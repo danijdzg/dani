@@ -2686,6 +2686,46 @@ const showRecurrentesModal = () => {
     showGenericModal('Gestionar Movimientos Recurrentes', html);
     renderRecurrentesModalList();
 };
+// ========= INICIO: CÓDIGO PARA SOLUCIONAR EL ERROR =========
+
+const showManageInvestmentAccountsModal = () => {
+    const visibleAccounts = getVisibleAccounts();
+    if (visibleAccounts.length === 0) {
+        showToast('No hay cuentas en esta vista para configurar.', 'info');
+        return;
+    }
+
+    const accountsListHTML = visibleAccounts
+        .sort((a, b) => a.nombre.localeCompare(b.nombre))
+        .map(cuenta => `
+            <div class="form-checkbox-group modal__list-item" style="padding-left:0; padding-right:0;">
+                <label for="invest-toggle-${cuenta.id}" style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0; cursor: pointer;">
+                    <span style="font-weight: 500;">${escapeHTML(cuenta.nombre)}</span>
+                    <small style="color: var(--c-on-surface-secondary); font-size: var(--fs-xs);">${toSentenceCase(escapeHTML(cuenta.tipo))}</small>
+                </label>
+                <label class="form-switch">
+                    <input type="checkbox" id="invest-toggle-${cuenta.id}" value="${cuenta.id}" ${cuenta.esInversion ? 'checked' : ''}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        `).join('');
+
+    const modalHTML = `
+        <form id="manage-investment-accounts-form" novalidate>
+            <p class="form-label" style="margin-bottom: var(--sp-3);">
+                Selecciona las cuentas que forman parte de tu cartera de inversión. Esto habilitará el seguimiento avanzado de rendimiento (P&L, TIR) en la pestaña de Patrimonio.
+            </p>
+            <div id="investment-accounts-modal-list">${accountsListHTML}</div>
+            <div class="modal__actions">
+                <button type="submit" class="btn btn--primary btn--full">Guardar Cambios</button>
+            </div>
+        </form>
+    `;
+
+    showGenericModal('Gestionar Activos de Inversión', modalHTML);
+};
+
+// ========= FIN: CÓDIGO PARA SOLUCIONAR EL ERROR =========
 
 const renderRecurrentesModalList = () => {
     const list = select('recurrentes-modal-list');
