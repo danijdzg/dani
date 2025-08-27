@@ -3627,7 +3627,7 @@ const renderInicioRecientesView = async () => {
         
         const showCalculator = (targetInput) => {
             calculatorState.targetInput = targetInput;
-            const currentValue = targetInput.value.trim().replace(/\s?â‚?g, '');
+            const currentValue = targetInput.value.trim().replace(/\s?€/g, '');
             if (currentValue && !isNaN(parseFloat(currentValue.replace(',', '.')))) {
                 calculatorState.displayValue = currentValue.replace('.', '');
             } else {
