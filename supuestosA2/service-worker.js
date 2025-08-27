@@ -1,7 +1,7 @@
 const CACHE_NAME = 'supuestos-manises-cache-v1';
 const URLS_TO_CACHE = [
-  './',
-  './SupuestosA2.html',
+  '/cuentas/supuestosA2/',
+  '/cuentas/supuestosA2/index.html',
   'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap'
 ];
 
