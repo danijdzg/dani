@@ -1,0 +1,21 @@
+{
+  "name": "Supuestos Prácticos Manises",
+  "short_name": "Supuestos A2",
+  "description": "Supuestos prácticos para la oposición de Técnico Económico A2 del Ayuntamiento de Manises.",
+  "start_url": "./SupuestosA2.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#2a7aeb",
+  "icons": [
+    {
+      "src": "aiDANAI.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "aiDANAI.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
