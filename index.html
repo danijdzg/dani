@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ï»¿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -3627,7 +3627,7 @@ const renderInicioRecientesView = async () => {
         
         const showCalculator = (targetInput) => {
             calculatorState.targetInput = targetInput;
-            const currentValue = targetInput.value.trim().replace(/\s?€/g, '');
+            const currentValue = targetInput.value.trim().replace(/\s?â‚¬/g, '');
             if (currentValue && !isNaN(parseFloat(currentValue.replace(',', '.')))) {
                 calculatorState.displayValue = currentValue.replace('.', '');
             } else {
@@ -4884,7 +4884,7 @@ if (actions[action]) actions[action](e);
             if (typeof currencyString !== 'string' || !currencyString) return 0;
             const number = parseFloat(
                 currencyString
-                .replace('â‚?, '')
+                .replace('â‚¬', '')
                 .trim()
                 .replace(/\./g, '')
                 .replace(',', '.')
