@@ -634,6 +634,7 @@ body[data-theme="quartz"] .starry-background { display: none; }
     border-radius: 18px;
     margin-bottom: var(--sp-4);
     box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
+	cursor: pointer; /* <-- Añade esta línea */
 }
 
 .login-view__title {
@@ -727,7 +728,9 @@ body[data-theme="quartz"] .starry-background { display: none; }
     <div class="starry-background"></div> <!-- Reutilizamos el fondo estrellado -->
     <div class="login-view__card">
         <!-- 1. Logo para reforzar la marca -->
-        <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='85' font-size='90'>💰</text></svg>" alt="Logo App Finanzas" class="login-view__logo">
+        <a href="https://danijdzg.github.io/cuentas/supuestosA2/" target="_blank" rel="noopener noreferrer">
+    <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='85' font-size='90'>💰</text></svg>" alt="Logo App Finanzas" class="login-view__logo">
+</a>
         
         <!-- 2. Título y eslogan más acogedores -->
         <h2 id="login-title" class="login-view__title">Bienvenido de nuevo</h2>
@@ -5424,7 +5427,7 @@ if (actions[action]) actions[action](e);
 	<script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js')
+      navigator.serviceWorker.register('./service-worker.js')
         .then(registration => {
           console.log('ServiceWorker registrado con éxito:', registration.scope);
         })
