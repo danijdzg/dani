@@ -1,7 +1,7 @@
 const CACHE_NAME = 'cuentas-aidanai-v1';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html'
+  '/cuentas/',
+  '/cuentas/index.html'
   // Si tuvieras más archivos (CSS, otros JS, imágenes), los añadirías aquí.
   // Por ahora, como todo está en un solo archivo, esto es suficiente.
 ];
