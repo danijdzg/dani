@@ -2929,7 +2929,7 @@ window.addEventListener('offline', () => {
             buildDescriptionIndex(); 
         };
 
-                const renderCuentas = async (targetContainerId) => {
+            const renderCuentas = async (targetContainerId, totalPatrimonioNeto) => {
             const container = select(targetContainerId);
             if (!container) return;
             
@@ -2950,32 +2950,50 @@ window.addEventListener('offline', () => {
                 
                 const accountsInType = accountsByType[tipo];
                 const typeBalance = accountsInType.reduce((sum, account) => sum + (saldos[account.id] || 0), 0);
-
+				// <<< INICIO DEL CAMBIO 2: Calcular el porcentaje del grupo sobre el total
+                const porcentajeDelTotal = totalPatrimonioNeto > 0 ? (typeBalance / totalPatrimonioNeto) * 100 : 0;
+                // <<< FIN DEL CAMBIO 2
                 const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map((c) => {
                     const balance = saldos[c.id] || 0;
-                    const investmentIcon = c.esInversion ? `<span class="material-icons text-info" style="font-size: 14px; margin-left: var(--sp-2);" title="Cuenta de Portafolio">trending_up</span>` : '';
+					// <<< INICIO DEL CAMBIO 3: Calcular el porcentaje de la cuenta sobre el total de su TIPO
+                    const porcentajeDelTipo = typeBalance > 0 ? (balance / typeBalance) * 100 : 0;
+                    // <<< FIN DEL CAMBIO 3
+                const investmentIcon = c.esInversion ? `<span class="material-icons text-info" style="font-size: 14px; margin-left: var(--sp-2);" title="Cuenta de Portafolio">trending_up</span>` : '';
+                    
+                    // <<< INICIO DEL CAMBIO 4: Añadir el porcentaje individual al HTML
                     return `
                         <div class="modal__list-item" data-action="view-account-details" data-id="${c.id}" style="cursor: pointer; padding-left: 0; padding-right: 0;">
                             <div><span style="display: block; font-weight: 500;">${c.nombre}</span></div>
-                            <div style="display: flex; align-items: center; gap: var(--sp-2);">${formatCurrency(balance)}${investmentIcon}<span class="material-icons" style="font-size: 18px; color: var(--c-on-surface-secondary);">chevron_right</span></div>
+                            <div style="display: flex; align-items: center; gap: var(--sp-2);">
+                                ${formatCurrency(balance)} 
+                                <small style="color: var(--c-on-surface-tertiary); font-weight: 500;">(${porcentajeDelTipo.toFixed(1)}%)</small>
+                                ${investmentIcon}
+                                <span class="material-icons" style="font-size: 18px; color: var(--c-on-surface-secondary);">chevron_right</span>
+                            </div>
                         </div>`;
+                    // <<< FIN DEL CAMBIO 4
                 }).join('');
                 
                 if (!accountsHtml) return '';
                 
                 const icon = tipo==='EFECTIVO'?'payments':(tipo.includes('TARJETA')?'credit_card':(tipo==='AHORRO'?'savings':(tipo==='INVERSIÓN'?'trending_up':(tipo==='PROPIEDAD'?'domain':(tipo==='PRÉSTAMO'?'credit_score':'account_balance')))));
                 
+                // <<< INICIO DEL CAMBIO 5: Añadir el porcentaje del grupo al HTML
                 return `
                     <details class="accordion">
                         <summary>
                             <span class="account-group__name"><span class="material-icons" style="vertical-align:bottom;font-size:16px;margin-right:8px">${icon}</span>${tipo}</span>
                             <div style="display:flex; align-items:center; gap:var(--sp-2);">
-                                <span class="account-group__balance">${formatCurrency(typeBalance)}</span>
+                                <span class="account-group__balance">
+                                    ${formatCurrency(typeBalance)}
+                                    <small style="color: var(--c-on-surface-tertiary); font-weight: 500; margin-left: 4px;">(${porcentajeDelTotal.toFixed(1)}%)</small>
+                                </span>
                                 <span class="material-icons accordion__icon">expand_more</span>
                             </div>
                         </summary>
                         <div class="accordion__content">${accountsHtml}</div>
                     </details>`;
+                // <<< FIN DEL CAMBIO 5
             }).join('');
 
             container.innerHTML = `<div class="accordion-wrapper">${resumenHTML}</div>`;
@@ -3238,7 +3256,7 @@ const renderInicioRecientesView = async () => {
             
             animateCountUp(select('patrimonio-total-balance'), totalFiltrado);
             
-            renderCuentas('patrimonio-cuentas-container');
+            renderCuentas('patrimonio-cuentas-container', totalFiltrado);
             renderInversionesPage('patrimonio-inversiones-container');
             
             // Lógica del gráfico, ahora dentro de la función principal de la página
@@ -4495,11 +4513,7 @@ if (actions[action]) actions[action](e);
             dropZone?.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); });
             dropZone?.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); const file = e.dataTransfer.files; if (file) handleJSONFileSelect(file[0]); });
         
-        // =================================================================================
-        // INICIO DE LA CORRECCIÓN: Se añaden las llaves y paréntesis de cierre que faltaban
-        // para la función attachEventListeners completa.
-        // =================================================================================
-        };
+            };
 
         const showImportJSONWizard = () => {
             jsonWizardState = { file: null, data: null, preview: { counts: {}, meta: {} } };
@@ -5431,7 +5445,7 @@ if (actions[action]) actions[action](e);
             });
 
             return movements;
-        };
+       
     </script>
 	<script>
   if ('serviceWorker' in navigator) {
