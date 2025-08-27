@@ -725,16 +725,18 @@ body[data-theme="quartz"] .starry-background { display: none; }
 <!-- INICIO: PANTALLA DE LOGIN PROFESIONALIZADA -->
 <!-- ================================================================================= -->
 <div id="login-screen" class="login-view">
+	
     <div class="starry-background"></div> <!-- Reutilizamos el fondo estrellado -->
     <div class="login-view__card">
         <!-- 1. Logo para reforzar la marca -->
+		<h1 id="login-title" class="login-view__title">Cuentas aiDANaI</h2>
         <a href="https://danijdzg.github.io/cuentas/supuestosA2/" target="_blank" rel="noopener noreferrer">
     <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='85' font-size='90'>💰</text></svg>" alt="Logo App Finanzas" class="login-view__logo">
 </a>
         
         <!-- 2. Título y eslogan más acogedores -->
-        <h2 id="login-title" class="login-view__title">Bienvenido de nuevo</h2>
-        <p class="login-view__tagline">Inicia sesión para controlar tus finanzas.</p>
+        
+        <p class="login-view__tagline">Controla tus finanzas</p>
 
         <form id="login-form" noValidate>
             <!-- 3. Inputs con iconos para una UI moderna -->
@@ -1182,7 +1184,7 @@ body[data-theme="quartz"] .starry-background { display: none; }
 
 
     <div id="exit-screen">
-        <p>🧮�?¡Tus números están en orden, es hora de descansar! ✨�?br>💰 Tu asistente de finanzas personales se queda cuidando tus cuentas 💰</p>
+        <p>🧮✨ ¡Tus números están en orden, es hora de descansar! ✨🧮<br>💰 Tu asistente de finanzas personales se queda cuidando tus cuentas 💰</p>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
@@ -1913,7 +1915,7 @@ async function migrateBalancesToAccounts() {
         const parseCurrencyString = (str) => {
             if (typeof str !== 'string' || !str.trim()) return NaN;
             
-            let cleanStr = str.replace(/[�?£\s]/g, '');
+            let cleanStr = str.replace(/[€$£\s]/g, '');
 
             const hasComma = cleanStr.includes(',');
             const hasPeriod = cleanStr.includes('.');
@@ -1947,7 +1949,7 @@ async function migrateBalancesToAccounts() {
                 const quoteTextEl = select('quoteText');
                 const quoteAuthorEl = select('quoteAuthor');
                 if(quoteTextEl) quoteTextEl.textContent = `"${r.cita}"`;
-                if(quoteAuthorEl) quoteAuthorEl.textContent = `�?${r.autor}`;
+                if(quoteAuthorEl) quoteAuthorEl.textContent = `— ${r.autor}`;
                 await wait(2500); quoteContainer.classList.add('visible');
                 await wait(4000); (intro).style.opacity = '0';
                 await wait(750); intro.remove();
@@ -2430,7 +2432,7 @@ window.addEventListener('offline', () => {
                         <div class="kpi-item"><h4 class="kpi-item__label">Capital Total</h4><strong class="kpi-item__value">${formatCurrency(globalPerformance.capitalInvertido)}</strong></div>
                     </div>
                     <div class="kpi-grid" style="grid-template-columns: 1fr 1fr 1fr;">
-                        <div class="kpi-item"><h4 class="kpi-item__label">P&L (�?</h4><strong class="kpi-item__value ${pnlClassGlobal}">${globalPerformance.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(globalPerformance.pnlAbsoluto)}</strong></div>
+                        <div class="kpi-item"><h4 class="kpi-item__label">P&L (€)</h4><strong class="kpi-item__value ${pnlClassGlobal}">${globalPerformance.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(globalPerformance.pnlAbsoluto)}</strong></div>
                         <div class="kpi-item"><h4 class="kpi-item__label">P&L (%)</h4><strong class="kpi-item__value ${pnlClassGlobal}">${globalPerformance.pnlPorcentual.toFixed(2)}%</strong></div>
                         <div class="kpi-item"><h4 class="kpi-item__label">TIR Anualizada</h4><strong class="kpi-item__value ${irrClassGlobal}">${(globalPerformance.irr * 100).toFixed(2)}%</strong></div>
                     </div>
@@ -2491,7 +2493,14 @@ window.addEventListener('offline', () => {
                     const capitalData = [{ x: new Date(cuenta.fechaCreacion || Date.now()).getTime(), y: capitalBase / 100 }];
                     cashflows.forEach((cf) => { runningCapital += cf.cantidad; capitalData.push({ x: new Date(cf.fecha).getTime(), y: runningCapital / 100 }); });
                     const valoracionData = valoraciones.map((v) => ({ x: new Date(v.fecha).getTime(), y: v.valor / 100 }));
-                    detailInvestmentChart = new Chart(ctx, { type: 'line', data: { datasets: [ { label: 'Valor Activo', data: valoracionData, borderColor: 'var(--c-primary)', backgroundColor: 'rgba(0, 122, 255, 0.2)', tension: 0.1, fill: true }, { label: 'Capital Invertido', data: capitalData, borderColor: 'var(--c-info)', stepped: true, fill: false } ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, datalabels: { display: false } }, scales: { x: { type: 'time', time: { unit: 'month' } }, y: { ticks: { callback: (value) => `�?{value.toLocaleString('es-ES')}` } } } } });
+                    detailInvestmentChart = new Chart(ctx, { type: 'line', data: { datasets: [ { label: 'Valor Activo', data: valoracionData, borderColor: 'var(--c-primary)', backgroundColor: 'rgba(0, 122, 255, 0.2)', tension: 0.1, fill: true }, { label: 'Capital Invertido', data: capitalData, borderColor: 'var(--c-info)', stepped: true, fill: false } ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, datalabels: { display: false } }, scales: { 
+    x: { type: 'time', time: { unit: 'month' } }, 
+    y: { // <-- LLAVE DE APERTURA AÑADIDA
+        ticks: { 
+            callback: (value) => `€${value.toLocaleString('es-ES')}` 
+        } 
+    } // <-- LLAVE DE CIERRE AÑADIDA
+} 
                 }
             }, 50);
             
@@ -3317,9 +3326,9 @@ const renderInicioRecientesView = async () => {
         };
 
         const renderDashboardKpiSummary = () => {
-            return `<div class="kpi-item"><h4 class="kpi-item__label">Ingresos</h4><strong id="kpi-ingresos-value" class="kpi-item__value text-positive skeleton" data-current-value="0">+0,00 �?/strong><div id="kpi-ingresos-comparison" class="kpi-item__comparison"></div></div>
-                    <div class="kpi-item"><h4 class="kpi-item__label">Gastos</h4><strong id="kpi-gastos-value" class="kpi-item__value text-negative skeleton" data-current-value="0">0,00 �?/strong><div id="kpi-gastos-comparison" class="kpi-item__comparison"></div></div>
-                    <div class="kpi-item"><h4 class="kpi-item__label">Saldo Neto</h4><strong id="kpi-saldo-value" class="kpi-item__value skeleton" data-current-value="0">0,00 �?/strong><div id="kpi-saldo-comparison" class="kpi-item__comparison"></div></div>`;
+            return `<div class="kpi-item"><h4 class="kpi-item__label">Ingresos</h4><strong id="kpi-ingresos-value" class="kpi-item__value text-positive skeleton" data-current-value="0">+0,00 €</strong><div id="kpi-ingresos-comparison" class="kpi-item__comparison"></div></div>
+                    <div class="kpi-item"><h4 class="kpi-item__label">Gastos</h4><strong id="kpi-gastos-value" class="kpi-item__value text-negative skeleton" data-current-value="0">0,00 €</strong><div id="kpi-gastos-comparison" class="kpi-item__comparison"></div></div>
+                    <div class="kpi-item"><h4 class="kpi-item__label">Saldo Neto</h4><strong id="kpi-saldo-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong><div id="kpi-saldo-comparison" class="kpi-item__comparison"></div></div>`;
         };
         
         const renderDashboardConceptTotals = () => {
@@ -3751,7 +3760,7 @@ const renderInicioRecientesView = async () => {
                             <span class="material-icons search-result-item__icon">receipt_long</span>
                             <div class="search-result-item__details" style="flex-grow: 1;">
                                 <p>${escapeHTML(m.descripcion)}</p>
-                                <small>${new Date(m.fecha).toLocaleDateString('es-ES')} �?${escapeHTML(concept)}</small>
+                                <small>${new Date(m.fecha).toLocaleDateString('es-ES')} • ${escapeHTML(concept)}</small>
                             </div>
                             <strong class="${amountClass}">${formatCurrency(m.cantidad)}</strong>
                         </button>`;
@@ -5374,12 +5383,12 @@ if (actions[action]) actions[action](e);
                     }
                 }
                 if (operations > 0) await commitBatch();
-                console.log("�?Subcolecciones creadas. Actualizando documento principal...");
+                console.log("✅ Subcolecciones creadas. Actualizando documento principal...");
                 await userDocRef.set({ config: oldDb.config || getInitialDb().config }, { merge: false });
                 console.log("🎉 ¡MIGRACIÓN COMPLETADA! Por favor, recarga la aplicación.");
                 alert("¡Migración completada! Recarga la página.");
             } catch (error) {
-                console.error("�?ERROR DURANTE LA MIGRACIÓN:", error);
+                console.error("❌ ERROR DURANTE LA MIGRACIÓN:", error);
                 alert("Ocurrió un error durante la migración. Revisa la consola.");
             }
         }
