@@ -9,20 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-	<link rel="manifest" href="data:application/manifest+json,{
-        %22name%22:%22Gestor de Cuentas%22,
-        %22short_name%22:%22Cuentas%22,
-        %22start_url%22:%22.%22,
-        %22display%22:%22standalone%22,
-        %22background_color%22:%22#000000%22,
-        %22theme_color%22:%22#007AFF%22,
-        %22description%22:%22Gestor de finanzas personales, elegante y profesional.%22,
-        %22icons%22:[
-            {%22src%22:%22data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='85' font-size='90'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg%2bxml%2bxml%22},
-            {%22src%22:%22data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='85' font-size='90'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22512x512%22,%22type%22:%22image/svg%2bxml%2bxml%22}
-        ]
-    }">
-    <meta name="theme-color" content="#000000"/>
+	<link rel="manifest" href="manifest.json">
+	<meta name="theme-color" content="#000000"/>
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='85' font-size='90'>💰</text></svg>">
     
     <!-- ================================================================================= -->
@@ -1191,7 +1179,7 @@ body[data-theme="quartz"] .starry-background { display: none; }
 
 
     <div id="exit-screen">
-        <p>🧮✨ ¡Tus números están en orden, es hora de descansar! ✨🧮<br>💰 Tu asistente de finanzas personales se queda cuidando tus cuentas 💰</p>
+        <p>🧮�?¡Tus números están en orden, es hora de descansar! ✨�?br>💰 Tu asistente de finanzas personales se queda cuidando tus cuentas 💰</p>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
@@ -1922,7 +1910,7 @@ async function migrateBalancesToAccounts() {
         const parseCurrencyString = (str) => {
             if (typeof str !== 'string' || !str.trim()) return NaN;
             
-            let cleanStr = str.replace(/[€$£\s]/g, '');
+            let cleanStr = str.replace(/[�?£\s]/g, '');
 
             const hasComma = cleanStr.includes(',');
             const hasPeriod = cleanStr.includes('.');
@@ -1956,7 +1944,7 @@ async function migrateBalancesToAccounts() {
                 const quoteTextEl = select('quoteText');
                 const quoteAuthorEl = select('quoteAuthor');
                 if(quoteTextEl) quoteTextEl.textContent = `"${r.cita}"`;
-                if(quoteAuthorEl) quoteAuthorEl.textContent = `— ${r.autor}`;
+                if(quoteAuthorEl) quoteAuthorEl.textContent = `�?${r.autor}`;
                 await wait(2500); quoteContainer.classList.add('visible');
                 await wait(4000); (intro).style.opacity = '0';
                 await wait(750); intro.remove();
@@ -2439,7 +2427,7 @@ window.addEventListener('offline', () => {
                         <div class="kpi-item"><h4 class="kpi-item__label">Capital Total</h4><strong class="kpi-item__value">${formatCurrency(globalPerformance.capitalInvertido)}</strong></div>
                     </div>
                     <div class="kpi-grid" style="grid-template-columns: 1fr 1fr 1fr;">
-                        <div class="kpi-item"><h4 class="kpi-item__label">P&L (€)</h4><strong class="kpi-item__value ${pnlClassGlobal}">${globalPerformance.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(globalPerformance.pnlAbsoluto)}</strong></div>
+                        <div class="kpi-item"><h4 class="kpi-item__label">P&L (�?</h4><strong class="kpi-item__value ${pnlClassGlobal}">${globalPerformance.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(globalPerformance.pnlAbsoluto)}</strong></div>
                         <div class="kpi-item"><h4 class="kpi-item__label">P&L (%)</h4><strong class="kpi-item__value ${pnlClassGlobal}">${globalPerformance.pnlPorcentual.toFixed(2)}%</strong></div>
                         <div class="kpi-item"><h4 class="kpi-item__label">TIR Anualizada</h4><strong class="kpi-item__value ${irrClassGlobal}">${(globalPerformance.irr * 100).toFixed(2)}%</strong></div>
                     </div>
@@ -2500,7 +2488,7 @@ window.addEventListener('offline', () => {
                     const capitalData = [{ x: new Date(cuenta.fechaCreacion || Date.now()).getTime(), y: capitalBase / 100 }];
                     cashflows.forEach((cf) => { runningCapital += cf.cantidad; capitalData.push({ x: new Date(cf.fecha).getTime(), y: runningCapital / 100 }); });
                     const valoracionData = valoraciones.map((v) => ({ x: new Date(v.fecha).getTime(), y: v.valor / 100 }));
-                    detailInvestmentChart = new Chart(ctx, { type: 'line', data: { datasets: [ { label: 'Valor Activo', data: valoracionData, borderColor: 'var(--c-primary)', backgroundColor: 'rgba(0, 122, 255, 0.2)', tension: 0.1, fill: true }, { label: 'Capital Invertido', data: capitalData, borderColor: 'var(--c-info)', stepped: true, fill: false } ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, datalabels: { display: false } }, scales: { x: { type: 'time', time: { unit: 'month' } }, y: { ticks: { callback: (value) => `€${value.toLocaleString('es-ES')}` } } } } });
+                    detailInvestmentChart = new Chart(ctx, { type: 'line', data: { datasets: [ { label: 'Valor Activo', data: valoracionData, borderColor: 'var(--c-primary)', backgroundColor: 'rgba(0, 122, 255, 0.2)', tension: 0.1, fill: true }, { label: 'Capital Invertido', data: capitalData, borderColor: 'var(--c-info)', stepped: true, fill: false } ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, datalabels: { display: false } }, scales: { x: { type: 'time', time: { unit: 'month' } }, y: { ticks: { callback: (value) => `�?{value.toLocaleString('es-ES')}` } } } } });
                 }
             }, 50);
             
@@ -3326,9 +3314,9 @@ const renderInicioRecientesView = async () => {
         };
 
         const renderDashboardKpiSummary = () => {
-            return `<div class="kpi-item"><h4 class="kpi-item__label">Ingresos</h4><strong id="kpi-ingresos-value" class="kpi-item__value text-positive skeleton" data-current-value="0">+0,00 €</strong><div id="kpi-ingresos-comparison" class="kpi-item__comparison"></div></div>
-                    <div class="kpi-item"><h4 class="kpi-item__label">Gastos</h4><strong id="kpi-gastos-value" class="kpi-item__value text-negative skeleton" data-current-value="0">0,00 €</strong><div id="kpi-gastos-comparison" class="kpi-item__comparison"></div></div>
-                    <div class="kpi-item"><h4 class="kpi-item__label">Saldo Neto</h4><strong id="kpi-saldo-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong><div id="kpi-saldo-comparison" class="kpi-item__comparison"></div></div>`;
+            return `<div class="kpi-item"><h4 class="kpi-item__label">Ingresos</h4><strong id="kpi-ingresos-value" class="kpi-item__value text-positive skeleton" data-current-value="0">+0,00 �?/strong><div id="kpi-ingresos-comparison" class="kpi-item__comparison"></div></div>
+                    <div class="kpi-item"><h4 class="kpi-item__label">Gastos</h4><strong id="kpi-gastos-value" class="kpi-item__value text-negative skeleton" data-current-value="0">0,00 �?/strong><div id="kpi-gastos-comparison" class="kpi-item__comparison"></div></div>
+                    <div class="kpi-item"><h4 class="kpi-item__label">Saldo Neto</h4><strong id="kpi-saldo-value" class="kpi-item__value skeleton" data-current-value="0">0,00 �?/strong><div id="kpi-saldo-comparison" class="kpi-item__comparison"></div></div>`;
         };
         
         const renderDashboardConceptTotals = () => {
@@ -3639,7 +3627,7 @@ const renderInicioRecientesView = async () => {
         
         const showCalculator = (targetInput) => {
             calculatorState.targetInput = targetInput;
-            const currentValue = targetInput.value.trim().replace(/\s?€/g, '');
+            const currentValue = targetInput.value.trim().replace(/\s?�?g, '');
             if (currentValue && !isNaN(parseFloat(currentValue.replace(',', '.')))) {
                 calculatorState.displayValue = currentValue.replace('.', '');
             } else {
@@ -3760,7 +3748,7 @@ const renderInicioRecientesView = async () => {
                             <span class="material-icons search-result-item__icon">receipt_long</span>
                             <div class="search-result-item__details" style="flex-grow: 1;">
                                 <p>${escapeHTML(m.descripcion)}</p>
-                                <small>${new Date(m.fecha).toLocaleDateString('es-ES')} • ${escapeHTML(concept)}</small>
+                                <small>${new Date(m.fecha).toLocaleDateString('es-ES')} �?${escapeHTML(concept)}</small>
                             </div>
                             <strong class="${amountClass}">${formatCurrency(m.cantidad)}</strong>
                         </button>`;
@@ -4896,7 +4884,7 @@ if (actions[action]) actions[action](e);
             if (typeof currencyString !== 'string' || !currencyString) return 0;
             const number = parseFloat(
                 currencyString
-                .replace('€', '')
+                .replace('�?, '')
                 .trim()
                 .replace(/\./g, '')
                 .replace(',', '.')
@@ -5383,12 +5371,12 @@ if (actions[action]) actions[action](e);
                     }
                 }
                 if (operations > 0) await commitBatch();
-                console.log("✅ Subcolecciones creadas. Actualizando documento principal...");
+                console.log("�?Subcolecciones creadas. Actualizando documento principal...");
                 await userDocRef.set({ config: oldDb.config || getInitialDb().config }, { merge: false });
                 console.log("🎉 ¡MIGRACIÓN COMPLETADA! Por favor, recarga la aplicación.");
                 alert("¡Migración completada! Recarga la página.");
             } catch (error) {
-                console.error("❌ ERROR DURANTE LA MIGRACIÓN:", error);
+                console.error("�?ERROR DURANTE LA MIGRACIÓN:", error);
                 alert("Ocurrió un error durante la migración. Revisa la consola.");
             }
         }
@@ -5433,5 +5421,18 @@ if (actions[action]) actions[action](e);
             return movements;
         };
     </script>
+	<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('ServiceWorker registrado con �xito:', registration.scope);
+        })
+        .catch(error => {
+          console.log('Fallo en el registro del ServiceWorker:', error);
+        });
+    });
+  }
+</script>
 </body>
 </html>
