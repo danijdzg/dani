@@ -2485,24 +2485,42 @@ window.addEventListener('offline', () => {
                 </div>`;
         
             setTimeout(async () => {
-                const ctx = (select('detail-investment-chart'))?.getContext('2d');
-                if (ctx) {
-                    const saldos = await getSaldos();
-                    const capitalBase = saldos[cuentaId] || 0;
-                    let runningCapital = capitalBase;
-                    const capitalData = [{ x: new Date(cuenta.fechaCreacion || Date.now()).getTime(), y: capitalBase / 100 }];
-                    cashflows.forEach((cf) => { runningCapital += cf.cantidad; capitalData.push({ x: new Date(cf.fecha).getTime(), y: runningCapital / 100 }); });
-                    const valoracionData = valoraciones.map((v) => ({ x: new Date(v.fecha).getTime(), y: v.valor / 100 }));
-                    detailInvestmentChart = new Chart(ctx, { type: 'line', data: { datasets: [ { label: 'Valor Activo', data: valoracionData, borderColor: 'var(--c-primary)', backgroundColor: 'rgba(0, 122, 255, 0.2)', tension: 0.1, fill: true }, { label: 'Capital Invertido', data: capitalData, borderColor: 'var(--c-info)', stepped: true, fill: false } ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, datalabels: { display: false } }, scales: { 
-    x: { type: 'time', time: { unit: 'month' } }, 
-    y: { // <-- LLAVE DE APERTURA AÑADIDA
-        ticks: { 
-            callback: (value) => `€${value.toLocaleString('es-ES')}` 
-        } 
-    } // <-- LLAVE DE CIERRE AÑADIDA
-} 
-                }
-            }, 50);
+    const ctx = (select('detail-investment-chart'))?.getContext('2d');
+    if (ctx) {
+        const saldos = await getSaldos();
+        const capitalBase = saldos[cuentaId] || 0;
+        let runningCapital = capitalBase;
+        const capitalData = [{ x: new Date(cuenta.fechaCreacion || Date.now()).getTime(), y: capitalBase / 100 }];
+        cashflows.forEach((cf) => { runningCapital += cf.cantidad; capitalData.push({ x: new Date(cf.fecha).getTime(), y: runningCapital / 100 }); });
+        const valoracionData = valoraciones.map((v) => ({ x: new Date(v.fecha).getTime(), y: v.valor / 100 }));
+        
+        detailInvestmentChart = new Chart(ctx, { 
+            type: 'line', 
+            data: { 
+                datasets: [ 
+                    { label: 'Valor Activo', data: valoracionData, borderColor: 'var(--c-primary)', backgroundColor: 'rgba(0, 122, 255, 0.2)', tension: 0.1, fill: true }, 
+                    { label: 'Capital Invertido', data: capitalData, borderColor: 'var(--c-info)', stepped: true, fill: false } 
+                ] 
+            }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { position: 'top' }, 
+                    datalabels: { display: false } 
+                }, 
+                scales: { 
+                    x: { type: 'time', time: { unit: 'month' } }, 
+                    y: { 
+                        ticks: { 
+                            callback: (value) => `€${value.toLocaleString('es-ES')}` 
+                        } 
+                    } 
+                } 
+            }
+        }); // <-- El constructor de Chart termina aquí
+    }
+}, 50);
             
             const timelineContainer = select('investment-detail-timeline');
             const timelineItems = [ ...valoraciones.map((v) => ({...v, type: 'valoracion'})), ...cashflows.map((c) => ({...c, type: c.cantidad > 0 ? 'aportacion' : 'reembolso'})) ].sort((a,b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
@@ -2636,21 +2654,37 @@ window.addEventListener('offline', () => {
             `;
         
             informesChart = new Chart(chartCtx, {
-                type: 'line',
-                data: {
-                    labels: etiquetasFormateadas,
-                    datasets: [
-                        { label: 'Ingresos', data: datosIngresos, borderColor: getComputedStyle(document.body).getPropertyValue('--c-success'), backgroundColor: 'rgba(48, 209, 88, 0.2)', fill: true, tension: 0.3, pointBackgroundColor: getComputedStyle(document.body).getPropertyValue('--c-success') },
-                        { label: 'Gastos', data: datosGastos, borderColor: getComputedStyle(document.body).getPropertyValue('--c-danger'), backgroundColor: 'rgba(255, 59, 48, 0.2)', fill: true, tension: 0.3, pointBackgroundColor: getComputedStyle(document.body).getPropertyValue('--c-danger') }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, ticks: { callback: (value) => formatCurrency(value * 100).replace(/\s/g, '') } } },
-                    plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: (c) => `${c.dataset.label || ''}: ${formatCurrency(c.parsed.y * 100)}` } }, datalabels: { display: false } }
-                }
-            });
-        };
+    type: 'line',
+    data: {
+        labels: etiquetasFormateadas,
+        datasets: [
+            { label: 'Ingresos', data: datosIngresos, borderColor: getComputedStyle(document.body).getPropertyValue('--c-success'), backgroundColor: 'rgba(48, 209, 88, 0.2)', fill: true, tension: 0.3, pointBackgroundColor: getComputedStyle(document.body).getPropertyValue('--c-success') },
+            { label: 'Gastos', data: datosGastos, borderColor: getComputedStyle(document.body).getPropertyValue('--c-danger'), backgroundColor: 'rgba(255, 59, 48, 0.2)', fill: true, tension: 0.3, pointBackgroundColor: getComputedStyle(document.body).getPropertyValue('--c-danger') }
+        ]
+    },
+    options: { // <-- El objeto "options" empieza aquí
+        responsive: true, 
+        maintainAspectRatio: false,
+        scales: { 
+            y: { 
+                beginAtZero: true, 
+                ticks: { 
+                    callback: (value) => formatCurrency(value * 100).replace(/\s/g, '') 
+                } 
+            } 
+        },
+        // LA SECCIÓN "plugins" AHORA ESTÁ DENTRO DE "options"
+        plugins: { 
+            legend: { position: 'top' }, 
+            tooltip: { 
+                callbacks: { 
+                    label: (c) => `${c.dataset.label || ''}: ${formatCurrency(c.parsed.y * 100)}` 
+                } 
+            }, 
+            datalabels: { display: false } 
+        }
+    } // <-- Y el objeto "options" se cierra aquí, correctamente.
+});
         
         const renderVirtualListItem = (item) => {
             if (item.type === 'date-header') {
@@ -3361,93 +3395,113 @@ const renderInicioRecientesView = async () => {
                 </div>`;
         };
         
-        const updateDashboardData = async () => {
-            const { current, previous, label } = await getFilteredMovements(true);
-            const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
-            const kpiContainer = select('kpi-container');
-            const conceptListContainer = select('concepto-totals-list');
-            const chartCtx = select('conceptos-chart')?.getContext('2d');
-            const cId = select('filter-cuenta')?.value;
-        
-            const calculateTotals = (movs) => {
-    let ingresos = 0, gastos = 0;
-    movs.forEach(m => {
-        if (m.tipo === 'movimiento') { 
-            if (m.cantidad > 0) ingresos += m.cantidad; 
-            else gastos += m.cantidad; 
-        } 
-        else if (m.tipo === 'traspaso') {
-            // Si hay una cuenta específica seleccionada en el filtro
-            if (cId) {
-                // === INICIO DE LA CORRECCIÓN LÓGICA ===
-                // Un traspaso que sale de la cuenta seleccionada es un GASTO para esa cuenta.
-                if (m.cuentaOrigenId === cId) { 
-				gastos += -m.cantidad; // Lo añadimos como un valor negativo
-                }
-                // Un traspaso que entra a la cuenta seleccionada es un INGRESO para esa cuenta.
-                if (m.cuentaDestinoId === cId) { 
-                    ingresos += m.cantidad;
-                }
-                // === FIN DE LA CORRECCIÓN LÓGICA ===
-            } else { // Si se están viendo "Todas las cuentas"
-                const origenVisible = visibleAccountIds.has(m.cuentaOrigenId);
-                const destinoVisible = visibleAccountIds.has(m.cuentaDestinoId);
-                
-                // Solo contamos el traspaso si representa una entrada/salida neta del patrimonio visible.
-                if (origenVisible && !destinoVisible) { 
-                    gastos += -m.cantidad; // Sale dinero del conjunto de cuentas visibles.
-                }
-                else if (!origenVisible && destinoVisible) { 
-                    ingresos += m.cantidad; // Entra dinero al conjunto de cuentas visibles.
-                }
-                // Si origen y destino son visibles, es un movimiento interno y no afecta a los totales.
-            }
-        }
-    });
-    return { ingresos, gastos };
-};
-        
-            const currentTotals = calculateTotals(current);
-            const previousTotals = calculateTotals(previous);
-            
-            if (kpiContainer) {
-                selectAll('#kpi-container .skeleton').forEach(el => el.classList.remove('skeleton'));
-                
-                const getComparisonHTML = (currentVal, prevVal, comparisonLabel, lowerIsBetter = false) => {
-                    if (!comparisonLabel || prevVal === 0) return '';
-                    const isImprovement = lowerIsBetter ? (currentVal < prevVal) : (currentVal > prevVal);
-                    const diff = (currentVal - prevVal) / Math.abs(prevVal) * 100;
-                    const diffClass = isImprovement ? 'text-positive' : 'text-negative';
-                    const icon = isImprovement ? 'arrow_upward' : 'arrow_downward';
-                    return `<span class="${diffClass}"><span class="material-icons" style="font-size: 12px; vertical-align: middle;">${icon}</span> ${Math.abs(diff).toFixed(0)}%</span> <span style="color:var(--c-on-surface-secondary)">${comparisonLabel}</span>`;
-                };
+  const updateDashboardData = async () => {
+    const { current, previous, label } = await getFilteredMovements(true);
+    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+    const kpiContainer = select('kpi-container');
+    const conceptListContainer = select('concepto-totals-list');
+    const chartCtx = select('conceptos-chart')?.getContext('2d');
+    const cId = select('filter-cuenta')?.value;
 
-                const saldoActual = currentTotals.ingresos + currentTotals.gastos;
-                const saldoAnterior = previousTotals.ingresos + previousTotals.gastos;
-        
-                animateCountUp(select('kpi-ingresos-value'), currentTotals.ingresos);
-                select('kpi-ingresos-comparison').innerHTML = getComparisonHTML(currentTotals.ingresos, previousTotals.ingresos, label);
-                animateCountUp(select('kpi-gastos-value'), currentTotals.gastos);
-                select('kpi-gastos-comparison').innerHTML = getComparisonHTML(Math.abs(currentTotals.gastos), Math.abs(previousTotals.gastos), label, true);
-                
-                const kpiSaldoValueEl = select('kpi-saldo-value');
-                if (kpiSaldoValueEl) {
-                    kpiSaldoValueEl.classList.remove('text-positive', 'text-negative');
-                    kpiSaldoValueEl.classList.add(saldoActual >= 0 ? 'text-positive' : 'text-negative');
-                    animateCountUp(kpiSaldoValueEl, saldoActual);
+    const calculateTotals = (movs) => {
+        let ingresos = 0, gastos = 0;
+        movs.forEach(m => {
+            if (m.tipo === 'movimiento') { 
+                if (m.cantidad > 0) ingresos += m.cantidad; 
+                else gastos += m.cantidad; 
+            } 
+            else if (m.tipo === 'traspaso') {
+                if (cId) {
+                    if (m.cuentaOrigenId === cId) { 
+                        gastos += -m.cantidad;
+                    }
+                    if (m.cuentaDestinoId === cId) { 
+                        ingresos += m.cantidad;
+                    }
+                } else {
+                    const origenVisible = visibleAccountIds.has(m.cuentaOrigenId);
+                    const destinoVisible = visibleAccountIds.has(m.cuentaDestinoId);
+                    
+                    if (origenVisible && !destinoVisible) { 
+                        gastos += -m.cantidad;
+                    }
+                    else if (!origenVisible && destinoVisible) { 
+                        ingresos += m.cantidad;
+                    }
                 }
-                select('kpi-saldo-comparison').innerHTML = getComparisonHTML(saldoActual, saldoAnterior, label);
             }
+        });
+        return { ingresos, gastos };
+    };
+
+    const currentTotals = calculateTotals(current);
+    const previousTotals = calculateTotals(previous);
+    
+    if (kpiContainer) {
+        selectAll('#kpi-container .skeleton').forEach(el => el.classList.remove('skeleton'));
         
-            if (conceptosChart) conceptosChart.destroy();
-            if (conceptListContainer && chartCtx) {
-                const cTots = current.reduce((a, m) => { if (m.tipo === 'movimiento' && m.conceptoId) { if (!a[m.conceptoId]) a[m.conceptoId] = { total: 0, movements: [], icon: db.conceptos.find((c) => c.id === m.conceptoId)?.icon || 'label' }; a[m.conceptoId].total += m.cantidad; a[m.conceptoId].movements.push(m); } return a; }, {});
-                const sortedTotals = Object.entries(cTots).sort(([, a], [, b]) => a.total - b.total);
-                const colorSuccess = getComputedStyle(document.body).getPropertyValue('--c-chart-positive').trim(), colorDanger = getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
-                conceptosChart = new Chart(chartCtx, { type: 'bar', data: { labels: sortedTotals.map(([id]) => toSentenceCase(db.conceptos.find((c) => c.id === id)?.nombre || '?')), datasets: [{ data: sortedTotals.map(([, data]) => data.total / 100), backgroundColor: sortedTotals.map(([, data]) => data.total >= 0 ? colorSuccess : colorDanger), borderRadius: 6, }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { y: { ticks: { callback: (value) => `${value.toLocaleString('es-ES')}` } } } } });
-                conceptListContainer.innerHTML = sortedTotals.length === 0 ? `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Sin datos para los filtros.</p></div>` : sortedTotals.map(([id, data]) => { const con = db.conceptos.find((c) => c.id === id); const t = data.total; return `<details class="accordion" style="background-color: var(--c-surface-variant);"><summary><span style="display: flex; align-items: center; gap: 8px;"><span class="material-icons" style="font-size: 18px;">${data.icon}</span>${toSentenceCase(con?.nombre || '?')}</span><span><strong class="${t >= 0 ? 'text-positive' : 'text-negative'}">${formatCurrency(t)}</strong><span class="material-icons accordion__icon">expand_more</span></span></summary><div class="accordion__content">${data.movements.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map((mov) => `<div class="transaction-card" data-action="edit-movement" data-id="${mov.id}" style="border:0;"><div class="transaction-card__content" style="padding: var(--sp-1) 0; "><div style="flex-grow:1;min-width:0;"><div class="transaction-card__row-2" style="font-size:0.75rem;">${new Date(mov.fecha).toLocaleDateString('es-ES')} - ${escapeHTML(mov.descripcion)}</div></div><div class="transaction-card__amount ${mov.cantidad >= 0 ? 'text-positive' : 'text-negative'}">${formatCurrency(mov.cantidad)}</div></div></div>`).join('')}</div></details>`; }).join('');
-            }
+        const getComparisonHTML = (currentVal, prevVal, comparisonLabel, lowerIsBetter = false) => {
+            if (!comparisonLabel || prevVal === 0) return '';
+            const isImprovement = lowerIsBetter ? (currentVal < prevVal) : (currentVal > prevVal);
+            const diff = (currentVal - prevVal) / Math.abs(prevVal) * 100;
+            const diffClass = isImprovement ? 'text-positive' : 'text-negative';
+            const icon = isImprovement ? 'arrow_upward' : 'arrow_downward';
+            return `<span class="${diffClass}"><span class="material-icons" style="font-size: 12px; vertical-align: middle;">${icon}</span> ${Math.abs(diff).toFixed(0)}%</span> <span style="color:var(--c-on-surface-secondary)">${comparisonLabel}</span>`;
         };
+
+        const saldoActual = currentTotals.ingresos + currentTotals.gastos;
+        const saldoAnterior = previousTotals.ingresos + previousTotals.gastos;
+
+        animateCountUp(select('kpi-ingresos-value'), currentTotals.ingresos);
+        select('kpi-ingresos-comparison').innerHTML = getComparisonHTML(currentTotals.ingresos, previousTotals.ingresos, label);
+        animateCountUp(select('kpi-gastos-value'), currentTotals.gastos);
+        select('kpi-gastos-comparison').innerHTML = getComparisonHTML(Math.abs(currentTotals.gastos), Math.abs(previousTotals.gastos), label, true);
+        
+        const kpiSaldoValueEl = select('kpi-saldo-value');
+        if (kpiSaldoValueEl) {
+            kpiSaldoValueEl.classList.remove('text-positive', 'text-negative');
+            kpiSaldoValueEl.classList.add(saldoActual >= 0 ? 'text-positive' : 'text-negative');
+            animateCountUp(kpiSaldoValueEl, saldoActual);
+        }
+        select('kpi-saldo-comparison').innerHTML = getComparisonHTML(saldoActual, saldoAnterior, label);
+    }
+
+    if (conceptosChart) conceptosChart.destroy();
+    if (conceptListContainer && chartCtx) {
+        const cTots = current.reduce((a, m) => { if (m.tipo === 'movimiento' && m.conceptoId) { if (!a[m.conceptoId]) a[m.conceptoId] = { total: 0, movements: [], icon: db.conceptos.find((c) => c.id === m.conceptoId)?.icon || 'label' }; a[m.conceptoId].total += m.cantidad; a[m.conceptoId].movements.push(m); } return a; }, {});
+        const sortedTotals = Object.entries(cTots).sort(([, a], [, b]) => a.total - b.total);
+        const colorSuccess = getComputedStyle(document.body).getPropertyValue('--c-chart-positive').trim(), colorDanger = getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
+        
+        conceptosChart = new Chart(chartCtx, {
+            type: 'bar',
+            data: {
+                labels: sortedTotals.map(([id]) => toSentenceCase(db.conceptos.find((c) => c.id === id)?.nombre || '?')),
+                datasets: [{
+                    data: sortedTotals.map(([, data]) => data.total / 100),
+                    backgroundColor: sortedTotals.map(([, data]) => data.total >= 0 ? colorSuccess : colorDanger),
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: { display: false }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: (value) => `${value.toLocaleString('es-ES')}`
+                        }
+                    }
+                }
+            }
+        });
+        
+        conceptListContainer.innerHTML = sortedTotals.length === 0 ? `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Sin datos para los filtros.</p></div>` : sortedTotals.map(([id, data]) => { const con = db.conceptos.find((c) => c.id === id); const t = data.total; return `<details class="accordion" style="background-color: var(--c-surface-variant);"><summary><span style="display: flex; align-items: center; gap: 8px;"><span class="material-icons" style="font-size: 18px;">${data.icon}</span>${toSentenceCase(con?.nombre || '?')}</span><span><strong class="${t >= 0 ? 'text-positive' : 'text-negative'}">${formatCurrency(t)}</strong><span class="material-icons accordion__icon">expand_more</span></span></summary><div class="accordion__content">${data.movements.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map((mov) => `<div class="transaction-card" data-action="edit-movement" data-id="${mov.id}" style="border:0;"><div class="transaction-card__content" style="padding: var(--sp-1) 0; "><div style="flex-grow:1;min-width:0;"><div class="transaction-card__row-2" style="font-size:0.75rem;">${new Date(mov.fecha).toLocaleDateString('es-ES')} - ${escapeHTML(mov.descripcion)}</div></div><div class="transaction-card__amount ${mov.cantidad >= 0 ? 'text-positive' : 'text-negative'}">${formatCurrency(mov.cantidad)}</div></div></div>`).join('')}</div></details>`; }).join('');
+    }
+};
         
         // =================================================================================
         // 8. MODAL & FORM HANDLING
@@ -4339,7 +4393,7 @@ const renderInicioRecientesView = async () => {
                         await updateAccountBalance(movToDelete.cuentaId, -movToDelete.cantidad);
                                                             }
                     recentMovementsCache = recentMovementsCache.filter(m => m.id !== idToDelete);
-                }
+                
             }
             await deleteDoc(collection, idToDelete);
             hideModal('movimiento-modal');
@@ -4452,8 +4506,7 @@ const renderInicioRecientesView = async () => {
     'toggle-traspaso-accounts-filter': () => populateTraspasoDropdowns()
 };    
 if (actions[action]) actions[action](e);
-            });
-
+            
             document.body.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const target = e.target;
@@ -4816,9 +4869,8 @@ if (actions[action]) actions[action](e);
             // La actualización de los KPIs sí la podemos forzar, ya que es un cálculo diferente.
             updateDashboardData();
             
-        } else if (currentPage === PAGE_IDS.MOVIMIENTOS_FULL) {
-            // La vista de historial completo sí necesita una recarga total.
-            loadInitialMovements();
+        } else if (currentPage === PAGE_IDS.MOVIMIENTOS_FULL) { 
+			loadInitialMovements();
         }
     }
 };
@@ -5372,7 +5424,7 @@ if (actions[action]) actions[action](e);
             renderPatrimonioPage();
         };
 
-        async function migrateDataToSubcollections() {
+                async function migrateDataToSubcollections() {
             if (!currentUser) { console.error("No hay usuario logueado."); return; }
             console.log("🚀 Iniciando migración para el usuario:", currentUser.uid);
             try {
@@ -5407,7 +5459,7 @@ if (actions[action]) actions[action](e);
             }
         }
         window.migrateDataToSubcollections = migrateDataToSubcollections;
-
+		 };
         document.addEventListener('DOMContentLoaded', initApp);
 		
 		// =================================================================================
@@ -5446,20 +5498,17 @@ if (actions[action]) actions[action](e);
 
             return movements;
 			};
-			};
-    </script>
-	<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(registration => {
-          console.log('ServiceWorker registrado con éxito:', registration.scope);
-        })
-        .catch(error => {
-          console.log('Fallo en el registro del ServiceWorker:', error);
+		if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./service-worker.js')
+            .then(registration => {
+              console.log('ServiceWorker registrado con éxito:', registration.scope);
+            })
+            .catch(error => {
+              console.log('Fallo en el registro del ServiceWorker:', error);
+            });
         });
-    });
-  }
+      }
 </script>
 </body>
 </html>
