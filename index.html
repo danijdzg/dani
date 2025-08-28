@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="manifest" href="/supuestosA2/manifest.json">
-    <title>Supuestos Prácticos - A2 Económico Ayuntamiento de Manises</title>
+    <title>Supuestos A2 Ayto Manises</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
@@ -214,26 +214,37 @@
         .hidden {
             display: none;
         }
-		/* ESTILOS PARA EL ICONO DEL TÍTULO */
-        .title-icon-link {
-            text-decoration: none; /* Quita el subrayado del enlace */
-            color: inherit; /* Hereda el color del texto del título (blanco) */
-            margin-right: 12px; /* Añade un espacio entre el icono y el texto */
-            transition: transform 0.2s ease-in-out; /* Suaviza la animación al pasar el ratón */
-            display: inline-block; /* Necesario para que la transformación funcione correctamente */
+		/* --- ESTILOS AÑADIDOS PARA LOS ICONOS DEL TÍTULO --- */
+        /* Estilos COMUNES para ambos iconos */
+        .title-icon-link,
+        .title-icon-link-right {
+            text-decoration: none; /* Quita el subrayado */
+            color: inherit; /* Hereda el color del título (blanco) */
+            transition: transform 0.2s ease-in-out, color 0.2s ease-in-out; /* Suaviza la animación */
+            display: inline-block; /* Necesario para que la transformación funcione */
         }
 
-        .title-icon-link:hover {
-            transform: scale(1.2); /* Aumenta ligeramente el tamaño del icono al pasar el ratón */
-            color: var(--primary-accent); /* Cambia el color al color de acento del tema */
+        /* Efecto hover COMÚN para ambos iconos */
+        .title-icon-link:hover,
+        .title-icon-link-right:hover {
+            transform: scale(1.2); /* Aumenta el tamaño al pasar el ratón */
+            color: var(--primary-accent); /* Cambia al color de acento */
+        }
+        
+        /* Estilos ESPECÍFICOS para cada icono */
+        .title-icon-link {
+            margin-right: 12px; /* Espacio a la DERECHA del primer icono */
+        }
+
+        .title-icon-link-right {
+            margin-left: 12px; /* Espacio a la IZQUIERDA del segundo icono */
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><a href="https://danijdzg.github.io/supuestosA2/Ctas.html" target="_blank" rel="noopener noreferrer" class="title-icon-link">💰</a>Supuestos A2</h1>
-            <p class="subtitle">Ayto Manises</p>
+            <h1><a href="https://danijdzg.github.io/supuestosA2/Ctas.html" target="_blank" rel="noopener noreferrer" class="title-icon-link">💰</a>Supuestos A2 <a href="https://danijdzg.github.io/aiDANaI/agenda/" target="_blank" rel="noopener noreferrer" class="title-icon-link-right">📅</a></h1>
         </header>
 
         <div id="exam-selector-container">
