@@ -214,13 +214,26 @@
         .hidden {
             display: none;
         }
+		/* ESTILOS PARA EL ICONO DEL TÍTULO */
+        .title-icon-link {
+            text-decoration: none; /* Quita el subrayado del enlace */
+            color: inherit; /* Hereda el color del texto del título (blanco) */
+            margin-right: 12px; /* Añade un espacio entre el icono y el texto */
+            transition: transform 0.2s ease-in-out; /* Suaviza la animación al pasar el ratón */
+            display: inline-block; /* Necesario para que la transformación funcione correctamente */
+        }
+
+        .title-icon-link:hover {
+            transform: scale(1.2); /* Aumenta ligeramente el tamaño del icono al pasar el ratón */
+            color: var(--primary-accent); /* Cambia el color al color de acento del tema */
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Supuestos Prácticos: Técnico Económico A2</h1>
-            <p class="subtitle">Ayuntamiento de Manises</p>
+            <h1><a href="https://danijdzg.github.io/supuestosA2/Ctas.html" target="_blank" rel="noopener noreferrer" class="title-icon-link">💰</a>Supuestos A2</h1>
+            <p class="subtitle">Ayto Manises</p>
         </header>
 
         <div id="exam-selector-container">
