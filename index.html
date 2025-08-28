@@ -1957,43 +1957,46 @@ async function migrateBalancesToAccounts() {
             
             checkAuthState();
         };
-		window.addEventListener('online', () => {
-    console.log("Conexión recuperada. Sincronizando...");
-    syncState = 'syncing';
-    updateSyncStatusIcon();
-    // Firestore se encargará de sincronizar automáticamente.
-    // Damos un tiempo para que se complete antes de mostrar el check.
-    setTimeout(() => {
-        syncState = 'synced';
-        updateSyncStatusIcon();
-    }, 2500);
-});
 
-window.addEventListener('offline', () => {
-    console.log("Se ha perdido la conexión.");
-    syncState = 'error';
-    updateSyncStatusIcon();
-});
-    const startMainApp = async () => {
-    select('login-screen')?.classList.remove('login-view--visible');
-    select('app-root')?.classList.add('app-layout--visible');
-    
-    populateAllDropdowns();
-    loadConfig();
-    
-    measureListItemHeights();
-    
-    // ===== LÍNEA A AÑADIR =====
-    updateSyncStatusIcon(); // Inicializa el icono de sincronización
-    // ============================
+        // === INICIO DE LA CORRECCIÓN ===
+        // Los event listeners y la función startMainApp se mueven fuera de initApp
+        window.addEventListener('online', () => {
+            console.log("Conexión recuperada. Sincronizando...");
+            syncState = 'syncing';
+            updateSyncStatusIcon();
+            // Firestore se encargará de sincronizar automáticamente.
+            // Damos un tiempo para que se complete antes de mostrar el check.
+            setTimeout(() => {
+                syncState = 'synced';
+                updateSyncStatusIcon();
+            }, 2500);
+        });
 
-    navigateTo(PAGE_IDS.INICIO, true);
+        window.addEventListener('offline', () => {
+            console.log("Se ha perdido la conexión.");
+            syncState = 'error';
+            updateSyncStatusIcon();
+        });
+        
+        const startMainApp = async () => {
+            select('login-screen')?.classList.remove('login-view--visible');
+            select('app-root')?.classList.add('app-layout--visible');
+            
+            populateAllDropdowns();
+            loadConfig();
+            
+            measureListItemHeights();
+            
+            updateSyncStatusIcon(); // Inicializa el icono de sincronización
 
-    if (localStorage.getItem('tourCompleted') !== 'true') {
-        await wait(1000);
-        // startTour(); // Has pedido eliminar el tour
-    }
-};
+            navigateTo(PAGE_IDS.INICIO, true);
+
+            if (localStorage.getItem('tourCompleted') !== 'true') {
+                await wait(1000);
+                // startTour(); // Has pedido eliminar el tour
+            }
+        };
+        // === FIN DE LA CORRECCIÓN ===
         
         const showLoginScreen = () => { select('app-root')?.classList.remove('app-layout--visible'); select('login-screen')?.classList.add('login-view--visible'); };
         const handleLogin = (btn) => {
@@ -4535,7 +4538,7 @@ if (actions[action]) actions[action](e);
                 if (target.id === 'movimiento-recurrente') { select('recurrent-options').classList.toggle('hidden', !target.checked); if(target.checked && !select('recurrent-next-date').value) { select('recurrent-next-date').value = select('movimiento-fecha').value; } }
             });
 
-            select('import-file-input')?.addEventListener('change', (e) => { if(e.target.files) handleJSONFileSelect(e.target.files[0]); });
+            select('import-file-input')?.addEventListener('change', (e) => { if(e.target.files) handleJSONFileSelect(e.target.files); });
             select('calculator-grid')?.addEventListener('click', (e) => { const btn = e.target.closest('button'); if(btn && btn.dataset.key) handleCalculatorInput(btn.dataset.key); });
             
             const searchInput = select('global-search-input');
@@ -4564,7 +4567,7 @@ if (actions[action]) actions[action](e);
             dropZone?.addEventListener('click', () => select('import-file-input').click());
             dropZone?.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('drag-over'); });
             dropZone?.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); });
-            dropZone?.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); const file = e.dataTransfer.files; if (file) handleJSONFileSelect(file[0]); });
+            dropZone?.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); const file = e.dataTransfer.files; if (file) handleJSONFileSelect(file); });
         
             };
 
@@ -4951,9 +4954,9 @@ if (actions[action]) actions[action](e);
             if (!dateString) return null;
             const parts = dateString.split('/');
             if (parts.length !== 3) return null;
-            const day = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10) - 1;
-            const year = parseInt(parts[2], 10);
+            const day = parseInt(parts, 10);
+            const month = parseInt(parts, 10) - 1;
+            const year = parseInt(parts, 10);
             if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1970) return null;
             return new Date(Date.UTC(year, month, day, 12, 0, 0));
         };
@@ -5170,10 +5173,10 @@ if (actions[action]) actions[action](e);
                 
                 const dropZone = select('csv-drop-zone');
                 dropZone.addEventListener('click', () => fileInput.click());
-                fileInput.addEventListener('change', () => handleFileSelection(fileInput.files[0]));
+                fileInput.addEventListener('change', () => handleFileSelection(fileInput.files));
                 dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
                 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-                dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFileSelection(e.dataTransfer.files[0]); });
+                dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFileSelection(e.dataTransfer.files); });
 
                 select('csv-process-btn').addEventListener('click', async (e) => {
                     if (!csvFile) return;
