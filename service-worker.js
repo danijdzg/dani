@@ -1,42 +1,48 @@
-const CACHE_NAME = 'cuentas-aidanai-v1';
-const ASSETS_TO_CACHE = [
-  '/cuentas/',
-  '/cuentas/index.html'
-  // Si tuvieras más archivos (CSS, otros JS, imágenes), los añadirías aquí.
-  // Por ahora, como todo está en un solo archivo, esto es suficiente.
+const CACHE_NAME = 'supuestos-manises-cache-v1';
+const URLS_TO_CACHE = [
+  '/supuestosA2/',
+  '/supuestosA2/index.html',
+  '/supuestosA2/icon-192x192.png', // Añadido
+  '/supuestosA2/icon-512x512.png', // Añadido
+  'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap'
 ];
 
-// Evento de instalación: se guarda en caché los archivos base de la app.
+// Evento de instalación: se abre la caché y se guardan los archivos principales.
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log('Cache abierto, añadiendo assets...');
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Cache abierta');
+        return cache.addAll(URLS_TO_CACHE);
+      })
   );
 });
-
-// Evento de activación: limpia cachés antiguos.
-self.addEventListener('activate', event => {
+elf.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map(cache => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
+        cacheNames.map(cacheName => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Borrando caché antigua:', cacheName);
+            return caches.delete(cacheName);
           }
         })
       );
     })
   );
 });
-
-// Evento de fetch: decide si servir desde el caché o desde la red.
+// Evento de "fetch": intercepta las peticiones.
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => {
-      // Si el recurso está en el caché, lo devuelve. Si no, va a la red.
-      return response || fetch(event.request);
-    })
+    caches.match(event.request)
+      .then(response => {
+        // Si la petición está en la caché, la devuelve.
+        if (response) {
+          return response;
+        }
+        // Si no, la busca en la red.
+        return fetch(event.request);
+      })
   );
 });
