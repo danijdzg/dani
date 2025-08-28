@@ -18,7 +18,7 @@
     <!-- 1. Cargar la librería principal Chart.js PRIMERO. -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- 2. Cargar las dependencias (date-fns es para el adaptador de fecha). -->
-    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/dist/date-fns.min.js"></script>
     <!-- 3. Cargar el adaptador, que depende de Chart.js y date-fns. -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <!-- 4. Cargar cualquier plugin, que depende de Chart.js. -->
@@ -5498,7 +5498,7 @@ if (actions[action]) actions[action](e);
 
             return movements;
 			};
-		if ('serviceWorker' in navigator) {
+		     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('./service-worker.js')
             .then(registration => {
