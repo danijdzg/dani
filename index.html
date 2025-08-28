@@ -2195,7 +2195,7 @@ async function migrateBalancesToAccounts() {
         const calculateIRR = (cashflows) => {
             if (cashflows.length < 2) return 0;
             const sortedCashflows = [...cashflows].sort((a, b) => a.date.getTime() - b.date.getTime());
-            const firstDate = sortedCashflows[0].date;
+            const firstDate = sortedCashflows.date;
             const npv = (rate) => { let total = 0; for (const flow of sortedCashflows) { const years = (flow.date.getTime() - firstDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000); total += flow.amount / Math.pow(1 + rate, years); } return total; };
             const derivative = (rate) => { let total = 0; for (const flow of sortedCashflows) { const years = (flow.date.getTime() - firstDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000); if (years > 0) { total -= years * flow.amount / Math.pow(1 + rate, years + 1); } } return total; };
             let guess = 0.1; const maxIterations = 100; const tolerance = 1e-7;
@@ -2211,15 +2211,15 @@ async function migrateBalancesToAccounts() {
             investmentAccounts.forEach(cuenta => {
                 const capitalBase = saldos[cuenta.id] || 0; const cashflows = (db.inversion_cashflows || []).filter(cf => cf.cuentaId === cuenta.id); const netCashflow = cashflows.reduce((sum, cf) => sum + cf.cantidad, 0); const capitalInvertido = capitalBase + netCashflow;
                 const valoraciones = (db.inversiones_historial || []).filter(v => v.cuentaId === cuenta.id).sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()); 
-                const valorActual = valoraciones.length > 0 ? valoraciones[0].valor : capitalInvertido;
+                const valorActual = valoraciones.length > 0 ? valoraciones.valor : capitalInvertido;
                 totalValor += valorActual; totalCapitalInvertido += capitalInvertido;
                 const irrCashflows = []; if (capitalBase !== 0) { irrCashflows.push({ amount: -capitalBase, date: new Date(cuenta.fechaCreacion) }); } cashflows.forEach(cf => { irrCashflows.push({ amount: -cf.cantidad, date: new Date(cf.fecha) }); }); if (valorActual !== 0) { irrCashflows.push({ amount: valorActual, date: new Date() }); }
                 allIrrCashflows.push(...irrCashflows);
             });
             const pnlAbsoluto = totalValor - totalCapitalInvertido; const pnlPorcentual = totalCapitalInvertido !== 0 ? (pnlAbsoluto / totalCapitalInvertido) * 100 : 0;
             if (cuentaId) {
-                const cuentaUnica = investmentAccounts[0]; const capitalBase = saldos[cuentaUnica.id] || 0; const cashflows = (db.inversion_cashflows || []).filter(cf => cf.cuentaId === cuentaUnica.id); const netCashflow = cashflows.reduce((sum, cf) => sum + cf.cantidad, 0); const capitalInvertido = capitalBase + netCashflow; const valoraciones = (db.inversiones_historial || []).filter(v => v.cuentaId === cuentaUnica.id).sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()); 
-                const valorActual = valoraciones.length > 0 ? valoraciones[0].valor : capitalInvertido; 
+                const cuentaUnica = investmentAccounts; const capitalBase = saldos[cuentaUnica.id] || 0; const cashflows = (db.inversion_cashflows || []).filter(cf => cf.cuentaId === cuentaUnica.id); const netCashflow = cashflows.reduce((sum, cf) => sum + cf.cantidad, 0); const capitalInvertido = capitalBase + netCashflow; const valoraciones = (db.inversiones_historial || []).filter(v => v.cuentaId === cuentaUnica.id).sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()); 
+                const valorActual = valoraciones.length > 0 ? valoraciones.valor : capitalInvertido; 
                 const pnlAbsolutoUnico = valorActual - capitalInvertido; const pnlPorcentualUnico = capitalInvertido !== 0 ? (pnlAbsolutoUnico / capitalInvertido) * 100 : 0;
                 const singleIrrCashflows = []; if (capitalBase !== 0) singleIrrCashflows.push({ amount: -capitalBase, date: new Date(cuentaUnica.fechaCreacion) }); cashflows.forEach(cf => singleIrrCashflows.push({ amount: -cf.cantidad, date: new Date(cf.fecha) })); if (valorActual !== 0) singleIrrCashflows.push({ amount: valorActual, date: new Date() }); const irrUnico = calculateIRR(singleIrrCashflows);
                 return { valorActual: valorActual, capitalInvertido: capitalInvertido, pnlAbsoluto: pnlAbsolutoUnico, pnlPorcentual: pnlPorcentualUnico, irr: irrUnico };
@@ -2276,7 +2276,7 @@ async function migrateBalancesToAccounts() {
                 const el = select(id); if (!el) return; const currentVal = el.value;
                 let opts = all ? '<option value="">Todos</option>' : ''; if (none) opts += '<option value="">Ninguno</option>';
                 [...data].sort((a,b) => (a[nameKey]||"").localeCompare(b[nameKey]||"")).forEach(i => opts += `<option value="${i[valKey]}">${i[nameKey]}</option>`);
-                el.innerHTML = opts; el.value = Array.from(el.options).some(o=>o.value===currentVal) ? currentVal : (el.options[0]?.value || "");
+                el.innerHTML = opts; el.value = Array.from(el.options).some(o=>o.value===currentVal) ? currentVal : (el.options?.value || "");
             };
             populate('movimiento-cuenta', visibleAccounts, 'nombre', 'id', false, true);
             
@@ -2304,7 +2304,7 @@ async function migrateBalancesToAccounts() {
                 if (Array.from(el.options).some(o => o.value === currentVal)) {
                     el.value = currentVal;
                 } else {
-                    el.value = el.options[0]?.value || "";
+                    el.value = el.options?.value || "";
                 }
             };
 
@@ -3485,7 +3485,7 @@ const renderInicioRecientesView = async () => {
                     borderRadius: 6,
                 }]
             },
-            options: {
+			options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
@@ -4954,9 +4954,9 @@ if (actions[action]) actions[action](e);
             if (!dateString) return null;
             const parts = dateString.split('/');
             if (parts.length !== 3) return null;
-            const day = parseInt(parts, 10);
-            const month = parseInt(parts, 10) - 1;
-            const year = parseInt(parts, 10);
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year = parseInt(parts[2], 10);
             if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1970) return null;
             return new Date(Date.UTC(year, month, day, 12, 0, 0));
         };
