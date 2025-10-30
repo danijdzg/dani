@@ -93,32 +93,30 @@
     
     <div id="app-root" class="app-layout">
 <nav class="bottom-nav">
-    <!-- 1. RESUMEN: La nueva página de inicio. El cerebro de la app. -->
-    <button data-action="navigate" data-page="resumen-page" class="bottom-nav__item">
-        <span class="material-icons">insights</span> <!-- Icono que sugiere análisis e inteligencia -->
-        <span class="bottom-nav__label">Resumen</span>
+    <button data-action="navigate" data-page="inicio-page" class="bottom-nav__item">
+        <span class="material-icons">dashboard</span>
+        <span class="bottom-nav__label">Panel</span>
     </button>
-    <!-- 2. MOVIMIENTOS: El log detallado. Más claro que "Diario". -->
-    <button data-action="navigate" data-page="movimientos-page" class="bottom-nav__item">
+    <button data-action="navigate" data-page="diario-page" class="bottom-nav__item">
         <span class="material-icons">receipt_long</span>
-        <span class="bottom-nav__label">Movimientos</span>
+        <span class="bottom-nav__label">Diario</span>
     </button>
     
-    <!-- El botón de acción rápida se mantiene, es perfecto. -->
+    <!-- Mantenemos el botón central para añadir rápido -->
     <button data-action="open-main-add-modal" id="bottom-nav-add-btn">
         <span class="material-icons">add</span>
     </button>
     
-    <!-- 3. PLANIFICACIÓN: El centro estratégico para el futuro. -->
-    <button data-action="navigate" data-page="planificacion-page" class="bottom-nav__item">
-        <span class="material-icons">edit_calendar</span>
-        <span class="bottom-nav__label">Planificación</span>
+    <!-- ¡NUEVA PESTAÑA "PLANIFICAR"! -->
+    <button data-action="navigate" data-page="planificar-page" class="bottom-nav__item">
+        <span class="material-icons">edit_calendar</span> <!-- Icono más apropiado -->
+        <span class="bottom-nav__label">Planificar</span>
     </button>
     
-    <!-- 4. ACTIVOS: Engloba inversiones y más. Es más completo. -->
-    <button data-action="navigate" data-page="activos-page" class="bottom-nav__item">
+    <!-- "INVERSIONES" SE MUEVE A LA DERECHA -->
+    <button data-action="navigate" data-page="inversiones-page" class="bottom-nav__item">
         <span class="material-icons">rocket_launch</span>
-        <span class="bottom-nav__label">Activos</span>
+        <span class="bottom-nav__label">Inversiones</span>
     </button>
 </nav>
 
@@ -151,15 +149,12 @@
 </div>
 
 <main class="app-layout__main">
-    <section id="resumen-page" class="view"></section>
-    
-    <!-- ▼▼▼ VERIFICA ESTA LÍNEA ▼▼▼ -->
-    <section id="movimientos-page" class="view" style="padding: 0; gap: 0;"></section>
-    
-    <section id="planificacion-page" class="view"></section> 
-    <section id="activos-page" class="view"></section>
+    <section id="inicio-page" class="view"></section>
+    <section id="diario-page" class="view" style="padding: 0; gap: 0;"></section>
+    <section id="planificar-page" class="view"></section> 
+    <section id="inversiones-page" class="view"></section>
     <section id="ajustes-page" class="view"></section>
-</main>
+</main> 
     
 </div>
     
