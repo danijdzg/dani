@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>Ctas aiDANaI</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<meta name="theme-color" content="#00B34D" />
+	<link rel="manifest" href="manifest.json">	
+	<link rel="apple-touch-icon" href="aiDANaI.webp">
+    <link rel="icon" href="data:image/svg+xml,%3svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='85' font-size='90'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@2.3.0"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+	    
+<link rel="stylesheet" href="style.css">	
+</head>
+
+<body data-ledger-mode="A">
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+     
+<div id="login-screen" class="login-view">
+    <div class="starry-background"></div>
+    <div class="login-view__card">
+        <img src="aiDANaI.webp" alt="Logo Cuentas aiDANaI" class="login-view__logo">
+        
+        <h2 id="login-title" class="login-view__title">Bienvenido de nuevo</h2>
+        <p class="login-view__tagline">Inicia sesión para controlar tus finanzas.</p>
+
+        <form id="login-form" noValidate>
+            <div class="form-group form-group--with-icon">
+                <span class="material-icons">alternate_email</span>
+                <input type="email" id="login-email" class="form-input" placeholder="Correo electrónico" required autoComplete="email" autoCapitalize="none" aria-describedby="login-email-error" />
+                <span class="form-error" id="login-email-error"></span>
+            </div>
+            <div class="form-group form-group--with-icon">
+                <span class="material-icons">lock</span>
+                <input type="password" id="login-password" class="form-input" placeholder="Contraseña" required autoComplete="current-password" aria-describedby="login-password-error" />
+                <span class="form-error" id="login-password-error"></span>
+            </div>
+
+            <div class="login-view__actions">
+                <a href="#" class="login-view__link" data-action="forgot-password">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <p id="login-error" class="form-error" style="min-height: 16px; margin-top: 8px;"></p>
+            
+            <div class="login-view__footer">
+                <button type="submit" data-action="login" class="btn btn--primary btn--full">Iniciar Sesión</button>
+                <p class="login-view__secondary-action">
+                    <span>¿No tienes una cuenta?</span> <a href="#" class="login-view__link" data-action="show-register">Regístrate aquí</a>
+                </p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="pin-login-screen" class="login-view">
+    <div class="starry-background"></div>
+    <div class="login-view__card">
+        <img src="aiDANaI.webp" alt="Logo" class="login-view__logo">
+        <h2 class="login-view__title">Acceso Rápido</h2>
+        <p class="login-view__tagline">Introduce tu PIN de 4 dígitos.</p>
+
+        <form id="pin-form">
+            <div class="pin-inputs" id="pin-inputs-container">
+                <input type="password" class="pin-input" pattern="[0-9]*" inputmode="numeric" maxlength="1" required>
+                <input type="password" class="pin-input" pattern="[0-9]*" inputmode="numeric" maxlength="1" required>
+                <input type="password" class="pin-input" pattern="[0-9]*" inputmode="numeric" maxlength="1" required>
+                <input type="password" class="pin-input" pattern="[0-9]*" inputmode="numeric" maxlength="1" required>
+            </div>
+            <p id="pin-error" class="form-error" style="min-height: 16px; margin-top: 8px;"></p>
+        </form>
+        
+    <div class="login-view__footer">
+    <p class="login-view__secondary-action">
+        <a href="#" class="login-view__link" data-action="use-password-instead">
+            Usar contraseña en su lugar
+        </a>
+    </p>
+    <p class="login-view__secondary-action" style="margin-top: var(--sp-2);">
+        <a href="#" class="login-view__link" data-action="logout">O iniciar sesión con otra cuenta</a>
+    </p>
+</div>
+    </div>
+</div>
+    
+    <div id="app-root" class="app-layout">
+<nav class="bottom-nav">
+    <!-- 1. RESUMEN: La nueva página de inicio. El cerebro de la app. -->
+    <button data-action="navigate" data-page="resumen-page" class="bottom-nav__item">
+        <span class="material-icons">insights</span> <!-- Icono que sugiere análisis e inteligencia -->
+        <span class="bottom-nav__label">Resumen</span>
+    </button>
+    <!-- 2. MOVIMIENTOS: El log detallado. Más claro que "Diario". -->
+    <button data-action="navigate" data-page="movimientos-page" class="bottom-nav__item">
+        <span class="material-icons">receipt_long</span>
+        <span class="bottom-nav__label">Movimientos</span>
+    </button>
+    
+    <!-- El botón de acción rápida se mantiene, es perfecto. -->
+    <button data-action="open-main-add-modal" id="bottom-nav-add-btn">
+        <span class="material-icons">add</span>
+    </button>
+    
+    <!-- 3. PLANIFICACIÓN: El centro estratégico para el futuro. -->
+    <button data-action="navigate" data-page="planificacion-page" class="bottom-nav__item">
+        <span class="material-icons">edit_calendar</span>
+        <span class="bottom-nav__label">Planificación</span>
+    </button>
+    
+    <!-- 4. ACTIVOS: Engloba inversiones y más. Es más completo. -->
+    <button data-action="navigate" data-page="activos-page" class="bottom-nav__item">
+        <span class="material-icons">rocket_launch</span>
+        <span class="bottom-nav__label">Activos</span>
+    </button>
+</nav>
+
+        <header id="app-top-bar" class="top-bar">
+            <div class="top-bar__left-group">
+                <div id="top-bar-left-button" class="top-bar__left-button">
+                </div>
+            </div>
+
+            <h1 id="top-bar-title" class="top-bar__title"></h1>
+
+            <div id="top-bar-actions" class="top-bar__actions"></div>
+			 <span id="sync-status-icon" class="material-icons"></span>
+        </header>
+		<!-- INICIO: Menú desplegable de la barra superior -->
+<div id="main-menu-popover" class="popover-menu">
+    <button data-action="navigate" data-page="ajustes-page" class="popover-menu__item">
+        <span class="material-icons">settings</span>
+        <span>Ajustes y Configuración</span>
+    </button>
+    <button data-action="help" class="popover-menu__item">
+        <span class="material-icons">help_outline</span>
+        <span>Guía de Usuario</span>
+    </button>
+    <div class="popover-menu__divider"></div>
+    <button data-action="exit" class="popover-menu__item popover-menu__item--danger">
+        <span class="material-icons">exit_to_app</span>
+        <span>Salir</span>
+    </button>
+</div>
+
+<main class="app-layout__main">
+    <section id="resumen-page" class="view"></section>
+    
+    <!-- ▼▼▼ VERIFICA ESTA LÍNEA ▼▼▼ -->
+    <section id="movimientos-page" class="view" style="padding: 0; gap: 0;"></section>
+    
+    <section id="planificacion-page" class="view"></section> 
+    <section id="activos-page" class="view"></section>
+    <section id="ajustes-page" class="view"></section>
+</main>
+    
+</div>
+    
+    <div id="toast-container" aria-live="assertive"></div>
+    
+    <div id="movimiento-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="form-movimiento-title">
+        <div class="modal">
+            <div class="modal__grabber"></div>
+            <header class="modal__header" style="padding-top: var(--sp-2);">
+                <h3 id="form-movimiento-title" class="modal__title">Añadir Movimiento</h3>
+                <button class="icon-btn" data-action="close-modal" data-modal-id="movimiento-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
+            </header>
+            <div class="modal__body">
+			
+<form id="form-movimiento" novalidate>
+    <input type="hidden" id="movimiento-id" />
+    <input type="hidden" id="movimiento-mode" value="new" />
+
+    <!-- 1. SELECTOR DE TIPO: Se mantiene igual, es compacto. -->
+    <div class="filter-pills" style="justify-content: center; margin-bottom: var(--sp-3);">
+        <button type="button" class="filter-pill filter-pill--active" data-action="set-movimiento-type" data-type="gasto">Gasto</button>
+        <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="ingreso">Ingreso</button>
+        <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="traspaso">Traspaso</button>
+    </div>
+
+    <!-- 2. REJILLA DE DATOS PRINCIPAL: Aquí está la mayor optimización de espacio. -->
+    <div class="dense-form-grid">
+        <!-- Cantidad -->
+        <div class="form-field-compact" id="movimiento-cantidad-form-group" style="grid-area: amount;">
+            <label for="movimiento-cantidad">Cantidad</label>
+            <div class="input-wrapper">
+                <input type="text" id="movimiento-cantidad" required placeholder="0,00" />
+                <button type="button" id="calculator-toggle-btn" class="icon-btn" title="Abrir Calculadora">
+                    <span class="material-icons">calculate</span>
+                </button>
+            </div>
+            <span class="form-error" id="movimiento-cantidad-error"></span>
+        </div>
+        
+        <!-- Descripción -->
+        <div class="form-field-compact" style="grid-area: description;">
+            <label for="movimiento-descripcion">Descripción</label>
+            <div class="input-wrapper">
+                <input type="text" id="movimiento-descripcion" required placeholder="Compra semanal, café..." />
+            </div>
+            <span class="form-error" id="movimiento-descripcion-error"></span>
+            <div id="description-suggestions"></div>
+        </div>
+        
+        <!-- Contenedor para campos de movimiento normal -->
+        <div id="movimiento-fields" style="grid-area: details; display: contents;">
+            <div class="form-field-compact">
+                <label for="movimiento-concepto">Concepto</label>
+                <div class="input-wrapper input-wrapper--with-addon">
+                    <select id="movimiento-concepto" required></select>
+                    <button type="button" data-action="manage-conceptos" class="icon-btn" title="Gestionar Conceptos"><span class="material-icons">more_vert</span></button>
+                </div>
+                <span class="form-error" id="movimiento-concepto-error"></span>
+            </div>
+            <div class="form-field-compact">
+                <label for="movimiento-cuenta">Cuenta</label>
+                <div class="input-wrapper input-wrapper--with-addon">
+                    <select id="movimiento-cuenta" required></select>
+                    <button type="button" data-action="manage-cuentas" class="icon-btn" title="Gestionar Cuentas"><span class="material-icons">more_vert</span></button>
+                </div>
+                <span class="form-error" id="movimiento-cuenta-error"></span>
+            </div>
+        </div>
+
+        <!-- Contenedor para campos de traspaso -->
+        <div id="traspaso-fields" class="hidden" style="grid-area: details; display: contents;">
+            <div class="form-field-compact">
+                <label for="movimiento-cuenta-origen">Origen</label>
+                <div class="input-wrapper">
+                    <select id="movimiento-cuenta-origen"></select>
+                </div>
+                <span class="form-error" id="movimiento-cuenta-origen-error"></span>
+            </div>
+            <div class="form-field-compact">
+                <label for="movimiento-cuenta-destino">Destino</label>
+                <div class="input-wrapper">
+                    <select id="movimiento-cuenta-destino"></select>
+                </div>
+                <span class="form-error" id="movimiento-cuenta-destino-error"></span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 3. SECCIÓN RECURRENTE: Ahora mucho más compacta. -->
+    <div class="recurrent-section">
+        <div class="form-switch-group">
+            <label for="movimiento-recurrente" class="recurrent-section__label">Programar como recurrente</label>
+            <label class="form-switch"><input type="checkbox" id="movimiento-recurrente"><span class="slider"></span></label>
+        </div>
+        <div id="recurrent-options" class="hidden">
+            <select id="recurrent-frequency">
+                <option value="once">Única vez</option>
+                <option value="daily">Diaria</option>
+                <option value="weekly">Semanal</option>
+                <option value="monthly" selected>Mensual</option>
+                <option value="yearly">Anual</option>
+            </select>
+            <input type="date" id="recurrent-next-date">
+            <input type="date" id="recurrent-end-date" title="Finaliza el (opcional)">
+        </div>
+    </div>
+    
+    <!-- 4. CAMPO DE FECHA: También compactado. -->
+    <div class="form-field-compact" style="margin-top: var(--sp-3);">
+        <div class="input-wrapper">
+            <input type="date" id="movimiento-fecha" class="visually-hidden" required />
+            <button type="button" id="movimiento-fecha-display" class="date-button-compact">
+                <span class="material-icons">edit_calendar</span>
+                <span id="movimiento-fecha-text"></span>
+            </button>
+        </div>
+        <span class="form-error" id="movimiento-fecha-error"></span>
+    </div>
+
+    <!-- 5. BOTONES DE ACCIÓN: CON LOS CAMBIOS APLICADOS -->
+    <div class="modal__actions" style="display:flex; justify-content: space-between; align-items:center; margin-top: var(--sp-4);">
+        <div class="left-actions" style="display:flex; gap: var(--sp-1);">
+            <!-- ▼▼▼ CAMBIO 1: ELIMINADO EL ESTILO INLINE ROJO ▼▼▼ -->
+            <button type="button" id="delete-movimiento-btn" data-action="delete-movement-from-modal" class="icon-btn hidden" title="Borrar"><span class="material-icons">delete</span></button>
+            <button type="button" id="duplicate-movimiento-btn" data-action="duplicate-movement" class="icon-btn hidden" title="Duplicar"><span class="material-icons">content_copy</span></button>
+        </div>
+        <div class="right-actions" style="display:flex; gap: var(--sp-2);">
+            <button id="save-and-new-movimiento-btn" type="button" data-action="save-and-new-movement" class="btn btn--secondary">Guardar y Nuevo</button>
+            <!-- ▼▼▼ CAMBIO 2: CAMBIADO de btn--primary A btn--secondary ▼▼▼ -->
+            <button id="save-movimiento-btn" type="submit" class="btn btn--secondary">Guardar</button>
+        </div>
+    </div>
+</form>
+			</div>
+			
+    </div>
+                 
+    </div>
+	    <div id="generic-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="generic-modal-title">
+        <div class="modal">
+            <header class="modal__header">
+                <h3 id="generic-modal-title" class="modal__title"></h3>
+                <button class="icon-btn" data-action="close-modal" data-modal-id="generic-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
+            </header>
+            <div id="generic-modal-body" class="modal__body"></div>
+        </div>
+    </div>
+	 <div id="diario-filters-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="diario-filters-title">
+    <div class="modal">
+        <div class="modal__grabber"></div>
+        <header class="modal__header" style="padding-top: var(--sp-2);">
+            <h3 id="diario-filters-title" class="modal__title">Filtrar Diario</h3>
+            <button class="icon-btn" data-action="close-modal" data-modal-id="diario-filters-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
+        </header>
+        <div class="modal__body">
+            <form id="diario-filters-form" novalidate>
+                <div class="form-group">
+                    <label class="form-label">Rango de Fechas</label>
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                        <input type="date" id="filter-diario-start-date" class="form-input">
+                        <input type="date" id="filter-diario-end-date" class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="filter-diario-description" class="form-label">La descripción contiene...</label>
+                    <input type="search" id="filter-diario-description" class="form-input" placeholder="Ej: Amazon, compra semanal...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Importe entre...</label>
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                        <input type="number" id="filter-diario-min-amount" class="form-input" placeholder="Mínimo (€)">
+                        <input type="number" id="filter-diario-max-amount" class="form-input" placeholder="Máximo (€)">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="filter-diario-cuentas" class="form-label">Cuentas (selección múltiple)</label>
+                    <select id="filter-diario-cuentas" class="form-select" multiple style="height: 120px;"></select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="filter-diario-conceptos" class="form-label">Conceptos (selección múltiple)</label>
+                    <select id="filter-diario-conceptos" class="form-select" multiple style="height: 120px;"></select>
+                </div>
+                
+                <div class="modal__actions" style="justify-content: space-between;">
+                    <button type="button" data-action="clear-diario-filters" class="btn btn--secondary">Limpiar Filtros</button>
+                    <button type="submit" class="btn btn--primary">Aplicar Filtros</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div id="global-search-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="global-search-title">
+        <div class="modal">
+            <header class="modal__header">
+                <div id="global-search-input-wrapper">
+                    <span class="material-icons" style="color: var(--c-on-surface-secondary);">search</span>
+                    <input type="search" id="global-search-input" placeholder="Buscar en toda la app..." autocomplete="off">
+                </div>
+                <button class="icon-btn" data-action="close-modal" data-modal-id="global-search-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
+            </header>
+            <div id="global-search-results" class="modal__body">
+                <div class="empty-state" style="background:transparent; border: none;">
+                    <span class="material-icons">manage_search</span>
+                    <h3>Encuéntralo todo</h3>
+                    <p>Busca movimientos, cuentas o conceptos. <br>Atajo: <strong>Cmd/Ctrl + K</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+    <div id="json-import-wizard-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="json-wizard-title">
+        <div class="modal" style="max-width: 500px; height: auto; max-height: 85vh;">
+            <header class="modal__header">
+                <h3 id="json-wizard-title" class="modal__title">Asistente de Importación JSON</h3>
+                <button class="icon-btn" data-action="close-modal" data-modal-id="json-import-wizard-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
+            </header>
+            <div id="json-wizard-body" class="modal__body" style="display: flex; flex-direction: column;">
+
+                <div id="json-wizard-step-1" class="json-wizard-step">
+                    <h4>Paso 1: Selecciona tu copia de seguridad</h4>
+                    <p class="form-label" style="margin-bottom: var(--sp-3);">Arrastra y suelta el archivo <code>.json</code> o haz clic para seleccionarlo. La importación reemplazará <strong>todos</strong> tus datos actuales.</p>
+                    <div id="json-drop-zone">
+                        <span class="material-icons" style="font-size: 48px; color: var(--c-outline);">upload_file</span>
+                        <p id="json-drop-zone-text">Arrastra tu archivo aquí o haz clic</p>
+                    </div>
+                    <div id="json-file-error" class="form-error" style="text-align: center; margin-top: var(--sp-3);"></div>
+                </div>
+
+                <div id="json-wizard-step-2" class="json-wizard-step" style="display: none;">
+                    <h4>Paso 2: Revisa y confirma</h4>
+                    <p class="form-label" style="margin-bottom: var(--sp-3);">Hemos analizado tu archivo. Si los datos son correctos, pulsa "Importar" para reemplazar tus datos actuales.</p>
+                    <div id="json-preview-container">
+                        <ul id="json-preview-list"></ul>
+                        <div class="form-error" style="margin-top: var(--sp-2); text-align: center;"><strong>Atención:</strong> <span>Esta acción es irreversible.</span></div>
+                    </div>
+                    <div class="modal__actions" style="justify-content: space-between;">
+                        <button class="btn btn--secondary" data-action="json-wizard-back-2">Atrás</button>
+                        <button class="btn btn--danger" data-action="json-wizard-import-final"><span class="material-icons">warning</span><span>Importar y Reemplazar</span></button>
+                    </div>
+                </div>
+
+                <div id="json-wizard-step-3" class="json-wizard-step" style="display: none; justify-content: center; align-items: center; text-align: center; min-height: 200px;">
+                    <div id="json-import-progress">
+                        <span class="spinner" style="width: 48px; height: 48px; border-width: 4px;"></span>
+                        <h4 style="margin-top: var(--sp-4);">Importando...</h4>
+                        <p>Estamos guardando tus datos. Por favor, no cierres esta ventana.</p>
+                    </div>
+                     <div id="json-import-result" style="display: none;">
+                        <span class="material-icons" style="font-size: 60px; color: var(--c-success);">task_alt</span>
+                        <h4 id="json-result-title" style="margin-top: var(--sp-2);">¡Importación Completada!</h4>
+                        <p id="json-result-message"></p>
+                        <div class="modal__actions" style="justify-content: center;">
+                            <button class="btn btn--primary" data-action="close-modal" data-modal-id="json-import-wizard-modal">Finalizar</button>
+                        </div>
+                     </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div id="exit-screen">
+        <p>Finanzas al día ✅ Movimientos revisados 👀  <br>💰 aiDANaI simplifica tus cuentas 💰</p>
+    </div>
+<div id="help-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+    <div class="modal" style="max-width: 650px; max-height: 80vh;">
+        <header class="modal__header">
+            <h3 id="help-modal-title" class="modal__title"></h3>
+            <button class="icon-btn" data-action="close-modal" data-modal-id="help-modal" title="Cerrar" aria-label="Cerrar">
+                <span class="material-icons">close</span>
+            </button>
+        </header>
+        <div id="help-modal-body" class="modal__body">
+        </div>
+    </div>
+</div>
+<div id="calculator-overlay" class="modal-overlay" style="background: transparent; pointer-events: none;">
+    <div id="calculator-ui" class="calculator-ui" style="pointer-events: all;">
+    <!-- === INICIO: CÓDIGO AÑADIDO === -->
+    <div id="calculator-history-display" class="calculator-history-display"></div>
+    <!-- === FIN: CÓDIGO AÑADIDO === -->
+    <div id="calculator-display" class="calculator-display">0</div>
+    <div id="calculator-grid" class="calculator-grid">
+        <button class="calculator-btn btn-operator" data-key="clear">C</button>
+        <button class="calculator-btn btn-operator" data-key="sign">+/-</button>
+        <button class="calculator-btn btn-operator" data-key="backspace"><span class="material-icons backspace-icon">backspace</span></button>
+        <button class="calculator-btn btn-confirm" id="calculator-btn-done" data-key="done">OK</button>
+        
+        <button class="calculator-btn" data-key="7">7</button>
+        <button class="calculator-btn" data-key="8">8</button>
+        <button class="calculator-btn" data-key="9">9</button>
+        <button class="calculator-btn btn-operator" data-key="divide">/</button>
+
+        <button class="calculator-btn" data-key="4">4</button>
+        <button class="calculator-btn" data-key="5">5</button>
+        <button class="calculator-btn" data-key="6">6</button>
+        <button class="calculator-btn btn-operator" data-key="multiply">x</button>
+        
+        <button class="calculator-btn" data-key="1">1</button>
+        <button class="calculator-btn" data-key="2">2</button>
+        <button class="calculator-btn" data-key="3">3</button>
+        <button class="calculator-btn btn-operator" data-key="subtract">-</button>
+
+        <button class="calculator-btn zero" data-key="0">0</button>
+        <button class="calculator-btn" data-key="comma">,</button>
+        <button class="calculator-btn btn-operator" data-key="add">+</button>
+    </div>
+</div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+    
+<script type="module" src="main.js"></script>
+</body>
+</html>
