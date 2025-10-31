@@ -7976,6 +7976,55 @@ const handleAddConcept = async (btn) => {
     showToast('Concepto añadido.');
     (select('add-concepto-form')).reset(); 
 };
+ const handleAddAccount = async (btn) => {
+    // 1. Obtenemos y limpiamos los datos de los inputs del formulario
+    const nombreInput = select('new-cuenta-nombre');
+    const tipoInput = select('new-cuenta-tipo');
+    const nombre = nombreInput.value.trim();
+    const tipo = toSentenceCase(tipoInput.value.trim());
+
+    // 2. Validación de los campos
+    if (!nombre || !tipo) {
+        showToast('El nombre y el tipo de la cuenta son obligatorios.', 'warning');
+        if (!nombre) nombreInput.classList.add('form-input--invalid');
+        if (!tipo) tipoInput.classList.add('form-input--invalid');
+        return;
+    }
+
+    // 3. Verificamos si ya existe una cuenta con el mismo nombre (para evitar duplicados)
+    if (db.cuentas.some(c => c.nombre.toLowerCase() === nombre.toLowerCase())) {
+        showToast(`La cuenta "${nombre}" ya existe.`, 'danger');
+        nombreInput.classList.add('form-input--invalid');
+        return;
+    }
+
+    // 4. Si todo es correcto, preparamos el nuevo objeto de cuenta
+    const newId = generateId();
+    const newAccountData = {
+        id: newId,
+        nombre: nombre,
+        tipo: tipo,
+        saldo: 0, // Las cuentas nuevas siempre empiezan con saldo 0
+        esInversion: false, // Por defecto, una cuenta no es de inversión
+        offBalance: false // Por defecto, pertenece a la contabilidad principal 'A'
+    };
+
+    // 5. Guardamos en la base de datos y damos feedback al usuario
+    await saveDoc('cuentas', newId, newAccountData, btn);
+    
+    hapticFeedback('success');
+    showToast('Cuenta añadida con éxito.');
+    
+    // 6. Reseteamos el formulario para que se pueda añadir otra cuenta rápidamente
+    const form = select('add-cuenta-form');
+    if (form) {
+        form.reset();
+        nombreInput.focus(); // Devolvemos el foco al primer campo
+    }
+    
+    // NOTA: La lista de cuentas se actualizará automáticamente gracias al listener onSnapshot
+    // que ya tienes configurado en la función loadCoreData.
+};
 
  const handleSaveConfig = async (btn) => { 
      setButtonLoading(btn, true);
