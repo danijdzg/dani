@@ -7154,28 +7154,57 @@ function createCustomSelect(selectElement) {
             'show-login': (e) => { e.preventDefault(); const title = select('login-title'); const mainButton = document.querySelector('#login-form button[data-action="register"]'); const secondaryAction = document.querySelector('.login-view__secondary-action'); if (mainButton.dataset.action === 'register') { title.textContent = 'Bienvenido de nuevo'; mainButton.dataset.action = 'login'; mainButton.textContent = 'Iniciar Sesión'; secondaryAction.innerHTML = `<span>¿No tienes una cuenta?</span> <a href="#" class="login-view__link" data-action="show-register">Regístrate aquí</a>`; } },
             'import-csv': showCsvImportWizard,
             'toggle-ledger': async () => {
-    hapticFeedback('medium');
-    
-    // 1. Cambiamos el estado global
-    isOffBalanceMode = !isOffBalanceMode;
-    document.body.dataset.ledgerMode = isOffBalanceMode ? 'B' : 'A';
+            hapticFeedback('medium');
+            
+            // 1. Cambiamos el estado global (esto no cambia)
+            isOffBalanceMode = !isOffBalanceMode;
+            document.body.dataset.ledgerMode = isOffBalanceMode ? 'B' : 'A';
+            showToast(`Mostrando Contabilidad ${isOffBalanceMode ? 'B' : 'A'}.`, 'info');
 
-    // 2. Notificamos al usuario
-    showToast(`Mostrando Contabilidad ${isOffBalanceMode ? 'B' : 'A'}.`, 'info');
+            // 2. Obtenemos la página que está activa en este momento
+            const activePageEl = document.querySelector('.view--active');
+            if (!activePageEl) return;
 
-    // 3. Obtenemos la página activa
-    const activePageEl = document.querySelector('.view--active');
-    const activePageId = activePageEl ? activePageEl.id : PAGE_IDS.DIARIO;
+            // 3. Actualizamos manualmente el texto del botón A/B en la barra superior
+            const ledgerBtn = select('ledger-toggle-btn');
+            if (ledgerBtn) {
+                ledgerBtn.textContent = isOffBalanceMode ? 'B' : 'A';
+            }
+            
+            // 4. LÓGICA INTELIGENTE: En lugar de una recarga completa, ejecutamos
+            //    la acción de refresco más ligera posible para la página actual.
+            switch (activePageEl.id) {
+                case PAGE_IDS.INICIO:
+                    // El Panel necesita recalcular los KPIs, llamamos a su función de actualización.
+                    // Sigue siendo mucho más rápido que un navigateTo().
+                    scheduleDashboardUpdate();
+                    break;
+                    
+                case PAGE_IDS.DIARIO:
+                    // ¡LA OPTIMIZACIÓN CLAVE!
+                    // Simplemente le decimos a la lista virtual que se redibuje.
+                    // Esta función ya sabe cómo filtrar por la contabilidad activa (A o B)
+                    // y lo hace sobre los datos que YA ESTÁN EN MEMORIA, sin llamar a la base de datos.
+                    // El cambio es instantáneo.
+                    updateVirtualListUI();
+                    break;
 
-    // 4. Forzamos una navegación a la misma página.
-    // Esto es más robusto que llamar a la función de renderizado directamente,
-    // ya que `navigateTo` se encarga de todo el ciclo de vida:
-    // - Destruye gráficos antiguos.
-    // - Re-renderiza la barra superior completa.
-    // - Llama a la función de renderizado correcta, que ahora contendrá la lógica de reseteo.
-    // - Gestiona las animaciones de transición.
-    await navigateTo(activePageId, true); // El `true` evita animaciones y la entrada al historial.
-},
+                case PAGE_IDS.INVERSIONES:
+                    // La vista de Inversiones necesita redibujar sus gráficos y listas.
+                    await renderInversionesView();
+                    break;
+
+                case PAGE_IDS.PLANIFICAR:
+                    // La vista de Planificar también necesita recalcular sus proyecciones.
+                    await renderPlanificacionPage();
+                    break;
+                
+                // La página de Ajustes no depende de la contabilidad, así que no hacemos nada.
+                case PAGE_IDS.AJUSTES:
+                default:
+                    break;
+            }
+        },
             'toggle-off-balance': async () => { const checkbox = target.closest('input[type="checkbox"]'); if (!checkbox) return; hapticFeedback('light'); await saveDoc('cuentas', checkbox.dataset.id, { offBalance: checkbox.checked }); },
             'apply-filters': () => { hapticFeedback('light'); scheduleDashboardUpdate(); },
             'delete-movement-from-modal': () => { const isRecurrent = (actionTarget.dataset.isRecurrent === 'true'); const idToDelete = select('movimiento-id').value; const message = isRecurrent ? '¿Seguro que quieres eliminar esta operación recurrente?' : '¿Seguro que quieres eliminar este movimiento?'; showConfirmationModal(message, async () => { hideModal('movimiento-modal'); await deleteMovementAndAdjustBalance(idToDelete, isRecurrent); }); },
