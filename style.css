@@ -1000,24 +1000,51 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 @keyframes spin { to { transform:rotate(360deg); } }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
-/* --- Iconos de Encabezado con Estilo --- */
-.top-bar .top-bar__actions .icon-btn { width: 40px; height: 40px; position: relative; overflow: hidden; transition: transform 0.25s ease-out; }
-.top-bar .top-bar__actions .icon-btn .material-icons { font-size: 24px; font-weight: 600; -webkit-background-clip: text; background-clip: text; color: transparent; transition: all 0.25s ease-out; }
-.top-bar .top-bar__actions .icon-btn[data-action="global-search"] .material-icons { background-image: linear-gradient(45deg, var(--c-primary), var(--c-info)); text-shadow: 0 0 8px color-mix(in srgb, var(--c-primary) 50%, transparent); }
-.top-bar .top-bar__actions .icon-btn[data-action="show-main-menu"] .material-icons {
-    background-image: linear-gradient(45deg, var(--c-on-surface), var(--c-on-surface-secondary));
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+/* --- INICIO: Iconos de Encabezado con Estilo (VERSIÓN CORREGIDA Y MEJORADA) --- */
+
+.top-bar .top-bar__actions .icon-btn {
+    width: 40px;
+    height: 40px;
+    transition: transform 0.2s ease-out, background-color 0.2s ease-out;
 }
-.top-bar .top-bar__actions .icon-btn[data-action="show-aidanai-help"] .material-icons {
-    background-image: linear-gradient(45deg, #2DD4BF, var(--c-primary));
-    text-shadow: 0 0 8px color-mix(in srgb, var(--c-info) 50%, transparent);
+
+.top-bar .top-bar__actions .icon-btn .material-icons {
+    font-size: 24px;
+    transition: color 0.2s, transform 0.2s;
+    /* Color por defecto para los iconos menos importantes */
+    color: var(--c-on-surface-secondary); 
 }
-.top-bar .top-bar__actions .icon-btn[data-action="toggle-theme"] .material-icons { background-image: linear-gradient(45deg, var(--c-info), #F43F5E); text-shadow: 0 0 8px color-mix(in srgb, var(--c-info) 50%, transparent); }
-.top-bar .top-bar__actions .icon-btn[data-action="help"] .material-icons { background-image: linear-gradient(45deg, var(--c-success), #2DD4BF); text-shadow: 0 0 8px color-mix(in srgb, var(--c-success) 50%, transparent); }
-.top-bar .top-bar__actions .icon-btn[data-action="exit"] .material-icons { background-image: linear-gradient(45deg, var(--c-danger), var(--c-warning)); text-shadow: 0 0 8px color-mix(in srgb, var(--c-danger) 50%, transparent); }
-.top-bar .top-bar__actions .icon-btn:hover { transform: scale(1.15); background-color: color-mix(in srgb, var(--c-surface-variant) 80%, transparent); }
-.top-bar .top-bar__actions .icon-btn:hover .material-icons { transform: scale(1.1); }
-.top-bar .top-bar__actions .icon-btn:active { transform: scale(0.95); transition-duration: 0.1s; }
+
+/* 1. Icono de Búsqueda (Acción Principal) */
+.top-bar .top-bar__actions .icon-btn[data-action="global-search"] .material-icons {
+    color: var(--c-primary); /* Usa el color principal del tema */
+    font-weight: 600;
+}
+
+/* 2. Icono del Asistente IA (Característica Especial) */
+.top-bar .top-bar__actions .icon-btn[data-action="show-aidanai-assistant"] .material-icons {
+    color: #2DD4BF; /* Un color cian/turquesa tecnológico y único */
+    font-weight: 600;
+}
+/* Agregamos un pequeño espacio a la izquierda para separarlo visualmente */
+.top-bar .top-bar__actions .icon-btn[data-action="show-aidanai-assistant"] {
+    margin-left: 4px;
+}
+
+
+/* 3. El resto de iconos (Tema, Menú) usan el color por defecto */
+
+/* Efecto Hover para TODOS los iconos */
+.top-bar .top-bar__actions .icon-btn:hover .material-icons {
+    color: var(--c-white);
+    transform: scale(1.1);
+}
+
+.top-bar .top-bar__actions .icon-btn:active { 
+    transform: scale(0.9);
+}
+
+/* --- FIN: Bloque de Estilos Corregido --- */
 
 /* --- Componentes Específicos (Inversiones, Presupuestos, etc.) --- */
 .investment-asset-card { background-color: var(--c-surface); border: 1px solid var(--c-outline); border-radius: var(--border-radius-lg); padding: var(--sp-3); margin-bottom: var(--sp-2); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
