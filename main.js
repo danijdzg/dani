@@ -64,16 +64,11 @@ const handleExportFilteredCsv = (btn) => {
         
         const firebaseConfig = { apiKey: "AIzaSyAp-t-2qmbvSX-QEBW9B1aAJHBESqnXy9M", authDomain: "cuentas-aidanai.firebaseapp.com", projectId: "cuentas-aidanai", storageBucket: "cuentas-aidanai.appspot.com", messagingSenderId: "58244686591", appId: "1:58244686591:web:85c87256c2287d350322ca" };
 const PAGE_IDS = {
-    RESUMEN: 'resumen-page',
-    MOVIMIENTOS: 'movimientos-page',
-    PLANIFICACION: 'planificacion-page',
-    PATRIMONIO: 'patrimonio-page', // ¡NUEVA!
+    INICIO: 'inicio-page',
+    DIARIO: 'diario-page',
+    INVERSIONES: 'inversiones-page',
+    PLANIFICAR: 'planificar-page', // ¡La nueva página!
     AJUSTES: 'ajustes-page',
-    
-    // Antiguas IDs que vamos a deprecar
-    // INICIO: 'inicio-page',
-    // DIARIO: 'diario-page',
-    // INVERSIONES: 'inversiones-page'
 };
 
 
@@ -287,7 +282,7 @@ const applyDiarioFilters = async () => {
     showToast('Filtros aplicados. Mostrando resultados.', 'info');
     
     // Volvemos a renderizar la página del Diario para que aplique los filtros
-    await renderMovimientosPage();
+    await renderDiarioPage();
 };
 
 // La función que se ejecuta al pulsar "Limpiar Filtros"
@@ -296,7 +291,7 @@ const clearDiarioFilters = async () => {
     select('diario-filters-form').reset();
     hideModal('diario-filters-modal');
     showToast('Filtros eliminados.', 'info');
-    await renderMovimientosPage();
+    await renderDiarioPage();
 };
 
 // ▲▲▲ FIN DEL BLOQUE A PEGAR ▲▲▲
@@ -662,7 +657,7 @@ async function loadCoreData(uid) {
             if (collectionName === 'recurrentes') {
     dataLoaded.recurrentes = true;
     const activePage = document.querySelector('.view--active');
-    if (activePage && (activePage.id === PAGE_IDS.MOVIMIENTOS)) {
+    if (activePage && (activePage.id === PAGE_IDS.DIARIO)) {
         // En lugar de recargar todo, solo actualizamos la UI de la lista virtual.
         // Esto es instantáneo y no vuelve a pedir datos a la BBDD.
         updateVirtualListUI(); 
@@ -708,7 +703,7 @@ async function loadCoreData(uid) {
             
             // Si el usuario está en la página de Inicio, la actualizamos inmediatamente.
             const activePage = document.querySelector('.view--active');
-            if (activePage && activePage.id === PAGE_IDS.RESUMEN) {
+            if (activePage && activePage.id === PAGE_IDS.INICIO) {
                 scheduleDashboardUpdate();
             }
         }, error => console.error("Error escuchando movimientos recientes: ", error));
@@ -1333,7 +1328,7 @@ window.addEventListener('offline', () => {
             
             updateSyncStatusIcon();
             buildIntelligentIndex();
-			navigateTo(PAGE_IDS.MOVIMIENTOS, true); // <-- CAMBIADO
+			navigateTo(PAGE_IDS.DIARIO, true); // <-- CAMBIADO
             updateThemeIcon(localStorage.getItem('appTheme') || 'default');
             isInitialLoadComplete = true;
 			};
@@ -1446,28 +1441,22 @@ window.addEventListener('offline', () => {
     }
 };
 
-// REEMPLAZA TU FUNCIÓN navigateTo ENTERA CON ESTA VERSIÓN CORREGIDA
-
+// EN main.js - REEMPLAZA TU FUNCIÓN navigateTo POR ESTA VERSIÓN
 const navigateTo = async (pageId, isInitial = false) => {
     const oldView = document.querySelector('.view--active');
-    const newView = select(pageId); // Buscamos el ID de la nueva sección
-
-    // === INICIO: GUARDAS DE SEGURIDAD MEJORADAS ===
-    if (!newView) {
-        console.error(`Error de Navegación: La página con el id "${pageId}" no se encontró en el DOM. Revisa tu index.html.`);
-        return; // Detenemos la ejecución si la página no existe
-    }
-    if (oldView && oldView.id === pageId) {
-        return; // No hacemos nada si ya estamos en la página
-    }
-    // === FIN: GUARDAS DE SEGURIDAD MEJORADAS ===
-
+    const newView = select(pageId);
     const mainScroller = selectOne('.app-layout__main');
 
+    // Guardar la posición del scroll de la vista anterior
     if (oldView && mainScroller) {
         pageScrollPositions[oldView.id] = mainScroller.scrollTop;
     }
+
+    if (!newView || (oldView && oldView.id === pageId)) return;
     
+    // --- LÓGICA DE CARGA DE VISTAS CORREGIDA ---
+    // Ya no se intenta hacer 'fetch' de archivos HTML. La función de renderizado se encargará de todo.
+
     destroyAllCharts();
 
     if (!isInitial) hapticFeedback('light');
@@ -1483,41 +1472,44 @@ const navigateTo = async (pageId, isInitial = false) => {
 
     const actionsEl = select('top-bar-actions');
     const leftEl = select('top-bar-left-button');
-    const fab = select('fab-add-movimiento');
+    const fab = select('fab-add-movimiento'); // Asumiendo que pudieras tener un FAB
     
     const standardActions = `
-        <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
-            <span class="material-icons">search</span>
-        </button>
-        <button data-action="show-aidanai-assistant" class="icon-btn" title="Asistente IA aiDANaI" aria-label="Asistente IA">
-            <span class="material-icons">auto_awesome</span>
-        </button>
-        <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
-            <span class="material-icons">dark_mode</span>
-        </button>
-        <button data-action="show-main-menu" class="icon-btn" title="Más opciones" aria-label="Mostrar más opciones">
-            <span class="material-icons">more_vert</span>
-        </button>
-    `;
+    <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
+        <span class="material-icons">search</span>
+    </button>
+
+    <!-- ▼▼▼ ESTE ES EL BOTÓN QUE AHORA SÍ SE VERÁ ▼▼▼ -->
+    <button data-action="show-aidanai-assistant" class="icon-btn" title="Asistente IA aiDANaI" aria-label="Asistente IA">
+        <span class="material-icons">auto_awesome</span>
+    </button>
+    <!-- ▲▲▲ FIN DEL BOTÓN CORREGIDO ▲▲▲ -->
+
+    <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
+        <span class="material-icons">dark_mode</span>
+    </button>
+    <button data-action="show-main-menu" class="icon-btn" title="Más opciones" aria-label="Mostrar más opciones">
+        <span class="material-icons">more_vert</span>
+    </button>
+`;
     
-    if (pageId === PAGE_IDS.PLANIFICACION && !dataLoaded.presupuestos) await loadPresupuestos();
-    if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
+    // Lazy loading de datos si es necesario
+    if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
+    if (pageId === PAGE_IDS.INVERSIONES && !dataLoaded.inversiones) await loadInversiones();
 
     const pageRenderers = {
-        [PAGE_IDS.RESUMEN]: { title: 'Resumen', render: renderResumenPage, actions: standardActions },
-        [PAGE_IDS.MOVIMIENTOS]: { title: 'Movimientos', render: renderMovimientosPage, actions: standardActions },
-        [PAGE_IDS.PLANIFICACION]: { title: 'Planificación', render: renderPlanificacionPage, actions: standardActions },
-        [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: standardActions },
+        [PAGE_IDS.INICIO]: { title: 'Panel', render: renderInicioPage, actions: standardActions },
+        [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
+        [PAGE_IDS.INVERSIONES]: { title: 'Inversiones', render: renderInversionesView, actions: standardActions },
+        [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage, actions: standardActions },
         [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
     };
 
     if (pageRenderers[pageId]) { 
         if (leftEl) {
             let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar a Contabilidad ${isOffBalanceMode ? 'A' : 'B'}"> ${isOffBalanceMode ? 'B' : 'A'}</button><span id="page-title-display">${pageRenderers[pageId].title}</span>`;
-            if (pageId === PAGE_IDS.RESUMEN) {
-                leftSideHTML += `<button data-action="configure-dashboard" class="icon-btn" title="Personalizar qué se ve en el Panel" style="margin-left: 8px;"><span class="material-icons">dashboard_customize</span></button>`;
-            }
-            if (pageId === PAGE_IDS.MOVIMIENTOS) {
+            if (pageId === PAGE_IDS.INICIO) leftSideHTML += `<button data-action="configure-dashboard" class="icon-btn" title="Personalizar qué se ve en el Panel" style="margin-left: 8px;"><span class="material-icons">dashboard_customize</span></button>`;
+            if (pageId === PAGE_IDS.DIARIO) {
                 leftSideHTML += `
                     <button data-action="show-diario-filters" class="icon-btn" title="Filtrar y Buscar" style="margin-left: 8px;">
                         <span class="material-icons">filter_list</span>
@@ -1532,7 +1524,8 @@ const navigateTo = async (pageId, isInitial = false) => {
 
         if (actionsEl) actionsEl.innerHTML = pageRenderers[pageId].actions;
         
-        // Llamamos a la función de renderizado
+        // --- LLAMADA DIRECTA A LA FUNCIÓN DE RENDERIZADO ---
+        // Este es el cambio clave. Ahora llamamos a la función JS que genera el HTML.
         await pageRenderers[pageId].render();
     }
     
@@ -1558,11 +1551,14 @@ const navigateTo = async (pageId, isInitial = false) => {
         oldView.classList.remove('view--active');
     }
 
+    // Restaurar posición de scroll de la nueva vista
     if (mainScroller) {
         mainScroller.scrollTop = pageScrollPositions[pageId] || 0;
     }
 
-    if (pageId === PAGE_IDS.RESUMEN) {
+    if (pageId === PAGE_IDS.INICIO) {
+        // En lugar de llamar directamente a la actualización (que puede ser pesada),
+        // usamos el sistema inteligente que ya tienes para que no se solape.
         scheduleDashboardUpdate();
     }
 };
@@ -2844,7 +2840,7 @@ const loadMoreMovements = async (isInitial = false) => {
     isLoadingMoreMovements = true;
     const loadMoreBtn = select('load-more-btn'); // Esto se usaba para el botón, lo mantenemos por si vuelve.
 
-    // La lógica de mostrar esqueletos o el spinner del botón pertenece a renderMovimientosPage,
+    // La lógica de mostrar esqueletos o el spinner del botón pertenece a renderDiarioPage,
     // pero la dejamos aquí condicionada para no romper nada si se usa en otro contexto.
     if (isInitial) {
         let skeletonHTML = '';
@@ -2919,66 +2915,10 @@ const loadMoreMovements = async (isInitial = false) => {
     // Le decimos al vigilante que empiece a observar nuestro activador invisible.
     movementsObserver.observe(trigger);
 };
-const renderPatrimonioCuentasView = async (containerId) => {
-    const container = select(containerId);
-    if (!container) return;
 
-    // 1. Dibuja el esqueleto de la página con dos acordeones
-    container.innerHTML = `
-        <!-- Acordeón para Todas las Cuentas -->
-        <div class="card card--no-bg accordion-wrapper">
-            <details class="accordion" open>
-                <summary>
-                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">account_balance_wallet</span>Mis Cuentas</h3>
-                    <span class="material-icons accordion__icon">expand_more</span>
-                </summary>
-                <div class="accordion__content" style="padding: 0;">
-                    <div id="patrimonio-cuentas-container">
-                        <!-- El contenido de las cuentas se renderizará aquí -->
-                        <div class="skeleton" style="height: 250px; margin: var(--sp-4);"></div>
-                    </div>
-                    <div class="card card--no-bg" style="padding: var(--sp-4); padding-top: 0;">
-                        <button class="btn btn--secondary btn--full" data-action="manage-cuentas">
-                            <span class="material-icons" style="font-size: 16px;">playlist_add</span>
-                            Gestionar Cuentas
-                        </button>
-                    </div>
-                </div>
-            </details>
-        </div>
+// ▼▼▼ REEMPLAZA TU FUNCIÓN renderDiarioPage POR COMPLETO CON ESTA VERSIÓN ▼▼▼
 
-        <!-- Acordeón para el Portafolio de Inversión -->
-        <div class="card card--no-bg accordion-wrapper">
-            <details class="accordion" open>
-                <summary>
-                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">rocket_launch</span>Mi Portafolio de Inversión</h3>
-                    <span class="material-icons accordion__icon">expand_more</span>
-                </summary>
-                <div class="accordion__content" style="padding: 0;">
-                     <div id="patrimonio-inversiones-container">
-                        <!-- El contenido de las inversiones se renderizará aquí -->
-                        <div class="skeleton" style="height: 300px; margin: var(--sp-4);"></div>
-                    </div>
-                </div>
-            </details>
-        </div>
-    `;
-
-    // 2. Llama a las funciones de renderizado existentes para rellenar los contenedores
-    // Usamos un pequeño timeout para asegurar que el DOM está listo
-    setTimeout(async () => {
-        // La antigua función de renderizado del widget de patrimonio ahora rellena "Mis Cuentas"
-        // NOTA: El nombre de la función ya era renderPatrimonioPage, ¡qué conveniente!
-        // Le cambiamos el nombre para evitar conflictos y la llamamos
-        await renderPatrimonioCuentasView('patrimonio-cuentas-container');
-
-        // La antigua función de la página de inversiones ahora rellena "Mi Portafolio"
-        await renderInversionesView();
-    }, 50);
-};
-    
-
-const renderMovimientosPage = async () => {
+const renderDiarioPage = async () => {
     if (isDiarioPageRendering) {
         console.log("BLOQUEADO: Intento de re-renderizar el Diario mientras ya estaba en proceso.");
         return;
@@ -3251,14 +3191,97 @@ const renderBudgetTrendChart = (monthlyIncomeData, monthlyExpenseData, averageBu
 };
 
 
-               
+// =============================================================
+// === INICIO: FUNCIÓN RESTAURADA PARA EL WIDGET DE PATRIMONIO ===
+// =============================================================
+const renderPatrimonioPage = async () => {
+    const container = select('patrimonio-completo-container');
+    if (!container) return;
+
+    const visibleAccounts = getVisibleAccounts();
+    const saldos = await getSaldos();
+    const BASE_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
+
+    const allAccountTypes = [...new Set(visibleAccounts.map((c) => toSentenceCase(c.tipo || 'S/T')))].sort();
+    const filteredAccountTypes = new Set(allAccountTypes.filter(t => !deselectedAccountTypesFilter.has(t)));
+
+    const colorMap = {};
+    allAccountTypes.forEach((tipo, index) => {
+        colorMap[tipo] = BASE_COLORS[index % BASE_COLORS.length];
+    });
+
+    const pillsHTML = allAccountTypes.map(t => {
+        const isActive = !deselectedAccountTypesFilter.has(t);
+        const color = colorMap[t];
+        let style = '';
+        if (isActive && color) {
+            style = `style="background-color: ${color}; border-color: ${color}; color: #FFFFFF; box-shadow: 0 0 8px ${color}70;"`;
+        }
+        return `<button class="filter-pill ${isActive ? 'filter-pill--active' : ''}" data-action="toggle-account-type-filter" data-type="${t}" ${style}>${t}</button>`;
+    }).join('') || `<p style="font-size:var(--fs-xs); color:var(--c-on-surface-secondary)">No hay cuentas en esta vista.</p>`;
+    
+    const filteredAccounts = visibleAccounts.filter(c => {
+        const tipo = toSentenceCase(c.tipo || 'S/T');
+        return filteredAccountTypes.has(tipo);
+    });
+
+    const totalFiltrado = filteredAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
+    
+    const treeData = [];
+    filteredAccounts.forEach(c => {
+        const saldo = saldos[c.id] || 0;
+        if (saldo > 0) {
+            treeData.push({ tipo: toSentenceCase(c.tipo || 'S/T'), nombre: c.nombre, saldo: saldo / 100 });
+        }
+    });
+
+    container.innerHTML = `
+        <h3 class="card__title"><span class="material-icons">account_balance</span>Patrimonio</h3>
+        <div class="card__content" style="padding-top:0;">
+            <div class="patrimonio-header-grid__kpi" style="margin-bottom: var(--sp-4);">
+                <h4 class="kpi-item__label">Patrimonio Neto (Seleccionado)</h4>
+                <strong id="patrimonio-total-balance" class="kpi-item__value" style="font-size: 2rem; line-height: 1.1;">${formatCurrency(totalFiltrado)}</strong>
+            </div>
+            <div class="patrimonio-header-grid__filters" style="margin-bottom: var(--sp-4);">
+                <h4 class="kpi-item__label">Filtros por tipo de activo</h4>
+                <div id="filter-account-types-pills" class="filter-pills" style="margin-bottom: 0;">${pillsHTML}</div>
+            </div>
+            <div id="liquid-assets-chart-container" class="chart-container" style="height: 250px; margin-bottom: var(--sp-4);"><canvas id="liquid-assets-chart"></canvas></div>
+            <div id="patrimonio-cuentas-lista"></div>
+        </div>`;
+
+    setTimeout(() => {
+        const chartCtx = select('liquid-assets-chart')?.getContext('2d');
+        if (chartCtx) {
+            if (liquidAssetsChart) liquidAssetsChart.destroy();
+            if (treeData.length > 0) {
+                liquidAssetsChart = new Chart(chartCtx, { type: 'treemap', data: { datasets: [{ tree: treeData, key: 'saldo', groups: ['tipo', 'nombre'], spacing: 0.5, borderWidth: 1.5, borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'), backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'), labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) } }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false }}} });
+            } else {
+                select('liquid-assets-chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con saldo positivo para mostrar.</p></div>`;
+            }
+        }
+        const listaContainer = select('patrimonio-cuentas-lista');
+        if (listaContainer) {
+            const accountsByType = filteredAccounts.reduce((acc, c) => { const tipo = toSentenceCase(c.tipo || 'S/T'); if (!acc[tipo]) acc[tipo] = []; acc[tipo].push(c); return acc; }, {});
+            listaContainer.innerHTML = Object.keys(accountsByType).sort().map(tipo => {
+                const accountsInType = accountsByType[tipo];
+                const typeBalance = accountsInType.reduce((sum, acc) => sum + (saldos[acc.id] || 0), 0);
+                const porcentajeGlobal = totalFiltrado > 0 ? (typeBalance / totalFiltrado) * 100 : 0;
+                const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => `<div class="modal__list-item" data-action="view-account-details" data-id="${c.id}" style="cursor: pointer; padding: var(--sp-2) 0;"><div><span style="display: block;">${c.nombre}</span><small style="color: var(--c-on-surface-secondary);">${((saldos[c.id] || 0) / typeBalance * 100).toFixed(1)}% de ${tipo}</small></div><div style="display: flex; align-items: center; gap: var(--sp-2);">${formatCurrency(saldos[c.id] || 0)}<span class="material-icons" style="font-size: 18px;">chevron_right</span></div></div>`).join('');
+                if (!accountsHtml) return '';
+                return `<details class="accordion" style="margin-bottom: var(--sp-2);"><summary><span class="account-group__name">${tipo}</span><div style="display:flex; align-items:center; gap:var(--sp-2);"><small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small><span class="account-group__balance">${formatCurrency(typeBalance)}</span><span class="material-icons accordion__icon">expand_more</span></div></summary><div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div></details>`;
+            }).join('');
+        }
+    }, 50);
+};
+                
         
         const loadConfig = () => { 
             const userEmailEl = select('config-user-email'); 
             if (userEmailEl && currentUser) userEmailEl.textContent = currentUser.email;  			
         };
 		
-  const renderResumenPage = async () => {
+  const renderInicioPage = async () => {
     const container = select(PAGE_IDS.INICIO);
     if (!container) return;
 
@@ -4190,7 +4213,7 @@ const renderInicioResumenView = () => {
                     html += renderVirtualListItem({ type: 'transaction', movement: mov });
                 }
             }
-            html += `<div style="text-align: center; margin-top: var(--sp-4);"><button class="btn btn--secondary" data-action="navigate" data-page="${PAGE_IDS.MOVIMIENTOS}">Ver todos los movimientos</button></div>`;
+            html += `<div style="text-align: center; margin-top: var(--sp-4);"><button class="btn btn--secondary" data-action="navigate" data-page="${PAGE_IDS.DIARIO}">Ver todos los movimientos</button></div>`;
             recientesContainer.innerHTML = html;
         };
 		 const renderPendingRecurrents = () => {
@@ -4366,7 +4389,7 @@ const renderPlanificacionPage = () => {
     renderRecurrentsListOnPage();
 };
  const renderInversionesView = () => {
-    const container = select('patrimonio-inversiones-container');
+    const container = select(PAGE_IDS.INVERSIONES);
     if (!container) return;
 
     // Ahora esta función se encarga de TODO: crea el esqueleto y llama a las funciones que lo rellenan.
@@ -4714,7 +4737,7 @@ const updateNetWorthChart = async (saldos) => {
 const scheduleDashboardUpdate = () => {
     // El jefe de obra solo trabaja si la página "Inicio" está abierta.
     const activePage = document.querySelector('.view--active');
-    if (!activePage || activePage.id !== PAGE_IDS.RESUMEN) {
+    if (!activePage || activePage.id !== PAGE_IDS.INICIO) {
         return;
     }
       
@@ -7084,7 +7107,7 @@ function createCustomSelect(selectElement) {
                     showDrillDownModal(`Movimientos de: ${conceptName}`, movementsOfConcept);
                 });
             },
-            'toggle-diario-view': () => { diarioViewMode = diarioViewMode === 'list' ? 'calendar' : 'list'; const btnIcon = selectOne('[data-action="toggle-diario-view"] .material-icons'); if(btnIcon) btnIcon.textContent = diarioViewMode === 'list' ? 'calendar_month' : 'list'; renderMovimientosPage(); },
+            'toggle-diario-view': () => { diarioViewMode = diarioViewMode === 'list' ? 'calendar' : 'list'; const btnIcon = selectOne('[data-action="toggle-diario-view"] .material-icons'); if(btnIcon) btnIcon.textContent = diarioViewMode === 'list' ? 'calendar_month' : 'list'; renderDiarioPage(); },
             'calendar-nav': () => {
                 const direction = actionTarget.dataset.direction;
                 if (!(diarioCalendarDate instanceof Date) || isNaN(diarioCalendarDate)) {
@@ -7809,7 +7832,7 @@ const handleSaveMovement = async (form, btn) => {
         if (activePage && activePage.id === PAGE_IDS.PLANIFICACION) {
             renderPlanificacionPage();
         } else if (activePage && activePage.id === PAGE_IDS.DIARIO) {
-            renderMovimientosPage(); // También refresca el diario por si hay pendientes
+            renderDiarioPage(); // También refresca el diario por si hay pendientes
         }
         return true;
 
@@ -7916,8 +7939,8 @@ const handleSaveMovement = async (form, btn) => {
             console.error("Error al guardar el movimiento:", error);
             showToast("Error crítico al guardar. La operación fue cancelada.", "danger");
             setButtonLoading(btn, false);
-            if (select('movimientos-page')?.classList.contains('view--active')) {
-                await renderMovimientosPage();
+            if (select('diario-page')?.classList.contains('view--active')) {
+                await renderDiarioPage();
             }
             return false;
         }
