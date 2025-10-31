@@ -1450,16 +1450,23 @@ window.addEventListener('offline', () => {
 
 const navigateTo = async (pageId, isInitial = false) => {
     const oldView = document.querySelector('.view--active');
-    // Corrección: Ahora buscamos el ID de la nueva sección de patrimonio
-    const newView = select(pageId) || select('patrimonio-page'); 
+    const newView = select(pageId); // Buscamos el ID de la nueva sección
+
+    // === INICIO: GUARDAS DE SEGURIDAD MEJORADAS ===
+    if (!newView) {
+        console.error(`Error de Navegación: La página con el id "${pageId}" no se encontró en el DOM. Revisa tu index.html.`);
+        return; // Detenemos la ejecución si la página no existe
+    }
+    if (oldView && oldView.id === pageId) {
+        return; // No hacemos nada si ya estamos en la página
+    }
+    // === FIN: GUARDAS DE SEGURIDAD MEJORADAS ===
 
     const mainScroller = selectOne('.app-layout__main');
 
     if (oldView && mainScroller) {
         pageScrollPositions[oldView.id] = mainScroller.scrollTop;
     }
-
-    if (!newView || (oldView && oldView.id === pageId)) return;
     
     destroyAllCharts();
 
@@ -1478,7 +1485,6 @@ const navigateTo = async (pageId, isInitial = false) => {
     const leftEl = select('top-bar-left-button');
     const fab = select('fab-add-movimiento');
     
-    // El HTML de 'standardActions' se mantiene igual, es correcto.
     const standardActions = `
         <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
             <span class="material-icons">search</span>
@@ -1494,13 +1500,9 @@ const navigateTo = async (pageId, isInitial = false) => {
         </button>
     `;
     
-    // --- LÓGICA DE CARGA CORREGIDA ---
-    // Asociamos la carga de datos a las NUEVAS páginas
     if (pageId === PAGE_IDS.PLANIFICACION && !dataLoaded.presupuestos) await loadPresupuestos();
     if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
 
-    // --- EL "ROUTER" INTERNO CORREGIDO ---
-    // Todas las referencias a las constantes antiguas han sido actualizadas
     const pageRenderers = {
         [PAGE_IDS.RESUMEN]: { title: 'Resumen', render: renderResumenPage, actions: standardActions },
         [PAGE_IDS.MOVIMIENTOS]: { title: 'Movimientos', render: renderMovimientosPage, actions: standardActions },
@@ -1512,8 +1514,6 @@ const navigateTo = async (pageId, isInitial = false) => {
     if (pageRenderers[pageId]) { 
         if (leftEl) {
             let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar a Contabilidad ${isOffBalanceMode ? 'A' : 'B'}"> ${isOffBalanceMode ? 'B' : 'A'}</button><span id="page-title-display">${pageRenderers[pageId].title}</span>`;
-            
-            // Lógica de la barra superior actualizada con las NUEVAS constantes
             if (pageId === PAGE_IDS.RESUMEN) {
                 leftSideHTML += `<button data-action="configure-dashboard" class="icon-btn" title="Personalizar qué se ve en el Panel" style="margin-left: 8px;"><span class="material-icons">dashboard_customize</span></button>`;
             }
@@ -1532,6 +1532,7 @@ const navigateTo = async (pageId, isInitial = false) => {
 
         if (actionsEl) actionsEl.innerHTML = pageRenderers[pageId].actions;
         
+        // Llamamos a la función de renderizado
         await pageRenderers[pageId].render();
     }
     
@@ -1561,7 +1562,6 @@ const navigateTo = async (pageId, isInitial = false) => {
         mainScroller.scrollTop = pageScrollPositions[pageId] || 0;
     }
 
-    // Lógica final de la función actualizada con la NUEVA constante
     if (pageId === PAGE_IDS.RESUMEN) {
         scheduleDashboardUpdate();
     }
