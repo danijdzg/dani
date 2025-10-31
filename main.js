@@ -2919,17 +2919,139 @@ const loadMoreMovements = async (isInitial = false) => {
     // Le decimos al vigilante que empiece a observar nuestro activador invisible.
     movementsObserver.observe(trigger);
 };
-// AÑADE ESTA NUEVA FUNCIÓN TEMPORAL
 const renderPatrimonioPage = async () => {
     const container = select(PAGE_IDS.PATRIMONIO);
     if (!container) return;
-    container.innerHTML = `<div class="empty-state">
-        <span class="material-icons">construction</span>
-        <h3>Sección 'Patrimonio' en construcción</h3>
-        <p>¡Aquí verás todas tus cuentas e inversiones!</p>
-    </div>`;
+
+    // Dibuja el esqueleto de la página con los dos acordeones
+    container.innerHTML = `
+        <!-- Acordeón para Todas las Cuentas -->
+        <div class="card card--no-bg accordion-wrapper">
+            <details class="accordion" open>
+                <summary>
+                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">account_balance_wallet</span>Mis Cuentas</h3>
+                    <span class="material-icons accordion__icon">expand_more</span>
+                </summary>
+                <div class="accordion__content" style="padding: 0;">
+                    <div id="patrimonio-cuentas-container">
+                        <div class="skeleton" style="height: 250px; margin: var(--sp-4);"></div>
+                    </div>
+                    <div class="card card--no-bg" style="padding: var(--sp-4); padding-top: 0;">
+                        <button class="btn btn--secondary btn--full" data-action="manage-cuentas">
+                            <span class="material-icons" style="font-size: 16px;">playlist_add</span>
+                            Gestionar Cuentas
+                        </button>
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <!-- Acordeón para el Portafolio de Inversión -->
+        <div class="card card--no-bg accordion-wrapper">
+            <details class="accordion" open>
+                <summary>
+                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">rocket_launch</span>Mi Portafolio de Inversión</h3>
+                    <span class="material-icons accordion__icon">expand_more</span>
+                </summary>
+                <div class="accordion__content" style="padding: 0;">
+                     <div id="patrimonio-inversiones-container">
+                        <div class="skeleton" style="height: 300px; margin: var(--sp-4);"></div>
+                    </div>
+                </div>
+            </details>
+        </div>
+    `;
+ // Esta es tu ANTIGUA función 'renderPatrimonioPage', ahora RENOMBRADA correctamente.
+// Se encarga de dibujar el widget de cuentas (treemap, lista por tipo, etc.).
+const renderPatrimonioCuentasView = async (containerId) => {
+    const container = select(containerId);
+    if (!container) return;
+
+    const visibleAccounts = getVisibleAccounts();
+    const saldos = await getSaldos();
+    const BASE_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
+
+    const allAccountTypes = [...new Set(visibleAccounts.map((c) => toSentenceCase(c.tipo || 'S/T')))].sort();
+    const filteredAccountTypes = new Set(allAccountTypes.filter(t => !deselectedAccountTypesFilter.has(t)));
+
+    const colorMap = {};
+    allAccountTypes.forEach((tipo, index) => {
+        colorMap[tipo] = BASE_COLORS[index % BASE_COLORS.length];
+    });
+
+    const pillsHTML = allAccountTypes.map(t => {
+        const isActive = !deselectedAccountTypesFilter.has(t);
+        const color = colorMap[t];
+        let style = '';
+        if (isActive && color) {
+            style = `style="background-color: ${color}; border-color: ${color}; color: #FFFFFF; box-shadow: 0 0 8px ${color}70;"`;
+        }
+        return `<button class="filter-pill ${isActive ? 'filter-pill--active' : ''}" data-action="toggle-account-type-filter" data-type="${t}" ${style}>${t}</button>`;
+    }).join('') || `<p style="font-size:var(--fs-xs); color:var(--c-on-surface-secondary)">No hay cuentas en esta vista.</p>`;
+    
+    const filteredAccounts = visibleAccounts.filter(c => {
+        const tipo = toSentenceCase(c.tipo || 'S/T');
+        return filteredAccountTypes.has(tipo);
+    });
+
+    const totalFiltrado = filteredAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
+    
+    const treeData = [];
+    filteredAccounts.forEach(c => {
+        const saldo = saldos[c.id] || 0;
+        if (saldo > 0) {
+            treeData.push({ tipo: toSentenceCase(c.tipo || 'S/T'), nombre: c.nombre, saldo: saldo / 100 });
+        }
+    });
+
+    container.innerHTML = `
+        <h3 class="card__title"><span class="material-icons">account_balance</span>Patrimonio</h3>
+        <div class="card__content" style="padding-top:0;">
+            <div class="patrimonio-header-grid__kpi" style="margin-bottom: var(--sp-4);">
+                <h4 class="kpi-item__label">Patrimonio Neto (Seleccionado)</h4>
+                <strong id="patrimonio-total-balance" class="kpi-item__value" style="font-size: 2rem; line-height: 1.1;">${formatCurrency(totalFiltrado)}</strong>
+            </div>
+            <div class="patrimonio-header-grid__filters" style="margin-bottom: var(--sp-4);">
+                <h4 class="kpi-item__label">Filtros por tipo de activo</h4>
+                <div id="filter-account-types-pills" class="filter-pills" style="margin-bottom: 0;">${pillsHTML}</div>
+            </div>
+            <div id="liquid-assets-chart-container" class="chart-container" style="height: 250px; margin-bottom: var(--sp-4);"><canvas id="liquid-assets-chart"></canvas></div>
+            <div id="patrimonio-cuentas-lista"></div>
+        </div>`;
+
+    setTimeout(() => {
+        const chartCtx = select('liquid-assets-chart')?.getContext('2d');
+        if (chartCtx) {
+            if (liquidAssetsChart) liquidAssetsChart.destroy();
+            if (treeData.length > 0) {
+                liquidAssetsChart = new Chart(chartCtx, { type: 'treemap', data: { datasets: [{ tree: treeData, key: 'saldo', groups: ['tipo', 'nombre'], spacing: 0.5, borderWidth: 1.5, borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'), backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'), labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) } }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false }}} });
+            } else {
+                select('liquid-assets-chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con saldo positivo para mostrar.</p></div>`;
+            }
+        }
+        const listaContainer = select('patrimonio-cuentas-lista');
+        if (listaContainer) {
+            const accountsByType = filteredAccounts.reduce((acc, c) => { const tipo = toSentenceCase(c.tipo || 'S/T'); if (!acc[tipo]) acc[tipo] = []; acc[tipo].push(c); return acc; }, {});
+            listaContainer.innerHTML = Object.keys(accountsByType).sort().map(tipo => {
+                const accountsInType = accountsByType[tipo];
+                const typeBalance = accountsInType.reduce((sum, acc) => sum + (saldos[acc.id] || 0), 0);
+                const porcentajeGlobal = totalFiltrado > 0 ? (typeBalance / totalFiltrado) * 100 : 0;
+                const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => `<div class="modal__list-item" data-action="view-account-details" data-id="${c.id}" style="cursor: pointer; padding: var(--sp-2) 0;"><div><span style="display: block;">${c.nombre}</span><small style="color: var(--c-on-surface-secondary);">${((saldos[c.id] || 0) / typeBalance * 100).toFixed(1)}% de ${tipo}</small></div><div style="display: flex; align-items: center; gap: var(--sp-2);">${formatCurrency(saldos[c.id] || 0)}<span class="material-icons" style="font-size: 18px;">chevron_right</span></div></div>`).join('');
+                if (!accountsHtml) return '';
+                return `<details class="accordion" style="margin-bottom: var(--sp-2);"><summary><span class="account-group__name">${tipo}</span><div style="display:flex; align-items:center; gap:var(--sp-2);"><small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small><span class="account-group__balance">${formatCurrency(typeBalance)}</span><span class="material-icons accordion__icon">expand_more</span></div></summary><div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div></details>`;
+            }).join('');
+        }
+    }, 50);
 };
-// ▼▼▼ REEMPLAZA TU FUNCIÓN renderMovimientosPage POR COMPLETO CON ESTA VERSIÓN ▼▼▼
+    // Llama a las funciones de renderizado para rellenar los contenedores
+    setTimeout(async () => {
+        // Esta es la función RENOMBRADA que dibuja el widget de cuentas
+        await renderPatrimonioCuentasView('patrimonio-cuentas-container');
+        // Esta es la función adaptada que dibuja el portafolio
+        await renderInversionesView();
+    }, 50);
+};
+
 
 const renderMovimientosPage = async () => {
     if (isDiarioPageRendering) {
@@ -4319,7 +4441,7 @@ const renderPlanificacionPage = () => {
     renderRecurrentsListOnPage();
 };
  const renderInversionesView = () => {
-    const container = select(PAGE_IDS.INVERSIONES);
+    const container = select('patrimonio-inversiones-container');
     if (!container) return;
 
     // Ahora esta función se encarga de TODO: crea el esqueleto y llama a las funciones que lo rellenan.
