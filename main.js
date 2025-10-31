@@ -7029,9 +7029,9 @@ function createCustomSelect(selectElement) {
         const actions = {
             // ▼▼▼ ¡ESTO CONECTA TODO! ▼▼▼
             'show-aidanai-assistant': showAidanaiModal,
-            'ask-aidanai': () => {
-                const questionKey = actionTarget.dataset.question;
-                handleAskAidanai(questionKey);
+             'ask-aidanai': () => {
+                const questionText = actionTarget.dataset.question; // Obtiene la pregunta del chip
+                handleAidanaiQuery(questionText); // Llama al nuevo gestor de queries
             },
             'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
@@ -9130,168 +9130,150 @@ const renderAjustesPage = () => {
     loadConfig();
 };
 
-// =================================================================
-// === INICIO: MÓDULO DEL ASISTENTE INTELIGENTE aiDANaI          ===
-// =================================================================
+// ========================================================================
+// === INICIO: MÓDULO CONVERSACIONAL aiDANaI v2.0                       ===
+// ========================================================================
+
+const starterQuestions = [
+    "Mayor gasto del mes pasado",
+    "Gasto por categorías",
+    "¿Mi ahorro es saludable?",
+    "Busca gastos inusuales"
+];
 
 /**
- * Muestra el modal del asistente aiDANaI con el saludo y las preguntas.
+ * Añade un mensaje (del usuario o de la IA) al historial del chat.
+ * @param {string} text - El contenido del mensaje.
+ * @param {string} sender - 'user' o 'aidanai'.
  */
-const showAidanaiModal = () => {
-    const bodyEl = select('aidanai-modal-body');
-    if (!bodyEl) {
-        console.error("El cuerpo del modal de aiDANaI no se encuentra. ¿Has añadido el HTML a index.html?");
-        return;
-    }
+const addMessageToChat = (text, sender) => {
+    const chatHistory = select('aidanai-chat-history');
+    if (!chatHistory) return;
 
-    bodyEl.innerHTML = `
-        <div class="aidanai-modal-content">
-            <img src="aiDANaI.webp" alt="Asistente aiDANaI" class="aidanai-avatar">
-            <h4>¡Hola! Soy tu copiloto financiero.</h4>
-            <p class="aidanai-greeting">Estoy aquí para analizar tus datos y darte una visión clara. ¿Qué quieres saber?</p>
-            
-            <div id="aidanai-questions">
-                <button class="aidanai-question" data-action="ask-aidanai" data-question="biggest-expense">
-                    <span class="material-icons">trending_down</span>
-                    <span>¿Cuál fue mi mayor gasto el mes pasado?</span>
-                </button>
-                <button class="aidanai-question" data-action="ask-aidanai" data-question="main-outflow">
-                    <span class="material-icons">pie_chart</span>
-                    <span>¿En qué tres categorías gasto más?</span>
-                </button>
-                 <button class="aidanai-question" data-action="ask-aidanai" data-question="savings-check">
-                    <span class="material-icons">savings</span>
-                    <span>¿Mi tasa de ahorro es saludable?</span>
-                </button>
-                <button class="aidanai-question" data-action="ask-aidanai" data-question="unusual-activity">
-                    <span class="material-icons">policy</span>
-                    <span>Busca alguna transacción inusual</span>
-                </button>
-            </div>
-            
-            <div id="aidanai-response-container" style="width: 100%; margin-top: var(--sp-4);"></div>
+    const senderClass = sender === 'user' ? 'from-user' : 'from-aidanai';
+    const avatarContent = sender === 'user' 
+        ? (currentUser.email ? currentUser.email[0].toUpperCase() : 'U') 
+        : '';
+    const avatarImageClass = sender === 'aidanai' ? 'style="background-image: url(aiDANaI.webp); background-size: cover;"' : '';
+    
+    // Si hay un spinner de "pensando", lo quitamos
+    const thinkingSpinner = chatHistory.querySelector('.thinking');
+    if (thinkingSpinner) thinkingSpinner.remove();
+    
+    const messageHtml = `
+        <div class="chat-message ${senderClass}">
+            <div class="avatar" ${avatarImageClass}>${avatarContent}</div>
+            <div class="message-bubble">${text}</div>
         </div>
     `;
-
-    showModal('aidanai-modal');
+    chatHistory.insertAdjacentHTML('beforeend', messageHtml);
+    chatHistory.scrollTop = chatHistory.scrollHeight; // Auto-scroll al final
 };
 
 /**
- * Gestiona la pregunta del usuario, llama a la función de análisis y muestra la respuesta.
+ * Muestra el spinner de "pensando" del asistente.
  */
-const handleAskAidanai = async (questionKey) => {
-    const responseContainer = select('aidanai-response-container');
-    if (!responseContainer) return;
-    
-    responseContainer.innerHTML = `<div id="aidanai-response" style="text-align:center;"><span class="spinner"></span><p>Analizando tus datos...</p></div>`;
-    hapticFeedback('light');
+const showAidanaiThinking = () => {
+    const chatHistory = select('aidanai-chat-history');
+    if (!chatHistory) return;
 
-    selectAll('.aidanai-question').forEach(b => b.disabled = true);
-    let responseHtml = '';
-    
-    try {
-        switch(questionKey) {
-            case 'biggest-expense':
-                responseHtml = analyzeBiggestExpense();
-                break;
-            case 'main-outflow':
-                responseHtml = analyzeMainOutflow();
-                break;
-            case 'savings-check':
-                responseHtml = await analyzeSavingsRate();
-                break;
-            case 'unusual-activity':
-                responseHtml = analyzeUnusualActivity();
-                break;
-        }
-    } catch(e) {
-        console.error("Error del Asistente IA:", e);
-        responseHtml = `<p class="text-danger">Hubo un error al analizar tus datos. Revisa la consola para más detalles.</p>`;
+    const thinkingHtml = `
+        <div class="chat-message from-aidanai thinking">
+            <div class="avatar" style="background-image: url(aiDANaI.webp); background-size: cover;"></div>
+            <div class="message-bubble">
+                <span class="spinner" style="width:20px; height:20px;"></span>
+            </div>
+        </div>
+    `;
+    chatHistory.insertAdjacentHTML('beforeend', thinkingHtml);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+}
+
+/**
+ * Analiza el texto del usuario y devuelve una respuesta de la IA.
+ * @param {string} query - La pregunta del usuario.
+ * @returns {Promise<string>} La respuesta HTML del asistente.
+ */
+async function parseUserQuery(query) {
+    const q = query.toLowerCase();
+
+    // Reglas de intención (de más específicas a más genéricas)
+    if (q.includes('gasto') && (q.includes('mayor') || q.includes('grande'))) {
+        return analyzeBiggestExpense();
+    }
+    if ((q.includes('categor') && q.includes('gasto')) || q.includes('reparto gastos')) {
+        return analyzeMainOutflow();
+    }
+    if (q.includes('ahorro') && (q.includes('saludable') || q.includes('cómo voy') || q.includes('tasa'))) {
+        return await analyzeSavingsRate();
+    }
+    if (q.includes('inusual') || q.includes('raro') || q.includes('anormal')) {
+        return analyzeUnusualActivity();
     }
 
+    // Respuesta por defecto si no se entiende la pregunta
+    return `Lo siento, no he entendido bien tu pregunta. Puedes probar a preguntarme cosas como:<br><ul><li>"¿Cuál fue mi mayor gasto?"</li><li>"Analiza mis gastos por categoría"</li><li>"¿Es buena mi tasa de ahorro?"</li></ul>`;
+}
+
+/**
+ * Gestiona el envío de una nueva pregunta desde el formulario o los chips.
+ * @param {string} queryText - El texto de la pregunta.
+ */
+const handleAidanaiQuery = async (queryText) => {
+    if (!queryText || queryText.trim() === '') return;
+
+    addMessageToChat(escapeHTML(queryText), 'user');
+    showAidanaiThinking();
+    hapticFeedback('light');
+
+    const responseHtml = await parseUserQuery(queryText);
+
     setTimeout(() => {
-        responseContainer.innerHTML = `<div id="aidanai-response">${responseHtml}</div>`;
-        selectAll('.aidanai-question').forEach(b => b.disabled = false);
+        addMessageToChat(responseHtml, 'aidanai');
         hapticFeedback('success');
-    }, 1000);
+    }, 1200); // Retardo para simular procesamiento
 };
 
-// --- FUNCIONES DE ANÁLISIS DEL ASISTENTE ---
-
-function analyzeBiggestExpense() {
-    const lastMonth = new Date();
-    lastMonth.setMonth(lastMonth.getMonth() - 1);
-    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
-    const expensesLastMonth = (recentMovementsCache || []).filter(m => 
-        new Date(m.fecha) >= lastMonth && m.tipo === 'movimiento' && m.cantidad < 0 && visibleAccountIds.has(m.cuentaId)
-    );
-
-    if (expensesLastMonth.length === 0) return `<p>¡Felicidades! Parece que no tuviste ningún gasto el mes pasado.</p>`;
+/**
+ * Muestra el modal del asistente con el saludo y las preguntas iniciales.
+ */
+const showAidanaiModal = () => {
+    // Las funciones de análisis (analyzeBiggestExpense, etc.) que ya tienes se mantienen sin cambios
     
-    const biggestExpense = expensesLastMonth.reduce((max, mov) => mov.cantidad < max.cantidad ? mov : max);
-    const concepto = db.conceptos.find(c => c.id === biggestExpense.conceptoId)?.nombre || 'Sin categoría';
-
-    return `<p>Tu mayor gasto del mes pasado fue de <strong>${formatCurrency(biggestExpense.cantidad)}</strong> en "<em>${escapeHTML(biggestExpense.descripcion)}</em>", bajo el concepto de <strong>${concepto}</strong>.</p>`;
-}
-
-function analyzeMainOutflow() {
-    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
-    const expenseTotals = (recentMovementsCache || []).reduce((acc, m) => {
-        if (m.tipo === 'movimiento' && m.cantidad < 0 && visibleAccountIds.has(m.cuentaId)) {
-            acc[m.conceptoId] = (acc[m.conceptoId] || 0) + m.cantidad;
-        }
-        return acc;
-    }, {});
-
-    const sortedExpenses = Object.entries(expenseTotals).sort((a, b) => a[1] - b[1]);
-
-    if (sortedExpenses.length === 0) return `<p>No he encontrado categorías de gastos significativas.</p>`;
+    showModal('aidanai-modal');
     
-    let html = `<p>Tus <strong>3 mayores focos de gasto</strong> recientes son:</p><ol style="list-style-position: inside; padding-left: 8px;">`;
-    sortedExpenses.slice(0, 3).forEach(([conceptoId, total]) => {
-        const concepto = db.conceptos.find(c => c.id === conceptoId)?.nombre || 'Desconocido';
-        html += `<li style="margin-bottom: 4px;"><strong>${concepto}:</strong> ${formatCurrency(total)}</li>`;
+    const chatHistory = select('aidanai-chat-history');
+    const suggestionsContainer = select('aidanai-suggestions');
+    const inputForm = select('aidanai-input-form');
+    const userInput = select('aidanai-user-input');
+
+    if (!chatHistory || !suggestionsContainer || !inputForm || !userInput) return;
+
+    // 1. Limpiar y configurar estado inicial
+    chatHistory.innerHTML = '';
+    userInput.value = '';
+    
+    // 2. Mensaje de bienvenida
+    addMessageToChat("¡Hola! Soy tu copiloto financiero. ¿Qué necesitas analizar hoy?", 'aidanai');
+    
+    // 3. Rellenar chips de sugerencias
+    suggestionsContainer.innerHTML = starterQuestions.map(q => 
+        `<button class="suggestion-chip" data-action="ask-aidanai" data-question="${q}">${q}</button>`
+    ).join('');
+    
+    // 4. Configurar el listener del formulario (solo una vez)
+    // Usamos un clon para evitar múltiples listeners
+    const newForm = inputForm.cloneNode(true);
+    inputForm.parentNode.replaceChild(newForm, inputForm);
+
+    newForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = newForm.querySelector('#aidanai-user-input');
+        handleAidanaiQuery(input.value);
+        input.value = '';
     });
-    return html + `</ol>`;
-}
+};
 
-async function analyzeSavingsRate() {
-    const { current } = await getFilteredMovements(false);
-    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
-    const { ingresos, saldoNeto } = calculateTotals(current, visibleAccountIds);
-    
-    if (ingresos <= 0) return `<p>No he detectado ingresos en el periodo para calcular tu tasa de ahorro.</p>`;
-
-    const tasaAhorro = (saldoNeto / ingresos) * 100;
-    let advice = '';
-    if (tasaAhorro >= 20) advice = `¡Excelente! Estás ahorrando más del 20%, un objetivo financiero muy saludable.`;
-    else if (tasaAhorro >= 10) advice = `Vas por buen camino. Ahorrar entre un 10% y un 20% es un gran logro.`;
-    else if (tasaAhorro > 0) advice = `¡Bien! Estás ahorrando. Revisa tus gastos para ver si puedes aumentar este porcentaje.`;
-    else advice = `Has gastado más de lo que ingresaste. Es importante analizar por qué y crear un plan para revertir la situación.`;
-
-    return `<p>En el periodo actual, tu tasa de ahorro es del <strong>${tasaAhorro.toFixed(1)}%</strong>.</p><p style="margin-top: 8px;">${advice}</p>`;
-}
-
-function analyzeUnusualActivity() {
-    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
-    const allExpenses = db.movimientos.filter(m => m.tipo === 'movimiento' && m.cantidad < 0 && visibleAccountIds.has(m.cuentaId));
-    
-    if (allExpenses.length < 10) return `<p>Necesito más historial para detectar patrones. Sigue registrando tus gastos.</p>`;
-
-    const avgExpense = allExpenses.reduce((sum, m) => sum + m.cantidad, 0) / allExpenses.length;
-    const stdDev = Math.sqrt(allExpenses.map(m => Math.pow(m.cantidad - avgExpense, 2)).reduce((sum, v) => sum + v, 0) / allExpenses.length);
-
-    const threshold = avgExpense - (2.5 * stdDev); 
-    const unusualTransactions = allExpenses.filter(m => m.cantidad < threshold).sort((a,b) => a.cantidad - b.cantidad);
-    
-    if (unusualTransactions.length === 0) return `<p>No he detectado ninguna transacción que se desvíe de tus patrones de gasto habituales. ¡Todo parece en orden!</p>`;
-    
-    const mostUnusual = unusualTransactions[0];
-    const concepto = db.conceptos.find(c => c.id === mostUnusual.conceptoId)?.nombre || 'Sin categoría';
-
-    return `<p>He detectado un gasto de <strong>${formatCurrency(mostUnusual.cantidad)}</strong> en "<em>${escapeHTML(mostUnusual.descripcion)}</em>" que es significativamente más alto que tu promedio.</p><p style="margin-top:8px;">Puede ser normal, pero siempre es bueno revisarlo. ¿Es correcto?</p>`;
-}
-
-// =================================================================
-// === FIN: MÓDULO DEL ASISTENTE INTELIGENTE aiDANaI           ===
-// =================================================================
+// ========================================================================
+// === FIN: MÓDULO CONVERSACIONAL aiDANaI v2.0                         ===
+// ========================================================================
