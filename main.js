@@ -9146,21 +9146,29 @@ const addMessageToChat = (text, sender) => {
     if (!chatHistory) return;
 
     const senderClass = sender === 'user' ? 'from-user' : 'from-aidanai';
-    const avatarContent = sender === 'user' ? (currentUser.email ? currentUser.email[0].toUpperCase() : 'U') : '';
+    const avatarContent = sender === 'user' 
+        ? (currentUser.email ? currentUser.email[0].toUpperCase() : 'U') 
+        : '';
+
+    // CORRECCIÓN: Definimos los atributos del avatar antes de construir el string.
+    let avatarAttributes = '';
+    if (sender === 'aidanai') {
+        // En lugar de buscar con querySelector, inyectamos el estilo directamente.
+        avatarAttributes = 'style="background-image: url(aiDANaI.webp); background-size: cover;"';
+    }
     
+    // Si hay un spinner de "pensando", lo quitamos. Esto no cambia.
     const thinkingSpinner = chatHistory.querySelector('.thinking');
     if (thinkingSpinner) thinkingSpinner.remove();
     
+    // Construimos el HTML final con los atributos ya inyectados.
     const messageHtml = `
         <div class="chat-message ${senderClass}">
-            <div class="avatar">${avatarContent}</div>
+            <div class="avatar" ${avatarAttributes}>${avatarContent}</div>
             <div class="message-bubble">${text}</div>
         </div>
     `;
-    if (sender === 'aidanai') {
-        const aiAvatar = messageHtml.querySelector('.avatar');
-        if(aiAvatar) aiAvatar.style.backgroundImage = "url('aiDANaI.webp')";
-    }
+
     chatHistory.insertAdjacentHTML('beforeend', messageHtml);
     chatHistory.scrollTop = chatHistory.scrollHeight;
 };
