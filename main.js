@@ -287,7 +287,7 @@ const applyDiarioFilters = async () => {
     showToast('Filtros aplicados. Mostrando resultados.', 'info');
     
     // Volvemos a renderizar la página del Diario para que aplique los filtros
-    await renderDiarioPage();
+    await renderMovimientosPage();
 };
 
 // La función que se ejecuta al pulsar "Limpiar Filtros"
@@ -296,7 +296,7 @@ const clearDiarioFilters = async () => {
     select('diario-filters-form').reset();
     hideModal('diario-filters-modal');
     showToast('Filtros eliminados.', 'info');
-    await renderDiarioPage();
+    await renderMovimientosPage();
 };
 
 // ▲▲▲ FIN DEL BLOQUE A PEGAR ▲▲▲
@@ -662,7 +662,7 @@ async function loadCoreData(uid) {
             if (collectionName === 'recurrentes') {
     dataLoaded.recurrentes = true;
     const activePage = document.querySelector('.view--active');
-    if (activePage && (activePage.id === PAGE_IDS.DIARIO)) {
+    if (activePage && (activePage.id === PAGE_IDS.MOVIMIENTOS)) {
         // En lugar de recargar todo, solo actualizamos la UI de la lista virtual.
         // Esto es instantáneo y no vuelve a pedir datos a la BBDD.
         updateVirtualListUI(); 
@@ -1333,7 +1333,7 @@ window.addEventListener('offline', () => {
             
             updateSyncStatusIcon();
             buildIntelligentIndex();
-			navigateTo(PAGE_IDS.DIARIO, true); // <-- CAMBIADO
+			navigateTo(PAGE_IDS.MOVIMIENTOS, true); // <-- CAMBIADO
             updateThemeIcon(localStorage.getItem('appTheme') || 'default');
             isInitialLoadComplete = true;
 			};
@@ -1503,12 +1503,12 @@ const navigateTo = async (pageId, isInitial = false) => {
     if (pageId === PAGE_IDS.INVERSIONES && !dataLoaded.inversiones) await loadInversiones();
 
     const pageRenderers = {
-        [PAGE_IDS.INICIO]: { title: 'Panel', render: renderInicioPage, actions: standardActions },
-        [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
-        [PAGE_IDS.INVERSIONES]: { title: 'Inversiones', render: renderInversionesView, actions: standardActions },
-        [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage, actions: standardActions },
-        [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
-    };
+    [PAGE_IDS.RESUMEN]: { title: 'Resumen', render: renderResumenPage, actions: standardActions },
+    [PAGE_IDS.MOVIMIENTOS]: { title: 'Movimientos', render: renderMovimientosPage, actions: standardActions },
+    [PAGE_IDS.PLANIFICACION]: { title: 'Planificación', render: renderPlanificacionPage, actions: standardActions },
+    [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: standardActions }, // ¡NUEVA LÍNEA!
+    [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
+};
 
     if (pageRenderers[pageId]) { 
         if (leftEl) {
@@ -2845,7 +2845,7 @@ const loadMoreMovements = async (isInitial = false) => {
     isLoadingMoreMovements = true;
     const loadMoreBtn = select('load-more-btn'); // Esto se usaba para el botón, lo mantenemos por si vuelve.
 
-    // La lógica de mostrar esqueletos o el spinner del botón pertenece a renderDiarioPage,
+    // La lógica de mostrar esqueletos o el spinner del botón pertenece a renderMovimientosPage,
     // pero la dejamos aquí condicionada para no romper nada si se usa en otro contexto.
     if (isInitial) {
         let skeletonHTML = '';
@@ -2920,10 +2920,19 @@ const loadMoreMovements = async (isInitial = false) => {
     // Le decimos al vigilante que empiece a observar nuestro activador invisible.
     movementsObserver.observe(trigger);
 };
+// AÑADE ESTA NUEVA FUNCIÓN TEMPORAL
+const renderPatrimonioPage = async () => {
+    const container = select(PAGE_IDS.PATRIMONIO);
+    if (!container) return;
+    container.innerHTML = `<div class="empty-state">
+        <span class="material-icons">construction</span>
+        <h3>Sección 'Patrimonio' en construcción</h3>
+        <p>¡Aquí verás todas tus cuentas e inversiones!</p>
+    </div>`;
+};
+// ▼▼▼ REEMPLAZA TU FUNCIÓN renderMovimientosPage POR COMPLETO CON ESTA VERSIÓN ▼▼▼
 
-// ▼▼▼ REEMPLAZA TU FUNCIÓN renderDiarioPage POR COMPLETO CON ESTA VERSIÓN ▼▼▼
-
-const renderDiarioPage = async () => {
+const renderMovimientosPage = async () => {
     if (isDiarioPageRendering) {
         console.log("BLOQUEADO: Intento de re-renderizar el Diario mientras ya estaba en proceso.");
         return;
@@ -3286,7 +3295,7 @@ const renderPatrimonioPage = async () => {
             if (userEmailEl && currentUser) userEmailEl.textContent = currentUser.email;  			
         };
 		
-  const renderInicioPage = async () => {
+  const renderResumenPage = async () => {
     const container = select(PAGE_IDS.INICIO);
     if (!container) return;
 
@@ -4218,7 +4227,7 @@ const renderInicioResumenView = () => {
                     html += renderVirtualListItem({ type: 'transaction', movement: mov });
                 }
             }
-            html += `<div style="text-align: center; margin-top: var(--sp-4);"><button class="btn btn--secondary" data-action="navigate" data-page="${PAGE_IDS.DIARIO}">Ver todos los movimientos</button></div>`;
+            html += `<div style="text-align: center; margin-top: var(--sp-4);"><button class="btn btn--secondary" data-action="navigate" data-page="${PAGE_IDS.MOVIMIENTOS}">Ver todos los movimientos</button></div>`;
             recientesContainer.innerHTML = html;
         };
 		 const renderPendingRecurrents = () => {
@@ -7112,7 +7121,7 @@ function createCustomSelect(selectElement) {
                     showDrillDownModal(`Movimientos de: ${conceptName}`, movementsOfConcept);
                 });
             },
-            'toggle-diario-view': () => { diarioViewMode = diarioViewMode === 'list' ? 'calendar' : 'list'; const btnIcon = selectOne('[data-action="toggle-diario-view"] .material-icons'); if(btnIcon) btnIcon.textContent = diarioViewMode === 'list' ? 'calendar_month' : 'list'; renderDiarioPage(); },
+            'toggle-diario-view': () => { diarioViewMode = diarioViewMode === 'list' ? 'calendar' : 'list'; const btnIcon = selectOne('[data-action="toggle-diario-view"] .material-icons'); if(btnIcon) btnIcon.textContent = diarioViewMode === 'list' ? 'calendar_month' : 'list'; renderMovimientosPage(); },
             'calendar-nav': () => {
                 const direction = actionTarget.dataset.direction;
                 if (!(diarioCalendarDate instanceof Date) || isNaN(diarioCalendarDate)) {
@@ -7837,7 +7846,7 @@ const handleSaveMovement = async (form, btn) => {
         if (activePage && activePage.id === PAGE_IDS.PLANIFICACION) {
             renderPlanificacionPage();
         } else if (activePage && activePage.id === PAGE_IDS.DIARIO) {
-            renderDiarioPage(); // También refresca el diario por si hay pendientes
+            renderMovimientosPage(); // También refresca el diario por si hay pendientes
         }
         return true;
 
@@ -7945,7 +7954,7 @@ const handleSaveMovement = async (form, btn) => {
             showToast("Error crítico al guardar. La operación fue cancelada.", "danger");
             setButtonLoading(btn, false);
             if (select('diario-page')?.classList.contains('view--active')) {
-                await renderDiarioPage();
+                await renderMovimientosPage();
             }
             return false;
         }
