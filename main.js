@@ -65,9 +65,9 @@ const handleExportFilteredCsv = (btn) => {
         const firebaseConfig = { apiKey: "AIzaSyAp-t-2qmbvSX-QEBW9B1aAJHBESqnXy9M", authDomain: "cuentas-aidanai.firebaseapp.com", projectId: "cuentas-aidanai", storageBucket: "cuentas-aidanai.appspot.com", messagingSenderId: "58244686591", appId: "1:58244686591:web:85c87256c2287d350322ca" };
 const PAGE_IDS = {
     INICIO: 'inicio-page',
-    DIARIO: 'diario-page',
+    DIARIO: 'diario-page', // <-- ID corregido para coincidir con el HTML
     INVERSIONES: 'inversiones-page',
-    PLANIFICAR: 'planificar-page', // ¡La nueva página!
+    PLANIFICAR: 'planificar-page',
     AJUSTES: 'ajustes-page',
 };
 
