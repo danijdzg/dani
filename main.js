@@ -9130,8 +9130,8 @@ const renderAjustesPage = () => {
     loadConfig();
 };
 
- // ========================================================================
-// === INICIO: MÓDULO DE INTERFAZ para aiDANaI v3.0                     ===
+// ========================================================================
+// === INICIO: MÓDULO DE INTERFAZ para aiDANaI v3.0 (CORREGIDO)        ===
 // ========================================================================
 
 const starterQuestions = [
@@ -9141,6 +9141,11 @@ const starterQuestions = [
     "Busca gastos inusuales"
 ];
 
+/**
+ * Añade un mensaje (del usuario o de la IA) al historial del chat.
+ * @param {string} text - El contenido del mensaje.
+ * @param {string} sender - 'user' o 'aidanai'.
+ */
 const addMessageToChat = (text, sender) => {
     const chatHistory = select('aidanai-chat-history');
     if (!chatHistory) return;
@@ -9149,28 +9154,27 @@ const addMessageToChat = (text, sender) => {
     const avatarContent = sender === 'user' 
         ? (currentUser.email ? currentUser.email[0].toUpperCase() : 'U') 
         : '';
-
-    // CORRECCIÓN: Definimos los atributos del avatar antes de construir el string.
+    
+    // *** ESTA ES LA LÍNEA CRÍTICA CORREGIDA ***
+    // Construimos los atributos del avatar como texto ANTES de crear el HTML final.
+    // Esto evita el error de "querySelector is not a function".
     let avatarAttributes = '';
     if (sender === 'aidanai') {
-        // En lugar de buscar con querySelector, inyectamos el estilo directamente.
         avatarAttributes = 'style="background-image: url(aiDANaI.webp); background-size: cover;"';
     }
     
-    // Si hay un spinner de "pensando", lo quitamos. Esto no cambia.
     const thinkingSpinner = chatHistory.querySelector('.thinking');
     if (thinkingSpinner) thinkingSpinner.remove();
     
-    // Construimos el HTML final con los atributos ya inyectados.
     const messageHtml = `
         <div class="chat-message ${senderClass}">
             <div class="avatar" ${avatarAttributes}>${avatarContent}</div>
             <div class="message-bubble">${text}</div>
         </div>
     `;
-
+    
     chatHistory.insertAdjacentHTML('beforeend', messageHtml);
-    chatHistory.scrollTop = chatHistory.scrollHeight;
+    chatHistory.scrollTop = chatHistory.scrollHeight; // Auto-scroll al final
 };
 
 const showAidanaiThinking = () => {
@@ -9192,25 +9196,20 @@ const handleAidanaiQuery = async (queryText) => {
     showAidanaiThinking();
     hapticFeedback('light');
 
-    // **¡AQUÍ ESTÁ LA MAGIA!**
-    // 1. Obtén la intención del nuevo motor.
     const intent = getIntent(queryText.toLowerCase());
     
-    // 2. Prepara los datos EN MEMORIA que necesitará el análisis.
     const appData = {
-        movements: recentMovementsCache, // Usa el caché rápido para análisis
+        movements: recentMovementsCache,
         accounts: db.cuentas,
         concepts: db.conceptos
     };
 
-    // 3. Obtén la respuesta del nuevo motor.
     const responseHtml = await getAidanaiResponse(intent, appData);
 
-    // 4. Muestra la respuesta con una pequeña demora para fluidez.
     setTimeout(() => {
         addMessageToChat(responseHtml, 'aidanai');
         hapticFeedback('success');
-    }, 500); // Un retardo más corto, ¡la respuesta ya es instantánea!
+    }, 500);
 };
 
 const showAidanaiModal = () => {
@@ -9242,6 +9241,7 @@ const showAidanaiModal = () => {
         input.value = '';
     });
 };
+
 // ========================================================================
-// === FIN: MÓDULO DE INTERFAZ para aiDANaI v3.0                      ===
+// === FIN: MÓDULO DE INTERFAZ para aiDANaI v3.0 (CORREGIDO)           ===
 // ========================================================================
