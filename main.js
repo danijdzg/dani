@@ -6022,9 +6022,6 @@ const showValoracionModal = (cuentaId) => {
     showGenericModal(`Actualizar Valor de ${cuenta.nombre}`, formHtml);
 };
 
-// ======================================================================================
-// === INICIO: GUARDADO DE VALORACIÓN - VERSIÓN FINAL CON ACTUALIZACIÓN OPTIMISTA (v8.0) ===
-// ======================================================================================
 const handleSaveValoracion = async (form, btn) => {
     setButtonLoading(btn, true);
     const cuentaId = form.dataset.id;
@@ -6081,16 +6078,21 @@ const handleSaveValoracion = async (form, btn) => {
         const tipoDeCuenta = toSentenceCase(cuenta.tipo || 'S/T');
         deselectedInvestmentTypesFilter.delete(tipoDeCuenta);
 
-        // 3. Ahora sí, redibujamos la pantalla. Esta llamada usará la memoria que acabamos de actualizar.
-        const container = select('inversiones-content-container');
-        if (container) {
-            await renderInversionesPage('inversiones-content-container');
-        }
+        // 3. ▼▼▼ CORRECCIÓN CLAVE: LLAMAMOS A LA FUNCIÓN CORRECTA ▼▼▼
+        // En lugar de llamar a una función inexistente, llamamos a renderInversionesView,
+        // que es la encargada de redibujar toda la pestaña de Inversiones.
+        await renderInversionesView();
+		 setTimeout(() => {
+            const updatedCard = document.querySelector(`.modal__list-item[data-id="${cuentaId}"]`);
+            if (updatedCard) {
+                updatedCard.classList.add('highlight-animation');
+                // Limpiamos la clase después de la animación para futuras actualizaciones
+                updatedCard.addEventListener('animationend', () => {
+                    updatedCard.classList.remove('highlight-animation');
+                }, { once: true });
+            }
+        }, 50);
         
-        // ===================================================================
-        // === FIN: ACTUALIZACIÓN OPTIMISTA DE LA UI                       ===
-        // ===================================================================
-
         setButtonLoading(btn, false);
         hideModal('generic-modal');
         hapticFeedback('success');
