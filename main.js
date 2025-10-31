@@ -2330,7 +2330,7 @@ const renderBudgetTracking = async () => {
 };
 
 // ====================================================================================
-// === PASO 2: REEMPLAZA ESTA FUNCIÓN COMPLETA - VERSIÓN CON ETIQUETAS CLARAS ===
+// === REEMPLAZA ESTA FUNCIÓN COMPLETA - VERSIÓN CON ORDEN ALFABÉTICO POR NOMBRE ===
 // ====================================================================================
 
 let investmentChartMode = 'valorado';
@@ -2468,8 +2468,24 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         }
         const listContainer = select('investment-assets-list');
         if (listContainer) {
-            const listHtml = displayAssetsData.sort((a,b) => b.valorActual - a.valorActual).map(cuenta => {
+            
+            // --- ▼▼▼ ¡AQUÍ ESTÁ EL CAMBIO! ▼▼▼ ---
+            const listHtml = displayAssetsData
+                .sort((a, b) => a.nombre.localeCompare(b.nombre)) // Ordenamos alfabéticamente por 'nombre'
+                .map(cuenta => {
+            // --- ▲▲▲ ¡FIN DEL CAMBIO! ▲▲▲ ---
                     const pnlClass = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
+                    const ultimaValoracion = (db.inversiones_historial || [])
+                        .filter(v => v.cuentaId === cuenta.id)
+                        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
+
+                    let ultimaValoracionHtml = '';
+                    if (ultimaValoracion) {
+                        const fechaVal = new Date(ultimaValoracion.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        ultimaValoracionHtml = `<span title="Fecha de la última valoración" style="color:var(--c-on-surface-secondary); font-size: var(--fs-xs);">Últ. Val: ${fechaVal}</span>`;
+                    } else {
+                        ultimaValoracionHtml = `<span title="Este activo no tiene ninguna valoración manual registrada" style="color:var(--c-on-surface-secondary); font-size: var(--fs-xs); font-style: italic;">Sin valorar</span>`;
+                    }
                     return `<div class="modal__list-item" data-action="view-account-details" data-id="${cuenta.id}" style="cursor: pointer; padding: var(--sp-3); display: block; border-bottom: 1px solid var(--c-outline);">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; margin-bottom: var(--sp-1);">
                             <strong style="font-size: var(--fs-base);">${escapeHTML(cuenta.nombre)}</strong><strong style="font-size: var(--fs-base);">${formatCurrency(cuenta.valorActual)}</strong>
@@ -2480,7 +2496,10 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                             <span style="color:var(--c-on-surface-secondary); font-size: var(--fs-xs);">Aportado: ${formatCurrency(cuenta.capitalInvertido)}</span>
-                            <button class="btn btn--secondary" data-action="update-asset-value" data-id="${cuenta.id}" style="padding: 4px 10px; font-size: 0.75rem;"><span class="material-icons" style="font-size: 14px;">add_chart</span>Valoración</button>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                ${ultimaValoracionHtml}
+                                <button class="btn btn--secondary" data-action="update-asset-value" data-id="${cuenta.id}" style="padding: 4px 10px; font-size: 0.75rem;"><span class="material-icons" style="font-size: 14px;">add_chart</span>Valoración</button>
+                            </div>
                         </div>
                     </div>`;
                 }).join('');
