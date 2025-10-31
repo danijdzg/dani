@@ -103,33 +103,33 @@
     
     <div id="app-root" class="app-layout">
 <nav class="bottom-nav">
-    <!-- 1. Panel (Presente) -->
-    <button data-action="navigate" data-page="inicio-page" class="bottom-nav__item">
+    <!-- 1. Resumen (antes Panel) -->
+    <button data-action="navigate" data-page="resumen-page" class="bottom-nav__item">
         <span class="material-icons">dashboard</span>
-        <span class="bottom-nav__label">Panel</span>
+        <span class="bottom-nav__label">Resumen</span>
     </button>
     
-    <!-- 2. Diario (Pasado Reciente) -->
-    <button data-action="navigate" data-page="diario-page" class="bottom-nav__item">
+    <!-- 2. Movimientos (antes Diario) -->
+    <button data-action="navigate" data-page="movimientos-page" class="bottom-nav__item">
         <span class="material-icons">receipt_long</span>
-        <span class="bottom-nav__label">Diario</span>
+        <span class="bottom-nav__label">Movimientos</span>
     </button>
     
-    <!-- 3. Añadir (Acción Principal, Invariable) -->
+    <!-- 3. Añadir (sin cambios) -->
     <button data-action="open-main-add-modal" id="bottom-nav-add-btn">
         <span class="material-icons">add</span>
     </button>
     
-    <!-- 4. Planificar (Futuro Estratégico) -->
-    <button data-action="navigate" data-page="planificar-page" class="bottom-nav__item">
+    <!-- 4. Planificación (antes Planificar) -->
+    <button data-action="navigate" data-page="planificacion-page" class="bottom-nav__item">
         <span class="material-icons">edit_calendar</span>
-        <span class="bottom-nav__label">Planificar</span>
+        <span class="bottom-nav__label">Planificación</span>
     </button>
     
-    <!-- 5. Inversiones (Futuro a Largo Plazo) -->
-    <button data-action="navigate" data-page="inversiones-page" class="bottom-nav__item">
-        <span class="material-icons">rocket_launch</span>
-        <span class="bottom-nav__label">Inversiones</span>
+    <!-- 5. Patrimonio (NUEVA, reemplaza Inversiones) -->
+    <button data-action="navigate" data-page="patrimonio-page" class="bottom-nav__item">
+        <span class="material-icons">account_balance</span>
+        <span class="bottom-nav__label">Patrimonio</span>
     </button>
 </nav>
 
@@ -162,12 +162,15 @@
 </div>
 
 <main class="app-layout__main">
-    <section id="inicio-page" class="view"></section>
-    <section id="diario-page" class="view" style="padding: 0; gap: 0;"></section>
-    <section id="planificar-page" class="view"></section> 
-    <section id="inversiones-page" class="view"></section>
-    <section id="ajustes-page" class="view"></section>
-</main> 
+    <section id="resumen-page" class="view"></section>      <!-- Renombrada de 'inicio-page' -->
+    <section id="movimientos-page" class="view" style="padding: 0; gap: 0;"></section> <!-- Renombrada de 'diario-page' -->
+    <section id="planificacion-page" class="view"></section>  <!-- Renombrada de 'planificar-page' -->
+    <section id="patrimonio-page" class="view"></section>     <!-- ¡NUEVA! -->
+    <section id="ajustes-page" class="view"></section>      <!-- Se mantiene para el futuro -->
+    
+    <!-- La antigua página de inversiones ya no se necesita como vista principal -->
+    <!-- <section id="inversiones-page" class="view"></section> --> 
+</main>
     
 </div>
     
