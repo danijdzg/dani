@@ -9130,8 +9130,8 @@ const renderAjustesPage = () => {
     loadConfig();
 };
 
-// ========================================================================
-// === INICIO: MÓDULO CONVERSACIONAL aiDANaI v2.0                       ===
+ // ========================================================================
+// === INICIO: MÓDULO DE INTERFAZ para aiDANaI v3.0                     ===
 // ========================================================================
 
 const starterQuestions = [
@@ -9141,84 +9141,42 @@ const starterQuestions = [
     "Busca gastos inusuales"
 ];
 
-/**
- * Añade un mensaje (del usuario o de la IA) al historial del chat.
- * @param {string} text - El contenido del mensaje.
- * @param {string} sender - 'user' o 'aidanai'.
- */
 const addMessageToChat = (text, sender) => {
     const chatHistory = select('aidanai-chat-history');
     if (!chatHistory) return;
 
     const senderClass = sender === 'user' ? 'from-user' : 'from-aidanai';
-    const avatarContent = sender === 'user' 
-        ? (currentUser.email ? currentUser.email[0].toUpperCase() : 'U') 
-        : '';
-    const avatarImageClass = sender === 'aidanai' ? 'style="background-image: url(aiDANaI.webp); background-size: cover;"' : '';
+    const avatarContent = sender === 'user' ? (currentUser.email ? currentUser.email[0].toUpperCase() : 'U') : '';
     
-    // Si hay un spinner de "pensando", lo quitamos
     const thinkingSpinner = chatHistory.querySelector('.thinking');
     if (thinkingSpinner) thinkingSpinner.remove();
     
     const messageHtml = `
         <div class="chat-message ${senderClass}">
-            <div class="avatar" ${avatarImageClass}>${avatarContent}</div>
+            <div class="avatar">${avatarContent}</div>
             <div class="message-bubble">${text}</div>
         </div>
     `;
+    if (sender === 'aidanai') {
+        const aiAvatar = messageHtml.querySelector('.avatar');
+        if(aiAvatar) aiAvatar.style.backgroundImage = "url('aiDANaI.webp')";
+    }
     chatHistory.insertAdjacentHTML('beforeend', messageHtml);
-    chatHistory.scrollTop = chatHistory.scrollHeight; // Auto-scroll al final
+    chatHistory.scrollTop = chatHistory.scrollHeight;
 };
 
-/**
- * Muestra el spinner de "pensando" del asistente.
- */
 const showAidanaiThinking = () => {
     const chatHistory = select('aidanai-chat-history');
     if (!chatHistory) return;
-
     const thinkingHtml = `
         <div class="chat-message from-aidanai thinking">
             <div class="avatar" style="background-image: url(aiDANaI.webp); background-size: cover;"></div>
-            <div class="message-bubble">
-                <span class="spinner" style="width:20px; height:20px;"></span>
-            </div>
-        </div>
-    `;
+            <div class="message-bubble"><span class="spinner" style="width:20px; height:20px;"></span></div>
+        </div>`;
     chatHistory.insertAdjacentHTML('beforeend', thinkingHtml);
     chatHistory.scrollTop = chatHistory.scrollHeight;
-}
+};
 
-/**
- * Analiza el texto del usuario y devuelve una respuesta de la IA.
- * @param {string} query - La pregunta del usuario.
- * @returns {Promise<string>} La respuesta HTML del asistente.
- */
-async function parseUserQuery(query) {
-    const q = query.toLowerCase();
-
-    // Reglas de intención (de más específicas a más genéricas)
-    if (q.includes('gasto') && (q.includes('mayor') || q.includes('grande'))) {
-        return analyzeBiggestExpense();
-    }
-    if ((q.includes('categor') && q.includes('gasto')) || q.includes('reparto gastos')) {
-        return analyzeMainOutflow();
-    }
-    if (q.includes('ahorro') && (q.includes('saludable') || q.includes('cómo voy') || q.includes('tasa'))) {
-        return await analyzeSavingsRate();
-    }
-    if (q.includes('inusual') || q.includes('raro') || q.includes('anormal')) {
-        return analyzeUnusualActivity();
-    }
-
-    // Respuesta por defecto si no se entiende la pregunta
-    return `Lo siento, no he entendido bien tu pregunta. Puedes probar a preguntarme cosas como:<br><ul><li>"¿Cuál fue mi mayor gasto?"</li><li>"Analiza mis gastos por categoría"</li><li>"¿Es buena mi tasa de ahorro?"</li></ul>`;
-}
-
-/**
- * Gestiona el envío de una nueva pregunta desde el formulario o los chips.
- * @param {string} queryText - El texto de la pregunta.
- */
 const handleAidanaiQuery = async (queryText) => {
     if (!queryText || queryText.trim() === '') return;
 
@@ -9226,20 +9184,28 @@ const handleAidanaiQuery = async (queryText) => {
     showAidanaiThinking();
     hapticFeedback('light');
 
-    const responseHtml = await parseUserQuery(queryText);
+    // **¡AQUÍ ESTÁ LA MAGIA!**
+    // 1. Obtén la intención del nuevo motor.
+    const intent = getIntent(queryText.toLowerCase());
+    
+    // 2. Prepara los datos EN MEMORIA que necesitará el análisis.
+    const appData = {
+        movements: recentMovementsCache, // Usa el caché rápido para análisis
+        accounts: db.cuentas,
+        concepts: db.conceptos
+    };
 
+    // 3. Obtén la respuesta del nuevo motor.
+    const responseHtml = await getAidanaiResponse(intent, appData);
+
+    // 4. Muestra la respuesta con una pequeña demora para fluidez.
     setTimeout(() => {
         addMessageToChat(responseHtml, 'aidanai');
         hapticFeedback('success');
-    }, 1200); // Retardo para simular procesamiento
+    }, 500); // Un retardo más corto, ¡la respuesta ya es instantánea!
 };
 
-/**
- * Muestra el modal del asistente con el saludo y las preguntas iniciales.
- */
 const showAidanaiModal = () => {
-    // Las funciones de análisis (analyzeBiggestExpense, etc.) que ya tienes se mantienen sin cambios
-    
     showModal('aidanai-modal');
     
     const chatHistory = select('aidanai-chat-history');
@@ -9249,20 +9215,15 @@ const showAidanaiModal = () => {
 
     if (!chatHistory || !suggestionsContainer || !inputForm || !userInput) return;
 
-    // 1. Limpiar y configurar estado inicial
     chatHistory.innerHTML = '';
     userInput.value = '';
     
-    // 2. Mensaje de bienvenida
     addMessageToChat("¡Hola! Soy tu copiloto financiero. ¿Qué necesitas analizar hoy?", 'aidanai');
     
-    // 3. Rellenar chips de sugerencias
     suggestionsContainer.innerHTML = starterQuestions.map(q => 
         `<button class="suggestion-chip" data-action="ask-aidanai" data-question="${q}">${q}</button>`
     ).join('');
     
-    // 4. Configurar el listener del formulario (solo una vez)
-    // Usamos un clon para evitar múltiples listeners
     const newForm = inputForm.cloneNode(true);
     inputForm.parentNode.replaceChild(newForm, inputForm);
 
@@ -9273,7 +9234,6 @@ const showAidanaiModal = () => {
         input.value = '';
     });
 };
-
 // ========================================================================
-// === FIN: MÓDULO CONVERSACIONAL aiDANaI v2.0                         ===
+// === FIN: MÓDULO DE INTERFAZ para aiDANaI v3.0                      ===
 // ========================================================================
