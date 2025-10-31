@@ -221,37 +221,7 @@
     border: 2px solid red;
     background: #ffecec;
   }
-	/* === INICIO: Estilos para el Asistente aiDANaI === */
-.aidanai-modal-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: var(--sp-2);
-}
-.aidanai-modal-content img {
-    width: 80px;
-    height: 80px;
-    border-radius: 24px;
-    margin-bottom: var(--sp-3);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-.aidanai-modal-content h4 {
-    color: var(--c-primary);
-    font-weight: 700;
-    margin-bottom: var(--sp-2);
-    font-size: var(--fs-lg);
-}
-.aidanai-modal-content p {
-    color: var(--c-on-surface-secondary);
-    line-height: 1.6;
-    font-size: var(--fs-sm);
-}
-.aidanai-modal-content p strong {
-    color: var(--c-on-surface);
-    font-weight: 600;
-}
-/* === FIN: Estilos para el Asistente aiDANaI === */
+
 	
 	#pending-recurrents-container .accordion__content {
     display: flex;
@@ -1937,6 +1907,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     transition: background-color 0.2s, transform 0.2s;
     font-size: var(--fs-sm);
     font-weight: 600;
+    color: var(--c-on-surface); /* Aseguramos el color del texto */
 }
 .aidanai-question:hover {
     background-color: var(--c-surface-variant);
