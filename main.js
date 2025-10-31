@@ -1478,9 +1478,13 @@ const navigateTo = async (pageId, isInitial = false) => {
     <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
         <span class="material-icons">search</span>
     </button>
+    
+    <!-- ▼▼▼ EL BOTÓN QUE FALTABA ESTÁ AQUÍ ▼▼▼ -->
     <button data-action="show-aidanai-assistant" class="icon-btn" title="Asistente IA aiDANaI" aria-label="Asistente IA">
         <span class="material-icons">auto_awesome</span>
     </button>
+    <!-- ▲▲▲ FIN DEL BOTÓN AÑADIDO ▲▲▲ -->
+
     <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
         <span class="material-icons">dark_mode</span>
     </button>
