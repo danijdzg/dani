@@ -708,7 +708,7 @@ async function loadCoreData(uid) {
             
             // Si el usuario está en la página de Inicio, la actualizamos inmediatamente.
             const activePage = document.querySelector('.view--active');
-            if (activePage && activePage.id === PAGE_IDS.INICIO) {
+            if (activePage && activePage.id === PAGE_IDS.RESUMEN) {
                 scheduleDashboardUpdate();
             }
         }, error => console.error("Error escuchando movimientos recientes: ", error));
@@ -1446,22 +1446,21 @@ window.addEventListener('offline', () => {
     }
 };
 
-// EN main.js - REEMPLAZA TU FUNCIÓN navigateTo POR ESTA VERSIÓN
+// REEMPLAZA TU FUNCIÓN navigateTo ENTERA CON ESTA VERSIÓN CORREGIDA
+
 const navigateTo = async (pageId, isInitial = false) => {
     const oldView = document.querySelector('.view--active');
-    const newView = select(pageId);
+    // Corrección: Ahora buscamos el ID de la nueva sección de patrimonio
+    const newView = select(pageId) || select('patrimonio-page'); 
+
     const mainScroller = selectOne('.app-layout__main');
 
-    // Guardar la posición del scroll de la vista anterior
     if (oldView && mainScroller) {
         pageScrollPositions[oldView.id] = mainScroller.scrollTop;
     }
 
     if (!newView || (oldView && oldView.id === pageId)) return;
     
-    // --- LÓGICA DE CARGA DE VISTAS CORREGIDA ---
-    // Ya no se intenta hacer 'fetch' de archivos HTML. La función de renderizado se encargará de todo.
-
     destroyAllCharts();
 
     if (!isInitial) hapticFeedback('light');
@@ -1477,44 +1476,48 @@ const navigateTo = async (pageId, isInitial = false) => {
 
     const actionsEl = select('top-bar-actions');
     const leftEl = select('top-bar-left-button');
-    const fab = select('fab-add-movimiento'); // Asumiendo que pudieras tener un FAB
+    const fab = select('fab-add-movimiento');
     
+    // El HTML de 'standardActions' se mantiene igual, es correcto.
     const standardActions = `
-    <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
-        <span class="material-icons">search</span>
-    </button>
-
-    <!-- ▼▼▼ ESTE ES EL BOTÓN QUE AHORA SÍ SE VERÁ ▼▼▼ -->
-    <button data-action="show-aidanai-assistant" class="icon-btn" title="Asistente IA aiDANaI" aria-label="Asistente IA">
-        <span class="material-icons">auto_awesome</span>
-    </button>
-    <!-- ▲▲▲ FIN DEL BOTÓN CORREGIDO ▲▲▲ -->
-
-    <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
-        <span class="material-icons">dark_mode</span>
-    </button>
-    <button data-action="show-main-menu" class="icon-btn" title="Más opciones" aria-label="Mostrar más opciones">
-        <span class="material-icons">more_vert</span>
-    </button>
-`;
+        <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
+            <span class="material-icons">search</span>
+        </button>
+        <button data-action="show-aidanai-assistant" class="icon-btn" title="Asistente IA aiDANaI" aria-label="Asistente IA">
+            <span class="material-icons">auto_awesome</span>
+        </button>
+        <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
+            <span class="material-icons">dark_mode</span>
+        </button>
+        <button data-action="show-main-menu" class="icon-btn" title="Más opciones" aria-label="Mostrar más opciones">
+            <span class="material-icons">more_vert</span>
+        </button>
+    `;
     
-    // Lazy loading de datos si es necesario
-    if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
-    if (pageId === PAGE_IDS.INVERSIONES && !dataLoaded.inversiones) await loadInversiones();
+    // --- LÓGICA DE CARGA CORREGIDA ---
+    // Asociamos la carga de datos a las NUEVAS páginas
+    if (pageId === PAGE_IDS.PLANIFICACION && !dataLoaded.presupuestos) await loadPresupuestos();
+    if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
 
+    // --- EL "ROUTER" INTERNO CORREGIDO ---
+    // Todas las referencias a las constantes antiguas han sido actualizadas
     const pageRenderers = {
-    [PAGE_IDS.RESUMEN]: { title: 'Resumen', render: renderResumenPage, actions: standardActions },
-    [PAGE_IDS.MOVIMIENTOS]: { title: 'Movimientos', render: renderMovimientosPage, actions: standardActions },
-    [PAGE_IDS.PLANIFICACION]: { title: 'Planificación', render: renderPlanificacionPage, actions: standardActions },
-    [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: standardActions }, // ¡NUEVA LÍNEA!
-    [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
-};
+        [PAGE_IDS.RESUMEN]: { title: 'Resumen', render: renderResumenPage, actions: standardActions },
+        [PAGE_IDS.MOVIMIENTOS]: { title: 'Movimientos', render: renderMovimientosPage, actions: standardActions },
+        [PAGE_IDS.PLANIFICACION]: { title: 'Planificación', render: renderPlanificacionPage, actions: standardActions },
+        [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: standardActions },
+        [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
+    };
 
     if (pageRenderers[pageId]) { 
         if (leftEl) {
             let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar a Contabilidad ${isOffBalanceMode ? 'A' : 'B'}"> ${isOffBalanceMode ? 'B' : 'A'}</button><span id="page-title-display">${pageRenderers[pageId].title}</span>`;
-            if (pageId === PAGE_IDS.INICIO) leftSideHTML += `<button data-action="configure-dashboard" class="icon-btn" title="Personalizar qué se ve en el Panel" style="margin-left: 8px;"><span class="material-icons">dashboard_customize</span></button>`;
-            if (pageId === PAGE_IDS.DIARIO) {
+            
+            // Lógica de la barra superior actualizada con las NUEVAS constantes
+            if (pageId === PAGE_IDS.RESUMEN) {
+                leftSideHTML += `<button data-action="configure-dashboard" class="icon-btn" title="Personalizar qué se ve en el Panel" style="margin-left: 8px;"><span class="material-icons">dashboard_customize</span></button>`;
+            }
+            if (pageId === PAGE_IDS.MOVIMIENTOS) {
                 leftSideHTML += `
                     <button data-action="show-diario-filters" class="icon-btn" title="Filtrar y Buscar" style="margin-left: 8px;">
                         <span class="material-icons">filter_list</span>
@@ -1529,8 +1532,6 @@ const navigateTo = async (pageId, isInitial = false) => {
 
         if (actionsEl) actionsEl.innerHTML = pageRenderers[pageId].actions;
         
-        // --- LLAMADA DIRECTA A LA FUNCIÓN DE RENDERIZADO ---
-        // Este es el cambio clave. Ahora llamamos a la función JS que genera el HTML.
         await pageRenderers[pageId].render();
     }
     
@@ -1556,14 +1557,12 @@ const navigateTo = async (pageId, isInitial = false) => {
         oldView.classList.remove('view--active');
     }
 
-    // Restaurar posición de scroll de la nueva vista
     if (mainScroller) {
         mainScroller.scrollTop = pageScrollPositions[pageId] || 0;
     }
 
-    if (pageId === PAGE_IDS.INICIO) {
-        // En lugar de llamar directamente a la actualización (que puede ser pesada),
-        // usamos el sistema inteligente que ya tienes para que no se solape.
+    // Lógica final de la función actualizada con la NUEVA constante
+    if (pageId === PAGE_IDS.RESUMEN) {
         scheduleDashboardUpdate();
     }
 };
@@ -4751,7 +4750,7 @@ const updateNetWorthChart = async (saldos) => {
 const scheduleDashboardUpdate = () => {
     // El jefe de obra solo trabaja si la página "Inicio" está abierta.
     const activePage = document.querySelector('.view--active');
-    if (!activePage || activePage.id !== PAGE_IDS.INICIO) {
+    if (!activePage || activePage.id !== PAGE_IDS.RESUMEN) {
         return;
     }
       
@@ -7953,7 +7952,7 @@ const handleSaveMovement = async (form, btn) => {
             console.error("Error al guardar el movimiento:", error);
             showToast("Error crítico al guardar. La operación fue cancelada.", "danger");
             setButtonLoading(btn, false);
-            if (select('diario-page')?.classList.contains('view--active')) {
+            if (select('movimientos-page')?.classList.contains('view--active')) {
                 await renderMovimientosPage();
             }
             return false;
