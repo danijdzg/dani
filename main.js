@@ -1475,16 +1475,19 @@ const navigateTo = async (pageId, isInitial = false) => {
     const fab = select('fab-add-movimiento'); // Asumiendo que pudieras tener un FAB
     
     const standardActions = `
-        <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
-            <span class="material-icons">search</span>
-        </button>
-        <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
-            <span class="material-icons">dark_mode</span>
-        </button>
-        <button data-action="show-main-menu" class="icon-btn" title="Más opciones" aria-label="Mostrar más opciones">
-            <span class="material-icons">more_vert</span>
-        </button>
-    `;
+    <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
+        <span class="material-icons">search</span>
+    </button>
+    <button data-action="show-aidanai-assistant" class="icon-btn" title="Asistente IA aiDANaI" aria-label="Asistente IA">
+        <span class="material-icons">auto_awesome</span>
+    </button>
+    <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
+        <span class="material-icons">dark_mode</span>
+    </button>
+    <button data-action="show-main-menu" class="icon-btn" title="Más opciones" aria-label="Mostrar más opciones">
+        <span class="material-icons">more_vert</span>
+    </button>
+`;
     
     // Lazy loading de datos si es necesario
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
@@ -7020,6 +7023,11 @@ function createCustomSelect(selectElement) {
         const btn = actionTarget.closest('button');
         
         const actions = {
+			 'show-aidanai-assistant': showAidanaiModal,
+			'ask-aidanai': () => {
+				const questionKey = actionTarget.dataset.question;
+				handleAskAidanai(questionKey, actionTarget);
+			},
             'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
                 if (!menu) return;
@@ -9116,3 +9124,195 @@ const renderAjustesPage = () => {
     // Esta función es necesaria para que se muestre tu email
     loadConfig();
 };
+
+  // =================================================================
+// === INICIO: MÓDULO DEL ASISTENTE INTELIGENTE aiDANaI          ===
+// =================================================================
+
+/**
+ * Muestra el modal del asistente aiDANaI con el saludo y las preguntas.
+ */
+const showAidanaiModal = () => {
+    const bodyEl = select('aidanai-modal-body');
+    if (!bodyEl) return;
+
+    bodyEl.innerHTML = `
+        <div class="aidanai-modal-content">
+            <img src="aiDANaI.webp" alt="Asistente aiDANaI" class="aidanai-avatar">
+            <h4>¡Hola! Soy tu copiloto financiero.</h4>
+            <p class="aidanai-greeting">Estoy aquí para analizar tus datos y darte una visión clara. ¿Qué quieres saber?</p>
+            
+            <div id="aidanai-questions">
+                <button class="aidanai-question" data-action="ask-aidanai" data-question="biggest-expense">
+                    <span class="material-icons">trending_down</span>
+                    <span>¿Cuál fue mi mayor gasto el mes pasado?</span>
+                </button>
+                <button class="aidanai-question" data-action="ask-aidanai" data-question="main-outflow">
+                    <span class="material-icons">pie_chart</span>
+                    <span>¿En qué tres categorías gasto más?</span>
+                </button>
+                 <button class="aidanai-question" data-action="ask-aidanai" data-question="savings-check">
+                    <span class="material-icons">savings</span>
+                    <span>¿Mi tasa de ahorro es saludable?</span>
+                </button>
+                <button class="aidanai-question" data-action="ask-aidanai" data-question="unusual-activity">
+                    <span class="material-icons">policy</span>
+                    <span>Busca alguna transacción inusual</span>
+                </button>
+            </div>
+            
+            <div id="aidanai-response-container" style="width: 100%; margin-top: var(--sp-4);"></div>
+        </div>
+    `;
+
+    showModal('aidanai-modal');
+};
+
+/**
+ * Gestiona la pregunta del usuario, llama a la función de análisis y muestra la respuesta.
+ * @param {string} questionKey - La clave de la pregunta (e.g., 'biggest-expense').
+ */
+const handleAskAidanai = async (questionKey, btn) => {
+    const responseContainer = select('aidanai-response-container');
+    if (!responseContainer) return;
+    
+    // Mostramos que el asistente está "pensando"
+    responseContainer.innerHTML = `<div id="aidanai-response" style="text-align:center;"><span class="spinner"></span><p>Analizando tus datos...</p></div>`;
+    hapticFeedback('light');
+
+    // Desactivamos los botones para evitar múltiples clics
+    selectAll('.aidanai-question').forEach(b => b.disabled = true);
+
+    let responseHtml = '';
+    
+    try {
+        switch(questionKey) {
+            case 'biggest-expense':
+                responseHtml = analyzeBiggestExpense();
+                break;
+            case 'main-outflow':
+                responseHtml = analyzeMainOutflow();
+                break;
+            case 'savings-check':
+                responseHtml = analyzeSavingsRate();
+                break;
+            case 'unusual-activity':
+                responseHtml = analyzeUnusualActivity();
+                break;
+        }
+    } catch(e) {
+        responseHtml = `<p class="text-danger">Hubo un error al analizar tus datos: ${e.message}</p>`;
+    }
+
+    // Pequeño retardo para simular el "pensamiento"
+    setTimeout(() => {
+        responseContainer.innerHTML = `<div id="aidanai-response">${responseHtml}</div>`;
+        selectAll('.aidanai-question').forEach(b => b.disabled = false); // Reactivamos botones
+        hapticFeedback('success');
+    }, 1000);
+};
+
+// --- FUNCIONES DE ANÁLISIS DEL ASISTENTE ---
+
+function analyzeBiggestExpense() {
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+    
+    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+    const expensesLastMonth = recentMovementsCache.filter(m => 
+        new Date(m.fecha) >= lastMonth &&
+        m.tipo === 'movimiento' &&
+        m.cantidad < 0 &&
+        visibleAccountIds.has(m.cuentaId)
+    );
+
+    if (expensesLastMonth.length === 0) {
+        return `<p>¡Felicidades! Parece que no tuviste ningún gasto el mes pasado según los datos disponibles.</p>`;
+    }
+    
+    const biggestExpense = expensesLastMonth.reduce((max, mov) => mov.cantidad < max.cantidad ? mov : max, expensesLastMonth[0]);
+    const concepto = db.conceptos.find(c => c.id === biggestExpense.conceptoId)?.nombre || 'Sin categoría';
+
+    return `<p>Tu mayor gasto del mes pasado fue de <strong>${formatCurrency(biggestExpense.cantidad)}</strong> en "<em>${escapeHTML(biggestExpense.descripcion)}</em>", bajo el concepto de <strong>${concepto}</strong>.</p>`;
+}
+
+function analyzeMainOutflow() {
+    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+    const expenseTotals = recentMovementsCache.reduce((acc, m) => {
+        if (m.tipo === 'movimiento' && m.cantidad < 0 && visibleAccountIds.has(m.cuentaId)) {
+            const conceptoId = m.conceptoId;
+            acc[conceptoId] = (acc[conceptoId] || 0) + m.cantidad;
+        }
+        return acc;
+    }, {});
+
+    const sortedExpenses = Object.entries(expenseTotals).sort((a, b) => a[1] - b[1]);
+
+    if (sortedExpenses.length === 0) {
+        return `<p>No he encontrado categorías de gastos significativas en tus movimientos recientes.</p>`;
+    }
+    
+    let html = `<p>Tus <strong>3 mayores focos de gasto</strong> recientes son:</p><ol style="list-style-position: inside; padding-left: 8px;">`;
+    sortedExpenses.slice(0, 3).forEach(([conceptoId, total]) => {
+        const concepto = db.conceptos.find(c => c.id === conceptoId)?.nombre || 'Desconocido';
+        html += `<li style="margin-bottom: 4px;"><strong>${concepto}:</strong> ${formatCurrency(total)}</li>`;
+    });
+    html += `</ol>`;
+
+    return html;
+}
+
+function analyzeSavingsRate() {
+    const { current, previous, label } = getFilteredMovements(true); // Usa el filtro activo del dashboard
+    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+    
+    const {ingresos, saldoNeto} = calculateTotals(current, visibleAccountIds);
+    
+    if (ingresos === 0) {
+        return `<p>No he detectado ingresos en el periodo seleccionado para poder calcular tu tasa de ahorro. Si tus ingresos son superiores a tus gastos, es una buena señal.</p>`;
+    }
+
+    const tasaAhorro = (saldoNeto / ingresos) * 100;
+    
+    let advice = '';
+    if (tasaAhorro >= 20) {
+        advice = `¡Excelente! Estás ahorrando más del 20%, lo que se considera un objetivo financiero muy saludable. ¡Sigue así!`;
+    } else if (tasaAhorro >= 10) {
+        advice = `Vas por buen camino. Ahorrar entre un 10% y un 20% es un gran logro. Busca pequeñas optimizaciones para potenciarlo aún más.`;
+    } else if (tasaAhorro > 0) {
+        advice = `¡Bien! Cada céntimo cuenta. Estás ahorrando, y eso es lo importante. Revisa tus gastos para ver si puedes aumentar un poco este porcentaje.`;
+    } else {
+        advice = `Has gastado más de lo que ingresaste. Es importante analizar por qué y crear un plan para revertir la situación en el próximo periodo.`;
+    }
+
+    return `<p>En el periodo actual, tu tasa de ahorro es del <strong>${tasaAhorro.toFixed(1)}%</strong>.</p><p style="margin-top: 8px;">${advice}</p>`;
+}
+
+function analyzeUnusualActivity() {
+    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+    const allExpenses = db.movimientos.filter(m => m.tipo === 'movimiento' && m.cantidad < 0 && visibleAccountIds.has(m.cuentaId));
+    
+    if (allExpenses.length < 10) {
+        return `<p>Necesito un poco más de historial para detectar patrones. Sigue registrando tus gastos y volveré a analizarlo.</p>`;
+    }
+
+    const avgExpense = allExpenses.reduce((sum, m) => sum + m.cantidad, 0) / allExpenses.length;
+    const stdDev = Math.sqrt(allExpenses.map(m => Math.pow(m.cantidad - avgExpense, 2)).reduce((sum, v) => sum + v, 0) / allExpenses.length);
+
+    // Un gasto "inusual" es aquel que supera en 2.5 veces la desviación estándar del gasto promedio
+    const threshold = avgExpense - (2.5 * stdDev); 
+    const unusualTransactions = allExpenses.filter(m => m.cantidad < threshold).sort((a,b) => a.cantidad - b.cantidad);
+    
+    if (unusualTransactions.length === 0) {
+        return `<p>No he detectado ninguna transacción que se desvíe significativamente de tus patrones de gasto habituales. ¡Todo parece en orden!</p>`;
+    }
+    
+    const mostUnusual = unusualTransactions[0];
+    const concepto = db.conceptos.find(c => c.id === mostUnusual.conceptoId)?.nombre || 'Sin categoría';
+
+    return `<p>He detectado un gasto de <strong>${formatCurrency(mostUnusual.cantidad)}</strong> en "<em>${escapeHTML(mostUnusual.descripcion)}</em>" que es significativamente más alto que tu promedio.</p><p style="margin-top:8px;">Puede ser perfectamente normal (un viaje, una compra grande), pero siempre es bueno revisarlo. ¿Es correcto?</p>`;
+}
+// =================================================================
+// === FIN: MÓDULO DEL ASISTENTE INTELIGENTE aiDANaI           ===
+// =================================================================
+

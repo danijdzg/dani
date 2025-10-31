@@ -349,38 +349,30 @@
 .drag-handle:active { cursor: grabbing; }
 
 :root {
-    /* PALETA "CIBER-NEÓN": Cian eléctrico sobre negro puro. */
-    --c-primary: #00B34D;       /* Verde Esmeralda Profundo */
-	--c-primary-hover: #00CC55; /* Versión más brillante para hover */
-    --c-danger: #FF3B30;        /* Rojo Neón */
-    --c-success: #39FF14;       /* Verde Lima Neón */
-    --c-warning: #FFD60A;       /* Amarillo Neón */
-    --c-info: #BF5AF2;          /* Púrpura Neón */
-
-    /* FONDO: Negro puro para AMOLED. */
-    --c-background: #000000;
+    /* TEMA 1: "NEON BLADE" (Oscuro por defecto) */
+    /* PALETA: Inspirada en estética ciber-neón sobre negro puro. */
+    --c-primary: #00B34D;       /* Verde Esmeralda Profundo (Tu color de manifest) */
+    --c-primary-hover: #00CC55; /* Versión más brillante para interacciones */
+    --c-danger: #FF3B30;        /* Rojo Neón Intenso */
+    --c-success: #39FF14;       /* Verde Lima Eléctrico */
+    --c-warning: #FFD60A;       /* Amarillo Neón Vibrante */
+    --c-info: #BF5AF2;          /* Púrpura Neón (para traspasos e info) */
     
-    /* SUPERFICIES: "Cristal Holográfico" oscuro. */
-    --c-surface: rgba(10, 25, 40, 0.70); /* Tinte azulado oscuro translúcido */
+    /* FONDOS Y SUPERFICIES: Negro AMOLED y "cristal" oscuro. */
+    --c-background: #000000;    /* Negro Puro para pantallas AMOLED */
+    --c-surface: rgba(10, 25, 40, 0.75); /* Tinte azulado oscuro translúcido, más opaco para legibilidad */
     --c-surface-variant: rgba(20, 35, 50, 0.70);
-
-    /* BORDES Y RESPLANDOR: El corazón del efecto neón. */
-    --c-outline: rgba(0, 255, 255, 0.35);
-    --c-border-glow: 0 0 12px rgba(0, 255, 255, 0.4); /* Resplandor para inputs */
-
-    /* TEXTOS: Optimizados para brillar. */
-    --c-on-surface: #F0F8FF; /* Blanco Alice Blue (muy claro, casi blanco) */
-    --c-on-surface-secondary: rgba(240, 248, 255, 0.75); /* WCAG CORRECCIÓN: Aumentada opacidad de 0.65 a 0.75 por seguridad */
-    --c-on-surface-tertiary: rgba(240, 248, 255, 0.60); /* WCAG CORRECCIÓN: Aumentada opacidad de 0.45 a 0.60 para pasar el test de contraste */
-    --c-on-surface-disabled: #444444;
     
-    --c-white: #FFFFFF;
-    --c-black: #000000;
+    /* BORDES Y RESPLANDOR: El alma del efecto neón. */
+    --c-outline: rgba(0, 255, 255, 0.35); /* Cian para los bordes */
+    --c-border-glow: 0 0 12px rgba(0, 255, 255, 0.4);
     
-    --c-chart-positive: var(--c-success);
-    --c-chart-negative: var(--c-danger);
-
-    /* SOMBRAS: Resplandor de neón pronunciado ("Bloom Effect"). */
+    /* TEXTOS: Optimizados para brillar con alto contraste. */
+    --c-on-surface: #F0F8FF;             /* Blanco "Alice Blue" (casi blanco) */
+    --c-on-surface-secondary: rgba(240, 248, 255, 0.80); /* WCAG: Opacidad aumentada para >4.5:1 */
+    --c-on-surface-tertiary: rgba(240, 248, 255, 0.65); /* WCAG: Opacidad aumentada para >4.5:1 */
+    
+    /* SOMBRAS: Efecto "Bloom" de resplandor neón. */
     --shadow-sm: 0 0 8px rgba(0, 255, 255, 0.25);
     --shadow-md: 0 0 20px rgba(0, 255, 255, 0.45);
     --glow-red: 0 0 20px rgba(255, 59, 48, 0.55);
@@ -394,7 +386,7 @@
     --border-radius-md: 10px; --border-radius-lg: 16px;
 }
 
-body::before {
+body[data-theme="default"]::before {
     content: '';
     position: fixed;
     top: 0; left: 0;
@@ -414,32 +406,37 @@ body::before {
     100% { background-position: 350px 350px; }
 }
 
+/* Opcional: Elimina la rejilla del tema claro si no te gusta */
+body[data-theme="sunset-groove"]::before {
+    display: none;
+}
+
 body[data-theme="sunset-groove"] {
-    /* PALETA "PRISMÁTICA": Colores saturados y de alto contraste. */
-    --c-primary: #0060C0;       /* WCAG CORRECCIÓN: Azul oscurecido para mejorar contraste (antes #007AFF) */
-    --c-primary-hover: #007AFF;
-    --c-danger: #FF3B30;        /* Rojo Vibrante */
-    --c-success: #34C759;       /* Verde Vibrante */
-    --c-warning: #FF9500;       /* Naranja Vibrante */
-    --c-info: #5856D6;          /* Índigo Vibrante */
-
-    /* FONDO: Gradiente abstracto y colorido. */
-    --c-background: #E5E5EA; /* Un gris muy claro como base */
+    /* TEMA 2: "SUNSET GROOVE" (Claro profesional) */
+    /* PALETA: Vibrante y colorida sobre fondo gris claro. */
+    --c-primary: #0060C0;       /* WCAG: Azul oscurecido para un contraste >4.5:1 sobre el fondo */
+    --c-primary-hover: #007AFF; /* Azul original para interacciones */
+    --c-danger: #D92A2A;        /* WCAG: Rojo oscurecido para contraste */
+    --c-success: #28a745;       /* WCAG: Verde oscurecido para contraste */
+    --c-warning: #FF9500;
+    --c-info: #5856D6;
     
-    /* SUPERFICIES: El efecto de cristal es la estrella. */
-    --c-surface: rgba(252, 252, 252, 0.75); /* WCAG CORRECCIÓN: Aumentada opacidad para mejorar legibilidad */
-    --c-surface-variant: rgba(255, 255, 255, 0.5);
-    --c-outline: rgba(60, 60, 67, 0.2); /* WCAG CORRECCIÓN: Borde más oscuro para mejor definición */
-
-    /* TEXTOS: Oscuros para un contraste perfecto sobre el fondo claro y borroso. */
-    --c-on-surface: #1C1C1E; /* Negro suave */
+    /* FONDOS Y SUPERFICIES: Glassmorphism sobre gris pizarra. */
+    --c-background: #E5E5EA;    /* Gris pizarra muy claro */
+    --c-surface: rgba(252, 252, 252, 0.85); /* "Cristal esmerilado", más opaco para legibilidad */
+    --c-surface-variant: rgba(255, 255, 255, 0.6);
+    --c-outline: rgba(60, 60, 67, 0.25);  /* Borde más oscuro para mejor definición */
+    
+    /* TEXTOS: Oscuros para un contraste perfecto. */
+    --c-on-surface: #1C1C1E; /* Negro suave, no puro */
     --c-on-surface-secondary: #3C3C4399;
-    --c-on-surface-tertiary: #3C3C4380; /* WCAG CORRECCIÓN: Aumentada opacidad de 66 a 80 para mejorar contraste */
+    --c-on-surface-tertiary: #3C3C4380;
     
-    /* SOMBRAS: Suaves y difusas para realzar el efecto de flotación. */
+    /* SOMBRAS: Suaves y difusas para un efecto de flotación. */
     --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
+
 
 /* ================================================================= */
 /* === ESTILOS GLOBALES DEL ENCABEZADO (INVARIABLE A LOS TEMAS)   === */
@@ -1897,3 +1894,61 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     background-color: var(--c-surface-variant);
 }
 /* --- FIN: Mejora UX --- */
+
+/* === INICIO: Estilos para el Asistente aiDANaI === */
+.aidanai-modal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--sp-2);
+}
+.aidanai-modal-content .aidanai-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 24px;
+    margin-bottom: var(--sp-3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.aidanai-modal-content h4 {
+    color: var(--c-primary);
+    font-weight: 700;
+    margin-bottom: var(--sp-2);
+    font-size: var(--fs-lg);
+}
+.aidanai-modal-content .aidanai-greeting {
+    color: var(--c-on-surface-secondary);
+    line-height: 1.6;
+    font-size: var(--fs-sm);
+    margin-bottom: var(--sp-5);
+}
+.aidanai-question {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    margin-bottom: var(--sp-2);
+    border: 1px solid var(--c-outline);
+    border-radius: var(--border-radius-md);
+    background: var(--c-surface);
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.2s, transform 0.2s;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+}
+.aidanai-question:hover {
+    background-color: var(--c-surface-variant);
+    transform: scale(1.02);
+}
+#aidanai-response {
+    background-color: var(--c-surface-variant);
+    border-radius: var(--border-radius-lg);
+    padding: var(--sp-4);
+    margin-top: var(--sp-2);
+    animation: pop-in 0.3s ease-out;
+    text-align: left;
+    line-height: 1.6;
+}
+/* === FIN: Estilos para el Asistente aiDANaI === */

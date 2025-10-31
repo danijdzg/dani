@@ -485,7 +485,18 @@
         <button class="calculator-btn btn-operator" data-key="add">+</button>
     </div>
 </div>
-
+	 <div id="aidanai-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="aidanai-modal-title">
+    <div class="modal">
+        <div class="modal__grabber"></div>
+        <header class="modal__header" style="padding-top: var(--sp-2);">
+            <h3 id="aidanai-modal-title" class="modal__title">Tu Asistente aiDANaI</h3>
+            <button class="icon-btn" data-action="close-modal" data-modal-id="aidanai-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
+        </header>
+        <div class="modal__body" id="aidanai-modal-body">
+            <!-- El contenido del asistente se generará aquí con JS -->
+        </div>
+    </div>
+</div>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
