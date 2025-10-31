@@ -1,8 +1,8 @@
 
 {
-  "name": "ctas Dani",
-  "short_name": "Ctas",
-  "description": "Finanzas ctas Dani",
+  "name": "DaniCtas",
+  "short_name": "DaniCtas",
+  "description": "Finanzas Dani Ctas",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#121820",

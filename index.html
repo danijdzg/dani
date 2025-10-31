@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <title>Ctas aiDANaI</title>
+    <title>DaniCtas</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,8 +11,21 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	<meta name="theme-color" content="#00B34D" />
 	<link rel="manifest" href="manifest.json">	
-	<link rel="apple-touch-icon" href="aiDANaI.webp">
-    <link rel="icon" href="data:image/svg+xml,%3svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='85' font-size='90'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E">
+	<!-- Icono .ico tradicional para máxima compatibilidad con navegadores antiguos -->
+<link rel="icon" href="/favicon.ico" sizes="any">
+
+<!-- Icono PNG para navegadores modernos (mejor calidad que .ico) -->
+<link rel="icon" href="/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/icons/favicon-16x16.png" type="image/png" sizes="16x16">
+
+<!-- Icono para la pantalla de inicio de Apple (cuando el usuario "Añade a la pantalla de inicio") -->
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+
+<!-- Manifest para la instalación de la PWA en Android y escritorio -->
+<link rel="manifest" href="/manifest.json">
+
+<!-- Color de la barra de estado en móviles -->
+<meta name="theme-color" content="#00B34D" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
@@ -93,27 +106,30 @@
     
     <div id="app-root" class="app-layout">
 <nav class="bottom-nav">
+    <!-- 1. Panel (Presente) -->
     <button data-action="navigate" data-page="inicio-page" class="bottom-nav__item">
         <span class="material-icons">dashboard</span>
         <span class="bottom-nav__label">Panel</span>
     </button>
+    
+    <!-- 2. Diario (Pasado Reciente) -->
     <button data-action="navigate" data-page="diario-page" class="bottom-nav__item">
         <span class="material-icons">receipt_long</span>
         <span class="bottom-nav__label">Diario</span>
     </button>
     
-    <!-- Mantenemos el botón central para añadir rápido -->
+    <!-- 3. Añadir (Acción Principal, Invariable) -->
     <button data-action="open-main-add-modal" id="bottom-nav-add-btn">
         <span class="material-icons">add</span>
     </button>
     
-    <!-- ¡NUEVA PESTAÑA "PLANIFICAR"! -->
+    <!-- 4. Planificar (Futuro Estratégico) -->
     <button data-action="navigate" data-page="planificar-page" class="bottom-nav__item">
-        <span class="material-icons">edit_calendar</span> <!-- Icono más apropiado -->
+        <span class="material-icons">edit_calendar</span>
         <span class="bottom-nav__label">Planificar</span>
     </button>
     
-    <!-- "INVERSIONES" SE MUEVE A LA DERECHA -->
+    <!-- 5. Inversiones (Futuro a Largo Plazo) -->
     <button data-action="navigate" data-page="inversiones-page" class="bottom-nav__item">
         <span class="material-icons">rocket_launch</span>
         <span class="bottom-nav__label">Inversiones</span>

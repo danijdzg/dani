@@ -349,34 +349,41 @@
 .drag-handle:active { cursor: grabbing; }
 
 :root {
-    /* PALETA: Verde vibrante sobre negro AMOLED. Profesional, moderno, "tech". */
-    --c-primary: #00B34D;       /* Verde Intenso */
-    --c-primary-hover: #00D158; /* Verde más brillante para hover */
-    --c-danger: #FF3B30;        /* Rojo Neón (Apple HIG) */
-    --c-success: #34C759;       /* Verde Neón (Apple HIG) - Se mantiene para contraste */
-    --c-warning: #FF9500;       /* Naranja Neón (Apple HIG) */
-    --c-info: #0A84FF;          /* Azul Neón (Apple HIG) */
+    /* PALETA "CIBER-NEÓN": Cian eléctrico sobre negro puro. */
+    --c-primary: #00B34D;       /* Verde Esmeralda Profundo */
+	--c-primary-hover: #00CC55; /* Versión más brillante para hover */
+    --c-danger: #FF3B30;        /* Rojo Neón */
+    --c-success: #39FF14;       /* Verde Lima Neón */
+    --c-warning: #FFD60A;       /* Amarillo Neón */
+    --c-info: #BF5AF2;          /* Púrpura Neón */
 
-    /* FONDO: Negro puro para AMOLED y máximo contraste. */
+    /* FONDO: Negro puro para AMOLED. */
     --c-background: #000000;
     
-    /* SUPERFICIES: Grises muy oscuros para crear estructura sobre el negro. */
-    --c-surface: #1C1C1E;       /* Gris casi negro para tarjetas */
-    --c-surface-variant: #2C2C2E; /* Gris un poco más claro para fondos secundarios */
+    /* SUPERFICIES: "Cristal Holográfico" oscuro. */
+    --c-surface: rgba(10, 25, 40, 0.70); /* Tinte azulado oscuro translúcido */
+    --c-surface-variant: rgba(20, 35, 50, 0.70);
 
-    /* BORDES: Ligeramente más visibles y con brillo verde. */
-    --c-outline: rgba(90, 90, 90, 0.5);
-    --c-border-glow: 0 0 15px rgba(0, 179, 77, 0.7);
+    /* BORDES Y RESPLANDOR: El corazón del efecto neón. */
+    --c-outline: rgba(0, 255, 255, 0.35);
+    --c-border-glow: 0 0 12px rgba(0, 255, 255, 0.4); /* Resplandor para inputs */
 
-    /* TEXTOS: Blancos puros para máximo contraste y legibilidad. */
-    --c-on-surface: #F2F2F7;
-    --c-on-surface-secondary: rgba(235, 235, 245, 0.6);
-    --c-on-surface-tertiary: rgba(235, 235, 245, 0.4);
+    /* TEXTOS: Optimizados para brillar. */
+    --c-on-surface: #F0F8FF; /* Blanco Alice Blue (muy claro, casi blanco) */
+    --c-on-surface-secondary: rgba(240, 248, 255, 0.75); /* WCAG CORRECCIÓN: Aumentada opacidad de 0.65 a 0.75 por seguridad */
+    --c-on-surface-tertiary: rgba(240, 248, 255, 0.60); /* WCAG CORRECCIÓN: Aumentada opacidad de 0.45 a 0.60 para pasar el test de contraste */
+    --c-on-surface-disabled: #444444;
     
-    /* SOMBRAS: Basadas en el brillo (glow) para un efecto más futurista. */
-    --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.5);
-    --glow-red: 0 0 20px rgba(255, 59, 48, 0.6);
+    --c-white: #FFFFFF;
+    --c-black: #000000;
+    
+    --c-chart-positive: var(--c-success);
+    --c-chart-negative: var(--c-danger);
+
+    /* SOMBRAS: Resplandor de neón pronunciado ("Bloom Effect"). */
+    --shadow-sm: 0 0 8px rgba(0, 255, 255, 0.25);
+    --shadow-md: 0 0 20px rgba(0, 255, 255, 0.45);
+    --glow-red: 0 0 20px rgba(255, 59, 48, 0.55);
 
     /* VARIABLES BASE (No se tocan) */
     --c-white: #FFFFFF; --c-black: #000000;
@@ -408,34 +415,30 @@ body::before {
 }
 
 body[data-theme="sunset-groove"] {
-    /* PALETA: Colores cálidos y vibrantes sobre un fondo tipo pergamino. */
-    --c-primary: #D9534F;       /* Rojo Coral Suave */
-    --c-primary-hover: #E06C68;
-    --c-danger: #D9534F;        /* El mismo coral funciona como alerta */
-    --c-success: #5CB85C;       /* Verde Natural */
-    --c-warning: #F0AD4E;       /* Amarillo Mostaza */
-    --c-info: #4A90E2;          /* Azul Cielo */
+    /* PALETA "PRISMÁTICA": Colores saturados y de alto contraste. */
+    --c-primary: #0060C0;       /* WCAG CORRECCIÓN: Azul oscurecido para mejorar contraste (antes #007AFF) */
+    --c-primary-hover: #007AFF;
+    --c-danger: #FF3B30;        /* Rojo Vibrante */
+    --c-success: #34C759;       /* Verde Vibrante */
+    --c-warning: #FF9500;       /* Naranja Vibrante */
+    --c-info: #5856D6;          /* Índigo Vibrante */
 
-    /* FONDO: Un color crema/pergamino, "menos claro" y más cálido. */
-    --c-background: #FAF8F0;
+    /* FONDO: Gradiente abstracto y colorido. */
+    --c-background: #E5E5EA; /* Un gris muy claro como base */
     
-    /* SUPERFICIES: Blanco puro para que las tarjetas floten sobre el fondo. */
-    --c-surface: #FFFFFF;
-    --c-surface-variant: #F4F5F7;
+    /* SUPERFICIES: El efecto de cristal es la estrella. */
+    --c-surface: rgba(252, 252, 252, 0.75); /* WCAG CORRECCIÓN: Aumentada opacidad para mejorar legibilidad */
+    --c-surface-variant: rgba(255, 255, 255, 0.5);
+    --c-outline: rgba(60, 60, 67, 0.2); /* WCAG CORRECCIÓN: Borde más oscuro para mejor definición */
 
-    /* BORDES: Grises cálidos muy sutiles. */
-    --c-outline: #DCD9C4;
-    --c-border-glow: 0 0 12px rgba(217, 83, 79, 0.5);
-
-    /* TEXTOS: Negro suavizado para no ser tan agresivo a la vista. */
-    --c-on-surface: #333333;
-    --c-on-surface-secondary: #6B6B6B;
-    --c-on-surface-tertiary: #9B9B9B;
+    /* TEXTOS: Oscuros para un contraste perfecto sobre el fondo claro y borroso. */
+    --c-on-surface: #1C1C1E; /* Negro suave */
+    --c-on-surface-secondary: #3C3C4399;
+    --c-on-surface-tertiary: #3C3C4380; /* WCAG CORRECCIÓN: Aumentada opacidad de 66 a 80 para mejorar contraste */
     
-    /* SOMBRAS: Más suaves y realistas para un tema claro. */
-    --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.07);
-    --shadow-md: 0 8px 16px -3px rgba(0, 0, 0, 0.1);
-    --glow-red: 0 0 20px rgba(217, 83, 79, 0.5);
+    /* SOMBRAS: Suaves y difusas para realzar el efecto de flotación. */
+    --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 /* ================================================================= */
