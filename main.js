@@ -65,9 +65,9 @@ const handleExportFilteredCsv = (btn) => {
         const firebaseConfig = { apiKey: "AIzaSyAp-t-2qmbvSX-QEBW9B1aAJHBESqnXy9M", authDomain: "cuentas-aidanai.firebaseapp.com", projectId: "cuentas-aidanai", storageBucket: "cuentas-aidanai.appspot.com", messagingSenderId: "58244686591", appId: "1:58244686591:web:85c87256c2287d350322ca" };
 const PAGE_IDS = {
     INICIO: 'inicio-page',
-    DIARIO: 'diario-page', // <-- ID corregido para coincidir con el HTML
+    DIARIO: 'diario-page',
     INVERSIONES: 'inversiones-page',
-    PLANIFICAR: 'planificar-page',
+    PLANIFICAR: 'planificar-page', // ¡La nueva página!
     AJUSTES: 'ajustes-page',
 };
 
@@ -5347,7 +5347,7 @@ const getDragAfterElement = (container, y) => {
 };
 
 		let suggestionDebounceTimer = null;
-        const applyDescriptionSuggestion = (target) => {
+const applyDescriptionSuggestion = (target) => {
     // Extraemos la información directamente del elemento clicado
     const { description, conceptoId, cuentaId } = target.dataset;
 
@@ -5355,7 +5355,27 @@ const getDragAfterElement = (container, y) => {
     select('movimiento-descripcion').value = toSentenceCase(description);
     select('movimiento-concepto').value = conceptoId;
     select('movimiento-cuenta').value = cuentaId;
+
+    // [IMPORTANTE] Disparamos el evento 'change' para que los dropdowns personalizados actualicen su texto visible
+    select('movimiento-concepto').dispatchEvent(new Event('change'));
+    select('movimiento-cuenta').dispatchEvent(new Event('change'));
     
+    // Ocultamos las sugerencias
+    select('description-suggestions').style.display = 'none';
+
+    // Damos feedback visual de los campos que se han rellenado
+    hapticFeedback('light');
+    [select('movimiento-concepto'), select('movimiento-cuenta')].forEach(el => {
+        const parent = el.closest('.form-field-compact'); 
+        if(parent) {
+            parent.classList.add('field-highlighted');
+            setTimeout(() => parent.classList.remove('field-highlighted'), 1500);
+        }
+    });
+
+    // Movemos el foco al campo de cantidad para un flujo ultra-rápido
+    select('movimiento-cantidad').focus();
+};
     // Ocultamos la caja de sugerencias
     select('description-suggestions').style.display = 'none';
 
@@ -5718,24 +5738,16 @@ const setMovimientoFormType = (type) => {
     hapticFeedback('light');
     const isTraspaso = type === 'traspaso';
 
-    // 1. Obtenemos referencias a los elementos
     const titleEl = select('form-movimiento-title');
     const amountGroup = select('movimiento-cantidad-form-group');
-    const mode = select('movimiento-mode').value; // <-- ¡LA CLAVE ESTÁ AQUÍ!
+    const mode = select('movimiento-mode').value;
 
-    // Ocultar/mostrar campos
     select('movimiento-fields').classList.toggle('hidden', isTraspaso);
     select('traspaso-fields').classList.toggle('hidden', !isTraspaso);
 
-    // 2. Reseteamos colores
-    if (titleEl) {
-        titleEl.classList.remove('title--gasto', 'title--ingreso', 'title--traspaso');
-    }
-    if (amountGroup) {
-        amountGroup.classList.remove('is-gasto', 'is-ingreso', 'is-traspaso');
-    }
+    if (titleEl) titleEl.classList.remove('title--gasto', 'title--ingreso', 'title--traspaso');
+    if (amountGroup) amountGroup.classList.remove('is-gasto', 'is-ingreso', 'is-traspaso');
 
-    // 3. Aplicamos colores y el TÍTULO CORRECTO
     if (titleEl && amountGroup) {
         const isEditing = mode.startsWith('edit');
         let baseTitle = isEditing ? 'Editar' : 'Nuevo';
@@ -5755,6 +5767,7 @@ const setMovimientoFormType = (type) => {
                 titleEl.textContent = `${baseTitle} Traspaso`;
                 titleEl.classList.add('title--traspaso');
                 amountGroup.classList.add('is-traspaso');
+                // [CAMBIO UX] Si es un nuevo traspaso y la descripción está vacía, la rellenamos.
                 if (!isEditing && select('movimiento-descripcion').value.trim() === '') {
                     select('movimiento-descripcion').value = 'Traspaso';
                 }
@@ -5762,13 +5775,12 @@ const setMovimientoFormType = (type) => {
         }
     }
     
-    // Gestionar la clase activa en los botones
     selectAll('[data-action="set-movimiento-type"]').forEach(btn => {
         btn.classList.toggle('filter-pill--active', btn.dataset.type === type);
     });
 };
 
-                const updateDateDisplay = (dateInput) => {
+            const updateDateDisplay = (dateInput) => {
             const dateTextEl = select('movimiento-fecha-text');
             if (!dateTextEl || !dateInput.value) return;
 
@@ -7765,7 +7777,11 @@ const handleSaveMovement = async (form, btn) => {
     }
 
     const isSaveAndNew = btn && btn.dataset.action === 'save-and-new-movement';
-    setButtonLoading(btn, true);
+    // [CAMBIO UX] Desactivamos AMBOS botones para prevenir doble submission
+    const saveBtn = select('save-movimiento-btn');
+    const saveNewBtn = select('save-and-new-movimiento-btn');
+    if(saveBtn) setButtonLoading(saveBtn, true);
+    if(saveNewBtn) setButtonLoading(saveNewBtn, true);
 
     const isRecurrent = select('movimiento-recurrente').checked;
 
@@ -7776,7 +7792,7 @@ const handleSaveMovement = async (form, btn) => {
         const tipoRecurrente = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
         const cantidadPositiva = parseCurrencyString(select('movimiento-cantidad').value);
         const cantidadEnCentimos = Math.round(cantidadPositiva * 100);
-
+		
         // 1. Preparamos el objeto base con los datos comunes
         const dataToSave = {
             id: id,
@@ -7924,25 +7940,31 @@ const handleSaveMovement = async (form, btn) => {
                 setTimeout(() => hideModal('movimiento-modal'), 200);
                 showToast(mode === 'new' ? 'Movimiento guardado.' : 'Movimiento actualizado.');
             } else {
+                // ▼▼▼ ESTE ES EL BLOQUE MEJORADO ▼▼▼
                 form.reset();
                 setMovimientoFormType('gasto');
+                // Forzamos la actualización visual de los dropdowns personalizados
+                select('movimiento-concepto').dispatchEvent(new Event('change'));
+                select('movimiento-cuenta').dispatchEvent(new Event('change'));
+
                 const today = new Date();
                 const fechaInput = select('movimiento-fecha');
                 fechaInput.value = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
                 updateDateDisplay(fechaInput);
+                
+                showToast('Movimiento guardado. Puedes añadir otro.', 'info');
+                // Devolvemos el foco al campo más importante para el siguiente movimiento.
                 select('movimiento-cantidad').focus();
             }
-
             return true;
 
         } catch (error) {
             console.error("Error al guardar el movimiento:", error);
             showToast("Error crítico al guardar. La operación fue cancelada.", "danger");
-            setButtonLoading(btn, false);
-            if (select('diario-page')?.classList.contains('view--active')) {
-                await renderDiarioPage();
-            }
             return false;
+        } finally {
+            if(saveBtn) setButtonLoading(saveBtn, false);
+            if(saveNewBtn) setButtonLoading(saveNewBtn, false);
         }
     }
 };
@@ -8566,7 +8588,20 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
             const index = db.movimientos.findIndex(m => m.id === id);
             if (index === -1) throw new Error("Movimiento no encontrado.");
             [itemToDelete] = db.movimientos.splice(index, 1);
+
+            // [CORRECCIÓN CRÍTICA] Revertimos el impacto del movimiento en los saldos locales (db.cuentas)
+            // ANTES de redibujar la interfaz. Esto asegura que los saldos acumulados se recalculen correctamente.
+            if (itemToDelete.tipo === 'traspaso') {
+                const origen = db.cuentas.find(c => c.id === itemToDelete.cuentaOrigenId);
+                if (origen) origen.saldo += itemToDelete.cantidad; // Devolvemos el dinero al origen
+                const destino = db.cuentas.find(c => c.id === itemToDelete.cuentaDestinoId);
+                if (destino) destino.saldo -= itemToDelete.cantidad; // Quitamos el dinero del destino
+            } else {
+                const cuenta = db.cuentas.find(c => c.id === itemToDelete.cuentaId);
+                if (cuenta) cuenta.saldo -= itemToDelete.cantidad; // Revertimos la operación
+            }
         }
+	
 
         // 2. EFECTO VISUAL (Si el elemento está en pantalla)
         if (itemElement) {
@@ -9072,47 +9107,10 @@ const handleDescriptionInput = () => {
             return scoreB - scoreA;
         });
 
-        const topSuggestion = suggestions[0];
-        const conceptoSelect = select('movimiento-concepto');
-        const cuentaSelect = select('movimiento-cuenta');
+        // [CAMBIO UX] Esta función ya NO RELLENA los campos automáticamente.
+        // Solo prepara la lista de sugerencias para que el usuario elija.
 
-        // ==========================================================
-        // ===        ✨ ¡LA MAGIA DEL COPILOTO SUCEDE AQUÍ! ✨      ===
-        // ==========================================================
-        if (topSuggestion) {
-            // 2. Si lo que escribes coincide con el inicio de tu mejor sugerencia...
-            if (topSuggestion.description.startsWith(query) && topSuggestion.description.length > query.length) {
-                
-                // 3. ...y si el campo "Concepto" está vacío, ¡lo rellenamos por ti!
-                if (!conceptoSelect.value && conceptoSelect.querySelector(`option[value="${topSuggestion.conceptoId}"]`)) {
-                    conceptoSelect.value = topSuggestion.conceptoId;
-                    
-                    // Animación para que veas lo que ha pasado
-                    const parent = conceptoSelect.closest('.form-group-addon');
-                    if(parent) {
-                        parent.classList.add('field-highlighted');
-                        setTimeout(() => parent.classList.remove('field-highlighted'), 1500);
-                    }
-                }
-                
-                // 4. ...y hacemos lo mismo con el campo "Cuenta".
-                if (!cuentaSelect.value && cuentaSelect.querySelector(`option[value="${topSuggestion.cuentaId}"]`)) {
-                    cuentaSelect.value = topSuggestion.cuentaId;
-
-                    // Animación para que veas lo que ha pasado
-                    const parent = cuentaSelect.closest('.form-group-addon');
-                    if(parent) {
-                        parent.classList.add('field-highlighted');
-                        setTimeout(() => parent.classList.remove('field-highlighted'), 1500);
-                    }
-                }
-            }
-            
-            // ==========================================================
-            // ===                FIN DE LA MAGIA                     ===
-            // ==========================================================
-
-            // 5. El resto del código simplemente muestra la lista de sugerencias, como ya hacía antes.
+        if (suggestions.length > 0) {
             suggestionsBox.innerHTML = suggestions.slice(0, DESCRIPTION_SUGGESTION_LIMIT).map(s => {
                 const concepto = db.conceptos.find(c => c.id === s.conceptoId)?.nombre || 'S/C';
                 const cuenta = db.cuentas.find(c => c.id === s.cuentaId)?.nombre || 'S/C';
