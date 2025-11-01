@@ -5391,7 +5391,7 @@ const applyDescriptionSuggestion = (target) => {
 
     // ¡La magia final! Movemos el foco al campo de la cantidad.
     select('movimiento-cantidad').focus();
-};
+;
 
 // =================================================================
 // === INICIO: CÓDIGO UNIFICADO PARA MODALES ARRASTRABLES ===
