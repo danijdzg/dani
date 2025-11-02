@@ -4392,7 +4392,7 @@ const renderPlanificacionPage = () => {
     // 1. Dibuja la estructura base con esqueletos y los dos acordeones.
     container.innerHTML = `
         <!-- Acordeón para la Visión General del Patrimonio -->
-        <details class="accordion" open style="margin-bottom: var(--sp-4);">
+        <details class="accordion" style="margin-bottom: var(--sp-4);">
             <summary>
                 <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
                     <span class="material-icons">account_balance</span>
@@ -4407,7 +4407,7 @@ const renderPlanificacionPage = () => {
         </details>
 
         <!-- Acordeón para el Portafolio de Inversión -->
-        <details class="accordion" open style="margin-bottom: var(--sp-4);">
+        <details class="accordion" style="margin-bottom: var(--sp-4);">
             <summary>
                 <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
                     <span class="material-icons">rocket_launch</span>
