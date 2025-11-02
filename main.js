@@ -6196,7 +6196,7 @@ const handleSaveValoracion = async (form, btn) => {
     }
 
     const valor = parseCurrencyString(select('valoracion-valor').value);
-    const fecha = select('valoracion-fecha').value;
+    const fecha = select('valoracion-fecha').value; // 'fecha' ya es un string "YYYY-MM-DD"
     
     if (isNaN(valor) || !fecha || valor < 0) {
         showToast('El valor debe ser un número positivo y la fecha es obligatoria.', "warning");
@@ -6204,28 +6204,33 @@ const handleSaveValoracion = async (form, btn) => {
         return;
     }
     
-    const fechaISO = parseDateStringAsUTC(fecha).toISOString();
+    // ▼▼▼ ¡ESTA ES LA ÚNICA LÍNEA QUE CAMBIA! ▼▼▼
+    // Simplemente usamos la fecha del input directamente. Ya no la convertimos a un timestamp completo.
+    const fechaISO = fecha;
+    // ▲▲▲ FIN DEL CAMBIO ▲▲▲
+    
     const valorEnCentimos = Math.round(valor * 100);
 
     try {
         const userRef = fbDb.collection('users').doc(currentUser.uid);
+        // Ahora la query busca una coincidencia exacta de la cadena "YYYY-MM-DD", que es lo correcto.
         const query = userRef.collection('inversiones_historial').where('cuentaId', '==', cuentaId).where('fecha', '==', fechaISO).limit(1);
         const existingSnapshot = await query.get();
 
         let docId;
         if (!existingSnapshot.empty) {
+            // Si ya existe una valoración para este día, la actualizamos.
             docId = existingSnapshot.docs[0].id;
 			await existingSnapshot.docs[0].ref.update({ valor: valorEnCentimos });
         } else {
+            // Si no existe, creamos una nueva.
             docId = generateId();
+            // Guardamos directamente 'fechaISO' que ahora es "YYYY-MM-DD"
             await saveDoc('inversiones_historial', docId, { id: docId, cuentaId, valor: valorEnCentimos, fecha: fechaISO });
         }
 
-        // =====================================================================
-        // === INICIO: ACTUALIZACIÓN OPTIMISTA DE LA UI (LA SOLUCIÓN CLAVE)   ===
-        // =====================================================================
-
-        // 1. Buscamos si ya existe una valoración para esta fecha en nuestra memoria local.
+        // --- El resto de la función para la actualización optimista de la UI se mantiene igual ---
+        // Buscamos si ya existe una valoración para esta fecha en nuestra memoria local.
         const existingIndex = (db.inversiones_historial || []).findIndex(v => v.cuentaId === cuentaId && v.fecha === fechaISO);
 
         if (existingIndex > -1) {
@@ -6237,19 +6242,18 @@ const handleSaveValoracion = async (form, btn) => {
             db.inversiones_historial.push({ id: docId, cuentaId, valor: valorEnCentimos, fecha: fechaISO });
         }
 
-        // 2. Nos aseguramos de que el filtro para este tipo de activo esté visible.
         const tipoDeCuenta = toSentenceCase(cuenta.tipo || 'S/T');
         deselectedInvestmentTypesFilter.delete(tipoDeCuenta);
+        
+        // Llamamos a las funciones que renderizan el portafolio para ver el cambio
+        await renderPortfolioMainContent('portfolio-main-content');
+        await renderPortfolioEvolutionChart('portfolio-evolution-container');
 
-        // 3. ▼▼▼ CORRECCIÓN CLAVE: LLAMAMOS A LA FUNCIÓN CORRECTA ▼▼▼
-        // En lugar de llamar a una función inexistente, llamamos a renderInversionesView,
-        // que es la encargada de redibujar toda la pestaña de Inversiones.
-        await renderInversionesView();
-		 setTimeout(() => {
+        // Aplicamos una animación de "destello" para dar feedback visual de la actualización.
+		setTimeout(() => {
             const updatedCard = document.querySelector(`.modal__list-item[data-id="${cuentaId}"]`);
             if (updatedCard) {
                 updatedCard.classList.add('highlight-animation');
-                // Limpiamos la clase después de la animación para futuras actualizaciones
                 updatedCard.addEventListener('animationend', () => {
                     updatedCard.classList.remove('highlight-animation');
                 }, { once: true });
@@ -6259,7 +6263,7 @@ const handleSaveValoracion = async (form, btn) => {
         setButtonLoading(btn, false);
         hideModal('generic-modal');
         hapticFeedback('success');
-        showToast('Valoración guardada y cálculos actualizados instantáneamente.');
+        showToast('Valoración guardada y cálculos actualizados.');
 
     } catch (error) {
         console.error("Error al guardar la valoración:", error);
