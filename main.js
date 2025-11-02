@@ -1326,7 +1326,7 @@ window.addEventListener('offline', () => {
             
             updateSyncStatusIcon();
             buildIntelligentIndex();
-			navigateTo(PAGE_IDS.DIARIO, true); // <-- CAMBIADO
+			navigateTo(PAGE_IDS.INICIO, true);
             updateThemeIcon(localStorage.getItem('appTheme') || 'default');
             isInitialLoadComplete = true;
 			};
@@ -3249,28 +3249,49 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
         </div>`;
 
     setTimeout(() => {
-        const chartCtx = select('liquid-assets-chart')?.getContext('2d');
-        if (chartCtx) {
-            if (liquidAssetsChart) liquidAssetsChart.destroy();
-            if (treeData.length > 0) {
-                liquidAssetsChart = new Chart(chartCtx, { type: 'treemap', data: { datasets: [{ tree: treeData, key: 'saldo', groups: ['tipo', 'nombre'], spacing: 0.5, borderWidth: 1.5, borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'), backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'), labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) } }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false }}} });
-            } else {
-                select('liquid-assets-chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con saldo positivo para mostrar.</p></div>`;
-            }
+    const chartCtx = select('liquid-assets-chart')?.getContext('2d');
+    if (chartCtx) {
+        if (liquidAssetsChart) liquidAssetsChart.destroy();
+        if (treeData.length > 0) {
+            liquidAssetsChart = new Chart(chartCtx, { 
+                type: 'treemap', 
+                data: { /* ... tus datos del gráfico se mantienen igual ... */ }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { 
+                            display: false 
+                        }, 
+                        tooltip: { 
+                            callbacks: { 
+                                label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` 
+                            } 
+                        }, 
+                        datalabels: { 
+                            display: false 
+                        }
+                    },
+                    // ▼▼▼ ¡AQUÍ ESTÁ LA SOLUCIÓN! ▼▼▼
+                    // Añadimos un manejador para el evento 'click' del gráfico.
+                    onClick: (e) => {
+                        // `e.native` es el evento original del navegador.
+                        // `stopPropagation()` evita que el evento "burbujee" hacia arriba
+                        // por el DOM, impidiendo que llegue al acordeón.
+                        if (e.native) {
+                            e.native.stopPropagation();
+                        }
+                    }
+                    // ▲▲▲ FIN DE LA SOLUCIÓN ▲▲▲
+                } 
+            });
+        } else {
+            select('liquid-assets-chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con saldo positivo para mostrar.</p></div>`;
         }
-        const listaContainer = select('patrimonio-cuentas-lista');
-        if (listaContainer) {
-            const accountsByType = filteredAccounts.reduce((acc, c) => { const tipo = toSentenceCase(c.tipo || 'S/T'); if (!acc[tipo]) acc[tipo] = []; acc[tipo].push(c); return acc; }, {});
-            listaContainer.innerHTML = Object.keys(accountsByType).sort().map(tipo => {
-                const accountsInType = accountsByType[tipo];
-                const typeBalance = accountsInType.reduce((sum, acc) => sum + (saldos[acc.id] || 0), 0);
-                const porcentajeGlobal = totalFiltrado > 0 ? (typeBalance / totalFiltrado) * 100 : 0;
-                const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => `<div class="modal__list-item" data-action="view-account-details" data-id="${c.id}" style="cursor: pointer; padding: var(--sp-2) 0;"><div><span style="display: block;">${c.nombre}</span><small style="color: var(--c-on-surface-secondary);">${((saldos[c.id] || 0) / typeBalance * 100).toFixed(1)}% de ${tipo}</small></div><div style="display: flex; align-items: center; gap: var(--sp-2);">${formatCurrency(saldos[c.id] || 0)}<span class="material-icons" style="font-size: 18px;">chevron_right</span></div></div>`).join('');
-                if (!accountsHtml) return '';
-                return `<details class="accordion" style="margin-bottom: var(--sp-2);"><summary><span class="account-group__name">${tipo}</span><div style="display:flex; align-items:center; gap:var(--sp-2);"><small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small><span class="account-group__balance">${formatCurrency(typeBalance)}</span><span class="material-icons accordion__icon">expand_more</span></div></summary><div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div></details>`;
-            }).join('');
-        }
-    }, 50);
+    }
+    const listaContainer = select('patrimonio-cuentas-lista');
+    // ... el resto de la función para renderizar la lista se mantiene igual ...
+}, 50);
 };
                 
         
@@ -5806,6 +5827,10 @@ const setMovimientoFormType = (type) => {
     if (titleEl && amountGroup) {
         const isEditing = mode.startsWith('edit');
         let baseTitle = isEditing ? 'Editar' : 'Nuevo';
+		// Detectar si venimos de duplicar un movimiento
+		if (titleEl.textContent === 'Duplicar Movimiento') {
+        baseTitle = 'Duplicar';
+		}
 
         switch (type) {
             case 'gasto':
@@ -7008,11 +7033,7 @@ function createCustomSelect(selectElement) {
             trigger.setAttribute('aria-expanded', 'false');
         }
     });
-    
-    // ▼▼▼ ¡ESTA ES LA LÍNEA QUE SOLUCIONA EL BUG! ▼▼▼
-    // Le decimos al componente que "escuche". Si el <select> original cambia
-    // por CUALQUIER motivo (como tu script asignándole un valor), la función
-    // populateOptions() se ejecutará de nuevo para actualizar el texto visible.
+       
     selectElement.addEventListener('change', populateOptions);
 }
 
@@ -8042,6 +8063,7 @@ startMovementForm(movementToDuplicate.id, false);
 // 2. Usamos un pequeño retardo para asegurarnos de que el formulario ya está visible
 // antes de modificarlo para que actúe como "Nuevo" en lugar de "Editar".
 setTimeout(() => {
+ select('form-movimiento-title').textContent = 'Duplicar Movimiento';	
 // 3. Modificamos el estado del formulario para que sepa que vamos a crear
 // un movimiento NUEVO, no a actualizar el antiguo.
 select('movimiento-mode').value = 'new';
@@ -9018,31 +9040,29 @@ const handleInteractionStart = (e) => {
 const handleInteractionMove = (e) => {
     if (!swipeState.isSwiping || !swipeState.activeCard) return;
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const point = e.type === 'touchmove' ? e.touches[0] : e;
     const deltaX = point.clientX - swipeState.startX;
-    const deltaY = point.clientY - swipeState.startY; // <-- AÑADE ESTA LÍNEA
+    const deltaY = point.clientY - swipeState.startY; // <-- Dato que necesitamos
 
-    // Si es la primera vez que se detecta movimiento, decidimos si es scroll o swipe
+    // ▼▼▼ NUEVA LÓGICA DE DECISIÓN DE GESTO ▼▼▼
     if (!swipeState.isSwipeIntent && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
-        // Si el movimiento es más vertical que horizontal, es un SCROLL.
+        // Si el movimiento vertical es más dominante, es un SCROLL. Cancelamos todo.
         if (Math.abs(deltaY) > Math.abs(deltaX)) {
-            // Cancelamos todo el proceso de swipe y dejamos que el navegador haga scroll.
             if (longPressState.timer) clearTimeout(longPressState.timer);
-            swipeState.isSwiping = false;
+            swipeState.isSwiping = false; // Detenemos la lógica de swipe
             return;
         }
-        // Si es más horizontal, es un SWIPE.
+        // Si es más horizontal, es un SWIPE. Confirmamos la intención.
         swipeState.isSwipeIntent = true;
         if (longPressState.timer) clearTimeout(longPressState.timer);
     }
-    // --- FIN DE LA MODIFICACIÓN ---
+    // ▲▲▲ FIN DE LA NUEVA LÓGICA ▲▲▲
 
+    // El resto de la función solo se ejecuta si la intención es de swipe
     if (swipeState.isSwipeIntent) {
-        e.preventDefault(); 
+        e.preventDefault(); // Evitamos el scroll del navegador solo si estamos haciendo swipe
         swipeState.currentX = point.clientX;
         const currentDiff = swipeState.currentX - swipeState.startX;
-        
         const direction = currentDiff > 0 ? 'right' : 'left';
         const leftActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.left');
         const rightActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.right');
