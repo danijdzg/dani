@@ -4152,8 +4152,6 @@ const renderInicioResumenView = () => {
             return `<div data-widget-type="action-center">${renderDashboardActionCenter()}</div>`;
         case 'net-worth-trend':
             return `<div data-widget-type="net-worth-trend">${renderDashboardNetWorthTrend()}</div>`;
-        case 'patrimonio-structure':
-           return `<div data-widget-type="patrimonio-structure"><div class="card" id="patrimonio-widget"><div id="patrimonio-completo-container"><div class="skeleton" style="height:250px;"></div></div></div></div>`;
         case 'emergency-fund':
             return `<div data-widget-type="emergency-fund">${renderDashboardEmergencyFund()}</div>`;
         case 'fi-progress':
