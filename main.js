@@ -66,8 +66,8 @@ const handleExportFilteredCsv = (btn) => {
 const PAGE_IDS = {
     INICIO: 'inicio-page',
     DIARIO: 'diario-page',
-    INVERSIONES: 'inversiones-page',
-    PLANIFICAR: 'planificar-page', // ¡La nueva página!
+    PATRIMONIO: 'patrimonio-page', // <-- CAMBIO CLAVE
+    PLANIFICAR: 'planificar-page', 
     AJUSTES: 'ajustes-page',
 };
 
@@ -91,7 +91,6 @@ const PAGE_IDS = {
 const DEFAULT_DASHBOARD_WIDGETS = [
     'super-centro-operaciones', // <-- El widget principal y más completo
     'net-worth-trend',          // Evolución del Patrimonio
-    'patrimonio-structure',     // Desglose del Patrimonio
     'action-center'             // Centro de Acciones (Recurrentes pendientes)
 ];
 // ▼▼▼ REEMPLAZAR POR COMPLETO CON LA VERSIÓN FINAL Y MATEMÁTICAMENTE CORRECTA ▼▼▼
@@ -1498,12 +1497,12 @@ const navigateTo = async (pageId, isInitial = false) => {
     if (pageId === PAGE_IDS.INVERSIONES && !dataLoaded.inversiones) await loadInversiones();
 
     const pageRenderers = {
-        [PAGE_IDS.INICIO]: { title: 'Panel', render: renderInicioPage, actions: standardActions },
-        [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
-        [PAGE_IDS.INVERSIONES]: { title: 'Inversiones', render: renderInversionesView, actions: standardActions },
-        [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage, actions: standardActions },
-        [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
-    };
+    [PAGE_IDS.INICIO]: { title: 'Panel', render: renderInicioPage, actions: standardActions },
+    [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
+    [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: standardActions }, // <-- CAMBIOS AQUÍ
+    [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage, actions: standardActions },
+    [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
+};
 
     if (pageRenderers[pageId]) { 
         if (leftEl) {
@@ -3194,8 +3193,8 @@ const renderBudgetTrendChart = (monthlyIncomeData, monthlyExpenseData, averageBu
 // =============================================================
 // === INICIO: FUNCIÓN RESTAURADA PARA EL WIDGET DE PATRIMONIO ===
 // =============================================================
-const renderPatrimonioPage = async () => {
-    const container = select('patrimonio-completo-container');
+const renderPatrimonioOverviewWidget = async (containerId) => {
+    const container = select(containerId);
     if (!container) return;
 
     const visibleAccounts = getVisibleAccounts();
@@ -4388,37 +4387,54 @@ const renderPlanificacionPage = () => {
     renderPendingRecurrents();
     renderRecurrentsListOnPage();
 };
- const renderInversionesView = () => {
-    const container = select(PAGE_IDS.INVERSIONES);
+ const renderPatrimonioPage = () => {
+    const container = select(PAGE_IDS.PATRIMONIO); // Usamos la nueva constante
     if (!container) return;
 
-    // Ahora esta función se encarga de TODO: crea el esqueleto y llama a las funciones que lo rellenan.
+    // 1. Dibuja la estructura base con esqueletos y los dos acordeones.
     container.innerHTML = `
-        <div id="inversiones-content-container">
-            <!-- Nuevo Acordeón para el Gráfico de Evolución -->
-            <details class="accordion" open style="margin-bottom: var(--sp-4);">
-                <summary>
-                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
-                        <span class="material-icons">show_chart</span>
-                        Evolución del Portafolio
-                    </h3>
-                    <span class="material-icons accordion__icon">expand_more</span>
-                </summary>
-                <div class="accordion__content" id="portfolio-evolution-container" style="padding: var(--sp-3) var(--sp-4);">
-                    <!-- Esqueleto de carga para el gráfico de evolución -->
-                    <div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"></div>
-                </div>
-            </details>
-
-            <!-- El resto de tu HTML de la página de Inversiones se generará después -->
-            <div id="portfolio-main-content">
-                <!-- Esqueleto de carga para el resto de la página -->
-                <div class="skeleton" style="height: 300px; border-radius: var(--border-radius-lg);"></div>
+        <!-- Acordeón para la Visión General del Patrimonio -->
+        <details class="accordion" open style="margin-bottom: var(--sp-4);">
+            <summary>
+                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                    <span class="material-icons">account_balance</span>
+                    Visión General del Patrimonio
+                </h3>
+                <span class="material-icons accordion__icon">expand_more</span>
+            </summary>
+            <div class="accordion__content" id="patrimonio-overview-container" style="padding: 0 var(--sp-2);">
+                <!-- Esqueleto de carga para el widget de patrimonio -->
+                <div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>
             </div>
-        </div>
+        </details>
+
+        <!-- Acordeón para el Portafolio de Inversión -->
+        <details class="accordion" open style="margin-bottom: var(--sp-4);">
+            <summary>
+                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                    <span class="material-icons">rocket_launch</span>
+                    Portafolio de Inversión
+                </h3>
+                <span class="material-icons accordion__icon">expand_more</span>
+            </summary>
+            <div class="accordion__content" style="padding: 0 var(--sp-2);">
+                <div id="portfolio-evolution-container">
+                     <div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"></div>
+                </div>
+                <div id="portfolio-main-content" style="margin-top: var(--sp-4);">
+                    <div class="skeleton" style="height: 300px; border-radius: var(--border-radius-lg);"></div>
+                </div>
+            </div>
+        </details>
     `;
-	    // Llamamos a las dos funciones que rellenarán cada parte.
+    
+    // 2. Llama a las funciones de renderizado para rellenar cada sección.
+    //    Usamos un setTimeout para asegurar que el DOM está listo.
     setTimeout(async () => {
+        // Renombramos la antigua 'renderPatrimonioPage' para ser más específica.
+        await renderPatrimonioOverviewWidget('patrimonio-overview-container'); 
+        
+        // Reutilizamos la lógica de inversiones que ya tenías.
         await renderPortfolioEvolutionChart('portfolio-evolution-container');
         await renderPortfolioMainContent('portfolio-main-content');
     }, 50);
