@@ -3235,7 +3235,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
 
     // 3. Generamos y renderizamos el HTML completo, reemplazando el esqueleto.
     container.innerHTML = `
-        <h3 class="card__title"><span class="material-icons">account_balance</span>Visión General del Patrimonio</h3>
+        <h3 class="card__title"><span class="material-icons">account_balance</span></h3>
         <div class="card__content" style="padding-top:0;">
             <div class="patrimonio-header-grid__kpi" style="margin-bottom: var(--sp-4);">
                 <h4 class="kpi-item__label">Patrimonio Neto (Seleccionado)</h4>
