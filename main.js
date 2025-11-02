@@ -83,7 +83,6 @@ const PAGE_IDS = {
         'super-centro-operaciones': { title: 'Centro de Operaciones', description: 'Visión completa con filtros, KPIs y análisis de conceptos.', icon: 'query_stats' },
         'action-center': { title: 'Centro de Acciones', description: 'Alertas y tareas pendientes.', icon: 'notifications_active' },
         'net-worth-trend': { title: 'Evolución del Patrimonio', description: 'Gráfico histórico de la variación de tu patrimonio neto.', icon: 'show_chart' },
-        'patrimonio-structure': { title: 'Patrimonio', description: 'Gráfico interactivo y listado de todas tus cuentas y su peso.', icon: 'account_balance' },
         'emergency-fund': { title: 'Colchón de Emergencia', description: 'Mide tu red de seguridad financiera.', icon: 'shield' },
         'fi-progress': { title: 'Independencia Financiera', description: 'Sigue tu progreso hacia la libertad financiera.', icon: 'flag' },
         'informe-personalizado': { title: 'Mi Informe Personalizado', description: 'Un gráfico a tu medida con los datos que más te importan.', icon: 'insights' }
@@ -91,7 +90,7 @@ const PAGE_IDS = {
 const DEFAULT_DASHBOARD_WIDGETS = [
     'super-centro-operaciones', // <-- El widget principal y más completo
     'net-worth-trend',          // Evolución del Patrimonio
-    'action-center'             // Centro de Acciones (Recurrentes pendientes)
+    
 ];
 // ▼▼▼ REEMPLAZAR POR COMPLETO CON LA VERSIÓN FINAL Y MATEMÁTICAMENTE CORRECTA ▼▼▼
 // AÑADE ESTA NUEVA FUNCIÓN A main.js
@@ -4879,7 +4878,49 @@ const updateDashboardData = async () => {
         
         const actionCenterContainer = select('action-center-content');
         if (actionCenterContainer) {
-             let actionItems = []; const now = new Date(); const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())); const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000); const pendingRecurrents = (db.recurrentes || []).filter(r => new Date(r.nextDate) <= today); pendingRecurrents.forEach(r => actionItems.push({ urgency: 3, type: 'pending', data: r, subtitle: `Vencido desde el ${new Date(r.nextDate).toLocaleDateString()}` })); (db.recurrentes || []).filter(r => { const nextDate = new Date(r.nextDate); return nextDate > today && nextDate <= nextWeek; }).slice(0, 10).forEach(r => actionItems.push({ urgency: 2, type: 'upcoming', data: r, subtitle: `Vence el ${new Date(r.nextDate).toLocaleDateString()}` })); actionItems.sort((a, b) => b.urgency - a.urgency || new Date(a.data.nextDate) - new Date(b.data.nextDate)); if (actionItems.length === 0) { actionCenterContainer.innerHTML = `<div class="empty-state" style="padding: var(--sp-2) 0; background: transparent; border: none;"><span class="material-icons text-positive">task_alt</span><p style="color: var(--c-on-surface-secondary);">¡Todo en orden!</p></div>`; } else { actionCenterContainer.innerHTML = actionItems.map(item => { const r = item.data; const amountClass = r.cantidad >= 0 ? 'text-positive' : 'text-negative'; const actionButtons = item.type === 'pending' ? `<div style="display: flex; gap: var(--sp-2);"><button class="btn btn--secondary" data-action="skip-recurrent" data-id="${r.id}" style="padding: 4px 8px; font-size: 0.7rem;">Omitir</button><button class="btn btn--primary" data-action="confirm-recurrent" data-id="${r.id}" style="padding: 4px 8px; font-size: 0.7rem;">Añadir</button></div>` : ''; return `<div class="modal__list-item" style="padding: var(--sp-2) 0;"><div><strong style="font-size: var(--fs-sm);">${r.descripcion}</strong><small style="display: block; color: var(--c-on-surface-secondary);">${item.subtitle}</small></div><div style="text-align: right;"><strong class="${amountClass}" style="font-size: var(--fs-base);">${formatCurrency(r.cantidad)}</strong>${actionButtons}</div></div>`; }).join(''); }
+            let actionItems = [];
+            const now = new Date();
+            const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+            const allRecurrents = db.recurrentes || [];
+
+            // 1. OBTENER OPERACIONES PENDIENTES (las que ya han vencido)
+            const pendingRecurrents = allRecurrents.filter(r => r.nextDate && new Date(r.nextDate) <= today);
+            pendingRecurrents.forEach(r => actionItems.push({ 
+                urgency: 3, 
+                type: 'pending', 
+                data: r, 
+                subtitle: `Vencido desde el ${new Date(r.nextDate).toLocaleDateString('es-ES')}` 
+            }));
+            
+            // 2. OBTENER LAS PRÓXIMAS 10 OPERACIONES FUTURAS
+            const upcomingRecurrents = allRecurrents
+                .filter(r => r.nextDate && new Date(r.nextDate) > today) // Filtro: fechas futuras
+                .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate)) // Ordenar: más próximo primero
+                .slice(0, 10); // Limitar: solo los 10 primeros
+
+            upcomingRecurrents.forEach(r => actionItems.push({
+                urgency: 2, 
+                type: 'upcoming', 
+                data: r,
+                subtitle: `Próximo: ${new Date(r.nextDate).toLocaleDateString('es-ES')}`
+            }));
+
+            // 3. ORDENAR LA LISTA FINAL (los pendientes siempre primero)
+            actionItems.sort((a, b) => b.urgency - a.urgency || new Date(a.data.nextDate) - new Date(b.data.nextDate));
+
+            // 4. RENDERIZAR EL RESULTADO (el código HTML no cambia, solo los datos que recibe)
+            if (actionItems.length === 0) { 
+                actionCenterContainer.innerHTML = `<div class="empty-state" style="padding: var(--sp-2) 0; background: transparent; border: none;"><span class="material-icons text-positive">task_alt</span><p style="color: var(--c-on-surface-secondary);">¡Todo en orden! No hay acciones pendientes ni próximas.</p></div>`; 
+            } else { 
+                actionCenterContainer.innerHTML = actionItems.map(item => { 
+                    const r = item.data; 
+                    const amountClass = r.cantidad >= 0 ? 'text-positive' : 'text-negative'; 
+                    // Esta lógica es clave: los botones solo aparecen para los items de tipo 'pending'
+                    const actionButtons = item.type === 'pending' ? `<div style="display: flex; gap: var(--sp-2);"><button class="btn btn--secondary" data-action="skip-recurrent" data-id="${r.id}" style="padding: 4px 8px; font-size: 0.7rem;">Omitir</button><button class="btn btn--primary" data-action="confirm-recurrent" data-id="${r.id}" style="padding: 4px 8px; font-size: 0.7rem;">Añadir</button></div>` : ''; 
+                    
+                    return `<div class="modal__list-item" style="padding: var(--sp-2) 0;"><div><strong style="font-size: var(--fs-sm);">${escapeHTML(r.descripcion)}</strong><small style="display: block; color: var(--c-on-surface-secondary);">${item.subtitle}</small></div><div style="text-align: right;"><strong class="${amountClass}" style="font-size: var(--fs-base);">${formatCurrency(r.cantidad)}</strong>${actionButtons}</div></div>`; 
+                }).join(''); 
+            }
         }
         const efWidget = select('emergency-fund-widget');
         if (efWidget) {
