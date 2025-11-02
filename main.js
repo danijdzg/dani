@@ -2331,8 +2331,6 @@ const handleToggleInvestmentTypeFilter = (type) => {
 // === REEMPLAZA ESTA FUNCIÓN COMPLETA - VERSIÓN CON ORDEN ALFABÉTICO POR NOMBRE ===
 // ====================================================================================
 
-let investmentChartMode = 'valorado';
-
 const renderPortfolioMainContent = async (targetContainerId) => {
     const container = select(targetContainerId);
     if (!container) return;
@@ -2402,10 +2400,6 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             <summary><h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">pie_chart</span>Asignación y Filtros</h3><span class="material-icons accordion__icon">expand_more</span></summary>
             <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
                 <div class="filter-pills" style="margin-bottom: var(--sp-2);">${pillsHTML}</div>
-                <div class="filter-pills" style="justify-content: center; margin-bottom: var(--sp-4);">
-                    <button class="filter-pill ${investmentChartMode === 'valorado' ? 'filter-pill--active' : ''}" data-action="set-investment-chart-mode" data-mode="valorado">Por Valor de Mercado</button>
-                    <button class="filter-pill ${investmentChartMode === 'invertido' ? 'filter-pill--active' : ''}" data-action="set-investment-chart-mode" data-mode="invertido">Por Capital Aportado</button>
-                </div>
                 <div class="chart-container" style="height: 250px; margin-bottom: 0;"><canvas id="asset-allocation-chart"></canvas></div>
             </div>
         </details>
@@ -2414,14 +2408,22 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             <button class="btn btn--secondary btn--full" data-action="manage-investment-accounts"><span class="material-icons" style="font-size: 16px;">checklist</span>Gestionar Activos</button>
         </div>`;
     
-    setTimeout(() => {
-        const chartCtx = select('asset-allocation-chart')?.getContext('2d');
-        if (chartCtx) {
-            if (assetAllocationChart) assetAllocationChart.destroy();
-            const keyToSum = investmentChartMode === 'valorado' ? 'valorActual' : 'capitalInvertido';
-            const treeData = [];
-            displayAssetsData.forEach(asset => {
-                const valor = asset[keyToSum] / 100;
+    setTimeout(() => { // O si ya lo has refactorizado, directamente después.
+    const chartCtx = select('asset-allocation-chart')?.getContext('2d');
+    if (chartCtx) {
+        if (assetAllocationChart) assetAllocationChart.destroy();
+
+        // ▼▼▼ AQUÍ ESTÁ LA LÍNEA A CAMBIAR ▼▼▼
+        // ANTES:
+        // const keyToSum = investmentChartMode === 'valorado' ? 'valorActual' : 'capitalInvertido';
+
+        // AHORA (SIMPLE Y DIRECTO):
+        const keyToSum = 'valorActual'; // Dejamos fijo el valor de mercado como única vista.
+        // ▲▲▲ FIN DEL CAMBIO ▲▲▲
+
+        const treeData = [];
+        displayAssetsData.forEach(asset => {
+            const valor = asset[keyToSum] / 100;
                 if (valor > 0) treeData.push({ tipo: toSentenceCase(asset.tipo || 'S/T'), nombre: asset.nombre, valor: valor });
             });
             if (treeData.length > 0) {
@@ -7358,7 +7360,6 @@ function createCustomSelect(selectElement) {
             'clear-data': () => { showConfirmationModal('¿Borrar TODOS tus datos de la nube? Esta acción es IRREVERSIBLE y no se puede deshacer.', async () => { /* Lógica de borrado aquí */ }, 'Confirmación Final de Borrado'); },
             'update-budgets': handleUpdateBudgets, 'logout': () => fbAuth.signOut(), 'delete-account': () => { showConfirmationModal('Esto eliminará tu cuenta y todos tus datos de forma PERMANENTE. ¿Estás absolutamente seguro?', async () => { /* Lógica de borrado de cuenta aquí */ }); },
             'manage-investment-accounts': showManageInvestmentAccountsModal, 'update-asset-value': () => showValoracionModal(id),
-            'set-investment-chart-mode': () => handleSetInvestmentChartMode(actionTarget.dataset.mode),
             'global-search': () => { showGlobalSearchModal(); hapticFeedback('medium'); },
             'edit-concepto': () => showConceptoEditForm(id), 'cancel-edit-concepto': renderConceptosModalList, 'save-edited-concepto': () => handleSaveEditedConcept(id, btn),
             'edit-cuenta': () => showAccountEditForm(id), 'cancel-edit-cuenta': renderCuentasModalList, 'save-edited-cuenta': () => handleSaveEditedAccount(id, btn),
@@ -7448,17 +7449,7 @@ function createCustomSelect(selectElement) {
 // =================================================================
 // === FIN: BLOQUE DE CÓDIGO CORREGIDO PARA REEMPLAZAR           ===
 // =================================================================
-
-	const handleSetInvestmentChartMode = (mode) => {
-    if (investmentChartMode === mode) return; // No hacer nada si ya está en ese modo
-    hapticFeedback('light');
-    investmentChartMode = mode; // Actualizamos el estado global
-    
-    // LA SOLUCIÓN:
-    // Aplicamos la misma lógica aquí. Forzamos el redibujado en el contenedor correcto.
-    renderInversionesView();
-};
-            
+           
         const showImportJSONWizard = () => {
             jsonWizardState = { file: null, data: null, preview: { counts: {}, meta: {} } };
             goToJSONStep(1);
