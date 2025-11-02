@@ -4668,17 +4668,13 @@ const updateNetWorthChart = async (saldos) => {
     if (!netWorthCanvas) return;
     const chartContainer = netWorthCanvas.closest('.chart-container');
 
-    // AQUÍ ESTÁ LA MAGIA: Consultamos directamente a Chart.js y destruimos CUALQUIER
-    // instancia que esté usando este canvas antes de intentar crear una nueva.
     const existingChart = Chart.getChart(canvasId);
     if (existingChart) {
         existingChart.destroy();
     }
-    netWorthChart = null; // Limpiamos la referencia global por si acaso.
+    netWorthChart = null; 
     
     const allMovements = await fetchAllMovementsForHistory();
-    // ... El resto del cuerpo de la función para obtener datos y crear el gráfico
-    // se mantiene EXACTAMENTE IGUAL que en la versión que ya tenéis...
     const visibleAccountIds = new Set(Object.keys(saldos));
     const cuentas = db.cuentas.filter(c => visibleAccountIds.has(c.id));
 
@@ -4784,10 +4780,11 @@ const updateNetWorthChart = async (saldos) => {
             },
             plugins: {
                 datalabels: { display: false },
+                // ▼▼▼ LA LÍNEA CLAVE QUE HEMOS CAMBIADO ▼▼▼
                 legend: {
-                    position: 'bottom',
-                    labels: { boxWidth: 15, padding: 20 }
+                    display: false // ¡Listo! Leyendas ocultas.
                 },
+                // ▲▲▲ FIN DEL CAMBIO ▲▲▲
                 tooltip: {
                     intersect: false,
                     mode: 'index',
