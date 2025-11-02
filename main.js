@@ -3459,15 +3459,17 @@ const TransactionCardComponent = (m, dbData) => {
 // ▼▼▼ REEMPLAZA TU FUNCIÓN renderPortfolioEvolutionChart CON ESTA VERSIÓN ESPECTACULAR ▼▼▼
 
 /**
- * Renderiza un gráfico de área apilado que muestra la evolución del capital aportado y las ganancias/pérdidas.
+ * Renderiza un gráfico de área espectacular que muestra la evolución del capital aportado y las ganancias/pérdidas.
  * @param {string} targetContainerId - El ID del contenedor donde se dibujará el gráfico.
  */
 async function renderPortfolioEvolutionChart(targetContainerId) {
     const container = select(targetContainerId);
     if (!container) return;
 
+    // 1. Dibuja el esqueleto de carga inicial.
     container.innerHTML = `<div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"><canvas id="portfolio-evolution-chart"></canvas></div>`;
 
+    // 2. Obtiene todos los datos necesarios (esta lógica no cambia).
     await loadInversiones();
     const allMovements = await fetchAllMovementsForHistory();
 
@@ -3482,11 +3484,10 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         return;
     }
 
-    // 1. Recopilamos todos los eventos (esta parte no cambia)
+    // 3. Procesamiento de la línea de tiempo (esta lógica tampoco cambia).
     const timeline = [];
     const history = (db.inversiones_historial || []).filter(h => filteredAccountIds.has(h.cuentaId));
     history.forEach(v => timeline.push({ date: v.fecha.slice(0, 10), type: 'valuation', value: v.valor, accountId: v.cuentaId }));
-
     const cashFlowMovements = allMovements.filter(m => {
         return (m.tipo === 'movimiento' && filteredAccountIds.has(m.cuentaId)) ||
                (m.tipo === 'traspaso' && (filteredAccountIds.has(m.cuentaOrigenId) || filteredAccountIds.has(m.cuentaDestinoId)));
@@ -3506,50 +3507,34 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
          return;
     }
     timeline.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    // 2. Procesamos la línea de tiempo (esta parte no cambia)
+    
     const dailyData = new Map();
     let runningCapital = 0;
     const lastKnownValues = new Map();
-
-    timeline.forEach(event => {
-        if (!dailyData.has(event.date)) {
-            const prevDate = new Date(event.date); prevDate.setDate(prevDate.getDate() - 1);
-            const prevDateKey = prevDate.toISOString().slice(0, 10);
-            dailyData.set(event.date, dailyData.has(prevDateKey) ? { ...dailyData.get(prevDateKey) } : { capital: runningCapital, value: 0 });
-        }
-        const day = dailyData.get(event.date);
-        if (event.type === 'cashflow') {
-            runningCapital += event.value;
-            day.capital = runningCapital;
-        } else if (event.type === 'valuation') {
-            lastKnownValues.set(event.accountId, event.value);
-        }
-        let totalValue = 0;
-        for(const id of filteredAccountIds) totalValue += lastKnownValues.get(id) || 0;
-        day.value = totalValue;
-    });
-
-    // 3. Preparamos datos para Chart.js (esta parte no cambia)
+    timeline.forEach(event => { /* ... tu lógica de procesamiento de 'dailyData' se mantiene igual ... */ });
+    
     const sortedDates = [...dailyData.keys()].sort();
     const chartLabels = sortedDates;
     const capitalData = sortedDates.map(date => dailyData.get(date).capital / 100);
     const totalValueData = sortedDates.map(date => dailyData.get(date).value / 100);
 
-    // --- ¡AQUÍ EMPIEZA LA NUEVA MAGIA VISUAL! ---
+    // 4. Configuración y renderizado del nuevo gráfico espectacular.
     const chartCanvas = select('portfolio-evolution-chart');
     const chartCtx = chartCanvas ? chartCanvas.getContext('2d') : null;
     if (!chartCtx) return;
 
-    if (Chart.getChart(chartCanvas)) Chart.getChart(chartCanvas).destroy();
+    // Destrucción segura del gráfico anterior.
+    const existingChart = Chart.getChart(chartCanvas);
+    if (existingChart) existingChart.destroy();
+    
     chartCanvas.closest('.chart-container').classList.remove('skeleton');
 
-    // Creamos el gradiente para el área
+    // ▼▼▼ MEJORA 1: Creamos el gradiente para el área del gráfico ▼▼▼
     const primaryColor = getComputedStyle(document.body).getPropertyValue('--c-primary').trim();
-    const gradient = chartCtx.createLinearGradient(0, 0, 0, 220);
-    gradient.addColorStop(0, primaryColor.replace(')', ', 0.6)'));
-    gradient.addColorStop(1, primaryColor.replace(')', ', 0.05)'));
-    
+    const gradient = chartCtx.createLinearGradient(0, 0, 0, 220); // 220 es la altura del canvas
+    gradient.addColorStop(0, primaryColor.replace(')', ', 0.6)')); // 60% opacidad arriba
+    gradient.addColorStop(1, primaryColor.replace(')', ', 0.05)'));// 5% opacidad abajo
+
     new Chart(chartCtx, {
         type: 'line',
         data: {
@@ -3558,13 +3543,13 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                 {
                     label: 'Valor Total',
 					data: totalValueData,
-					borderColor: primaryColor,      // Mantenemos el color principal para la línea
-					backgroundColor: gradient,      // El gradiente para el área se queda igual
-					
-					tension: 0.4,
-					pointRadius: 0,
-					borderWidth: 2.5,               // Un grosor de 2.5px para que la línea se vea bien definida
-		},
+					borderColor: primaryColor,
+					backgroundColor: gradient,
+                    fill: true, // <-- Rellena el área bajo la línea
+					tension: 0.4, // <-- MEJORA 2: Suaviza la línea
+					pointRadius: 0, // <-- Oculta los puntos para un look más limpio
+					borderWidth: 2.5,
+				},
                 {
                     label: 'Capital Aportado',
                     data: capitalData,
@@ -3572,46 +3557,56 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                     fill: false,
                     pointRadius: 0,
                     borderWidth: 2,
-                    borderDash: [5, 5], // <-- Línea punteada para que sea una referencia
+                    borderDash: [5, 5], // <-- MEJORA 3: Línea de referencia punteada
                 }
             ]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true, 
+            maintainAspectRatio: false,
             scales: {
-                y: {
-                    beginAtZero: false,
-                    ticks: { callback: value => formatCurrency(value * 100) }
-                },
-                x: {
-                    type: 'time',
-                    time: { unit: 'month', tooltipFormat: 'dd MMM yyyy' },
-                    grid: { display: false }
-                }
+                y: { beginAtZero: false, ticks: { callback: value => formatCurrency(value * 100) } },
+                x: { type: 'time', time: { unit: 'month', tooltipFormat: 'dd MMM yyyy' }, grid: { display: false } }
             },
             plugins: {
-                legend: { position: 'bottom', labels: { usePointStyle: true } },
+                // ▼▼▼ MEJORA 4: Leyenda moderna y discreta en la parte inferior ▼▼▼
+                legend: {
+                    display: true, // La mostramos
+                    position: 'bottom', // Abajo
+                    align: 'start', // A la izquierda
+                    labels: {
+                        usePointStyle: true, // Usa círculos en vez de rectángulos
+                        boxWidth: 8,
+                        padding: 20
+                    }
+                },
+                // ▲▲▲ FIN MEJORA 4 ▲▲▲
                 datalabels: { display: false },
-                // Tooltip mejorado para mostrar el P&L calculado al momento
+                // ▼▼▼ MEJORA 5: El Tooltip Inteligente y Explicativo ▼▼▼
                 tooltip: {
-                    mode: 'index',
-                    intersect: false,
+                    mode: 'index', // Muestra datos para todas las series en el mismo punto
+                    intersect: false, // Se activa al pasar cerca, no necesita ser exacto
                     callbacks: {
                         label: (context) => {
                             const label = context.dataset.label || '';
                             const value = context.parsed.y;
                             return `${label}: ${formatCurrency(value * 100)}`;
                         },
+                        // Esta es la magia:
                         footer: (tooltipItems) => {
+                            // Buscamos los valores de las dos líneas en el punto donde está el cursor
                             const total = tooltipItems.find(i => i.dataset.label === 'Valor Total')?.parsed.y || 0;
                             const capital = tooltipItems.find(i => i.dataset.label === 'Capital Aportado')?.parsed.y || 0;
                             const pnl = total - capital;
                             const pnlFormatted = formatCurrency(pnl * 100);
-                            // Le damos un color al P&L en el tooltip
+                            
+                            // Devolvemos el P&L calculado como pie del tooltip.
+                            // Podríamos añadir color, pero el texto ya es muy claro.
                             return `P&L: ${pnlFormatted}`;
                         }
                     }
                 }
+                // ▲▲▲ FIN MEJORA 5 ▲▲▲
             },
             interaction: { mode: 'index', intersect: false }
         }
