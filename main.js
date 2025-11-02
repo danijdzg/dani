@@ -2321,10 +2321,12 @@ const renderBudgetTracking = async () => {
         deselectedInvestmentTypesFilter.add(type);
     }
 
-    // LA SOLUCIÓN:
-    // Ya no buscamos el contenedor, simplemente llamamos a la función de
-    // renderizado con el ID correcto para la pestaña de Inversiones.
-    renderInversionesView();
+    // ▼▼▼ ¡ESTA ES LA LÍNEA QUE LO SOLUCIONA TODO! ▼▼▼
+    // Llamamos a la función principal que se encarga de renderizar TODA la página de Patrimonio.
+    // Esto asegura que tanto el gráfico de evolución como la sección de asignación de activos
+    // se actualicen para reflejar el nuevo estado de los filtros.
+    renderPatrimonioPage();
+    // ▲▲▲ ANTES AQUÍ HABÍA UNA LLAMADA A UNA FUNCIÓN INEXISTENTE: renderInversionesView(); ▲▲▲
 };
 
 // ====================================================================================
