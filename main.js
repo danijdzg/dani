@@ -2571,17 +2571,34 @@ const renderPortfolioMainContent = async (targetContainerId) => {
     </div>`;
 }
             if (item.type === 'date-header') {
-                const dateObj = new Date(item.date + 'T12:00:00Z');
-                const day = dateObj.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase().replace('.', '');
-                const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const dateObj = new Date(item.date + 'T12:00:00Z');
+    let label = '';
+    
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    today.setHours(0,0,0,0);
+    yesterday.setHours(0,0,0,0);
+    
+    const itemDate = new Date(dateObj); // Clonamos para no modificar el original
+    itemDate.setHours(0,0,0,0);
+    
+    // Creamos las etiquetas especiales
+    if (itemDate.getTime() === today.getTime()) {
+        label = "Hoy";
+    } else if (itemDate.getTime() === yesterday.getTime()) {
+        label = "Ayer";
+    } else {
+        label = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric' });
+    }
 
-                return `
-                    <div class="movimiento-date-header">
-                        <span>${day} ${dateStr}</span>
-                        <span>${formatCurrency(item.total)}</span>
-                    </div>
-                `;
-            }
+    return `
+        <div class="movimiento-date-header ${label === 'Hoy' ? 'is-today' : ''}">
+            <span style="text-transform: capitalize;">${label}</span>
+            <span>${formatCurrency(item.total)}</span>
+        </div>
+    `;
+}
 			if (item.type === 'transaction') {
         return TransactionCardComponent(item.movement, { cuentas: db.cuentas, conceptos: db.conceptos });
 		}
@@ -6289,40 +6306,45 @@ const showHelpModal = () => {
 <h3><span class="material-icons">explore</span>El Gran Tour: Un Paseo por Tu Imperio</h3>
 <p>Cada pestaña de la aplicación es un departamento de tu imperio financiero, diseñado para responder a una pregunta clave sobre tu dinero:</p>
 
-<details class="accordion" style="margin-bottom: var(--sp-2);">
-    <summary><span class="material-icons" style="margin-right:8px">dashboard</span><strong>1. Panel: ¿Cómo voy hoy? (La Torre de Control)</strong></summary>
+<details class="accordion" style="margin-bottom: var(--sp-2);" open>
+    <summary><span class="material-icons" style="margin-right:8px">dashboard</span><strong>1. Panel: ¿Cómo voy ahora? (La Torre de Control)</strong></summary>
     <div class="accordion__content" style="padding-top: var(--sp-2);">
-        <p>Esta es tu <strong>vista de pájaro</strong>. De un solo vistazo, tienes el pulso de tu situación. Es tu panel personalizable con "Widgets", que son como tus asesores personales. Puedes activarlos, desactivarlos y reordenarlos desde el botón <span class="material-icons" style="font-size:1em; vertical-align:bottom;">dashboard_customize</span> en la barra superior.</p>
+        <p>Esta es tu <strong>vista de pájaro</strong>. Al abrir la app, esto es lo primero que ves. De un solo vistazo, tienes el pulso de tu situación financiera en el periodo que elijas (este mes, este año...). Es tu centro de mando personalizable con "Widgets", que son como tus asesores personales. Puedes activarlos, desactivarlos y reordenarlos desde el botón <span class="material-icons" style="font-size:1em; vertical-align:bottom;">dashboard_customize</span> en la barra superior.</p>
         <p><strong>Consejo de experto:</strong> ¡No te quedes en la superficie! La mayoría de los datos son interactivos. Haz clic en las barras de los gráficos (por ejemplo, en la barra de "Comida" en el gráfico de conceptos) y verás un desglose de todos los movimientos de esa categoría para el periodo seleccionado.</p>
     </div>
 </details>
 
 <details class="accordion" style="margin-bottom: var(--sp-2);">
-    <summary><span class="material-icons" style="margin-right:8px">receipt_long</span><strong>2. Diario: ¿Qué ha pasado exactamente? (El Libro de la Verdad)</strong></summary>
+    <summary><span class="material-icons" style="margin-right:8px">receipt_long</span><strong>2. Diario: ¿Qué ha pasado? (El Libro de la Verdad)</strong></summary>
     <div class="accordion__content" style="padding-top: var(--sp-2);">
-        <p>Este es tu <strong>historial financiero completo</strong>, el registro notarial de cada céntimo. Es la verdad absoluta de tus finanzas, sin trampa ni cartón.</p>
+        <p>Este es tu <strong>historial financiero completo</strong>, el registro notarial de cada céntimo que entra y sale. Es la verdad absoluta de tus finanzas, sin trampa ni cartón.</p>
         <p><strong>Superpoder secreto:</strong> ¡El Gesto Mágico! En un dispositivo móvil, desliza cualquier movimiento hacia la <strong>derecha para duplicarlo</strong> (perfecto para ese café que te tomas cada mañana) o hacia la <strong>izquierda para borrarlo</strong>. Esto te ahorrará horas a lo largo del año.</p>
     </div>
 </details>
 
 <details class="accordion" style="margin-bottom: var(--sp-2);">
-    <summary><span class="material-icons" style="margin-right:8px">edit_calendar</span><strong>3. Planificar: ¿Cuál es mi plan de futuro? (La Sala de Estrategia)</strong></summary>
+    <summary><span class="material-icons" style="margin-right:8px">edit_calendar</span><strong>3. Planificar: ¿Qué va a pasar? (La Sala de Estrategia)</strong></summary>
     <div class="accordion__content" style="padding-top: var(--sp-2);">
         <p>Aquí te pones el sombrero de estratega. Es donde le dices a tu dinero qué hacer, en lugar de preguntarte a dónde se ha ido a final de mes. Domina tu futuro con dos herramientas clave:</p>
          <ul>
-            <li><strong>Movimientos Recurrentes:</strong> ¡Automatiza tu vida! Registra tu nómina, el alquiler, Netflix, el gimnasio... La app los tendrá listos para ti cada mes en la sección "Diario" para que los confirmes con un solo clic. Se acabó teclear lo mismo una y otra vez.</li>
-            <li><strong>Presupuestos Anuales:</strong> ¡Tu plan de batalla! Define cuánto quieres gastar o ingresar por categoría al año. La app te mostrará proyecciones y te dirá si vas por buen camino para tus metas o si te estás pasando con los pedidos a domicilio.</li>
+            <li><strong>Movimientos Recurrentes:</strong> ¡Automatiza tu vida! Registra tu nómina, el alquiler, Netflix, el gimnasio... La app los tendrá listos para ti cada mes en la sección "Diario" (como "Pendientes") para que los confirmes con un solo clic. Se acabó teclear lo mismo una y otra vez.</li>
+            <li><strong>Presupuestos Anuales:</strong> ¡Tu plan de batalla! Define cuánto quieres gastar (o ingresar) por categoría al año. La app te mostrará proyecciones y te dirá si vas por buen camino para cumplir tus metas o si te estás pasando con los pedidos a domicilio.</li>
         </ul>
     </div>
 </details>
 
 <details class="accordion" style="margin-bottom: var(--sp-2);">
-    <summary><span class="material-icons" style="margin-right:8px">rocket_launch</span><strong>4. Inversiones: ¿Mi dinero está trabajando para mí? (El Motor de Riqueza)</strong></summary>
+    <summary><span class="material-icons" style="margin-right:8px">account_balance</span><strong>4. Patrimonio: ¿Qué tengo y cuánto vale? (La Caja Fuerte)</strong></summary>
     <div class="accordion__content" style="padding-top: var(--sp-2);">
-        <p>Esta es la sección dedicada a tu portafolio. Analiza tus inversiones como un profesional con métricas clave que te darán una claridad total:</p>
+        <p>Esta es la foto completa de tu salud financiera. Aquí ves la suma de todo lo que tienes (tus activos) y cómo evoluciona en el tiempo. Se divide en dos partes:</p>
         <ul>
-            <li><strong>P&L (Ganancias y Pérdidas):</strong> Es el "marcador" del partido. Te dice, en euros y en porcentaje, si vas ganando o perdiendo basándose en la diferencia entre el valor de mercado que introduces y el capital que has aportado. Simple y honesto.</li>
-            <li><strong>TIR (Tasa Interna de Retorno):</strong> ¡El indicador definitivo! Olvídate de porcentajes confusos. La TIR te dice la rentabilidad <strong>anualizada real</strong> de tu dinero, teniendo en cuenta CUÁNDO y CUÁNTO has invertido. Es la métrica que usan los profesionales para saber si una inversión de verdad merece la pena.</li>
+            <li><strong>Visión General:</strong> Muestra el valor de todas tus cuentas (bancos, efectivo, préstamos...). Puedes filtrar por tipo para ver, por ejemplo, cuánto dinero líquido tienes disponible.</li>
+            <li><strong>Portafolio de Inversión:</strong> Si marcas una cuenta como "de inversión", aparecerá aquí para un análisis profesional con métricas que te darán una claridad total:
+                <ul>
+                    <li><strong>P&L (Ganancias y Pérdidas):</strong> Es el "marcador" del partido. Te dice, en euros y en porcentaje, si vas ganando o perdiendo basándose en la diferencia entre el valor de mercado que introduces y el capital que has aportado.</li>
+                    <li><strong>TIR (Tasa Interna de Retorno):</strong> ¡El indicador definitivo! Te dice la rentabilidad <strong>anualizada real</strong> de tu dinero, teniendo en cuenta CUÁNDO has invertido. Es la métrica que usan los profesionales para saber si una inversión de verdad merece la pena.</li>
+                </ul>
+            </li>
         </ul>
     </div>
 </details>
@@ -6347,9 +6369,9 @@ const showHelpModal = () => {
 </details>
 
 <details class="accordion" style="margin-bottom: var(--sp-2);">
-    <summary>🧠 <strong>Autocompletado Inteligente: El Copiloto Automático</strong></summary>
+    <summary>🧠 <strong>Asistente aiDANaI y Autocompletado: El Copiloto Automático</strong></summary>
     <div class="accordion__content" style="padding-top: var(--sp-2);">
-        <p>Cuando añadas un movimiento, empieza a escribir la descripción. Verás que te sugiero conceptos y cuentas basándome en tus hábitos. Si siempre que escribes "Mercadona" lo asocias al concepto "Supermercado" y a tu "Tarjeta de Débito", la aplicación lo aprenderá. Con el tiempo, rellenará los campos por ti. ¡Tu tiempo es oro!</p>
+        <p>Tu app aprende de ti. Cuando añadas un movimiento, empieza a escribir la descripción y verás sugerencias basadas en tus hábitos. Además, el Asistente IA (<span class="material-icons" style="font-size:1em; vertical-align:bottom;">auto_awesome</span>) puede responder preguntas en lenguaje natural como "¿cuál fue mi mayor gasto el mes pasado?".</p>
     </div>
 </details>
 
@@ -8686,13 +8708,12 @@ const handleAddConcept = async (btn) => {
 // ==============================================================
 const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
     const collection = isRecurrent ? 'recurrentes' : 'movimientos';
-    const ANIMATION_DURATION = 400; // Debe coincidir con la duración en el CSS (0.4s)
+    const ANIMATION_DURATION = 400; // Debe coincidir con la duración en el CSS
 
-    // Buscamos el elemento visual en el DOM ANTES de hacer cualquier cambio.
     const itemElement = document.querySelector(`.transaction-card[data-id="${id}"]`)?.closest('.swipe-container');
 
     try {
-        // 1. ELIMINACIÓN DE DATOS (Optimista e Inmediata)
+        // 1. ACTUALIZACIÓN OPTIMISTA DE DATOS
         let itemToDelete;
         if (isRecurrent) {
             const index = db.recurrentes.findIndex(r => r.id === id);
@@ -8702,37 +8723,25 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
             const index = db.movimientos.findIndex(m => m.id === id);
             if (index === -1) throw new Error("Movimiento no encontrado.");
             [itemToDelete] = db.movimientos.splice(index, 1);
-
-            // [CORRECCIÓN CRÍTICA] Revertimos el impacto del movimiento en los saldos locales (db.cuentas)
-            // ANTES de redibujar la interfaz. Esto asegura que los saldos acumulados se recalculen correctamente.
-            if (itemToDelete.tipo === 'traspaso') {
-                const origen = db.cuentas.find(c => c.id === itemToDelete.cuentaOrigenId);
-                if (origen) origen.saldo += itemToDelete.cantidad; // Devolvemos el dinero al origen
-                const destino = db.cuentas.find(c => c.id === itemToDelete.cuentaDestinoId);
-                if (destino) destino.saldo -= itemToDelete.cantidad; // Quitamos el dinero del destino
-            } else {
-                const cuenta = db.cuentas.find(c => c.id === itemToDelete.cuentaId);
-                if (cuenta) cuenta.saldo -= itemToDelete.cantidad; // Revertimos la operación
-            }
+            // Revertimos el saldo en la caché local ANTES de redibujar
+            applyOptimisticBalanceUpdate(null, itemToDelete); 
         }
-	
-
+    
         // 2. EFECTO VISUAL (Si el elemento está en pantalla)
         if (itemElement) {
             itemElement.classList.add('item-deleting');
         }
 
-        // 3. SINCRONIZACIÓN Y REDIBUJADO
+        // 3. ACTUALIZACIÓN DE LA UI (Después de la animación)
         setTimeout(() => {
-            updateLocalDataAndRefreshUI(); // Redibuja la lista virtual con los datos ya actualizados.
-            if (isRecurrent) renderPlanificacionPage(); // Refresca la vista de planificación si se borra un recurrente.
-        }, itemElement ? ANIMATION_DURATION : 0); // Si no hay elemento visual, el redibujado es inmediato.
+            updateLocalDataAndRefreshUI(); // Redibuja la lista virtual ya sin el elemento.
+            if (isRecurrent) renderPlanificacionPage();
+        }, itemElement ? ANIMATION_DURATION : 0);
 
-        // 4. PERSISTENCIA EN BASE DE DATOS (en segundo plano)
-        const batch = fbDb.batch();
-        const userRef = fbDb.collection('users').doc(currentUser.uid);
-
+        // 4. PERSISTENCIA EN SEGUNDO PLANO
         if (!isRecurrent) {
+            const batch = fbDb.batch();
+            const userRef = fbDb.collection('users').doc(currentUser.uid);
             if (itemToDelete.tipo === 'traspaso') {
                 const origenRef = userRef.collection('cuentas').doc(itemToDelete.cuentaOrigenId);
                 const destinoRef = userRef.collection('cuentas').doc(itemToDelete.cuentaDestinoId);
@@ -8742,19 +8751,19 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
                 const cuentaRef = userRef.collection('cuentas').doc(itemToDelete.cuentaId);
                 batch.update(cuentaRef, { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
             }
+            batch.delete(userRef.collection(collection).doc(id));
+            await batch.commit();
+        } else {
+            await deleteDoc(collection, id);
         }
-
-        const docToDeleteRef = userRef.collection(collection).doc(id);
-        batch.delete(docToDeleteRef);
-        await batch.commit();
 
         hapticFeedback('success');
         showToast("Elemento eliminado.", "info");
 
     } catch (error) {
         console.error("Error al eliminar:", error);
-        showToast("Error al eliminar. Recargando para mantener la consistencia...", "danger");
-        setTimeout(() => location.reload(), 1500); // Recarga como último recurso.
+        showToast("Error al eliminar. Recargando para mantener la consistencia.", "danger");
+        setTimeout(() => location.reload(), 1500);
     }
 };
 // ============================================================

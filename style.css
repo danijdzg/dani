@@ -482,9 +482,7 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
     from {
         opacity: 1;
         transform: scaleY(1);
-        max-height: 76px; /* Altura máxima de un item */
-        padding-top: var(--sp-2);
-        padding-bottom: var(--sp-2);
+        max-height: 76px; /* Altura máxima de un item de traspaso */
     }
     to {
         opacity: 0;
@@ -500,6 +498,8 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 .item-deleting {
     animation: fade-out-and-collapse 0.4s ease-out forwards;
     overflow: hidden;
+    /* Aseguramos que el borde también desaparezca */
+    border-bottom: none !important; 
 }
 @keyframes item-enter {
     from {
@@ -902,8 +902,6 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 .filter-pill--active { background-color: var(--c-primary); color: var(--c-white); font-weight: 700; border-color: var(--c-primary); }
 .toast-container { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); pointer-events: none;}
 .toast { background-color: var(--c-surface); color: var(--c-white); padding: var(--sp-2) var(--sp-4); border-radius: var(--border-radius-md); box-shadow: 0 0 20px rgba(0,0,0,0.5); pointer-events: all; border: 1px solid var(--c-outline); }
-@keyframes fade-out-and-collapse { from { opacity: 1; transform: scaleY(1); max-height: 76px; padding-top: var(--sp-2); padding-bottom: var(--sp-2); } to { opacity: 0; transform: scaleY(0.8); max-height: 0; padding-top: 0; padding-bottom: 0; margin: 0; border: 0; } }
-.item-deleting { animation: fade-out-and-collapse 0.4s ease-out forwards; overflow: hidden; }
 #description-suggestions {
     display: none; /* Empezará oculto */
     position: absolute;
@@ -2014,3 +2012,9 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     color: var(--c-white);
 }
 /* === FIN: Estilos para el Asistente aiDANaI (v2.0 Conversacional) === */
+
+.movimiento-date-header.is-today {
+    background-color: var(--c-primary);
+    color: var(--c-white);
+    box-shadow: 0 0 12px var(--c-primary);
+}
