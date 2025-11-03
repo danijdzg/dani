@@ -7150,6 +7150,160 @@ function createCustomSelect(selectElement) {
     selectElement.addEventListener('change', populateOptions);
 }
 
+// ========================================================================
+// === INICIO: MÓDULO CONVERSACIONAL aiDANaI v4.0 (Query Engine) ===
+// ========================================================================
+
+const handleAidanaiQuery = async (query) => {
+    if (!query || query.trim() === '') return;
+    addMessageToChat(escapeHTML(query), 'user');
+    showAidanaiThinking();
+    hapticFeedback('light');
+
+    try {
+        // Asegurarnos de tener todos los datos antes de analizar
+        const allMovements = await getAllMovements();
+        
+        // 1. ANÁLISIS DE LA PREGUNTA (Reconocimiento de Entidades)
+        const entities = parseQuery(query.toLowerCase());
+
+        // 2. FILTRADO DE DATOS (Construcción Dinámica de la Consulta)
+        const filteredMovements = filterMovements(allMovements, entities);
+        
+        // 3. ANÁLISIS Y RESPUESTA (Síntesis y Presentación)
+        const responseHtml = generateResponse(filteredMovements, entities);
+        
+        setTimeout(() => {
+            addMessageToChat(responseHtml, 'aidanai');
+            hapticFeedback('success');
+        }, 500);
+
+    } catch (error) {
+        console.error("Error en el asistente aiDANaI:", error);
+        addMessageToChat("Lo siento, he tenido un problema interno al procesar tu solicitud.", 'aidanai');
+    }
+};
+
+/**
+ * Paso 1: Extrae las entidades clave de la pregunta del usuario.
+ */
+function parseQuery(query) {
+    const entities = {
+        metric: 'saldo', // 'ingresos', 'gastos', 'saldo'
+        qualifier: null, // 'mayor', 'menor', 'promedio', 'total'
+        groupBy: null,   // 'concepto', 'cuenta'
+        timeframe: { start: null, end: null },
+        filters: {
+            concepts: [],
+            accounts: [],
+            description: null
+        }
+    };
+
+    // Reconocer Métrica
+    if (query.includes('gasto') || query.includes('gastos')) entities.metric = 'gastos';
+    else if (query.includes('ingreso')) entities.metric = 'ingresos';
+
+    // Reconocer Calificador
+    if (query.includes('mayor') || query.includes('grande')) entities.qualifier = 'mayor';
+    if (query.includes('total') || query.includes('cuánto')) entities.qualifier = 'total';
+
+    // Reconocer Agrupación
+    if (query.includes('categoría') || query.includes('concepto')) entities.groupBy = 'concepto';
+    
+    // Reconocer Periodo de Tiempo (ejemplo simple, se puede expandir)
+    const now = new Date();
+    if (query.includes('mes pasado')) {
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        entities.timeframe = { start, end };
+    } else if (query.includes('este mes')) {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        entities.timeframe = { start, end };
+    }
+    
+    // Reconocer Filtros (Conceptos y Cuentas)
+    db.conceptos.forEach(c => {
+        if (query.includes(c.nombre.toLowerCase())) entities.filters.concepts.push(c.id);
+    });
+    db.cuentas.forEach(c => {
+        if (query.includes(c.nombre.toLowerCase())) entities.filters.accounts.push(c.id);
+    });
+
+    return entities;
+}
+
+/**
+ * Paso 2: Filtra la lista de movimientos según las entidades reconocidas.
+ */
+function filterMovements(movements, entities) {
+    return movements.filter(m => {
+        // Filtro por Métrica
+        if (entities.metric === 'gastos' && m.cantidad >= 0) return false;
+        if (entities.metric === 'ingresos' && m.cantidad <= 0) return false;
+        
+        // Filtro por Periodo
+        if (entities.timeframe.start && new Date(m.fecha) < entities.timeframe.start) return false;
+        if (entities.timeframe.end && new Date(m.fecha) > entities.timeframe.end) return false;
+
+        // Filtro por Concepto y Cuenta
+        if (entities.filters.concepts.length > 0 && !entities.filters.concepts.includes(m.conceptoId)) return false;
+        if (entities.filters.accounts.length > 0 && !entities.filters.accounts.includes(m.cuentaId)) return false;
+
+        return true;
+    });
+}
+
+/**
+ * Paso 3: Genera una respuesta en lenguaje natural a partir de los datos filtrados.
+ */
+function generateResponse(filteredMovements, entities) {
+    if (filteredMovements.length === 0) {
+        return `<p>No he encontrado datos que coincidan con tu pregunta. Prueba a ser más específico o a cambiar el periodo de tiempo.</p>`;
+    }
+
+    // Caso de uso: "Mayor gasto del mes pasado"
+    if (entities.qualifier === 'mayor' && entities.metric === 'gastos') {
+        const target = filteredMovements.reduce((max, mov) => mov.cantidad < max.cantidad ? mov : max);
+        const concepto = db.conceptos.find(c => c.id === target.conceptoId)?.nombre || 'S/C';
+        return `<p>El mayor gasto que he encontrado es de <strong>${formatCurrency(target.cantidad)}</strong> por "<em>${escapeHTML(target.descripcion)}</em>" en la categoría <strong>${concepto}</strong>.</p>`;
+    }
+    
+    // Caso de uso: "Gastos en comida este mes" o "Total de gastos este mes"
+    if (entities.qualifier === 'total' || entities.filters.concepts.length > 0) {
+        const total = filteredMovements.reduce((sum, m) => sum + m.cantidad, 0);
+        let context = entities.filters.concepts.length > 0 
+            ? `en <strong>${db.conceptos.find(c => c.id === entities.filters.concepts[0]).nombre}</strong>`
+            : '';
+        return `<p>El total de ${entities.metric} ${context} ha sido de <strong>${formatCurrency(total)}</strong>, basado en ${filteredMovements.length} movimientos.</p>`;
+    }
+
+    // Caso de uso: "Gastos por categoría este mes"
+    if (entities.groupBy === 'concepto') {
+        const byConcept = filteredMovements.reduce((acc, m) => {
+            const id = m.conceptoId || 'otros';
+            acc[id] = (acc[id] || 0) + m.cantidad;
+            return acc;
+        }, {});
+        const sorted = Object.entries(byConcept).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 5);
+        let html = `<p>Aquí tienes el desglose de tus <strong>${entities.metric}</strong> por categoría:</p><ul>`;
+        sorted.forEach(([id, total]) => {
+            const nombre = db.conceptos.find(c => c.id === id)?.nombre || 'Sin Categoría';
+            html += `<li><strong>${nombre}:</strong> ${formatCurrency(total)}</li>`;
+        });
+        html += `</ul>`;
+        return html;
+    }
+
+    // Respuesta por defecto si no encaja en una lógica específica
+    const total = filteredMovements.reduce((sum, m) => sum + m.cantidad, 0);
+    return `<p>He encontrado ${filteredMovements.length} movimientos que coinciden con tu búsqueda, sumando un total de <strong>${formatCurrency(total)}</strong>.</p>`;
+}
+// ========================================================================
+// === FIN: MÓDULO CONVERSACIONAL aiDANaI v4.0 (Query Engine) ===
+// ========================================================================
+
 
 // =================================================================
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
@@ -9390,159 +9544,6 @@ const renderAjustesPage = () => {
     loadConfig();
 };
 
-// ========================================================================
-// === INICIO: MÓDULO CONVERSACIONAL aiDANaI v4.0 (Query Engine) ===
-// ========================================================================
-
-const handleAidanaiQuery = async (query) => {
-    if (!query || query.trim() === '') return;
-    addMessageToChat(escapeHTML(query), 'user');
-    showAidanaiThinking();
-    hapticFeedback('light');
-
-    try {
-        // Asegurarnos de tener todos los datos antes de analizar
-        const allMovements = await getAllMovements();
-        
-        // 1. ANÁLISIS DE LA PREGUNTA (Reconocimiento de Entidades)
-        const entities = parseQuery(query.toLowerCase());
-
-        // 2. FILTRADO DE DATOS (Construcción Dinámica de la Consulta)
-        const filteredMovements = filterMovements(allMovements, entities);
-        
-        // 3. ANÁLISIS Y RESPUESTA (Síntesis y Presentación)
-        const responseHtml = generateResponse(filteredMovements, entities);
-        
-        setTimeout(() => {
-            addMessageToChat(responseHtml, 'aidanai');
-            hapticFeedback('success');
-        }, 500);
-
-    } catch (error) {
-        console.error("Error en el asistente aiDANaI:", error);
-        addMessageToChat("Lo siento, he tenido un problema interno al procesar tu solicitud.", 'aidanai');
-    }
-};
-
-/**
- * Paso 1: Extrae las entidades clave de la pregunta del usuario.
- */
-function parseQuery(query) {
-    const entities = {
-        metric: 'saldo', // 'ingresos', 'gastos', 'saldo'
-        qualifier: null, // 'mayor', 'menor', 'promedio', 'total'
-        groupBy: null,   // 'concepto', 'cuenta'
-        timeframe: { start: null, end: null },
-        filters: {
-            concepts: [],
-            accounts: [],
-            description: null
-        }
-    };
-
-    // Reconocer Métrica
-    if (query.includes('gasto') || query.includes('gastos')) entities.metric = 'gastos';
-    else if (query.includes('ingreso')) entities.metric = 'ingresos';
-
-    // Reconocer Calificador
-    if (query.includes('mayor') || query.includes('grande')) entities.qualifier = 'mayor';
-    if (query.includes('total') || query.includes('cuánto')) entities.qualifier = 'total';
-
-    // Reconocer Agrupación
-    if (query.includes('categoría') || query.includes('concepto')) entities.groupBy = 'concepto';
-    
-    // Reconocer Periodo de Tiempo (ejemplo simple, se puede expandir)
-    const now = new Date();
-    if (query.includes('mes pasado')) {
-        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-        entities.timeframe = { start, end };
-    } else if (query.includes('este mes')) {
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-        entities.timeframe = { start, end };
-    }
-    
-    // Reconocer Filtros (Conceptos y Cuentas)
-    db.conceptos.forEach(c => {
-        if (query.includes(c.nombre.toLowerCase())) entities.filters.concepts.push(c.id);
-    });
-    db.cuentas.forEach(c => {
-        if (query.includes(c.nombre.toLowerCase())) entities.filters.accounts.push(c.id);
-    });
-
-    return entities;
-}
-
-/**
- * Paso 2: Filtra la lista de movimientos según las entidades reconocidas.
- */
-function filterMovements(movements, entities) {
-    return movements.filter(m => {
-        // Filtro por Métrica
-        if (entities.metric === 'gastos' && m.cantidad >= 0) return false;
-        if (entities.metric === 'ingresos' && m.cantidad <= 0) return false;
-        
-        // Filtro por Periodo
-        if (entities.timeframe.start && new Date(m.fecha) < entities.timeframe.start) return false;
-        if (entities.timeframe.end && new Date(m.fecha) > entities.timeframe.end) return false;
-
-        // Filtro por Concepto y Cuenta
-        if (entities.filters.concepts.length > 0 && !entities.filters.concepts.includes(m.conceptoId)) return false;
-        if (entities.filters.accounts.length > 0 && !entities.filters.accounts.includes(m.cuentaId)) return false;
-
-        return true;
-    });
-}
-
-/**
- * Paso 3: Genera una respuesta en lenguaje natural a partir de los datos filtrados.
- */
-function generateResponse(filteredMovements, entities) {
-    if (filteredMovements.length === 0) {
-        return `<p>No he encontrado datos que coincidan con tu pregunta. Prueba a ser más específico o a cambiar el periodo de tiempo.</p>`;
-    }
-
-    // Caso de uso: "Mayor gasto del mes pasado"
-    if (entities.qualifier === 'mayor' && entities.metric === 'gastos') {
-        const target = filteredMovements.reduce((max, mov) => mov.cantidad < max.cantidad ? mov : max);
-        const concepto = db.conceptos.find(c => c.id === target.conceptoId)?.nombre || 'S/C';
-        return `<p>El mayor gasto que he encontrado es de <strong>${formatCurrency(target.cantidad)}</strong> por "<em>${escapeHTML(target.descripcion)}</em>" en la categoría <strong>${concepto}</strong>.</p>`;
-    }
-    
-    // Caso de uso: "Gastos en comida este mes" o "Total de gastos este mes"
-    if (entities.qualifier === 'total' || entities.filters.concepts.length > 0) {
-        const total = filteredMovements.reduce((sum, m) => sum + m.cantidad, 0);
-        let context = entities.filters.concepts.length > 0 
-            ? `en <strong>${db.conceptos.find(c => c.id === entities.filters.concepts[0]).nombre}</strong>`
-            : '';
-        return `<p>El total de ${entities.metric} ${context} ha sido de <strong>${formatCurrency(total)}</strong>, basado en ${filteredMovements.length} movimientos.</p>`;
-    }
-
-    // Caso de uso: "Gastos por categoría este mes"
-    if (entities.groupBy === 'concepto') {
-        const byConcept = filteredMovements.reduce((acc, m) => {
-            const id = m.conceptoId || 'otros';
-            acc[id] = (acc[id] || 0) + m.cantidad;
-            return acc;
-        }, {});
-        const sorted = Object.entries(byConcept).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 5);
-        let html = `<p>Aquí tienes el desglose de tus <strong>${entities.metric}</strong> por categoría:</p><ul>`;
-        sorted.forEach(([id, total]) => {
-            const nombre = db.conceptos.find(c => c.id === id)?.nombre || 'Sin Categoría';
-            html += `<li><strong>${nombre}:</strong> ${formatCurrency(total)}</li>`;
-        });
-        html += `</ul>`;
-        return html;
-    }
-
-    // Respuesta por defecto si no encaja en una lógica específica
-    const total = filteredMovements.reduce((sum, m) => sum + m.cantidad, 0);
-    return `<p>He encontrado ${filteredMovements.length} movimientos que coinciden con tu búsqueda, sumando un total de <strong>${formatCurrency(total)}</strong>.</p>`;
-}
-// ========================================================================
-// === FIN: MÓDULO CONVERSACIONAL aiDANaI v4.0 (Query Engine) ===
-// ========================================================================
 
 
 
