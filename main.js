@@ -1,4 +1,3 @@
-
 const handleExportFilteredCsv = (btn) => {
     // La lista de movimientos a exportar es la que ya tenemos filtrada en db.movimientos
     const movementsToExport = db.movimientos;
@@ -849,7 +848,16 @@ async function loadCoreData(uid) {
     
     console.log('Alturas de elementos definidas (Robusto):', vList.heights);
 };
-        const hapticFeedback = (type = 'light') => {
+        
+  const setupTheme = () => { 
+    const gridColor = 'rgba(255, 255, 255, 0.1)';
+    const textColor = '#FFFFFF';
+    Chart.defaults.color = textColor; 
+    Chart.defaults.borderColor = gridColor;
+    Chart.register(ChartDataLabels);
+};
+		
+		const hapticFeedback = (type = 'light') => {
             if ('vibrate' in navigator) {
                 try {
                     let pattern;
@@ -1445,6 +1453,7 @@ window.addEventListener('offline', () => {
     }
 };
 
+ 
 
 // ========================================================================
 // === INICIO: MÓDULO CONVERSACIONAL aiDANaI v5.0 (ORÁCULO FINANCIERO) ===
