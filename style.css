@@ -2018,3 +2018,11 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     color: var(--c-white);
     box-shadow: 0 0 12px var(--c-primary);
 }
+
+.icon-btn--danger {
+    color: var(--c-danger);
+}
+.icon-btn--danger:hover {
+    background-color: color-mix(in srgb, var(--c-danger) 15%, transparent);
+    color: var(--c-danger);
+}

@@ -2775,15 +2775,24 @@ const updateVirtualListUI = () => {
     const loadMoreContainer = select('load-more-container');
     const emptyContainer = select('empty-movimientos');
     const listContainer = select('movimientos-list-container');
-    if (vList.items.length === 0) {
-        listContainer?.classList.add('hidden');
-        loadMoreContainer?.classList.add('hidden');
-        emptyContainer?.classList.remove('hidden');
+    if (vList.items.length === 0 && !isLoadingMoreMovements) { // Añadimos la comprobación de carga
+    listContainer?.classList.add('hidden');
+    loadMoreContainer?.classList.add('hidden');
+    emptyContainer?.classList.remove('hidden');
+
+    // ¡LA MAGIA ESTÁ AQUÍ!
+    const emptyText = emptyContainer.querySelector('p');
+    if (diarioActiveFilters) {
+        emptyText.textContent = 'No se encontraron movimientos que coincidan con tus filtros.';
     } else {
-        listContainer?.classList.remove('hidden');
-        emptyContainer?.classList.add('hidden');
-        loadMoreContainer?.classList.toggle('hidden', allMovementsLoaded);
+        emptyText.textContent = 'Aún no has añadido ningún movimiento. ¡Empieza ahora!';
     }
+
+} else {
+    listContainer?.classList.remove('hidden');
+    emptyContainer?.classList.add('hidden');
+    loadMoreContainer?.classList.toggle('hidden', allMovementsLoaded);
+}
 };
 
 // Paso B: La función que carga los datos. Ahora es más simple y se llama
@@ -2988,27 +2997,42 @@ const renderDiarioPage = async () => {
             if (allDiarioMovementsCache.length === 0) {
                 allDiarioMovementsCache = await fetchAllMovementsForHistory();
             }
-
+			let query = fbDb.collection('users').doc(currentUser.uid).collection('movimientos');
             const { startDate, endDate, description, minAmount, maxAmount, cuentas, conceptos } = diarioActiveFilters;
-            db.movimientos = allDiarioMovementsCache.filter(m => {
-                if (startDate && m.fecha < startDate) return false;
-                if (endDate && m.fecha > endDate) return false;
-                if (description && !m.descripcion.toLowerCase().includes(description)) return false;
-                const cantidadEuros = m.cantidad / 100;
-                if (minAmount && cantidadEuros < parseFloat(minAmount)) return false;
-                if (maxAmount && cantidadEuros > parseFloat(maxAmount)) return false;
-                if (cuentas.length > 0) {
-                    if (m.tipo === 'traspaso' && !cuentas.includes(m.cuentaOrigenId) && !cuentas.includes(m.cuentaDestinoId)) return false;
-                    if (m.tipo === 'movimiento' && !cuentas.includes(m.cuentaId)) return false;
-                }
-                if (conceptos.length > 0 && m.tipo === 'movimiento' && !conceptos.includes(m.conceptoId)) return false;
-                return true;
-            });
-            
-            await processMovementsForRunningBalance(db.movimientos, true);
-            updateVirtualListUI();
+			if (startDate) query = query.where('fecha', '>=', startDate);
+        if (endDate) query = query.where('fecha', '<=', endDate);
+        // NOTA: Firestore no permite filtros de desigualdad (`<`, `>`) en más de un campo a la vez,
+        // ni búsquedas de "contiene" (like). El filtrado por descripción, importe, cuentas y conceptos
+        // todavía tendrá que hacerse en el cliente DESPUÉS de obtener los resultados por fecha.
+        // Esta es una limitación de Firestore, pero al menos reducimos drásticamente los datos por fecha.
 
-        } else {
+        // Ordenamos para que las consultas compuestas funcionen
+        query = query.orderBy('fecha', 'desc');
+
+        const snapshot = await query.get();
+        let filteredMovements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // APLICAMOS EL RESTO DE FILTROS EN EL CLIENTE (sobre un set de datos ya reducido)
+        filteredMovements = filteredMovements.filter(m => {
+            if (description && !m.descripcion.toLowerCase().includes(description)) return false;
+            const cantidadEuros = m.cantidad / 100;
+            if (minAmount && cantidadEuros < parseFloat(minAmount)) return false;
+            if (maxAmount && cantidadEuros > parseFloat(maxAmount)) return false;
+            if (cuentas.length > 0) {
+                if (m.tipo === 'traspaso' && !cuentas.includes(m.cuentaOrigenId) && !cuentas.includes(m.cuentaDestinoId)) return false;
+                if (m.tipo === 'movimiento' && !cuentas.includes(m.cuentaId)) return false;
+            }
+            if (conceptos.length > 0 && m.tipo === 'movimiento' && !conceptos.includes(m.conceptoId)) return false;
+            return true;
+        });
+        
+        db.movimientos = filteredMovements;
+        
+        await processMovementsForRunningBalance(db.movimientos, true);
+        updateVirtualListUI();
+
+    } else {
+            
             if (scrollTrigger) scrollTrigger.classList.remove('hidden');
             select('diario-filter-active-indicator').classList.add('hidden');
             
@@ -9526,7 +9550,7 @@ const showAidanaiModal = () => {
     if (!chatHistory || !suggestionsContainer || !inputForm || !userInput) return;
     chatHistory.innerHTML = '';
     userInput.value = '';
-    addMessageToChat("¡Hola! Soy tu copiloto financiero. ¿Qué necesitas analizar hoy?", 'aidanai');
+    addMessageToChat("¡Hola! Soy tu copiloto financiero. ¿Qué necesitas analizar hoy?", 'aiDANaI');
     suggestionsContainer.innerHTML = starterQuestions.map(q => 
         `<button class="suggestion-chip" data-action="ask-aidanai" data-question="${q}">${q}</button>`
     ).join('');
