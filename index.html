@@ -212,9 +212,7 @@
             <label for="movimiento-descripcion">Descripción</label>
             <div class="input-wrapper">
                 <input type="text" id="movimiento-descripcion" required placeholder="Compra semanal, café..." />
-				 <button type="button" data-action="parse-with-aidanai" class="icon-btn" title="Usar Asistente para Rellenar">
-					<span class="material-icons">auto_awesome</span>
-				</button>
+				 
             </div>
             <span class="form-error" id="movimiento-descripcion-error"></span>
             <div id="description-suggestions"></div>
@@ -453,34 +451,7 @@
         </div>
     </div>
 </div>
- <div id="aidanai-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="aidanai-modal-title">
-    <div class="modal">
-        <div class="modal__grabber"></div>
-        <header class="modal__header" style="padding-top: var(--sp-2);">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <img src="aiDANaI.webp" alt="Asistente aiDANaI" class="aidanai-header-avatar">
-                <h3 id="aidanai-modal-title" class="modal__title">Asistente aiDANaI</h3>
-            </div>
-            <button class="icon-btn" data-action="close-modal" data-modal-id="aidanai-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
-        </header>
-        <div class="modal__body" id="aidanai-modal-body">
-            <div id="aidanai-chat-history">
-                <!-- Los mensajes del chat aparecerán aquí -->
-            </div>
-            <div id="aidanai-suggestions">
-                <!-- Las sugerencias de preguntas aparecerán aquí -->
-            </div>
-        </div>
-        <footer class="modal__footer">
-            <form id="aidanai-input-form">
-                <input type="text" id="aidanai-user-input" placeholder="Pregúntame algo sobre tus finanzas..." autocomplete="off">
-                <button type="submit" class="icon-btn">
-                    <span class="material-icons">send</span>
-                </button>
-            </form>
-        </footer>
-    </div>
-</div>
+ 
 <div id="calculator-overlay" class="modal-overlay" style="background: transparent; pointer-events: none;">
     <div id="calculator-ui" class="calculator-ui" style="pointer-events: all;">
     <!-- === INICIO: CÓDIGO AÑADIDO === -->
