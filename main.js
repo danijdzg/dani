@@ -1804,21 +1804,54 @@ function parseTimeframe(query) {
         return { start, end, text: `en ${monthName} de ${year}` };
     }
 
-    // El resto de la lógica para "mes pasado", "este año", etc., se mantiene.
-    // (Omitido por brevedad, es el mismo que en la versión anterior)
+    // --- CÓDIGO RESTAURADO Y COMPLETO ---
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
     if (query.includes('hoy')) return { start: todayStart, end: todayEnd, text: 'hoy' };
-    if (query.includes('ayer')) { /* ... */ return { start, end, text: 'ayer' }; }
-    if (query.includes('semana pasada')) { /* ... */ return { start, end, text: 'la semana pasada' }; }
-    if (query.includes('mes pasado')) { /* ... */ return { start, end, text: 'el mes pasado' }; }
-    if (query.includes('este mes')) { /* ... */ return { start, end, text: 'este mes' }; }
-    if (query.includes('este año')) { /* ... */ return { start, end, text: 'este año' }; }
-    const anioMatch = query.match(/en (\d{4})/);
-    if (anioMatch && anioMatch[1]) { /* ... */ return { start, end, text: `en ${year}`}; }
     
+    if (query.includes('ayer')) {
+        const start = new Date(todayStart.getTime() - 86400000);
+        const end = new Date(todayEnd.getTime() - 86400000);
+        return { start, end, text: 'ayer' };
+    }
+    
+    if (query.includes('semana pasada')) {
+        const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1; // Lunes=0, Domingo=6
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek - 7);
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek - 1, 23, 59, 59);
+        return { start, end, text: 'la semana pasada' };
+    }
+    
+    if (query.includes('mes pasado')) {
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        return { start, end, text: 'el mes pasado' };
+    }
+    
+     if (query.includes('este mes')) {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        return { start, end, text: 'este mes' };
+    }
+    
+    if (query.includes('este año')) {
+        const start = new Date(now.getFullYear(), 0, 1);
+        const end = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+        return { start, end, text: 'este año' };
+    }
+    
+    const anioMatch = query.match(/en (\d{4})/);
+    if (anioMatch && anioMatch[1]) {
+        const year = parseInt(anioMatch[1], 10);
+        const start = new Date(year, 0, 1);
+        const end = new Date(year, 11, 31, 23, 59, 59);
+        return { start, end, text: `en ${year}`};
+    }
+    // --- FIN DEL CÓDIGO RESTAURADO ---
+    
+    // Si no encuentra nada, devuelve un periodo nulo
     return { start: null, end: null, text: 'en todo tu historial' };
-}
 
 /**
  * FASE 2: LAS MANOS v6.0 - Filtra, y ahora también ordena y limita.
