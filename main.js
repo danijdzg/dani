@@ -1634,178 +1634,292 @@ function generateResponse(filteredMovements, entities) {
 }
 
 // ========================================================================
-// === FIN: MÓDULO CONVERSACIONAL aiDANaI v4.1 (COMPLETO Y CORREGIDO) ===
+// === INICIO: MÓDULO CONVERSACIONAL aiDANaI v5.0 (ORÁCULO FINANCIERO) ===
 // ========================================================================
 
-// EN main.js - REEMPLAZA TU FUNCIÓN navigateTo POR ESTA VERSIÓN
-const navigateTo = async (pageId, isInitial = false) => {
-    const oldView = document.querySelector('.view--active');
-    const newView = select(pageId);
-    const mainScroller = selectOne('.app-layout__main');
+const starterQuestions = [
+    "Mayor gasto del mes pasado",
+    "Gasto por categorías",
+    "¿Mi ahorro es saludable?",
+    "Busca gastos inusuales"
+];
 
-    // Guardar la posición del scroll de la vista anterior
-    if (oldView && mainScroller) {
-        pageScrollPositions[oldView.id] = mainScroller.scrollTop;
-    }
+// --- PARTE VISUAL: Funciones para mostrar el modal y el chat (Sin cambios) ---
 
-    if (!newView || (oldView && oldView.id === pageId)) return;
+const showAidanaiModal = () => {
+    showModal('aidanai-modal');
+    const chatHistory = select('aidanai-chat-history');
+    const suggestionsContainer = select('aidanai-suggestions');
+    const inputForm = select('aidanai-input-form');
+    const userInput = select('aidanai-user-input');
+
+    if (!chatHistory || !suggestionsContainer || !inputForm || !userInput) return;
     
-    // --- LÓGICA DE CARGA DE VISTAS CORREGIDA ---
-    // Ya no se intenta hacer 'fetch' de archivos HTML. La función de renderizado se encargará de todo.
-
-    destroyAllCharts();
-
-    if (!isInitial) hapticFeedback('light');
-
-    if (!isInitial && window.history.state?.page !== pageId) {
-        history.pushState({ page: pageId }, '', `#${pageId}`);
-    }
-
-    const navItems = Array.from(selectAll('.bottom-nav__item'));
-    const oldIndex = oldView ? navItems.findIndex(item => item.dataset.page === oldView.id) : -1;
-    const newIndex = navItems.findIndex(item => item.dataset.page === newView.id);
-    const isForward = newIndex > oldIndex;
-
-    const actionsEl = select('top-bar-actions');
-    const leftEl = select('top-bar-left-button');
-    const fab = select('fab-add-movimiento'); // Asumiendo que pudieras tener un FAB
+    chatHistory.innerHTML = '';
+    userInput.value = '';
+    addMessageToChat("¡Hola! Soy tu copiloto financiero. Puedo analizar tus datos. ¿Qué quieres saber?", 'aidanai');
+    suggestionsContainer.innerHTML = starterQuestions.map(q => `<button class="suggestion-chip" data-action="ask-aidanai" data-question="${q}">${q}</button>`).join('');
     
-    const standardActions = `
-    <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
-        <span class="material-icons">search</span>
-    </button>
-
-    <!-- ▼▼▼ ESTE ES EL BOTÓN QUE AHORA SÍ SE VERÁ ▼▼▼ -->
-    <button data-action="show-aidanai-assistant" class="icon-btn" title="Asistente IA aiDANaI" aria-label="Asistente IA">
-        <span class="material-icons">auto_awesome</span>
-    </button>
-    <!-- ▲▲▲ FIN DEL BOTÓN CORREGIDO ▲▲▲ -->
-
-    <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
-        <span class="material-icons">dark_mode</span>
-    </button>
-    <button data-action="show-main-menu" class="icon-btn" title="Más opciones" aria-label="Mostrar más opciones">
-        <span class="material-icons">more_vert</span>
-    </button>
-`;
-    
-    // Lazy loading de datos si es necesario
-    if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
-    if (pageId === PAGE_IDS.INVERSIONES && !dataLoaded.inversiones) await loadInversiones();
-
-    const pageRenderers = {
-    [PAGE_IDS.INICIO]: { title: 'Panel', render: renderInicioPage, actions: standardActions },
-    [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
-    [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: standardActions }, // <-- CAMBIOS AQUÍ
-    [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage, actions: standardActions },
-    [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
+    const newForm = inputForm.cloneNode(true);
+    inputForm.parentNode.replaceChild(newForm, inputForm);
+    newForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = newForm.querySelector('#aidanai-user-input');
+        handleAidanaiQuery(input.value);
+        input.value = '';
+    });
 };
 
-    if (pageRenderers[pageId]) { 
-        if (leftEl) {
-            let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar a Contabilidad ${isOffBalanceMode ? 'A' : 'B'}"> ${isOffBalanceMode ? 'B' : 'A'}</button><span id="page-title-display">${pageRenderers[pageId].title}</span>`;
-            if (pageId === PAGE_IDS.INICIO) leftSideHTML += `<button data-action="configure-dashboard" class="icon-btn" title="Personalizar qué se ve en el Panel" style="margin-left: 8px;"><span class="material-icons">dashboard_customize</span></button>`;
-            if (pageId === PAGE_IDS.DIARIO) {
-                leftSideHTML += `
-                    <button data-action="show-diario-filters" class="icon-btn" title="Filtrar y Buscar" style="margin-left: 8px;">
-                        <span class="material-icons">filter_list</span>
-                    </button>
-                    <button data-action="toggle-diario-view" class="icon-btn" title="Cambiar Vista">
-                        <span class="material-icons">${diarioViewMode === 'list' ? 'calendar_month' : 'list'}</span>
-                    </button>
-                `;
-            }
-            leftEl.innerHTML = leftSideHTML;
+const addMessageToChat = (text, sender) => {
+    const chatHistory = select('aidanai-chat-history');
+    if (!chatHistory) return;
+    const senderClass = sender === 'user' ? 'from-user' : 'from-aidanai';
+    const avatarContent = sender === 'user' ? (currentUser.email ? currentUser.email[0].toUpperCase() : 'U') : '';
+    const thinkingSpinner = chatHistory.querySelector('.thinking');
+    if (thinkingSpinner) thinkingSpinner.remove();
+    const messageHtml = `<div class="chat-message ${senderClass}">
+        <div class="avatar" ${sender === 'aidanai' ? 'style="background-image: url(aiDANaI.webp); background-size: cover;"' : ''}>${avatarContent}</div>
+        <div class="message-bubble">${text}</div>
+    </div>`;
+    chatHistory.insertAdjacentHTML('beforeend', messageHtml);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+};
+
+const showAidanaiThinking = () => {
+    const chatHistory = select('aidanai-chat-history');
+    if (!chatHistory) return;
+    const thinkingHtml = `<div class="chat-message from-aidanai thinking">
+        <div class="avatar" style="background-image: url(aiDANaI.webp); background-size: cover;"></div>
+        <div class="message-bubble"><span class="spinner" style="width:20px; height:20px;"></span></div>
+    </div>`;
+    chatHistory.insertAdjacentHTML('beforeend', thinkingHtml);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+};
+
+
+// --- EL CEREBRO DEL ASISTENTE: La nueva Lógica Inteligente ---
+
+const handleAidanaiQuery = async (query) => {
+    if (!query || query.trim() === '') return;
+    addMessageToChat(escapeHTML(query), 'user');
+    showAidanaiThinking();
+    hapticFeedback('light');
+
+    try {
+        const allMovements = await getAllMovements(); // Reutilizamos nuestra caché maestra
+        
+        // 1. El Cerebro: Analiza la pregunta
+        const entities = parseQuery(query.toLowerCase());
+
+        // 2. Las Manos: Filtran los datos según el análisis
+        const filteredMovements = filterMovements(allMovements, entities);
+        
+        // 3. La Voz: Genera una respuesta humana
+        const responseHtml = generateResponse(filteredMovements, entities, query);
+        
+        setTimeout(() => {
+            addMessageToChat(responseHtml, 'aidanai');
+            hapticFeedback('success');
+        }, 600);
+
+    } catch (error) {
+        console.error("Error en el asistente aiDANaI:", error);
+        addMessageToChat("Lo siento, he tenido un problema interno al procesar tu solicitud.", 'aidanai');
+    }
+};
+
+/**
+ * EL CEREBRO: Extrae las piezas clave (entidades) de la pregunta.
+ * @param {string} query - La pregunta del usuario en minúsculas.
+ * @returns {object} Un objeto con todas las entidades encontradas.
+ */
+function parseQuery(query) {
+    const entities = {
+        metric: 'saldo',      // Por defecto, hablamos de saldo.
+        qualifier: null,      // 'mayor', 'menor', 'promedio', 'total'
+        groupBy: null,        // 'concepto', 'cuenta'
+        timeframe: { start: null, end: null, text: 'todo el historial' }, // Guardamos el texto para la respuesta
+        filters: {
+            concepts: [],
+            accounts: [],
+            description: null
         }
+    };
 
-        if (actionsEl) actionsEl.innerHTML = pageRenderers[pageId].actions;
-        
-        // --- LLAMADA DIRECTA A LA FUNCIÓN DE RENDERIZADO ---
-        // Este es el cambio clave. Ahora llamamos a la función JS que genera el HTML.
-        await pageRenderers[pageId].render();
-    }
-    
-    selectAll('.bottom-nav__item').forEach(b => b.classList.toggle('bottom-nav__item--active', b.dataset.page === newView.id));
-    if (fab) fab.classList.toggle('fab--visible', true);
-    updateThemeIcon();
-    
-    newView.classList.add('view--active'); 
-    
-    if (oldView && !isInitial) {
-        const outClass = isForward ? 'view-transition-out-forward' : 'view-transition-out-backward';
-        const inClass = isForward ? 'view-transition-in-forward' : 'view-transition-in-backward';
-
-        newView.classList.add(inClass);
-        oldView.classList.add(outClass);
-
-        oldView.addEventListener('animationend', () => {
-            oldView.classList.remove('view--active', outClass);
-            newView.classList.remove(inClass);
-        }, { once: true });
-
-    } else if (oldView) {
-        oldView.classList.remove('view--active');
-    }
-
-    // Restaurar posición de scroll de la nueva vista
-    if (mainScroller) {
-        mainScroller.scrollTop = pageScrollPositions[pageId] || 0;
-    }
-
-    if (pageId === PAGE_IDS.INICIO) {
-        // En lugar de llamar directamente a la actualización (que puede ser pesada),
-        // usamos el sistema inteligente que ya tienes para que no se solape.
-        scheduleDashboardUpdate();
-    }
-};
-        
-    const setupTheme = () => { 
-    const gridColor = 'rgba(255, 255, 255, 0.1)';
-    const textColor = '#FFFFFF';
-    Chart.defaults.color = textColor; 
-    Chart.defaults.borderColor = gridColor;
-    Chart.register(ChartDataLabels);
-};
-        
-    const buildIntelligentIndex = (movementsSource = db.movimientos) => {
-    intelligentIndex.clear(); 
-    if (!movementsSource || movementsSource.length === 0) return;
-
-    const visibleAccounts = getVisibleAccounts().map(c => c.id);
-    const tempIndex = new Map();
-
-    const movementsToIndex = [...movementsSource]
-        .filter(mov => mov.tipo === 'movimiento' && visibleAccounts.includes(mov.cuentaId)) // Filtramos solo por el ledger activo
-        .sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordenamos por fecha
-
-    for (const mov of movementsToIndex) {
-        const desc = mov.descripcion.trim().toLowerCase();
-        if (desc.length > 3) {
-            const key = desc;
-            if (!tempIndex.has(key)) {
-                tempIndex.set(key, {
-                    conceptoId: mov.conceptoId,
-                    cuentaId: mov.cuentaId,
-                    count: 0, // Reiniciamos el contador
-                    lastUsed: 0
-                });
-            }
-            const entry = tempIndex.get(key);
-            entry.conceptoId = mov.conceptoId; 
-            entry.cuentaId = mov.cuentaId;
-            entry.count++; 
-            entry.lastUsed = new Date(mov.fecha).getTime();
+    // --- Reconocer Métricas y Calificadores ---
+    const keywords = {
+        'gastos': { type: 'metric', value: 'gastos' },
+        'ingresos': { type: 'metric', value: 'ingresos' },
+        'mayor': { type: 'qualifier', value: 'mayor' },
+        'más grande': { type: 'qualifier', value: 'mayor' },
+        'top': { type: 'qualifier', value: 'mayor' },
+        'total': { type: 'qualifier', value: 'total' },
+        'cuánto': { type: 'qualifier', value: 'total' },
+        'suma': { type: 'qualifier', value: 'total' },
+        'promedio': { type: 'qualifier', value: 'promedio' },
+        'por categoría': { type: 'groupBy', value: 'concepto' },
+        'por concepto': { type: 'groupBy', value: 'concepto' },
+    };
+    for (const key in keywords) {
+        if (query.includes(key)) {
+            entities[keywords[key].type] = keywords[key].value;
         }
     }
     
-    intelligentIndex = tempIndex;
-    console.log(`Índice inteligente MEJORADO con ${intelligentIndex.size} entradas.`);
-};
-		
-		
-// =================================================================
-// === BLOQUE DE FUNCIONES DE CUENTAS (CORREGIDO Y UNIFICADO) ===
-// =================================================================
+    // --- Reconocer Periodo de Tiempo (esta función es ahora mucho más potente) ---
+    entities.timeframe = parseTimeframe(query);
+
+    // --- Reconocer Filtros por Concepto, Cuenta o Descripción ---
+    db.conceptos.forEach(c => {
+        if (query.includes(c.nombre.toLowerCase())) entities.filters.concepts.push(c.id);
+    });
+    db.cuentas.forEach(c => {
+        if (query.includes(c.nombre.toLowerCase())) entities.filters.accounts.push(c.id);
+    });
+    // Busca texto entre comillas como un filtro de descripción. Ej: gastos en "mercadona"
+    const descriptionMatch = query.match(/"([^"]+)"/);
+    if (descriptionMatch && descriptionMatch[1]) {
+        entities.filters.description = descriptionMatch[1];
+    }
+
+    return entities;
+}
+
+/**
+ * Función especializada para entender fechas en lenguaje natural.
+ * @param {string} query - La pregunta del usuario.
+ * @returns {object} - Objeto con { start: Date, end: Date, text: string }
+ */
+function parseTimeframe(query) {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+    if (query.includes('hoy')) return { start: todayStart, end: todayEnd, text: 'hoy' };
+    if (query.includes('ayer')) {
+        const start = new Date(todayStart.getTime() - 86400000);
+        const end = new Date(todayEnd.getTime() - 86400000);
+        return { start, end, text: 'ayer' };
+    }
+    if (query.includes('semana pasada')) {
+        const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1; // Lunes=0, Domingo=6
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek - 7);
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek - 1, 23, 59, 59);
+        return { start, end, text: 'la semana pasada' };
+    }
+    if (query.includes('mes pasado')) {
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        return { start, end, text: 'el mes pasado' };
+    }
+     if (query.includes('este mes')) {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        return { start, end, text: 'este mes' };
+    }
+    if (query.includes('este año')) {
+        const start = new Date(now.getFullYear(), 0, 1);
+        const end = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+        return { start, end, text: 'este año' };
+    }
+    const anioMatch = query.match(/en (\d{4})/);
+    if (anioMatch && anioMatch[1]) {
+        const year = parseInt(anioMatch[1], 10);
+        const start = new Date(year, 0, 1);
+        const end = new Date(year, 11, 31, 23, 59, 59);
+        return { start, end, text: `en ${year}`};
+    }
+    
+    // Si no encuentra nada, devuelve un periodo nulo, lo que significa "todo el historial"
+    return { start: null, end: null, text: 'en todo tu historial' };
+}
+
+/**
+ * LAS MANOS: Filtra movimientos según las entidades. Ahora es más inteligente.
+ */
+function filterMovements(movements, entities) {
+    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+    
+    return movements.filter(m => {
+        const accountSet = entities.filters.accounts.length > 0 
+            ? new Set(entities.filters.accounts) 
+            : visibleAccountIds;
+
+        // Filtro de Visibilidad por Cuenta/Contabilidad
+        let isInAccountSet = false;
+        if (m.tipo === 'traspaso') {
+            isInAccountSet = accountSet.has(m.cuentaOrigenId) || accountSet.has(m.cuentaDestinoId);
+        } else {
+            isInAccountSet = accountSet.has(m.cuentaId);
+        }
+        if (!isInAccountSet) return false;
+
+        // Filtro por Métrica (Gastos vs. Ingresos) usando el impacto real
+        const impact = calculateMovementAmount(m, visibleAccountIds);
+        if (entities.metric === 'gastos' && impact >= 0) return false;
+        if (entities.metric === 'ingresos' && impact <= 0) return false;
+        
+        // Filtro por Periodo
+        if (entities.timeframe.start && new Date(m.fecha) < entities.timeframe.start) return false;
+        if (entities.timeframe.end && new Date(m.fecha) > entities.timeframe.end) return false;
+
+        // Filtro por Concepto y Descripción
+        if (entities.filters.concepts.length > 0 && !entities.filters.concepts.includes(m.conceptoId)) return false;
+        if (entities.filters.description && !m.descripcion.toLowerCase().includes(entities.filters.description)) return false;
+        
+        return true;
+    });
+}
+
+/**
+ * LA VOZ: Genera una respuesta humana basada en los resultados y las entidades.
+ */
+function generateResponse(filteredMovements, entities, originalQuery) {
+    if (filteredMovements.length === 0) {
+        return `<p>No he encontrado datos para tu consulta. Quizás no hubo movimientos que cumplieran esos criterios en el periodo seleccionado.</p>`;
+    }
+    
+    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+
+    // Lógica para "el mayor gasto en..."
+    if (entities.qualifier === 'mayor' && entities.metric === 'gastos') {
+        const target = filteredMovements.reduce((max, mov) => calculateMovementAmount(mov, visibleAccountIds) < calculateMovementAmount(max, visibleAccountIds) ? mov : max);
+        const concepto = db.conceptos.find(c => c.id === target.conceptoId)?.nombre || 'S/C';
+        return `<p>Tu mayor gasto ${entities.timeframe.text} fue de <strong>${formatCurrency(target.cantidad)}</strong> en "<em>${escapeHTML(target.descripcion)}</em>", categoría <strong>${concepto}</strong>.</p>`;
+    }
+
+    // Lógica para "gastos por categoría"
+    if (entities.groupBy === 'concepto') {
+        const byConcept = filteredMovements.reduce((acc, m) => {
+            const impact = calculateMovementAmount(m, visibleAccountIds);
+            if (m.tipo === 'movimiento' && impact !== 0) {
+                const id = m.conceptoId || 'otros';
+                acc[id] = (acc[id] || 0) + impact;
+            }
+            return acc;
+        }, {});
+
+        const sorted = Object.entries(byConcept)
+            .sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]))
+            .slice(0, 5);
+        
+        let html = `<p>Aquí tienes el desglose de tus <strong>${entities.metric}</strong> ${entities.timeframe.text}:</p><ul style="list-style-position: inside; padding-left: 8px;">`;
+        sorted.forEach(([id, total]) => {
+            const nombre = db.conceptos.find(c => c.id === id)?.nombre || 'Sin Categoría';
+            html += `<li style="margin-bottom: 4px;"><strong>${nombre}:</strong> ${formatCurrency(total)}</li>`;
+        });
+        html += `</ul>`;
+        return html;
+    }
+
+    // Respuesta genérica de "total"
+    const total = filteredMovements.reduce((sum, m) => sum + calculateMovementAmount(m, visibleAccountIds), 0);
+    return `<p>He encontrado ${filteredMovements.length} movimientos. El <strong>${entities.metric} total</strong> ${entities.timeframe.text} es de <strong>${formatCurrency(total)}</strong>.</p>`;
+}
+
+// ========================================================================
+// === FIN: MÓDULO CONVERSACIONAL aiDANaI v5.0 (ORÁCULO FINANCIERO) ===
+// ========================================================================
 
 /**
  * REVISADO Y ÚNICO: Obtiene únicamente las cuentas activas para la contabilidad actual (A o B).
