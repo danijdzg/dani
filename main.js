@@ -9465,25 +9465,19 @@ const starterQuestions = [
 
 // --- 1. EL "MENSAJERO": Comunica con la API de Google AI ---
 async function callGoogleAI(prompt) {
-    // Si la clave no está configurada, damos un aviso amigable
-    if (!window.GEMINI_API_KEY || window.GEMINI_API_KEY === "AQUÍ_VA_TU_CLAVE_SECRETA") {
-        return "ERROR: La clave de API de Google AI no está configurada. Por favor, sigue el Paso 0 de la guía de implementación.";
+    if (!window.GEMINI_API_KEY || window.GEMINI_API_KEY === "AQUÍ_VA_TU_NUEVA_CLAVE_SECRETA") {
+        return "ERROR: La clave de API de Google AI no está configurada. Por favor, asegúrate de añadir tu nueva clave en el archivo index.html.";
     }
 
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${window.GEMINI_API_KEY}`;
+    // La URL corregida y más robusta
+    const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${window.GEMINI_API_KEY}`;
 
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    temperature: 0.1, // Hace que la IA sea más precisa y menos "creativa"
-                    topK: 1,
-                    topP: 1,
-                    maxOutputTokens: 2048,
-                },
+                contents: [{ parts: [{ text: prompt }] }]
             }),
         });
 
@@ -9494,7 +9488,12 @@ async function callGoogleAI(prompt) {
         }
 
         const data = await response.json();
-        return data.candidates[0].content.parts[0].text;
+        // La estructura de la respuesta puede variar ligeramente, nos aseguramos de que funcione
+        if (data.candidates && data.candidates[0] && data.candidates[0].content.parts[0].text) {
+            return data.candidates[0].content.parts[0].text;
+        } else {
+            return "La IA no ha devuelto una respuesta válida.";
+        }
     } catch (error) {
         console.error("Error de conexión con Google AI:", error);
         return "Error: No se pudo conectar con el asistente de IA. Revisa tu conexión a internet.";
