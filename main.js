@@ -3412,7 +3412,14 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             if (!accountsHtml) return '';
 
             return `
-                
+             <details class="accordion" open style="background-color: var(--c-surface-variant); margin-bottom: var(--sp-3); border-radius: var(--border-radius-md);">
+                    <summary style="padding: var(--sp-3);">
+                        <div style="flex-grow: 1; font-weight: 700;">${tipo} (${porcentajeGlobal.toFixed(1)}%)</div>
+                        <strong>${formatCurrency(typeBalance)}</strong>
+                    </summary>
+                    <div class="accordion__content" style="padding: 0 var(--sp-3) var(--sp-2) var(--sp-3);">${accountsHtml}</div>
+                </details>
+            `;    
         }).join('');
     }
 };
