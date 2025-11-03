@@ -1521,7 +1521,124 @@ window.addEventListener('offline', () => {
 // ========================================================================
 // === INICIO: MÓDULO CONVERSACIONAL aiDANaI v5.0 (ORÁCULO FINANCIERO) ===
 // ========================================================================
+const navigateTo = async (pageId, isInitial = false) => {
+    // Obtenemos referencias a la vista que se va y a la que llega
+    const oldView = document.querySelector('.view--active');
+    const newView = select(pageId);
+    const mainScroller = selectOne('.app-layout__main');
 
+    // Antes de cambiar, guardamos la posición de scroll de la página que dejamos
+    if (oldView && mainScroller) {
+        pageScrollPositions[oldView.id] = mainScroller.scrollTop;
+    }
+
+    // Si la nueva vista no existe o ya estamos en ella, no hacemos nada
+    if (!newView || (oldView && oldView.id === pageId)) return;
+    
+    // Destruimos cualquier gráfico existente para evitar errores
+    destroyAllCharts();
+
+    // Feedback háptico al navegar (excepto en la carga inicial)
+    if (!isInitial) hapticFeedback('light');
+
+    // Actualiza el historial del navegador para que el botón "atrás" funcione
+    if (!isInitial && window.history.state?.page !== pageId) {
+        history.pushState({ page: pageId }, '', `#${pageId}`);
+    }
+
+    // --- Lógica de renderizado y lazy-loading ---
+
+    // Mapa de todas nuestras páginas, sus títulos y la función que las "dibuja"
+    const pageRenderers = {
+        [PAGE_IDS.INICIO]: { title: 'Panel', render: renderInicioPage },
+        [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage },
+        [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage },
+        [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage },
+        [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage },
+    };
+    
+    // Si la página a la que vamos está en nuestro mapa
+    if (pageRenderers[pageId]) {
+        // Cargamos datos "pesados" solo si son necesarios para esta vista
+        if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
+        if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
+
+        // Actualizamos la barra superior con los botones y título correctos
+        updateTopBar(pageId, pageRenderers[pageId].title);
+        
+        // ¡La magia! Llamamos a la función JS que genera el HTML de la página
+        await pageRenderers[pageId].render();
+    }
+    
+    // Actualizamos el estado activo de los iconos de la barra inferior
+    selectAll('.bottom-nav__item').forEach(b => b.classList.toggle('bottom-nav__item--active', b.dataset.page === newView.id));
+    
+    // --- Lógica de animación de transición ---
+
+    // Preparamos a la nueva vista para entrar
+    newView.classList.add('view--active'); 
+    
+    // Si no es la carga inicial, animamos la transición
+    if (oldView && !isInitial) {
+        const navItems = Array.from(selectAll('.bottom-nav__item'));
+        const oldIndex = navItems.findIndex(item => item.dataset.page === oldView.id);
+        const newIndex = navItems.findIndex(item => item.dataset.page === newView.id);
+        const isForward = newIndex > oldIndex;
+
+        const outClass = isForward ? 'view-transition-out-forward' : 'view-transition-out-backward';
+        const inClass = isForward ? 'view-transition-in-forward' : 'view-transition-in-backward';
+
+        newView.classList.add(inClass);
+        oldView.classList.add(outClass);
+
+        // Limpiamos las clases de animación cuando esta termina
+        oldView.addEventListener('animationend', () => {
+            oldView.classList.remove('view--active', outClass);
+            newView.classList.remove(inClass);
+        }, { once: true });
+    } else if (oldView) {
+        oldView.classList.remove('view--active'); // Si es la carga inicial, simplemente quitamos la vista antigua
+    }
+
+    // Restauramos la posición de scroll que guardamos al principio
+    if (mainScroller) {
+        mainScroller.scrollTop = pageScrollPositions[pageId] || 0;
+    }
+};
+
+// Función de ayuda para mantener la barra superior limpia
+function updateTopBar(pageId, title) {
+    const actionsEl = select('top-bar-actions');
+    const leftEl = select('top-bar-left-button');
+    const titleEl = select('top-bar-title');
+    
+    if (titleEl) titleEl.innerHTML = ''; // Limpiamos el título central (que ya no usamos)
+
+    // Botones de la derecha (siempre los mismos por ahora)
+    if (actionsEl) {
+        actionsEl.innerHTML = `
+            <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Ctrl+K)"><span class="material-icons">search</span></button>
+            <button data-action="show-aidanai-assistant" class="icon-btn" title="Asistente IA aiDANaI"><span class="material-icons">auto_awesome</span></button>
+            <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema"><span class="material-icons">dark_mode</span></button>
+            <button data-action="show-main-menu" class="icon-btn" title="Más opciones"><span class="material-icons">more_vert</span></button>`;
+    }
+    
+    // Botones de la izquierda (cambian según la página)
+    if (leftEl) {
+        let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar Contabilidad">${isOffBalanceMode ? 'B' : 'A'}</button>
+                            <span id="page-title-display">${title}</span>`;
+        if (pageId === PAGE_IDS.INICIO) {
+            leftSideHTML += `<button data-action="configure-dashboard" class="icon-btn" title="Personalizar Panel"><span class="material-icons">dashboard_customize</span></button>`;
+        }
+        if (pageId === PAGE_IDS.DIARIO) {
+            leftSideHTML += `<button data-action="show-diario-filters" class="icon-btn" title="Filtrar Diario"><span class="material-icons">filter_list</span></button>
+                             <button data-action="toggle-diario-view" class="icon-btn" title="Cambiar Vista"><span class="material-icons">${diarioViewMode === 'list' ? 'calendar_month' : 'list'}</span></button>`;
+        }
+        leftEl.innerHTML = leftSideHTML;
+    }
+    
+    updateThemeIcon(); // Aseguramos que el icono del tema esté siempre correcto
+}
 const starterQuestions = [
     "Mayor gasto del mes pasado",
     "Gasto por categorías",
