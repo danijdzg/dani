@@ -1852,7 +1852,7 @@ function parseTimeframe(query) {
     
     // Si no encuentra nada, devuelve un periodo nulo
     return { start: null, end: null, text: 'en todo tu historial' };
-
+	}
 /**
  * FASE 2: LAS MANOS v6.0 - Filtra, y ahora también ordena y limita.
  */
