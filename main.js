@@ -9470,7 +9470,7 @@ async function callGoogleAI(prompt) {
         return "ERROR: La clave de API de Google AI no está configurada. Por favor, sigue el Paso 0 de la guía de implementación.";
     }
 
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${window.GEMINI_API_KEY}`;
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${window.GEMINI_API_KEY}`;
 
     try {
         const response = await fetch(API_URL, {
