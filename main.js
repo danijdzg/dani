@@ -7249,8 +7249,7 @@ function createCustomSelect(selectElement) {
         const btn = actionTarget.closest('button');
         
         const actions = {
-            // ▼▼▼ ¡ESTO CONECTA TODO! ▼▼▼
-            'show-aidanai-assistant': showAidanaiModal,
+             'show-aidanai-assistant': showAidanaiModal,
              'ask-aidanai': () => {
                 const questionText = actionTarget.dataset.question; // Obtiene la pregunta del chip
                 handleAidanaiQuery(questionText); // Llama al nuevo gestor de queries
@@ -9544,6 +9543,8 @@ function generateResponse(filteredMovements, entities) {
 // ========================================================================
 // === FIN: MÓDULO CONVERSACIONAL aiDANaI v4.0 (Query Engine) ===
 // ========================================================================
+
+
 
  const handleParseWithAidanai = () => {
     const descriptionInput = select('movimiento-descripcion');
