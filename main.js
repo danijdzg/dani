@@ -9709,10 +9709,16 @@ const renderAjustesPage = () => {
 
 
 
-
+/**
+ * Analiza el texto del campo de descripción para intentar rellenar automáticamente
+ * el campo de cantidad y sugerir un concepto/cuenta.
+ * Se activa con el botón del asistente en el formulario de movimientos.
+ */
  const handleParseWithAidanai = () => {
     const descriptionInput = select('movimiento-descripcion');
     const query = descriptionInput.value.trim();
+
+    // 1. Validación: Asegurarse de que hay suficiente texto para analizar.
     if (query.length < 5) {
         showToast("Escribe una frase más descriptiva para que el asistente pueda ayudarte.", "warning");
         return;
@@ -9721,29 +9727,35 @@ const renderAjustesPage = () => {
     hapticFeedback('light');
     showToast("aiDANaI está analizando tu texto...", "info");
 
-    // Lógica simple de extracción de entidades (se puede mejorar)
-    const cantidadRegex = /(\d+[,.]?\d*)\s*(€|eur)/i;
+    // 2. Extracción de la cantidad: Usamos una expresión regular para encontrar patrones de dinero.
+    //    Busca números (con o sin decimales de coma/punto) seguidos opcionalmente por "€" o "eur".
+    const cantidadRegex = /(\d+[,.]?\d*)\s*(€|eur)?/i;
     const cantidadMatch = query.match(cantidadRegex);
     
+    // Si se encuentra una cantidad...
     if (cantidadMatch && cantidadMatch[1]) {
+        // Usamos la función `parseCurrencyString` para convertir el texto a un número válido.
         const amountValue = parseCurrencyString(cantidadMatch[1]);
+
         if (!isNaN(amountValue)) {
             const cantidadInput = select('movimiento-cantidad');
+            // Formateamos el número y lo insertamos en el campo de cantidad.
             cantidadInput.value = amountValue.toLocaleString('es-ES', { useGrouping: false, minimumFractionDigits: 2 });
             
-            // Quitamos la cantidad de la descripción para no tenerla duplicada
-            descriptionInput.value = query.replace(cantidadRegex, '').trim();
+            // 3. Limpieza: Eliminamos la cantidad del texto original para no tener información duplicada.
+            descriptionInput.value = query.replace(cantidadRegex, '').replace(/\s\s+/g, ' ').trim();
 
-            // Feedback visual
+            // 4. Feedback Visual: Resaltamos el campo que se ha rellenado automáticamente.
             const amountGroup = select('movimiento-cantidad-form-group');
-            amountGroup.classList.add('field-highlighted');
-            setTimeout(() => amountGroup.classList.remove('field-highlighted'), 1500);
+            if (amountGroup) {
+                amountGroup.classList.add('field-highlighted');
+                setTimeout(() => amountGroup.classList.remove('field-highlighted'), 1500);
+            }
         }
     }
     
-    // Intentamos adivinar el concepto (usando tu índice inteligente)
+    // 5. Inferencia del Concepto: Reutilizamos la potente lógica de sugerencias que ya existe.
+    //    Al llamar a esta función, se analizará la descripción (ya limpia) y se mostrarán
+    //    las sugerencias más probables para el concepto y la cuenta.
     handleDescriptionInput();
 };
-
-// Y añade la acción en tu manejador de eventos `attachEventListeners`
-// 'parse-with-aidanai': handleParseWithAidanai,
