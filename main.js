@@ -1,3 +1,4 @@
+
 const handleExportFilteredCsv = (btn) => {
     // La lista de movimientos a exportar es la que ya tenemos filtrada en db.movimientos
     const movementsToExport = db.movimientos;
@@ -848,78 +849,7 @@ async function loadCoreData(uid) {
     
     console.log('Alturas de elementos definidas (Robusto):', vList.heights);
 };
-        
-  const setupTheme = () => { 
-    const gridColor = 'rgba(255, 255, 255, 0.1)';
-    const textColor = '#FFFFFF';
-    Chart.defaults.color = textColor; 
-    Chart.defaults.borderColor = gridColor;
-    Chart.register(ChartDataLabels);
-};
-	// ========================================================================
-// === INICIO: ÍNDICE INTELIGENTE PARA AUTOCOMPLETADO Y SUGERENCIAS ===
-// ========================================================================
-
-const buildIntelligentIndex = (movementsSource = db.movimientos) => {
-    // Limpiamos el índice antiguo para reconstruirlo con datos frescos.
-    intelligentIndex.clear();
-    
-    // Si no hay movimientos, no hay nada que indexar.
-    if (!movementsSource || movementsSource.length === 0) {
-        console.log("No hay movimientos para construir el índice inteligente.");
-        return;
-    }
-
-    // Creamos un mapa temporal para construir el nuevo índice.
-    const tempIndex = new Map();
-
-    // 1. FILTRAMOS los movimientos relevantes para el índice.
-    //    Solo nos interesan ingresos/gastos de la contabilidad activa.
-    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
-    const movementsToIndex = movementsSource.filter(mov => 
-        mov.tipo === 'movimiento' && visibleAccountIds.has(mov.cuentaId)
-    );
-
-    // 2. PROCESAMOS cada movimiento para "aprender" de él.
-    for (const mov of movementsToIndex) {
-        const desc = mov.descripcion.trim().toLowerCase();
-        
-        // Ignoramos descripciones muy cortas que no aportan valor.
-        if (desc.length > 3) {
-            // Si es la primera vez que vemos esta descripción, creamos una entrada.
-            if (!tempIndex.has(desc)) {
-                tempIndex.set(desc, {
-                    conceptoId: mov.conceptoId,
-                    cuentaId: mov.cuentaId,
-                    count: 0,      // Contador de cuántas veces se ha usado.
-                    lastUsed: 0    // Fecha de la última vez que se usó (para relevancia).
-                });
-            }
-
-            // 3. ACTUALIZAMOS la entrada existente.
-            const entry = tempIndex.get(desc);
-            // Siempre actualizamos con el concepto y la cuenta más recientes.
-            entry.conceptoId = mov.conceptoId; 
-            entry.cuentaId = mov.cuentaId;
-            // Incrementamos el contador de uso.
-            entry.count++;
-            // Actualizamos la fecha de último uso.
-            const movDate = new Date(mov.fecha).getTime();
-            if (movDate > entry.lastUsed) {
-                entry.lastUsed = movDate;
-            }
-        }
-    }
-    
-    // 4. Reemplazamos el índice global con nuestro nuevo índice, ya construido.
-    intelligentIndex = tempIndex;
-    console.log(`Índice inteligente reconstruido con ${intelligentIndex.size} entradas únicas.`);
-};
-
-// ========================================================================
-// === FIN: ÍNDICE INTELIGENTE ============================================
-// ========================================================================	
-	const hapticFeedback = (type = 'light') => {
+        const hapticFeedback = (type = 'light') => {
             if ('vibrate' in navigator) {
                 try {
                     let pattern;
@@ -936,11 +866,10 @@ const buildIntelligentIndex = (movementsSource = db.movimientos) => {
             }
         };
 
-     const parseDateStringAsUTC = (dateString) => {
+        const parseDateStringAsUTC = (dateString) => {
             if (!dateString) return null;
             return new Date(dateString + 'T12:00:00Z');
         };
-		
 		const generateReportFilterControls = (reportId, defaultPeriod = 'año-actual') => {
     return `
         <div class="report-filters" data-report-id="${reportId}" style="margin-bottom: var(--sp-4); padding: var(--sp-3); background-color: var(--c-surface-variant); border-radius: var(--border-radius-md);">
@@ -1516,124 +1445,367 @@ window.addEventListener('offline', () => {
     }
 };
 
- const navigateTo = async (pageId, isInitial = false) => {
-    // Obtenemos referencias a la vista que se va y a la que llega
+// ========================================================================
+// === INICIO: MÓDULO CONVERSACIONAL aiDANaI v4.1 (COMPLETO Y CORREGIDO) ===
+// ========================================================================
+
+const starterQuestions = [
+    "Mayor gasto del mes pasado",
+    "Gasto por categorías",
+    "¿Mi ahorro es saludable?",
+    "Busca gastos inusuales"
+];
+
+// --- PARTE VISUAL: Funciones para mostrar el modal y el chat ---
+
+const showAidanaiModal = () => {
+    showModal('aidanai-modal');
+    const chatHistory = select('aidanai-chat-history');
+    const suggestionsContainer = select('aidanai-suggestions');
+    const inputForm = select('aidanai-input-form');
+    const userInput = select('aidanai-user-input');
+
+    if (!chatHistory || !suggestionsContainer || !inputForm || !userInput) return;
+    
+    chatHistory.innerHTML = '';
+    userInput.value = '';
+
+    addMessageToChat("¡Hola! Soy tu copiloto financiero. ¿Qué necesitas analizar hoy?", 'aidanai');
+
+    suggestionsContainer.innerHTML = starterQuestions.map(q => 
+        `<button class="suggestion-chip" data-action="ask-aidanai" data-question="${q}">${q}</button>`
+    ).join('');
+    
+    // Clonar y reemplazar el formulario para evitar listeners duplicados
+    const newForm = inputForm.cloneNode(true);
+    inputForm.parentNode.replaceChild(newForm, inputForm);
+
+    newForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = newForm.querySelector('#aidanai-user-input');
+        handleAidanaiQuery(input.value);
+        input.value = '';
+    });
+};
+
+const addMessageToChat = (text, sender) => {
+    const chatHistory = select('aidanai-chat-history');
+    if (!chatHistory) return;
+
+    const senderClass = sender === 'user' ? 'from-user' : 'from-aidanai';
+    const avatarContent = sender === 'user' ? (currentUser.email ? currentUser.email[0].toUpperCase() : 'U') : '';
+    
+    const thinkingSpinner = chatHistory.querySelector('.thinking');
+    if (thinkingSpinner) thinkingSpinner.remove();
+    
+    const messageHtml = `<div class="chat-message ${senderClass}">
+        <div class="avatar" ${sender === 'aidanai' ? 'style="background-image: url(aiDANaI.webp); background-size: cover;"' : ''}>${avatarContent}</div>
+        <div class="message-bubble">${text}</div>
+    </div>`;
+
+    chatHistory.insertAdjacentHTML('beforeend', messageHtml);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+};
+
+const showAidanaiThinking = () => {
+    const chatHistory = select('aidanai-chat-history');
+    if (!chatHistory) return;
+    const thinkingHtml = `<div class="chat-message from-aidanai thinking">
+        <div class="avatar" style="background-image: url(aiDANaI.webp); background-size: cover;"></div>
+        <div class="message-bubble"><span class="spinner" style="width:20px; height:20px;"></span></div>
+    </div>`;
+    chatHistory.insertAdjacentHTML('beforeend', thinkingHtml);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+};
+
+
+// --- PARTE LÓGICA: El nuevo "cerebro" del asistente ---
+
+const handleAidanaiQuery = async (query) => {
+    if (!query || query.trim() === '') return;
+    addMessageToChat(escapeHTML(query), 'user');
+    showAidanaiThinking();
+    hapticFeedback('light');
+
+    try {
+        const allMovements = await getAllMovements();
+        const entities = parseQuery(query.toLowerCase());
+        const filteredMovements = filterMovements(allMovements, entities);
+        const responseHtml = generateResponse(filteredMovements, entities);
+        
+        setTimeout(() => {
+            addMessageToChat(responseHtml, 'aidanai');
+            hapticFeedback('success');
+        }, 500);
+
+    } catch (error) {
+        console.error("Error en el asistente aiDANaI:", error);
+        addMessageToChat("Lo siento, he tenido un problema interno al procesar tu solicitud.", 'aidanai');
+    }
+};
+
+function parseQuery(query) {
+    const entities = {
+        metric: 'saldo',
+        qualifier: null,
+        groupBy: null,
+        timeframe: { start: null, end: null },
+        filters: { concepts: [], accounts: [], description: null }
+    };
+    if (query.includes('gasto') || query.includes('gastos')) entities.metric = 'gastos';
+    else if (query.includes('ingreso')) entities.metric = 'ingresos';
+    if (query.includes('mayor') || query.includes('grande')) entities.qualifier = 'mayor';
+    if (query.includes('total') || query.includes('cuánto')) entities.qualifier = 'total';
+    if (query.includes('categoría') || query.includes('concepto')) entities.groupBy = 'concepto';
+    
+    const now = new Date();
+    if (query.includes('mes pasado')) {
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        entities.timeframe = { start, end };
+    } else if (query.includes('este mes')) {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        entities.timeframe = { start, end };
+    }
+    
+    db.conceptos.forEach(c => { if (query.includes(c.nombre.toLowerCase())) entities.filters.concepts.push(c.id); });
+    db.cuentas.forEach(c => { if (query.includes(c.nombre.toLowerCase())) entities.filters.accounts.push(c.id); });
+
+    return entities;
+}
+
+function filterMovements(movements, entities) {
+    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+    return movements.filter(m => {
+        const accountSet = entities.filters.accounts.length > 0 ? new Set(entities.filters.accounts) : visibleAccountIds;
+        if (m.tipo === 'traspaso') {
+            if (!accountSet.has(m.cuentaOrigenId) && !accountSet.has(m.cuentaDestinoId)) return false;
+        } else {
+            if (!accountSet.has(m.cuentaId)) return false;
+        }
+
+        if (entities.metric === 'gastos' && calculateMovementAmount(m, visibleAccountIds) >= 0) return false;
+        if (entities.metric === 'ingresos' && calculateMovementAmount(m, visibleAccountIds) <= 0) return false;
+        
+        if (entities.timeframe.start && new Date(m.fecha) < entities.timeframe.start) return false;
+        if (entities.timeframe.end && new Date(m.fecha) > entities.timeframe.end) return false;
+
+        if (entities.filters.concepts.length > 0 && !entities.filters.concepts.includes(m.conceptoId)) return false;
+        
+        return true;
+    });
+}
+
+function generateResponse(filteredMovements, entities) {
+    if (filteredMovements.length === 0) return `<p>No he encontrado datos que coincidan. Prueba a cambiar el periodo o los filtros.</p>`;
+
+    if (entities.qualifier === 'mayor' && entities.metric === 'gastos') {
+        const target = filteredMovements.reduce((max, mov) => mov.cantidad < max.cantidad ? mov : max);
+        const concepto = db.conceptos.find(c => c.id === target.conceptoId)?.nombre || 'S/C';
+        return `<p>El mayor gasto encontrado es de <strong>${formatCurrency(target.cantidad)}</strong> por "<em>${escapeHTML(target.descripcion)}</em>" en <strong>${concepto}</strong>.</p>`;
+    }
+    
+    if (entities.qualifier === 'total' || entities.filters.concepts.length > 0 || entities.filters.accounts.length > 0) {
+        const total = filteredMovements.reduce((sum, m) => sum + calculateMovementAmount(m, new Set(getVisibleAccounts().map(c => c.id))), 0);
+        return `<p>El total de ${entities.metric} para tu selección ha sido de <strong>${formatCurrency(total)}</strong>, analizando ${filteredMovements.length} movimientos.</p>`;
+    }
+
+    if (entities.groupBy === 'concepto') {
+        const byConcept = filteredMovements.reduce((acc, m) => {
+            if (m.tipo === 'movimiento') {
+                const id = m.conceptoId || 'otros';
+                acc[id] = (acc[id] || 0) + m.cantidad;
+            }
+            return acc;
+        }, {});
+        const sorted = Object.entries(byConcept).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 5);
+        let html = `<p>Aquí está el desglose de tus <strong>${entities.metric}</strong> por categoría:</p><ul>`;
+        sorted.forEach(([id, total]) => {
+            const nombre = db.conceptos.find(c => c.id === id)?.nombre || 'Sin Categoría';
+            html += `<li><strong>${nombre}:</strong> ${formatCurrency(total)}</li>`;
+        });
+        html += `</ul>`;
+        return html;
+    }
+
+    const total = filteredMovements.reduce((sum, m) => sum + calculateMovementAmount(m, new Set(getVisibleAccounts().map(c => c.id))), 0);
+    return `<p>He encontrado ${filteredMovements.length} movimientos que suman <strong>${formatCurrency(total)}</strong>. ¿Quieres que los desglose por categoría?</p>`;
+}
+
+// ========================================================================
+// === FIN: MÓDULO CONVERSACIONAL aiDANaI v4.1 (COMPLETO Y CORREGIDO) ===
+// ========================================================================
+
+// EN main.js - REEMPLAZA TU FUNCIÓN navigateTo POR ESTA VERSIÓN
+const navigateTo = async (pageId, isInitial = false) => {
     const oldView = document.querySelector('.view--active');
     const newView = select(pageId);
     const mainScroller = selectOne('.app-layout__main');
 
-    // Antes de cambiar, guardamos la posición de scroll de la página que dejamos
+    // Guardar la posición del scroll de la vista anterior
     if (oldView && mainScroller) {
         pageScrollPositions[oldView.id] = mainScroller.scrollTop;
     }
 
-    // Si la nueva vista no existe o ya estamos en ella, no hacemos nada
     if (!newView || (oldView && oldView.id === pageId)) return;
     
-    // Destruimos cualquier gráfico existente para evitar errores
+    // --- LÓGICA DE CARGA DE VISTAS CORREGIDA ---
+    // Ya no se intenta hacer 'fetch' de archivos HTML. La función de renderizado se encargará de todo.
+
     destroyAllCharts();
 
-    // Feedback háptico al navegar (excepto en la carga inicial)
     if (!isInitial) hapticFeedback('light');
 
-    // Actualiza el historial del navegador para que el botón "atrás" funcione
     if (!isInitial && window.history.state?.page !== pageId) {
         history.pushState({ page: pageId }, '', `#${pageId}`);
     }
 
-    // --- Lógica de renderizado y lazy-loading ---
+    const navItems = Array.from(selectAll('.bottom-nav__item'));
+    const oldIndex = oldView ? navItems.findIndex(item => item.dataset.page === oldView.id) : -1;
+    const newIndex = navItems.findIndex(item => item.dataset.page === newView.id);
+    const isForward = newIndex > oldIndex;
 
-    // Mapa de todas nuestras páginas, sus títulos y la función que las "dibuja"
-    const pageRenderers = {
-        [PAGE_IDS.INICIO]: { title: 'Panel', render: renderInicioPage },
-        [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage },
-        [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage },
-        [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage },
-        [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage },
-    };
+    const actionsEl = select('top-bar-actions');
+    const leftEl = select('top-bar-left-button');
+    const fab = select('fab-add-movimiento'); // Asumiendo que pudieras tener un FAB
     
-    // Si la página a la que vamos está en nuestro mapa
-    if (pageRenderers[pageId]) {
-        // Cargamos datos "pesados" solo si son necesarios para esta vista
-        if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
-        if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
+    const standardActions = `
+    <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
+        <span class="material-icons">search</span>
+    </button>
 
-        // Actualizamos la barra superior con los botones y título correctos
-        updateTopBar(pageId, pageRenderers[pageId].title);
+    <!-- ▼▼▼ ESTE ES EL BOTÓN QUE AHORA SÍ SE VERÁ ▼▼▼ -->
+    <button data-action="show-aidanai-assistant" class="icon-btn" title="Asistente IA aiDANaI" aria-label="Asistente IA">
+        <span class="material-icons">auto_awesome</span>
+    </button>
+    <!-- ▲▲▲ FIN DEL BOTÓN CORREGIDO ▲▲▲ -->
+
+    <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
+        <span class="material-icons">dark_mode</span>
+    </button>
+    <button data-action="show-main-menu" class="icon-btn" title="Más opciones" aria-label="Mostrar más opciones">
+        <span class="material-icons">more_vert</span>
+    </button>
+`;
+    
+    // Lazy loading de datos si es necesario
+    if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
+    if (pageId === PAGE_IDS.INVERSIONES && !dataLoaded.inversiones) await loadInversiones();
+
+    const pageRenderers = {
+    [PAGE_IDS.INICIO]: { title: 'Panel', render: renderInicioPage, actions: standardActions },
+    [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
+    [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: standardActions }, // <-- CAMBIOS AQUÍ
+    [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage, actions: standardActions },
+    [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
+};
+
+    if (pageRenderers[pageId]) { 
+        if (leftEl) {
+            let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar a Contabilidad ${isOffBalanceMode ? 'A' : 'B'}"> ${isOffBalanceMode ? 'B' : 'A'}</button><span id="page-title-display">${pageRenderers[pageId].title}</span>`;
+            if (pageId === PAGE_IDS.INICIO) leftSideHTML += `<button data-action="configure-dashboard" class="icon-btn" title="Personalizar qué se ve en el Panel" style="margin-left: 8px;"><span class="material-icons">dashboard_customize</span></button>`;
+            if (pageId === PAGE_IDS.DIARIO) {
+                leftSideHTML += `
+                    <button data-action="show-diario-filters" class="icon-btn" title="Filtrar y Buscar" style="margin-left: 8px;">
+                        <span class="material-icons">filter_list</span>
+                    </button>
+                    <button data-action="toggle-diario-view" class="icon-btn" title="Cambiar Vista">
+                        <span class="material-icons">${diarioViewMode === 'list' ? 'calendar_month' : 'list'}</span>
+                    </button>
+                `;
+            }
+            leftEl.innerHTML = leftSideHTML;
+        }
+
+        if (actionsEl) actionsEl.innerHTML = pageRenderers[pageId].actions;
         
-        // ¡La magia! Llamamos a la función JS que genera el HTML de la página
+        // --- LLAMADA DIRECTA A LA FUNCIÓN DE RENDERIZADO ---
+        // Este es el cambio clave. Ahora llamamos a la función JS que genera el HTML.
         await pageRenderers[pageId].render();
     }
     
-    // Actualizamos el estado activo de los iconos de la barra inferior
     selectAll('.bottom-nav__item').forEach(b => b.classList.toggle('bottom-nav__item--active', b.dataset.page === newView.id));
+    if (fab) fab.classList.toggle('fab--visible', true);
+    updateThemeIcon();
     
-    // --- Lógica de animación de transición ---
-
-    // Preparamos a la nueva vista para entrar
     newView.classList.add('view--active'); 
     
-    // Si no es la carga inicial, animamos la transición
     if (oldView && !isInitial) {
-        const navItems = Array.from(selectAll('.bottom-nav__item'));
-        const oldIndex = navItems.findIndex(item => item.dataset.page === oldView.id);
-        const newIndex = navItems.findIndex(item => item.dataset.page === newView.id);
-        const isForward = newIndex > oldIndex;
-
         const outClass = isForward ? 'view-transition-out-forward' : 'view-transition-out-backward';
         const inClass = isForward ? 'view-transition-in-forward' : 'view-transition-in-backward';
 
         newView.classList.add(inClass);
         oldView.classList.add(outClass);
 
-        // Limpiamos las clases de animación cuando esta termina
         oldView.addEventListener('animationend', () => {
             oldView.classList.remove('view--active', outClass);
             newView.classList.remove(inClass);
         }, { once: true });
+
     } else if (oldView) {
-        oldView.classList.remove('view--active'); // Si es la carga inicial, simplemente quitamos la vista antigua
+        oldView.classList.remove('view--active');
     }
 
-    // Restauramos la posición de scroll que guardamos al principio
+    // Restaurar posición de scroll de la nueva vista
     if (mainScroller) {
         mainScroller.scrollTop = pageScrollPositions[pageId] || 0;
     }
+
+    if (pageId === PAGE_IDS.INICIO) {
+        // En lugar de llamar directamente a la actualización (que puede ser pesada),
+        // usamos el sistema inteligente que ya tienes para que no se solape.
+        scheduleDashboardUpdate();
+    }
 };
+        
+    const setupTheme = () => { 
+    const gridColor = 'rgba(255, 255, 255, 0.1)';
+    const textColor = '#FFFFFF';
+    Chart.defaults.color = textColor; 
+    Chart.defaults.borderColor = gridColor;
+    Chart.register(ChartDataLabels);
+};
+        
+    const buildIntelligentIndex = (movementsSource = db.movimientos) => {
+    intelligentIndex.clear(); 
+    if (!movementsSource || movementsSource.length === 0) return;
 
-// Función de ayuda para mantener la barra superior limpia
-function updateTopBar(pageId, title) {
-    const actionsEl = select('top-bar-actions');
-    const leftEl = select('top-bar-left-button');
-    const titleEl = select('top-bar-title');
-    
-    if (titleEl) titleEl.innerHTML = ''; // Limpiamos el título central (que ya no usamos)
+    const visibleAccounts = getVisibleAccounts().map(c => c.id);
+    const tempIndex = new Map();
 
-    // Botones de la derecha (siempre los mismos por ahora)
-    if (actionsEl) {
-        actionsEl.innerHTML = `
-            <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Ctrl+K)"><span class="material-icons">search</span></button>
-            <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema"><span class="material-icons">dark_mode</span></button>
-            <button data-action="show-main-menu" class="icon-btn" title="Más opciones"><span class="material-icons">more_vert</span></button>`;
+    const movementsToIndex = [...movementsSource]
+        .filter(mov => mov.tipo === 'movimiento' && visibleAccounts.includes(mov.cuentaId)) // Filtramos solo por el ledger activo
+        .sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordenamos por fecha
+
+    for (const mov of movementsToIndex) {
+        const desc = mov.descripcion.trim().toLowerCase();
+        if (desc.length > 3) {
+            const key = desc;
+            if (!tempIndex.has(key)) {
+                tempIndex.set(key, {
+                    conceptoId: mov.conceptoId,
+                    cuentaId: mov.cuentaId,
+                    count: 0, // Reiniciamos el contador
+                    lastUsed: 0
+                });
+            }
+            const entry = tempIndex.get(key);
+            entry.conceptoId = mov.conceptoId; 
+            entry.cuentaId = mov.cuentaId;
+            entry.count++; 
+            entry.lastUsed = new Date(mov.fecha).getTime();
+        }
     }
     
-    // Botones de la izquierda (cambian según la página)
-    if (leftEl) {
-        let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar Contabilidad">${isOffBalanceMode ? 'B' : 'A'}</button>
-                            <span id="page-title-display">${title}</span>`;
-        if (pageId === PAGE_IDS.INICIO) {
-            leftSideHTML += `<button data-action="configure-dashboard" class="icon-btn" title="Personalizar Panel"><span class="material-icons">dashboard_customize</span></button>`;
-        }
-        if (pageId === PAGE_IDS.DIARIO) {
-            leftSideHTML += `<button data-action="show-diario-filters" class="icon-btn" title="Filtrar Diario"><span class="material-icons">filter_list</span></button>
-                             <button data-action="toggle-diario-view" class="icon-btn" title="Cambiar Vista"><span class="material-icons">${diarioViewMode === 'list' ? 'calendar_month' : 'list'}</span></button>`;
-        }
-        leftEl.innerHTML = leftSideHTML;
-    }
-    
-    updateThemeIcon(); // Aseguramos que el icono del tema esté siempre correcto
-}
-
+    intelligentIndex = tempIndex;
+    console.log(`Índice inteligente MEJORADO con ${intelligentIndex.size} entradas.`);
+};
+		
+		
+// =================================================================
+// === BLOQUE DE FUNCIONES DE CUENTAS (CORREGIDO Y UNIFICADO) ===
+// =================================================================
 
 /**
  * REVISADO Y ÚNICO: Obtiene únicamente las cuentas activas para la contabilidad actual (A o B).
@@ -3412,14 +3584,17 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             if (!accountsHtml) return '';
 
             return `
-             <details class="accordion" open style="background-color: var(--c-surface-variant); margin-bottom: var(--sp-3); border-radius: var(--border-radius-md);">
-                    <summary style="padding: var(--sp-3);">
-                        <div style="flex-grow: 1; font-weight: 700;">${tipo} (${porcentajeGlobal.toFixed(1)}%)</div>
-                        <strong>${formatCurrency(typeBalance)}</strong>
+                <details class="accordion" style="margin-bottom: var(--sp-2);">
+                    <summary>
+                        <span class="account-group__name">${tipo}</span>
+                        <div style="display:flex; align-items:center; gap:var(--sp-2);">
+                            <small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small>
+                            <span class="account-group__balance">${formatCurrency(typeBalance)}</span>
+                            <span class="material-icons accordion__icon">expand_more</span>
+                        </div>
                     </summary>
-                    <div class="accordion__content" style="padding: 0 var(--sp-3) var(--sp-2) var(--sp-3);">${accountsHtml}</div>
-                </details>
-            `;    
+                    <div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div>
+                </details>`;
         }).join('');
     }
 };
@@ -3433,7 +3608,13 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
     const container = select(PAGE_IDS.INICIO);
     if (!container) return;
 
-        
+    // AHORA ESTA FUNCIÓN SOLO CREA EL CONTENEDOR PRINCIPAL PARA LOS WIDGETS
+    container.innerHTML = `
+        <div id="resumen-content-container">
+             <!-- Los esqueletos de los widgets se cargarán aquí -->
+        </div>
+    `;
+    
     // Las llamadas a otras funciones se mantienen
     populateAllDropdowns();
     renderInicioResumenView(); // Esta función rellenará 'resumen-content-container'
@@ -5551,6 +5732,39 @@ const applyDescriptionSuggestion = (target) => {
     select('movimiento-concepto').dispatchEvent(new Event('change'));
     select('movimiento-cuenta').dispatchEvent(new Event('change'));
     
+    // Ocultamos las sugerencias
+    select('description-suggestions').style.display = 'none';
+
+    // Damos feedback visual de los campos que se han rellenado
+    hapticFeedback('light');
+    [select('movimiento-concepto'), select('movimiento-cuenta')].forEach(el => {
+        const parent = el.closest('.form-field-compact'); 
+        if(parent) {
+            parent.classList.add('field-highlighted');
+            setTimeout(() => parent.classList.remove('field-highlighted'), 1500);
+        }
+    });
+
+    // Movemos el foco al campo de cantidad para un flujo ultra-rápido
+    select('movimiento-cantidad').focus();
+};
+    // Ocultamos la caja de sugerencias
+    select('description-suggestions').style.display = 'none';
+
+    // Damos feedback visual y movemos el cursor al siguiente paso
+    hapticFeedback('light');
+    [select('movimiento-concepto'), select('movimiento-cuenta')].forEach(el => {
+        const parent = el.closest('.form-group-addon');
+        if(parent) {
+            parent.classList.add('field-highlighted');
+            setTimeout(() => parent.classList.remove('field-highlighted'), 1500);
+        }
+    });
+
+    // ¡La magia final! Movemos el foco al campo de la cantidad.
+    select('movimiento-cantidad').focus();
+;
+
 // =================================================================
 // === INICIO: CÓDIGO UNIFICADO PARA MODALES ARRASTRABLES ===
 // =================================================================
@@ -7229,6 +7443,11 @@ function createCustomSelect(selectElement) {
         const btn = actionTarget.closest('button');
         
         const actions = {
+             'show-aidanai-assistant': showAidanaiModal,
+             'ask-aidanai': () => {
+                const questionText = actionTarget.dataset.question; // Obtiene la pregunta del chip
+                handleAidanaiQuery(questionText); // Llama al nuevo gestor de queries
+            },
             'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
                 if (!menu) return;
@@ -7481,7 +7700,10 @@ function createCustomSelect(selectElement) {
     const mainScroller = selectOne('.app-layout__main'); if (mainScroller) { let scrollRAF = null; mainScroller.addEventListener('scroll', () => { if (scrollRAF) window.cancelAnimationFrame(scrollRAF); scrollRAF = window.requestAnimationFrame(() => { if (diarioViewMode === 'list' && select('diario-page')?.classList.contains('view--active')) { renderVisibleItems(); } }); }, { passive: true }); }
     document.body.addEventListener('toggle', (e) => { const detailsElement = e.target; if (detailsElement.tagName !== 'DETAILS' || !detailsElement.classList.contains('informe-acordeon')) { return; } if (detailsElement.open) { const id = detailsElement.id; const informeId = id.replace('acordeon-', ''); const container = select(`informe-content-${informeId}`); if (container && container.querySelector('.form-label')) { renderInformeDetallado(informeId); } } }, true);
 };
-
+// =================================================================
+// === FIN: BLOQUE DE CÓDIGO CORREGIDO PARA REEMPLAZAR           ===
+// =================================================================
+           
         const showImportJSONWizard = () => {
             jsonWizardState = { file: null, data: null, preview: { counts: {}, meta: {} } };
             goToJSONStep(1);
@@ -8649,7 +8871,7 @@ const handleAddConcept = async (btn) => {
      }, 0);
  };
 
-  const handleFinalCsvImport = async (btn, dataToImport, goToStep) => {
+ const handleFinalCsvImport = async (btn, dataToImport, goToStep) => {
      goToStep(3);
      setButtonLoading(btn, true, 'Importando...');
 
@@ -8714,7 +8936,7 @@ const handleAddConcept = async (btn) => {
          }
          setButtonLoading(btn, false);
      }
- }; // <-- LA LLAVE DE CIERRE QUE FALTABA
+ };
 
 
 // ==============================================================
@@ -9361,3 +9583,44 @@ const renderAjustesPage = () => {
     // Esta función es necesaria para que se muestre tu email
     loadConfig();
 };
+
+
+
+
+ const handleParseWithAidanai = () => {
+    const descriptionInput = select('movimiento-descripcion');
+    const query = descriptionInput.value.trim();
+    if (query.length < 5) {
+        showToast("Escribe una frase más descriptiva para que el asistente pueda ayudarte.", "warning");
+        return;
+    }
+
+    hapticFeedback('light');
+    showToast("aiDANaI está analizando tu texto...", "info");
+
+    // Lógica simple de extracción de entidades (se puede mejorar)
+    const cantidadRegex = /(\d+[,.]?\d*)\s*(€|eur)/i;
+    const cantidadMatch = query.match(cantidadRegex);
+    
+    if (cantidadMatch && cantidadMatch[1]) {
+        const amountValue = parseCurrencyString(cantidadMatch[1]);
+        if (!isNaN(amountValue)) {
+            const cantidadInput = select('movimiento-cantidad');
+            cantidadInput.value = amountValue.toLocaleString('es-ES', { useGrouping: false, minimumFractionDigits: 2 });
+            
+            // Quitamos la cantidad de la descripción para no tenerla duplicada
+            descriptionInput.value = query.replace(cantidadRegex, '').trim();
+
+            // Feedback visual
+            const amountGroup = select('movimiento-cantidad-form-group');
+            amountGroup.classList.add('field-highlighted');
+            setTimeout(() => amountGroup.classList.remove('field-highlighted'), 1500);
+        }
+    }
+    
+    // Intentamos adivinar el concepto (usando tu índice inteligente)
+    handleDescriptionInput();
+};
+
+// Y añade la acción en tu manejador de eventos `attachEventListeners`
+// 'parse-with-aidanai': handleParseWithAidanai,

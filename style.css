@@ -1890,6 +1890,128 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 }
 /* --- FIN: Mejora UX --- */
 
+/* === INICIO: Estilos para el Asistente aiDANaI (v2.0 Conversacional) === */
+#aidanai-modal .modal__body {
+    display: flex;
+    flex-direction: column;
+}
+.aidanai-header-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+}
+#aidanai-chat-history {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0 var(--sp-2) var(--sp-3) var(--sp-2);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+}
+.chat-message {
+    display: flex;
+    gap: var(--sp-2);
+    max-width: 85%;
+    animation: pop-in 0.3s ease-out;
+}
+.chat-message .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.chat-message .message-bubble {
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--border-radius-lg);
+    line-height: 1.5;
+}
+/* Mensajes de aiDANaI (izquierda) */
+.chat-message.from-aidanai {
+    align-self: flex-start;
+}
+.chat-message.from-aidanai .avatar {
+    background-image: url('aiDANaI.webp');
+    background-size: cover;
+}
+.chat-message.from-aidanai .message-bubble {
+    background-color: var(--c-surface-variant);
+    border-bottom-left-radius: 4px;
+}
+.chat-message.from-aidanai .message-bubble ol,
+.chat-message.from-aidanai .message-bubble ul {
+    padding-left: 20px;
+    margin-top: 8px;
+}
+
+/* Mensajes del Usuario (derecha) */
+.chat-message.from-user {
+    align-self: flex-end;
+    flex-direction: row-reverse; /* Invierte el orden para avatar a la derecha */
+}
+.chat-message.from-user .avatar {
+    background-color: var(--c-primary);
+    color: var(--c-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+.chat-message.from-user .message-bubble {
+    background-color: var(--c-primary);
+    color: var(--c-white);
+    border-bottom-right-radius: 4px;
+}
+
+/* Sugerencias de preguntas */
+#aidanai-suggestions {
+    padding: var(--sp-3) var(--sp-2) 0 var(--sp-2);
+    border-top: 1px solid var(--c-outline);
+}
+.suggestion-chip {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 4px;
+    border-radius: 20px;
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-outline);
+    color: var(--c-on-surface-secondary);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.suggestion-chip:hover {
+    background-color: var(--c-surface-variant);
+    border-color: var(--c-primary);
+    color: var(--c-primary);
+}
+
+/* Área de input del usuario */
+#aidanai-modal .modal__footer {
+    padding: var(--sp-2);
+    border-top: 1px solid var(--c-outline);
+}
+#aidanai-input-form {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+}
+#aidanai-user-input {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    color: var(--c-on-surface);
+    font-size: var(--fs-base);
+    padding: var(--sp-2);
+}
+#aidanai-user-input:focus {
+    outline: none;
+}
+#aidanai-input-form .icon-btn {
+    background-color: var(--c-primary);
+    color: var(--c-white);
+}
+/* === FIN: Estilos para el Asistente aiDANaI (v2.0 Conversacional) === */
 
 .movimiento-date-header.is-today {
     background-color: var(--c-primary);
