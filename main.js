@@ -9466,7 +9466,7 @@ const starterQuestions = [
 // --- 1. EL "MENSAJERO": Comunica con la API de Google AI ---
 async function callGoogleAI(prompt) {
     // Si la clave no está configurada, damos un aviso amigable
-    if (!window.GEMINI_API_KEY || window.GEMINI_API_KEY === "AIzaSyCQ_lUFXfoWn4uduju153iLE1HGROaMwJY") {
+    if (!window.GEMINI_API_KEY || window.GEMINI_API_KEY === "AQUÍ_VA_TU_CLAVE_SECRETA") {
         return "ERROR: La clave de API de Google AI no está configurada. Por favor, sigue el Paso 0 de la guía de implementación.";
     }
 
