@@ -5566,22 +5566,6 @@ const applyDescriptionSuggestion = (target) => {
     // Movemos el foco al campo de cantidad para un flujo ultra-rápido
     select('movimiento-cantidad').focus();
 };
-    // Ocultamos la caja de sugerencias
-    select('description-suggestions').style.display = 'none';
-
-    // Damos feedback visual y movemos el cursor al siguiente paso
-    hapticFeedback('light');
-    [select('movimiento-concepto'), select('movimiento-cuenta')].forEach(el => {
-        const parent = el.closest('.form-group-addon');
-        if(parent) {
-            parent.classList.add('field-highlighted');
-            setTimeout(() => parent.classList.remove('field-highlighted'), 1500);
-        }
-    });
-
-    // ¡La magia final! Movemos el foco al campo de la cantidad.
-    select('movimiento-cantidad').focus();
-;
 
 // =================================================================
 // === INICIO: CÓDIGO UNIFICADO PARA MODALES ARRASTRABLES ===
