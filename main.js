@@ -9361,5 +9361,3 @@ const renderAjustesPage = () => {
     // Esta función es necesaria para que se muestre tu email
     loadConfig();
 };
-
-
