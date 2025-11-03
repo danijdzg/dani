@@ -856,8 +856,70 @@ async function loadCoreData(uid) {
     Chart.defaults.borderColor = gridColor;
     Chart.register(ChartDataLabels);
 };
-		
-		const hapticFeedback = (type = 'light') => {
+	// ========================================================================
+// === INICIO: ÍNDICE INTELIGENTE PARA AUTOCOMPLETADO Y SUGERENCIAS ===
+// ========================================================================
+
+const buildIntelligentIndex = (movementsSource = db.movimientos) => {
+    // Limpiamos el índice antiguo para reconstruirlo con datos frescos.
+    intelligentIndex.clear();
+    
+    // Si no hay movimientos, no hay nada que indexar.
+    if (!movementsSource || movementsSource.length === 0) {
+        console.log("No hay movimientos para construir el índice inteligente.");
+        return;
+    }
+
+    // Creamos un mapa temporal para construir el nuevo índice.
+    const tempIndex = new Map();
+
+    // 1. FILTRAMOS los movimientos relevantes para el índice.
+    //    Solo nos interesan ingresos/gastos de la contabilidad activa.
+    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+    const movementsToIndex = movementsSource.filter(mov => 
+        mov.tipo === 'movimiento' && visibleAccountIds.has(mov.cuentaId)
+    );
+
+    // 2. PROCESAMOS cada movimiento para "aprender" de él.
+    for (const mov of movementsToIndex) {
+        const desc = mov.descripcion.trim().toLowerCase();
+        
+        // Ignoramos descripciones muy cortas que no aportan valor.
+        if (desc.length > 3) {
+            // Si es la primera vez que vemos esta descripción, creamos una entrada.
+            if (!tempIndex.has(desc)) {
+                tempIndex.set(desc, {
+                    conceptoId: mov.conceptoId,
+                    cuentaId: mov.cuentaId,
+                    count: 0,      // Contador de cuántas veces se ha usado.
+                    lastUsed: 0    // Fecha de la última vez que se usó (para relevancia).
+                });
+            }
+
+            // 3. ACTUALIZAMOS la entrada existente.
+            const entry = tempIndex.get(desc);
+            // Siempre actualizamos con el concepto y la cuenta más recientes.
+            entry.conceptoId = mov.conceptoId; 
+            entry.cuentaId = mov.cuentaId;
+            // Incrementamos el contador de uso.
+            entry.count++;
+            // Actualizamos la fecha de último uso.
+            const movDate = new Date(mov.fecha).getTime();
+            if (movDate > entry.lastUsed) {
+                entry.lastUsed = movDate;
+            }
+        }
+    }
+    
+    // 4. Reemplazamos el índice global con nuestro nuevo índice, ya construido.
+    intelligentIndex = tempIndex;
+    console.log(`Índice inteligente reconstruido con ${intelligentIndex.size} entradas únicas.`);
+};
+
+// ========================================================================
+// === FIN: ÍNDICE INTELIGENTE ============================================
+// ========================================================================	
+	const hapticFeedback = (type = 'light') => {
             if ('vibrate' in navigator) {
                 try {
                     let pattern;
@@ -874,10 +936,11 @@ async function loadCoreData(uid) {
             }
         };
 
-        const parseDateStringAsUTC = (dateString) => {
+     const parseDateStringAsUTC = (dateString) => {
             if (!dateString) return null;
             return new Date(dateString + 'T12:00:00Z');
         };
+		
 		const generateReportFilterControls = (reportId, defaultPeriod = 'año-actual') => {
     return `
         <div class="report-filters" data-report-id="${reportId}" style="margin-bottom: var(--sp-4); padding: var(--sp-3); background-color: var(--c-surface-variant); border-radius: var(--border-radius-md);">
