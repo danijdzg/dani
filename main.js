@@ -9452,188 +9452,201 @@ const renderAjustesPage = () => {
     loadConfig();
 };
 
- // ========================================================================
+// ========================================================================
 // === INICIO: MÓDULO CONVERSACIONAL aiDANaI v3.1 (VERSIÓN ÚNICA Y COMPLETA) ===
 // ========================================================================
 
 const starterQuestions = [
     "Mayor gasto del mes pasado",
-    "Gasto por categorías",
-    "¿Mi ahorro es saludable?",
-    "Busca gastos inusuales"
+    "Gasto por categorías este mes",
+    "Compara gastos en Ocio: este mes vs. el mes pasado",
+    "Busca todos mis gastos en Amazon"
 ];
 
-// ----------------------------------------------------
-// 1. EL "CEREBRO": Motor de Intenciones y Análisis
-// ----------------------------------------------------
-
-const INTENTS = {
-    FIND_BIGGEST_EXPENSE: {
-        primaryKeywords: ['mayor', 'grande', 'más caro'],
-        secondaryKeywords: ['gasto', 'compra', 'movimiento'],
-        handler: analyzeBiggestExpense
-    },
-    ANALYZE_CATEGORIES: {
-        primaryKeywords: ['categorías', 'reparto', 'distribución', 'en qué'],
-        secondaryKeywords: ['gasto', 'gastos', 'dinero'],
-        handler: analyzeMainOutflow
-    },
-    CHECK_SAVINGS_RATE: {
-        primaryKeywords: ['ahorro', 'tasa', 'ahorrando'],
-        secondaryKeywords: ['saludable', 'cómo voy', 'bien', 'porcentaje'],
-        handler: analyzeSavingsRate
-    },
-    FIND_UNUSUAL_SPEND: {
-        primaryKeywords: ['inusual', 'raro', 'extraño', 'anormal', 'sospechoso'],
-        secondaryKeywords: ['gasto', 'movimiento', 'transacción'],
-        handler: analyzeUnusualActivity
+// --- 1. EL "MENSAJERO": Comunica con la API de Google AI ---
+async function callGoogleAI(prompt) {
+    // Si la clave no está configurada, damos un aviso amigable
+    if (!window.GEMINI_API_KEY || window.GEMINI_API_KEY === "AIzaSyCQ_lUFXfoWn4uduju153iLE1HGROaMwJY") {
+        return "ERROR: La clave de API de Google AI no está configurada. Por favor, sigue el Paso 0 de la guía de implementación.";
     }
-};
 
-function getIntent(query) {
-    let bestMatch = { intent: null, score: 0 };
-    for (const intentKey in INTENTS) {
-        const intent = INTENTS[intentKey];
-        let currentScore = 0;
-        intent.primaryKeywords.forEach(keyword => {
-            if (query.includes(keyword)) currentScore += 2;
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${window.GEMINI_API_KEY}`;
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    temperature: 0.1, // Hace que la IA sea más precisa y menos "creativa"
+                    topK: 1,
+                    topP: 1,
+                    maxOutputTokens: 2048,
+                },
+            }),
         });
-        intent.secondaryKeywords.forEach(keyword => {
-            if (query.includes(keyword)) currentScore += 1;
-        });
-        if (currentScore > bestMatch.score) {
-            bestMatch = { intent: intentKey, score: currentScore };
+
+        if (!response.ok) {
+            const errorBody = await response.json();
+            console.error("Error en la API de Google AI:", errorBody);
+            return `Error de la IA: ${errorBody.error.message}`;
         }
+
+        const data = await response.json();
+        return data.candidates[0].content.parts[0].text;
+    } catch (error) {
+        console.error("Error de conexión con Google AI:", error);
+        return "Error: No se pudo conectar con el asistente de IA. Revisa tu conexión a internet.";
     }
-    return bestMatch.score > 1 ? bestMatch.intent : null;
 }
 
-async function getAidanaiResponse(intentKey, appData) {
-    if (intentKey && INTENTS[intentKey] && INTENTS[intentKey].handler) {
-        return await INTENTS[intentKey].handler(appData);
+
+// --- 2. EL "TRADUCTOR": Reúne los datos relevantes para una pregunta ---
+function gatherContextForQuery(query, appData) {
+    const { allMovements } = appData;
+    const now = new Date();
+    const queryLower = query.toLowerCase();
+
+    // Filtra movimientos por un rango de fechas aproximado si la pregunta lo menciona
+    let relevantMovements = allMovements;
+    if (queryLower.includes('este mes') || queryLower.includes('mes actual')) {
+        relevantMovements = allMovements.filter(m => new Date(m.fecha).getMonth() === now.getMonth() && new Date(m.fecha).getFullYear() === now.getFullYear());
+    } else if (queryLower.includes('mes pasado')) {
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        relevantMovements = allMovements.filter(m => new Date(m.fecha).getMonth() === lastMonth.getMonth() && new Date(m.fecha).getFullYear() === lastMonth.getFullYear());
+    } else if (queryLower.includes('este año')) {
+         relevantMovements = allMovements.filter(m => new Date(m.fecha).getFullYear() === now.getFullYear());
     }
-    return `Lo siento, no he entendido bien tu pregunta. Puedes probar a preguntarme cosas como:<br><ul><li>"¿Cuál fue mi mayor gasto?"</li><li>"Analiza mis gastos por categoría"</li><li>"¿Es buena mi tasa de ahorro?"</li></ul>`;
+
+    return {
+        movements: relevantMovements,
+        accounts: appData.accounts,
+        concepts: appData.concepts,
+    };
 }
 
-// --- Funciones de Análisis (Rápidas, operan en memoria) ---
 
-function analyzeBiggestExpense({ movements, concepts }) {
-    const lastMonth = new Date();
-    lastMonth.setMonth(lastMonth.getMonth() - 1);
-    const expensesLastMonth = movements.filter(m => 
-        new Date(m.fecha) >= lastMonth && m.tipo === 'movimiento' && m.cantidad < 0
-    );
-    if (expensesLastMonth.length === 0) return `<p>¡Felicidades! Parece que no tuviste ningún gasto el mes pasado.</p>`;
-    const biggestExpense = expensesLastMonth.reduce((max, mov) => mov.cantidad < max.cantidad ? mov : max);
-    const concepto = concepts.find(c => c.id === biggestExpense.conceptoId)?.nombre || 'Sin categoría';
-    return `<p>Tu mayor gasto del mes pasado fue de <strong>${formatCurrency(biggestExpense.cantidad)}</strong> en "<em>${escapeHTML(biggestExpense.descripcion)}</em>", bajo el concepto de <strong>${concepto}</strong>.</p>`;
+// --- 3. EL "ARQUITECTO DEL PROMPT": Construye la pregunta perfecta para la IA ---
+function createAIPrompt(query, context) {
+    // Convertimos los datos en un formato de texto simple (CSV-like) que la IA puede entender
+    const movementsData = context.movements.map(m => {
+        const concepto = context.concepts.find(c => c.id === m.conceptoId)?.nombre || 'N/A';
+        const cuenta = context.accounts.find(c => c.id === m.cuentaId)?.nombre || 'N/A';
+        return `${m.fecha.slice(0, 10)};${m.descripcion};${concepto};${cuenta};${(m.cantidad / 100).toFixed(2)}`;
+    }).join('\n');
+    
+    // El "Prompt" es la instrucción detallada que le damos a la IA
+    return `
+      Eres aiDANaI, un analista financiero experto integrado en una app de finanzas personales. Tu tono es servicial, claro y directo. No uses saludos como "¡Hola!".
+      
+      MIS INSTRUCCIONES:
+      1.  Responde únicamente basándote en los datos que te proporciono en la sección "DATOS DE CONTEXTO". No inventes nada.
+      2.  Tu respuesta debe ser HTML simple (usa <p>, <strong>, <ul>, <li>).
+      3.  Cuando menciones una cifra monetaria, usa el formato "1.234,56 €".
+      4.  Sé conciso. Si la respuesta es un número, dalo directamente y luego explica brevemente.
+      
+      DATOS DE CONTEXTO:
+      Hoy es ${new Date().toLocaleDateString('es-ES')}.
+      Estos son los movimientos relevantes en formato: FECHA;DESCRIPCION;CONCEPTO;CUENTA;IMPORTE
+      ---
+      ${movementsData.length > 0 ? movementsData : "No hay movimientos para este contexto."}
+      ---
+      
+      PREGUNTA DEL USUARIO:
+      "${query}"
+      
+      TU RESPUESTA (en HTML simple):
+    `;
 }
 
-function analyzeMainOutflow({ movements, concepts }) {
-    const expenseTotals = movements.reduce((acc, m) => {
-        if (m.tipo === 'movimiento' && m.cantidad < 0) {
-            acc[m.conceptoId] = (acc[m.conceptoId] || 0) + m.cantidad;
-        }
-        return acc;
-    }, {});
-    const sortedExpenses = Object.entries(expenseTotals).sort((a, b) => a[1] - b[1]);
-    if (sortedExpenses.length === 0) return `<p>No he encontrado categorías de gastos significativas.</p>`;
-    let html = `<p>Tus <strong>3 mayores focos de gasto</strong> recientes son:</p><ol style="list-style-position: inside; padding-left: 8px;">`;
-    sortedExpenses.slice(0, 3).forEach(([conceptoId, total]) => {
-        const concepto = concepts.find(c => c.id === conceptoId)?.nombre || 'Desconocido';
-        html += `<li style="margin-bottom: 4px;"><strong>${concepto}:</strong> ${formatCurrency(total)}</li>`;
-    });
-    return html + `</ol>`;
-}
+// --- 4. LA INTERFAZ y EL GESTOR DE CHAT (Uniendo todo) ---
 
-async function analyzeSavingsRate() {
-    const { current } = await getFilteredMovements(false);
-    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
-    const { ingresos, saldoNeto } = calculateTotals(current, visibleAccountIds);
-    if (ingresos <= 0) return `<p>No he detectado ingresos en el periodo actual del panel para calcular tu tasa de ahorro.</p>`;
-    const tasaAhorro = (saldoNeto / ingresos) * 100;
-    let advice = '';
-    if (tasaAhorro >= 20) advice = `¡Excelente! Estás ahorrando más del 20%, un objetivo muy saludable.`;
-    else if (tasaAhorro >= 10) advice = `Vas por buen camino. Ahorrar entre un 10% y un 20% es un gran logro.`;
-    else if (tasaAhorro > 0) advice = `¡Bien! Estás ahorrando. Revisa tus gastos para potenciarlo.`;
-    else advice = `Has gastado más de lo que ingresaste. Es importante analizar por qué.`;
-    return `<p>Considerando los filtros actuales del panel, tu tasa de ahorro es del <strong>${tasaAhorro.toFixed(1)}%</strong>.</p><p style="margin-top: 8px;">${advice}</p>`;
-}
-
-function analyzeUnusualActivity({ movements }) {
-    if (movements.length < 10) return `<p>Necesito más historial para detectar patrones.</p>`;
-    const allExpenses = movements.filter(m => m.tipo === 'movimiento' && m.cantidad < 0);
-    if (allExpenses.length < 10) return `<p>No hay suficientes gastos para un análisis de anomalías.</p>`;
-    const avgExpense = allExpenses.reduce((sum, m) => sum + m.cantidad, 0) / allExpenses.length;
-    const stdDev = Math.sqrt(allExpenses.map(m => Math.pow(m.cantidad - avgExpense, 2)).reduce((sum, v) => sum + v, 0) / allExpenses.length);
-    const threshold = avgExpense - (2.5 * stdDev);
-    const unusual = allExpenses.find(m => m.cantidad < threshold);
-    if (!unusual) return `<p>No he detectado ninguna transacción que se desvíe de tus patrones de gasto habituales. ¡Todo en orden!</p>`;
-    const concepto = db.conceptos.find(c => c.id === unusual.conceptoId)?.nombre || 'Sin categoría';
-    return `<p>He detectado un gasto de <strong>${formatCurrency(unusual.cantidad)}</strong> en "<em>${escapeHTML(unusual.descripcion)}</em>" que es significativamente más alto que tu promedio. Es bueno revisarlo.</p>`;
-}
-
-// ----------------------------------------------------
-// 2. LA "INTERFAZ": Lógica para Mostrar el Chat
-// ----------------------------------------------------
-
+// Añade un mensaje al historial del chat en la pantalla
 const addMessageToChat = (text, sender) => {
     const chatHistory = select('aidanai-chat-history');
     if (!chatHistory) return;
+
     const senderClass = sender === 'user' ? 'from-user' : 'from-aidanai';
     const avatarContent = sender === 'user' ? (currentUser.email ? currentUser.email[0].toUpperCase() : 'U') : '';
-    let avatarAttributes = '';
-    if (sender === 'aidanai') {
-        avatarAttributes = 'style="background-image: url(aiDANaI.webp); background-size: cover;"';
-    }
+    
+    // Eliminamos el spinner de "pensando" si existe
     const thinkingSpinner = chatHistory.querySelector('.thinking');
     if (thinkingSpinner) thinkingSpinner.remove();
-    const messageHtml = `<div class="chat-message ${senderClass}"><div class="avatar" ${avatarAttributes}>${avatarContent}</div><div class="message-bubble">${text}</div></div>`;
+
+    const messageHtml = `
+      <div class="chat-message ${senderClass}">
+          <div class="avatar">${avatarContent}</div>
+          <div class="message-bubble">${text}</div>
+      </div>`;
     chatHistory.insertAdjacentHTML('beforeend', messageHtml);
+    // Hacemos scroll automático para ver el último mensaje
     chatHistory.scrollTop = chatHistory.scrollHeight;
 };
 
+// Muestra el indicador de que la IA está "pensando"
 const showAidanaiThinking = () => {
     const chatHistory = select('aidanai-chat-history');
     if (!chatHistory) return;
-    const thinkingHtml = `<div class="chat-message from-aidanai thinking"><div class="avatar" style="background-image: url(aiDANaI.webp); background-size: cover;"></div><div class="message-bubble"><span class="spinner" style="width:20px; height:20px;"></span></div></div>`;
+    const thinkingHtml = `
+      <div class="chat-message from-aidanai thinking">
+          <div class="avatar"></div>
+          <div class="message-bubble"><span class="spinner" style="width:20px; height:20px;"></span></div>
+      </div>`;
     chatHistory.insertAdjacentHTML('beforeend', thinkingHtml);
     chatHistory.scrollTop = chatHistory.scrollHeight;
 };
 
+// Función principal que se ejecuta cuando el usuario envía una pregunta
 const handleAidanaiQuery = async (queryText) => {
     if (!queryText || queryText.trim() === '') return;
+    
     addMessageToChat(escapeHTML(queryText), 'user');
     showAidanaiThinking();
     hapticFeedback('light');
 
-    const intent = getIntent(queryText.toLowerCase());
+    // Reunimos todos los datos necesarios para cualquier pregunta
     const appData = {
-        movements: recentMovementsCache,
+        allMovements: await fetchAllMovementsForHistory(), // ¡Cargamos todos los movimientos una vez!
         accounts: db.cuentas,
         concepts: db.conceptos
     };
-    const responseHtml = await getAidanaiResponse(intent, appData);
 
-    setTimeout(() => {
-        addMessageToChat(responseHtml, 'aidanai');
-        hapticFeedback('success');
-    }, 500);
+    // Filtramos los datos relevantes para esta pregunta específica
+    const context = gatherContextForQuery(queryText, appData);
+    
+    // Creamos el prompt perfecto
+    const prompt = createAIPrompt(queryText, context);
+    
+    // Llamamos a la IA y esperamos su respuesta
+    const responseHtml = await callGoogleAI(prompt);
+
+    // Mostramos la respuesta
+    addMessageToChat(responseHtml, 'aidanai');
+    hapticFeedback('success');
 };
 
+// Configura y muestra el modal del asistente
 const showAidanaiModal = () => {
     showModal('aidanai-modal');
+    // Preparamos la interfaz del chat
     const chatHistory = select('aidanai-chat-history');
     const suggestionsContainer = select('aidanai-suggestions');
     const inputForm = select('aidanai-input-form');
     const userInput = select('aidanai-user-input');
+
     if (!chatHistory || !suggestionsContainer || !inputForm || !userInput) return;
+
     chatHistory.innerHTML = '';
     userInput.value = '';
-    addMessageToChat("¡Hola! Soy tu copiloto financiero. ¿Qué necesitas analizar hoy?", 'aidanai');
+    
+    addMessageToChat("¡Hola! Soy tu analista financiero personal. Pregúntame lo que quieras sobre tus datos.", 'aidanai');
+    
     suggestionsContainer.innerHTML = starterQuestions.map(q => 
         `<button class="suggestion-chip" data-action="ask-aidanai" data-question="${q}">${q}</button>`
     ).join('');
+
+    // Re-vinculamos el evento submit para evitar duplicados
     const newForm = inputForm.cloneNode(true);
     inputForm.parentNode.replaceChild(newForm, inputForm);
     newForm.addEventListener('submit', (e) => {
@@ -9645,5 +9658,5 @@ const showAidanaiModal = () => {
 };
 
 // ========================================================================
-// === FIN: MÓDULO CONVERSACIONAL aiDANaI v3.1 (VERSIÓN ÚNICA Y COMPLETA) ===
-// ========================================================================
+// === FIN: MÓDULO CONVERSACIONAL aiDANaI v3.1 ===
+// ========================================================================```
