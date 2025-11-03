@@ -9465,12 +9465,12 @@ const starterQuestions = [
 
 // --- 1. EL "MENSAJERO": Comunica con la API de Google AI ---
 async function callGoogleAI(prompt) {
-    if (!window.GEMINI_API_KEY || window.GEMINI_API_KEY === "AQUÍ_VA_TU_NUEVA_CLAVE_SECRETA") {
-        return "ERROR: La clave de API de Google AI no está configurada. Por favor, asegúrate de añadir tu nueva clave en el archivo index.html.";
+    if (!window.GEMINI_API_KEY || window.GEMINI_API_KEY.includes("AQUÍ_VA")) {
+        return "ERROR: La clave de API de Google AI no está configurada. Por favor, añade tu clave en el archivo index.html.";
     }
 
-    // La URL corregida y más robusta
-    const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${window.GEMINI_API_KEY}`;
+    // ¡ESTA ES LA URL CORRECTA Y DEFINITIVA! Usa la versión 'v1beta' que es la estándar.
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${window.GEMINI_API_KEY}`;
 
     try {
         const response = await fetch(API_URL, {
@@ -9484,15 +9484,21 @@ async function callGoogleAI(prompt) {
         if (!response.ok) {
             const errorBody = await response.json();
             console.error("Error en la API de Google AI:", errorBody);
+            // Proporcionamos un mensaje más útil si el error es de la clave
+            if (errorBody.error && errorBody.error.message.includes('API key not valid')) {
+                return "Error Crítico: Tu clave de API no es válida. Por favor, genera una nueva en Google AI Studio y pégala en el archivo `index.html`.";
+            }
             return `Error de la IA: ${errorBody.error.message}`;
         }
 
         const data = await response.json();
-        // La estructura de la respuesta puede variar ligeramente, nos aseguramos de que funcione
+        
+        // Verificación robusta de la respuesta
         if (data.candidates && data.candidates[0] && data.candidates[0].content.parts[0].text) {
             return data.candidates[0].content.parts[0].text;
         } else {
-            return "La IA no ha devuelto una respuesta válida.";
+            console.warn("La respuesta de la IA no tuvo el formato esperado:", data);
+            return "La IA ha devuelto una respuesta vacía. Inténtalo de nuevo.";
         }
     } catch (error) {
         console.error("Error de conexión con Google AI:", error);
