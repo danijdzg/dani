@@ -52,7 +52,13 @@ self.addEventListener('fetch', event => {
 
     // Estrategia para los recursos de la App (CSS, JS, HTML, imágenes)
     // Stale-While-Revalidate: Sirve desde la caché al instante, y actualiza en segundo plano.
-    if (URLS_TO_CACHE.includes(new URL(request.url).pathname)) {
+    const url = new URL(request.url);
+
+    // Ajustamos la lógica para que 'index.html' se sirva para la raíz '.'
+    const resourcePath = url.pathname.endsWith('/') ? '/index.html' : url.pathname;
+    const isAppShellResource = URLS_TO_CACHE.map(path => path.replace(/^\./, '')).includes(resourcePath);
+
+    if (isAppShellResource) {
         event.respondWith(
             caches.open(CACHE_NAME).then(cache => {
                 return cache.match(request).then(cachedResponse => {
@@ -65,7 +71,7 @@ self.addEventListener('fetch', event => {
                 });
             })
         );
-        return;
+        return; // <-- ¡ESTA ES LA LÍNEA CLAVE QUE LO ARREGLA!
     }
 
     // Estrategia para datos de Firebase (Network First)
@@ -73,12 +79,17 @@ self.addEventListener('fetch', event => {
     event.respondWith(
         fetch(request)
             .then(networkResponse => {
+                // Aumentamos la caché guardando los datos de Firebase también
                 return caches.open(CACHE_NAME).then(cache => {
-                    cache.put(request, networkResponse.clone());
+                    // Solo cacheamos peticiones GET a Firestore
+                    if (request.url.includes('firestore.googleapis.com')) {
+                        cache.put(request, networkResponse.clone());
+                    }
                     return networkResponse;
                 });
             })
             .catch(() => {
+                // Si la red falla, intentamos servir desde la caché
                 return caches.match(request);
             })
     );

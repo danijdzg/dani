@@ -228,12 +228,6 @@ const getInitialDb = () => ({
 let diarioActiveFilters = null;
 let allDiarioMovementsCache = []; // Caché para guardar TODOS los movimientos una vez cargados
 
-// Cerca de la declaración de variables globales
-let allMovementsCache = []; // Renombrado para ser más genérico
-let allMovementsCachePromise = null; // Para evitar cargas simultáneas
-
-
-
 // Función para abrir y preparar el modal de filtros
 const showDiarioFiltersModal = () => {
     showModal('diario-filters-modal');
@@ -1445,198 +1439,6 @@ window.addEventListener('offline', () => {
     }
 };
 
-// ========================================================================
-// === INICIO: MÓDULO CONVERSACIONAL aiDANaI v4.1 (COMPLETO Y CORREGIDO) ===
-// ========================================================================
-
-const starterQuestions = [
-    "Mayor gasto del mes pasado",
-    "Gasto por categorías",
-    "¿Mi ahorro es saludable?",
-    "Busca gastos inusuales"
-];
-
-// --- PARTE VISUAL: Funciones para mostrar el modal y el chat ---
-
-const showAidanaiModal = () => {
-    showModal('aidanai-modal');
-    const chatHistory = select('aidanai-chat-history');
-    const suggestionsContainer = select('aidanai-suggestions');
-    const inputForm = select('aidanai-input-form');
-    const userInput = select('aidanai-user-input');
-
-    if (!chatHistory || !suggestionsContainer || !inputForm || !userInput) return;
-    
-    chatHistory.innerHTML = '';
-    userInput.value = '';
-
-    addMessageToChat("¡Hola! Soy tu copiloto financiero. ¿Qué necesitas analizar hoy?", 'aidanai');
-
-    suggestionsContainer.innerHTML = starterQuestions.map(q => 
-        `<button class="suggestion-chip" data-action="ask-aidanai" data-question="${q}">${q}</button>`
-    ).join('');
-    
-    // Clonar y reemplazar el formulario para evitar listeners duplicados
-    const newForm = inputForm.cloneNode(true);
-    inputForm.parentNode.replaceChild(newForm, inputForm);
-
-    newForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const input = newForm.querySelector('#aidanai-user-input');
-        handleAidanaiQuery(input.value);
-        input.value = '';
-    });
-};
-
-const addMessageToChat = (text, sender) => {
-    const chatHistory = select('aidanai-chat-history');
-    if (!chatHistory) return;
-
-    const senderClass = sender === 'user' ? 'from-user' : 'from-aidanai';
-    const avatarContent = sender === 'user' ? (currentUser.email ? currentUser.email[0].toUpperCase() : 'U') : '';
-    
-    const thinkingSpinner = chatHistory.querySelector('.thinking');
-    if (thinkingSpinner) thinkingSpinner.remove();
-    
-    const messageHtml = `<div class="chat-message ${senderClass}">
-        <div class="avatar" ${sender === 'aidanai' ? 'style="background-image: url(aiDANaI.webp); background-size: cover;"' : ''}>${avatarContent}</div>
-        <div class="message-bubble">${text}</div>
-    </div>`;
-
-    chatHistory.insertAdjacentHTML('beforeend', messageHtml);
-    chatHistory.scrollTop = chatHistory.scrollHeight;
-};
-
-const showAidanaiThinking = () => {
-    const chatHistory = select('aidanai-chat-history');
-    if (!chatHistory) return;
-    const thinkingHtml = `<div class="chat-message from-aidanai thinking">
-        <div class="avatar" style="background-image: url(aiDANaI.webp); background-size: cover;"></div>
-        <div class="message-bubble"><span class="spinner" style="width:20px; height:20px;"></span></div>
-    </div>`;
-    chatHistory.insertAdjacentHTML('beforeend', thinkingHtml);
-    chatHistory.scrollTop = chatHistory.scrollHeight;
-};
-
-
-// --- PARTE LÓGICA: El nuevo "cerebro" del asistente ---
-
-const handleAidanaiQuery = async (query) => {
-    if (!query || query.trim() === '') return;
-    addMessageToChat(escapeHTML(query), 'user');
-    showAidanaiThinking();
-    hapticFeedback('light');
-
-    try {
-        const allMovements = await getAllMovements();
-        const entities = parseQuery(query.toLowerCase());
-        const filteredMovements = filterMovements(allMovements, entities);
-        const responseHtml = generateResponse(filteredMovements, entities);
-        
-        setTimeout(() => {
-            addMessageToChat(responseHtml, 'aidanai');
-            hapticFeedback('success');
-        }, 500);
-
-    } catch (error) {
-        console.error("Error en el asistente aiDANaI:", error);
-        addMessageToChat("Lo siento, he tenido un problema interno al procesar tu solicitud.", 'aidanai');
-    }
-};
-
-function parseQuery(query) {
-    const entities = {
-        metric: 'saldo',
-        qualifier: null,
-        groupBy: null,
-        timeframe: { start: null, end: null },
-        filters: { concepts: [], accounts: [], description: null }
-    };
-    if (query.includes('gasto') || query.includes('gastos')) entities.metric = 'gastos';
-    else if (query.includes('ingreso')) entities.metric = 'ingresos';
-    if (query.includes('mayor') || query.includes('grande')) entities.qualifier = 'mayor';
-    if (query.includes('total') || query.includes('cuánto')) entities.qualifier = 'total';
-    if (query.includes('categoría') || query.includes('concepto')) entities.groupBy = 'concepto';
-    
-    const now = new Date();
-    if (query.includes('mes pasado')) {
-        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-        entities.timeframe = { start, end };
-    } else if (query.includes('este mes')) {
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-        entities.timeframe = { start, end };
-    }
-    
-    db.conceptos.forEach(c => { if (query.includes(c.nombre.toLowerCase())) entities.filters.concepts.push(c.id); });
-    db.cuentas.forEach(c => { if (query.includes(c.nombre.toLowerCase())) entities.filters.accounts.push(c.id); });
-
-    return entities;
-}
-
-function filterMovements(movements, entities) {
-    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
-    return movements.filter(m => {
-        const accountSet = entities.filters.accounts.length > 0 ? new Set(entities.filters.accounts) : visibleAccountIds;
-        if (m.tipo === 'traspaso') {
-            if (!accountSet.has(m.cuentaOrigenId) && !accountSet.has(m.cuentaDestinoId)) return false;
-        } else {
-            if (!accountSet.has(m.cuentaId)) return false;
-        }
-
-        if (entities.metric === 'gastos' && calculateMovementAmount(m, visibleAccountIds) >= 0) return false;
-        if (entities.metric === 'ingresos' && calculateMovementAmount(m, visibleAccountIds) <= 0) return false;
-        
-        if (entities.timeframe.start && new Date(m.fecha) < entities.timeframe.start) return false;
-        if (entities.timeframe.end && new Date(m.fecha) > entities.timeframe.end) return false;
-
-        if (entities.filters.concepts.length > 0 && !entities.filters.concepts.includes(m.conceptoId)) return false;
-        
-        return true;
-    });
-}
-
-function generateResponse(filteredMovements, entities) {
-    if (filteredMovements.length === 0) return `<p>No he encontrado datos que coincidan. Prueba a cambiar el periodo o los filtros.</p>`;
-
-    if (entities.qualifier === 'mayor' && entities.metric === 'gastos') {
-        const target = filteredMovements.reduce((max, mov) => mov.cantidad < max.cantidad ? mov : max);
-        const concepto = db.conceptos.find(c => c.id === target.conceptoId)?.nombre || 'S/C';
-        return `<p>El mayor gasto encontrado es de <strong>${formatCurrency(target.cantidad)}</strong> por "<em>${escapeHTML(target.descripcion)}</em>" en <strong>${concepto}</strong>.</p>`;
-    }
-    
-    if (entities.qualifier === 'total' || entities.filters.concepts.length > 0 || entities.filters.accounts.length > 0) {
-        const total = filteredMovements.reduce((sum, m) => sum + calculateMovementAmount(m, new Set(getVisibleAccounts().map(c => c.id))), 0);
-        return `<p>El total de ${entities.metric} para tu selección ha sido de <strong>${formatCurrency(total)}</strong>, analizando ${filteredMovements.length} movimientos.</p>`;
-    }
-
-    if (entities.groupBy === 'concepto') {
-        const byConcept = filteredMovements.reduce((acc, m) => {
-            if (m.tipo === 'movimiento') {
-                const id = m.conceptoId || 'otros';
-                acc[id] = (acc[id] || 0) + m.cantidad;
-            }
-            return acc;
-        }, {});
-        const sorted = Object.entries(byConcept).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 5);
-        let html = `<p>Aquí está el desglose de tus <strong>${entities.metric}</strong> por categoría:</p><ul>`;
-        sorted.forEach(([id, total]) => {
-            const nombre = db.conceptos.find(c => c.id === id)?.nombre || 'Sin Categoría';
-            html += `<li><strong>${nombre}:</strong> ${formatCurrency(total)}</li>`;
-        });
-        html += `</ul>`;
-        return html;
-    }
-
-    const total = filteredMovements.reduce((sum, m) => sum + calculateMovementAmount(m, new Set(getVisibleAccounts().map(c => c.id))), 0);
-    return `<p>He encontrado ${filteredMovements.length} movimientos que suman <strong>${formatCurrency(total)}</strong>. ¿Quieres que los desglose por categoría?</p>`;
-}
-
-// ========================================================================
-// === FIN: MÓDULO CONVERSACIONAL aiDANaI v4.1 (COMPLETO Y CORREGIDO) ===
-// ========================================================================
-
 // EN main.js - REEMPLAZA TU FUNCIÓN navigateTo POR ESTA VERSIÓN
 const navigateTo = async (pageId, isInitial = false) => {
     const oldView = document.querySelector('.view--active');
@@ -1834,7 +1636,17 @@ const getAllSaldos = () => {
             const snapshot = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').get();
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
-        
+        const fetchAllMovementsForSearch = async () => {
+            if (!currentUser) return [];
+            try {
+                const snapshot = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').get();
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (error) {
+                console.error("Error al obtener todos los movimientos para la búsqueda:", error);
+                showToast("Error al realizar la búsqueda en la base de datos.", "danger");
+                return [];
+            }
+        };
         const getSaldos = async () => {
             const visibleAccounts = getVisibleAccounts();
             const saldos = {};
@@ -1843,42 +1655,19 @@ const getAllSaldos = () => {
             });
             return saldos;
         };
-	
-	const getAllMovements = () => {
-    // Si ya los tenemos, los devolvemos al instante
-    if (allMovementsCache.length > 0) {
-        return Promise.resolve(allMovementsCache);
+		
+	const fetchAllMovementsForHistory = async () => {
+    if (!currentUser) return [];
+    try {
+        const snapshot = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').get();
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+        console.error("Error al obtener el historial completo de movimientos:", error);
+        showToast("Error al cargar el historial para el gráfico de patrimonio.", "danger");
+        return [];
     }
-
-    // Si ya hay una petición en curso, nos "enganchamos" a ella en lugar de empezar una nueva
-    if (allMovementsCachePromise) {
-        return allMovementsCachePromise;
-    }
-
-    // Si no hay nada, esta es la primera vez. Hacemos la petición.
-    allMovementsCachePromise = new Promise(async (resolve, reject) => {
-        if (!currentUser) return resolve([]);
-        try {
-            console.log("CACHE MISS: Obteniendo todos los movimientos de Firestore por primera vez.");
-            const snapshot = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').get();
-            const movements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            // Guardamos en la caché para la próxima vez
-            allMovementsCache = movements;
-            resolve(allMovementsCache);
-        } catch (error) {
-            console.error("Error al obtener todos los movimientos para la caché:", error);
-            showToast("Error al cargar el historial completo.", "danger");
-            reject(error);
-        } finally {
-            // Una vez resuelta, reseteamos la promesa para futuras recargas si fuera necesario
-            allMovementsCachePromise = null;
-        }
-    });
-    return allMovementsCachePromise;
 };
-	
-			
+		
         
 const getFilteredMovements = async (forComparison = false) => {
     // 1. OBTENER FECHAS DEL FILTRO (esto no cambia)
@@ -1976,7 +1765,7 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
         return { valorActual: 0, capitalInvertido: 0, pnlAbsoluto: 0, pnlPorcentual: 0, irr: 0 };
     }
 
-    const allMovements = await getAllMovements();
+    const allMovements = await fetchAllMovementsForHistory();
 
     let totalValorActual = 0;
     let totalCapitalInvertido_para_PNL = 0;
@@ -2986,24 +2775,15 @@ const updateVirtualListUI = () => {
     const loadMoreContainer = select('load-more-container');
     const emptyContainer = select('empty-movimientos');
     const listContainer = select('movimientos-list-container');
-    if (vList.items.length === 0 && !isLoadingMoreMovements) { // Añadimos la comprobación de carga
-    listContainer?.classList.add('hidden');
-    loadMoreContainer?.classList.add('hidden');
-    emptyContainer?.classList.remove('hidden');
-
-    // ¡LA MAGIA ESTÁ AQUÍ!
-    const emptyText = emptyContainer.querySelector('p');
-    if (diarioActiveFilters) {
-        emptyText.textContent = 'No se encontraron movimientos que coincidan con tus filtros.';
+    if (vList.items.length === 0) {
+        listContainer?.classList.add('hidden');
+        loadMoreContainer?.classList.add('hidden');
+        emptyContainer?.classList.remove('hidden');
     } else {
-        emptyText.textContent = 'Aún no has añadido ningún movimiento. ¡Empieza ahora!';
+        listContainer?.classList.remove('hidden');
+        emptyContainer?.classList.add('hidden');
+        loadMoreContainer?.classList.toggle('hidden', allMovementsLoaded);
     }
-
-} else {
-    listContainer?.classList.remove('hidden');
-    emptyContainer?.classList.add('hidden');
-    loadMoreContainer?.classList.toggle('hidden', allMovementsLoaded);
-}
 };
 
 // Paso B: La función que carga los datos. Ahora es más simple y se llama
@@ -3206,44 +2986,29 @@ const renderDiarioPage = async () => {
             select('diario-filter-active-indicator').classList.remove('hidden');
             
             if (allDiarioMovementsCache.length === 0) {
-                allDiarioMovementsCache = await getAllMovements();
+                allDiarioMovementsCache = await fetchAllMovementsForHistory();
             }
-			let query = fbDb.collection('users').doc(currentUser.uid).collection('movimientos');
+
             const { startDate, endDate, description, minAmount, maxAmount, cuentas, conceptos } = diarioActiveFilters;
-			if (startDate) query = query.where('fecha', '>=', startDate);
-        if (endDate) query = query.where('fecha', '<=', endDate);
-        // NOTA: Firestore no permite filtros de desigualdad (`<`, `>`) en más de un campo a la vez,
-        // ni búsquedas de "contiene" (like). El filtrado por descripción, importe, cuentas y conceptos
-        // todavía tendrá que hacerse en el cliente DESPUÉS de obtener los resultados por fecha.
-        // Esta es una limitación de Firestore, pero al menos reducimos drásticamente los datos por fecha.
-
-        // Ordenamos para que las consultas compuestas funcionen
-        query = query.orderBy('fecha', 'desc');
-
-        const snapshot = await query.get();
-        let filteredMovements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        // APLICAMOS EL RESTO DE FILTROS EN EL CLIENTE (sobre un set de datos ya reducido)
-        filteredMovements = filteredMovements.filter(m => {
-            if (description && !m.descripcion.toLowerCase().includes(description)) return false;
-            const cantidadEuros = m.cantidad / 100;
-            if (minAmount && cantidadEuros < parseFloat(minAmount)) return false;
-            if (maxAmount && cantidadEuros > parseFloat(maxAmount)) return false;
-            if (cuentas.length > 0) {
-                if (m.tipo === 'traspaso' && !cuentas.includes(m.cuentaOrigenId) && !cuentas.includes(m.cuentaDestinoId)) return false;
-                if (m.tipo === 'movimiento' && !cuentas.includes(m.cuentaId)) return false;
-            }
-            if (conceptos.length > 0 && m.tipo === 'movimiento' && !conceptos.includes(m.conceptoId)) return false;
-            return true;
-        });
-        
-        db.movimientos = filteredMovements;
-        
-        await processMovementsForRunningBalance(db.movimientos, true);
-        updateVirtualListUI();
-
-    } else {
+            db.movimientos = allDiarioMovementsCache.filter(m => {
+                if (startDate && m.fecha < startDate) return false;
+                if (endDate && m.fecha > endDate) return false;
+                if (description && !m.descripcion.toLowerCase().includes(description)) return false;
+                const cantidadEuros = m.cantidad / 100;
+                if (minAmount && cantidadEuros < parseFloat(minAmount)) return false;
+                if (maxAmount && cantidadEuros > parseFloat(maxAmount)) return false;
+                if (cuentas.length > 0) {
+                    if (m.tipo === 'traspaso' && !cuentas.includes(m.cuentaOrigenId) && !cuentas.includes(m.cuentaDestinoId)) return false;
+                    if (m.tipo === 'movimiento' && !cuentas.includes(m.cuentaId)) return false;
+                }
+                if (conceptos.length > 0 && m.tipo === 'movimiento' && !conceptos.includes(m.conceptoId)) return false;
+                return true;
+            });
             
+            await processMovementsForRunningBalance(db.movimientos, true);
+            updateVirtualListUI();
+
+        } else {
             if (scrollTrigger) scrollTrigger.classList.remove('hidden');
             select('diario-filter-active-indicator').classList.add('hidden');
             
@@ -3723,7 +3488,7 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
 
     // 2. Obtiene todos los datos necesarios (esta lógica no cambia).
     await loadInversiones();
-    const allMovements = await getAllMovements();
+    const allMovements = await fetchAllMovementsForHistory();
 
     const filteredInvestmentAccounts = getVisibleAccounts().filter(account => {
         const accountType = toSentenceCase(account.tipo || 'S/T');
@@ -4926,7 +4691,7 @@ const updateNetWorthChart = async (saldos) => {
     }
     netWorthChart = null; 
     
-    const allMovements = await getAllMovements();
+    const allMovements = await fetchAllMovementsForHistory();
     const visibleAccountIds = new Set(Object.keys(saldos));
     const cuentas = db.cuentas.filter(c => visibleAccountIds.has(c.id));
 
@@ -6310,7 +6075,7 @@ const performGlobalSearch = async (query) => {
     let resultsHtml = '';
     const MAX_RESULTS_PER_GROUP = 10;
 
-     const allMovements = await getAllMovements();
+    const allMovements = await fetchAllMovementsForSearch();
 
     // --- SECCIÓN DE MOVIMIENTOS MEJORADA ---
     const movs = allMovements
@@ -7105,7 +6870,7 @@ const handleGenerateInformeCuenta = async (form, btn) => {
 
     try {
         // 1. Obtener TODOS los movimientos (considera obtener solo los de la cuenta si el rendimiento se ve afectado)
-        const todosLosMovimientos = await getAllMovements();
+        const todosLosMovimientos = await fetchAllMovementsForHistory();
 
         // 2. Filtrar movimientos relacionados con la cuenta seleccionada
         const movimientosDeLaCuenta = todosLosMovimientos.filter(m =>
@@ -7343,12 +7108,114 @@ function createCustomSelect(selectElement) {
 }
 
 
-
-
 // =================================================================
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
 // =================================================================
  const attachEventListeners = () => {
+	let longPressTimer;
+const addBtn = select('bottom-nav-add-btn');
+const quickMenu = select('quick-add-menu');
+
+if (addBtn && quickMenu) {
+    addBtn.addEventListener('mousedown', startLongPress);
+    addBtn.addEventListener('touchstart', startLongPress);
+    addBtn.addEventListener('mouseup', cancelLongPress);
+    addBtn.addEventListener('mouseleave', cancelLongPress);
+    addBtn.addEventListener('touchend', cancelLongPress);
+    
+    document.addEventListener('click', (e) => {
+        if (!quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
+            quickMenu.classList.remove('visible');
+        }
+    });
+}
+
+function startLongPress(e) {
+    e.preventDefault();
+    longPressTimer = setTimeout(() => {
+        hapticFeedback('medium');
+        quickMenu.classList.add('visible');
+        longPressTimer = null; // Marcar como ejecutado
+    }, 400); // 400ms para considerar pulsación larga
+}
+
+function cancelLongPress() {
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        // Si el tiempo fue corto, es un clic normal
+        addBtn.click();
+    }
+}
+
+document.body.addEventListener('click', (e) => {
+    const quickAddAction = e.target.closest('[data-action="quick-add-type"]');
+    if(quickAddAction) {
+        const type = quickAddAction.dataset.type;
+        quickMenu.classList.remove('visible');
+        startMovementForm(); // Abre el formulario genérico
+        setTimeout(() => setMovimientoFormType(type), 50); // Lo ajusta al tipo seleccionado
+    }
+});
+
+	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
+const mainScrollerPtr = selectOne('.app-layout__main');
+const ptrIndicator = document.createElement('div');
+ptrIndicator.id = 'pull-to-refresh-indicator';
+ptrIndicator.innerHTML = '<div class="spinner"></div>';
+if (ptrElement) ptrElement.prepend(ptrIndicator);
+
+let ptrState = {
+    startY: 0,
+    isPulling: false,
+    distance: 0,
+    threshold: 80 // Distancia necesaria para activar
+};
+
+if (ptrElement && mainScrollerPtr) {
+    ptrElement.addEventListener('touchstart', (e) => {
+        if (mainScrollerPtr.scrollTop === 0) { // Solo si estamos arriba del todo
+            ptrState.startY = e.touches[0].clientY;
+            ptrState.isPulling = true;
+        }
+    }, { passive: true });
+
+    ptrElement.addEventListener('touchmove', (e) => {
+        if (!ptrState.isPulling) return;
+        
+        const currentY = e.touches[0].clientY;
+        ptrState.distance = currentY - ptrState.startY;
+
+        if (ptrState.distance > 0) {
+            e.preventDefault(); // Evita el scroll del navegador
+            ptrIndicator.classList.add('visible');
+            const rotation = Math.min(ptrState.distance * 2.5, 360);
+            ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
+            ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
+        }
+    }, { passive: false });
+
+    ptrElement.addEventListener('touchend', async () => {
+        if (ptrState.isPulling && ptrState.distance > ptrState.threshold) {
+            hapticFeedback('medium');
+            ptrIndicator.querySelector('.spinner').style.transform = '';
+            ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
+            
+            // Acción de refresco: Recargamos los movimientos del diario
+            await renderDiarioPage();
+
+            // Ocultar indicador después de refrescar
+            setTimeout(() => {
+                ptrIndicator.classList.remove('visible');
+                ptrIndicator.querySelector('.spinner').style.animation = '';
+            }, 500);
+        } else {
+            ptrIndicator.classList.remove('visible');
+        }
+
+        ptrState.isPulling = false;
+        ptrState.distance = 0;
+    });
+}
     const cantidadInput = document.getElementById("movimiento-cantidad");
     if (cantidadInput) {
         const cantidadError = document.getElementById("movimiento-cantidad-error");
@@ -7443,7 +7310,8 @@ function createCustomSelect(selectElement) {
         const btn = actionTarget.closest('button');
         
         const actions = {
-             'show-aidanai-assistant': showAidanaiModal,
+            // ▼▼▼ ¡ESTO CONECTA TODO! ▼▼▼
+            'show-aidanai-assistant': showAidanaiModal,
              'ask-aidanai': () => {
                 const questionText = actionTarget.dataset.question; // Obtiene la pregunta del chip
                 handleAidanaiQuery(questionText); // Llama al nuevo gestor de queries
@@ -8513,7 +8381,7 @@ const handleAddConcept = async (btn) => {
      setButtonLoading(btn, true, 'Exportando...');
      
      try {
-         const allMovements = await getAllMovements();
+         const allMovements = await fetchAllMovementsForSearch();
          const allCuentas = db.cuentas;
          const allConceptos = db.conceptos;
 
@@ -9584,43 +9452,198 @@ const renderAjustesPage = () => {
     loadConfig();
 };
 
+ // ========================================================================
+// === INICIO: MÓDULO CONVERSACIONAL aiDANaI v3.1 (VERSIÓN ÚNICA Y COMPLETA) ===
+// ========================================================================
 
+const starterQuestions = [
+    "Mayor gasto del mes pasado",
+    "Gasto por categorías",
+    "¿Mi ahorro es saludable?",
+    "Busca gastos inusuales"
+];
 
+// ----------------------------------------------------
+// 1. EL "CEREBRO": Motor de Intenciones y Análisis
+// ----------------------------------------------------
 
- const handleParseWithAidanai = () => {
-    const descriptionInput = select('movimiento-descripcion');
-    const query = descriptionInput.value.trim();
-    if (query.length < 5) {
-        showToast("Escribe una frase más descriptiva para que el asistente pueda ayudarte.", "warning");
-        return;
+const INTENTS = {
+    FIND_BIGGEST_EXPENSE: {
+        primaryKeywords: ['mayor', 'grande', 'más caro'],
+        secondaryKeywords: ['gasto', 'compra', 'movimiento'],
+        handler: analyzeBiggestExpense
+    },
+    ANALYZE_CATEGORIES: {
+        primaryKeywords: ['categorías', 'reparto', 'distribución', 'en qué'],
+        secondaryKeywords: ['gasto', 'gastos', 'dinero'],
+        handler: analyzeMainOutflow
+    },
+    CHECK_SAVINGS_RATE: {
+        primaryKeywords: ['ahorro', 'tasa', 'ahorrando'],
+        secondaryKeywords: ['saludable', 'cómo voy', 'bien', 'porcentaje'],
+        handler: analyzeSavingsRate
+    },
+    FIND_UNUSUAL_SPEND: {
+        primaryKeywords: ['inusual', 'raro', 'extraño', 'anormal', 'sospechoso'],
+        secondaryKeywords: ['gasto', 'movimiento', 'transacción'],
+        handler: analyzeUnusualActivity
     }
-
-    hapticFeedback('light');
-    showToast("aiDANaI está analizando tu texto...", "info");
-
-    // Lógica simple de extracción de entidades (se puede mejorar)
-    const cantidadRegex = /(\d+[,.]?\d*)\s*(€|eur)/i;
-    const cantidadMatch = query.match(cantidadRegex);
-    
-    if (cantidadMatch && cantidadMatch[1]) {
-        const amountValue = parseCurrencyString(cantidadMatch[1]);
-        if (!isNaN(amountValue)) {
-            const cantidadInput = select('movimiento-cantidad');
-            cantidadInput.value = amountValue.toLocaleString('es-ES', { useGrouping: false, minimumFractionDigits: 2 });
-            
-            // Quitamos la cantidad de la descripción para no tenerla duplicada
-            descriptionInput.value = query.replace(cantidadRegex, '').trim();
-
-            // Feedback visual
-            const amountGroup = select('movimiento-cantidad-form-group');
-            amountGroup.classList.add('field-highlighted');
-            setTimeout(() => amountGroup.classList.remove('field-highlighted'), 1500);
-        }
-    }
-    
-    // Intentamos adivinar el concepto (usando tu índice inteligente)
-    handleDescriptionInput();
 };
 
-// Y añade la acción en tu manejador de eventos `attachEventListeners`
-// 'parse-with-aidanai': handleParseWithAidanai,
+function getIntent(query) {
+    let bestMatch = { intent: null, score: 0 };
+    for (const intentKey in INTENTS) {
+        const intent = INTENTS[intentKey];
+        let currentScore = 0;
+        intent.primaryKeywords.forEach(keyword => {
+            if (query.includes(keyword)) currentScore += 2;
+        });
+        intent.secondaryKeywords.forEach(keyword => {
+            if (query.includes(keyword)) currentScore += 1;
+        });
+        if (currentScore > bestMatch.score) {
+            bestMatch = { intent: intentKey, score: currentScore };
+        }
+    }
+    return bestMatch.score > 1 ? bestMatch.intent : null;
+}
+
+async function getAidanaiResponse(intentKey, appData) {
+    if (intentKey && INTENTS[intentKey] && INTENTS[intentKey].handler) {
+        return await INTENTS[intentKey].handler(appData);
+    }
+    return `Lo siento, no he entendido bien tu pregunta. Puedes probar a preguntarme cosas como:<br><ul><li>"¿Cuál fue mi mayor gasto?"</li><li>"Analiza mis gastos por categoría"</li><li>"¿Es buena mi tasa de ahorro?"</li></ul>`;
+}
+
+// --- Funciones de Análisis (Rápidas, operan en memoria) ---
+
+function analyzeBiggestExpense({ movements, concepts }) {
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+    const expensesLastMonth = movements.filter(m => 
+        new Date(m.fecha) >= lastMonth && m.tipo === 'movimiento' && m.cantidad < 0
+    );
+    if (expensesLastMonth.length === 0) return `<p>¡Felicidades! Parece que no tuviste ningún gasto el mes pasado.</p>`;
+    const biggestExpense = expensesLastMonth.reduce((max, mov) => mov.cantidad < max.cantidad ? mov : max);
+    const concepto = concepts.find(c => c.id === biggestExpense.conceptoId)?.nombre || 'Sin categoría';
+    return `<p>Tu mayor gasto del mes pasado fue de <strong>${formatCurrency(biggestExpense.cantidad)}</strong> en "<em>${escapeHTML(biggestExpense.descripcion)}</em>", bajo el concepto de <strong>${concepto}</strong>.</p>`;
+}
+
+function analyzeMainOutflow({ movements, concepts }) {
+    const expenseTotals = movements.reduce((acc, m) => {
+        if (m.tipo === 'movimiento' && m.cantidad < 0) {
+            acc[m.conceptoId] = (acc[m.conceptoId] || 0) + m.cantidad;
+        }
+        return acc;
+    }, {});
+    const sortedExpenses = Object.entries(expenseTotals).sort((a, b) => a[1] - b[1]);
+    if (sortedExpenses.length === 0) return `<p>No he encontrado categorías de gastos significativas.</p>`;
+    let html = `<p>Tus <strong>3 mayores focos de gasto</strong> recientes son:</p><ol style="list-style-position: inside; padding-left: 8px;">`;
+    sortedExpenses.slice(0, 3).forEach(([conceptoId, total]) => {
+        const concepto = concepts.find(c => c.id === conceptoId)?.nombre || 'Desconocido';
+        html += `<li style="margin-bottom: 4px;"><strong>${concepto}:</strong> ${formatCurrency(total)}</li>`;
+    });
+    return html + `</ol>`;
+}
+
+async function analyzeSavingsRate() {
+    const { current } = await getFilteredMovements(false);
+    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+    const { ingresos, saldoNeto } = calculateTotals(current, visibleAccountIds);
+    if (ingresos <= 0) return `<p>No he detectado ingresos en el periodo actual del panel para calcular tu tasa de ahorro.</p>`;
+    const tasaAhorro = (saldoNeto / ingresos) * 100;
+    let advice = '';
+    if (tasaAhorro >= 20) advice = `¡Excelente! Estás ahorrando más del 20%, un objetivo muy saludable.`;
+    else if (tasaAhorro >= 10) advice = `Vas por buen camino. Ahorrar entre un 10% y un 20% es un gran logro.`;
+    else if (tasaAhorro > 0) advice = `¡Bien! Estás ahorrando. Revisa tus gastos para potenciarlo.`;
+    else advice = `Has gastado más de lo que ingresaste. Es importante analizar por qué.`;
+    return `<p>Considerando los filtros actuales del panel, tu tasa de ahorro es del <strong>${tasaAhorro.toFixed(1)}%</strong>.</p><p style="margin-top: 8px;">${advice}</p>`;
+}
+
+function analyzeUnusualActivity({ movements }) {
+    if (movements.length < 10) return `<p>Necesito más historial para detectar patrones.</p>`;
+    const allExpenses = movements.filter(m => m.tipo === 'movimiento' && m.cantidad < 0);
+    if (allExpenses.length < 10) return `<p>No hay suficientes gastos para un análisis de anomalías.</p>`;
+    const avgExpense = allExpenses.reduce((sum, m) => sum + m.cantidad, 0) / allExpenses.length;
+    const stdDev = Math.sqrt(allExpenses.map(m => Math.pow(m.cantidad - avgExpense, 2)).reduce((sum, v) => sum + v, 0) / allExpenses.length);
+    const threshold = avgExpense - (2.5 * stdDev);
+    const unusual = allExpenses.find(m => m.cantidad < threshold);
+    if (!unusual) return `<p>No he detectado ninguna transacción que se desvíe de tus patrones de gasto habituales. ¡Todo en orden!</p>`;
+    const concepto = db.conceptos.find(c => c.id === unusual.conceptoId)?.nombre || 'Sin categoría';
+    return `<p>He detectado un gasto de <strong>${formatCurrency(unusual.cantidad)}</strong> en "<em>${escapeHTML(unusual.descripcion)}</em>" que es significativamente más alto que tu promedio. Es bueno revisarlo.</p>`;
+}
+
+// ----------------------------------------------------
+// 2. LA "INTERFAZ": Lógica para Mostrar el Chat
+// ----------------------------------------------------
+
+const addMessageToChat = (text, sender) => {
+    const chatHistory = select('aidanai-chat-history');
+    if (!chatHistory) return;
+    const senderClass = sender === 'user' ? 'from-user' : 'from-aidanai';
+    const avatarContent = sender === 'user' ? (currentUser.email ? currentUser.email[0].toUpperCase() : 'U') : '';
+    let avatarAttributes = '';
+    if (sender === 'aidanai') {
+        avatarAttributes = 'style="background-image: url(aiDANaI.webp); background-size: cover;"';
+    }
+    const thinkingSpinner = chatHistory.querySelector('.thinking');
+    if (thinkingSpinner) thinkingSpinner.remove();
+    const messageHtml = `<div class="chat-message ${senderClass}"><div class="avatar" ${avatarAttributes}>${avatarContent}</div><div class="message-bubble">${text}</div></div>`;
+    chatHistory.insertAdjacentHTML('beforeend', messageHtml);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+};
+
+const showAidanaiThinking = () => {
+    const chatHistory = select('aidanai-chat-history');
+    if (!chatHistory) return;
+    const thinkingHtml = `<div class="chat-message from-aidanai thinking"><div class="avatar" style="background-image: url(aiDANaI.webp); background-size: cover;"></div><div class="message-bubble"><span class="spinner" style="width:20px; height:20px;"></span></div></div>`;
+    chatHistory.insertAdjacentHTML('beforeend', thinkingHtml);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+};
+
+const handleAidanaiQuery = async (queryText) => {
+    if (!queryText || queryText.trim() === '') return;
+    addMessageToChat(escapeHTML(queryText), 'user');
+    showAidanaiThinking();
+    hapticFeedback('light');
+
+    const intent = getIntent(queryText.toLowerCase());
+    const appData = {
+        movements: recentMovementsCache,
+        accounts: db.cuentas,
+        concepts: db.conceptos
+    };
+    const responseHtml = await getAidanaiResponse(intent, appData);
+
+    setTimeout(() => {
+        addMessageToChat(responseHtml, 'aidanai');
+        hapticFeedback('success');
+    }, 500);
+};
+
+const showAidanaiModal = () => {
+    showModal('aidanai-modal');
+    const chatHistory = select('aidanai-chat-history');
+    const suggestionsContainer = select('aidanai-suggestions');
+    const inputForm = select('aidanai-input-form');
+    const userInput = select('aidanai-user-input');
+    if (!chatHistory || !suggestionsContainer || !inputForm || !userInput) return;
+    chatHistory.innerHTML = '';
+    userInput.value = '';
+    addMessageToChat("¡Hola! Soy tu copiloto financiero. ¿Qué necesitas analizar hoy?", 'aidanai');
+    suggestionsContainer.innerHTML = starterQuestions.map(q => 
+        `<button class="suggestion-chip" data-action="ask-aidanai" data-question="${q}">${q}</button>`
+    ).join('');
+    const newForm = inputForm.cloneNode(true);
+    inputForm.parentNode.replaceChild(newForm, inputForm);
+    newForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = newForm.querySelector('#aidanai-user-input');
+        handleAidanaiQuery(input.value);
+        input.value = '';
+    });
+};
+
+// ========================================================================
+// === FIN: MÓDULO CONVERSACIONAL aiDANaI v3.1 (VERSIÓN ÚNICA Y COMPLETA) ===
+// ========================================================================

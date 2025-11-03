@@ -212,9 +212,6 @@
             <label for="movimiento-descripcion">Descripción</label>
             <div class="input-wrapper">
                 <input type="text" id="movimiento-descripcion" required placeholder="Compra semanal, café..." />
-				 <button type="button" data-action="parse-with-aidanai" class="icon-btn" title="Usar Asistente para Rellenar">
-					<span class="material-icons">auto_awesome</span>
-				</button>
             </div>
             <span class="form-error" id="movimiento-descripcion-error"></span>
             <div id="description-suggestions"></div>
@@ -294,7 +291,7 @@
     <div class="modal__actions" style="display:flex; justify-content: space-between; align-items:center; margin-top: var(--sp-4);">
         <div class="left-actions" style="display:flex; gap: var(--sp-1);">
             <!-- ▼▼▼ CAMBIO 1: ELIMINADO EL ESTILO INLINE ROJO ▼▼▼ -->
-            <button type="button" id="delete-movimiento-btn" data-action="delete-movement-from-modal" class="icon-btn icon-btn--danger hidden" title="Borrar"><span class="material-icons">delete</span></button>
+            <button type="button" id="delete-movimiento-btn" data-action="delete-movement-from-modal" class="icon-btn hidden" title="Borrar"><span class="material-icons">delete</span></button>
             <button type="button" id="duplicate-movimiento-btn" data-action="duplicate-movement" class="icon-btn hidden" title="Duplicar"><span class="material-icons">content_copy</span></button>
         </div>
         <div class="right-actions" style="display:flex; gap: var(--sp-2);">
@@ -513,7 +510,22 @@
         <button class="calculator-btn btn-operator" data-key="add">+</button>
     </div>
 </div>
-
+	<!-- ▼▼▼ AÑADE ESTE MENÚ OCULTO AL FINAL DE TU BODY ▼▼▼ -->
+<div id="quick-add-menu">
+    <div class="quick-add-item" data-action="quick-add-type" data-type="gasto">
+        <span class="label">Nuevo Gasto</span>
+        <div class="icon-wrapper gasto"><span class="material-icons">shopping_cart</span></div>
+    </div>
+    <div class="quick-add-item" data-action="quick-add-type" data-type="ingreso">
+        <span class="label">Nuevo Ingreso</span>
+        <div class="icon-wrapper ingreso"><span class="material-icons">attach_money</span></div>
+    </div>
+    <div class="quick-add-item" data-action="quick-add-type" data-type="traspaso">
+        <span class="label">Nuevo Traspaso</span>
+        <div class="icon-wrapper traspaso"><span class="material-icons">swap_horiz</span></div>
+    </div>
+</div> 
+	 
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>

@@ -1114,6 +1114,15 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     .top-bar .top-bar__actions .icon-btn .material-icons {
         font-size: 22px;
     }
+	.informe-linea-movimiento {
+    display: grid; /* <--- ¡AÑADE ESTA LÍNEA! */
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    padding: var(--sp-3);
+    gap: 4px var(--sp-4);
+    align-items: center;
+    border-bottom: 1px solid var(--c-outline);
+	}
 }
 
 /* Para tablets y pantallas medianas */
@@ -2019,10 +2028,60 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     box-shadow: 0 0 12px var(--c-primary);
 }
 
-.icon-btn--danger {
-    color: var(--c-danger);
+/* === INICIO: Estilos para el Menú de Acciones Rápidas === */
+#quick-add-menu {
+    position: fixed;
+    bottom: calc(48px + env(safe-area-inset-bottom) + 16px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1080;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    
+    /* Estado inicial: oculto y listo para animar */
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+    pointer-events: none;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.icon-btn--danger:hover {
-    background-color: color-mix(in srgb, var(--c-danger) 15%, transparent);
-    color: var(--c-danger);
+
+#quick-add-menu.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
 }
+
+.quick-add-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.quick-add-item .label {
+    background-color: var(--c-surface);
+    color: var(--c-on-surface);
+    padding: 6px 12px;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+}
+
+.quick-add-item .icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--c-white);
+    box-shadow: var(--shadow-sm);
+}
+
+.icon-wrapper.gasto { background-color: var(--c-danger); }
+.icon-wrapper.ingreso { background-color: var(--c-success); }
+.icon-wrapper.traspaso { background-color: var(--c-info); }
+/* === FIN: Estilos Menú === */
