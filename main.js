@@ -8649,7 +8649,7 @@ const handleAddConcept = async (btn) => {
      }, 0);
  };
 
- const handleFinalCsvImport = async (btn, dataToImport, goToStep) => {
+  const handleFinalCsvImport = async (btn, dataToImport, goToStep) => {
      goToStep(3);
      setButtonLoading(btn, true, 'Importando...');
 
@@ -8714,7 +8714,7 @@ const handleAddConcept = async (btn) => {
          }
          setButtonLoading(btn, false);
      }
- };
+ }; // <-- LA LLAVE DE CIERRE QUE FALTABA
 
 
 // ==============================================================
