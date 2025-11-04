@@ -4343,7 +4343,7 @@ const renderInicioResumenView = () => {
         return normalizedNextDate <= today;
     })
     .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
-*/
+
 // ▲▲▲ ...CON ESTA ÚNICA LÍNEA: ▲▲▲
 
 const pending = getPendingRecurrents();
