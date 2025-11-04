@@ -7401,9 +7401,6 @@ if (ptrElement && mainScrollerPtr) {
             return;
         }
         const actionTarget = target.closest('[data-action]');
-        if (!actionTarget && !target.closest('.transaction-card')) {
-            resetActiveSwipe();
-        }
         if (!actionTarget) return;
 
         const { action, id, page, type, modalId, reportId } = actionTarget.dataset;
