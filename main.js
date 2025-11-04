@@ -7414,8 +7414,7 @@ if (ptrElement && mainScrollerPtr) {
 			const tabName = actionTarget.dataset.tab;
 			showEstrategiaTab(tabName);
 		},
-        const tabName = actionTarget.dataset.tab;
-
+        
         // Gestionar clases activas para botones y contenidos
         selectAll('.tab-item').forEach(btn => btn.classList.remove('tab-item--active'));
         actionTarget.classList.add('tab-item--active');
