@@ -311,7 +311,7 @@ const clearDiarioFilters = async () => {
 		let newMovementIdToHighlight = null;
 		let unsubscribeRecientesListener = null
         const originalButtonTexts = new Map();
-        let conceptosChart = null, liquidAssetsChart = null, detailInvestmentChart = null, informesChart = null, assetAllocationChart = null, budgetTrendChart = null, netWorthChart = null;
+        let conceptosChart = null, liquidAssetsChart = null, detailInvestmentChart = null, informesChart = null, assetAllocationChart = null, budgetTrendChart = null, netWorthChart = null;  let informeActivoChart = null;
         let lastScrollTop = null;
         let pageScrollPositions = {};
         let jsonWizardState = {
@@ -3659,8 +3659,6 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
 // === INICIO: NUEVO MOTOR DE RENDERIZADO DE INFORMES (v2.0) ===
 // =================================================================
 
-// Esta variable global evitará errores de "Canvas en uso"
-let informeActivoChart = null;
 
 async function renderInformeResumenEjecutivo(container) {
     // 1. Ya no se genera el HTML de los filtros aquí.
@@ -4482,8 +4480,6 @@ const renderPlanificacionPage = () => {
     renderRecurrentsListOnPage();
 };
 
-// Variable global para evitar errores de "Canvas en uso"
-let informeActivoChart = null;
 
 const renderInformesPage = () => {
     const container = select(PAGE_IDS.INFORMES);
@@ -4527,7 +4523,10 @@ const renderInformesPage = () => {
     `;
 
     // Renderizamos el primer informe por defecto, ya que está abierto.
-    renderInformeEvolucionPatrimonio(select('informe-content-evolucion_patrimonio'));
+    // Damos un pequeño respiro al DOM para que exista el contenedor antes de dibujar.
+    setTimeout(() => {
+        renderInformeEvolucionPatrimonio(select('informe-content-evolucion_patrimonio'));
+    }, 0);
 };
   // =================================================================
 // === INICIO: NUEVO MOTOR DE RENDERIZADO DE INFORMES Y PDF      ===
