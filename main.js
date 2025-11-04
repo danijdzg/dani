@@ -652,16 +652,15 @@ async function loadCoreData(uid) {
         const unsubscribe = userRef.collection(collectionName).onSnapshot(snapshot => {
             db[collectionName] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
-            if (collectionName === 'recurrentes') {
+     if (collectionName === 'recurrentes') {
     dataLoaded.recurrentes = true;
     const activePage = document.querySelector('.view--active');
     if (activePage && (activePage.id === PAGE_IDS.DIARIO)) {
-        // En lugar de recargar todo, solo actualizamos la UI de la lista virtual.
-        // Esto es instantáneo y no vuelve a pedir datos a la BBDD.
         updateVirtualListUI(); 
     }
-    if (activePage && (activePage.id === PAGE_IDS.PLANIFICACION)) {
-        renderEstrategiaPlanificacion();
+    // ¡ESTA ES LA LÍNEA A VERIFICAR!
+    if (activePage && (activePage.id === PAGE_IDS.ESTRATEGIA)) {
+        renderEstrategiaPlanificacion(); // Debe llamar a la función de la PESTAÑA, no a la página entera
     }
 }
             
@@ -4519,15 +4518,62 @@ const renderEstrategiaPlanificacion = () => {
     const container = select('estrategia-planificacion-content');
     if (!container) return;
 
-    // El CÓDIGO HTML de tu antigua 'renderPlanificacionPage' va aquí.
-    // Asegúrate de que los IDs (#pending-recurrents-container, etc.)
-    // no se dupliquen en otras partes de la app si no es necesario.
+    // ESTE ES EL CONTENIDO COMPLETO DE TU ANTIGUA VISTA DE PLANIFICACIÓN
     container.innerHTML = `
-        <!-- Contenido completo de tu antigua vista de Planificación -->
-        <div class="card card--no-bg accordion-wrapper"> ... </div>
+        <div class="card card--no-bg accordion-wrapper">
+            <details class="accordion">
+                <summary>
+                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">event_repeat</span>Movimientos Recurrentes</h3>
+                    <span class="material-icons accordion__icon">expand_more</span>
+                </summary>
+                <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
+                    <div id="pending-recurrents-container"></div>
+                    <p class="form-label" style="margin-bottom: var(--sp-3);">Pulsa en una operación para editarla. Estas son las que se ejecutarán en el futuro.</p>
+                    <div id="recurrentes-list-container"></div>
+                </div>
+            </details>
+        </div>
+
+        <div class="card card--no-bg accordion-wrapper">
+            <details class="accordion">
+                <summary>
+                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">request_quote</span>Presupuestos Anuales</h3>
+                    <span class="material-icons accordion__icon">expand_more</span>
+                </summary>
+                <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sp-4);">
+                        <div class="form-group" style="flex-grow: 1; margin: 0;">
+                            <label for="budget-year-selector" class="form-label">Año del Presupuesto</label>
+                            <select id="budget-year-selector" class="form-select"></select>
+                        </div>
+                        <button data-action="update-budgets" class="btn btn--secondary" style="margin-left: var(--sp-3);">
+                            <span class="material-icons" style="font-size: 16px;">edit_calendar</span><span>Gestionar</span>
+                        </button>
+                    </div>
+                    <div id="annual-budget-dashboard">
+                        <div id="budget-kpi-container" class="kpi-grid"></div>
+                        <div class="card" style="margin-top: var(--sp-4);">
+                            <h3 class="card__title"><span class="material-icons">trending_up</span>Tendencia Ingresos y Gastos</h3>
+                            <div class="card__content">
+                                <div class="chart-container" style="height: 220px;"><canvas id="budget-trend-chart"></canvas></div>
+                            </div>
+                        </div>
+                        <div id="budget-details-list" style="margin-top: var(--sp-4);"></div>
+                    </div>
+                    <div id="budget-init-placeholder" class="empty-state hidden">
+                        <span class="material-icons">edit_calendar</span>
+                        <h3 id="budget-placeholder-title">Define tu Plan Financiero</h3>
+                        <p id="budget-placeholder-text">Establece límites de gasto y metas de ingreso para tomar el control de tu año. ¡Empieza ahora!</p>
+                        <button data-action="update-budgets" class="btn btn--primary" style="margin-top: var(--sp-4);">
+                            <span class="material-icons" style="font-size: 16px;">add_circle_outline</span><span>Crear Presupuestos</span>
+                        </button>
+                    </div>
+                </div>
+            </details>
+        </div>
     `;
 
-    // Las llamadas para poblar el contenido también se mueven aquí.
+    // Estas llamadas son necesarias para poblar el HTML anterior con datos
     populateAllDropdowns();
     renderBudgetTracking();
     renderPendingRecurrents();
@@ -4538,13 +4584,41 @@ const renderEstrategiaActivos = () => {
     const container = select('estrategia-activos-content');
     if (!container) return;
 
-    // El CÓDIGO HTML de tu antigua 'renderEstrategiaActivos' va aquí.
+    // ESTE ES EL CONTENIDO COMPLETO DE TU ANTIGUA VISTA DE PATRIMONIO
     container.innerHTML = `
-        <!-- Contenido completo de tu antigua vista de Patrimonio -->
-        <details class="accordion"> ... </details>
+        <details class="accordion" style="margin-bottom: var(--sp-4);">
+            <summary>
+                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                    <span class="material-icons">account_balance</span>
+                    Visión General del Patrimonio
+                </h3>
+                <span class="material-icons accordion__icon">expand_more</span>
+            </summary>
+            <div class="accordion__content" id="patrimonio-overview-container" style="padding: 0 var(--sp-2);">
+                <div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>
+            </div>
+        </details>
+
+        <details class="accordion" style="margin-bottom: var(--sp-4);">
+            <summary>
+                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                    <span class="material-icons">rocket_launch</span>
+                    Portafolio de Inversión
+                </h3>
+                <span class="material-icons accordion__icon">expand_more</span>
+            </summary>
+            <div class="accordion__content" style="padding: 0 var(--sp-2);">
+                <div id="portfolio-evolution-container">
+                     <div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"></div>
+                </div>
+                <div id="portfolio-main-content" style="margin-top: var(--sp-4);">
+                    <div class="skeleton" style="height: 300px; border-radius: var(--border-radius-lg);"></div>
+                </div>
+            </div>
+        </details>
     `;
 
-    // Las llamadas para dibujar los gráficos de esta sección van aquí.
+    // Usamos un pequeño retardo para asegurar que el DOM está listo antes de dibujar gráficos
     setTimeout(async () => {
         await renderPatrimonioOverviewWidget('patrimonio-overview-container'); 
         await renderPortfolioEvolutionChart('portfolio-evolution-container');
@@ -4556,12 +4630,12 @@ const renderEstrategiaInformes = () => {
     const container = select('estrategia-informes-content');
     if (!container) return;
     
-    // Este código ya lo tenías, lo movemos aquí.
+    // Este código mueve el "Extracto de Cuenta" a su nueva pestaña
     container.innerHTML = `
         <div class="card card--no-bg accordion-wrapper">
             <details class="accordion informe-acordeon" open>
                 <summary>
-                    <h3 class="card__title" style="margin:0; padding:0;">
+                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
                         <span class="material-icons">wysiwyg</span>
                         <span>Extracto de Cuenta (Cartilla)</span>
                     </h3>
@@ -4571,8 +4645,8 @@ const renderEstrategiaInformes = () => {
                     <div id="informe-content-extracto_cuenta">
                          <form id="informe-cuenta-form" novalidate>
                             <div class="form-group">
-                                <label for="informe-cuenta-select" class="form-label">...</label>
-                                <select id="informe-cuenta-select" class="form-select"></select>
+                                <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta para ver su historial:</label>
+                                <select id="informe-cuenta-select" class="form-select" required></select>
                             </div>
                             <button type="submit" class="btn btn--primary btn--full">Generar Extracto</button>
                         </form>
@@ -4583,12 +4657,15 @@ const renderEstrategiaInformes = () => {
         </div>
     `;
 
+    // Rellenamos el selector de cuentas
     const populate = (id, data, nameKey, valKey='id') => {
-        // ... (tu código para rellenar el select)
+        const el = select(id); if (!el) return;
+        let opts = '<option value="">Seleccionar cuenta...</option>';
+        [...data].sort((a,b) => (a[nameKey]||"").localeCompare(b[nameKey]||"")).forEach(i => opts += `<option value="${i[valKey]}">${i[nameKey]}</option>`);
+        el.innerHTML = opts;
     };
     populate('informe-cuenta-select', getVisibleAccounts(), 'nombre', 'id');
-} 
-
+}
  
 
 const renderEstrategiaPage = () => {
