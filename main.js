@@ -6934,46 +6934,6 @@ const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
         </div>
     `;
 };
-const renderInformesPage = () => {
-    const container = select(PAGE_IDS.INFORMES);
-    if (!container) return;
-
-    // AHORA SOLO MOSTRAMOS EL ÚNICO INFORME NECESARIO
-    container.innerHTML = `
-        <div class="card card--no-bg accordion-wrapper">
-            <details id="acordeon-extracto_cuenta" class="accordion informe-acordeon" open>
-                <summary>
-                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
-                        <span class="material-icons">wysiwyg</span>
-                        <span>Extracto de Cuenta (Cartilla)</span>
-                    </h3>
-                    <span class="material-icons accordion__icon">expand_more</span>
-                </summary>
-                <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
-                    <div id="informe-content-extracto_cuenta">
-                         <form id="informe-cuenta-form" novalidate>
-                            <div class="form-group">
-                                <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta para ver su historial completo:</label>
-                                <select id="informe-cuenta-select" class="form-select" required></select>
-                            </div>
-                            <button type="submit" class="btn btn--primary btn--full">Generar Extracto</button>
-                        </form>
-                        <div id="informe-resultado-container" style="margin-top: var(--sp-4);"></div>
-                    </div>
-                </div>
-            </details>
-        </div>
-    `;
-
-    // Rellenamos el selector de cuentas
-    const populate = (id, data, nameKey, valKey='id') => {
-        const el = select(id); if (!el) return;
-        let opts = '<option value="">Seleccionar cuenta...</option>';
-        [...data].sort((a,b) => (a[nameKey]||"").localeCompare(b[nameKey]||"")).forEach(i => opts += `<option value="${i[valKey]}">${i[nameKey]}</option>`);
-        el.innerHTML = opts;
-    };
-    populate('informe-cuenta-select', getVisibleAccounts(), 'nombre', 'id');
-};
 
 const handleGenerateInformeCuenta = async (form, btn) => {
     setButtonLoading(btn, true, 'Generando...');
