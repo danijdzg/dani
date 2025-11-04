@@ -7407,40 +7407,7 @@ if (ptrElement && mainScrollerPtr) {
         const btn = actionTarget.closest('button');
         
         const actions = {
-		'switch-estrategia-tab': () => {
-    // Obtenemos el nombre de la pestaña desde el atributo data-tab
-    // 'actionTarget' es una variable global que ya existe en el scope del manejador de eventos
-    const tabName = actionTarget.dataset.tab; 
-    
-    // Llamamos a nuestra función "controladora"
-    showEstrategiaTab(tabName);
-},
-        
-        // Gestionar clases activas para botones y contenidos
-        selectAll('.tab-item').forEach(btn => btn.classList.remove('tab-item--active'));
-        actionTarget.classList.add('tab-item--active');
-
-        selectAll('.tab-content').forEach(content => content.classList.remove('tab-content--active'));
-        select(`estrategia-${tabName}-content`).classList.add('tab-content--active');
-
-        // Destruir gráficos antes de cambiar para evitar errores
-        destroyAllCharts();
-
-        // Renderizar el contenido de la pestaña seleccionada
-        switch (tabName) {
-            case 'planificacion':
-                renderEstrategiaPlanificacion();
-                break;
-            case 'activos':
-                renderEstrategiaActivos();
-                break;
-            case 'informes':
-                renderEstrategiaInformes();
-                break;
-        }
-    },	
-            // ▼▼▼ ¡ESTO CONECTA TODO! ▼▼▼
-            'show-main-menu': () => {
+			'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
                 if (!menu) return;
                 menu.classList.toggle('popover-menu--visible');
@@ -7471,6 +7438,7 @@ if (ptrElement && mainScrollerPtr) {
                 amountInput.value = newValue.toLocaleString('es-ES', { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 updateAmountTypeUI(!isCurrentlyGasto);
             },
+			
             'context-edit': () => { hideModal('generic-modal'); startMovementForm(id, false); },
             'context-duplicate': () => { hideModal('generic-modal'); const movement = db.movimientos.find(m => m.id === id); if(movement) handleDuplicateMovement(movement); },
             'context-delete': () => { hideModal('generic-modal'); showConfirmationModal('¿Seguro que quieres eliminar este movimiento?', async () => { await deleteMovementAndAdjustBalance(id, false); }); },
@@ -7513,7 +7481,11 @@ if (ptrElement && mainScrollerPtr) {
             },
             'toggle-investment-type-filter': () => handleToggleInvestmentTypeFilter(type),
             'toggle-account-type-filter': () => { hapticFeedback('light'); if (deselectedAccountTypesFilter.has(type)) { deselectedAccountTypesFilter.delete(type); } else { deselectedAccountTypesFilter.add(type); } renderPatrimonioOverviewWidget('patrimonio-overview-container'); },
-            'show-help-topic': () => {
+			 'switch-estrategia-tab': () => {
+        const tabName = actionTarget.dataset.tab;
+        showEstrategiaTab(tabName);
+    },
+			'show-help-topic': () => {
                 const topic = actionTarget.dataset.topic;
                 if(topic) {
                     let title, content;
