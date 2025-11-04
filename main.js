@@ -661,7 +661,7 @@ async function loadCoreData(uid) {
         updateVirtualListUI(); 
     }
     if (activePage && (activePage.id === PAGE_IDS.PLANIFICACION)) {
-        renderPlanificacionPage();
+        renderEstrategiaPlanificacion();
     }
 }
             
@@ -1491,11 +1491,10 @@ const navigateTo = async (pageId, isInitial = false) => {
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
     if (pageId === PAGE_IDS.INVERSIONES && !dataLoaded.inversiones) await loadInversiones();
 
-    const pageRenderers = {
+ const pageRenderers = {
     [PAGE_IDS.INICIO]: { title: 'Panel', render: renderInicioPage, actions: standardActions },
     [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
-    [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: standardActions }, // <-- CAMBIOS AQUÍ
-    [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage, actions: standardActions },
+    [PAGE_IDS.ESTRATEGIA]: { title: 'Estrategia', render: renderEstrategiaPage, actions: standardActions },
     [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
 };
 
@@ -2353,7 +2352,7 @@ const handleToggleInvestmentTypeFilter = (type) => {
         deselectedInvestmentTypesFilter.add(type);
     }
 
-    // ANTES: renderPatrimonioPage(); (o la función inexistente que corregimos antes)
+    // ANTES: renderEstrategiaActivos(); (o la función inexistente que corregimos antes)
     // AHORA (Correcto): Llamamos a las dos funciones que dependen de este filtro.
     renderPortfolioMainContent('portfolio-main-content');
     renderPortfolioEvolutionChart('portfolio-evolution-container');
@@ -4481,57 +4480,112 @@ const renderPlanificacionPage = () => {
     renderPendingRecurrents();
     renderRecurrentsListOnPage();
 };
- const renderPatrimonioPage = () => {
-    const container = select(PAGE_IDS.PATRIMONIO); // Usamos la nueva constante
+const renderEstrategiaPlanificacion = () => {
+    const container = select('estrategia-planificacion-content');
     if (!container) return;
 
-    // 1. Dibuja la estructura base con esqueletos y los dos acordeones.
+    // El CÓDIGO HTML de tu antigua 'renderPlanificacionPage' va aquí.
+    // Asegúrate de que los IDs (#pending-recurrents-container, etc.)
+    // no se dupliquen en otras partes de la app si no es necesario.
     container.innerHTML = `
-        <!-- Acordeón para la Visión General del Patrimonio -->
-        <details class="accordion" style="margin-bottom: var(--sp-4);">
-            <summary>
-                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
-                    <span class="material-icons">account_balance</span>
-                    Visión General del Patrimonio
-                </h3>
-                <span class="material-icons accordion__icon">expand_more</span>
-            </summary>
-            <div class="accordion__content" id="patrimonio-overview-container" style="padding: 0 var(--sp-2);">
-                <!-- Esqueleto de carga para el widget de patrimonio -->
-                <div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>
-            </div>
-        </details>
-
-        <!-- Acordeón para el Portafolio de Inversión -->
-        <details class="accordion" style="margin-bottom: var(--sp-4);">
-            <summary>
-                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
-                    <span class="material-icons">rocket_launch</span>
-                    Portafolio de Inversión
-                </h3>
-                <span class="material-icons accordion__icon">expand_more</span>
-            </summary>
-            <div class="accordion__content" style="padding: 0 var(--sp-2);">
-                <div id="portfolio-evolution-container">
-                     <div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"></div>
-                </div>
-                <div id="portfolio-main-content" style="margin-top: var(--sp-4);">
-                    <div class="skeleton" style="height: 300px; border-radius: var(--border-radius-lg);"></div>
-                </div>
-            </div>
-        </details>
+        <!-- Contenido completo de tu antigua vista de Planificación -->
+        <div class="card card--no-bg accordion-wrapper"> ... </div>
     `;
-    
-    // 2. Llama a las funciones de renderizado para rellenar cada sección.
-    //    Usamos un setTimeout para asegurar que el DOM está listo.
+
+    // Las llamadas para poblar el contenido también se mueven aquí.
+    populateAllDropdowns();
+    renderBudgetTracking();
+    renderPendingRecurrents();
+    renderRecurrentsListOnPage();
+};
+
+const renderEstrategiaActivos = () => {
+    const container = select('estrategia-activos-content');
+    if (!container) return;
+
+    // El CÓDIGO HTML de tu antigua 'renderEstrategiaActivos' va aquí.
+    container.innerHTML = `
+        <!-- Contenido completo de tu antigua vista de Patrimonio -->
+        <details class="accordion"> ... </details>
+    `;
+
+    // Las llamadas para dibujar los gráficos de esta sección van aquí.
     setTimeout(async () => {
-        // Renombramos la antigua 'renderPatrimonioPage' para ser más específica.
         await renderPatrimonioOverviewWidget('patrimonio-overview-container'); 
-        
-        // Reutilizamos la lógica de inversiones que ya tenías.
         await renderPortfolioEvolutionChart('portfolio-evolution-container');
         await renderPortfolioMainContent('portfolio-main-content');
     }, 50);
+};
+
+const renderEstrategiaInformes = () => {
+    const container = select('estrategia-informes-content');
+    if (!container) return;
+    
+    // Este código ya lo tenías, lo movemos aquí.
+    container.innerHTML = `
+        <div class="card card--no-bg accordion-wrapper">
+            <details class="accordion informe-acordeon" open>
+                <summary>
+                    <h3 class="card__title" style="margin:0; padding:0;">
+                        <span class="material-icons">wysiwyg</span>
+                        <span>Extracto de Cuenta (Cartilla)</span>
+                    </h3>
+                    <span class="material-icons accordion__icon">expand_more</span>
+                </summary>
+                <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
+                    <div id="informe-content-extracto_cuenta">
+                         <form id="informe-cuenta-form" novalidate>
+                            <div class="form-group">
+                                <label for="informe-cuenta-select" class="form-label">...</label>
+                                <select id="informe-cuenta-select" class="form-select"></select>
+                            </div>
+                            <button type="submit" class="btn btn--primary btn--full">Generar Extracto</button>
+                        </form>
+                        <div id="informe-resultado-container" style="margin-top: var(--sp-4);"></div>
+                    </div>
+                </div>
+            </details>
+        </div>
+    `;
+
+    const populate = (id, data, nameKey, valKey='id') => {
+        // ... (tu código para rellenar el select)
+    };
+    populate('informe-cuenta-select', getVisibleAccounts(), 'nombre', 'id');
+} 
+ const renderEstrategiaPage = () => {
+    const container = select(PAGE_IDS.ESTRATEGIA);
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="tabs">
+            <button class="tab-item tab-item--active" data-action="switch-estrategia-tab" data-tab="planificacion">
+                <span class="material-icons">edit_calendar</span>
+                <span>Planificación</span>
+            </button>
+            <button class="tab-item" data-action="switch-estrategia-tab" data-tab="activos">
+                <span class="material-icons">account_balance</span>
+                <span>Activos</span>
+            </button>
+            <button class="tab-item" data-action="switch-estrategia-tab" data-tab="informes">
+                <span class="material-icons">assessment</span>
+                <span>Informes</span>
+            </button>
+        </div>
+        
+        <div class="tab-content tab-content--active" id="estrategia-planificacion-content">
+            <!-- El contenido de planificación se cargará aquí -->
+        </div>
+        <div class="tab-content" id="estrategia-activos-content">
+            <!-- El contenido de activos se cargará aquí -->
+        </div>
+        <div class="tab-content" id="estrategia-informes-content">
+            <!-- El contenido de informes se cargará aquí -->
+        </div>
+    `;
+
+    // Por defecto, renderizamos la primera pestaña al cargar la página.
+    renderEstrategiaPlanificacion();
 };
   // =================================================================
 // === INICIO: NUEVO MOTOR DE RENDERIZADO DE INFORMES Y PDF      ===
@@ -5098,7 +5152,7 @@ const updateDashboardData = async () => {
     conceptListContainer.innerHTML = listHtml;
 }
 		
-		if (select('patrimonio-completo-container')) { await renderPatrimonioPage(); }
+		if (select('patrimonio-completo-container')) { await renderEstrategiaActivos(); }
         if (select('patrimonio-inversiones-container')) { await renderInversionesPage('patrimonio-inversiones-container'); }
         if (select('informe-personalizado-widget')) { await renderInformeWidgetContent(); }
 		
@@ -7160,6 +7214,32 @@ function cancelLongPress() {
 }
 
 document.body.addEventListener('click', (e) => {
+	'switch-estrategia-tab': (e) => {
+    const tabName = actionTarget.dataset.tab;
+    
+    // Gestionar clases activas para botones y contenidos
+    selectAll('.tab-item').forEach(btn => btn.classList.remove('tab-item--active'));
+    actionTarget.classList.add('tab-item--active');
+
+    selectAll('.tab-content').forEach(content => content.classList.remove('tab-content--active'));
+    select(`estrategia-${tabName}-content`).classList.add('tab-content--active');
+
+    // Destruir gráficos antes de cambiar para evitar errores
+    destroyAllCharts();
+
+    // Renderizar el contenido de la pestaña seleccionada
+    switch(tabName) {
+        case 'planificacion':
+            renderEstrategiaPlanificacion();
+            break;
+        case 'activos':
+            renderEstrategiaActivos();
+            break;
+        case 'informes':
+            renderEstrategiaInformes();
+            break;
+    }
+}
     const quickAddAction = e.target.closest('[data-action="quick-add-type"]');
     if(quickAddAction) {
         const type = quickAddAction.dataset.type;
@@ -7465,7 +7545,7 @@ if (ptrElement && mainScrollerPtr) {
 
                 case PAGE_IDS.PLANIFICAR:
                     // La vista de Planificar también necesita recalcular sus proyecciones.
-                    await renderPlanificacionPage();
+                    await renderEstrategiaPlanificacion();
                     break;
                 
                 // La página de Ajustes no depende de la contabilidad, así que no hacemos nada.
@@ -7773,7 +7853,7 @@ const handleConfirmRecurrent = async (id, btn) => {
             // Si el elemento no está visible, refrescamos la UI directamente
             const activePage = document.querySelector('.view--active');
             if (activePage && activePage.id === PAGE_IDS.DIARIO) updateVirtualListUI();
-            if (activePage && activePage.id === PAGE_IDS.PLANIFICACION) renderPlanificacionPage();
+            if (activePage && activePage.id === PAGE_IDS.PLANIFICACION) renderEstrategiaPlanificacion();
         }
         
         // --- 3. Sincronización en Segundo Plano con Firebase (el resto del código no cambia) ---
@@ -7827,7 +7907,7 @@ const handleSkipRecurrent = async (id, btn) => {
             itemEl.addEventListener('animationend', () => {
                 const activePage = document.querySelector('.view--active');
                 if (activePage && activePage.id === PAGE_IDS.DIARIO) updateVirtualListUI();
-                if (activePage && activePage.id === PAGE_IDS.PLANIFICACION) renderPlanificacionPage();
+                if (activePage && activePage.id === PAGE_IDS.PLANIFICACION) renderEstrategiaPlanificacion();
             }, { once: true });
         }
 
@@ -8080,7 +8160,7 @@ const handleSaveMovement = async (form, btn) => {
         // Refrescamos la vista de planificación para ver los cambios
         const activePage = document.querySelector('.view--active');
         if (activePage && activePage.id === PAGE_IDS.PLANIFICACION) {
-            renderPlanificacionPage();
+            renderEstrategiaPlanificacion();
         } else if (activePage && activePage.id === PAGE_IDS.DIARIO) {
             renderDiarioPage(); // También refresca el diario por si hay pendientes
         }
@@ -8834,7 +8914,7 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
         // 3. ACTUALIZACIÓN DE LA UI (Después de la animación)
         setTimeout(() => {
     updateLocalDataAndRefreshUI();
-    if (isRecurrent) renderPlanificacionPage();
+    if (isRecurrent) renderEstrategiaPlanificacion();
 }, itemElement ? 400 : 0); // 400ms es la duración de la animación
 
         // 4. PERSISTENCIA EN SEGUNDO PLANO

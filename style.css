@@ -1952,3 +1952,49 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 .icon-wrapper.ingreso { background-color: var(--c-success); }
 .icon-wrapper.traspaso { background-color: var(--c-info); }
 /* === FIN: Estilos Menú === */
+
+/* === INICIO: Estilos para Navegación por Pestañas (Tabs) === */
+.tabs {
+    display: flex;
+    gap: var(--sp-2);
+    border-bottom: 2px solid var(--c-outline);
+    margin-bottom: var(--sp-4);
+    padding: 0 var(--sp-2); /* Alineado con los márgenes del view */
+}
+
+.tab-item {
+    flex: 1;
+    padding: var(--sp-2) var(--sp-1);
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--c-on-surface-secondary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.tab-item:hover {
+    color: var(--c-on-surface);
+    background-color: var(--c-surface-variant);
+}
+
+.tab-item--active {
+    color: var(--c-primary);
+    border-bottom-color: var(--c-primary);
+}
+
+.tab-content {
+    display: none;
+    flex-direction: column;
+    gap: var(--sp-4);
+}
+
+.tab-content--active {
+    display: flex;
+}
+/* === FIN: Estilos para Navegación por Pestañas === */

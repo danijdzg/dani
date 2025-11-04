@@ -120,17 +120,17 @@
         <span class="material-icons">add</span>
     </button>
     
-    <!-- 4. Planificar (Futuro Estratégico) -->
-    <button data-action="navigate" data-page="planificar-page" class="bottom-nav__item">
-        <span class="material-icons">edit_calendar</span>
-        <span class="bottom-nav__label">Planificar</span>
+    <!-- 4. Estrategia (Futuro unificado) -->
+    <button data-action="navigate" data-page="estrategia-page" class="bottom-nav__item">
+        <span class="material-icons">insights</span>
+        <span class="bottom-nav__label">Estrategia</span>
     </button>
     
-    <!-- 5. Inversiones (Futuro a Largo Plazo) -->
-    <button data-action="navigate" data-page="patrimonio-page" class="bottom-nav__item">
-    <span class="material-icons">account_balance</span>
-    <span class="bottom-nav__label">Patrimonio</span>
-</button>
+    <!-- 5. Ajustes (Acceso Rápido) -->
+    <button data-action="navigate" data-page="ajustes-page" class="bottom-nav__item">
+        <span class="material-icons">settings</span>
+        <span class="bottom-nav__label">Ajustes</span>
+    </button>
 </nav>
 
         <header id="app-top-bar" class="top-bar">
@@ -146,28 +146,23 @@
         </header>
 		<!-- INICIO: Menú desplegable de la barra superior -->
 <div id="main-menu-popover" class="popover-menu">
-    <button data-action="navigate" data-page="ajustes-page" class="popover-menu__item">
-        <span class="material-icons">settings</span>
-        <span>Ajustes y Configuración</span>
-    </button>
+    <!-- El botón de Ajustes ha sido ELIMINADO de aquí -->
     <button data-action="help" class="popover-menu__item">
         <span class="material-icons">help_outline</span>
         <span>Guía de Usuario</span>
     </button>
     <div class="popover-menu__divider"></div>
     <button data-action="exit" class="popover-menu__item popover-menu__item--danger">
-        <span class="material-icons">exit_to_app</span>
-        <span>Salir</span>
+        <!-- ... -->
     </button>
 </div>
 
 <main class="app-layout__main">
     <section id="inicio-page" class="view"></section>
     <section id="diario-page" class="view" style="padding: 0; gap: 0;"></section>
-    <section id="planificar-page" class="view"></section> 
-    <section id="patrimonio-page" class="view"></section>
+    <section id="estrategia-page" class="view"></section> <!-- AÑADIDA -->
     <section id="ajustes-page" class="view"></section>
-</main> 
+</main>
     
 </div>
     
