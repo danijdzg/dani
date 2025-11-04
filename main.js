@@ -66,8 +66,8 @@ const handleExportFilteredCsv = (btn) => {
 const PAGE_IDS = {
     INICIO: 'inicio-page',
     DIARIO: 'diario-page',
-    PATRIMONIO: 'patrimonio-page', // <-- CAMBIO CLAVE
     PLANIFICAR: 'planificar-page', 
+    INFORMES: 'informes-page', // <-- ¡NUEVO!
     AJUSTES: 'ajustes-page',
 };
 
@@ -1494,8 +1494,8 @@ const navigateTo = async (pageId, isInitial = false) => {
     const pageRenderers = {
     [PAGE_IDS.INICIO]: { title: 'Panel', render: renderInicioPage, actions: standardActions },
     [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
-    [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: standardActions }, // <-- CAMBIOS AQUÍ
     [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage, actions: standardActions },
+    [PAGE_IDS.INFORMES]: { title: 'Informes', render: renderInformesPage, actions: standardActions }, // <-- ¡NUEVO!
     [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
 };
 
@@ -4481,57 +4481,53 @@ const renderPlanificacionPage = () => {
     renderPendingRecurrents();
     renderRecurrentsListOnPage();
 };
- const renderPatrimonioPage = () => {
-    const container = select(PAGE_IDS.PATRIMONIO); // Usamos la nueva constante
+
+// Variable global para evitar errores de "Canvas en uso"
+let informeActivoChart = null;
+
+const renderInformesPage = () => {
+    const container = select(PAGE_IDS.INFORMES);
     if (!container) return;
-
-    // 1. Dibuja la estructura base con esqueletos y los dos acordeones.
-    container.innerHTML = `
-        <!-- Acordeón para la Visión General del Patrimonio -->
-        <details class="accordion" style="margin-bottom: var(--sp-4);">
-            <summary>
-                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
-                    <span class="material-icons">account_balance</span>
-                    Visión General del Patrimonio
-                </h3>
-                <span class="material-icons accordion__icon">expand_more</span>
-            </summary>
-            <div class="accordion__content" id="patrimonio-overview-container" style="padding: 0 var(--sp-2);">
-                <!-- Esqueleto de carga para el widget de patrimonio -->
-                <div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>
-            </div>
-        </details>
-
-        <!-- Acordeón para el Portafolio de Inversión -->
-        <details class="accordion" style="margin-bottom: var(--sp-4);">
-            <summary>
-                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
-                    <span class="material-icons">rocket_launch</span>
-                    Portafolio de Inversión
-                </h3>
-                <span class="material-icons accordion__icon">expand_more</span>
-            </summary>
-            <div class="accordion__content" style="padding: 0 var(--sp-2);">
-                <div id="portfolio-evolution-container">
-                     <div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"></div>
-                </div>
-                <div id="portfolio-main-content" style="margin-top: var(--sp-4);">
-                    <div class="skeleton" style="height: 300px; border-radius: var(--border-radius-lg);"></div>
-                </div>
-            </div>
-        </details>
-    `;
     
-    // 2. Llama a las funciones de renderizado para rellenar cada sección.
-    //    Usamos un setTimeout para asegurar que el DOM está listo.
-    setTimeout(async () => {
-        // Renombramos la antigua 'renderPatrimonioPage' para ser más específica.
-        await renderPatrimonioOverviewWidget('patrimonio-overview-container'); 
-        
-        // Reutilizamos la lógica de inversiones que ya tenías.
-        await renderPortfolioEvolutionChart('portfolio-evolution-container');
-        await renderPortfolioMainContent('portfolio-main-content');
-    }, 50);
+    container.innerHTML = `
+        <div class="card card--no-bg accordion-wrapper" style="padding: 0 var(--sp-4);">
+            <!-- Informe 1: Evolución del Patrimonio -->
+            <details id="acordeon-evolucion_patrimonio" class="accordion informe-acordeon" open>
+                <summary>
+                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                        <span class="material-icons">show_chart</span>
+                        <span>Evolución Detallada del Patrimonio</span>
+                    </h3>
+                    <span class="material-icons accordion__icon">expand_more</span>
+                </summary>
+                <div class="accordion__content" style="padding-top: var(--sp-4);">
+                    <div id="informe-content-evolucion_patrimonio">
+                        <!-- El gráfico se renderizará aquí -->
+                    </div>
+                </div>
+            </details>
+            
+            <!-- Informe 2: Flujo de Caja -->
+            <details id="acordeon-flujo_caja" class="accordion informe-acordeon">
+                <summary>
+                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                        <span class="material-icons">waterfall_chart</span>
+                        <span>Análisis de Flujo de Caja</span>
+                    </h3>
+                    <span class="material-icons accordion__icon">expand_more</span>
+                </summary>
+                <div class="accordion__content" style="padding-top: var(--sp-4);">
+                    ${generateReportFilterControls('flujo_caja', 'año-actual')}
+                    <div id="informe-content-flujo_caja">
+                        <!-- El gráfico se renderizará aquí -->
+                    </div>
+                </div>
+            </details>
+        </div>
+    `;
+
+    // Renderizamos el primer informe por defecto, ya que está abierto.
+    renderInformeEvolucionPatrimonio(select('informe-content-evolucion_patrimonio'));
 };
   // =================================================================
 // === INICIO: NUEVO MOTOR DE RENDERIZADO DE INFORMES Y PDF      ===
@@ -4690,7 +4686,127 @@ const resampleDataWeekly = (dailyData) => {
     
     return weeklyData;
 };
+/**
+ * Renderiza el informe #1: Evolución Detallada del Patrimonio Neto.
+ */
+async function renderInformeEvolucionPatrimonio(container) {
+    container.innerHTML = `<div class="chart-container skeleton" style="height: 250px;"></div>`;
+    
+    const allMovements = await fetchAllMovementsForHistory();
+    const cuentas = getVisibleAccounts();
+    const saldos = await getSaldos();
+    
+    if (cuentas.length === 0) {
+        container.innerHTML = `<div class="empty-state"><p>No tienes cuentas en esta contabilidad para generar el informe.</p></div>`;
+        return;
+    }
+    
+    // 1. Calcula los totales actuales por componente (Líquido, Inversión, etc.)
+    const currentComponentTotals = { 'Líquido': 0, 'Inversión': 0, 'Propiedades': 0, 'Deuda': 0 };
+    cuentas.forEach(c => {
+        const component = getNetWorthComponent(c.tipo);
+        const balance = saldos[c.id] || 0;
+        if (component === 'Deuda') {
+            currentComponentTotals.Deuda += Math.abs(balance); // Guardamos la deuda como positiva para el gráfico
+        } else {
+            currentComponentTotals[component] += balance;
+        }
+    });
 
+    // 2. "Rebobina" el tiempo. Empezamos desde hoy y vamos restando el efecto de cada movimiento.
+    let runningComponentTotals = { ...currentComponentTotals };
+    const dailyData = {};
+    const todayKey = new Date().toISOString().slice(0, 10);
+    dailyData[todayKey] = { ...runningComponentTotals };
+
+    const sortedMovements = allMovements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    
+    for (const mov of sortedMovements) {
+        let componentChange = null;
+        let changeAmount = 0;
+
+        if (mov.tipo === 'movimiento') {
+            const cuenta = cuentas.find(c => c.id === mov.cuentaId);
+            if (cuenta) {
+                componentChange = getNetWorthComponent(cuenta.tipo);
+                changeAmount = mov.cantidad;
+            }
+        } else if (mov.tipo === 'traspaso') {
+            const origen = cuentas.find(c => c.id === mov.cuentaOrigenId);
+            const destino = cuentas.find(c => c.id === mov.cuentaDestinoId);
+            const origenComp = origen ? getNetWorthComponent(origen.tipo) : null;
+            const destinoComp = destino ? getNetWorthComponent(destino.tipo) : null;
+
+            // Lógica para traspasos entre diferentes componentes del patrimonio
+            if (origen && !destino) { // Dinero sale de la contabilidad visible
+                componentChange = origenComp;
+                changeAmount = -mov.cantidad;
+            } else if (!origen && destino) { // Dinero entra
+                componentChange = destinoComp;
+                changeAmount = mov.cantidad;
+            } else if (origen && destino && origenComp !== destinoComp) {
+                // Traspaso entre componentes (ej. de Líquido a Inversión)
+                runningComponentTotals[origenComp] += (origenComp === 'Deuda' ? -mov.cantidad : mov.cantidad);
+                runningComponentTotals[destinoComp] += (destinoComp === 'Deuda' ? mov.cantidad : -mov.cantidad);
+            }
+        }
+        
+        // Revertimos el cambio
+        if (componentChange) {
+            runningComponentTotals[componentChange] -= (componentChange === 'Deuda' ? -changeAmount : changeAmount);
+        }
+        
+        // Guardamos la "foto" del patrimonio para esa fecha
+        const dateKey = mov.fecha.slice(0, 10);
+        dailyData[dateKey] = { ...runningComponentTotals };
+    }
+    
+    // 3. Optimización: Suavizamos los datos a puntos semanales
+    const weeklyData = resampleDataWeekly(dailyData);
+    const sortedDates = Object.keys(weeklyData).sort();
+
+    // 4. Renderizamos el gráfico
+    container.innerHTML = `<div class="chart-container" style="height: 250px;"><canvas id="evolucion-patrimonio-chart"></canvas></div>`;
+
+    const datasets = Object.keys(NET_WORTH_COMPONENT_COLORS).map(component => ({
+        label: component,
+        data: sortedDates.map(date => (weeklyData[date][component] || 0) / 100),
+        fill: true,
+        backgroundColor: NET_WORTH_COMPONENT_COLORS[component],
+        borderColor: NET_WORTH_COMPONENT_COLORS[component].replace('0.7', '1'),
+        pointRadius: 0,
+        borderWidth: 1.5,
+    }));
+    
+    const ctx = document.getElementById('evolucion-patrimonio-chart').getContext('2d');
+    informeActivoChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: sortedDates, datasets: datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: { stacked: true, ticks: { callback: v => formatCurrency(v * 100).replace(/\s/g,'') } },
+                x: {
+                    type: 'time', time: { unit: 'month' },
+                    grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 6 }
+                }
+            },
+            plugins: {
+                datalabels: { display: false },
+                tooltip: {
+                    mode: 'index', intersect: false,
+                    callbacks: {
+                        footer: (tooltipItems) => {
+                            let sum = tooltipItems.reduce((acc, item) => acc + item.parsed.y, 0);
+                            return 'Total: ' + formatCurrency(sum * 100);
+                        },
+                    },
+                },
+            },
+            interaction: { mode: 'index', intersect: false },
+        }
+    });
+}
 const updateNetWorthChart = async (saldos) => {
     const canvasId = 'net-worth-chart';
     const netWorthCanvas = select(canvasId);
@@ -7508,13 +7624,38 @@ if (ptrElement && mainScrollerPtr) {
     });
 
     document.body.addEventListener('toggle', (e) => {
-        const detailsElement = e.target;
-        if (detailsElement.tagName !== 'DETAILS' || !detailsElement.classList.contains('informe-acordeon')) { return; }
-        if (detailsElement.open) {
-            const informeId = detailsElement.id.replace('acordeon-', '');
-            renderInformeDetallado(informeId);
+    const detailsElement = e.target;
+    // Nos aseguramos de que es un acordeón de informe
+    if (detailsElement.tagName !== 'DETAILS' || !detailsElement.classList.contains('informe-acordeon')) {
+        return;
+    }
+    // Si el acordeón se acaba de abrir, renderizamos su contenido
+    if (detailsElement.open) {
+        const id = detailsElement.id;
+        const informeId = id.replace('acordeon-', '');
+        
+        const container = select(`informe-content-${informeId}`);
+        if (container) {
+            
+            // Destruimos cualquier gráfico anterior para liberar el canvas
+            if (informeActivoChart) {
+                informeActivoChart.destroy();
+                informeActivoChart = null;
+            }
+            
+            // Llamamos a la función de renderizado correcta
+            switch (informeId) {
+                case 'evolucion_patrimonio':
+                    renderInformeEvolucionPatrimonio(container);
+                    break;
+                case 'flujo_caja':
+                    renderInformeFlujoCaja(container);
+                    break;
+                // Aquí podrías añadir más informes en el futuro
+            }
         }
-    }, true);
+    }
+}, true); // Usamos captura de eventos para que se ejecute antes
     
     document.body.addEventListener('submit', (e) => {
         e.preventDefault();
