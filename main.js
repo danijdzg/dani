@@ -7411,9 +7411,13 @@ if (ptrElement && mainScrollerPtr) {
         
         const actions = {
 		'switch-estrategia-tab': () => {
-			const tabName = actionTarget.dataset.tab;
-			showEstrategiaTab(tabName);
-		},
+    // Obtenemos el nombre de la pestaña desde el atributo data-tab
+    // 'actionTarget' es una variable global que ya existe en el scope del manejador de eventos
+    const tabName = actionTarget.dataset.tab; 
+    
+    // Llamamos a nuestra función "controladora"
+    showEstrategiaTab(tabName);
+},
         
         // Gestionar clases activas para botones y contenidos
         selectAll('.tab-item').forEach(btn => btn.classList.remove('tab-item--active'));
