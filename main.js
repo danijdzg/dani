@@ -2710,8 +2710,6 @@ const updateVirtualListUI = () => {
             return nextDate && new Date(Date.UTC(nextDate.getUTCFullYear(), nextDate.getUTCMonth(), nextDate.getUTCDate())) <= today;
         })
         .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
-*/
-// ▲▲▲ ...CON ESTA ÚNICA LÍNEA: ▲▲▲
 
 const pendingRecurrents = getPendingRecurrents();
 
