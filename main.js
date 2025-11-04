@@ -4322,30 +4322,13 @@ const renderInicioResumenView = () => {
             html += `<div style="text-align: center; margin-top: var(--sp-4);"><button class="btn btn--secondary" data-action="navigate" data-page="${PAGE_IDS.DIARIO}">Ver todos los movimientos</button></div>`;
             recientesContainer.innerHTML = html;
         };
-		 const renderPendingRecurrents = () => {
+	const renderPendingRecurrents = () => {
     const container = select('pending-recurrents-container');
     if (!container || !db.recurrentes) return;
 
-    const now = new Date();
-    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    
-    const pending = db.recurrentes
-    .filter(r => {
-        // --- ¡ESTA ES LA CORRECCIÓN CLAVE! ---
-        // Primero, nos aseguramos de que la fecha existe antes de intentar usarla.
-        if (!r.nextDate) return false;
-
-        const nextDate = parseDateStringAsUTC(r.nextDate);
-        // Segundo, comprobamos que la fecha se ha podido interpretar correctamente.
-        if (!nextDate) return false;
-
-        const normalizedNextDate = new Date(Date.UTC(nextDate.getUTCFullYear(), nextDate.getUTCMonth(), nextDate.getUTCDate()));
-        return normalizedNextDate <= today;
-    })
-    .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
-
+/*
 // ▲▲▲ ...CON ESTA ÚNICA LÍNEA: ▲▲▲
-
+*/
 const pending = getPendingRecurrents();
 
     if (pending.length === 0) {
