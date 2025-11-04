@@ -4246,7 +4246,30 @@ const renderInicioResumenView = () => {
     // ¡IMPORTANTE! Después de dibujar los esqueletos, le decimos a nuestro "asistente" que empiece a observar.
     initWidgetObserver();
 };
-		
+	const getPendingRecurrents = () => {
+    const now = new Date();
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    
+    return (db.recurrentes || [])
+        .filter(r => {
+            const nextDate = parseDateStringAsUTC(r.nextDate);
+            // Si la fecha no es válida o es futura, la descartamos
+            if (!nextDate || nextDate > today) {
+                return false;
+            }
+            // Si tiene fecha de fin y ya ha pasado, la descartamos
+            if (r.endDate) {
+                const endDate = parseDateStringAsUTC(r.endDate);
+                if (endDate && today > endDate) {
+                    return false;
+                }
+            }
+            return true;
+        })
+        .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
+};
+
+	
         const _renderRecientesFromCache = async () => {
             const recientesContainer = select('inicio-view-recientes');
             if (!recientesContainer) return;
@@ -8829,9 +8852,9 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
 
         // 3. ACTUALIZACIÓN DE LA UI (Después de la animación)
         setTimeout(() => {
-            updateLocalDataAndRefreshUI(); // Redibuja la lista virtual ya sin el elemento.
-            if (isRecurrent) renderPlanificacionPage();
-        }, itemElement ? ANIMATION_DURATION : 0);
+    updateLocalDataAndRefreshUI();
+    if (isRecurrent) renderPlanificacionPage();
+}, itemElement ? 400 : 0); // 400ms es la duración de la animación
 
         // 4. PERSISTENCIA EN SEGUNDO PLANO
         if (!isRecurrent) {
