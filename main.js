@@ -66,8 +66,7 @@ const handleExportFilteredCsv = (btn) => {
 const PAGE_IDS = {
     INICIO: 'inicio-page',
     DIARIO: 'diario-page',
-    PATRIMONIO: 'patrimonio-page', // <-- CAMBIO CLAVE
-    PLANIFICAR: 'planificar-page', 
+    ESTRATEGIA: 'estrategia-page', // <-- CORREGIDO Y AÑADIDO
     AJUSTES: 'ajustes-page',
 };
 
@@ -652,17 +651,17 @@ async function loadCoreData(uid) {
         const unsubscribe = userRef.collection(collectionName).onSnapshot(snapshot => {
             db[collectionName] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
-     if (collectionName === 'recurrentes') {
-    dataLoaded.recurrentes = true;
-    const activePage = document.querySelector('.view--active');
-    if (activePage && (activePage.id === PAGE_IDS.DIARIO)) {
-        updateVirtualListUI(); 
+   if (collectionName === 'recurrentes') {
+        dataLoaded.recurrentes = true;
+        const activePage = document.querySelector('.view--active');
+        if (activePage && (activePage.id === PAGE_IDS.DIARIO)) {
+            updateVirtualListUI(); 
+        }
+        // AHORA UTILIZA LA CONSTANTE CORRECTA
+        if (activePage && (activePage.id === PAGE_IDS.ESTRATEGIA)) {
+            renderEstrategiaPlanificacion(); 
+        }
     }
-    // ¡ESTA ES LA LÍNEA A VERIFICAR!
-    if (activePage && (activePage.id === PAGE_IDS.ESTRATEGIA)) {
-        renderEstrategiaPlanificacion(); // Debe llamar a la función de la PESTAÑA, no a la página entera
-    }
-}
             
             populateAllDropdowns();
             
@@ -1472,19 +1471,19 @@ const navigateTo = async (pageId, isInitial = false) => {
     const fab = select('fab-add-movimiento'); // Asumiendo que pudieras tener un FAB
     
     const standardActions = `
-    <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
-        <span class="material-icons">search</span>
-    </button>
-
-    <!-- ▼▼▼ BORRA EL BOTÓN DEL ASISTENTE QUE ESTABA AQUÍ ▼▼▼ -->
-    
-    <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
-        <span class="material-icons">dark_mode</span>
-    </button>
-    <button data-action="show-main-menu" class="icon-btn" title="Más opciones" aria-label="Mostrar más opciones">
-        <span class="material-icons">more_vert</span>
-    </button>
-`;
+        <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
+            <span class="material-icons">search</span>
+        </button>
+        <button data-action="help" class="icon-btn" title="Guía de Usuario" aria-label="Abrir Guía de Usuario">
+            <span class="material-icons">help_outline</span>
+        </button>
+        <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
+            <span class="material-icons">dark_mode</span>
+        </button>
+        <button data-action="exit" class="icon-btn" title="Salir de la aplicación" aria-label="Salir de la aplicación">
+            <span class="material-icons">exit_to_app</span>
+        </button>
+    `;
     
     // Lazy loading de datos si es necesario
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
