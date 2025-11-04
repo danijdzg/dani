@@ -4553,13 +4553,51 @@ const renderEstrategiaInformes = () => {
     };
     populate('informe-cuenta-select', getVisibleAccounts(), 'nombre', 'id');
 } 
- const renderEstrategiaPage = () => {
+
+ const showEstrategiaTab = (tabName) => {
+    // 1. Gestionar el estado activo de los botones de las pestañas
+    const tabButton = document.querySelector(`.tab-item[data-tab="${tabName}"]`);
+    if (tabButton) {
+        selectAll('.tab-item').forEach(btn => btn.classList.remove('tab-item--active'));
+        tabButton.classList.add('tab-item--active');
+    }
+
+    // 2. Gestionar la visibilidad de los contenedores de contenido
+    const contentContainer = select(`estrategia-${tabName}-content`);
+    if (contentContainer) {
+        selectAll('.tab-content').forEach(content => content.classList.remove('tab-content--active'));
+        contentContainer.classList.add('tab-content--active');
+    } else {
+        // Si el contenedor no existe, no hacemos nada más.
+        console.error(`Contenedor de pestaña no encontrado: estrategia-${tabName}-content`);
+        return;
+    }
+    
+    // 3. Destruir gráficos anteriores para evitar conflictos
+    destroyAllCharts();
+
+    // 4. Llamar a la función de renderizado específica para esa pestaña
+    switch (tabName) {
+        case 'planificacion':
+            renderEstrategiaPlanificacion();
+            break;
+        case 'activos':
+            renderEstrategiaActivos();
+            break;
+        case 'informes':
+            renderEstrategiaInformes();
+            break;
+    }
+};
+
+const renderEstrategiaPage = () => {
     const container = select(PAGE_IDS.ESTRATEGIA);
     if (!container) return;
 
+    // Se mantiene igual: dibuja el esqueleto una sola vez.
     container.innerHTML = `
         <div class="tabs">
-            <button class="tab-item tab-item--active" data-action="switch-estrategia-tab" data-tab="planificacion">
+            <button class="tab-item" data-action="switch-estrategia-tab" data-tab="planificacion">
                 <span class="material-icons">edit_calendar</span>
                 <span>Planificación</span>
             </button>
@@ -4573,19 +4611,14 @@ const renderEstrategiaInformes = () => {
             </button>
         </div>
         
-        <div class="tab-content tab-content--active" id="estrategia-planificacion-content">
-            <!-- El contenido de planificación se cargará aquí -->
-        </div>
-        <div class="tab-content" id="estrategia-activos-content">
-            <!-- El contenido de activos se cargará aquí -->
-        </div>
-        <div class="tab-content" id="estrategia-informes-content">
-            <!-- El contenido de informes se cargará aquí -->
-        </div>
+        <div class="tab-content" id="estrategia-planificacion-content"></div>
+        <div class="tab-content" id="estrategia-activos-content"></div>
+        <div class="tab-content" id="estrategia-informes-content"></div>
     `;
 
-    // Por defecto, renderizamos la primera pestaña al cargar la página.
-    renderEstrategiaPlanificacion();
+    // AHORA, llamamos a nuestra función controladora para que muestre la pestaña por defecto.
+    // Al hacer esto, garantizamos que el HTML ya existe cuando se intente renderizar el contenido.
+    showEstrategiaTab('planificacion');
 };
   // =================================================================
 // === INICIO: NUEVO MOTOR DE RENDERIZADO DE INFORMES Y PDF      ===
@@ -7376,7 +7409,10 @@ if (ptrElement && mainScrollerPtr) {
         const btn = actionTarget.closest('button');
         
         const actions = {
-		'switch-estrategia-tab': (e) => {
+		'switch-estrategia-tab': () => {
+			const tabName = actionTarget.dataset.tab;
+			showEstrategiaTab(tabName);
+		},
         const tabName = actionTarget.dataset.tab;
 
         // Gestionar clases activas para botones y contenidos
