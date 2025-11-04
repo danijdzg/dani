@@ -3411,7 +3411,42 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
     // Cargamos los datos para que el dashboard pueda pintarse
     await Promise.all([loadPresupuestos(), loadInversiones()]);
 };
- 
+
+ const showEstrategiaTab = (tabName) => {
+    // 1. Gestionar el estado activo de los botones de las pestañas
+    const tabButton = document.querySelector(`.tab-item[data-tab="${tabName}"]`);
+    if (tabButton) {
+        selectAll('.tab-item').forEach(btn => btn.classList.remove('tab-item--active'));
+        tabButton.classList.add('tab-item--active');
+    }
+
+    // 2. Gestionar la visibilidad de los contenedores de contenido
+    const contentContainer = select(`estrategia-${tabName}-content`);
+    if (contentContainer) {
+        selectAll('.tab-content').forEach(content => content.classList.remove('tab-content--active'));
+        contentContainer.classList.add('tab-content--active');
+    } else {
+        // Si el contenedor no existe, no hacemos nada más.
+        console.error(`Contenedor de pestaña no encontrado: estrategia-${tabName}-content`);
+        return;
+    }
+    
+    // 3. Destruir gráficos anteriores para evitar conflictos
+    destroyAllCharts();
+
+    // 4. Llamar a la función de renderizado específica para esa pestaña
+    switch (tabName) {
+        case 'planificacion':
+            renderEstrategiaPlanificacion();
+            break;
+        case 'activos':
+            renderEstrategiaActivos();
+            break;
+        case 'informes':
+            renderEstrategiaInformes();
+            break;
+    }
+};
 // =====================================================================
 // === INICIO: PASO 1 - REEMPLAZA ESTA FUNCIÓN POR COMPLETO          ===
 // =====================================================================
@@ -4554,41 +4589,7 @@ const renderEstrategiaInformes = () => {
     populate('informe-cuenta-select', getVisibleAccounts(), 'nombre', 'id');
 } 
 
- const showEstrategiaTab = (tabName) => {
-    // 1. Gestionar el estado activo de los botones de las pestañas
-    const tabButton = document.querySelector(`.tab-item[data-tab="${tabName}"]`);
-    if (tabButton) {
-        selectAll('.tab-item').forEach(btn => btn.classList.remove('tab-item--active'));
-        tabButton.classList.add('tab-item--active');
-    }
-
-    // 2. Gestionar la visibilidad de los contenedores de contenido
-    const contentContainer = select(`estrategia-${tabName}-content`);
-    if (contentContainer) {
-        selectAll('.tab-content').forEach(content => content.classList.remove('tab-content--active'));
-        contentContainer.classList.add('tab-content--active');
-    } else {
-        // Si el contenedor no existe, no hacemos nada más.
-        console.error(`Contenedor de pestaña no encontrado: estrategia-${tabName}-content`);
-        return;
-    }
-    
-    // 3. Destruir gráficos anteriores para evitar conflictos
-    destroyAllCharts();
-
-    // 4. Llamar a la función de renderizado específica para esa pestaña
-    switch (tabName) {
-        case 'planificacion':
-            renderEstrategiaPlanificacion();
-            break;
-        case 'activos':
-            renderEstrategiaActivos();
-            break;
-        case 'informes':
-            renderEstrategiaInformes();
-            break;
-    }
-};
+ 
 
 const renderEstrategiaPage = () => {
     const container = select(PAGE_IDS.ESTRATEGIA);
