@@ -1599,7 +1599,43 @@ const navigateTo = async (pageId, isInitial = false) => {
     intelligentIndex = tempIndex;
     console.log(`Índice inteligente MEJORADO con ${intelligentIndex.size} entradas.`);
 };
-		
+
+/**
+ * Obtiene todos los movimientos recurrentes cuya próxima fecha de ejecución
+ * es hoy o ha pasado, y que no han finalizado.
+ * Esta es la única fuente de verdad para saber qué está pendiente.
+ * @returns {Array<object>} Un array de objetos de movimientos recurrentes pendientes, ordenados por fecha.
+ */
+const getPendingRecurrents = () => {
+    const now = new Date();
+    // Creamos "hoy" en UTC a las 00:00 para una comparación precisa
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    
+    return (db.recurrentes || [])
+        .filter(r => {
+            // Usamos la función UTC para evitar la trampa de la zona horaria
+            const nextDate = parseDateStringAsUTC(r.nextDate);
+            
+            // Si no hay fecha o la fecha es futura, no está pendiente.
+            if (!nextDate || nextDate > today) {
+                return false;
+            }
+            
+            // Si tiene una fecha de fin y ya ha pasado, tampoco está pendiente.
+            if (r.endDate) {
+                const endDate = parseDateStringAsUTC(r.endDate);
+                if (endDate && today > endDate) {
+                    return false; // El recurrente ya ha expirado.
+                }
+            }
+            
+            // Si pasa todos los filtros, está pendiente.
+            return true;
+        })
+        // Ordenamos para que los más antiguos aparezcan primero.
+        .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
+};
+
 		
 // =================================================================
 // === BLOQUE DE FUNCIONES DE CUENTAS (CORREGIDO Y UNIFICADO) ===
@@ -2674,6 +2710,10 @@ const updateVirtualListUI = () => {
             return nextDate && new Date(Date.UTC(nextDate.getUTCFullYear(), nextDate.getUTCMonth(), nextDate.getUTCDate())) <= today;
         })
         .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
+*/
+// ▲▲▲ ...CON ESTA ÚNICA LÍNEA: ▲▲▲
+
+const pendingRecurrents = getPendingRecurrents();
 
     if (pendingRecurrents.length > 0) {
         vList.items.push({ type: 'pending-header', count: pendingRecurrents.length });
@@ -4246,30 +4286,7 @@ const renderInicioResumenView = () => {
     // ¡IMPORTANTE! Después de dibujar los esqueletos, le decimos a nuestro "asistente" que empiece a observar.
     initWidgetObserver();
 };
-	const getPendingRecurrents = () => {
-    const now = new Date();
-    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    
-    return (db.recurrentes || [])
-        .filter(r => {
-            const nextDate = parseDateStringAsUTC(r.nextDate);
-            // Si la fecha no es válida o es futura, la descartamos
-            if (!nextDate || nextDate > today) {
-                return false;
-            }
-            // Si tiene fecha de fin y ya ha pasado, la descartamos
-            if (r.endDate) {
-                const endDate = parseDateStringAsUTC(r.endDate);
-                if (endDate && today > endDate) {
-                    return false;
-                }
-            }
-            return true;
-        })
-        .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
-};
-
-	
+		
         const _renderRecientesFromCache = async () => {
             const recientesContainer = select('inicio-view-recientes');
             if (!recientesContainer) return;
@@ -4337,6 +4354,10 @@ const renderInicioResumenView = () => {
         return normalizedNextDate <= today;
     })
     .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
+*/
+// ▲▲▲ ...CON ESTA ÚNICA LÍNEA: ▲▲▲
+
+const pending = getPendingRecurrents();
 
     if (pending.length === 0) {
         container.innerHTML = '';
@@ -7745,69 +7766,62 @@ const handleConfirmRecurrent = async (id, btn) => {
     const recurrente = db.recurrentes[recurrenteIndex];
 
     try {
+        // --- 1. Lógica Optimista (UI se actualiza ANTES de que Firebase responda) ---
         const newMovementId = generateId();
-        
-        // Lógica optimista (actualización local inmediata)
         const newMovementData = {
             id: newMovementId,
             cantidad: recurrente.cantidad,
             descripcion: recurrente.descripcion,
-            fecha: new Date().toISOString(), // Se añade con la fecha de hoy
+            fecha: new Date().toISOString(),
             tipo: recurrente.tipo,
             cuentaId: recurrente.cuentaId,
             conceptoId: recurrente.conceptoId,
             cuentaOrigenId: recurrente.cuentaOrigenId,
             cuentaDestinoId: recurrente.cuentaDestinoId
         };
-        
         db.movimientos.unshift(newMovementData);
 
-        // === ¡AQUÍ ESTÁ LA MAGIA! ===
         if (recurrente.frequency === 'once') {
-            // Si es de única vez, lo eliminamos de la lista local de recurrentes.
             db.recurrentes.splice(recurrenteIndex, 1);
         } else {
-            // Si es periódico, calculamos la siguiente fecha.
             const nextDueDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency);
             db.recurrentes[recurrenteIndex].nextDate = nextDueDate.toISOString().slice(0, 10);
         }
-        
-        // Refrescamos la UI al instante
-        const activePage = document.querySelector('.view--active');
-        if (activePage && activePage.id === PAGE_IDS.DIARIO) {
-            updateLocalDataAndRefreshUI();
-        } else if (activePage && activePage.id === PAGE_IDS.PLANIFICACION) {
-            renderPlanificacionPage();
-        }
 
-        // Sincronización en segundo plano con Firebase
+        // --- 2. Animación y Refresco de UI ---
+        const itemEl = document.getElementById(`pending-recurrente-${id}`);
+        if (itemEl) {
+            itemEl.classList.add('item-deleting');
+            itemEl.addEventListener('animationend', () => {
+                const activePage = document.querySelector('.view--active');
+                if (activePage && activePage.id === PAGE_IDS.DIARIO) updateVirtualListUI();
+                if (activePage && activePage.id === PAGE_IDS.PLANIFICACION) renderPlanificacionPage();
+            }, { once: true });
+        } else {
+            // Si el elemento no está visible, refrescamos la UI directamente
+            const activePage = document.querySelector('.view--active');
+            if (activePage && activePage.id === PAGE_IDS.DIARIO) updateVirtualListUI();
+            if (activePage && activePage.id === PAGE_IDS.PLANIFICACION) renderPlanificacionPage();
+        }
+        
+        // --- 3. Sincronización en Segundo Plano con Firebase (el resto del código no cambia) ---
         const batch = fbDb.batch();
-        const newMovementRef = fbDb.collection('users').doc(currentUser.uid).collection('movimientos').doc(newMovementId);
-        batch.set(newMovementRef, newMovementData);
+        batch.set(fbDb.collection('users').doc(currentUser.uid).collection('movimientos').doc(newMovementId), newMovementData);
         
         const recurrenteRef = fbDb.collection('users').doc(currentUser.uid).collection('recurrentes').doc(id);
-
-        // === ¡LA MISMA LÓGICA EN FIREBASE! ===
         if (recurrente.frequency === 'once') {
-            // Si es de única vez, lo borramos de la base de datos.
             batch.delete(recurrenteRef);
         } else {
-            // Si es periódico, actualizamos su próxima fecha.
             const nextDueDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency);
             batch.update(recurrenteRef, { nextDate: nextDueDate.toISOString().slice(0, 10) });
         }
 
-        // Ajuste de saldos (esto no cambia)
         if (recurrente.tipo === 'traspaso') {
-            const origenRef = fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaOrigenId);
-            const destinoRef = fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaDestinoId);
-            batch.update(origenRef, { saldo: firebase.firestore.FieldValue.increment(-recurrente.cantidad) });
-            batch.update(destinoRef, { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
+            batch.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-recurrente.cantidad) });
+            batch.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
         } else {
-            const cuentaRef = fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaId);
-            batch.update(cuentaRef, { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
+            batch.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
         }
-
         await batch.commit();
 
         hapticFeedback('success');
@@ -7816,7 +7830,6 @@ const handleConfirmRecurrent = async (id, btn) => {
     } catch (error) {
         console.error("Error al confirmar el movimiento recurrente:", error);
         showToast("No se pudo añadir el movimiento recurrente.", "danger");
-        // En caso de error, podríamos necesitar recargar los datos para asegurar la consistencia.
     } finally {
         if (btn) setButtonLoading(btn, false);
     }
@@ -7833,35 +7846,31 @@ const handleSkipRecurrent = async (id, btn) => {
     }
 
     try {
-        // === ¡LA MISMA MAGIA OTRA VEZ! ===
-        if (recurrente.frequency === 'once') {
-            // Si es de única vez y lo omitimos, simplemente lo borramos.
-            await deleteDoc('recurrentes', id);
-            showToast("Operación programada eliminada.", "info");
-        } else {
-            // Si es periódico, calculamos la siguiente fecha para omitir la actual.
-            const nextDueDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency);
-            await saveDoc('recurrentes', id, { nextDate: nextDueDate.toISOString().slice(0, 10) });
-            showToast("Operación recurrente omitida esta vez.", "info");
-        }
-
-        hapticFeedback('success');
-
-        // La animación de borrado y refresco de UI funciona para ambos casos.
-        const itemEl = select(`pending-recurrente-${id}`);
+        let successMessage = "";
+        
+        // --- Animación y Refresco de UI (se ejecuta antes de la llamada a Firebase) ---
+        const itemEl = document.getElementById(`pending-recurrente-${id}`);
         if (itemEl) {
             itemEl.classList.add('item-deleting');
             itemEl.addEventListener('animationend', () => {
                 const activePage = document.querySelector('.view--active');
-                if (activePage && activePage.id === PAGE_IDS.DIARIO) {
-                    updateVirtualListUI();
-                } else if (activePage && activePage.id === PAGE_IDS.PLANIFICACION) {
-                    renderPlanificacionPage();
-                } else {
-                    scheduleDashboardUpdate();
-                }
+                if (activePage && activePage.id === PAGE_IDS.DIARIO) updateVirtualListUI();
+                if (activePage && activePage.id === PAGE_IDS.PLANIFICACION) renderPlanificacionPage();
             }, { once: true });
         }
+
+        // --- Sincronización con Firebase ---
+        if (recurrente.frequency === 'once') {
+            await deleteDoc('recurrentes', id);
+            successMessage = "Operación programada eliminada.";
+        } else {
+            const nextDueDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency);
+            await saveDoc('recurrentes', id, { nextDate: nextDueDate.toISOString().slice(0, 10) });
+            successMessage = "Operación recurrente omitida esta vez.";
+        }
+
+        hapticFeedback('success');
+        showToast(successMessage, "info");
 
     } catch (error) {
         console.error("Error al omitir el movimiento recurrente:", error);
