@@ -2694,7 +2694,7 @@ const updateLocalDataAndRefreshUI = async () => {
  
 // ▼▼▼ REEMPLAZA TU FUNCIÓN updateVirtualListUI POR COMPLETO CON ESTA VERSIÓN CORREGIDA ▼▼▼
 
-const updateVirtualListUI = () => {
+cconst updateVirtualListUI = () => {
     if (!vList.sizerEl) return;
 
     vList.items = [];
@@ -2702,16 +2702,7 @@ const updateVirtualListUI = () => {
     let currentHeight = 0;
     
     // 1. Lógica para los recurrentes pendientes (esto no cambia)
-    const now = new Date();
-    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    const pendingRecurrents = (db.recurrentes || [])
-        .filter(r => {
-            const nextDate = parseDateStringAsUTC(r.nextDate);
-            return nextDate && new Date(Date.UTC(nextDate.getUTCFullYear(), nextDate.getUTCMonth(), nextDate.getUTCDate())) <= today;
-        })
-        .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
-
-const pendingRecurrents = getPendingRecurrents();
+    const pendingRecurrents = getPendingRecurrents();
 
     if (pendingRecurrents.length > 0) {
         vList.items.push({ type: 'pending-header', count: pendingRecurrents.length });
