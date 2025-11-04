@@ -7214,33 +7214,7 @@ function cancelLongPress() {
 }
 
 document.body.addEventListener('click', (e) => {
-	'switch-estrategia-tab': (e) => {
-    const tabName = actionTarget.dataset.tab;
-    
-    // Gestionar clases activas para botones y contenidos
-    selectAll('.tab-item').forEach(btn => btn.classList.remove('tab-item--active'));
-    actionTarget.classList.add('tab-item--active');
-
-    selectAll('.tab-content').forEach(content => content.classList.remove('tab-content--active'));
-    select(`estrategia-${tabName}-content`).classList.add('tab-content--active');
-
-    // Destruir gráficos antes de cambiar para evitar errores
-    destroyAllCharts();
-
-    // Renderizar el contenido de la pestaña seleccionada
-    switch(tabName) {
-        case 'planificacion':
-            renderEstrategiaPlanificacion();
-            break;
-        case 'activos':
-            renderEstrategiaActivos();
-            break;
-        case 'informes':
-            renderEstrategiaInformes();
-            break;
-    }
-}
-    const quickAddAction = e.target.closest('[data-action="quick-add-type"]');
+	const quickAddAction = e.target.closest('[data-action="quick-add-type"]');
     if(quickAddAction) {
         const type = quickAddAction.dataset.type;
         quickMenu.classList.remove('visible');
@@ -7402,6 +7376,32 @@ if (ptrElement && mainScrollerPtr) {
         const btn = actionTarget.closest('button');
         
         const actions = {
+		'switch-estrategia-tab': (e) => {
+        const tabName = actionTarget.dataset.tab;
+
+        // Gestionar clases activas para botones y contenidos
+        selectAll('.tab-item').forEach(btn => btn.classList.remove('tab-item--active'));
+        actionTarget.classList.add('tab-item--active');
+
+        selectAll('.tab-content').forEach(content => content.classList.remove('tab-content--active'));
+        select(`estrategia-${tabName}-content`).classList.add('tab-content--active');
+
+        // Destruir gráficos antes de cambiar para evitar errores
+        destroyAllCharts();
+
+        // Renderizar el contenido de la pestaña seleccionada
+        switch (tabName) {
+            case 'planificacion':
+                renderEstrategiaPlanificacion();
+                break;
+            case 'activos':
+                renderEstrategiaActivos();
+                break;
+            case 'informes':
+                renderEstrategiaInformes();
+                break;
+        }
+    },	
             // ▼▼▼ ¡ESTO CONECTA TODO! ▼▼▼
             'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
