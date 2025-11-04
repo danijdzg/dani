@@ -2694,7 +2694,7 @@ const updateLocalDataAndRefreshUI = async () => {
  
 // ▼▼▼ REEMPLAZA TU FUNCIÓN updateVirtualListUI POR COMPLETO CON ESTA VERSIÓN CORREGIDA ▼▼▼
 
-cconst updateVirtualListUI = () => {
+const updateVirtualListUI = () => {
     if (!vList.sizerEl) return;
 
     vList.items = [];
