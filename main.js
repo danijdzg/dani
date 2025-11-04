@@ -7155,7 +7155,7 @@ function cancelLongPress() {
     if (longPressTimer) {
         clearTimeout(longPressTimer);
         // Si el tiempo fue corto, es un clic normal
-        addBtn.click();
+         startMovementForm();
     }
 }
 
@@ -8860,10 +8860,17 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
         showToast("Elemento eliminado.", "info");
 
     } catch (error) {
-        console.error("Error al eliminar:", error);
-        showToast("Error al eliminar. Recargando para mantener la consistencia.", "danger");
-        setTimeout(() => location.reload(), 1500);
-    }
+    // ¡PLAN B! Si Firebase falla, revertimos el cambio en la UI
+    console.error("Firebase falló. Revirtiendo cambio optimista:", error);
+    showToast("Error de sincronización. Reestableciendo estado.", "danger");
+    // Volvemos a añadir el item que borramos localmente
+    if (isRecurrent) db.recurrentes.push(itemToDelete);
+    else db.movimientos.push(itemToDelete);
+    // Recalculamos el saldo con el item restaurado
+    if (!isRecurrent) applyOptimisticBalanceUpdate(itemToDelete, null);
+    // Forzamos un re-renderizado completo para asegurar la consistencia
+    updateLocalDataAndRefreshUI(); 
+}
 };
 // ============================================================
 // === FIN: FUNCIÓN DE BORRADO OPTIMIZADA ===
