@@ -3237,7 +3237,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
     const container = select(containerId);
     if (!container) return;
 
-    // (El código de carga de datos y renderizado del HTML es el mismo, pero lo incluyo todo para que solo tengas que copiar y pegar)
+    // (El código de carga y renderizado del HTML es el mismo, pero lo incluyo todo para que sea un solo copiar y pegar)
     container.innerHTML = `<div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>`;
 
     const visibleAccounts = getVisibleAccounts();
@@ -3319,7 +3319,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
                      style="cursor: pointer; padding: var(--sp-2) 0;">
                     <div>
                         <span style="display: block;">${c.nombre}</span>
-                        <small style="color: var(--c-on-surface-secondary);">${(saldos[c.id] || 0) / typeBalance * 100 > 0 ? ((saldos[c.id] || 0) / typeBalance * 100).toFixed(1) + '% de ' + tipo : ''}</small>
+                        <small style="color: var(--c-on-surface-secondary);">${(saldos[c.id] || 0) / typeBalance > 0 ? (((saldos[c.id] || 0) / typeBalance) * 100).toFixed(1) + '% de ' + tipo : ''}</small>
                     </div>
                     <div style="display: flex; align-items: center; gap: var(--sp-2);">
                         ${formatCurrency(saldos[c.id] || 0)}
@@ -3349,52 +3349,56 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
         const investmentItems = listaContainer.querySelectorAll('[data-is-investment="true"]');
         
         investmentItems.forEach(item => {
-            let longPressTimer;
-            let startX, startY;
-            let longPressTriggered = false;
+            let longPressTimer;       // Nuestro 'cronómetro' para medir la pulsación.
+            let startX, startY;       // Guardan dónde empezó el toque para diferenciar de un scroll.
+            let longPressTriggered = false; // Una bandera para saber si la pulsación larga se completó.
 
             const startHandler = (e) => {
-                e.stopPropagation(); // Detenemos la propagación para evitar conflictos
+                e.stopPropagation(); // Evita que otros 'clicks' se disparen accidentalmente.
                 const point = e.touches ? e.touches[0] : e;
                 startX = point.clientX;
                 startY = point.clientY;
                 longPressTriggered = false;
 
+                // Ponemos en marcha el cronómetro...
                 longPressTimer = setTimeout(() => {
-                    longPressTriggered = true;
+                    longPressTriggered = true; // ¡Se completó la pulsación larga!
                     const accountId = item.dataset.id;
+                    // Llamamos a la función que muestra el gráfico de TIR.
                     handleShowIrrHistory({ accountId: accountId });
-                }, 500); // 500ms
+                }, 500); // 500 milisegundos (medio segundo)
             };
 
             const moveHandler = (e) => {
                 if (!longPressTimer) return;
                 const point = e.touches ? e.touches[0] : e;
+                // Si el dedo se mueve más de 10px, es un scroll, no una pulsación.
                 if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
-                    clearTimeout(longPressTimer);
+                    clearTimeout(longPressTimer); // Cancelamos el cronómetro.
                     longPressTimer = null;
                 }
             };
 
             const endHandler = (e) => {
-                clearTimeout(longPressTimer);
+                clearTimeout(longPressTimer); // Siempre cancelamos el cronómetro al soltar.
                 if (longPressTriggered) {
-                    e.preventDefault(); // Si fue pulsación larga, prevenimos la acción de 'click'
+                    e.preventDefault(); // Si fue pulsación larga, prevenimos la acción de 'click' normal.
                 }
             };
             
-            // Asignamos los listeners para móvil y escritorio
+            // Asignamos los "escuchadores" para todos los casos: móvil (touch) y escritorio (mouse).
             item.addEventListener('mousedown', startHandler);
             item.addEventListener('touchstart', startHandler, { passive: true });
             item.addEventListener('mousemove', moveHandler);
             item.addEventListener('touchmove', moveHandler, { passive: true });
             item.addEventListener('mouseup', endHandler);
             item.addEventListener('touchend', endHandler);
-            item.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
+            item.addEventListener('mouseleave', () => clearTimeout(longPressTimer)); // Si el ratón sale del elemento, se cancela.
         });
         // ⭐ FIN DE LA LÓGICA CORREGIDA ⭐
     }
 };
+
        
 const handleShowIrrHistory = async (options) => {
     hapticFeedback('medium');
@@ -9722,7 +9726,7 @@ const renderAjustesPage = () => {
                         <span class="settings-item__label">Exportar Copia de Seguridad (JSON)</span>
                         <span class="material-icons">chevron_right</span>
                     </button>
-                     <button class="settings-item" data-action="export-csv">
+                    <button class="settings-item" data-action="export-csv">
                         <span class="material-icons text-positive">description</span>
                         <span class="settings-item__label">Exportar a CSV (Excel)</span>
                         <span class="material-icons">chevron_right</span>
@@ -9733,12 +9737,25 @@ const renderAjustesPage = () => {
                         <span class="material-icons">chevron_right</span>
                     </button>
                     <button class="settings-item" data-action="import-csv">
-                         <span class="material-icons text-warning">grid_on</span>
+                        <span class="material-icons text-warning">grid_on</span>
                         <span class="settings-item__label">Importar desde CSV</span>
                         <span class="material-icons">chevron_right</span>
                     </button>
                 </div>
             </div>
+
+            <!-- ▼▼▼ ¡AQUÍ ESTÁ LA MAGIA! ESTE ES EL NUEVO BLOQUE QUE HEMOS AÑADIDO ▼▼▼ -->
+            <h3 class="settings-group__title">Herramientas Avanzadas</h3>
+            <div class="card" style="margin-bottom: var(--sp-4);">
+                <div class="card__content" style="padding: 0;">
+                    <button class="settings-item" data-action="recalculate-balances">
+                        <span class="material-icons text-warning">build_circle</span>
+                        <span class="settings-item__label">Auditar y Corregir Saldos</span>
+                        <span class="material-icons">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+            <!-- ▲▲▲ FIN DEL BLOQUE AÑADIDO ▲▲▲ -->
             
             <!-- Grupo 3: Seguridad y Cuenta -->
             <h3 class="settings-group__title">Seguridad y Cuenta</h3>
@@ -9766,4 +9783,3 @@ const renderAjustesPage = () => {
     // Esta función es necesaria para que se muestre tu email
     loadConfig();
 };
-
