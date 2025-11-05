@@ -3237,7 +3237,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
     const container = select(containerId);
     if (!container) return;
 
-    // (El código de carga de datos y renderizado del HTML es el mismo, pero lo incluyo todo para que solo tengas que copiar y pegar)
+    // (El código de carga de datos y renderizado del HTML es el mismo)
     container.innerHTML = `<div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>`;
 
     const visibleAccounts = getVisibleAccounts();
@@ -3344,8 +3344,6 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
                 </details>`;
         }).join('');
 
-        // ⭐ INICIO DE LA LÓGICA DE DETECCIÓN DE "LONG PRESS" CORREGIDA ⭐
-        // Ahora, esta lógica se activa DESPUÉS de que la lista de cuentas se haya dibujado en la pantalla.
         const investmentItems = listaContainer.querySelectorAll('[data-is-investment="true"]');
         
         investmentItems.forEach(item => {
@@ -3354,7 +3352,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             let longPressTriggered = false;
 
             const startHandler = (e) => {
-                e.stopPropagation(); // Detenemos la propagación para evitar conflictos
+                e.stopPropagation(); 
                 const point = e.touches ? e.touches[0] : e;
                 startX = point.clientX;
                 startY = point.clientY;
@@ -3364,7 +3362,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
                     longPressTriggered = true;
                     const accountId = item.dataset.id;
                     handleShowIrrHistory({ accountId: accountId });
-                }, 500); // 500ms
+                }, 500); 
             };
 
             const moveHandler = (e) => {
@@ -3379,11 +3377,13 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             const endHandler = (e) => {
                 clearTimeout(longPressTimer);
                 if (longPressTriggered) {
-                    e.preventDefault(); // Si fue pulsación larga, prevenimos la acción de 'click'
+                    e.preventDefault(); 
+                    // ▼▼▼ ¡LA CORRECCIÓN CLAVE ESTÁ AQUÍ! ▼▼▼
+                    e.stopPropagation(); // Evita que el evento 'click' se propague al listener global.
+                    // ▲▲▲ ¡FIN DE LA CORRECCIÓN! ▲▲▲
                 }
             };
             
-            // Asignamos los listeners para móvil y escritorio
             item.addEventListener('mousedown', startHandler);
             item.addEventListener('touchstart', startHandler, { passive: true });
             item.addEventListener('mousemove', moveHandler);
@@ -3392,7 +3392,6 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             item.addEventListener('touchend', endHandler);
             item.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
         });
-        // ⭐ FIN DE LA LÓGICA CORREGIDA ⭐
     }
 };
  const handleShowIrrHistory = async (options) => {
