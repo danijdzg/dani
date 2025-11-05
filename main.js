@@ -7704,22 +7704,28 @@ if (ptrElement && mainScrollerPtr) {
 
         // Mapa de acciones para un código más limpio.
         const actions = {
-            'navigate': () => navigateTo(page),
             
-            // Acciones del nuevo menú rápido (+)
-            'quick-add-type': () => {
-        const type = actionTarget.dataset.type;
+			'quick-add-type': (e) => {
+                const quickAddItem = e.target.closest('[data-action="quick-add-type"]');
+                if (!quickAddItem) return;
+                
+                const type = quickAddItem.dataset.type;
                 const menu = select('quick-add-menu');
                 if (menu) menu.classList.remove('visible');
                 
-                startMovementForm(); // Abre el formulario...
-                setTimeout(() => { // ...y luego lo configura.
+                // Abre el formulario genérico...
+                startMovementForm();
+                
+                // ...y 50ms después lo configura y abre la calculadora.
+                setTimeout(() => {
                     setMovimientoFormType(type);
                     const amountInput = select('movimiento-cantidad');
-                    if (amountInput) showCalculator(amountInput);
+                    if (amountInput) {
+                        showCalculator(amountInput);
+                    }
                 }, 50);
             },
-			
+			'navigate': () => navigateTo(page),
 			'swipe-show-irr-history': () => handleShowIrrHistory(type),
 			'show-main-menu': () => {
     const menu = document.getElementById('main-menu-popover');
