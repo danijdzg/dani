@@ -7409,47 +7409,57 @@ const addBtn = select('bottom-nav-add-btn');
 const quickMenu = select('quick-add-menu');
 
 if (addBtn && quickMenu) {
-    addBtn.addEventListener('mousedown', startLongPress);
-    addBtn.addEventListener('touchstart', startLongPress);
-    addBtn.addEventListener('mouseup', cancelLongPress);
-    addBtn.addEventListener('mouseleave', cancelLongPress);
-    addBtn.addEventListener('touchend', cancelLongPress);
+    let longPressTimer;
+    let isLongPressTriggered = false;
+
+    const startPress = (e) => {
+        // Prevenimos el comportamiento por defecto en touch para evitar zoom o scroll no deseado
+        if (e.type === 'touchstart') e.preventDefault();
+        
+        isLongPressTriggered = false;
+        longPressTimer = setTimeout(() => {
+            isLongPressTriggered = true;
+            hapticFeedback('medium');
+            quickMenu.classList.add('visible');
+        }, 400); // 400ms para considerar una pulsación larga
+    };
+
+    const endPress = (e) => {
+        clearTimeout(longPressTimer);
+        // Si el temporizador se canceló ANTES de que se cumpliera (isLongPressTriggered es false),
+        // entonces fue un clic corto.
+        if (!isLongPressTriggered) {
+            startMovementForm();
+        }
+    };
     
+    // Asignamos los listeners
+    addBtn.addEventListener('mousedown', startPress);
+    addBtn.addEventListener('touchstart', startPress);
+    addBtn.addEventListener('mouseup', endPress);
+    addBtn.addEventListener('touchend', endPress);
+    // Si el usuario arrastra el dedo/ratón fuera del botón, cancelamos todo
+    addBtn.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
+
+    // Listener para cerrar el menú si se hace clic fuera
     document.addEventListener('click', (e) => {
         if (!quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
             quickMenu.classList.remove('visible');
         }
     });
+
+    // Listener para las acciones del menú rápido (este ya estaba bien)
+    document.body.addEventListener('click', (e) => {
+        const quickAddAction = e.target.closest('[data-action="quick-add-type"]');
+        if (quickAddAction) {
+            const type = quickAddAction.dataset.type;
+            quickMenu.classList.remove('visible');
+            startMovementForm(); // Abre el formulario genérico
+            setTimeout(() => setMovimientoFormType(type), 50); // Lo ajusta al tipo seleccionado
+        }
+    });
 }
-
-function startLongPress(e) {
-    e.preventDefault();
-    longPressTimer = setTimeout(() => {
-        hapticFeedback('medium');
-        quickMenu.classList.add('visible');
-        longPressTimer = null; // Marcar como ejecutado
-    }, 400); // 400ms para considerar pulsación larga
-}
-
-function cancelLongPress() {
-    if (longPressTimer) {
-        clearTimeout(longPressTimer);
-        // Si el tiempo fue corto, es un clic normal
-        startMovementForm();
-    }
-}
-
-document.body.addEventListener('click', (e) => {
-	const quickAddAction = e.target.closest('[data-action="quick-add-type"]');
-    if(quickAddAction) {
-        const type = quickAddAction.dataset.type;
-        quickMenu.classList.remove('visible');
-        startMovementForm(); // Abre el formulario genérico
-        setTimeout(() => setMovimientoFormType(type), 50); // Lo ajusta al tipo seleccionado
-    }
-});
-
-	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
+const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
 const mainScrollerPtr = selectOne('.app-layout__main');
 const ptrIndicator = document.createElement('div');
 ptrIndicator.id = 'pull-to-refresh-indicator';
@@ -8458,22 +8468,22 @@ const handleSaveMovement = async (form, btn) => {
                 setTimeout(() => hideModal('movimiento-modal'), 200);
                 showToast(mode === 'new' ? 'Movimiento guardado.' : 'Movimiento actualizado.');
             } else {
-                // ▼▼▼ ESTE ES EL BLOQUE MEJORADO ▼▼▼
-                form.reset();
-                setMovimientoFormType('gasto');
-                // Forzamos la actualización visual de los dropdowns personalizados
-                select('movimiento-concepto').dispatchEvent(new Event('change'));
-                select('movimiento-cuenta').dispatchEvent(new Event('change'));
+    // ▼▼▼ ESTE ES EL BLOQUE MEJORADO ▼▼▼
+    form.reset();
+    setMovimientoFormType('gasto');
+    // Forzamos la actualización visual de los dropdowns personalizados
+    select('movimiento-concepto').dispatchEvent(new Event('change'));
+    select('movimiento-cuenta').dispatchEvent(new Event('change'));
 
-                const today = new Date();
-                const fechaInput = select('movimiento-fecha');
-                fechaInput.value = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
-                updateDateDisplay(fechaInput);
-                
-                showToast('Movimiento guardado. Puedes añadir otro.', 'info');
-                // Devolvemos el foco al campo más importante para el siguiente movimiento.
-                select('movimiento-cantidad').focus();
-            }
+    const today = new Date();
+    const fechaInput = select('movimiento-fecha');
+    fechaInput.value = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
+    updateDateDisplay(fechaInput);
+    
+    showToast('Movimiento guardado. Puedes añadir otro.', 'info');
+    // Devolvemos el foco al campo más importante para el siguiente movimiento.
+    select('movimiento-cantidad').focus();
+}
             return true;
 
         } catch (error) {
