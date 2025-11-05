@@ -7704,8 +7704,7 @@ if (ptrElement && mainScrollerPtr) {
 
         // Mapa de acciones para un código más limpio.
         const actions = {
-            
-			'quick-add-type': (e) => {
+            'quick-add-type': (e) => { // <-- ¡LA NUEVA ACCIÓN QUE SOLUCIONA EL ERROR!
                 const quickAddItem = e.target.closest('[data-action="quick-add-type"]');
                 if (!quickAddItem) return;
                 
@@ -7713,10 +7712,8 @@ if (ptrElement && mainScrollerPtr) {
                 const menu = select('quick-add-menu');
                 if (menu) menu.classList.remove('visible');
                 
-                // Abre el formulario genérico...
                 startMovementForm();
                 
-                // ...y 50ms después lo configura y abre la calculadora.
                 setTimeout(() => {
                     setMovimientoFormType(type);
                     const amountInput = select('movimiento-cantidad');
