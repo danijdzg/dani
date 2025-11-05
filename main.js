@@ -3237,7 +3237,6 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
     const container = select(containerId);
     if (!container) return;
 
-    // (El código de carga de datos y renderizado del HTML es el mismo)
     container.innerHTML = `<div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>`;
 
     const visibleAccounts = getVisibleAccounts();
@@ -3378,9 +3377,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
                 clearTimeout(longPressTimer);
                 if (longPressTriggered) {
                     e.preventDefault(); 
-                    // ▼▼▼ ¡LA CORRECCIÓN CLAVE ESTÁ AQUÍ! ▼▼▼
-                    e.stopPropagation(); // Evita que el evento 'click' se propague al listener global.
-                    // ▲▲▲ ¡FIN DE LA CORRECCIÓN! ▲▲▲
+                    e.stopPropagation(); // <-- ¡LA CORRECCIÓN MÁGICA!
                 }
             };
             
@@ -3394,141 +3391,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
         });
     }
 };
- const handleShowIrrHistory = async (options) => {
-    hapticFeedback('medium');
-    
-    const titleEl = select('irr-history-title');
-    const bodyEl = select('irr-history-body');
-    if(bodyEl) bodyEl.innerHTML = `<div style="display: flex; justify-content: center; align-items: center; height: 100%;"><span class="spinner" style="width: 48px; height: 48px;"></span></div>`;
-    showModal('irr-history-modal');
 
-    let accountIds = [];
-    let title = 'Evolución TIR';
-
-    if (options.accountId) {
-        accountIds = [options.accountId];
-        const account = db.cuentas.find(c => c.id === options.accountId);
-        if (account) title = `Evolución TIR: ${account.nombre}`;
-    } else if (options.accountType) {
-        accountIds = getVisibleAccounts()
-            .filter(c => toSentenceCase(c.tipo || 'S/T') === options.accountType && c.esInversion)
-            .map(c => c.id);
-        title = `Evolución TIR: ${options.accountType}`;
-    }
-
-    if(titleEl) titleEl.textContent = title;
-        
-    const historyData = await calculateHistoricalIrrForGroup(accountIds);
-
-    if (!historyData || historyData.length < 2) {
-        if(bodyEl) bodyEl.innerHTML = `<div class="empty-state"><p>No hay suficientes valoraciones para generar un histórico de TIR para este activo.</p></div>`;
-        return;
-    }
-
-    if(bodyEl) bodyEl.innerHTML = `<div class="chart-container" style="height: 100%;"><canvas id="irr-history-chart"></canvas></div>`;
-    const chartCtx = select('irr-history-chart').getContext('2d');
-    const existingChart = Chart.getChart(chartCtx);
-    if (existingChart) existingChart.destroy();
-
-    new Chart(chartCtx, {
-        type: 'line',
-        data: {
-            labels: historyData.map(d => new Date(d.date)),
-            datasets: [{
-                label: 'TIR Anualizada',
-                data: historyData.map(d => d.irr * 100),
-                borderColor: 'var(--c-info)',
-                backgroundColor: 'rgba(191, 90, 242, 0.2)',
-                fill: true,
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { ticks: { callback: (value) => `${value.toFixed(1)}%` }, title: { display: true, text: 'TIR Anualizada (%)' } },
-                x: { type: 'time', time: { unit: 'month', tooltipFormat: 'dd MMM yyyy' } }
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: (context) => `TIR: ${context.parsed.y.toFixed(2)}%` } },
-                datalabels: { display: false }
-            }
-        }
-    });
-};
-
-/**
- * La "Máquina del Tiempo": Calcula la TIR en diferentes puntos del pasado.
- * @param {string[]} accountIds - Array de IDs de las cuentas a analizar.
- * @returns {Promise<Array<{date: string, irr: number}>>} - Una promesa que resuelve a un array de puntos para el gráfico.
- */
-async function calculateHistoricalIrrForGroup(accountIds) {
-    if (!dataLoaded.inversiones) await loadInversiones();
-    const allMovements = await fetchAllMovementsForHistory();
-    const accountIdSet = new Set(accountIds);
-    
-    // 1. Recopilar todos los eventos (cashflows y valoraciones) para estas cuentas
-    const timeline = [];
-    const valuations = (db.inversiones_historial || []).filter(v => accountIdSet.has(v.cuentaId));
-    const cashflows = allMovements.filter(m => {
-        return (m.tipo === 'movimiento' && accountIdSet.has(m.cuentaId)) ||
-               (m.tipo === 'traspaso' && (accountIdSet.has(m.cuentaOrigenId) || accountIdSet.has(m.cuentaDestinoId)));
-    });
-
-    // Añadir cashflows a la línea de tiempo
-    cashflows.forEach(m => {
-        let amount = 0;
-        if (m.tipo === 'movimiento') amount = m.cantidad;
-        else if (m.tipo === 'traspaso') {
-            const origenEsInversion = accountIdSet.has(m.cuentaOrigenId);
-            const destinoEsInversion = accountIdSet.has(m.cuentaDestinoId);
-            // Solo contamos movimientos que entran/salen del "universo de inversión" del grupo
-            if (origenEsInversion && !destinoEsInversion) amount = -m.cantidad; // Sale dinero del grupo
-            else if (!origenEsInversion && destinoEsInversion) amount = m.cantidad; // Entra dinero al grupo
-        }
-        if (amount !== 0) {
-            // Flujo de caja para TIR: aportación es negativo, retirada es positivo
-            timeline.push({ date: new Date(m.fecha), amount: -amount });
-        }
-    });
-
-    // 2. Ordenar y procesar las valoraciones
-    const sortedValuations = valuations.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-    const historicalIrr = [];
-    const valuationMap = new Map();
-
-    // Agrupamos valoraciones por fecha
-    sortedValuations.forEach(v => {
-        const dateKey = v.fecha.slice(0, 10);
-        if (!valuationMap.has(dateKey)) valuationMap.set(dateKey, 0);
-        // Usamos la última valoración de cada cuenta para una fecha dada
-        valuationMap.set(dateKey, valuationMap.get(dateKey) + v.valor);
-    });
-
-    // 3. Viajar en el tiempo y calcular la TIR en cada punto de valoración
-    for (const [dateKey, totalValue] of valuationMap.entries()) {
-        const currentDate = new Date(dateKey);
-        
-        // Obtenemos todos los cashflows hasta esta fecha de valoración
-        const cashflowsUpToDate = timeline
-            .filter(cf => cf.date <= currentDate)
-            .map(cf => ({...cf})); // Clonamos para no modificar el original
-
-        // Añadimos el valor total de mercado en esa fecha como el "flujo de caja final"
-        cashflowsUpToDate.push({ date: currentDate, amount: totalValue });
-        
-        // Calculamos la TIR y la añadimos a nuestros resultados si es válida
-        const irr = calculateIRR(cashflowsUpToDate);
-        if (!isNaN(irr)) {
-            historicalIrr.push({ date: dateKey, irr: irr });
-        }
-    }
-
-    return historicalIrr;
-}    
-	 
 const handleShowIrrHistory = async (options) => {
     hapticFeedback('medium');
     
@@ -3594,17 +3457,11 @@ const handleShowIrrHistory = async (options) => {
     });
 };
 
-/**
- * La "Máquina del Tiempo": Calcula la TIR en diferentes puntos del pasado.
- * @param {string[]} accountIds - Array de IDs de las cuentas a analizar.
- * @returns {Promise<Array<{date: string, irr: number}>>} - Una promesa que resuelve a un array de puntos para el gráfico.
- */
 async function calculateHistoricalIrrForGroup(accountIds) {
     if (!dataLoaded.inversiones) await loadInversiones();
     const allMovements = await fetchAllMovementsForHistory();
     const accountIdSet = new Set(accountIds);
     
-    // 1. Recopilar todos los eventos (cashflows y valoraciones) para estas cuentas
     const timeline = [];
     const valuations = (db.inversiones_historial || []).filter(v => accountIdSet.has(v.cuentaId));
     const cashflows = allMovements.filter(m => {
@@ -3612,49 +3469,39 @@ async function calculateHistoricalIrrForGroup(accountIds) {
                (m.tipo === 'traspaso' && (accountIdSet.has(m.cuentaOrigenId) || accountIdSet.has(m.cuentaDestinoId)));
     });
 
-    // Añadir cashflows a la línea de tiempo
     cashflows.forEach(m => {
         let amount = 0;
         if (m.tipo === 'movimiento') amount = m.cantidad;
         else if (m.tipo === 'traspaso') {
             const origenEsInversion = accountIdSet.has(m.cuentaOrigenId);
             const destinoEsInversion = accountIdSet.has(m.cuentaDestinoId);
-            // Solo contamos movimientos que entran/salen del "universo de inversión" del grupo
-            if (origenEsInversion && !destinoEsInversion) amount = -m.cantidad; // Sale dinero del grupo
-            else if (!origenEsInversion && destinoEsInversion) amount = m.cantidad; // Entra dinero al grupo
+            if (origenEsInversion && !destinoEsInversion) amount = -m.cantidad;
+            else if (!origenEsInversion && destinoEsInversion) amount = m.cantidad;
         }
         if (amount !== 0) {
-            // Flujo de caja para TIR: aportación es negativo, retirada es positivo
             timeline.push({ date: new Date(m.fecha), amount: -amount });
         }
     });
 
-    // 2. Ordenar y procesar las valoraciones
     const sortedValuations = valuations.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     const historicalIrr = [];
     const valuationMap = new Map();
 
-    // Agrupamos valoraciones por fecha
     sortedValuations.forEach(v => {
         const dateKey = v.fecha.slice(0, 10);
         if (!valuationMap.has(dateKey)) valuationMap.set(dateKey, 0);
-        // Usamos la última valoración de cada cuenta para una fecha dada
         valuationMap.set(dateKey, valuationMap.get(dateKey) + v.valor);
     });
 
-    // 3. Viajar en el tiempo y calcular la TIR en cada punto de valoración
     for (const [dateKey, totalValue] of valuationMap.entries()) {
         const currentDate = new Date(dateKey);
         
-        // Obtenemos todos los cashflows hasta esta fecha de valoración
         const cashflowsUpToDate = timeline
             .filter(cf => cf.date <= currentDate)
-            .map(cf => ({...cf})); // Clonamos para no modificar el original
+            .map(cf => ({...cf})); 
 
-        // Añadimos el valor total de mercado en esa fecha como el "flujo de caja final"
         cashflowsUpToDate.push({ date: currentDate, amount: totalValue });
         
-        // Calculamos la TIR y la añadimos a nuestros resultados si es válida
         const irr = calculateIRR(cashflowsUpToDate);
         if (!isNaN(irr)) {
             historicalIrr.push({ date: dateKey, irr: irr });
@@ -3663,7 +3510,8 @@ async function calculateHistoricalIrrForGroup(accountIds) {
 
     return historicalIrr;
 }
-	   
+	 
+   
         const loadConfig = () => { 
             const userEmailEl = select('config-user-email'); 
             if (userEmailEl && currentUser) userEmailEl.textContent = currentUser.email;  			
