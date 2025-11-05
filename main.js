@@ -3237,10 +3237,8 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
     const container = select(containerId);
     if (!container) return;
 
-    // 1. Mostramos un esqueleto para dar feedback visual inmediato al usuario.
     container.innerHTML = `<div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>`;
 
-    // 2. Preparamos todos los datos necesarios de forma asíncrona.
     const visibleAccounts = getVisibleAccounts();
     const saldos = await getSaldos();
     const BASE_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
@@ -3274,9 +3272,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
         }
     });
 
-    // 3. Generamos y renderizamos el HTML completo, reemplazando el esqueleto.
     container.innerHTML = `
-        
         <div class="card__content" style="padding-top:0;">
             <div class="patrimonio-header-grid__kpi" style="margin-bottom: var(--sp-4);">
                 <h4 class="kpi-item__label">Patrimonio Neto (Seleccionado)</h4>
@@ -3290,58 +3286,17 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             <div id="patrimonio-cuentas-lista"></div>
         </div>`;
 
-    // 4. Dibujamos el gráfico de forma segura (SIN setTimeout).
     const chartCtx = select('liquid-assets-chart')?.getContext('2d');
     if (chartCtx) {
-        // **LA SOLUCIÓN CLAVE**: Verificamos si existe un gráfico previo y lo destruimos.
         const existingChart = Chart.getChart('liquid-assets-chart');
-        if (existingChart) {
-            existingChart.destroy();
-        }
-
+        if (existingChart) existingChart.destroy();
         if (treeData.length > 0) {
-            liquidAssetsChart = new Chart(chartCtx, { 
-                type: 'treemap', 
-                data: { 
-                    datasets: [{ 
-                        tree: treeData, 
-                        key: 'saldo', 
-                        groups: ['tipo', 'nombre'], 
-                        spacing: 0.5, 
-                        borderWidth: 1.5, 
-                        borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'), 
-                        backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'), 
-                        labels: { 
-                            display: true, 
-                            color: '#FFFFFF', 
-                            font: { size: 11, weight: '600' }, 
-                            align: 'center', 
-                            position: 'middle', 
-                            formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) 
-                        } 
-                    }] 
-                }, 
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { 
-                        legend: { display: false }, 
-                        tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, 
-                        datalabels: { display: false }
-                    },
-                    onClick: (e) => {
-                        if (e.native) {
-                            e.native.stopPropagation();
-                        }
-                    }
-                } 
-            });
+            liquidAssetsChart = new Chart(chartCtx, { type: 'treemap', data: { datasets: [{ tree: treeData, key: 'saldo', groups: ['tipo', 'nombre'], spacing: 0.5, borderWidth: 1.5, borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'), backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'), labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) } }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false } }, onClick: (e) => e.native && e.native.stopPropagation() } });
         } else {
             select('liquid-assets-chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con saldo positivo para mostrar.</p></div>`;
         }
     }
     
-    // 5. Renderizamos la lista de cuentas.
     const listaContainer = select('patrimonio-cuentas-lista');
     if (listaContainer) {
         const accountsByType = filteredAccounts.reduce((acc, c) => { 
@@ -3369,23 +3324,183 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             ).join('');
 
             if (!accountsHtml) return '';
+            
+            // ⭐ INICIO DE LA MODIFICACIÓN: Envolvemos el <details> con la estructura de swipe ⭐
+            const isInvestmentGroup = accountsInType.some(acc => acc.esInversion);
+            let swipeActions = '';
+            if (isInvestmentGroup) {
+                swipeActions = `
+                    <div class="swipe-actions-container right">
+                        <button class="swipe-action-btn show-chart" data-action="swipe-show-irr-history" data-type="${tipo}">
+                            <span class="material-icons">show_chart</span>
+                            <span>TIR Hist.</span>
+                        </button>
+                    </div>`;
+            }
 
             return `
-                <details class="accordion" style="margin-bottom: var(--sp-2);">
-                    <summary>
-                        <span class="account-group__name">${tipo}</span>
-                        <div style="display:flex; align-items:center; gap:var(--sp-2);">
-                            <small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small>
-                            <span class="account-group__balance">${formatCurrency(typeBalance)}</span>
-                            <span class="material-icons accordion__icon">expand_more</span>
-                        </div>
-                    </summary>
-                    <div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div>
-                </details>`;
+                <div class="swipe-container patrimonio-swipe-container">
+                    ${swipeActions}
+                    <div class="transaction-card" style="padding: 0; min-height: 0; display: block; background: var(--c-background);">
+                        <details class="accordion" style="margin-bottom: var(--sp-2);">
+                            <summary>
+                                <span class="account-group__name">${tipo}</span>
+                                <div style="display:flex; align-items:center; gap:var(--sp-2);">
+                                    <small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small>
+                                    <span class="account-group__balance">${formatCurrency(typeBalance)}</span>
+                                    <span class="material-icons accordion__icon">expand_more</span>
+                                </div>
+                            </summary>
+                            <div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div>
+                        </details>
+                    </div>
+                </div>`;
+            // ⭐ FIN DE LA MODIFICACIÓN ⭐
         }).join('');
     }
 };
+       
+/**
+ * Gestiona la acción de mostrar el gráfico histórico de la TIR para un tipo de activo.
+ * @param {string} accountType - El tipo de cuenta (ej. "Broker").
+ */
+const handleShowIrrHistory = async (accountType) => {
+    resetActiveSwipe(); // Cierra el swipe
+    hapticFeedback('light');
+    
+    // Muestra un modal con un spinner mientras se calculan los datos
+    const titleEl = select('irr-history-title');
+    const bodyEl = select('irr-history-body');
+    if(titleEl) titleEl.textContent = `Evolución TIR: ${accountType}`;
+    if(bodyEl) bodyEl.innerHTML = `<div style="display: flex; justify-content: center; align-items: center; height: 100%;"><span class="spinner" style="width: 48px; height: 48px;"></span></div>`;
+    showModal('irr-history-modal');
+
+    // Obtiene las cuentas que pertenecen a este tipo
+    const accountIds = getVisibleAccounts()
+        .filter(c => toSentenceCase(c.tipo || 'S/T') === accountType && c.esInversion)
+        .map(c => c.id);
         
+    // Llama a la "máquina del tiempo" para obtener los datos
+    const historyData = await calculateHistoricalIrrForGroup(accountIds);
+
+    // Si no hay datos, muestra un mensaje
+    if (!historyData || historyData.length < 2) {
+        if(bodyEl) bodyEl.innerHTML = `<div class="empty-state"><p>No hay suficientes valoraciones para generar un histórico de TIR para este grupo de activos.</p></div>`;
+        return;
+    }
+
+    // Prepara el canvas y destruye cualquier gráfico anterior
+    if(bodyEl) bodyEl.innerHTML = `<div class="chart-container" style="height: 100%;"><canvas id="irr-history-chart"></canvas></div>`;
+    const chartCtx = select('irr-history-chart').getContext('2d');
+    const existingChart = Chart.getChart(chartCtx);
+    if (existingChart) existingChart.destroy();
+
+    // Dibuja el nuevo gráfico de líneas
+    new Chart(chartCtx, {
+        type: 'line',
+        data: {
+            labels: historyData.map(d => new Date(d.date)),
+            datasets: [{
+                label: 'TIR Anualizada',
+                data: historyData.map(d => d.irr * 100),
+                borderColor: 'var(--c-info)',
+                backgroundColor: 'rgba(191, 90, 242, 0.2)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    ticks: { callback: (value) => `${value.toFixed(1)}%` },
+                    title: { display: true, text: 'TIR Anualizada (%)' }
+                },
+                x: {
+                    type: 'time',
+                    time: { unit: 'month', tooltipFormat: 'dd MMM yyyy' }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (context) => `TIR: ${context.parsed.y.toFixed(2)}%` } },
+                datalabels: { display: false }
+            }
+        }
+    });
+};
+
+/**
+ * La "Máquina del Tiempo": Calcula la TIR en diferentes puntos del pasado.
+ * @param {string[]} accountIds - Array de IDs de las cuentas a analizar.
+ * @returns {Promise<Array<{date: string, irr: number}>>} - Una promesa que resuelve a un array de puntos para el gráfico.
+ */
+async function calculateHistoricalIrrForGroup(accountIds) {
+    if (!dataLoaded.inversiones) await loadInversiones();
+    const allMovements = await fetchAllMovementsForHistory();
+    const accountIdSet = new Set(accountIds);
+    
+    // 1. Recopilar todos los eventos (cashflows y valoraciones) para estas cuentas
+    const timeline = [];
+    const valuations = (db.inversiones_historial || []).filter(v => accountIdSet.has(v.cuentaId));
+    const cashflows = allMovements.filter(m => {
+        return (m.tipo === 'movimiento' && accountIdSet.has(m.cuentaId)) ||
+               (m.tipo === 'traspaso' && (accountIdSet.has(m.cuentaOrigenId) || accountIdSet.has(m.cuentaDestinoId)));
+    });
+
+    // Añadir cashflows a la línea de tiempo
+    cashflows.forEach(m => {
+        let amount = 0;
+        if (m.tipo === 'movimiento') amount = m.cantidad;
+        else if (m.tipo === 'traspaso') {
+            const origenEsInversion = accountIdSet.has(m.cuentaOrigenId);
+            const destinoEsInversion = accountIdSet.has(m.cuentaDestinoId);
+            // Solo contamos movimientos que entran/salen del "universo de inversión" del grupo
+            if (origenEsInversion && !destinoEsInversion) amount = -m.cantidad; // Sale dinero del grupo
+            else if (!origenEsInversion && destinoEsInversion) amount = m.cantidad; // Entra dinero al grupo
+        }
+        if (amount !== 0) {
+            // Flujo de caja para TIR: aportación es negativo, retirada es positivo
+            timeline.push({ date: new Date(m.fecha), amount: -amount });
+        }
+    });
+
+    // 2. Ordenar y procesar las valoraciones
+    const sortedValuations = valuations.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    const historicalIrr = [];
+    const valuationMap = new Map();
+
+    // Agrupamos valoraciones por fecha
+    sortedValuations.forEach(v => {
+        const dateKey = v.fecha.slice(0, 10);
+        if (!valuationMap.has(dateKey)) valuationMap.set(dateKey, 0);
+        // Usamos la última valoración de cada cuenta para una fecha dada
+        valuationMap.set(dateKey, valuationMap.get(dateKey) + v.valor);
+    });
+
+    // 3. Viajar en el tiempo y calcular la TIR en cada punto de valoración
+    for (const [dateKey, totalValue] of valuationMap.entries()) {
+        const currentDate = new Date(dateKey);
+        
+        // Obtenemos todos los cashflows hasta esta fecha de valoración
+        const cashflowsUpToDate = timeline
+            .filter(cf => cf.date <= currentDate)
+            .map(cf => ({...cf})); // Clonamos para no modificar el original
+
+        // Añadimos el valor total de mercado en esa fecha como el "flujo de caja final"
+        cashflowsUpToDate.push({ date: currentDate, amount: totalValue });
+        
+        // Calculamos la TIR y la añadimos a nuestros resultados si es válida
+        const irr = calculateIRR(cashflowsUpToDate);
+        if (!isNaN(irr)) {
+            historicalIrr.push({ date: dateKey, irr: irr });
+        }
+    }
+
+    return historicalIrr;
+}
+	   
         const loadConfig = () => { 
             const userEmailEl = select('config-user-email'); 
             if (userEmailEl && currentUser) userEmailEl.textContent = currentUser.email;  			
@@ -7483,6 +7598,7 @@ if (ptrElement && mainScrollerPtr) {
         const btn = actionTarget.closest('button');
         
         const actions = {
+			'swipe-show-irr-history': () => handleShowIrrHistory(type),
 			'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
                 if (!menu) return;
