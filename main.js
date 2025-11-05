@@ -7512,6 +7512,30 @@ const handleInteractionEnd = (e) => {
     swipeState.isSwiping = false;
     swipeState.isSwipeIntent = false;
 };
+let longPressTimer = null;
+
+const startPress = () => {
+    longPressState.isLongPress = false;
+    longPressTimer = setTimeout(() => {
+        longPressState.isLongPress = true;
+        hapticFeedback('medium');
+        // Acción de pulsación larga: abrir directamente el formulario de gasto
+        startMovementForm();
+        setTimeout(() => setMovimientoFormType('gasto'), 50);
+    }, 400); // 400ms para considerarse una pulsación larga
+};
+
+const endPress = () => {
+    clearTimeout(longPressTimer);
+    if (!longPressState.isLongPress) {
+        // Acción de toque corto: abrir el menú rápido
+        hapticFeedback('medium');
+        const quickMenu = select('quick-add-menu');
+        if (quickMenu) {
+            quickMenu.classList.toggle('visible');
+        }
+    }
+};
 
 // =================================================================
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
