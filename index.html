@@ -115,11 +115,7 @@
         <span class="bottom-nav__label">Diario</span>
     </button>
     
-    <!-- 3. Añadir (Acción Principal, Invariable) -->
-    <button data-action="open-main-add-modal" id="bottom-nav-add-btn">
-        <span class="material-icons">add</span>
-    </button>
-    
+        
     <!-- 4. Estrategia (Futuro unificado) -->
     <button data-action="navigate" data-page="estrategia-page" class="bottom-nav__item">
         <span class="material-icons">insights</span>
@@ -154,8 +150,20 @@
     <section id="estrategia-page" class="view"></section> <!-- AÑADIDA -->
     <section id="ajustes-page" class="view"></section>
 </main>
-    
-</div>
+   <div id="quick-add-menu">
+    <div class="quick-add-item" data-action="quick-add-type" data-type="gasto">
+        <span class="label">Nuevo Gasto</span>
+        <div class="icon-wrapper gasto"><span class="material-icons">shopping_cart</span></div>
+    </div>
+    <div class="quick-add-item" data-action="quick-add-type" data-type="ingreso">
+        <span class="label">Nuevo Ingreso</span>
+        <div class="icon-wrapper ingreso"><span class="material-icons">attach_money</span></div>
+    </div>
+    <div class="quick-add-item" data-action="quick-add-type" data-type="traspaso">
+        <span class="label">Nuevo Traspaso</span>
+        <div class="icon-wrapper traspaso"><span class="material-icons">swap_horiz</span></div>
+    </div>
+</div> 
     
     <div id="toast-container" aria-live="assertive"></div>
     

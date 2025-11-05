@@ -7384,34 +7384,24 @@ function createCustomSelect(selectElement) {
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
 // =================================================================
  const attachEventListeners = () => {
-	let longPressTimer;
 const addBtn = select('bottom-nav-add-btn');
 const quickMenu = select('quick-add-menu');
 
 if (addBtn && quickMenu) {
-    let longPressTimer;
-    let isLongPressTriggered = false;
+    // Cuando haces clic en el botón (+)
+    addBtn.addEventListener('click', () => {
+        hapticFeedback('medium');
+        // Simplemente muestra u oculta el menú
+        quickMenu.classList.toggle('visible');
+    });
 
-    const startPress = (e) => {
-        // Prevenimos el comportamiento por defecto en touch para evitar zoom o scroll no deseado
-        if (e.type === 'touchstart') e.preventDefault();
-        
-        isLongPressTriggered = false;
-        longPressTimer = setTimeout(() => {
-            isLongPressTriggered = true;
-            hapticFeedback('medium');
-            quickMenu.classList.add('visible');
-        }, 400); // 400ms para considerar una pulsación larga
-    };
-
-    const endPress = (e) => {
-        clearTimeout(longPressTimer);
-        // Si el temporizador se canceló ANTES de que se cumpliera (isLongPressTriggered es false),
-        // entonces fue un clic corto.
-        if (!isLongPressTriggered) {
-            startMovementForm();
+    // Listener para cerrar el menú si se hace clic fuera
+    document.addEventListener('click', (e) => {
+        if (!quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
+            quickMenu.classList.remove('visible');
         }
-    };
+    });
+}
     
     // Asignamos los listeners
     addBtn.addEventListener('mousedown', startPress);
@@ -7591,6 +7581,25 @@ if (ptrElement && mainScrollerPtr) {
         const btn = actionTarget.closest('button');
         
         const actions = {
+			 'quick-add-type': (e) => {
+        const type = e.target.closest('[data-type]').dataset.type;
+        const menu = select('quick-add-menu');
+        if (menu) menu.classList.remove('visible');
+        
+        startMovementForm(); // Abre el formulario genérico...
+        
+        // ...y 50ms después (para que el modal se haya renderizado), 
+        // le decimos qué tipo de movimiento es.
+        setTimeout(() => {
+            setMovimientoFormType(type);
+            
+            // ¡Paso final y crucial! Abrimos la calculadora automáticamente.
+            const amountInput = select('movimiento-cantidad');
+            if (amountInput) {
+                showCalculator(amountInput);
+            }
+        }, 50);
+    },
 			'swipe-show-irr-history': () => handleShowIrrHistory(type),
 			'show-main-menu': () => {
     const menu = document.getElementById('main-menu-popover');
