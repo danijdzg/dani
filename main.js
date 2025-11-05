@@ -792,18 +792,55 @@ async function loadCoreData(uid) {
             });
         };
 
-        const calculateNextDueDate = (currentDueDate, frequency) => {
-            const d = new Date(currentDueDate);
-            d.setHours(12, 0, 0, 0); 
-        
-            switch (frequency) {
-                case 'daily': return addDays(d, 1);
-                case 'weekly': return addWeeks(d, 1);
-                case 'monthly': return addMonths(d, 1);
-                case 'yearly': return addYears(d, 1);
-                default: return d;
+  const calculateNextDueDate = (currentDueDate, frequency, daysOfWeek = []) => {
+    // Usamos el constructor que ya manejaba bien la zona horaria UTC.
+    const d = parseDateStringAsUTC(currentDueDate);
+    if (!d) return new Date(); // Devolvemos la fecha actual como fallback seguro
+
+    switch (frequency) {
+        case 'daily':
+            return addDays(d, 1);
+        case 'weekly':
+            // ¡Aquí está la nueva magia!
+            if (daysOfWeek && daysOfWeek.length > 0) {
+                // Convertimos el array de strings a números y lo ordenamos
+                const activeDays = daysOfWeek.map(Number).sort((a, b) => a - b);
+                // Obtenemos el día de la semana actual (Lunes=1, ..., Domingo=7)
+                // Usamos getUTCDay y hacemos un ajuste para que Domingo sea 7 en vez de 0.
+                let currentDay = d.getUTCDay();
+                if (currentDay === 0) currentDay = 7;
+                
+                let nextDay = -1;
+                // Buscamos el próximo día activo en la misma semana
+                for (const day of activeDays) {
+                    if (day > currentDay) {
+                        nextDay = day;
+                        break;
+                    }
+                }
+                
+                if (nextDay !== -1) {
+                    // Si encontramos un día después en la misma semana, simplemente sumamos la diferencia de días
+                    return addDays(d, nextDay - currentDay);
+                } else {
+                    // Si no, significa que debemos ir al primer día activo de la próxima semana
+                    // Calculamos los días que faltan para terminar la semana actual + los días para llegar al primer día activo de la siguiente.
+                    const daysUntilNextWeek = 7 - currentDay;
+                    const firstDayOfNextWeek = activeDays[0];
+                    return addDays(d, daysUntilNextWeek + firstDayOfNextWeek);
+                }
+            } else {
+                // Si no hay días específicos, funciona como antes.
+                return addWeeks(d, 1);
             }
-        };
+        case 'monthly':
+            return addMonths(d, 1);
+        case 'yearly':
+            return addYears(d, 1);
+        default:
+            return d;
+    }
+};
         const calculatePreviousDueDate = (currentDueDate, frequency) => {
     const d = new Date(currentDueDate);
     d.setHours(12, 0, 0, 0); 
@@ -3236,19 +3273,17 @@ const renderBudgetTrendChart = (monthlyIncomeData, monthlyExpenseData, averageBu
 const renderPatrimonioOverviewWidget = async (containerId) => {
     const container = select(containerId);
     if (!container) return;
-
-    // 1. Dibuja toda la estructura HTML, incluyendo la lista de cuentas
     container.innerHTML = `<div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>`;
-    // (Aquí va todo el código que ya tenías para dibujar los filtros, el gráfico treemap, etc. Es el mismo de antes.)
+
     const visibleAccounts = getVisibleAccounts();
     const saldos = await getSaldos();
     const BASE_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
+
     const allAccountTypes = [...new Set(visibleAccounts.map((c) => toSentenceCase(c.tipo || 'S/T')))].sort();
     const filteredAccountTypes = new Set(allAccountTypes.filter(t => !deselectedAccountTypesFilter.has(t)));
+
     const colorMap = {};
-    allAccountTypes.forEach((tipo, index) => {
-        colorMap[tipo] = BASE_COLORS[index % BASE_COLORS.length];
-    });
+    allAccountTypes.forEach((tipo, index) => { colorMap[tipo] = BASE_COLORS[index % BASE_COLORS.length]; });
     const pillsHTML = allAccountTypes.map(t => {
         const isActive = !deselectedAccountTypesFilter.has(t);
         const color = colorMap[t];
@@ -3258,14 +3293,13 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
         }
         return `<button class="filter-pill ${isActive ? 'filter-pill--active' : ''}" data-action="toggle-account-type-filter" data-type="${t}" ${style}>${t}</button>`;
     }).join('') || `<p style="font-size:var(--fs-xs); color:var(--c-on-surface-secondary)">No hay cuentas en esta vista.</p>`;
+    
     const filteredAccounts = visibleAccounts.filter(c => filteredAccountTypes.has(toSentenceCase(c.tipo || 'S/T')));
     const totalFiltrado = filteredAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
     const treeData = [];
     filteredAccounts.forEach(c => {
         const saldo = saldos[c.id] || 0;
-        if (saldo > 0) {
-            treeData.push({ tipo: toSentenceCase(c.tipo || 'S/T'), nombre: c.nombre, saldo: saldo / 100 });
-        }
+        if (saldo > 0) treeData.push({ tipo: toSentenceCase(c.tipo || 'S/T'), nombre: c.nombre, saldo: saldo / 100 });
     });
     container.innerHTML = `
         <div class="card__content" style="padding-top:0;">
@@ -3282,13 +3316,14 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
         </div>`;
     const chartCtx = select('liquid-assets-chart')?.getContext('2d');
     if (chartCtx) {
-        if (Chart.getChart('liquid-assets-chart')) Chart.getChart('liquid-assets-chart').destroy();
+        if(Chart.getChart(chartCtx)) Chart.getChart(chartCtx).destroy();
         if (treeData.length > 0) {
             liquidAssetsChart = new Chart(chartCtx, { type: 'treemap', data: { datasets: [{ tree: treeData, key: 'saldo', groups: ['tipo', 'nombre'], spacing: 0.5, borderWidth: 1.5, borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'), backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'), labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) } }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false } }, onClick: (e) => e.native && e.native.stopPropagation() } });
         } else {
             select('liquid-assets-chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con saldo positivo para mostrar.</p></div>`;
         }
     }
+    
     const listaContainer = select('patrimonio-cuentas-lista');
     if (listaContainer) {
         const accountsByType = filteredAccounts.reduce((acc, c) => { const tipo = toSentenceCase(c.tipo || 'S/T'); if (!acc[tipo]) acc[tipo] = []; acc[tipo].push(c); return acc; }, {});
@@ -3297,11 +3332,8 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             const typeBalance = accountsInType.reduce((sum, acc) => sum + (saldos[acc.id] || 0), 0);
             const porcentajeGlobal = totalFiltrado > 0 ? (typeBalance / totalFiltrado) * 100 : 0;
             const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => 
-                `<div class="modal__list-item" data-action="view-account-details" data-id="${c.id}" ${c.esInversion ? 'data-is-investment="true"' : ''} style="cursor: pointer; padding: var(--sp-2) 0;">
-                    <div>
-                        <span style="display: block;">${c.nombre}</span>
-                        <small style="color: var(--c-on-surface-secondary);">${(saldos[c.id] || 0) / typeBalance > 0 ? (((saldos[c.id] || 0) / typeBalance) * 100).toFixed(1) + '% de ' + tipo : ''}</small>
-                    </div>
+                `<div class="modal__list-item" data-id="${c.id}" ${c.esInversion ? 'data-is-investment="true"' : ''} style="cursor: pointer; padding: var(--sp-2) 0;">
+                    <div><span style="display: block;">${c.nombre}</span><small style="color: var(--c-on-surface-secondary);">${(saldos[c.id] || 0) / typeBalance > 0 ? (((saldos[c.id] || 0) / typeBalance) * 100).toFixed(1) + '% de ' + tipo : ''}</small></div>
                     <div style="display: flex; align-items: center; gap: var(--sp-2);">
                         ${formatCurrency(saldos[c.id] || 0)}
                         <span class="material-icons" style="font-size: 18px;">chevron_right</span>
@@ -3311,51 +3343,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             if (!accountsHtml) return '';
             return `<details class="accordion" style="margin-bottom: var(--sp-2);"><summary><span class="account-group__name">${tipo}</span><div style="display:flex; align-items:center; gap:var(--sp-2);"><small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small><span class="account-group__balance">${formatCurrency(typeBalance)}</span><span class="material-icons accordion__icon">expand_more</span></div></summary><div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div></details>`;
         }).join('');
-
-        // ⭐ INICIO DE LA LÓGICA INFALIBLE PARA "LONG PRESS" ⭐
-        // 2. Seleccionamos los elementos de inversión DESPUÉS de haberlos creado en el paso anterior.
-        const investmentItems = listaContainer.querySelectorAll('[data-is-investment="true"]');
-        
-        // 3. A cada uno, le asignamos su propio "escuchador de eventos".
-        investmentItems.forEach(item => {
-            let longPressTimer;
-            let startX, startY;
-            let longPressTriggered = false;
-
-            const startHandler = (e) => {
-                e.stopPropagation();
-                const point = e.touches ? e.touches[0] : e;
-                startX = point.clientX;
-                startY = point.clientY;
-                longPressTriggered = false;
-                longPressTimer = setTimeout(() => {
-                    longPressTriggered = true;
-                    handleShowIrrHistory({ accountId: item.dataset.id });
-                }, 500); // Medio segundo para activar
-            };
-            const moveHandler = (e) => {
-                if (!longPressTimer) return;
-                const point = e.touches ? e.touches[0] : e;
-                if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                }
-            };
-            const endHandler = (e) => {
-                clearTimeout(longPressTimer);
-                if (longPressTriggered) {
-                    e.preventDefault();
-                }
-            };
-            item.addEventListener('mousedown', startHandler);
-            item.addEventListener('touchstart', startHandler, { passive: true });
-            item.addEventListener('mousemove', moveHandler);
-            item.addEventListener('touchmove', moveHandler, { passive: true });
-            item.addEventListener('mouseup', endHandler);
-            item.addEventListener('touchend', endHandler);
-            item.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
-        });
-        // ⭐ FIN DE LA LÓGICA INFALIBLE ⭐
+        // Ya no hay escuchadores de eventos aquí, son gestionados globalmente.
     }
 };
 
@@ -6172,6 +6160,9 @@ const setMovimientoFormType = (type) => {
     const titleEl = select('form-movimiento-title');
     const amountGroup = select('movimiento-cantidad-form-group');
     const mode = select('movimiento-mode').value;
+    
+    // Ocultamos el nuevo selector de días por defecto
+    select('recurrent-week-days').classList.add('hidden');
 
     select('movimiento-fields').classList.toggle('hidden', isTraspaso);
     select('traspaso-fields').classList.toggle('hidden', !isTraspaso);
@@ -6182,9 +6173,8 @@ const setMovimientoFormType = (type) => {
     if (titleEl && amountGroup) {
         const isEditing = mode.startsWith('edit');
         let baseTitle = isEditing ? 'Editar' : 'Nuevo';
-		// Detectar si venimos de duplicar un movimiento
 		if (titleEl.textContent === 'Duplicar Movimiento') {
-        baseTitle = 'Duplicar';
+            baseTitle = 'Duplicar';
 		}
 
         switch (type) {
@@ -6202,7 +6192,6 @@ const setMovimientoFormType = (type) => {
                 titleEl.textContent = `${baseTitle} Traspaso`;
                 titleEl.classList.add('title--traspaso');
                 amountGroup.classList.add('is-traspaso');
-                // [CAMBIO UX] Si es un nuevo traspaso y la descripción está vacía, la rellenamos.
                 if (!isEditing && select('movimiento-descripcion').value.trim() === '') {
                     select('movimiento-descripcion').value = 'Traspaso';
                 }
@@ -6241,13 +6230,16 @@ const setMovimientoFormType = (type) => {
             }
         };
 
-
 const startMovementForm = async (id = null, isRecurrent = false) => {
     hapticFeedback('medium');
     const form = select('form-movimiento');
     form.reset();
     clearAllErrors(form.id);
     populateAllDropdowns();
+
+    // Reseteamos los días de la semana
+    selectAll('#recurrent-week-days input').forEach(cb => cb.checked = false);
+    select('recurrent-week-days').classList.add('hidden');
 
     let data = null;
     let mode = 'new';
@@ -6257,7 +6249,6 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
         try {
             const collectionName = isRecurrent ? 'recurrentes' : 'movimientos';
             const doc = await fbDb.collection('users').doc(currentUser.uid).collection(collectionName).doc(id).get();
-
             if (doc.exists) {
                 data = { id: doc.id, ...doc.data() };
                 mode = isRecurrent ? 'edit-recurrent' : 'edit-single';
@@ -6282,7 +6273,6 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
         
         const fechaInput = select('movimiento-fecha');
         const dateStringForInput = isRecurrent ? data.nextDate : data.fecha;
-
         if (dateStringForInput) {
             const fecha = new Date(dateStringForInput);
             fechaInput.value = new Date(fecha.getTime() - (fecha.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
@@ -6292,9 +6282,7 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
             fechaInput.value = new Date(fecha.getTime() - (fecha.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
             updateDateDisplay(fechaInput);
         }
-
         select('movimiento-descripcion').value = data.descripcion || '';
-
         if (data.tipo === 'traspaso') {
             select('movimiento-cuenta-origen').value = data.cuentaOrigenId || '';
             select('movimiento-cuenta-destino').value = data.cuentaDestinoId || '';
@@ -6311,10 +6299,20 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
         const recurrentOptions = select('recurrent-options');
         if (mode === 'edit-recurrent') {
             recurrenteCheckbox.checked = true;
+            recurrentOptions.classList.remove('hidden');
             select('recurrent-frequency').value = data.frequency;
             select('recurrent-next-date').value = data.nextDate;
             select('recurrent-end-date').value = data.endDate || '';
-            recurrentOptions.classList.remove('hidden');
+            
+            // Lógica para mostrar y marcar los días de la semana
+            if (data.frequency === 'weekly' && data.daysOfWeek) {
+                select('recurrent-week-days').classList.remove('hidden');
+                data.daysOfWeek.forEach(dayIndex => {
+                    const cb = select(`weekday-${dayIndex}`);
+                    if (cb) cb.checked = true;
+                });
+            }
+
         } else {
             recurrenteCheckbox.checked = false;
             recurrentOptions.classList.add('hidden');
@@ -9093,70 +9091,66 @@ const handleAddConcept = async (btn) => {
 // ==============================================================
 const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
     const collection = isRecurrent ? 'recurrentes' : 'movimientos';
-    const ANIMATION_DURATION = 400; // Debe coincidir con la duración en el CSS
-
-    const itemElement = document.querySelector(`.transaction-card[data-id="${id}"]`)?.closest('.swipe-container');
-
-    try {
-        // 1. ACTUALIZACIÓN OPTIMISTA DE DATOS
-        let itemToDelete;
-        if (isRecurrent) {
-            const index = db.recurrentes.findIndex(r => r.id === id);
-            if (index === -1) throw new Error("Recurrente no encontrado.");
-            [itemToDelete] = db.recurrentes.splice(index, 1);
-        } else {
-            const index = db.movimientos.findIndex(m => m.id === id);
-            if (index === -1) throw new Error("Movimiento no encontrado.");
-            [itemToDelete] = db.movimientos.splice(index, 1);
-            // Revertimos el saldo en la caché local ANTES de redibujar
-            applyOptimisticBalanceUpdate(null, itemToDelete); 
-        }
     
-        // 2. EFECTO VISUAL (Si el elemento está en pantalla)
+    // Mostramos la confirmación al usuario antes de hacer nada
+    const message = isRecurrent 
+        ? '¿Seguro que quieres eliminar esta operación recurrente de forma permanente?'
+        : '¿Seguro que quieres eliminar este movimiento de forma permanente?';
+        
+    showConfirmationModal(message, async () => {
+        hapticFeedback('medium');
+        
+        // Efecto visual: animamos la salida del elemento de la lista
+        const itemElement = document.querySelector(`[data-id="${id}"]`)?.closest('.swipe-container, .modal__list-item');
         if (itemElement) {
             itemElement.classList.add('item-deleting');
+            // Esperamos a que la animación termine antes de continuar
+            await new Promise(resolve => setTimeout(resolve, 400));
         }
 
-        // 3. ACTUALIZACIÓN DE LA UI (Después de la animación)
-        setTimeout(() => {
-    updateLocalDataAndRefreshUI();
-    if (isRecurrent) renderEstrategiaPlanificacion();
-}, itemElement ? 400 : 0); // 400ms es la duración de la animación
+        try {
+            // Buscamos la información del elemento que vamos a borrar ANTES de que desaparezca
+            const itemToDelete = isRecurrent 
+                ? db.recurrentes.find(r => r.id === id) 
+                : db.movimientos.find(m => m.id === id);
 
-        // 4. PERSISTENCIA EN SEGUNDO PLANO
-        if (!isRecurrent) {
-            const batch = fbDb.batch();
-            const userRef = fbDb.collection('users').doc(currentUser.uid);
-            if (itemToDelete.tipo === 'traspaso') {
-                const origenRef = userRef.collection('cuentas').doc(itemToDelete.cuentaOrigenId);
-                const destinoRef = userRef.collection('cuentas').doc(itemToDelete.cuentaDestinoId);
-                batch.update(origenRef, { saldo: firebase.firestore.FieldValue.increment(itemToDelete.cantidad) });
-                batch.update(destinoRef, { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
+            if (!itemToDelete) throw new Error("Elemento no encontrado para borrar.");
+
+            // AHORA es cuando hacemos la llamada a la base de datos
+            if (!isRecurrent) {
+                // Para movimientos, usamos una transacción para asegurar que el saldo se actualiza correctamente
+                const batch = fbDb.batch();
+                const userRef = fbDb.collection('users').doc(currentUser.uid);
+
+                if (itemToDelete.tipo === 'traspaso') {
+                    if(itemToDelete.cuentaOrigenId) batch.update(userRef.collection('cuentas').doc(itemToDelete.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(itemToDelete.cantidad) });
+                    if(itemToDelete.cuentaDestinoId) batch.update(userRef.collection('cuentas').doc(itemToDelete.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
+                } else {
+                    if(itemToDelete.cuentaId) batch.update(userRef.collection('cuentas').doc(itemToDelete.cuentaId), { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
+                }
+                batch.delete(userRef.collection(collection).doc(id));
+                await batch.commit();
+
             } else {
-                const cuentaRef = userRef.collection('cuentas').doc(itemToDelete.cuentaId);
-                batch.update(cuentaRef, { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
+                // Para recurrentes, una simple eliminación es suficiente
+                await deleteDoc(collection, id);
             }
-            batch.delete(userRef.collection(collection).doc(id));
-            await batch.commit();
-        } else {
-            await deleteDoc(collection, id);
+
+            // Si todo ha ido bien, damos feedback y refrescamos la app
+            hapticFeedback('success');
+            showToast("Elemento eliminado.", "info");
+            
+            // Forzamos una recarga de datos limpia para asegurar 100% de consistencia,
+            // que se gestiona automáticamente por los `onSnapshot`.
+            
+        } catch (error) {
+            // Si Firebase falla, mostramos un error claro y el elemento no se borrará visualmente
+            console.error("Error al eliminar:", error);
+            showToast("Error al eliminar. La operación fue cancelada.", "danger");
+            // Quitamos la clase de animación para que el elemento vuelva a ser visible
+            if(itemElement) itemElement.classList.remove('item-deleting');
         }
-
-        hapticFeedback('success');
-        showToast("Elemento eliminado.", "info");
-
-    } catch (error) {
-         // ¡PLAN B! Si Firebase falla, revertimos el cambio en la UI
-    console.error("Firebase falló. Revirtiendo cambio optimista:", error);
-    showToast("Error de sincronización. Reestableciendo estado.", "danger");
-    // Volvemos a añadir el item que borramos localmente
-    if (isRecurrent) db.recurrentes.push(itemToDelete);
-    else db.movimientos.push(itemToDelete);
-    // Recalculamos el saldo con el item restaurado
-    if (!isRecurrent) applyOptimisticBalanceUpdate(itemToDelete, null);
-    // Forzamos un re-renderizado completo para asegurar la consistencia
-    updateLocalDataAndRefreshUI(); 
-}
+    });
 };
 // ============================================================
 // === FIN: FUNCIÓN DE BORRADO OPTIMIZADA ===
@@ -9447,58 +9441,70 @@ const longPressState = { timer: null, isLongPress: false };
 const swipeState = { activeCard: null, startX: 0, currentX: 0, isSwiping: false, isSwipeIntent: false, threshold: 60 };
 
 const handleInteractionStart = (e) => {
-    const card = e.target.closest('.transaction-card');
-    if (!card || !card.dataset.id) return;
+    // Buscamos el elemento interactuable más cercano (puede ser un movimiento o un activo)
+    const targetItem = e.target.closest('[data-id]');
+    if (!targetItem) return;
 
-    resetActiveSwipe();
+    const card = targetItem.classList.contains('transaction-card') ? targetItem : null;
+    if (card) resetActiveSwipe(); // Solo reseteamos swipes si estamos en una tarjeta de movimiento
 
     longPressState.isLongPress = false;
     longPressState.timer = setTimeout(() => {
         longPressState.isLongPress = true;
-        swipeState.isSwiping = false;
-        
+        swipeState.isSwiping = false; // Detenemos cualquier intención de swipe
         hapticFeedback('medium');
         
-        showContextMenuForMovement(card.dataset.id);
+        // --- LÓGICA DE DECISIÓN DE CONTEXTO ---
+        if (targetItem.dataset.isInvestment === 'true') {
+            // Si es un activo de inversión, muestra el gráfico de TIR
+            handleShowIrrHistory({ accountId: targetItem.dataset.id });
+        } else if (card) {
+            // Si es una tarjeta de movimiento, muestra el menú de acciones
+            showContextMenuForMovement(card.dataset.id);
+        }
         
     }, 500);
 
     swipeState.isSwiping = true;
     swipeState.isSwipeIntent = false;
     swipeState.activeCard = card;
-    // --- INICIO DE LA MODIFICACIÓN ---
     const point = e.type === 'touchstart' ? e.touches[0] : e;
     swipeState.startX = point.clientX;
     swipeState.currentX = swipeState.startX;
-    swipeState.startY = point.clientY; // <-- AÑADE ESTA LÍNEA
-    // --- FIN DE LA MODIFICACIÓN ---
+    swipeState.startY = point.clientY;
 };
 
 
 const handleInteractionMove = (e) => {
-    if (!swipeState.isSwiping || !swipeState.activeCard) return;
+    // Solo actuamos si hay una interacción activa
+    if (!swipeState.isSwiping) return;
+
+    // Si la interacción es en algo que no sea una tarjeta de movimiento, cancelamos el swipe
+    if (!swipeState.activeCard) {
+        const point = e.type === 'touchmove' ? e.touches[0] : e;
+        const deltaY = point.clientY - swipeState.startY;
+        if (Math.abs(deltaY) > 10) { // Si hay scroll vertical
+             if (longPressState.timer) clearTimeout(longPressState.timer);
+        }
+        return;
+    }
 
     const point = e.type === 'touchmove' ? e.touches[0] : e;
     const deltaX = point.clientX - swipeState.startX;
-    const deltaY = point.clientY - swipeState.startY; // <-- Dato que necesitamos
+    const deltaY = point.clientY - swipeState.startY;
 
-    // ▼▼▼ NUEVA LÓGICA DE DECISIÓN DE GESTO ▼▼▼
     if (!swipeState.isSwipeIntent && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
-        // Si el movimiento vertical es más dominante, es un SCROLL. Cancelamos todo.
-        if (Math.abs(deltaY) > Math.abs(deltaX)) {
+        if (Math.abs(deltaY) > Math.abs(deltaX)) { // Es scroll
             if (longPressState.timer) clearTimeout(longPressState.timer);
-            swipeState.isSwiping = false; // Detenemos la lógica de swipe
+            swipeState.isSwiping = false;
             return;
         }
-        // Si es más horizontal, es un SWIPE. Confirmamos la intención.
         swipeState.isSwipeIntent = true;
         if (longPressState.timer) clearTimeout(longPressState.timer);
     }
-    // ▲▲▲ FIN DE LA NUEVA LÓGICA ▲▲▲
-
-    // El resto de la función solo se ejecuta si la intención es de swipe
+    
     if (swipeState.isSwipeIntent) {
-        e.preventDefault(); // Evitamos el scroll del navegador solo si estamos haciendo swipe
+        e.preventDefault();
         swipeState.currentX = point.clientX;
         const currentDiff = swipeState.currentX - swipeState.startX;
         const direction = currentDiff > 0 ? 'right' : 'left';
@@ -9506,7 +9512,6 @@ const handleInteractionMove = (e) => {
         const rightActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.right');
         const activeActions = direction === 'right' ? leftActions : rightActions;
         const inactiveActions = direction === 'right' ? rightActions : leftActions;
-
         if (activeActions) activeActions.classList.add('swipe-actions-container--visible');
         if (inactiveActions) inactiveActions.classList.remove('swipe-actions-container--visible');
         
@@ -9522,30 +9527,37 @@ const handleInteractionMove = (e) => {
     }
 };
 const handleInteractionEnd = (e) => {
-    // Siempre limpiamos el cronómetro al soltar, por si no se había disparado.
     if (longPressState.timer) {
         clearTimeout(longPressState.timer);
         longPressState.timer = null;
     }
     
-    // Si ya se ejecutó la acción de pulsación larga, no hacemos nada más.
-    if (longPressState.isLongPress) {
-        longPressState.isLongPress = false; // Reseteamos para la próxima vez
+    // Si la acción de pulsación larga ya se ejecutó, no hacemos nada más.
+    // O si no había una interacción activa, tampoco.
+    if (longPressState.isLongPress || !swipeState.isSwiping) {
+        longPressState.isLongPress = false;
         return;
     }
-
-    // El resto de tu lógica de swipe se mantiene igual.
-    if (!swipeState.isSwiping || !swipeState.activeCard) return;
     
-    if (swipeState.isSwipeIntent) {
+    // Si no es un swipe y fue un toque corto en una tarjeta, lo tratamos como un clic normal
+    if (!swipeState.isSwipeIntent && swipeState.activeCard) {
+        const movementId = swipeState.activeCard.dataset.id;
+        startMovementForm(movementId, false);
+    } 
+    // Si fue un swipe, gestionamos la acción
+    else if (swipeState.isSwipeIntent && swipeState.activeCard) {
         const diff = swipeState.currentX - swipeState.startX;
         swipeState.activeCard.style.transition = 'transform 0.3s ease-out';
         
         if (Math.abs(diff) > swipeState.threshold) {
             const direction = diff > 0 ? 'right' : 'left';
-            const finalX = direction === 'right' ? 75 : -75;
-            swipeState.activeCard.style.transform = `translateX(${finalX}px)`;
-            hapticFeedback('light');
+            const actionContainer = direction === 'right' 
+                ? swipeState.activeCard.parentElement.querySelector('.left .swipe-action-btn')
+                : swipeState.activeCard.parentElement.querySelector('.right .swipe-action-btn');
+            
+            // Lanzamos la acción programada en el botón (duplicate o delete)
+            if(actionContainer) actionContainer.click();
+
         } else {
             resetActiveSwipe();
         }
