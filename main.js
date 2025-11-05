@@ -7436,12 +7436,6 @@ ptrIndicator.id = 'pull-to-refresh-indicator';
 ptrIndicator.innerHTML = '<div class="spinner"></div>';
 if (ptrElement) ptrElement.prepend(ptrIndicator);
 
-let ptrState = {
-    startY: 0,
-    isPulling: false,
-    distance: 0,
-    threshold: 80 // Distancia necesaria para activar
-};
 
 if (ptrElement && mainScrollerPtr) {
     ptrElement.addEventListener('touchstart', (e) => {
