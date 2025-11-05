@@ -3237,21 +3237,18 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
     const container = select(containerId);
     if (!container) return;
 
-    // (El código de carga y renderizado del HTML es el mismo, pero lo incluyo todo para que sea un solo copiar y pegar)
+    // 1. Dibuja toda la estructura HTML, incluyendo la lista de cuentas
     container.innerHTML = `<div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>`;
-
+    // (Aquí va todo el código que ya tenías para dibujar los filtros, el gráfico treemap, etc. Es el mismo de antes.)
     const visibleAccounts = getVisibleAccounts();
     const saldos = await getSaldos();
     const BASE_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
-
     const allAccountTypes = [...new Set(visibleAccounts.map((c) => toSentenceCase(c.tipo || 'S/T')))].sort();
     const filteredAccountTypes = new Set(allAccountTypes.filter(t => !deselectedAccountTypesFilter.has(t)));
-
     const colorMap = {};
     allAccountTypes.forEach((tipo, index) => {
         colorMap[tipo] = BASE_COLORS[index % BASE_COLORS.length];
     });
-
     const pillsHTML = allAccountTypes.map(t => {
         const isActive = !deselectedAccountTypesFilter.has(t);
         const color = colorMap[t];
@@ -3261,10 +3258,8 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
         }
         return `<button class="filter-pill ${isActive ? 'filter-pill--active' : ''}" data-action="toggle-account-type-filter" data-type="${t}" ${style}>${t}</button>`;
     }).join('') || `<p style="font-size:var(--fs-xs); color:var(--c-on-surface-secondary)">No hay cuentas en esta vista.</p>`;
-    
     const filteredAccounts = visibleAccounts.filter(c => filteredAccountTypes.has(toSentenceCase(c.tipo || 'S/T')));
     const totalFiltrado = filteredAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
-    
     const treeData = [];
     filteredAccounts.forEach(c => {
         const saldo = saldos[c.id] || 0;
@@ -3272,7 +3267,6 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             treeData.push({ tipo: toSentenceCase(c.tipo || 'S/T'), nombre: c.nombre, saldo: saldo / 100 });
         }
     });
-
     container.innerHTML = `
         <div class="card__content" style="padding-top:0;">
             <div class="patrimonio-header-grid__kpi" style="margin-bottom: var(--sp-4);">
@@ -3286,37 +3280,24 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             <div id="liquid-assets-chart-container" class="chart-container" style="height: 250px; margin-bottom: var(--sp-4);"><canvas id="liquid-assets-chart"></canvas></div>
             <div id="patrimonio-cuentas-lista"></div>
         </div>`;
-
     const chartCtx = select('liquid-assets-chart')?.getContext('2d');
     if (chartCtx) {
-        const existingChart = Chart.getChart('liquid-assets-chart');
-        if (existingChart) existingChart.destroy();
+        if (Chart.getChart('liquid-assets-chart')) Chart.getChart('liquid-assets-chart').destroy();
         if (treeData.length > 0) {
             liquidAssetsChart = new Chart(chartCtx, { type: 'treemap', data: { datasets: [{ tree: treeData, key: 'saldo', groups: ['tipo', 'nombre'], spacing: 0.5, borderWidth: 1.5, borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'), backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'), labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) } }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false } }, onClick: (e) => e.native && e.native.stopPropagation() } });
         } else {
             select('liquid-assets-chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con saldo positivo para mostrar.</p></div>`;
         }
     }
-    
     const listaContainer = select('patrimonio-cuentas-lista');
     if (listaContainer) {
-        const accountsByType = filteredAccounts.reduce((acc, c) => { 
-            const tipo = toSentenceCase(c.tipo || 'S/T'); 
-            if (!acc[tipo]) acc[tipo] = []; 
-            acc[tipo].push(c); 
-            return acc; 
-        }, {});
-
+        const accountsByType = filteredAccounts.reduce((acc, c) => { const tipo = toSentenceCase(c.tipo || 'S/T'); if (!acc[tipo]) acc[tipo] = []; acc[tipo].push(c); return acc; }, {});
         listaContainer.innerHTML = Object.keys(accountsByType).sort().map(tipo => {
             const accountsInType = accountsByType[tipo];
             const typeBalance = accountsInType.reduce((sum, acc) => sum + (saldos[acc.id] || 0), 0);
             const porcentajeGlobal = totalFiltrado > 0 ? (typeBalance / totalFiltrado) * 100 : 0;
             const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => 
-                `<div class="modal__list-item" 
-                     data-action="view-account-details" 
-                     data-id="${c.id}" 
-                     ${c.esInversion ? 'data-is-investment="true"' : ''}
-                     style="cursor: pointer; padding: var(--sp-2) 0;">
+                `<div class="modal__list-item" data-action="view-account-details" data-id="${c.id}" ${c.esInversion ? 'data-is-investment="true"' : ''} style="cursor: pointer; padding: var(--sp-2) 0;">
                     <div>
                         <span style="display: block;">${c.nombre}</span>
                         <small style="color: var(--c-on-surface-secondary);">${(saldos[c.id] || 0) / typeBalance > 0 ? (((saldos[c.id] || 0) / typeBalance) * 100).toFixed(1) + '% de ' + tipo : ''}</small>
@@ -3327,75 +3308,54 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
                     </div>
                 </div>`
             ).join('');
-
             if (!accountsHtml) return '';
-
-            return `
-                <details class="accordion" style="margin-bottom: var(--sp-2);">
-                    <summary>
-                        <span class="account-group__name">${tipo}</span>
-                        <div style="display:flex; align-items:center; gap:var(--sp-2);">
-                            <small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small>
-                            <span class="account-group__balance">${formatCurrency(typeBalance)}</span>
-                            <span class="material-icons accordion__icon">expand_more</span>
-                        </div>
-                    </summary>
-                    <div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div>
-                </details>`;
+            return `<details class="accordion" style="margin-bottom: var(--sp-2);"><summary><span class="account-group__name">${tipo}</span><div style="display:flex; align-items:center; gap:var(--sp-2);"><small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small><span class="account-group__balance">${formatCurrency(typeBalance)}</span><span class="material-icons accordion__icon">expand_more</span></div></summary><div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div></details>`;
         }).join('');
 
-        // ⭐ INICIO DE LA LÓGICA DE DETECCIÓN DE "LONG PRESS" CORREGIDA ⭐
-        // Ahora, esta lógica se activa DESPUÉS de que la lista de cuentas se haya dibujado en la pantalla.
+        // ⭐ INICIO DE LA LÓGICA INFALIBLE PARA "LONG PRESS" ⭐
+        // 2. Seleccionamos los elementos de inversión DESPUÉS de haberlos creado en el paso anterior.
         const investmentItems = listaContainer.querySelectorAll('[data-is-investment="true"]');
         
+        // 3. A cada uno, le asignamos su propio "escuchador de eventos".
         investmentItems.forEach(item => {
-            let longPressTimer;       // Nuestro 'cronómetro' para medir la pulsación.
-            let startX, startY;       // Guardan dónde empezó el toque para diferenciar de un scroll.
-            let longPressTriggered = false; // Una bandera para saber si la pulsación larga se completó.
+            let longPressTimer;
+            let startX, startY;
+            let longPressTriggered = false;
 
             const startHandler = (e) => {
-                e.stopPropagation(); // Evita que otros 'clicks' se disparen accidentalmente.
+                e.stopPropagation();
                 const point = e.touches ? e.touches[0] : e;
                 startX = point.clientX;
                 startY = point.clientY;
                 longPressTriggered = false;
-
-                // Ponemos en marcha el cronómetro...
                 longPressTimer = setTimeout(() => {
-                    longPressTriggered = true; // ¡Se completó la pulsación larga!
-                    const accountId = item.dataset.id;
-                    // Llamamos a la función que muestra el gráfico de TIR.
-                    handleShowIrrHistory({ accountId: accountId });
-                }, 500); // 500 milisegundos (medio segundo)
+                    longPressTriggered = true;
+                    handleShowIrrHistory({ accountId: item.dataset.id });
+                }, 500); // Medio segundo para activar
             };
-
             const moveHandler = (e) => {
                 if (!longPressTimer) return;
                 const point = e.touches ? e.touches[0] : e;
-                // Si el dedo se mueve más de 10px, es un scroll, no una pulsación.
                 if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
-                    clearTimeout(longPressTimer); // Cancelamos el cronómetro.
+                    clearTimeout(longPressTimer);
                     longPressTimer = null;
                 }
             };
-
             const endHandler = (e) => {
-                clearTimeout(longPressTimer); // Siempre cancelamos el cronómetro al soltar.
+                clearTimeout(longPressTimer);
                 if (longPressTriggered) {
-                    e.preventDefault(); // Si fue pulsación larga, prevenimos la acción de 'click' normal.
+                    e.preventDefault();
                 }
             };
-            
-            // Asignamos los "escuchadores" para todos los casos: móvil (touch) y escritorio (mouse).
             item.addEventListener('mousedown', startHandler);
             item.addEventListener('touchstart', startHandler, { passive: true });
             item.addEventListener('mousemove', moveHandler);
             item.addEventListener('touchmove', moveHandler, { passive: true });
             item.addEventListener('mouseup', endHandler);
             item.addEventListener('touchend', endHandler);
-            item.addEventListener('mouseleave', () => clearTimeout(longPressTimer)); // Si el ratón sale del elemento, se cancela.
+            item.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
         });
-        // ⭐ FIN DE LA LÓGICA CORREGIDA ⭐
+        // ⭐ FIN DE LA LÓGICA INFALIBLE ⭐
     }
 };
 
@@ -3403,10 +3363,11 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
 const handleShowIrrHistory = async (options) => {
     hapticFeedback('medium');
     
+    // Mostramos el modal INMEDIATAMENTE con un spinner
+    showModal('irr-history-modal');
     const titleEl = select('irr-history-title');
     const bodyEl = select('irr-history-body');
     if(bodyEl) bodyEl.innerHTML = `<div style="display: flex; justify-content: center; align-items: center; height: 100%;"><span class="spinner" style="width: 48px; height: 48px;"></span></div>`;
-    showModal('irr-history-modal');
 
     let accountIds = [];
     let title = 'Evolución TIR';
@@ -3424,18 +3385,26 @@ const handleShowIrrHistory = async (options) => {
 
     if(titleEl) titleEl.textContent = title;
         
+    // Obtenemos los datos para el gráfico
     const historyData = await calculateHistoricalIrrForGroup(accountIds);
 
-    if (!historyData || historyData.length < 2) {
-        if(bodyEl) bodyEl.innerHTML = `<div class="empty-state"><p>No hay suficientes valoraciones para generar un histórico de TIR para este activo.</p></div>`;
-        return;
-    }
-
+    // --- ¡AQUÍ ESTÁ LA CORRECCIÓN CLAVE! ---
+    // Ya no comprobamos si hay datos antes de dibujar.
+    // Dibujamos el lienzo del gráfico PASE LO QUE PASE.
     if(bodyEl) bodyEl.innerHTML = `<div class="chart-container" style="height: 100%;"><canvas id="irr-history-chart"></canvas></div>`;
     const chartCtx = select('irr-history-chart').getContext('2d');
+    
+    // Si ya existía un gráfico en este lienzo, lo destruimos
     const existingChart = Chart.getChart(chartCtx);
     if (existingChart) existingChart.destroy();
-
+    
+    // Si no hay datos suficientes, mostramos un mensaje dentro del lienzo del gráfico
+    if (!historyData || historyData.length < 2) {
+        bodyEl.innerHTML += `<div class="empty-state" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;"><p>No hay suficientes valoraciones para generar un histórico de TIR para este activo.</p></div>`;
+        return;
+    }
+    
+    // Si hay datos, creamos el nuevo gráfico
     new Chart(chartCtx, {
         type: 'line',
         data: {
