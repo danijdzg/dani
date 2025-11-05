@@ -3311,7 +3311,13 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             const typeBalance = accountsInType.reduce((sum, acc) => sum + (saldos[acc.id] || 0), 0);
             const porcentajeGlobal = totalFiltrado > 0 ? (typeBalance / totalFiltrado) * 100 : 0;
             const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => 
-                `<div class="modal__list-item" data-action="view-account-details" data-id="${c.id}" style="cursor: pointer; padding: var(--sp-2) 0;">
+                // ⭐ INICIO DE LA MODIFICACIÓN: Añadimos un identificador para las cuentas de inversión ⭐
+                `<div class="modal__list-item" 
+                     data-action="view-account-details" 
+                     data-id="${c.id}" 
+                     ${c.esInversion ? 'data-is-investment="true"' : ''}
+                     style="cursor: pointer; padding: var(--sp-2) 0;">
+                
                     <div>
                         <span style="display: block;">${c.nombre}</span>
                         <small style="color: var(--c-on-surface-secondary);">${(saldos[c.id] || 0) / typeBalance * 100 > 0 ? ((saldos[c.id] || 0) / typeBalance * 100).toFixed(1) + '% de ' + tipo : ''}</small>
@@ -3321,81 +3327,64 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
                         <span class="material-icons" style="font-size: 18px;">chevron_right</span>
                     </div>
                 </div>`
+                // ⭐ FIN DE LA MODIFICACIÓN ⭐
             ).join('');
 
             if (!accountsHtml) return '';
-            
-            // ⭐ INICIO DE LA MODIFICACIÓN: Envolvemos el <details> con la estructura de swipe ⭐
-            const isInvestmentGroup = accountsInType.some(acc => acc.esInversion);
-            let swipeActions = '';
-            if (isInvestmentGroup) {
-                swipeActions = `
-                    <div class="swipe-actions-container right">
-                        <button class="swipe-action-btn show-chart" data-action="swipe-show-irr-history" data-type="${tipo}">
-                            <span class="material-icons">show_chart</span>
-                            <span>TIR Hist.</span>
-                        </button>
-                    </div>`;
-            }
 
+            // ⭐ Ya no necesitamos el contenedor de swipe aquí, lo simplificamos ⭐
             return `
-                <div class="swipe-container patrimonio-swipe-container">
-                    ${swipeActions}
-                    <div class="transaction-card" style="padding: 0; min-height: 0; display: block; background: var(--c-background);">
-                        <details class="accordion" style="margin-bottom: var(--sp-2);">
-                            <summary>
-                                <span class="account-group__name">${tipo}</span>
-                                <div style="display:flex; align-items:center; gap:var(--sp-2);">
-                                    <small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small>
-                                    <span class="account-group__balance">${formatCurrency(typeBalance)}</span>
-                                    <span class="material-icons accordion__icon">expand_more</span>
-                                </div>
-                            </summary>
-                            <div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div>
-                        </details>
-                    </div>
-                </div>`;
-            // ⭐ FIN DE LA MODIFICACIÓN ⭐
+                <details class="accordion" style="margin-bottom: var(--sp-2);">
+                    <summary>
+                        <span class="account-group__name">${tipo}</span>
+                        <div style="display:flex; align-items:center; gap:var(--sp-2);">
+                            <small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small>
+                            <span class="account-group__balance">${formatCurrency(typeBalance)}</span>
+                            <span class="material-icons accordion__icon">expand_more</span>
+                        </div>
+                    </summary>
+                    <div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div>
+                </details>`;
         }).join('');
     }
 };
        
-/**
- * Gestiona la acción de mostrar el gráfico histórico de la TIR para un tipo de activo.
- * @param {string} accountType - El tipo de cuenta (ej. "Broker").
- */
-const handleShowIrrHistory = async (accountType) => {
-    resetActiveSwipe(); // Cierra el swipe
-    hapticFeedback('light');
+const handleShowIrrHistory = async (options) => {
+    hapticFeedback('medium');
     
-    // Muestra un modal con un spinner mientras se calculan los datos
     const titleEl = select('irr-history-title');
     const bodyEl = select('irr-history-body');
-    if(titleEl) titleEl.textContent = `Evolución TIR: ${accountType}`;
     if(bodyEl) bodyEl.innerHTML = `<div style="display: flex; justify-content: center; align-items: center; height: 100%;"><span class="spinner" style="width: 48px; height: 48px;"></span></div>`;
     showModal('irr-history-modal');
 
-    // Obtiene las cuentas que pertenecen a este tipo
-    const accountIds = getVisibleAccounts()
-        .filter(c => toSentenceCase(c.tipo || 'S/T') === accountType && c.esInversion)
-        .map(c => c.id);
+    let accountIds = [];
+    let title = 'Evolución TIR';
+
+    if (options.accountId) {
+        accountIds = [options.accountId];
+        const account = db.cuentas.find(c => c.id === options.accountId);
+        if (account) title = `Evolución TIR: ${account.nombre}`;
+    } else if (options.accountType) {
+        accountIds = getVisibleAccounts()
+            .filter(c => toSentenceCase(c.tipo || 'S/T') === options.accountType && c.esInversion)
+            .map(c => c.id);
+        title = `Evolución TIR: ${options.accountType}`;
+    }
+
+    if(titleEl) titleEl.textContent = title;
         
-    // Llama a la "máquina del tiempo" para obtener los datos
     const historyData = await calculateHistoricalIrrForGroup(accountIds);
 
-    // Si no hay datos, muestra un mensaje
     if (!historyData || historyData.length < 2) {
-        if(bodyEl) bodyEl.innerHTML = `<div class="empty-state"><p>No hay suficientes valoraciones para generar un histórico de TIR para este grupo de activos.</p></div>`;
+        if(bodyEl) bodyEl.innerHTML = `<div class="empty-state"><p>No hay suficientes valoraciones para generar un histórico de TIR para este activo.</p></div>`;
         return;
     }
 
-    // Prepara el canvas y destruye cualquier gráfico anterior
     if(bodyEl) bodyEl.innerHTML = `<div class="chart-container" style="height: 100%;"><canvas id="irr-history-chart"></canvas></div>`;
     const chartCtx = select('irr-history-chart').getContext('2d');
     const existingChart = Chart.getChart(chartCtx);
     if (existingChart) existingChart.destroy();
 
-    // Dibuja el nuevo gráfico de líneas
     new Chart(chartCtx, {
         type: 'line',
         data: {
@@ -3413,14 +3402,8 @@ const handleShowIrrHistory = async (accountType) => {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                y: {
-                    ticks: { callback: (value) => `${value.toFixed(1)}%` },
-                    title: { display: true, text: 'TIR Anualizada (%)' }
-                },
-                x: {
-                    type: 'time',
-                    time: { unit: 'month', tooltipFormat: 'dd MMM yyyy' }
-                }
+                y: { ticks: { callback: (value) => `${value.toFixed(1)}%` }, title: { display: true, text: 'TIR Anualizada (%)' } },
+                x: { type: 'time', time: { unit: 'month', tooltipFormat: 'dd MMM yyyy' } }
             },
             plugins: {
                 legend: { display: false },
@@ -7507,6 +7490,56 @@ if (ptrElement && mainScrollerPtr) {
         ptrState.distance = 0;
     });
 }
+// === INICIO: Lógica para Long Press en Cuentas de Inversión ===
+let longPressAccountTimer = null;
+    let startX, startY;
+
+    document.body.addEventListener('touchstart', (e) => {
+        const investmentItem = e.target.closest('[data-is-investment="true"]');
+        if (!investmentItem) return;
+        
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+
+        longPressAccountTimer = setTimeout(() => {
+            longPressAccountTimer = null; // Previene que se dispare el 'click' normal
+            const accountId = investmentItem.dataset.id;
+            handleShowIrrHistory({ accountId: accountId });
+        }, 500); // 500ms para la pulsación larga
+    }, { passive: true });
+
+    document.body.addEventListener('touchmove', (e) => {
+        if (!longPressAccountTimer) return;
+        const touch = e.touches[0];
+        // Si el dedo se mueve más de 10px en cualquier dirección, cancelamos la pulsación larga
+        if (Math.abs(touch.clientX - startX) > 10 || Math.abs(touch.clientY - startY) > 10) {
+            clearTimeout(longPressAccountTimer);
+            longPressAccountTimer = null;
+        }
+    });
+
+    document.body.addEventListener('touchend', () => {
+        if (longPressAccountTimer) {
+            clearTimeout(longPressAccountTimer);
+            longPressAccountTimer = null;
+        }
+    });
+    
+    // Lo mismo para el ratón en escritorio
+    document.body.addEventListener('mousedown', (e) => {
+        const investmentItem = e.target.closest('[data-is-investment="true"]');
+        if (!investmentItem) return;
+        longPressAccountTimer = setTimeout(() => {
+            longPressAccountTimer = null;
+            const accountId = investmentItem.dataset.id;
+            handleShowIrrHistory({ accountId: accountId });
+        }, 500);
+    });
+    document.body.addEventListener('mouseup', () => clearTimeout(longPressAccountTimer));
+    document.body.addEventListener('mouseleave', () => clearTimeout(longPressAccountTimer));
+    // === FIN: Lógica para Long Press ===
+	
     const cantidadInput = document.getElementById("movimiento-cantidad");
     if (cantidadInput) {
         const cantidadError = document.getElementById("movimiento-cantidad-error");

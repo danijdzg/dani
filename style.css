@@ -1999,28 +1999,3 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 }
 /* === FIN: Estilos para Navegación por Pestañas === */
 
-/* === INICIO: Estilos para Swipe de Gráfico de Activos === */
-
-/* Contenedor específico para las acciones de swipe en la lista de patrimonio */
-.patrimonio-swipe-container .swipe-actions-container.right {
-    right: 0;
-}
-
-/* Estilo del botón para mostrar el gráfico */
-.patrimonio-swipe-container .swipe-action-btn.show-chart {
-    background-color: var(--c-info); /* Usamos el color de "información" */
-}
-
-/* Estilos para el modal del gráfico histórico */
-#irr-history-modal .modal {
-    /* Hacemos el modal más grande para que el gráfico respire */
-    max-width: 95%;
-    height: 70vh; /* Ocupa el 70% de la altura de la pantalla */
-}
-
-@media (min-width: 768px) {
-    #irr-history-modal .modal {
-        max-width: 700px; /* Ancho máximo en tablets/escritorio */
-    }
-}
-/* === FIN: Estilos para Swipe === */
