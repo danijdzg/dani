@@ -7522,179 +7522,38 @@ let longPressTimer = null;
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
 // =================================================================
  const attachEventListeners = () => {
-const fabButton = select('bottom-nav-add-btn');
+    const fabButton = select('bottom-nav-add-btn');
     if (fabButton) {
         fabButton.addEventListener('mousedown', startFabPress);
         fabButton.addEventListener('touchstart', startFabPress, { passive: true });
         fabButton.addEventListener('mouseup', endFabPress);
         fabButton.addEventListener('touchend', endFabPress);
         fabButton.addEventListener('mouseleave', () => clearTimeout(longPressState.timer)); // Cancelar si se sale del botón
-    }	 
-const addBtn = select('bottom-nav-add-btn');
-const quickMenu = select('quick-add-menu');
-
-if (addBtn && quickMenu) {
-    // Ahora, el botón (+) solo reacciona a un 'clic' simple.
-    addBtn.addEventListener('click', (e) => {
-        // Detenemos la propagación para evitar que el listener del documento
-        // que viene a continuación cierre el menú inmediatamente.
-        e.stopPropagation(); 
-        
-        hapticFeedback('medium');
-        quickMenu.classList.toggle('visible'); // Muestra u oculta el menú.
-    });
-
-    // Este listener se encarga de cerrar el menú si se hace clic en cualquier otro lugar de la pantalla.
-    document.addEventListener('click', (e) => {
-        // Si el menú está visible y el clic no fue dentro del menú...
-        if (quickMenu.classList.contains('visible') && !quickMenu.contains(e.target)) {
-            quickMenu.classList.remove('visible');
-        }
-    });
-}	
-const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
-const mainScrollerPtr = selectOne('.app-layout__main');
-if (mainScroller) {
-        mainScroller.addEventListener('mousedown', handleInteractionStart);
-        mainScroller.addEventListener('touchstart', handleInteractionStart, { passive: true });
-        
-        // El 'listener' de movimiento es global para capturar el gesto aunque se salga del elemento.
-        document.addEventListener('mousemove', handleInteractionMove);
-        document.addEventListener('touchmove', handleInteractionMove, { passive: false });
-        
-        // El 'listener' de finalización también es global.
-        document.addEventListener('mouseup', handleInteractionEnd);
-        document.addEventListener('touchend', handleInteractionEnd);
     }
-const ptrIndicator = document.createElement('div');
-ptrIndicator.id = 'pull-to-refresh-indicator';
-ptrIndicator.innerHTML = '<div class="spinner"></div>';
-if (ptrElement) ptrElement.prepend(ptrIndicator);
+    const addBtn = select('bottom-nav-add-btn');
+    const quickMenu = select('quick-add-menu');
 
-
-if (ptrElement && mainScrollerPtr) {
-    ptrElement.addEventListener('touchstart', (e) => {
-        if (mainScrollerPtr.scrollTop === 0) { // Solo si estamos arriba del todo
-            ptrState.startY = e.touches[0].clientY;
-            ptrState.isPulling = true;
-        }
-    }, { passive: true });
-
-    ptrElement.addEventListener('touchmove', (e) => {
-        if (!ptrState.isPulling) return;
-        
-        const currentY = e.touches[0].clientY;
-        ptrState.distance = currentY - ptrState.startY;
-
-        if (ptrState.distance > 0) {
-            e.preventDefault(); // Evita el scroll del navegador
-            ptrIndicator.classList.add('visible');
-            const rotation = Math.min(ptrState.distance * 2.5, 360);
-            ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
-            ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
-        }
-    }, { passive: false });
-
-    ptrElement.addEventListener('touchend', async () => {
-        if (ptrState.isPulling && ptrState.distance > ptrState.threshold) {
+    if (addBtn && quickMenu) {
+        addBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             hapticFeedback('medium');
-            ptrIndicator.querySelector('.spinner').style.transform = '';
-            ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
-            
-            // Acción de refresco: Recargamos los movimientos del diario
-            await renderDiarioPage();
-
-            // Ocultar indicador después de refrescar
-            setTimeout(() => {
-                ptrIndicator.classList.remove('visible');
-                ptrIndicator.querySelector('.spinner').style.animation = '';
-            }, 500);
-        } else {
-            ptrIndicator.classList.remove('visible');
-        }
-
-        ptrState.isPulling = false;
-        ptrState.distance = 0;
-    });
-}
-
-	
-    const cantidadInput = document.getElementById("movimiento-cantidad");
-    if (cantidadInput) {
-        const cantidadError = document.getElementById("movimiento-cantidad-error");
-        cantidadInput.addEventListener("input", () => {
-            let valor = cantidadInput.value.trim();
-            valor = valor.replace(",", ".");
-            const regex = /^\d+(.\d{0,2})?$/;
-            if (valor === "" || !regex.test(valor)) {
-                cantidadError.textContent = "Introduce un número positivo (ej: 2,50 o 15.00)";
-                cantidadInput.classList.add("form-input--error");
-            } else {
-                cantidadError.textContent = "";
-                cantidadInput.classList.remove("form--error");
-            }
-        });
-        const descripcionInput = document.getElementById("movimiento-descripcion");
-        const cuentaSelect = document.getElementById("movimiento-cuenta");
-        const saveBtn = document.getElementById("save-movimiento-btn");
-        document.addEventListener("show-modal", (e) => {
-            if (e.detail.modalId === "movimiento-modal") {
-                setTimeout(() => cantidadInput.focus(), 100);
-            }
-        });
-        cantidadInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                descripcionInput.focus();
-            }
-        });
-        descripcionInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                cuentaSelect.focus();
-            }
-        });
-        cuentaSelect.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                saveBtn.click();
-            }
+            quickMenu.classList.toggle('visible');
         });
     }
 
-    const amountInputForFormatting = select('movimiento-cantidad');
-    if (amountInputForFormatting) {
-        amountInputForFormatting.addEventListener('focus', (e) => {
-            const input = e.target;
-            if (input.value === '') return;
-            const rawValue = input.value.replace(/\./g, '');
-            input.value = rawValue;
-        });
-        amountInputForFormatting.addEventListener('blur', (e) => {
-            const input = e.target;
-            if (input.value === '') return;
-            const numericValue = parseCurrencyString(input.value);
-            input.value = formatAsCurrencyInput(numericValue);
-        });
-    }
-
-    window.addEventListener('popstate', (event) => {
-        const activeModal = document.querySelector('.modal-overlay--active');
-        if (activeModal) {
-            hideModal(activeModal.id);
-            history.pushState({ page: window.history.state?.page }, '', `#${window.history.state?.page || 'panel-page'}`);
-            return;
-        }
-        const pageToNavigate = event.state ? event.state.page : PAGE_IDS.INICIO;
-        if (pageToNavigate) {
-            navigateTo(pageToNavigate, false);
-        }
-    });
-
-     // Cierra los selectores personalizados si se clica fuera.
+    // Listener global para clics, ahora corregido
+    document.body.addEventListener('click', (e) => {
+        
+        // --- INICIO DEL BLOQUE MOVIDO ---
+        // Este código ahora está DENTRO del listener y tiene acceso a 'e'
         if (!e.target.closest('.custom-select-wrapper')) {
             closeAllCustomSelects(null);
         }
+        
+        if (quickMenu && quickMenu.classList.contains('visible') && !quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
+            quickMenu.classList.remove('visible');
+        }
+        // --- FIN DEL BLOQUE MOVIDO ---
 
         const actionTarget = e.target.closest('[data-action]');
         if (!actionTarget) return;
@@ -7703,20 +7562,14 @@ if (ptrElement && mainScrollerPtr) {
         const btn = actionTarget.closest('button');
 
         // Mapa de acciones para un código más limpio.
-    const actions = {
-            // ==========================================================
-            // ACCIÓN CORREGIDA: Gestiona los clics en las opciones del menú (+)
-            // ==========================================================
+        const actions = {
             'quick-add-type': (e) => {
                 const quickAddItem = e.target.closest('[data-action="quick-add-type"]');
                 if (!quickAddItem) return;
-                
                 const type = quickAddItem.dataset.type;
                 const menu = select('quick-add-menu');
                 if (menu) menu.classList.remove('visible');
-                
                 startMovementForm();
-                
                 setTimeout(() => {
                     setMovimientoFormType(type);
                     const amountInput = select('movimiento-cantidad');
@@ -7725,12 +7578,8 @@ if (ptrElement && mainScrollerPtr) {
                     }
                 }, 50);
             },
-            
-            // ==========================================================
-            // EL RESTO DE TUS ACCIONES (YA ESTABAN CORRECTAS)
-            // ==========================================================
-			'swipe-show-irr-history': () => handleShowIrrHistory(type),
-			'show-main-menu': () => {
+            'swipe-show-irr-history': () => handleShowIrrHistory(type),
+            'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
                 if (!menu) return;
                 menu.classList.toggle('popover-menu--visible');
@@ -7827,7 +7676,7 @@ if (ptrElement && mainScrollerPtr) {
             'show-login': (e) => { /* ... lógica show login ... */ },
             'import-csv': showCsvImportWizard,
             'toggle-ledger': async () => { /* ... lógica toggle ledger ... */ },
-            'toggle-off-balance': async () => { const checkbox = target.closest('input[type="checkbox"]'); if (!checkbox) return; hapticFeedback('light'); await saveDoc('cuentas', checkbox.dataset.id, { offBalance: checkbox.checked }); },
+            'toggle-off-balance': async () => { const checkbox = actionTarget.closest('input[type="checkbox"]'); if (!checkbox) return; hapticFeedback('light'); await saveDoc('cuentas', checkbox.dataset.id, { offBalance: checkbox.checked }); },
             'apply-filters': () => { hapticFeedback('light'); scheduleDashboardUpdate(); },
             'delete-movement-from-modal': () => { const isRecurrent = (actionTarget.dataset.isRecurrent === 'true'); const idToDelete = select('movimiento-id').value; const message = isRecurrent ? '¿Seguro que quieres eliminar esta operación recurrente?' : '¿Seguro que quieres eliminar este movimiento?'; showConfirmationModal(message, async () => { hideModal('movimiento-modal'); await deleteMovementAndAdjustBalance(idToDelete, isRecurrent); }); },
             'swipe-delete-movement': () => { deleteMovementAndAdjustBalance(id, actionTarget.dataset.isRecurrent === 'true'); },
@@ -7860,7 +7709,7 @@ if (ptrElement && mainScrollerPtr) {
         if (actions[action]) {
             actions[action](e);
         }
-    };
+    });
 
     document.body.addEventListener('toggle', (e) => {
         const detailsElement = e.target;
@@ -7870,6 +7719,67 @@ if (ptrElement && mainScrollerPtr) {
             renderInformeDetallado(informeId);
         }
     }, true);
+    
+    document.body.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const target = e.target;
+        const submitter = e.submitter;
+        const handlers = {
+            'login-form': () => { const action = submitter ? submitter.dataset.action : 'login'; if (action === 'login') { handleLogin(submitter); } else if (action === 'register') { handleRegister(submitter); } },
+            'pin-form': handlePinSubmit,
+            'form-movimiento': () => handleSaveMovement(target, submitter),
+            'add-concepto-form': () => handleAddConcept(submitter),
+            'add-cuenta-form': () => handleAddAccount(submitter),
+            'informe-cuenta-form': () => handleGenerateInformeCuenta(target, submitter),
+            'manage-investment-accounts-form': () => handleSaveInvestmentAccounts(target, submitter),
+            'form-valoracion': () => handleSaveValoracion(target, submitter),
+            'diario-filters-form': applyDiarioFilters
+        };
+        if (handlers[target.id]) { handlers[target.id](); }
+    });
+    
+    document.body.addEventListener('input', (e) => { const id = e.target.id; if (id) { clearError(id); if (id === 'movimiento-cantidad') validateField('movimiento-cantidad', true); if (id === 'movimiento-descripcion') handleDescriptionInput(); if (id === 'movimiento-concepto' || id === 'movimiento-cuenta') validateField(id, true); if (id === 'movimiento-cuenta-origen' || id === 'movimiento-cuenta-destino') { validateField('movimiento-cuenta-origen', true); validateField('movimiento-cuenta-destino', true); } if (id === 'concepto-search-input') { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => renderConceptosModalList(), 200); } if (id === 'cuenta-search-input') { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => renderCuentasModalList(), 200); } } });
+    
+    document.body.addEventListener('blur', (e) => { const id = e.target.id; if (id) { if (id === 'movimiento-cantidad') validateField('movimiento-cantidad'); if (id === 'movimiento-concepto' || id === 'movimiento-cuenta') validateField(id); } }, true);
+    
+    document.body.addEventListener('focusin', (e) => { if (e.target.matches('.pin-input')) { handlePinInputInteraction(); } if (e.target.id === 'movimiento-descripcion') { handleDescriptionInput(); } });
+    
+    document.addEventListener('change', e => {
+        const target = e.target;
+        if (target.id === 'filter-periodo') {
+			
+            const el = select('custom-date-filters');
+            if (el) el.classList.toggle('hidden', target.value !== 'custom');
+            const applyBtnEl = document.querySelector('[data-action="apply-filters"]');
+            const isCustom = target.value === 'custom';
+            if (applyBtnEl) applyBtnEl.classList.toggle('hidden', !isCustom);
+            if (!isCustom) { hapticFeedback('light'); scheduleDashboardUpdate(); }
+        }
+        if (target.id === 'movimiento-recurrente') {
+            select('recurrent-options').classList.toggle('hidden', !target.checked);
+            if(target.checked && !select('recurrent-next-date').value) {
+                select('recurrent-next-date').value = select('movimiento-fecha').value;
+            }
+        }
+        if (e.target.id === 'recurrent-frequency') {
+        const weekDaysEl = select('recurrent-week-days');
+        if (weekDaysEl) {
+            weekDaysEl.classList.toggle('hidden', e.target.value !== 'weekly');
+        }
+    }
+});
+    
+    const importFileInput = select('import-file-input'); if (importFileInput) importFileInput.addEventListener('change', (e) => { if(e.target.files) handleJSONFileSelect(e.target.files[0]); });
+    const calculatorGrid = select('calculator-grid'); if (calculatorGrid) calculatorGrid.addEventListener('click', (e) => { const btn = e.target.closest('button'); if(btn && btn.dataset.key) handleCalculatorInput(btn.dataset.key); });
+    const searchInput = select('global-search-input'); if (searchInput) searchInput.addEventListener('input', () => { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => { performGlobalSearch(searchInput.value); }, 250); });
+    document.body.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); e.stopPropagation(); showGlobalSearchModal(); } });
+    const dropZone = select('json-drop-zone'); if (dropZone) { dropZone.addEventListener('click', () => { const el = select('import-file-input'); if (el) el.click() }); dropZone.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('drag-over'); }); dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); }); dropZone.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); const files = e.dataTransfer.files; if (files && files.length > 0) handleJSONFileSelect(files); }); }
+    const suggestionsBox = select('description-suggestions'); if (suggestionsBox) { suggestionsBox.addEventListener('click', (e) => { const suggestionItem = e.target.closest('.suggestion-item'); if (suggestionItem) { const { description, conceptoId, cuentaId } = suggestionItem.dataset; applyDescriptionSuggestion(suggestionItem); } }); }
+    const fechaDisplayButton = select('movimiento-fecha-display'); const fechaRealInput = select('movimiento-fecha'); if (fechaDisplayButton && fechaRealInput) { fechaDisplayButton.addEventListener('click', () => fechaRealInput.showPicker()); fechaRealInput.addEventListener('input', () => updateDateDisplay(fechaRealInput)); }
+    const diarioContainer = select('diario-page'); if (diarioContainer) { const mainScroller = selectOne('.app-layout__main'); diarioContainer.addEventListener('touchstart', (e) => { if (mainScroller.scrollTop > 0) return; ptrState.startY = e.touches[0].clientY; ptrState.isPulling = true; if (e.target.closest('.transaction-card')) { handleInteractionStart(e); } }, { passive: true }); diarioContainer.addEventListener('touchmove', (e) => { if (!ptrState.isPulling) { handleInteractionMove(e); return; } const currentY = e.touches[0].clientY; ptrState.distance = currentY - ptrState.startY; if (ptrState.distance > 0) { e.preventDefault(); const indicator = select('pull-to-refresh-indicator'); if (indicator) { indicator.classList.add('visible'); const rotation = Math.min(ptrState.distance * 2, 360); indicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`; } } }, { passive: false }); diarioContainer.addEventListener('touchend', async (e) => { const indicator = select('pull-to-refresh-indicator'); if (ptrState.isPulling && ptrState.distance > ptrState.threshold) { hapticFeedback('medium'); if (indicator) { indicator.querySelector('.spinner').style.animation = 'spin 1s linear infinite'; } await loadMoreMovements(true); setTimeout(() => { if (indicator) { indicator.classList.remove('visible'); indicator.querySelector('.spinner').style.animation = ''; } }, 500); } else if (indicator) { indicator.classList.remove('visible'); } ptrState.isPulling = false; ptrState.distance = 0; handleInteractionEnd(e); }); diarioContainer.addEventListener('mousedown', (e) => e.target.closest('.transaction-card') && handleInteractionStart(e)); diarioContainer.addEventListener('mousemove', handleInteractionMove); diarioContainer.addEventListener('mouseup', handleInteractionEnd); diarioContainer.addEventListener('mouseleave', handleInteractionEnd); }
+    const mainScroller = selectOne('.app-layout__main'); if (mainScroller) { let scrollRAF = null; mainScroller.addEventListener('scroll', () => { if (scrollRAF) window.cancelAnimationFrame(scrollRAF); scrollRAF = window.requestAnimationFrame(() => { if (diarioViewMode === 'list' && select('diario-page')?.classList.contains('view--active')) { renderVisibleItems(); } }); }, { passive: true }); }
+    document.body.addEventListener('toggle', (e) => { const detailsElement = e.target; if (detailsElement.tagName !== 'DETAILS' || !detailsElement.classList.contains('informe-acordeon')) { return; } if (detailsElement.open) { const id = detailsElement.id; const informeId = id.replace('acordeon-', ''); const container = select(`informe-content-${informeId}`); if (container && container.querySelector('.form-label')) { renderInformeDetallado(informeId); } } }, true);
+};
     
     document.body.addEventListener('submit', (e) => {
         e.preventDefault();
