@@ -1,4 +1,6 @@
-
+let userHasInteracted = false;
+document.addEventListener('touchstart', () => userHasInteracted = true, { once: true });
+document.addEventListener('click', () => userHasInteracted = true, { once: true });
 const handleExportFilteredCsv = (btn) => {
     // La lista de movimientos a exportar es la que ya tenemos filtrada en db.movimientos
     const movementsToExport = db.movimientos;
@@ -879,21 +881,24 @@ async function loadCoreData(uid) {
     console.log('Alturas de elementos definidas (Robusto):', vList.heights);
 };
         const hapticFeedback = (type = 'light') => {
-            if ('vibrate' in navigator) {
-                try {
-                    let pattern;
-                    switch (type) {
-                        case 'light':   pattern = 10; break;
-                        case 'medium':  pattern = 25; break;
-                        case 'success': pattern = [15, 60, 15]; break;
-                        case 'warning': pattern = [30, 40, 30]; break;
-                        case 'error':   pattern = [50, 50, 50]; break;
-                        default:        pattern = 10;
-                    }
-                    navigator.vibrate(pattern);
-                } catch (e) {}
+    // ¡LA LÍNEA MÁGICA! Si el usuario aún no ha tocado la pantalla, no hacemos nada.
+    if (!userHasInteracted) return;
+
+    if ('vibrate' in navigator) {
+        try {
+            let pattern;
+            switch (type) {
+                case 'light':   pattern = 10; break;
+                case 'medium':  pattern = 25; break;
+                case 'success': pattern = [15, 60, 15]; break;
+                case 'warning': pattern = [30, 40, 30]; break;
+                case 'error':   pattern = [50, 50, 50]; break;
+                default:        pattern = 10;
             }
-        };
+            navigator.vibrate(pattern);
+        } catch (e) {}
+    }
+};
 
         const parseDateStringAsUTC = (dateString) => {
             if (!dateString) return null;
@@ -7378,7 +7383,135 @@ function createCustomSelect(selectElement) {
        
     selectElement.addEventListener('change', populateOptions);
 }
+const longPressState = { timer: null, isLongPress: false };
+const swipeState = { activeCard: null, startX: 0, currentX: 0, isSwiping: false, isSwipeIntent: false, threshold: 60 };
 
+const handleInteractionStart = (e) => {
+    // Buscamos el elemento interactuable más cercano (puede ser un movimiento o un activo)
+    const targetItem = e.target.closest('[data-id]');
+    if (!targetItem) return;
+
+    const card = targetItem.classList.contains('transaction-card') ? targetItem : null;
+    if (card) resetActiveSwipe(); // Solo reseteamos swipes si estamos en una tarjeta de movimiento
+
+    longPressState.isLongPress = false;
+    longPressState.timer = setTimeout(() => {
+        longPressState.isLongPress = true;
+        swipeState.isSwiping = false; // Detenemos cualquier intención de swipe
+        hapticFeedback('medium');
+        
+        // --- LÓGICA DE DECISIÓN DE CONTEXTO ---
+        if (targetItem.dataset.isInvestment === 'true') {
+            // Si es un activo de inversión, muestra el gráfico de TIR
+            handleShowIrrHistory({ accountId: targetItem.dataset.id });
+        } else if (card) {
+            // Si es una tarjeta de movimiento, muestra el menú de acciones
+            showContextMenuForMovement(card.dataset.id);
+        }
+        
+    }, 500);
+
+    swipeState.isSwiping = true;
+    swipeState.isSwipeIntent = false;
+    swipeState.activeCard = card;
+    const point = e.type === 'touchstart' ? e.touches[0] : e;
+    swipeState.startX = point.clientX;
+    swipeState.currentX = swipeState.startX;
+    swipeState.startY = point.clientY;
+};
+
+
+const handleInteractionMove = (e) => {
+    // Solo actuamos si hay una interacción activa
+    if (!swipeState.isSwiping) return;
+
+    // Si la interacción es en algo que no sea una tarjeta de movimiento, cancelamos el swipe
+    if (!swipeState.activeCard) {
+        const point = e.type === 'touchmove' ? e.touches[0] : e;
+        const deltaY = point.clientY - swipeState.startY;
+        if (Math.abs(deltaY) > 10) { // Si hay scroll vertical
+             if (longPressState.timer) clearTimeout(longPressState.timer);
+        }
+        return;
+    }
+
+    const point = e.type === 'touchmove' ? e.touches[0] : e;
+    const deltaX = point.clientX - swipeState.startX;
+    const deltaY = point.clientY - swipeState.startY;
+
+    if (!swipeState.isSwipeIntent && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
+        if (Math.abs(deltaY) > Math.abs(deltaX)) { // Es scroll
+            if (longPressState.timer) clearTimeout(longPressState.timer);
+            swipeState.isSwiping = false;
+            return;
+        }
+        swipeState.isSwipeIntent = true;
+        if (longPressState.timer) clearTimeout(longPressState.timer);
+    }
+    
+    if (swipeState.isSwipeIntent) {
+        e.preventDefault();
+        swipeState.currentX = point.clientX;
+        const currentDiff = swipeState.currentX - swipeState.startX;
+        const direction = currentDiff > 0 ? 'right' : 'left';
+        const leftActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.left');
+        const rightActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.right');
+        const activeActions = direction === 'right' ? leftActions : rightActions;
+        const inactiveActions = direction === 'right' ? rightActions : leftActions;
+        if (activeActions) activeActions.classList.add('swipe-actions-container--visible');
+        if (inactiveActions) inactiveActions.classList.remove('swipe-actions-container--visible');
+        
+        const progress = Math.min(Math.abs(currentDiff) / swipeState.threshold, 1);
+        const icon = activeActions ? activeActions.querySelector('.material-icons') : null;
+        if (icon) {
+            icon.style.transform = `scale(${0.5 + (progress * 0.7)})`;
+            icon.style.opacity = progress;
+        }
+        
+        swipeState.activeCard.style.transition = 'none';
+        swipeState.activeCard.style.transform = `translateX(${currentDiff}px)`;
+    }
+};
+const handleInteractionEnd = (e) => {
+    if (longPressState.timer) {
+        clearTimeout(longPressState.timer);
+        longPressState.timer = null;
+    }
+    
+    // Si la acción de pulsación larga ya se ejecutó, no hacemos nada más.
+    // O si no había una interacción activa, tampoco.
+    if (longPressState.isLongPress || !swipeState.isSwiping) {
+        longPressState.isLongPress = false;
+        return;
+    }
+    
+    // Si no es un swipe y fue un toque corto en una tarjeta, lo tratamos como un clic normal
+    if (!swipeState.isSwipeIntent && swipeState.activeCard) {
+        const movementId = swipeState.activeCard.dataset.id;
+        startMovementForm(movementId, false);
+    } 
+    // Si fue un swipe, gestionamos la acción
+    else if (swipeState.isSwipeIntent && swipeState.activeCard) {
+        const diff = swipeState.currentX - swipeState.startX;
+        swipeState.activeCard.style.transition = 'transform 0.3s ease-out';
+        
+        if (Math.abs(diff) > swipeState.threshold) {
+            const direction = diff > 0 ? 'right' : 'left';
+            const actionContainer = direction === 'right' 
+                ? swipeState.activeCard.parentElement.querySelector('.left .swipe-action-btn')
+                : swipeState.activeCard.parentElement.querySelector('.right .swipe-action-btn');
+            
+            // Lanzamos la acción programada en el botón (duplicate o delete)
+            if(actionContainer) actionContainer.click();
+
+        } else {
+            resetActiveSwipe();
+        }
+    } 
+
+    swipeState.isSwiping = false;
+    swipeState.isSwipeIntent = false;
+};
 
 // =================================================================
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
@@ -9432,135 +9565,7 @@ const validateMovementForm = () => {
     return isValid;
 };
  
-const longPressState = { timer: null, isLongPress: false };
-const swipeState = { activeCard: null, startX: 0, currentX: 0, isSwiping: false, isSwipeIntent: false, threshold: 60 };
 
-const handleInteractionStart = (e) => {
-    // Buscamos el elemento interactuable más cercano (puede ser un movimiento o un activo)
-    const targetItem = e.target.closest('[data-id]');
-    if (!targetItem) return;
-
-    const card = targetItem.classList.contains('transaction-card') ? targetItem : null;
-    if (card) resetActiveSwipe(); // Solo reseteamos swipes si estamos en una tarjeta de movimiento
-
-    longPressState.isLongPress = false;
-    longPressState.timer = setTimeout(() => {
-        longPressState.isLongPress = true;
-        swipeState.isSwiping = false; // Detenemos cualquier intención de swipe
-        hapticFeedback('medium');
-        
-        // --- LÓGICA DE DECISIÓN DE CONTEXTO ---
-        if (targetItem.dataset.isInvestment === 'true') {
-            // Si es un activo de inversión, muestra el gráfico de TIR
-            handleShowIrrHistory({ accountId: targetItem.dataset.id });
-        } else if (card) {
-            // Si es una tarjeta de movimiento, muestra el menú de acciones
-            showContextMenuForMovement(card.dataset.id);
-        }
-        
-    }, 500);
-
-    swipeState.isSwiping = true;
-    swipeState.isSwipeIntent = false;
-    swipeState.activeCard = card;
-    const point = e.type === 'touchstart' ? e.touches[0] : e;
-    swipeState.startX = point.clientX;
-    swipeState.currentX = swipeState.startX;
-    swipeState.startY = point.clientY;
-};
-
-
-const handleInteractionMove = (e) => {
-    // Solo actuamos si hay una interacción activa
-    if (!swipeState.isSwiping) return;
-
-    // Si la interacción es en algo que no sea una tarjeta de movimiento, cancelamos el swipe
-    if (!swipeState.activeCard) {
-        const point = e.type === 'touchmove' ? e.touches[0] : e;
-        const deltaY = point.clientY - swipeState.startY;
-        if (Math.abs(deltaY) > 10) { // Si hay scroll vertical
-             if (longPressState.timer) clearTimeout(longPressState.timer);
-        }
-        return;
-    }
-
-    const point = e.type === 'touchmove' ? e.touches[0] : e;
-    const deltaX = point.clientX - swipeState.startX;
-    const deltaY = point.clientY - swipeState.startY;
-
-    if (!swipeState.isSwipeIntent && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
-        if (Math.abs(deltaY) > Math.abs(deltaX)) { // Es scroll
-            if (longPressState.timer) clearTimeout(longPressState.timer);
-            swipeState.isSwiping = false;
-            return;
-        }
-        swipeState.isSwipeIntent = true;
-        if (longPressState.timer) clearTimeout(longPressState.timer);
-    }
-    
-    if (swipeState.isSwipeIntent) {
-        e.preventDefault();
-        swipeState.currentX = point.clientX;
-        const currentDiff = swipeState.currentX - swipeState.startX;
-        const direction = currentDiff > 0 ? 'right' : 'left';
-        const leftActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.left');
-        const rightActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.right');
-        const activeActions = direction === 'right' ? leftActions : rightActions;
-        const inactiveActions = direction === 'right' ? rightActions : leftActions;
-        if (activeActions) activeActions.classList.add('swipe-actions-container--visible');
-        if (inactiveActions) inactiveActions.classList.remove('swipe-actions-container--visible');
-        
-        const progress = Math.min(Math.abs(currentDiff) / swipeState.threshold, 1);
-        const icon = activeActions ? activeActions.querySelector('.material-icons') : null;
-        if (icon) {
-            icon.style.transform = `scale(${0.5 + (progress * 0.7)})`;
-            icon.style.opacity = progress;
-        }
-        
-        swipeState.activeCard.style.transition = 'none';
-        swipeState.activeCard.style.transform = `translateX(${currentDiff}px)`;
-    }
-};
-const handleInteractionEnd = (e) => {
-    if (longPressState.timer) {
-        clearTimeout(longPressState.timer);
-        longPressState.timer = null;
-    }
-    
-    // Si la acción de pulsación larga ya se ejecutó, no hacemos nada más.
-    // O si no había una interacción activa, tampoco.
-    if (longPressState.isLongPress || !swipeState.isSwiping) {
-        longPressState.isLongPress = false;
-        return;
-    }
-    
-    // Si no es un swipe y fue un toque corto en una tarjeta, lo tratamos como un clic normal
-    if (!swipeState.isSwipeIntent && swipeState.activeCard) {
-        const movementId = swipeState.activeCard.dataset.id;
-        startMovementForm(movementId, false);
-    } 
-    // Si fue un swipe, gestionamos la acción
-    else if (swipeState.isSwipeIntent && swipeState.activeCard) {
-        const diff = swipeState.currentX - swipeState.startX;
-        swipeState.activeCard.style.transition = 'transform 0.3s ease-out';
-        
-        if (Math.abs(diff) > swipeState.threshold) {
-            const direction = diff > 0 ? 'right' : 'left';
-            const actionContainer = direction === 'right' 
-                ? swipeState.activeCard.parentElement.querySelector('.left .swipe-action-btn')
-                : swipeState.activeCard.parentElement.querySelector('.right .swipe-action-btn');
-            
-            // Lanzamos la acción programada en el botón (duplicate o delete)
-            if(actionContainer) actionContainer.click();
-
-        } else {
-            resetActiveSwipe();
-        }
-    } 
-
-    swipeState.isSwiping = false;
-    swipeState.isSwipeIntent = false;
-};
 const showContextMenuForMovement = (movementId) => {
     const movement = db.movimientos.find(m => m.id === movementId);
     if (!movement) return;
