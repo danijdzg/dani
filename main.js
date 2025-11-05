@@ -1507,20 +1507,14 @@ const navigateTo = async (pageId, isInitial = false) => {
     const leftEl = select('top-bar-left-button');
     const fab = select('fab-add-movimiento'); // Asumiendo que pudieras tener un FAB
     
-    const standardActions = `
-        <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
-            <span class="material-icons">search</span>
-        </button>
-        <button data-action="help" class="icon-btn" title="Guía de Usuario" aria-label="Abrir Guía de Usuario">
-            <span class="material-icons">help_outline</span>
-        </button>
-        <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
-            <span class="material-icons">dark_mode</span>
-        </button>
-        <button data-action="exit" class="icon-btn" title="Salir de la aplicación" aria-label="Salir de la aplicación">
-            <span class="material-icons">exit_to_app</span>
-        </button>
-    `;
+   const standardActions = `
+    <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
+        <span class="material-icons">search</span>
+    </button>
+    <button data-action="show-main-menu" class="icon-btn" title="Abrir menú" aria-label="Abrir menú de opciones">
+        <span class="material-icons">more_vert</span>
+    </button>
+`;
     
     // Lazy loading de datos si es necesario
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
@@ -4169,26 +4163,6 @@ const renderSavingsRateGauge = (canvasId, percentage) => {
     });
 };
 
-const renderDashboardKpiSummary = () => {
-   // ¡Simplemente eliminamos el atributo style!
-   return `<div class="kpi-grid" id="kpi-container">
-            <div class="kpi-item">
-                <h4 class="kpi-item__label">Ingresos</h4>
-                <strong id="kpi-ingresos-value" class="kpi-item__value text-positive skeleton" data-current-value="0">+0,00 €</strong> 
-                <div id="kpi-ingresos-comparison" class="kpi-item__comparison"></div>
-            </div>
-            <div class="kpi-item">
-                <h4 class="kpi-item__label">Gastos</h4>
-                <strong id="kpi-gastos-value" class="kpi-item__value text-negative skeleton" data-current-value="0">0,00 €</strong>
-                <div id="kpi-gastos-comparison" class="kpi-item__comparison"></div>
-            </div>
-            <div class="kpi-item">
-                <h4 class="kpi-item__label">Saldo Neto Periodo</h4>
-                <strong id="kpi-saldo-neto-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
-                <div id="kpi-saldo-neto-comparison" class="kpi-item__comparison"></div>
-            </div>
-        </div>`;
-};
 // ▼▼▼ REEMPLAZA TU FUNCIÓN renderDashboardSuperCentroOperaciones CON ESTA VERSIÓN REORDENADA ▼▼▼
 
 const renderDashboardSuperCentroOperaciones = () => {
@@ -7813,21 +7787,21 @@ if (ptrElement && mainScrollerPtr) {
         const actions = {
 			'swipe-show-irr-history': () => handleShowIrrHistory(type),
 			'show-main-menu': () => {
-                const menu = document.getElementById('main-menu-popover');
-                if (!menu) return;
-                menu.classList.toggle('popover-menu--visible');
-                if (menu.classList.contains('popover-menu--visible')) {
-                    setTimeout(() => {
-                        const closeOnClickOutside = (event) => {
-                            if (!menu.contains(event.target) && !event.target.closest('[data-action="show-main-menu"]')) {
-                                menu.classList.remove('popover-menu--visible');
-                                document.removeEventListener('click', closeOnClickOutside);
-                            }
-                        };
-                        document.addEventListener('click', closeOnClickOutside);
-                    }, 0);
+    const menu = document.getElementById('main-menu-popover');
+    if (!menu) return;
+    menu.classList.toggle('popover-menu--visible');
+    if (menu.classList.contains('popover-menu--visible')) {
+        setTimeout(() => {
+            const closeOnClickOutside = (event) => {
+                if (!menu.contains(event.target) && !event.target.closest('[data-action="show-main-menu"]')) {
+                    menu.classList.remove('popover-menu--visible');
+                    document.removeEventListener('click', closeOnClickOutside);
                 }
-            },
+            };
+            document.addEventListener('click', closeOnClickOutside);
+        }, 0);
+    }
+},
             'open-main-add-modal': () => startMovementForm(),
             'export-filtered-csv': () => handleExportFilteredCsv(btn),
             'show-diario-filters': showDiarioFiltersModal,

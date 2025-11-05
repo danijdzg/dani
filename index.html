@@ -141,8 +141,10 @@
 
             <h1 id="top-bar-title" class="top-bar__title"></h1>
 
-            <div id="top-bar-actions" class="top-bar__actions"></div>
-			 <span id="sync-status-icon" class="material-icons"></span>
+            <div id="top-bar-actions" class="top-bar__actions">
+    <!-- Los botones que estaban aquí ahora se generan desde JavaScript -->
+</div>
+<span id="sync-status-icon" class="material-icons"></span>
         </header>
 
 
@@ -509,7 +511,27 @@
             </div>
         </div>
     </div>
-	</div> 
+	</div>
+<div id="irr-history-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="irr-history-title">
+    <!-- ... contenido del modal ... -->
+</div> 
+
+<!-- ▼▼▼ AÑADE ESTE MENÚ OCULTO AL FINAL DE TU BODY ▼▼▼ -->
+<div id="main-menu-popover" class="popover-menu">
+    <button class="popover-menu__item" data-action="help">
+        <span class="material-icons">help_outline</span>
+        <span>Guía de Usuario</span>
+    </button>
+    <button id="theme-toggle-btn" class="popover-menu__item" data-action="toggle-theme">
+        <span class="material-icons">dark_mode</span>
+        <span>Cambiar Tema</span>
+    </button>
+    <div class="popover-menu__divider"></div>
+    <button class="popover-menu__item popover-menu__item--danger" data-action="exit">
+        <span class="material-icons">exit_to_app</span>
+        <span>Salir de la App</span>
+    </button>
+</div>	
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>

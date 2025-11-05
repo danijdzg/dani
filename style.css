@@ -1535,43 +1535,6 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 /* === FIN: Estilos para Nuevo Botón de Navegación Central === */
 
 
-/* === INICIO: Corrección de Contraste y Estilo para Opciones de Ajustes === */
-/*
-
-.accordion__content > button.modal__list-item {
-    background-color: transparent;
-    border: none;
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: inherit;
-    border-radius: 0;
-    transition: background-color 0.2s ease-out;
-}
-.accordion__content > button.modal__list-item:hover {
-    background-color: var(--c-surface-variant)}
-.modal__list-item .settings-item__label {
-    color: var(--c-on-surface); /* Texto principal (casi blanco sobre fondo oscuro) */
-    font-weight: 500;
-}
-
-.modal__list-item .settings-item__value,
-.modal__list-item .material-icons {
-    color: var(--c-on-surface-secondary);
-}
-/* 5. Mantenemos los colores semánticos para acciones y estados especiales. */
-.settings-item__label.text-warning,
-.modal__list-item .material-icons.text-warning {
-    color: var(--c-warning);
-}
-.settings-item__label.text-danger,
- .modal__list-item .material-icons.text-danger {
-    color: var(--c-danger);}
-/* === FIN: Corrección de Contraste y Estilo para Opciones de Ajustes === */
-
-/* --- INICIO: Estilos para la nueva página de Ajustes --- */
-
 .settings-group__title {
     font-size: var(--fs-sm);
     font-weight: 700;
