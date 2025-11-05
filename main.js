@@ -7561,14 +7561,7 @@ let longPressTimer = null;
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
 // =================================================================
  const attachEventListeners = () => {
-    const fabButton = select('bottom-nav-add-btn');
-    if (fabButton) {
-        fabButton.addEventListener('mousedown', startFabPress);
-        fabButton.addEventListener('touchstart', startFabPress, { passive: true });
-        fabButton.addEventListener('mouseup', endFabPress);
-        fabButton.addEventListener('touchend', endFabPress);
-        fabButton.addEventListener('mouseleave', () => clearTimeout(longPressState.timer)); // Cancelar si se sale del botón
-    }
+    
     const addBtn = select('bottom-nav-add-btn');
     const quickMenu = select('quick-add-menu');
 
