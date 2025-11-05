@@ -254,6 +254,20 @@
                 <option value="monthly" selected>Mensual</option>
                 <option value="yearly">Anual</option>
             </select>
+		 <div id="recurrent-week-days" class="hidden" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; width: 100%; margin-top: 12px; padding: 8px; background-color: var(--c-surface); border-radius: var(--border-radius-md);">
+        <style>
+            .weekday-label { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid var(--c-outline); border-radius: 50%; cursor: pointer; font-size: 0.8rem; font-weight: 600; user-select: none; transition: all 0.2s; }
+            .weekday-input:checked + .weekday-label { background-color: var(--c-primary); color: var(--c-white); border-color: var(--c-primary); }
+            .weekday-input { display: none; }
+        </style>
+        <span><input type="checkbox" id="weekday-1" class="weekday-input" value="1"><label for="weekday-1" class="weekday-label">L</label></span>
+        <span><input type="checkbox" id="weekday-2" class="weekday-input" value="2"><label for="weekday-2" class="weekday-label">M</label></span>
+        <span><input type="checkbox" id="weekday-3" class="weekday-input" value="3"><label for="weekday-3" class="weekday-label">X</label></span>
+        <span><input type="checkbox" id="weekday-4" class="weekday-input" value="4"><label for="weekday-4" class="weekday-label">J</label></span>
+        <span><input type="checkbox" id="weekday-5" class="weekday-input" value="5"><label for="weekday-5" class="weekday-label">V</label></span>
+        <span><input type="checkbox" id="weekday-6" class="weekday-input" value="6"><label for="weekday-6" class="weekday-label">S</label></span>
+        <span><input type="checkbox" id="weekday-7" class="weekday-input" value="7"><label for="weekday-7" class="weekday-label">D</label></span>
+    </div>	
             <input type="date" id="recurrent-next-date">
             <input type="date" id="recurrent-end-date" title="Finaliza el (opcional)">
         </div>
