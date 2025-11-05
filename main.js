@@ -1,6 +1,4 @@
-let userHasInteracted = false;
-document.addEventListener('touchstart', () => userHasInteracted = true, { once: true });
-document.addEventListener('click', () => userHasInteracted = true, { once: true });
+
 const handleExportFilteredCsv = (btn) => {
     // La lista de movimientos a exportar es la que ya tenemos filtrada en db.movimientos
     const movementsToExport = db.movimientos;
@@ -62,13 +60,13 @@ const handleExportFilteredCsv = (btn) => {
     }
 };
 
-import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
-
-const firebaseConfig = { apiKey: "AIzaSyAp-t-2qmbvSX-QEBW9B1aAJHBESqnXy9M", authDomain: "cuentas-aidanai.firebaseapp.com", projectId: "cuentas-aidanai", storageBucket: "cuentas-aidanai.appspot.com", messagingSenderId: "58244686591", appId: "1:58244686591:web:85c87256c2287d350322ca" };
+	import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm'
+        
+        const firebaseConfig = { apiKey: "AIzaSyAp-t-2qmbvSX-QEBW9B1aAJHBESqnXy9M", authDomain: "cuentas-aidanai.firebaseapp.com", projectId: "cuentas-aidanai", storageBucket: "cuentas-aidanai.appspot.com", messagingSenderId: "58244686591", appId: "1:58244686591:web:85c87256c2287d350322ca" };
 const PAGE_IDS = {
     INICIO: 'inicio-page',
     DIARIO: 'diario-page',
-    ESTRATEGIA: 'estrategia-page',
+    ESTRATEGIA: 'estrategia-page', // <-- CORREGIDO Y AÑADIDO
     AJUSTES: 'ajustes-page',
 };
 
@@ -402,37 +400,24 @@ const handleCalculatorInput = (key) => {
     } else {
         switch(key) {
             case 'done':
-    hapticFeedback('medium');
-    
-    // Si estábamos en medio de una operación (ej: 5+5), la terminamos.
-    if (operand1 !== null && operator !== null && !waitingForNewValue) {
-        calculate();
-        displayValue = calculatorState.displayValue;
-    }
-
-    const finalValue = parseFloat(displayValue.replace(',', '.')) || 0;
-    const finalValueInCents = Math.round(finalValue * 100);
-
-    hideCalculator(); // Cerramos la calculadora.
-
-    // === CORRECCIÓN CLAVE INICIO ===
-    // Comprobamos si la calculadora se abrió desde el menú (+)
-    if (calculatorState.targetInput && calculatorState.targetInput.dataset.movementType) {
-        // Si es así, llamamos a nuestro "mensajero".
-        const type = calculatorState.targetInput.dataset.movementType;
-        startMovementFormWithAmount(finalValueInCents, type);
-    } else if (calculatorState.targetInput) {
-        // Si se abrió desde un campo de input existente, hacemos lo de antes.
-        calculatorState.targetInput.value = finalValue.toLocaleString('es-ES', {
-            useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2
-        });
-        calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-        calculatorState.targetInput.dispatchEvent(new Event('blur'));
-    }
-    // === CORRECCIÓN CLAVE FIN ===
-    
-    historyValue = ''; // Limpiamos el historial de la calculadora.
-    return; // Usamos 'return' en lugar de 'break' para salir limpiamente.
+                hapticFeedback('medium');
+                if (operand1 !== null && operator !== null && !waitingForNewValue) {
+                    calculate();
+                    displayValue = calculatorState.displayValue;
+                }
+                if (calculatorState.targetInput) {
+                    const finalValue = parseFloat(displayValue.replace(',', '.')) || 0;
+                    calculatorState.targetInput.value = finalValue.toLocaleString('es-ES', { 
+                        useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 
+                    });
+                    // Disparamos eventos para que cualquier otra lógica reaccione
+                    calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    calculatorState.targetInput.dispatchEvent(new Event('blur')); 
+                }
+                historyValue = '';
+                hideCalculator();
+                select('movimiento-descripcion').focus(); // Llevamos al usuario al siguiente paso
+                return;
             case 'comma':
                 if (waitingForNewValue) {
                     displayValue = '0,';
@@ -807,55 +792,18 @@ async function loadCoreData(uid) {
             });
         };
 
-  const calculateNextDueDate = (currentDueDate, frequency, daysOfWeek = []) => {
-    // Usamos el constructor que ya manejaba bien la zona horaria UTC.
-    const d = parseDateStringAsUTC(currentDueDate);
-    if (!d) return new Date(); // Devolvemos la fecha actual como fallback seguro
-
-    switch (frequency) {
-        case 'daily':
-            return addDays(d, 1);
-        case 'weekly':
-            // ¡Aquí está la nueva magia!
-            if (daysOfWeek && daysOfWeek.length > 0) {
-                // Convertimos el array de strings a números y lo ordenamos
-                const activeDays = daysOfWeek.map(Number).sort((a, b) => a - b);
-                // Obtenemos el día de la semana actual (Lunes=1, ..., Domingo=7)
-                // Usamos getUTCDay y hacemos un ajuste para que Domingo sea 7 en vez de 0.
-                let currentDay = d.getUTCDay();
-                if (currentDay === 0) currentDay = 7;
-                
-                let nextDay = -1;
-                // Buscamos el próximo día activo en la misma semana
-                for (const day of activeDays) {
-                    if (day > currentDay) {
-                        nextDay = day;
-                        break;
-                    }
-                }
-                
-                if (nextDay !== -1) {
-                    // Si encontramos un día después en la misma semana, simplemente sumamos la diferencia de días
-                    return addDays(d, nextDay - currentDay);
-                } else {
-                    // Si no, significa que debemos ir al primer día activo de la próxima semana
-                    // Calculamos los días que faltan para terminar la semana actual + los días para llegar al primer día activo de la siguiente.
-                    const daysUntilNextWeek = 7 - currentDay;
-                    const firstDayOfNextWeek = activeDays[0];
-                    return addDays(d, daysUntilNextWeek + firstDayOfNextWeek);
-                }
-            } else {
-                // Si no hay días específicos, funciona como antes.
-                return addWeeks(d, 1);
+        const calculateNextDueDate = (currentDueDate, frequency) => {
+            const d = new Date(currentDueDate);
+            d.setHours(12, 0, 0, 0); 
+        
+            switch (frequency) {
+                case 'daily': return addDays(d, 1);
+                case 'weekly': return addWeeks(d, 1);
+                case 'monthly': return addMonths(d, 1);
+                case 'yearly': return addYears(d, 1);
+                default: return d;
             }
-        case 'monthly':
-            return addMonths(d, 1);
-        case 'yearly':
-            return addYears(d, 1);
-        default:
-            return d;
-    }
-};
+        };
         const calculatePreviousDueDate = (currentDueDate, frequency) => {
     const d = new Date(currentDueDate);
     d.setHours(12, 0, 0, 0); 
@@ -894,24 +842,21 @@ async function loadCoreData(uid) {
     console.log('Alturas de elementos definidas (Robusto):', vList.heights);
 };
         const hapticFeedback = (type = 'light') => {
-    // ¡LA LÍNEA MÁGICA! Si el usuario aún no ha tocado la pantalla, no hacemos nada.
-    if (!userHasInteracted) return;
-
-    if ('vibrate' in navigator) {
-        try {
-            let pattern;
-            switch (type) {
-                case 'light':   pattern = 10; break;
-                case 'medium':  pattern = 25; break;
-                case 'success': pattern = [15, 60, 15]; break;
-                case 'warning': pattern = [30, 40, 30]; break;
-                case 'error':   pattern = [50, 50, 50]; break;
-                default:        pattern = 10;
+            if ('vibrate' in navigator) {
+                try {
+                    let pattern;
+                    switch (type) {
+                        case 'light':   pattern = 10; break;
+                        case 'medium':  pattern = 25; break;
+                        case 'success': pattern = [15, 60, 15]; break;
+                        case 'warning': pattern = [30, 40, 30]; break;
+                        case 'error':   pattern = [50, 50, 50]; break;
+                        default:        pattern = 10;
+                    }
+                    navigator.vibrate(pattern);
+                } catch (e) {}
             }
-            navigator.vibrate(pattern);
-        } catch (e) {}
-    }
-};
+        };
 
         const parseDateStringAsUTC = (dateString) => {
             if (!dateString) return null;
@@ -1525,14 +1470,20 @@ const navigateTo = async (pageId, isInitial = false) => {
     const leftEl = select('top-bar-left-button');
     const fab = select('fab-add-movimiento'); // Asumiendo que pudieras tener un FAB
     
-   const standardActions = `
-    <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
-        <span class="material-icons">search</span>
-    </button>
-    <button data-action="show-main-menu" class="icon-btn" title="Abrir menú" aria-label="Abrir menú de opciones">
-        <span class="material-icons">more_vert</span>
-    </button>
-`;
+    const standardActions = `
+        <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
+            <span class="material-icons">search</span>
+        </button>
+        <button data-action="help" class="icon-btn" title="Guía de Usuario" aria-label="Abrir Guía de Usuario">
+            <span class="material-icons">help_outline</span>
+        </button>
+        <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
+            <span class="material-icons">dark_mode</span>
+        </button>
+        <button data-action="exit" class="icon-btn" title="Salir de la aplicación" aria-label="Salir de la aplicación">
+            <span class="material-icons">exit_to_app</span>
+        </button>
+    `;
     
     // Lazy loading de datos si es necesario
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
@@ -3285,6 +3236,8 @@ const renderBudgetTrendChart = (monthlyIncomeData, monthlyExpenseData, averageBu
 const renderPatrimonioOverviewWidget = async (containerId) => {
     const container = select(containerId);
     if (!container) return;
+
+    // (El código de carga de datos y renderizado del HTML es el mismo, pero lo incluyo todo para que solo tengas que copiar y pegar)
     container.innerHTML = `<div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>`;
 
     const visibleAccounts = getVisibleAccounts();
@@ -3295,7 +3248,10 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
     const filteredAccountTypes = new Set(allAccountTypes.filter(t => !deselectedAccountTypesFilter.has(t)));
 
     const colorMap = {};
-    allAccountTypes.forEach((tipo, index) => { colorMap[tipo] = BASE_COLORS[index % BASE_COLORS.length]; });
+    allAccountTypes.forEach((tipo, index) => {
+        colorMap[tipo] = BASE_COLORS[index % BASE_COLORS.length];
+    });
+
     const pillsHTML = allAccountTypes.map(t => {
         const isActive = !deselectedAccountTypesFilter.has(t);
         const color = colorMap[t];
@@ -3308,11 +3264,15 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
     
     const filteredAccounts = visibleAccounts.filter(c => filteredAccountTypes.has(toSentenceCase(c.tipo || 'S/T')));
     const totalFiltrado = filteredAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
+    
     const treeData = [];
     filteredAccounts.forEach(c => {
         const saldo = saldos[c.id] || 0;
-        if (saldo > 0) treeData.push({ tipo: toSentenceCase(c.tipo || 'S/T'), nombre: c.nombre, saldo: saldo / 100 });
+        if (saldo > 0) {
+            treeData.push({ tipo: toSentenceCase(c.tipo || 'S/T'), nombre: c.nombre, saldo: saldo / 100 });
+        }
     });
+
     container.innerHTML = `
         <div class="card__content" style="padding-top:0;">
             <div class="patrimonio-header-grid__kpi" style="margin-bottom: var(--sp-4);">
@@ -3326,9 +3286,11 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             <div id="liquid-assets-chart-container" class="chart-container" style="height: 250px; margin-bottom: var(--sp-4);"><canvas id="liquid-assets-chart"></canvas></div>
             <div id="patrimonio-cuentas-lista"></div>
         </div>`;
+
     const chartCtx = select('liquid-assets-chart')?.getContext('2d');
     if (chartCtx) {
-        if(Chart.getChart(chartCtx)) Chart.getChart(chartCtx).destroy();
+        const existingChart = Chart.getChart('liquid-assets-chart');
+        if (existingChart) existingChart.destroy();
         if (treeData.length > 0) {
             liquidAssetsChart = new Chart(chartCtx, { type: 'treemap', data: { datasets: [{ tree: treeData, key: 'saldo', groups: ['tipo', 'nombre'], spacing: 0.5, borderWidth: 1.5, borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'), backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'), labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) } }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false } }, onClick: (e) => e.native && e.native.stopPropagation() } });
         } else {
@@ -3338,36 +3300,109 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
     
     const listaContainer = select('patrimonio-cuentas-lista');
     if (listaContainer) {
-        const accountsByType = filteredAccounts.reduce((acc, c) => { const tipo = toSentenceCase(c.tipo || 'S/T'); if (!acc[tipo]) acc[tipo] = []; acc[tipo].push(c); return acc; }, {});
+        const accountsByType = filteredAccounts.reduce((acc, c) => { 
+            const tipo = toSentenceCase(c.tipo || 'S/T'); 
+            if (!acc[tipo]) acc[tipo] = []; 
+            acc[tipo].push(c); 
+            return acc; 
+        }, {});
+
         listaContainer.innerHTML = Object.keys(accountsByType).sort().map(tipo => {
             const accountsInType = accountsByType[tipo];
             const typeBalance = accountsInType.reduce((sum, acc) => sum + (saldos[acc.id] || 0), 0);
             const porcentajeGlobal = totalFiltrado > 0 ? (typeBalance / totalFiltrado) * 100 : 0;
             const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => 
-                `<div class="modal__list-item" data-id="${c.id}" ${c.esInversion ? 'data-is-investment="true"' : ''} style="cursor: pointer; padding: var(--sp-2) 0;">
-                    <div><span style="display: block;">${c.nombre}</span><small style="color: var(--c-on-surface-secondary);">${(saldos[c.id] || 0) / typeBalance > 0 ? (((saldos[c.id] || 0) / typeBalance) * 100).toFixed(1) + '% de ' + tipo : ''}</small></div>
+                `<div class="modal__list-item" 
+                     data-action="view-account-details" 
+                     data-id="${c.id}" 
+                     ${c.esInversion ? 'data-is-investment="true"' : ''}
+                     style="cursor: pointer; padding: var(--sp-2) 0;">
+                    <div>
+                        <span style="display: block;">${c.nombre}</span>
+                        <small style="color: var(--c-on-surface-secondary);">${(saldos[c.id] || 0) / typeBalance * 100 > 0 ? ((saldos[c.id] || 0) / typeBalance * 100).toFixed(1) + '% de ' + tipo : ''}</small>
+                    </div>
                     <div style="display: flex; align-items: center; gap: var(--sp-2);">
                         ${formatCurrency(saldos[c.id] || 0)}
                         <span class="material-icons" style="font-size: 18px;">chevron_right</span>
                     </div>
                 </div>`
             ).join('');
+
             if (!accountsHtml) return '';
-            return `<details class="accordion" style="margin-bottom: var(--sp-2);"><summary><span class="account-group__name">${tipo}</span><div style="display:flex; align-items:center; gap:var(--sp-2);"><small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small><span class="account-group__balance">${formatCurrency(typeBalance)}</span><span class="material-icons accordion__icon">expand_more</span></div></summary><div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div></details>`;
+
+            return `
+                <details class="accordion" style="margin-bottom: var(--sp-2);">
+                    <summary>
+                        <span class="account-group__name">${tipo}</span>
+                        <div style="display:flex; align-items:center; gap:var(--sp-2);">
+                            <small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small>
+                            <span class="account-group__balance">${formatCurrency(typeBalance)}</span>
+                            <span class="material-icons accordion__icon">expand_more</span>
+                        </div>
+                    </summary>
+                    <div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div>
+                </details>`;
         }).join('');
-        // Ya no hay escuchadores de eventos aquí, son gestionados globalmente.
+
+        // ⭐ INICIO DE LA LÓGICA DE DETECCIÓN DE "LONG PRESS" CORREGIDA ⭐
+        // Ahora, esta lógica se activa DESPUÉS de que la lista de cuentas se haya dibujado en la pantalla.
+        const investmentItems = listaContainer.querySelectorAll('[data-is-investment="true"]');
+        
+        investmentItems.forEach(item => {
+            let longPressTimer;
+            let startX, startY;
+            let longPressTriggered = false;
+
+            const startHandler = (e) => {
+                e.stopPropagation(); // Detenemos la propagación para evitar conflictos
+                const point = e.touches ? e.touches[0] : e;
+                startX = point.clientX;
+                startY = point.clientY;
+                longPressTriggered = false;
+
+                longPressTimer = setTimeout(() => {
+                    longPressTriggered = true;
+                    const accountId = item.dataset.id;
+                    handleShowIrrHistory({ accountId: accountId });
+                }, 500); // 500ms
+            };
+
+            const moveHandler = (e) => {
+                if (!longPressTimer) return;
+                const point = e.touches ? e.touches[0] : e;
+                if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+            };
+
+            const endHandler = (e) => {
+                clearTimeout(longPressTimer);
+                if (longPressTriggered) {
+                    e.preventDefault(); // Si fue pulsación larga, prevenimos la acción de 'click'
+                }
+            };
+            
+            // Asignamos los listeners para móvil y escritorio
+            item.addEventListener('mousedown', startHandler);
+            item.addEventListener('touchstart', startHandler, { passive: true });
+            item.addEventListener('mousemove', moveHandler);
+            item.addEventListener('touchmove', moveHandler, { passive: true });
+            item.addEventListener('mouseup', endHandler);
+            item.addEventListener('touchend', endHandler);
+            item.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
+        });
+        // ⭐ FIN DE LA LÓGICA CORREGIDA ⭐
     }
 };
-
        
 const handleShowIrrHistory = async (options) => {
     hapticFeedback('medium');
     
-    // Mostramos el modal INMEDIATAMENTE con un spinner
-    showModal('irr-history-modal');
     const titleEl = select('irr-history-title');
     const bodyEl = select('irr-history-body');
     if(bodyEl) bodyEl.innerHTML = `<div style="display: flex; justify-content: center; align-items: center; height: 100%;"><span class="spinner" style="width: 48px; height: 48px;"></span></div>`;
+    showModal('irr-history-modal');
 
     let accountIds = [];
     let title = 'Evolución TIR';
@@ -3385,26 +3420,18 @@ const handleShowIrrHistory = async (options) => {
 
     if(titleEl) titleEl.textContent = title;
         
-    // Obtenemos los datos para el gráfico
     const historyData = await calculateHistoricalIrrForGroup(accountIds);
 
-    // --- ¡AQUÍ ESTÁ LA CORRECCIÓN CLAVE! ---
-    // Ya no comprobamos si hay datos antes de dibujar.
-    // Dibujamos el lienzo del gráfico PASE LO QUE PASE.
-    if(bodyEl) bodyEl.innerHTML = `<div class="chart-container" style="height: 100%;"><canvas id="irr-history-chart"></canvas></div>`;
-    const chartCtx = select('irr-history-chart').getContext('2d');
-    
-    // Si ya existía un gráfico en este lienzo, lo destruimos
-    const existingChart = Chart.getChart(chartCtx);
-    if (existingChart) existingChart.destroy();
-    
-    // Si no hay datos suficientes, mostramos un mensaje dentro del lienzo del gráfico
     if (!historyData || historyData.length < 2) {
-        bodyEl.innerHTML += `<div class="empty-state" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;"><p>No hay suficientes valoraciones para generar un histórico de TIR para este activo.</p></div>`;
+        if(bodyEl) bodyEl.innerHTML = `<div class="empty-state"><p>No hay suficientes valoraciones para generar un histórico de TIR para este activo.</p></div>`;
         return;
     }
-    
-    // Si hay datos, creamos el nuevo gráfico
+
+    if(bodyEl) bodyEl.innerHTML = `<div class="chart-container" style="height: 100%;"><canvas id="irr-history-chart"></canvas></div>`;
+    const chartCtx = select('irr-history-chart').getContext('2d');
+    const existingChart = Chart.getChart(chartCtx);
+    if (existingChart) existingChart.destroy();
+
     new Chart(chartCtx, {
         type: 'line',
         data: {
@@ -4181,6 +4208,26 @@ const renderSavingsRateGauge = (canvasId, percentage) => {
     });
 };
 
+const renderDashboardKpiSummary = () => {
+   // ¡Simplemente eliminamos el atributo style!
+   return `<div class="kpi-grid" id="kpi-container">
+            <div class="kpi-item">
+                <h4 class="kpi-item__label">Ingresos</h4>
+                <strong id="kpi-ingresos-value" class="kpi-item__value text-positive skeleton" data-current-value="0">+0,00 €</strong> 
+                <div id="kpi-ingresos-comparison" class="kpi-item__comparison"></div>
+            </div>
+            <div class="kpi-item">
+                <h4 class="kpi-item__label">Gastos</h4>
+                <strong id="kpi-gastos-value" class="kpi-item__value text-negative skeleton" data-current-value="0">0,00 €</strong>
+                <div id="kpi-gastos-comparison" class="kpi-item__comparison"></div>
+            </div>
+            <div class="kpi-item">
+                <h4 class="kpi-item__label">Saldo Neto Periodo</h4>
+                <strong id="kpi-saldo-neto-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
+                <div id="kpi-saldo-neto-comparison" class="kpi-item__comparison"></div>
+            </div>
+        </div>`;
+};
 // ▼▼▼ REEMPLAZA TU FUNCIÓN renderDashboardSuperCentroOperaciones CON ESTA VERSIÓN REORDENADA ▼▼▼
 
 const renderDashboardSuperCentroOperaciones = () => {
@@ -5787,6 +5834,22 @@ const applyDescriptionSuggestion = (target) => {
     // Movemos el foco al campo de cantidad para un flujo ultra-rápido
     select('movimiento-cantidad').focus();
 };
+    // Ocultamos la caja de sugerencias
+    select('description-suggestions').style.display = 'none';
+
+    // Damos feedback visual y movemos el cursor al siguiente paso
+    hapticFeedback('light');
+    [select('movimiento-concepto'), select('movimiento-cuenta')].forEach(el => {
+        const parent = el.closest('.form-group-addon');
+        if(parent) {
+            parent.classList.add('field-highlighted');
+            setTimeout(() => parent.classList.remove('field-highlighted'), 1500);
+        }
+    });
+
+    // ¡La magia final! Movemos el foco al campo de la cantidad.
+    select('movimiento-cantidad').focus();
+;
 
 // =================================================================
 // === INICIO: CÓDIGO UNIFICADO PARA MODALES ARRASTRABLES ===
@@ -5917,7 +5980,7 @@ const hideModal = (id) => {
             }
             hideCalculator();
         };       
-	
+
 		 const updateDoneButtonText = () => {
             const doneButton = select('calculator-btn-done');
             if (doneButton) {
@@ -6049,31 +6112,7 @@ const hideCalculator = () => {
         calculatorKeyboardHandler = null;
     }
 };		
-	const startMovementFormWithAmount = (amountInCents, type) => {
-    // 1. Abrimos el formulario grande (ahora sí es el momento).
-    startMovementForm(); 
-
-    // 2. Usamos un pequeño retardo para asegurar que el modal es visible.
-    setTimeout(() => {
-        // 3. Rellenamos el formulario con los datos que ya tenemos.
-        const amountInput = select('movimiento-cantidad');
-        if (amountInput) {
-            // Convertimos los céntimos a un string con formato de euros para el input.
-            amountInput.value = (amountInCents / 100).toLocaleString('es-ES', {
-                useGrouping: false,
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-        }
-
-        // 4. Seleccionamos el tipo correcto (gasto, ingreso o traspaso).
-        setMovimientoFormType(type);
-
-        // 5. Movemos el cursor al campo de descripción para un flujo rápido.
-        select('movimiento-descripcion').focus();
-
-    }, 100); // 100ms es suficiente para que el modal aparezca.
-};
+		
 		
 // =================================================================
 // === INICIO: FUNCIÓN showToast (CORRECCIÓN CRÍTICA) ===
@@ -6160,9 +6199,6 @@ const setMovimientoFormType = (type) => {
     const titleEl = select('form-movimiento-title');
     const amountGroup = select('movimiento-cantidad-form-group');
     const mode = select('movimiento-mode').value;
-    
-    // Ocultamos el nuevo selector de días por defecto
-    select('recurrent-week-days').classList.add('hidden');
 
     select('movimiento-fields').classList.toggle('hidden', isTraspaso);
     select('traspaso-fields').classList.toggle('hidden', !isTraspaso);
@@ -6173,8 +6209,9 @@ const setMovimientoFormType = (type) => {
     if (titleEl && amountGroup) {
         const isEditing = mode.startsWith('edit');
         let baseTitle = isEditing ? 'Editar' : 'Nuevo';
+		// Detectar si venimos de duplicar un movimiento
 		if (titleEl.textContent === 'Duplicar Movimiento') {
-            baseTitle = 'Duplicar';
+        baseTitle = 'Duplicar';
 		}
 
         switch (type) {
@@ -6192,6 +6229,7 @@ const setMovimientoFormType = (type) => {
                 titleEl.textContent = `${baseTitle} Traspaso`;
                 titleEl.classList.add('title--traspaso');
                 amountGroup.classList.add('is-traspaso');
+                // [CAMBIO UX] Si es un nuevo traspaso y la descripción está vacía, la rellenamos.
                 if (!isEditing && select('movimiento-descripcion').value.trim() === '') {
                     select('movimiento-descripcion').value = 'Traspaso';
                 }
@@ -6230,25 +6268,13 @@ const setMovimientoFormType = (type) => {
             }
         };
 
+
 const startMovementForm = async (id = null, isRecurrent = false) => {
     hapticFeedback('medium');
     const form = select('form-movimiento');
     form.reset();
     clearAllErrors(form.id);
     populateAllDropdowns();
-
-    // Reseteamos los días de la semana
-    selectAll('#recurrent-week-days input').forEach(cb => cb.checked = false);
-    
-    const weekDaysEl = select('recurrent-week-days');
-    if (weekDaysEl) {
-        weekDaysEl.classList.add('hidden');
-    }
-
-    // ▼▼▼ ¡LA MAGIA SUCEDE AQUÍ! MOSTRAMOS EL MODAL PRIMERO ▼▼▼
-    showModal('movimiento-modal');
-    initAmountInput();
-    // ▲▲▲ FIN DEL CAMBIO CLAVE ▲▲▲
 
     let data = null;
     let mode = 'new';
@@ -6258,6 +6284,7 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
         try {
             const collectionName = isRecurrent ? 'recurrentes' : 'movimientos';
             const doc = await fbDb.collection('users').doc(currentUser.uid).collection(collectionName).doc(id).get();
+
             if (doc.exists) {
                 data = { id: doc.id, ...doc.data() };
                 mode = isRecurrent ? 'edit-recurrent' : 'edit-single';
@@ -6273,7 +6300,6 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
         }
     }
 
-    // Ahora que el modal es visible, estas llamadas funcionarán sin problema
     setMovimientoFormType(initialType);
     select('movimiento-mode').value = mode;
     select('movimiento-id').value = id || '';
@@ -6283,6 +6309,7 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
         
         const fechaInput = select('movimiento-fecha');
         const dateStringForInput = isRecurrent ? data.nextDate : data.fecha;
+
         if (dateStringForInput) {
             const fecha = new Date(dateStringForInput);
             fechaInput.value = new Date(fecha.getTime() - (fecha.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
@@ -6292,7 +6319,9 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
             fechaInput.value = new Date(fecha.getTime() - (fecha.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
             updateDateDisplay(fechaInput);
         }
+
         select('movimiento-descripcion').value = data.descripcion || '';
+
         if (data.tipo === 'traspaso') {
             select('movimiento-cuenta-origen').value = data.cuentaOrigenId || '';
             select('movimiento-cuenta-destino').value = data.cuentaDestinoId || '';
@@ -6309,19 +6338,10 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
         const recurrentOptions = select('recurrent-options');
         if (mode === 'edit-recurrent') {
             recurrenteCheckbox.checked = true;
-            recurrentOptions.classList.remove('hidden');
             select('recurrent-frequency').value = data.frequency;
             select('recurrent-next-date').value = data.nextDate;
             select('recurrent-end-date').value = data.endDate || '';
-            
-            if (data.frequency === 'weekly' && data.daysOfWeek) {
-                if (weekDaysEl) weekDaysEl.classList.remove('hidden');
-                data.daysOfWeek.forEach(dayIndex => {
-                    const cb = select(`weekday-${dayIndex}`);
-                    if (cb) cb.checked = true;
-                });
-            }
-
+            recurrentOptions.classList.remove('hidden');
         } else {
             recurrenteCheckbox.checked = false;
             recurrentOptions.classList.add('hidden');
@@ -6337,13 +6357,14 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
     select('delete-movimiento-btn').dataset.isRecurrent = String(isRecurrent);
     select('duplicate-movimiento-btn').classList.toggle('hidden', !(mode === 'edit-single' && data));
 
-    // Si es un movimiento nuevo, abrimos la calculadora automáticamente para un flujo más rápido
+    showModal('movimiento-modal');
+    initAmountInput();
+    
     if (!id) {
         setTimeout(() => showCalculator(select('movimiento-cantidad')), 150);
     }
 };
-
-       
+        
         
         const showGlobalSearchModal = () => {
             hapticFeedback('medium');
@@ -7406,223 +7427,211 @@ function createCustomSelect(selectElement) {
        
     selectElement.addEventListener('change', populateOptions);
 }
-// Estados globales para gestionar los gestos de swipe y pulsación larga.
-let longPressState = { timer: null, isLongPress: false };
-let swipeState = { activeCard: null, startX: 0, currentX: 0, isSwiping: false, isSwipeIntent: false, threshold: 60 };
-
-/**
- * Se activa al iniciar un toque (ratón o dedo).
- * Decide si es un posible swipe o una pulsación larga.
- * @param {Event} e - El evento de inicio (mousedown o touchstart).
- */
-const handleInteractionStart = (e) => {
-    // Buscamos el elemento interactuable más cercano. Puede ser un movimiento, un activo, etc.
-    const targetItem = e.target.closest('[data-id]');
-    if (!targetItem) return;
-
-    // Si la interacción es sobre una tarjeta de movimiento, reseteamos cualquier swipe anterior.
-    const card = targetItem.classList.contains('transaction-card') ? targetItem : null;
-    if (card) {
-        resetActiveSwipe();
-    }
-
-    // Iniciamos el temporizador para la pulsación larga.
-    longPressState.isLongPress = false;
-    longPressState.timer = setTimeout(() => {
-        longPressState.isLongPress = true;
-        swipeState.isSwiping = false; // Una pulsación larga cancela el swipe.
-        hapticFeedback('medium');
-        
-        // --- ¡LÓGICA CORREGIDA Y GLOBAL! ---
-        // Aquí decidimos qué hacer según el tipo de elemento pulsado.
-        if (targetItem.matches('.modal__list-item[data-is-investment="true"]')) {
-            // BUG CORREGIDO: Si es un activo de inversión, muestra el gráfico de TIR.
-            handleShowIrrHistory({ accountId: targetItem.dataset.id });
-        } else if (card) {
-            // MEJORA UX: Si es una tarjeta de movimiento, muestra la nueva "Action Sheet".
-            showContextMenuForMovement(card.dataset.id);
-        }
-        
-    }, 500); // 500ms es un buen tiempo para una pulsación larga.
-
-    // Preparamos el estado para un posible swipe.
-    swipeState.isSwiping = true;
-    swipeState.isSwipeIntent = false;
-    swipeState.activeCard = card;
-    const point = e.type === 'touchstart' ? e.touches[0] : e;
-    swipeState.startX = point.clientX;
-    swipeState.currentX = swipeState.startX;
-    swipeState.startY = point.clientY;
-};
-
-/**
- * Gestiona el movimiento del dedo/ratón.
- * Diferencia entre un scroll vertical y un swipe horizontal.
- * @param {Event} e - El evento de movimiento (mousemove o touchmove).
- */
-const handleInteractionMove = (e) => {
-    if (!swipeState.isSwiping) return;
-
-    const point = e.type === 'touchmove' ? e.touches[0] : e;
-    const deltaX = point.clientX - swipeState.startX;
-    const deltaY = point.clientY - swipeState.startY;
-
-    // Si aún no hemos decidido si es un swipe...
-    if (!swipeState.isSwipeIntent && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
-        // Si el movimiento vertical es mayor, es un scroll, no un swipe.
-        if (Math.abs(deltaY) > Math.abs(deltaX)) {
-            clearTimeout(longPressState.timer); // Cancelamos la pulsación larga.
-            swipeState.isSwiping = false;
-            return;
-        }
-        // Es un swipe horizontal.
-        swipeState.isSwipeIntent = true;
-        clearTimeout(longPressState.timer); // Cancelamos la pulsación larga.
-    }
-    
-    // Si estamos haciendo swipe en una tarjeta de movimiento...
-    if (swipeState.isSwipeIntent && swipeState.activeCard) {
-        e.preventDefault();
-        swipeState.currentX = point.clientX;
-        const currentDiff = swipeState.currentX - swipeState.startX;
-        const direction = currentDiff > 0 ? 'right' : 'left';
-
-        // Mostramos las acciones correspondientes (derecha o izquierda).
-        const leftActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.left');
-        const rightActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.right');
-        const activeActions = direction === 'right' ? leftActions : rightActions;
-        const inactiveActions = direction === 'right' ? rightActions : leftActions;
-        
-        if (activeActions) activeActions.classList.add('swipe-actions-container--visible');
-        if (inactiveActions) inactiveActions.classList.remove('swipe-actions-container--visible');
-        
-        // Animamos el icono para dar feedback.
-        const progress = Math.min(Math.abs(currentDiff) / swipeState.threshold, 1);
-        const icon = activeActions ? activeActions.querySelector('.material-icons') : null;
-        if (icon) {
-            icon.style.transform = `scale(${0.5 + (progress * 0.7)})`;
-            icon.style.opacity = progress;
-        }
-        
-        // Movemos la tarjeta con el dedo.
-        swipeState.activeCard.style.transition = 'none';
-        swipeState.activeCard.style.transform = `translateX(${currentDiff}px)`;
-    }
-};
-
-/**
- * Se activa al finalizar la interacción (levantar dedo o soltar ratón).
- * Ejecuta la acción de swipe, un clic corto o simplemente resetea el estado.
- * @param {Event} e - El evento de finalización (mouseup o touchend).
- */
-const handleInteractionEnd = (e) => {
-    clearTimeout(longPressState.timer);
-
-    if (longPressState.isLongPress || !swipeState.isSwiping) {
-        longPressState.isLongPress = false;
-        return;
-    }
-    
-    // Si fue un swipe, comprobamos si superó el umbral para activar la acción.
-    if (swipeState.isSwipeIntent && swipeState.activeCard) {
-        const diff = swipeState.currentX - swipeState.startX;
-        swipeState.activeCard.style.transition = 'transform 0.3s ease-out';
-        
-        if (Math.abs(diff) > swipeState.threshold) {
-            const direction = diff > 0 ? 'right' : 'left';
-            const actionBtn = swipeState.activeCard.parentElement.querySelector(`.${direction === 'right' ? 'left' : 'right'} .swipe-action-btn`);
-            if (actionBtn) {
-                actionBtn.click(); // Simulamos un clic en el botón de acción (borrar o duplicar).
-            }
-        } else {
-            resetActiveSwipe(); // No se superó el umbral, la tarjeta vuelve a su sitio.
-        }
-    } 
-    // Si fue un clic corto en una tarjeta, lo tratamos como una edición.
-    else if (!swipeState.isSwipeIntent && e.target.closest('.transaction-card')) {
-        const movementId = e.target.closest('[data-id]').dataset.id;
-        startMovementForm(movementId, false);
-    }
-    // Si fue un clic corto en un activo, mostramos sus movimientos.
-    else if (!swipeState.isSwipeIntent && e.target.closest('.modal__list-item[data-id]')) {
-         const accountId = e.target.closest('[data-id]').dataset.id;
-         showAccountMovementsModal(accountId);
-    }
-    
-    // Reseteamos todos los estados para la próxima interacción.
-    swipeState.isSwiping = false;
-    swipeState.isSwipeIntent = false;
-};
-
-let longPressTimer = null;
 
 
 // =================================================================
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
 // =================================================================
  const attachEventListeners = () => {
-    
-    const addBtn = select('bottom-nav-add-btn');
-    const quickMenu = select('quick-add-menu');
+	let longPressTimer;
+const addBtn = select('bottom-nav-add-btn');
+const quickMenu = select('quick-add-menu');
 
-    if (addBtn && quickMenu) {
-        addBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+if (addBtn && quickMenu) {
+    addBtn.addEventListener('mousedown', startLongPress);
+    addBtn.addEventListener('touchstart', startLongPress);
+    addBtn.addEventListener('mouseup', cancelLongPress);
+    addBtn.addEventListener('mouseleave', cancelLongPress);
+    addBtn.addEventListener('touchend', cancelLongPress);
+    
+    document.addEventListener('click', (e) => {
+        if (!quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
+            quickMenu.classList.remove('visible');
+        }
+    });
+}
+
+function startLongPress(e) {
+    e.preventDefault();
+    longPressTimer = setTimeout(() => {
+        hapticFeedback('medium');
+        quickMenu.classList.add('visible');
+        longPressTimer = null; // Marcar como ejecutado
+    }, 400); // 400ms para considerar pulsación larga
+}
+
+function cancelLongPress() {
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        // Si el tiempo fue corto, es un clic normal
+        startMovementForm();
+    }
+}
+
+document.body.addEventListener('click', (e) => {
+	const quickAddAction = e.target.closest('[data-action="quick-add-type"]');
+    if(quickAddAction) {
+        const type = quickAddAction.dataset.type;
+        quickMenu.classList.remove('visible');
+        startMovementForm(); // Abre el formulario genérico
+        setTimeout(() => setMovimientoFormType(type), 50); // Lo ajusta al tipo seleccionado
+    }
+});
+
+	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
+const mainScrollerPtr = selectOne('.app-layout__main');
+const ptrIndicator = document.createElement('div');
+ptrIndicator.id = 'pull-to-refresh-indicator';
+ptrIndicator.innerHTML = '<div class="spinner"></div>';
+if (ptrElement) ptrElement.prepend(ptrIndicator);
+
+let ptrState = {
+    startY: 0,
+    isPulling: false,
+    distance: 0,
+    threshold: 80 // Distancia necesaria para activar
+};
+
+if (ptrElement && mainScrollerPtr) {
+    ptrElement.addEventListener('touchstart', (e) => {
+        if (mainScrollerPtr.scrollTop === 0) { // Solo si estamos arriba del todo
+            ptrState.startY = e.touches[0].clientY;
+            ptrState.isPulling = true;
+        }
+    }, { passive: true });
+
+    ptrElement.addEventListener('touchmove', (e) => {
+        if (!ptrState.isPulling) return;
+        
+        const currentY = e.touches[0].clientY;
+        ptrState.distance = currentY - ptrState.startY;
+
+        if (ptrState.distance > 0) {
+            e.preventDefault(); // Evita el scroll del navegador
+            ptrIndicator.classList.add('visible');
+            const rotation = Math.min(ptrState.distance * 2.5, 360);
+            ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
+            ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
+        }
+    }, { passive: false });
+
+    ptrElement.addEventListener('touchend', async () => {
+        if (ptrState.isPulling && ptrState.distance > ptrState.threshold) {
             hapticFeedback('medium');
-            quickMenu.classList.toggle('visible');
+            ptrIndicator.querySelector('.spinner').style.transform = '';
+            ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
+            
+            // Acción de refresco: Recargamos los movimientos del diario
+            await renderDiarioPage();
+
+            // Ocultar indicador después de refrescar
+            setTimeout(() => {
+                ptrIndicator.classList.remove('visible');
+                ptrIndicator.querySelector('.spinner').style.animation = '';
+            }, 500);
+        } else {
+            ptrIndicator.classList.remove('visible');
+        }
+
+        ptrState.isPulling = false;
+        ptrState.distance = 0;
+    });
+}
+
+	
+    const cantidadInput = document.getElementById("movimiento-cantidad");
+    if (cantidadInput) {
+        const cantidadError = document.getElementById("movimiento-cantidad-error");
+        cantidadInput.addEventListener("input", () => {
+            let valor = cantidadInput.value.trim();
+            valor = valor.replace(",", ".");
+            const regex = /^\d+(.\d{0,2})?$/;
+            if (valor === "" || !regex.test(valor)) {
+                cantidadError.textContent = "Introduce un número positivo (ej: 2,50 o 15.00)";
+                cantidadInput.classList.add("form-input--error");
+            } else {
+                cantidadError.textContent = "";
+                cantidadInput.classList.remove("form--error");
+            }
+        });
+        const descripcionInput = document.getElementById("movimiento-descripcion");
+        const cuentaSelect = document.getElementById("movimiento-cuenta");
+        const saveBtn = document.getElementById("save-movimiento-btn");
+        document.addEventListener("show-modal", (e) => {
+            if (e.detail.modalId === "movimiento-modal") {
+                setTimeout(() => cantidadInput.focus(), 100);
+            }
+        });
+        cantidadInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                descripcionInput.focus();
+            }
+        });
+        descripcionInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                cuentaSelect.focus();
+            }
+        });
+        cuentaSelect.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                saveBtn.click();
+            }
         });
     }
 
-    // Listener global para clics, ahora corregido
-    document.body.addEventListener('click', (e) => {
-		if (e.target.classList.contains('modal-overlay')) {
-    const activeModal = e.target.closest('.modal-overlay--active');
-    if (activeModal && activeModal.id) {
-        // Excepción: no cerramos la calculadora al pinchar fuera, ya tiene su propia lógica.
-        if (activeModal.id !== 'calculator-overlay') {
-            hideModal(activeModal.id);
-        }
+    const amountInputForFormatting = select('movimiento-cantidad');
+    if (amountInputForFormatting) {
+        amountInputForFormatting.addEventListener('focus', (e) => {
+            const input = e.target;
+            if (input.value === '') return;
+            const rawValue = input.value.replace(/\./g, '');
+            input.value = rawValue;
+        });
+        amountInputForFormatting.addEventListener('blur', (e) => {
+            const input = e.target;
+            if (input.value === '') return;
+            const numericValue = parseCurrencyString(input.value);
+            input.value = formatAsCurrencyInput(numericValue);
+        });
     }
-}
-        
-        // --- INICIO DEL BLOQUE MOVIDO ---
-        // Este código ahora está DENTRO del listener y tiene acceso a 'e'
-        if (!e.target.closest('.custom-select-wrapper')) {
+
+    window.addEventListener('popstate', (event) => {
+        const activeModal = document.querySelector('.modal-overlay--active');
+        if (activeModal) {
+            hideModal(activeModal.id);
+            history.pushState({ page: window.history.state?.page }, '', `#${window.history.state?.page || 'panel-page'}`);
+            return;
+        }
+        const pageToNavigate = event.state ? event.state.page : PAGE_IDS.INICIO;
+        if (pageToNavigate) {
+            navigateTo(pageToNavigate, false);
+        }
+    });
+
+    document.body.addEventListener('click', async (e) => {
+        const target = e.target;
+
+        if (!target.closest('.custom-select-wrapper')) {
             closeAllCustomSelects(null);
         }
-        
-        if (quickMenu && quickMenu.classList.contains('visible') && !quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
-            quickMenu.classList.remove('visible');
-        }
-        // --- FIN DEL BLOQUE MOVIDO ---
 
-        const actionTarget = e.target.closest('[data-action]');
+        if (target.matches('.input-amount-calculator')) {
+            e.preventDefault();
+            showCalculator(target);
+            return;
+        }
+        const actionTarget = target.closest('[data-action]');
         if (!actionTarget) return;
 
-        const { action, id, page, type } = actionTarget.dataset;
+        const { action, id, page, type, modalId, reportId } = actionTarget.dataset;
         const btn = actionTarget.closest('button');
-
-        // Mapa de acciones para un código más limpio.
+        
         const actions = {
-			'quick-add-type': (e) => {
-			const quickAddItem = e.target.closest('[data-action="quick-add-type"]');
-			if (!quickAddItem) return;
-
-			const type = quickAddItem.dataset.type;
-			const menu = select('quick-add-menu');
-			if (menu) menu.classList.remove('visible');
-    
-			// En lugar de abrir el formulario, abrimos la calculadora y le pasamos el tipo.
-			const calculatorTargetInput = {
-			// Creamos un "objetivo falso" para la calculadora con la información que necesitamos.
-			// La calculadora no necesita un campo de input real para funcionar en este flujo.
-			value: '',
-			dataset: { movementType: type } // Guardamos el tipo de movimiento aquí.
-			};
-			showCalculator(calculatorTargetInput);
-			},
-            'swipe-show-irr-history': () => handleShowIrrHistory(type),
-            'show-main-menu': () => {
+			'swipe-show-irr-history': () => handleShowIrrHistory(type),
+			'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
                 if (!menu) return;
                 menu.classList.toggle('popover-menu--visible');
@@ -7653,9 +7662,10 @@ let longPressTimer = null;
                 amountInput.value = newValue.toLocaleString('es-ES', { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 updateAmountTypeUI(!isCurrentlyGasto);
             },
-            'context-edit': () => { hideModal('action-sheet-overlay'); startMovementForm(id, false); },
-            'context-duplicate': () => { hideModal('action-sheet-overlay'); const movement = db.movimientos.find(m => m.id === id); if(movement) handleDuplicateMovement(movement); },
-            'context-delete': () => { hideModal('action-sheet-overlay'); deleteMovementAndAdjustBalance(id, false); },
+			
+            'context-edit': () => { hideModal('generic-modal'); startMovementForm(id, false); },
+            'context-duplicate': () => { hideModal('generic-modal'); const movement = db.movimientos.find(m => m.id === id); if(movement) handleDuplicateMovement(movement); },
+            'context-delete': () => { hideModal('generic-modal'); showConfirmationModal('¿Seguro que quieres eliminar este movimiento?', async () => { await deleteMovementAndAdjustBalance(id, false); }); },
             'show-kpi-drilldown': () => handleKpiDrilldown(actionTarget),
             'edit-movement-from-modal': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; hideModal('generic-modal'); startMovementForm(movementId, false); },
             'edit-movement-from-list': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; startMovementForm(movementId, false); },
@@ -7696,14 +7706,21 @@ let longPressTimer = null;
             'toggle-investment-type-filter': () => handleToggleInvestmentTypeFilter(type),
             'toggle-account-type-filter': () => { hapticFeedback('light'); if (deselectedAccountTypesFilter.has(type)) { deselectedAccountTypesFilter.delete(type); } else { deselectedAccountTypesFilter.add(type); } renderPatrimonioOverviewWidget('patrimonio-overview-container'); },
 			 'switch-estrategia-tab': () => {
-                const tabName = actionTarget.dataset.tab;
-                showEstrategiaTab(tabName);
-            },
+        const tabName = actionTarget.dataset.tab;
+        showEstrategiaTab(tabName);
+    },
 			'show-help-topic': () => {
                 const topic = actionTarget.dataset.topic;
                 if(topic) {
                     let title, content;
-                    // ... (lógica del help topic)
+                    if (topic === 'tasa-ahorro') { title = '¿Cómo se calcula la Tasa de Ahorro?'; content = `<p>Mide qué porcentaje de tus ingresos consigues guardar después de cubrir todos tus gastos en el periodo seleccionado.</p><h4>Fórmula:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">(Saldo Neto del Periodo / Ingresos Totales del Periodo) * 100</code><p style="margin-top: var(--sp-2);">Es el indicador clave de tu capacidad para generar riqueza.</p>`; }
+                    else if (topic === 'patrimonio-neto') { title = '¿Cómo se calcula el Patrimonio Neto?'; content = `<p>Representa tu riqueza total. Es la suma de todo lo que tienes (activos) menos todo lo que debes (pasivos).</p><h4>Fórmula:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">Suma de los saldos de todas tus cuentas.</code><p style="margin-top: var(--sp-2);"><strong>Importante:</strong> Este valor es siempre tu situación global actual y no se ve afectado por los filtros de fecha del panel.</p>`; }
+                    else if (topic === 'pnl-inversion') { title = '¿Cómo se calcula el P&L de Inversión?'; content = `<p>P&L son las siglas de "Profits and Losses" (Ganancias y Pérdidas). Mide el <strong>flujo de caja neto</strong> de tus cuentas de inversión durante el periodo seleccionado.</p><h4>Fórmula:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">Suma de todos los movimientos en cuentas de inversión.</code><p style="margin-top: var(--sp-2);">No incluye la revalorización de activos que no hayas vendido. Es útil para saber si tus inversiones te están dando dinero (dividendos, ventas) o si estás invirtiendo más capital (compras).</p>`; }
+                    else if (topic === 'progreso-presupuesto') { title = '¿Cómo se calcula el Progreso del Presupuesto?'; content = `<p>Compara tus gastos reales con tu plan de gastos para el periodo seleccionado.</p><h4>Fórmula:</h4><ol style="list-style-position: inside; padding-left: var(--sp-2);"><li style="margin-bottom: 6px;">Se calcula tu <strong>límite de gasto proporcional</strong> para el periodo (ej. Presupuesto Anual / 12 para un mes).</li><li style="margin-bottom: 6px;">Se comparan tus <strong>gastos reales</strong> del periodo con ese límite.</li></ol><p style="margin-top: var(--sp-2);">Te ayuda a ver si te estás ciñendo a tu plan financiero y a corregir desviaciones a tiempo.</p>`; }
+                    else if (topic === 'colchon-emergencia') { title = 'Colchón de Emergencia'; content = `<p>Es tu red de seguridad financiera. Mide cuántos meses podrías vivir cubriendo tus gastos si dejaras de tener ingresos hoy mismo.</p><h4>Fórmula:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">Dinero Líquido Total / Gasto Mensual Promedio</code><p style="margin-top: var(--sp-2);">Se considera "dinero líquido" el saldo de tus cuentas de tipo Banco, Ahorro y Efectivo.</p>`; }
+                    else if (topic === 'independencia-financiera') { title = 'Independencia Financiera (I.F.)'; content = `<p>Mide tu progreso para alcanzar el punto en el que tus inversiones podrían cubrir tus gastos para siempre, sin necesidad de trabajar.</p><h4>Fórmula del Objetivo:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">(Gasto Mensual Promedio * 12) * 30</code><p style="margin-top: var(--sp-2);">El porcentaje muestra qué parte de ese objetivo ya has alcanzado con tu patrimonio neto actual.</p>`; }
+                    const titleEl = select('help-modal-title'); const bodyEl = select('help-modal-body');
+                    if(titleEl) titleEl.textContent = title; if(bodyEl) bodyEl.innerHTML = `<div style="padding: 0 var(--sp-2);">${content}</div>`;
                     showModal('help-modal');
                 }
             },
@@ -7770,36 +7787,29 @@ let longPressTimer = null;
                     break;
             }
         },
-            'toggle-off-balance': async () => { const checkbox = actionTarget.closest('input[type="checkbox"]'); if (!checkbox) return; hapticFeedback('light'); await saveDoc('cuentas', checkbox.dataset.id, { offBalance: checkbox.checked }); },
+            'toggle-off-balance': async () => { const checkbox = target.closest('input[type="checkbox"]'); if (!checkbox) return; hapticFeedback('light'); await saveDoc('cuentas', checkbox.dataset.id, { offBalance: checkbox.checked }); },
             'apply-filters': () => { hapticFeedback('light'); scheduleDashboardUpdate(); },
             'delete-movement-from-modal': () => { const isRecurrent = (actionTarget.dataset.isRecurrent === 'true'); const idToDelete = select('movimiento-id').value; const message = isRecurrent ? '¿Seguro que quieres eliminar esta operación recurrente?' : '¿Seguro que quieres eliminar este movimiento?'; showConfirmationModal(message, async () => { hideModal('movimiento-modal'); await deleteMovementAndAdjustBalance(idToDelete, isRecurrent); }); },
-            'swipe-delete-movement': () => { deleteMovementAndAdjustBalance(id, actionTarget.dataset.isRecurrent === 'true'); },
+            'swipe-delete-movement': () => { const isRecurrent = actionTarget.dataset.isRecurrent === 'true'; showConfirmationModal('¿Seguro que quieres eliminar este movimiento?', async () => { await deleteMovementAndAdjustBalance(id, isRecurrent); }); },
             'swipe-duplicate-movement': () => { const movement = db.movimientos.find(m => m.id === id) || recentMovementsCache.find(m => m.id === id); if (movement) handleDuplicateMovement(movement); },
             'search-result-movimiento': (e) => { hideModal('global-search-modal'); startMovementForm(e.target.closest('[data-id]').dataset.id, false); },
-            'search-result-cuenta': (e) => { hideModal('global-search-modal'); showAccountMovementsModal(e.target.closest('[data-id]').dataset.id); },
-            'search-result-concepto': (e) => { hideModal('global-search-modal'); /* Lógica futura para ver un informe de ese concepto */ },
             'delete-concepto': async () => { const movsCheck = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').where('conceptoId', '==', id).limit(1).get(); if(!movsCheck.empty) { showToast("Concepto en uso, no se puede borrar.","warning"); return; } showConfirmationModal('¿Seguro que quieres eliminar este concepto?', async () => { await deleteDoc('conceptos', id); hapticFeedback('success'); showToast("Concepto eliminado."); renderConceptosModalList(); }); },
             'delete-cuenta': async () => { const movsCheck = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').where('cuentaId', '==', id).limit(1).get(); if(!movsCheck.empty) { showToast("Cuenta con movimientos, no se puede borrar.","warning",3500); return; } showConfirmationModal('¿Seguro que quieres eliminar esta cuenta?', async () => { await deleteDoc('cuentas', id); hapticFeedback('success'); showToast("Cuenta eliminada."); renderCuentasModalList(); }); },
-            'close-modal': () => {
-				const modalId = actionTarget.dataset.modalId;
-				if (modalId) {
-				hideModal(modalId);
-				}
-				},
+            'close-modal': () => { const closestOverlay = target.closest('.modal-overlay'); const effectiveModalId = modalId || (closestOverlay ? closestOverlay.id : null); if (effectiveModalId) hideModal(effectiveModalId); },
             'manage-conceptos': showConceptosModal, 'manage-cuentas': showCuentasModal,
             'save-config': () => handleSaveConfig(btn),
             'export-data': () => handleExportData(btn), 'export-csv': () => handleExportCsv(btn), 'import-data': () => showImportJSONWizard(),
             'clear-data': () => { showConfirmationModal('¿Borrar TODOS tus datos de la nube? Esta acción es IRREVERSIBLE y no se puede deshacer.', async () => { /* Lógica de borrado aquí */ }, 'Confirmación Final de Borrado'); },
-            'update-budgets': handleUpdateBudgets, 'logout': () => fbAuth.signOut(), 'delete-account': () => { /* ... lógica delete account ... */ },
+            'update-budgets': handleUpdateBudgets, 'logout': () => fbAuth.signOut(), 'delete-account': () => { showConfirmationModal('Esto eliminará tu cuenta y todos tus datos de forma PERMANENTE. ¿Estás absolutamente seguro?', async () => { /* Lógica de borrado de cuenta aquí */ }); },
             'manage-investment-accounts': showManageInvestmentAccountsModal, 'update-asset-value': () => showValoracionModal(id),
             'global-search': () => { showGlobalSearchModal(); hapticFeedback('medium'); },
             'edit-concepto': () => showConceptoEditForm(id), 'cancel-edit-concepto': renderConceptosModalList, 'save-edited-concepto': () => handleSaveEditedConcept(id, btn),
             'edit-cuenta': () => showAccountEditForm(id), 'cancel-edit-cuenta': renderCuentasModalList, 'save-edited-cuenta': () => handleSaveEditedAccount(id, btn),
             'duplicate-movement': () => { hapticFeedback('medium'); select('movimiento-mode').value = 'new'; select('movimiento-id').value = ''; select('form-movimiento-title').textContent = 'Duplicar Movimiento'; select('delete-movimiento-btn').classList.add('hidden'); select('duplicate-movimiento-btn').classList.add('hidden'); const today = new Date(); const fechaInput = select('movimiento-fecha'); fechaInput.value = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10); updateDateDisplay(fechaInput); showToast('Datos duplicados. Ajusta y guarda como nuevo.', 'info'); },
             'save-and-new-movement': () => handleSaveMovement(document.getElementById('form-movimiento'), btn), 'set-movimiento-type': () => setMovimientoFormType(type),
-            'recalculate-balances': () => { showConfirmationModal('¿Realizar auditoría completa de saldos? Esta operación es intensiva y puede tardar.', () => auditAndFixAllBalances(btn), 'Confirmar Auditoría'); },
+            'recalculate-balances': () => { showConfirmationModal('Esta es una herramienta de auditoría que recalculará el saldo de cada cuenta desde cero, leyendo todo tu historial de movimientos. Úsala solo si sospechas que hay una inconsistencia. La operación puede tardar y consumir datos. ¿Quieres continuar?', () => auditAndFixAllBalances(btn), 'Confirmar Auditoría Completa'); },
             'json-wizard-back-2': () => goToJSONStep(1), 'json-wizard-import-final': () => handleFinalJsonImport(btn),
-            'toggle-traspaso-accounts-filter': () => populateTraspasoDropdowns(), 'set-pin': async () => { /* ... lógica set pin ... */ },
+            'toggle-traspaso-accounts-filter': () => populateTraspasoDropdowns(), 'set-pin': async () => { const pin = prompt("Introduce tu nuevo PIN de 4 dígitos. Déjalo en blanco para eliminarlo."); if (pin === null) return; if (pin === "") { localStorage.removeItem('pinUserHash'); localStorage.removeItem('pinUserEmail'); showToast('PIN de acceso rápido eliminado.', 'info'); return; } if (!/^\d{4}$/.test(pin)) { showToast('El PIN debe contener exactamente 4 dígitos numéricos.', 'danger'); return; } const pinConfirm = prompt("Confirma tu nuevo PIN de 4 dígitos."); if (pin !== pinConfirm) { showToast('Los PINs no coinciden. Inténtalo de nuevo.', 'danger'); return; } const pinHash = await hashPin(pin); localStorage.setItem('pinUserHash', pinHash); localStorage.setItem('pinUserEmail', currentUser.email); hapticFeedback('success'); showToast('¡PIN de acceso rápido configurado con éxito!', 'info'); },
             'edit-recurrente-from-pending': () => startMovementForm(id, true),
             'confirm-recurrent': () => handleConfirmRecurrent(id, btn), 'skip-recurrent': () => handleSkipRecurrent(id, btn),
 			'show-informe-builder': showInformeBuilderModal, 'save-informe': () => handleSaveInforme(btn),
@@ -7846,7 +7856,6 @@ let longPressTimer = null;
     document.addEventListener('change', e => {
         const target = e.target;
         if (target.id === 'filter-periodo') {
-			
             const el = select('custom-date-filters');
             if (el) el.classList.toggle('hidden', target.value !== 'custom');
             const applyBtnEl = document.querySelector('[data-action="apply-filters"]');
@@ -7860,75 +7869,13 @@ let longPressTimer = null;
                 select('recurrent-next-date').value = select('movimiento-fecha').value;
             }
         }
-        if (e.target.id === 'recurrent-frequency') {
-        const weekDaysEl = select('recurrent-week-days');
-        if (weekDaysEl) {
-            weekDaysEl.classList.toggle('hidden', e.target.value !== 'weekly');
+        if (target.id === 'recurrent-frequency') {
+            const endDateGroup = select('recurrent-end-date').closest('.form-group');
+            if (endDateGroup) {
+                endDateGroup.classList.toggle('hidden', target.value === 'once');
+            }
         }
-    }
-});
-    
-    const importFileInput = select('import-file-input'); if (importFileInput) importFileInput.addEventListener('change', (e) => { if(e.target.files) handleJSONFileSelect(e.target.files[0]); });
-    const calculatorGrid = select('calculator-grid'); if (calculatorGrid) calculatorGrid.addEventListener('click', (e) => { const btn = e.target.closest('button'); if(btn && btn.dataset.key) handleCalculatorInput(btn.dataset.key); });
-    const searchInput = select('global-search-input'); if (searchInput) searchInput.addEventListener('input', () => { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => { performGlobalSearch(searchInput.value); }, 250); });
-    document.body.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); e.stopPropagation(); showGlobalSearchModal(); } });
-    const dropZone = select('json-drop-zone'); if (dropZone) { dropZone.addEventListener('click', () => { const el = select('import-file-input'); if (el) el.click() }); dropZone.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('drag-over'); }); dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); }); dropZone.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); const files = e.dataTransfer.files; if (files && files.length > 0) handleJSONFileSelect(files); }); }
-    const suggestionsBox = select('description-suggestions'); if (suggestionsBox) { suggestionsBox.addEventListener('click', (e) => { const suggestionItem = e.target.closest('.suggestion-item'); if (suggestionItem) { const { description, conceptoId, cuentaId } = suggestionItem.dataset; applyDescriptionSuggestion(suggestionItem); } }); }
-    const fechaDisplayButton = select('movimiento-fecha-display'); const fechaRealInput = select('movimiento-fecha'); if (fechaDisplayButton && fechaRealInput) { fechaDisplayButton.addEventListener('click', () => fechaRealInput.showPicker()); fechaRealInput.addEventListener('input', () => updateDateDisplay(fechaRealInput)); }
-    const diarioContainer = select('diario-page'); if (diarioContainer) { const mainScroller = selectOne('.app-layout__main'); diarioContainer.addEventListener('touchstart', (e) => { if (mainScroller.scrollTop > 0) return; ptrState.startY = e.touches[0].clientY; ptrState.isPulling = true; if (e.target.closest('.transaction-card')) { handleInteractionStart(e); } }, { passive: true }); diarioContainer.addEventListener('touchmove', (e) => { if (!ptrState.isPulling) { handleInteractionMove(e); return; } const currentY = e.touches[0].clientY; ptrState.distance = currentY - ptrState.startY; if (ptrState.distance > 0) { e.preventDefault(); const indicator = select('pull-to-refresh-indicator'); if (indicator) { indicator.classList.add('visible'); const rotation = Math.min(ptrState.distance * 2, 360); indicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`; } } }, { passive: false }); diarioContainer.addEventListener('touchend', async (e) => { const indicator = select('pull-to-refresh-indicator'); if (ptrState.isPulling && ptrState.distance > ptrState.threshold) { hapticFeedback('medium'); if (indicator) { indicator.querySelector('.spinner').style.animation = 'spin 1s linear infinite'; } await loadMoreMovements(true); setTimeout(() => { if (indicator) { indicator.classList.remove('visible'); indicator.querySelector('.spinner').style.animation = ''; } }, 500); } else if (indicator) { indicator.classList.remove('visible'); } ptrState.isPulling = false; ptrState.distance = 0; handleInteractionEnd(e); }); diarioContainer.addEventListener('mousedown', (e) => e.target.closest('.transaction-card') && handleInteractionStart(e)); diarioContainer.addEventListener('mousemove', handleInteractionMove); diarioContainer.addEventListener('mouseup', handleInteractionEnd); diarioContainer.addEventListener('mouseleave', handleInteractionEnd); }
-    const mainScroller = selectOne('.app-layout__main'); if (mainScroller) { let scrollRAF = null; mainScroller.addEventListener('scroll', () => { if (scrollRAF) window.cancelAnimationFrame(scrollRAF); scrollRAF = window.requestAnimationFrame(() => { if (diarioViewMode === 'list' && select('diario-page')?.classList.contains('view--active')) { renderVisibleItems(); } }); }, { passive: true }); }
-    document.body.addEventListener('toggle', (e) => { const detailsElement = e.target; if (detailsElement.tagName !== 'DETAILS' || !detailsElement.classList.contains('informe-acordeon')) { return; } if (detailsElement.open) { const id = detailsElement.id; const informeId = id.replace('acordeon-', ''); const container = select(`informe-content-${informeId}`); if (container && container.querySelector('.form-label')) { renderInformeDetallado(informeId); } } }, true);
-};
-    
-    document.body.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const target = e.target;
-        const submitter = e.submitter;
-        const handlers = {
-            'login-form': () => { const action = submitter ? submitter.dataset.action : 'login'; if (action === 'login') { handleLogin(submitter); } else if (action === 'register') { handleRegister(submitter); } },
-            'pin-form': handlePinSubmit,
-            'form-movimiento': () => handleSaveMovement(target, submitter),
-            'add-concepto-form': () => handleAddConcept(submitter),
-            'add-cuenta-form': () => handleAddAccount(submitter),
-            'informe-cuenta-form': () => handleGenerateInformeCuenta(target, submitter),
-            'manage-investment-accounts-form': () => handleSaveInvestmentAccounts(target, submitter),
-            'form-valoracion': () => handleSaveValoracion(target, submitter),
-            'diario-filters-form': applyDiarioFilters
-        };
-        if (handlers[target.id]) { handlers[target.id](); }
     });
-    
-    document.body.addEventListener('input', (e) => { const id = e.target.id; if (id) { clearError(id); if (id === 'movimiento-cantidad') validateField('movimiento-cantidad', true); if (id === 'movimiento-descripcion') handleDescriptionInput(); if (id === 'movimiento-concepto' || id === 'movimiento-cuenta') validateField(id, true); if (id === 'movimiento-cuenta-origen' || id === 'movimiento-cuenta-destino') { validateField('movimiento-cuenta-origen', true); validateField('movimiento-cuenta-destino', true); } if (id === 'concepto-search-input') { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => renderConceptosModalList(), 200); } if (id === 'cuenta-search-input') { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => renderCuentasModalList(), 200); } } });
-    
-    document.body.addEventListener('blur', (e) => { const id = e.target.id; if (id) { if (id === 'movimiento-cantidad') validateField('movimiento-cantidad'); if (id === 'movimiento-concepto' || id === 'movimiento-cuenta') validateField(id); } }, true);
-    
-    document.body.addEventListener('focusin', (e) => { if (e.target.matches('.pin-input')) { handlePinInputInteraction(); } if (e.target.id === 'movimiento-descripcion') { handleDescriptionInput(); } });
-    
-    document.addEventListener('change', e => {
-        const target = e.target;
-        if (target.id === 'filter-periodo') {
-			
-            const el = select('custom-date-filters');
-            if (el) el.classList.toggle('hidden', target.value !== 'custom');
-            const applyBtnEl = document.querySelector('[data-action="apply-filters"]');
-            const isCustom = target.value === 'custom';
-            if (applyBtnEl) applyBtnEl.classList.toggle('hidden', !isCustom);
-            if (!isCustom) { hapticFeedback('light'); scheduleDashboardUpdate(); }
-        }
-        if (target.id === 'movimiento-recurrente') {
-            select('recurrent-options').classList.toggle('hidden', !target.checked);
-            if(target.checked && !select('recurrent-next-date').value) {
-                select('recurrent-next-date').value = select('movimiento-fecha').value;
-            }
-        }
-        if (e.target.id === 'recurrent-frequency') {
-        const weekDaysEl = select('recurrent-week-days');
-        if (weekDaysEl) {
-            weekDaysEl.classList.toggle('hidden', e.target.value !== 'weekly');
-        }
-    }
-    // ▲▲▲ FIN DEL BLOQUE A AÑADIR ▲▲▲
-});
     
     const importFileInput = select('import-file-input'); if (importFileInput) importFileInput.addEventListener('change', (e) => { if(e.target.files) handleJSONFileSelect(e.target.files[0]); });
     const calculatorGrid = select('calculator-grid'); if (calculatorGrid) calculatorGrid.addEventListener('click', (e) => { const btn = e.target.closest('button'); if(btn && btn.dataset.key) handleCalculatorInput(btn.dataset.key); });
@@ -7940,7 +7887,7 @@ let longPressTimer = null;
     const diarioContainer = select('diario-page'); if (diarioContainer) { const mainScroller = selectOne('.app-layout__main'); diarioContainer.addEventListener('touchstart', (e) => { if (mainScroller.scrollTop > 0) return; ptrState.startY = e.touches[0].clientY; ptrState.isPulling = true; if (e.target.closest('.transaction-card')) { handleInteractionStart(e); } }, { passive: true }); diarioContainer.addEventListener('touchmove', (e) => { if (!ptrState.isPulling) { handleInteractionMove(e); return; } const currentY = e.touches[0].clientY; ptrState.distance = currentY - ptrState.startY; if (ptrState.distance > 0) { e.preventDefault(); const indicator = select('pull-to-refresh-indicator'); if (indicator) { indicator.classList.add('visible'); const rotation = Math.min(ptrState.distance * 2, 360); indicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`; } } }, { passive: false }); diarioContainer.addEventListener('touchend', async (e) => { const indicator = select('pull-to-refresh-indicator'); if (ptrState.isPulling && ptrState.distance > ptrState.threshold) { hapticFeedback('medium'); if (indicator) { indicator.querySelector('.spinner').style.animation = 'spin 1s linear infinite'; } await loadMoreMovements(true); setTimeout(() => { if (indicator) { indicator.classList.remove('visible'); indicator.querySelector('.spinner').style.animation = ''; } }, 500); } else if (indicator) { indicator.classList.remove('visible'); } ptrState.isPulling = false; ptrState.distance = 0; handleInteractionEnd(e); }); diarioContainer.addEventListener('mousedown', (e) => e.target.closest('.transaction-card') && handleInteractionStart(e)); diarioContainer.addEventListener('mousemove', handleInteractionMove); diarioContainer.addEventListener('mouseup', handleInteractionEnd); diarioContainer.addEventListener('mouseleave', handleInteractionEnd); }
     const mainScroller = selectOne('.app-layout__main'); if (mainScroller) { let scrollRAF = null; mainScroller.addEventListener('scroll', () => { if (scrollRAF) window.cancelAnimationFrame(scrollRAF); scrollRAF = window.requestAnimationFrame(() => { if (diarioViewMode === 'list' && select('diario-page')?.classList.contains('view--active')) { renderVisibleItems(); } }); }, { passive: true }); }
     document.body.addEventListener('toggle', (e) => { const detailsElement = e.target; if (detailsElement.tagName !== 'DETAILS' || !detailsElement.classList.contains('informe-acordeon')) { return; } if (detailsElement.open) { const id = detailsElement.id; const informeId = id.replace('acordeon-', ''); const container = select(`informe-content-${informeId}`); if (container && container.querySelector('.form-label')) { renderInformeDetallado(informeId); } } }, true);
-
+};
 // =================================================================
 // === FIN: BLOQUE DE CÓDIGO CORREGIDO PARA REEMPLAZAR           ===
 // =================================================================
@@ -8540,22 +8487,22 @@ const handleSaveMovement = async (form, btn) => {
                 setTimeout(() => hideModal('movimiento-modal'), 200);
                 showToast(mode === 'new' ? 'Movimiento guardado.' : 'Movimiento actualizado.');
             } else {
-    // ▼▼▼ ESTE ES EL BLOQUE MEJORADO ▼▼▼
-    form.reset();
-    setMovimientoFormType('gasto');
-    // Forzamos la actualización visual de los dropdowns personalizados
-    select('movimiento-concepto').dispatchEvent(new Event('change'));
-    select('movimiento-cuenta').dispatchEvent(new Event('change'));
+                // ▼▼▼ ESTE ES EL BLOQUE MEJORADO ▼▼▼
+                form.reset();
+                setMovimientoFormType('gasto');
+                // Forzamos la actualización visual de los dropdowns personalizados
+                select('movimiento-concepto').dispatchEvent(new Event('change'));
+                select('movimiento-cuenta').dispatchEvent(new Event('change'));
 
-    const today = new Date();
-    const fechaInput = select('movimiento-fecha');
-    fechaInput.value = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
-    updateDateDisplay(fechaInput);
-    
-    showToast('Movimiento guardado. Puedes añadir otro.', 'info');
-    // Devolvemos el foco al campo más importante para el siguiente movimiento.
-    select('movimiento-cantidad').focus();
-}
+                const today = new Date();
+                const fechaInput = select('movimiento-fecha');
+                fechaInput.value = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
+                updateDateDisplay(fechaInput);
+                
+                showToast('Movimiento guardado. Puedes añadir otro.', 'info');
+                // Devolvemos el foco al campo más importante para el siguiente movimiento.
+                select('movimiento-cantidad').focus();
+            }
             return true;
 
         } catch (error) {
@@ -9173,66 +9120,70 @@ const handleAddConcept = async (btn) => {
 // ==============================================================
 const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
     const collection = isRecurrent ? 'recurrentes' : 'movimientos';
+    const ANIMATION_DURATION = 400; // Debe coincidir con la duración en el CSS
+
+    const itemElement = document.querySelector(`.transaction-card[data-id="${id}"]`)?.closest('.swipe-container');
+
+    try {
+        // 1. ACTUALIZACIÓN OPTIMISTA DE DATOS
+        let itemToDelete;
+        if (isRecurrent) {
+            const index = db.recurrentes.findIndex(r => r.id === id);
+            if (index === -1) throw new Error("Recurrente no encontrado.");
+            [itemToDelete] = db.recurrentes.splice(index, 1);
+        } else {
+            const index = db.movimientos.findIndex(m => m.id === id);
+            if (index === -1) throw new Error("Movimiento no encontrado.");
+            [itemToDelete] = db.movimientos.splice(index, 1);
+            // Revertimos el saldo en la caché local ANTES de redibujar
+            applyOptimisticBalanceUpdate(null, itemToDelete); 
+        }
     
-    // Mostramos la confirmación al usuario antes de hacer nada
-    const message = isRecurrent 
-        ? '¿Seguro que quieres eliminar esta operación recurrente de forma permanente?'
-        : '¿Seguro que quieres eliminar este movimiento de forma permanente?';
-        
-    showConfirmationModal(message, async () => {
-        hapticFeedback('medium');
-        
-        // Efecto visual: animamos la salida del elemento de la lista
-        const itemElement = document.querySelector(`[data-id="${id}"]`)?.closest('.swipe-container, .modal__list-item');
+        // 2. EFECTO VISUAL (Si el elemento está en pantalla)
         if (itemElement) {
             itemElement.classList.add('item-deleting');
-            // Esperamos a que la animación termine antes de continuar
-            await new Promise(resolve => setTimeout(resolve, 400));
         }
 
-        try {
-            // Buscamos la información del elemento que vamos a borrar ANTES de que desaparezca
-            const itemToDelete = isRecurrent 
-                ? db.recurrentes.find(r => r.id === id) 
-                : db.movimientos.find(m => m.id === id);
+        // 3. ACTUALIZACIÓN DE LA UI (Después de la animación)
+        setTimeout(() => {
+    updateLocalDataAndRefreshUI();
+    if (isRecurrent) renderEstrategiaPlanificacion();
+}, itemElement ? 400 : 0); // 400ms es la duración de la animación
 
-            if (!itemToDelete) throw new Error("Elemento no encontrado para borrar.");
-
-            // AHORA es cuando hacemos la llamada a la base de datos
-            if (!isRecurrent) {
-                // Para movimientos, usamos una transacción para asegurar que el saldo se actualiza correctamente
-                const batch = fbDb.batch();
-                const userRef = fbDb.collection('users').doc(currentUser.uid);
-
-                if (itemToDelete.tipo === 'traspaso') {
-                    if(itemToDelete.cuentaOrigenId) batch.update(userRef.collection('cuentas').doc(itemToDelete.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(itemToDelete.cantidad) });
-                    if(itemToDelete.cuentaDestinoId) batch.update(userRef.collection('cuentas').doc(itemToDelete.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
-                } else {
-                    if(itemToDelete.cuentaId) batch.update(userRef.collection('cuentas').doc(itemToDelete.cuentaId), { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
-                }
-                batch.delete(userRef.collection(collection).doc(id));
-                await batch.commit();
-
+        // 4. PERSISTENCIA EN SEGUNDO PLANO
+        if (!isRecurrent) {
+            const batch = fbDb.batch();
+            const userRef = fbDb.collection('users').doc(currentUser.uid);
+            if (itemToDelete.tipo === 'traspaso') {
+                const origenRef = userRef.collection('cuentas').doc(itemToDelete.cuentaOrigenId);
+                const destinoRef = userRef.collection('cuentas').doc(itemToDelete.cuentaDestinoId);
+                batch.update(origenRef, { saldo: firebase.firestore.FieldValue.increment(itemToDelete.cantidad) });
+                batch.update(destinoRef, { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
             } else {
-                // Para recurrentes, una simple eliminación es suficiente
-                await deleteDoc(collection, id);
+                const cuentaRef = userRef.collection('cuentas').doc(itemToDelete.cuentaId);
+                batch.update(cuentaRef, { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
             }
-
-            // Si todo ha ido bien, damos feedback y refrescamos la app
-            hapticFeedback('success');
-            showToast("Elemento eliminado.", "info");
-            
-            // Forzamos una recarga de datos limpia para asegurar 100% de consistencia,
-            // que se gestiona automáticamente por los `onSnapshot`.
-            
-        } catch (error) {
-            // Si Firebase falla, mostramos un error claro y el elemento no se borrará visualmente
-            console.error("Error al eliminar:", error);
-            showToast("Error al eliminar. La operación fue cancelada.", "danger");
-            // Quitamos la clase de animación para que el elemento vuelva a ser visible
-            if(itemElement) itemElement.classList.remove('item-deleting');
+            batch.delete(userRef.collection(collection).doc(id));
+            await batch.commit();
+        } else {
+            await deleteDoc(collection, id);
         }
-    });
+
+        hapticFeedback('success');
+        showToast("Elemento eliminado.", "info");
+
+    } catch (error) {
+         // ¡PLAN B! Si Firebase falla, revertimos el cambio en la UI
+    console.error("Firebase falló. Revirtiendo cambio optimista:", error);
+    showToast("Error de sincronización. Reestableciendo estado.", "danger");
+    // Volvemos a añadir el item que borramos localmente
+    if (isRecurrent) db.recurrentes.push(itemToDelete);
+    else db.movimientos.push(itemToDelete);
+    // Recalculamos el saldo con el item restaurado
+    if (!isRecurrent) applyOptimisticBalanceUpdate(itemToDelete, null);
+    // Forzamos un re-renderizado completo para asegurar la consistencia
+    updateLocalDataAndRefreshUI(); 
+}
 };
 // ============================================================
 // === FIN: FUNCIÓN DE BORRADO OPTIMIZADA ===
@@ -9519,81 +9470,149 @@ const validateMovementForm = () => {
     return isValid;
 };
  
+const longPressState = { timer: null, isLongPress: false };
+const swipeState = { activeCard: null, startX: 0, currentX: 0, isSwiping: false, isSwipeIntent: false, threshold: 60 };
 
+const handleInteractionStart = (e) => {
+    const card = e.target.closest('.transaction-card');
+    if (!card || !card.dataset.id) return;
+
+    resetActiveSwipe();
+
+    longPressState.isLongPress = false;
+    longPressState.timer = setTimeout(() => {
+        longPressState.isLongPress = true;
+        swipeState.isSwiping = false;
+        
+        hapticFeedback('medium');
+        
+        showContextMenuForMovement(card.dataset.id);
+        
+    }, 500);
+
+    swipeState.isSwiping = true;
+    swipeState.isSwipeIntent = false;
+    swipeState.activeCard = card;
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const point = e.type === 'touchstart' ? e.touches[0] : e;
+    swipeState.startX = point.clientX;
+    swipeState.currentX = swipeState.startX;
+    swipeState.startY = point.clientY; // <-- AÑADE ESTA LÍNEA
+    // --- FIN DE LA MODIFICACIÓN ---
+};
+
+
+const handleInteractionMove = (e) => {
+    if (!swipeState.isSwiping || !swipeState.activeCard) return;
+
+    const point = e.type === 'touchmove' ? e.touches[0] : e;
+    const deltaX = point.clientX - swipeState.startX;
+    const deltaY = point.clientY - swipeState.startY; // <-- Dato que necesitamos
+
+    // ▼▼▼ NUEVA LÓGICA DE DECISIÓN DE GESTO ▼▼▼
+    if (!swipeState.isSwipeIntent && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
+        // Si el movimiento vertical es más dominante, es un SCROLL. Cancelamos todo.
+        if (Math.abs(deltaY) > Math.abs(deltaX)) {
+            if (longPressState.timer) clearTimeout(longPressState.timer);
+            swipeState.isSwiping = false; // Detenemos la lógica de swipe
+            return;
+        }
+        // Si es más horizontal, es un SWIPE. Confirmamos la intención.
+        swipeState.isSwipeIntent = true;
+        if (longPressState.timer) clearTimeout(longPressState.timer);
+    }
+    // ▲▲▲ FIN DE LA NUEVA LÓGICA ▲▲▲
+
+    // El resto de la función solo se ejecuta si la intención es de swipe
+    if (swipeState.isSwipeIntent) {
+        e.preventDefault(); // Evitamos el scroll del navegador solo si estamos haciendo swipe
+        swipeState.currentX = point.clientX;
+        const currentDiff = swipeState.currentX - swipeState.startX;
+        const direction = currentDiff > 0 ? 'right' : 'left';
+        const leftActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.left');
+        const rightActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.right');
+        const activeActions = direction === 'right' ? leftActions : rightActions;
+        const inactiveActions = direction === 'right' ? rightActions : leftActions;
+
+        if (activeActions) activeActions.classList.add('swipe-actions-container--visible');
+        if (inactiveActions) inactiveActions.classList.remove('swipe-actions-container--visible');
+        
+        const progress = Math.min(Math.abs(currentDiff) / swipeState.threshold, 1);
+        const icon = activeActions ? activeActions.querySelector('.material-icons') : null;
+        if (icon) {
+            icon.style.transform = `scale(${0.5 + (progress * 0.7)})`;
+            icon.style.opacity = progress;
+        }
+        
+        swipeState.activeCard.style.transition = 'none';
+        swipeState.activeCard.style.transform = `translateX(${currentDiff}px)`;
+    }
+};
+const handleInteractionEnd = (e) => {
+    // Siempre limpiamos el cronómetro al soltar, por si no se había disparado.
+    if (longPressState.timer) {
+        clearTimeout(longPressState.timer);
+        longPressState.timer = null;
+    }
+    
+    // Si ya se ejecutó la acción de pulsación larga, no hacemos nada más.
+    if (longPressState.isLongPress) {
+        longPressState.isLongPress = false; // Reseteamos para la próxima vez
+        return;
+    }
+
+    // El resto de tu lógica de swipe se mantiene igual.
+    if (!swipeState.isSwiping || !swipeState.activeCard) return;
+    
+    if (swipeState.isSwipeIntent) {
+        const diff = swipeState.currentX - swipeState.startX;
+        swipeState.activeCard.style.transition = 'transform 0.3s ease-out';
+        
+        if (Math.abs(diff) > swipeState.threshold) {
+            const direction = diff > 0 ? 'right' : 'left';
+            const finalX = direction === 'right' ? 75 : -75;
+            swipeState.activeCard.style.transform = `translateX(${finalX}px)`;
+            hapticFeedback('light');
+        } else {
+            resetActiveSwipe();
+        }
+    } 
+
+    swipeState.isSwiping = false;
+    swipeState.isSwipeIntent = false;
+};
 const showContextMenuForMovement = (movementId) => {
     const movement = db.movimientos.find(m => m.id === movementId);
     if (!movement) return;
 
-    const overlay = select('action-sheet-overlay');
-    const container = select('action-sheet-container');
-    if (!overlay || !container) return;
-
-    container.innerHTML = `
-        <div class="modal__grabber"></div>
-        <div class="action-sheet-title">${escapeHTML(movement.descripcion)}</div>
-        <div class="modal__body">
-            <div class="action-sheet-options">
-                <button class="action-sheet-option" data-action="context-edit" data-id="${movementId}">
-                    <span class="material-icons">edit</span> Editar Movimiento
-                </button>
-                <button class="action-sheet-option" data-action="context-duplicate" data-id="${movementId}">
-                    <span class="material-icons">content_copy</span> Duplicar Movimiento
-                </button>
-                <button class="action-sheet-option danger" data-action="context-delete" data-id="${movementId}">
-                    <span class="material-icons">delete</span> Eliminar Movimiento
-                </button>
-            </div>
+    const html = `
+        <div style="display: flex; flex-direction: column; gap: var(--sp-2);">
+            <button class="btn btn--secondary btn--full" data-action="context-edit" data-id="${movementId}">
+                <span class="material-icons">edit</span> Editar Movimiento
+            </button>
+            <button class="btn btn--secondary btn--full" data-action="context-duplicate" data-id="${movementId}">
+                <span class="material-icons">content_copy</span> Duplicar
+            </button>
+            <button class="btn btn--danger btn--full" data-action="context-delete" data-id="${movementId}">
+                <span class="material-icons">delete</span> Eliminar
+            </button>
         </div>
     `;
     
-    // Usamos nuestra función showModal mejorada.
-    showModal('action-sheet-overlay');
-};
-
-/**
- * Cierra la Action Sheet. Es una versión especializada de hideModal.
- */
-const hideActionSheet = () => {
-    hideModal('action-sheet-overlay');
+    // Usamos el modal genérico para mostrar las opciones
+    showGenericModal(`Acciones para: ${movement.descripcion}`, html);
 };
 // Asegúrate de que tu función resetActiveSwipe también oculte las acciones
 const resetActiveSwipe = () => {
-    if (swipeState.activeCard) {
-        swipeState.activeCard.style.transition = 'transform 0.3s ease-out';
-        swipeState.activeCard.style.transform = 'translateX(0px)';
-        const parent = swipeState.activeCard.parentElement;
-        parent.querySelector('.swipe-actions-container.left')?.classList.remove('swipe-actions-container--visible');
-        parent.querySelector('.swipe-actions-container.right')?.classList.remove('swipe-actions-container--visible');
-    }
-    swipeState.activeCard = null;
-};
-
-const startFabPress = () => {
-    longPressState.isLongPress = false;
-    longPressState.timer = setTimeout(() => {
-        // Si se mantiene pulsado, es una pulsación larga.
-        longPressState.isLongPress = true;
-        hapticFeedback('medium');
-        // BUG CORREGIDO: Pulsación larga = Atajo para "Nuevo Gasto".
-        startMovementForm();
-        setTimeout(() => {
-            setMovimientoFormType('gasto');
-            const amountInput = select('movimiento-cantidad');
-            if (amountInput) showCalculator(amountInput);
-        }, 50);
-    }, 400); // 400ms para una pulsación larga.
-};
-const endFabPress = () => {
-    clearTimeout(longPressState.timer);
-    // Si no fue una pulsación larga, fue un clic corto.
-    if (!longPressState.isLongPress) {
-        hapticFeedback('medium');
-        // BUG CORREGIDO: Pulsación corta = Mostrar el menú de opciones.
-        const quickMenu = select('quick-add-menu');
-        if (quickMenu) {
-            quickMenu.classList.toggle('visible');
-        }
-    }
+if (swipeState.activeCard) {
+swipeState.activeCard.style.transition = 'transform 0.3s ease-out';
+swipeState.activeCard.style.transform = 'translateX(0px)';
+// También nos aseguramos de ocultar las acciones aquí
+const parent = swipeState.activeCard.parentElement;
+parent.querySelector('.swipe-actions-container.left')?.classList.remove('swipe-actions-container--visible');
+parent.querySelector('.swipe-actions-container.right')?.classList.remove('swipe-actions-container--visible');
+}
+swipeState.activeCard = null;
 };
 
 const handleDescriptionInput = () => {
@@ -9703,7 +9722,7 @@ const renderAjustesPage = () => {
                         <span class="settings-item__label">Exportar Copia de Seguridad (JSON)</span>
                         <span class="material-icons">chevron_right</span>
                     </button>
-                    <button class="settings-item" data-action="export-csv">
+                     <button class="settings-item" data-action="export-csv">
                         <span class="material-icons text-positive">description</span>
                         <span class="settings-item__label">Exportar a CSV (Excel)</span>
                         <span class="material-icons">chevron_right</span>
@@ -9714,25 +9733,12 @@ const renderAjustesPage = () => {
                         <span class="material-icons">chevron_right</span>
                     </button>
                     <button class="settings-item" data-action="import-csv">
-                        <span class="material-icons text-warning">grid_on</span>
+                         <span class="material-icons text-warning">grid_on</span>
                         <span class="settings-item__label">Importar desde CSV</span>
                         <span class="material-icons">chevron_right</span>
                     </button>
                 </div>
             </div>
-
-            <!-- ▼▼▼ ¡AQUÍ ESTÁ LA MAGIA! ESTE ES EL NUEVO BLOQUE QUE HEMOS AÑADIDO ▼▼▼ -->
-            <h3 class="settings-group__title">Herramientas Avanzadas</h3>
-            <div class="card" style="margin-bottom: var(--sp-4);">
-                <div class="card__content" style="padding: 0;">
-                    <button class="settings-item" data-action="recalculate-balances">
-                        <span class="material-icons text-warning">build_circle</span>
-                        <span class="settings-item__label">Auditar y Corregir Saldos</span>
-                        <span class="material-icons">chevron_right</span>
-                    </button>
-                </div>
-            </div>
-            <!-- ▲▲▲ FIN DEL BLOQUE AÑADIDO ▲▲▲ -->
             
             <!-- Grupo 3: Seguridad y Cuenta -->
             <h3 class="settings-group__title">Seguridad y Cuenta</h3>
@@ -9760,3 +9766,4 @@ const renderAjustesPage = () => {
     // Esta función es necesaria para que se muestre tu email
     loadConfig();
 };
+

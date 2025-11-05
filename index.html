@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <title>CtasDani</title>
+    <title>DaniCtas</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -101,191 +101,206 @@
     </div>
 </div>
     
-    <!-- Contenedor Principal de la App -->
     <div id="app-root" class="app-layout">
+<nav class="bottom-nav">
+    <!-- 1. Panel (Presente) -->
+    <button data-action="navigate" data-page="inicio-page" class="bottom-nav__item">
+        <span class="material-icons">dashboard</span>
+        <span class="bottom-nav__label">Panel</span>
+    </button>
+    
+    <!-- 2. Diario (Pasado Reciente) -->
+    <button data-action="navigate" data-page="diario-page" class="bottom-nav__item">
+        <span class="material-icons">receipt_long</span>
+        <span class="bottom-nav__label">Diario</span>
+    </button>
+    
+    <!-- 3. Añadir (Acción Principal, Invariable) -->
+    <button data-action="open-main-add-modal" id="bottom-nav-add-btn">
+        <span class="material-icons">add</span>
+    </button>
+    
+    <!-- 4. Estrategia (Futuro unificado) -->
+    <button data-action="navigate" data-page="estrategia-page" class="bottom-nav__item">
+        <span class="material-icons">insights</span>
+        <span class="bottom-nav__label">Estrategia</span>
+    </button>
+    
+    <!-- 5. Ajustes (Acceso Rápido) -->
+    <button data-action="navigate" data-page="ajustes-page" class="bottom-nav__item">
+        <span class="material-icons">settings</span>
+        <span class="bottom-nav__label">Ajustes</span>
+    </button>
+</nav>
+
         <header id="app-top-bar" class="top-bar">
             <div class="top-bar__left-group">
-                <div id="top-bar-left-button" class="top-bar__left-button"></div>
+                <div id="top-bar-left-button" class="top-bar__left-button">
+                </div>
             </div>
-            <h1 id="top-bar-title" class="top-bar__title visually-hidden"></h1>
+
+            <h1 id="top-bar-title" class="top-bar__title"></h1>
+
             <div id="top-bar-actions" class="top-bar__actions"></div>
-            <span id="sync-status-icon" class="material-icons"></span>
+			 <span id="sync-status-icon" class="material-icons"></span>
         </header>
 
-        <main class="app-layout__main">
-            <section id="inicio-page" class="view"></section>
-            <section id="diario-page" class="view" style="padding: 0; gap: 0;"></section>
-            <section id="estrategia-page" class="view"></section>
-            <section id="ajustes-page" class="view"></section>
-        </main>
 
-        <nav class="bottom-nav">
-            <button data-action="navigate" data-page="inicio-page" class="bottom-nav__item">
-                <span class="material-icons">dashboard</span>
-                <span class="bottom-nav__label">Panel</span>
-            </button>
-            <button data-action="navigate" data-page="diario-page" class="bottom-nav__item">
-                <span class="material-icons">receipt_long</span>
-                <span class="bottom-nav__label">Diario</span>
-            </button>
-            <button id="bottom-nav-add-btn">
-                <span class="material-icons">add</span>
-            </button>
-            <button data-action="navigate" data-page="estrategia-page" class="bottom-nav__item">
-                <span class="material-icons">insights</span>
-                <span class="bottom-nav__label">Estrategia</span>
-            </button>
-            <button data-action="navigate" data-page="ajustes-page" class="bottom-nav__item">
-                <span class="material-icons">settings</span>
-                <span class="bottom-nav__label">Ajustes</span>
-            </button>
-        </nav>
-    </div>
+<main class="app-layout__main">
+    <section id="inicio-page" class="view"></section>
+    <section id="diario-page" class="view" style="padding: 0; gap: 0;"></section>
+    <section id="estrategia-page" class="view"></section> <!-- AÑADIDA -->
+    <section id="ajustes-page" class="view"></section>
+</main>
     
-    <!-- Contenedores y Menús Ocultos -->
+</div>
+    
     <div id="toast-container" aria-live="assertive"></div>
     
-        
-    <!-- ▼▼▼ NUEVO: CONTENEDOR PARA LA "ACTION SHEET" ▼▼▼ -->
-    <div id="action-sheet-overlay" class="modal-overlay" role="dialog" aria-modal="true">
-        <div id="action-sheet-container" class="modal">
-            <!-- El contenido se generará con JavaScript -->
-        </div>
-    </div>
-
-    <!-- Modales (Estructura sin cambios, pero algunos se usarán menos) -->
     <div id="movimiento-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="form-movimiento-title">
         <div class="modal">
             <div class="modal__grabber"></div>
-            <header class="modal__header" style="padding-top: var(--sp-2);"><h3 id="form-movimiento-title" class="modal__title">Añadir Movimiento</h3><button class="icon-btn" data-action="close-modal" data-modal-id="movimiento-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button></header>
+            <header class="modal__header" style="padding-top: var(--sp-2);">
+                <h3 id="form-movimiento-title" class="modal__title">Añadir Movimiento</h3>
+                <button class="icon-btn" data-action="close-modal" data-modal-id="movimiento-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
+            </header>
             <div class="modal__body">
-                <form id="form-movimiento" novalidate>
-                   <input type="hidden" id="movimiento-mode" value="new">
-    <input type="hidden" id="movimiento-id" value="">
-    
-    <!-- Este input de fecha real estará oculto, lo controlaremos con nuestro botón personalizado -->
-    <input type="date" id="movimiento-fecha" class="visually-hidden">
+			
+<form id="form-movimiento" novalidate>
+    <input type="hidden" id="movimiento-id" />
+    <input type="hidden" id="movimiento-mode" value="new" />
 
-    <!-- 1. Píldoras de selección de tipo -->
-    <div class="filter-pills" style="justify-content: center; margin-bottom: var(--sp-4);">
+    <!-- 1. SELECTOR DE TIPO: Se mantiene igual, es compacto. -->
+    <div class="filter-pills" style="justify-content: center; margin-bottom: var(--sp-3);">
         <button type="button" class="filter-pill filter-pill--active" data-action="set-movimiento-type" data-type="gasto">Gasto</button>
         <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="ingreso">Ingreso</button>
         <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="traspaso">Traspaso</button>
     </div>
 
-    <!-- 2. Rejilla principal del formulario denso (optimizada para móviles) -->
+    <!-- 2. REJILLA DE DATOS PRINCIPAL: Aquí está la mayor optimización de espacio. -->
     <div class="dense-form-grid">
-        <!-- Campo de Cantidad -->
-        <div id="movimiento-cantidad-form-group" class="form-field-compact" style="grid-area: amount;">
-            <label for="movimiento-cantidad">Importe (€)</label>
+        <!-- Cantidad -->
+        <div class="form-field-compact" id="movimiento-cantidad-form-group" style="grid-area: amount;">
+            <label for="movimiento-cantidad">Cantidad</label>
             <div class="input-wrapper">
-                <input type="text" id="movimiento-cantidad" inputmode="decimal" placeholder="0,00" required>
+                <input type="text" id="movimiento-cantidad" required placeholder="0,00" />
+                <button type="button" id="calculator-toggle-btn" class="icon-btn" title="Abrir Calculadora">
+                    <span class="material-icons">calculate</span>
+                </button>
             </div>
             <span class="form-error" id="movimiento-cantidad-error"></span>
         </div>
-
-        <!-- Campo de Descripción -->
-        <div class="form-field-compact" style="grid-area: description; position: relative;">
+        
+        <!-- Descripción -->
+        <div class="form-field-compact" style="grid-area: description;">
             <label for="movimiento-descripcion">Descripción</label>
             <div class="input-wrapper">
-                <input type="text" id="movimiento-descripcion" placeholder="Ej: Compra semanal" autocomplete="off">
+                <input type="text" id="movimiento-descripcion" required placeholder="Compra semanal, café..." />
             </div>
-            <div id="description-suggestions"></div> <!-- Contenedor para autocompletado -->
+            <span class="form-error" id="movimiento-descripcion-error"></span>
+            <div id="description-suggestions"></div>
         </div>
-
-        <!-- Campos para Ingreso/Gasto -->
+        
+        <!-- Contenedor para campos de movimiento normal -->
         <div id="movimiento-fields" style="grid-area: details; display: contents;">
             <div class="form-field-compact">
                 <label for="movimiento-concepto">Concepto</label>
-                <select id="movimiento-concepto" required></select>
+                <div class="input-wrapper input-wrapper--with-addon">
+                    <select id="movimiento-concepto" required></select>
+                    <button type="button" data-action="manage-conceptos" class="icon-btn" title="Gestionar Conceptos"><span class="material-icons">more_vert</span></button>
+                </div>
+                <span class="form-error" id="movimiento-concepto-error"></span>
             </div>
             <div class="form-field-compact">
                 <label for="movimiento-cuenta">Cuenta</label>
-                <select id="movimiento-cuenta" required></select>
+                <div class="input-wrapper input-wrapper--with-addon">
+                    <select id="movimiento-cuenta" required></select>
+                    <button type="button" data-action="manage-cuentas" class="icon-btn" title="Gestionar Cuentas"><span class="material-icons">more_vert</span></button>
+                </div>
+                <span class="form-error" id="movimiento-cuenta-error"></span>
             </div>
         </div>
 
-        <!-- Campos para Traspaso (inicialmente ocultos) -->
+        <!-- Contenedor para campos de traspaso -->
         <div id="traspaso-fields" class="hidden" style="grid-area: details; display: contents;">
             <div class="form-field-compact">
-                <label for="movimiento-cuenta-origen">Desde Cuenta</label>
-                <select id="movimiento-cuenta-origen"></select>
+                <label for="movimiento-cuenta-origen">Origen</label>
+                <div class="input-wrapper">
+                    <select id="movimiento-cuenta-origen"></select>
+                </div>
+                <span class="form-error" id="movimiento-cuenta-origen-error"></span>
             </div>
             <div class="form-field-compact">
-                <label for="movimiento-cuenta-destino">Hasta Cuenta</label>
-                <select id="movimiento-cuenta-destino"></select>
+                <label for="movimiento-cuenta-destino">Destino</label>
+                <div class="input-wrapper">
+                    <select id="movimiento-cuenta-destino"></select>
+                </div>
+                <span class="form-error" id="movimiento-cuenta-destino-error"></span>
             </div>
         </div>
     </div>
-
-    <!-- 3. Contenedor de Fecha y Opciones Recurrentes -->
-    <div style="display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--sp-2); margin-top: var(--sp-3);">
-        <button type="button" id="movimiento-fecha-display" class="date-button-compact">
-            <span class="material-icons">calendar_today</span>
-            <span id="movimiento-fecha-text">Hoy</span>
-        </button>
-        <div class="recurrent-section__label" style="display: flex; align-items: center; gap: var(--sp-2);">
+    
+    <!-- 3. SECCIÓN RECURRENTE: Ahora mucho más compacta. -->
+    <div class="recurrent-section">
+        <div class="form-switch-group">
+            <label for="movimiento-recurrente" class="recurrent-section__label">Programar como recurrente</label>
             <label class="form-switch"><input type="checkbox" id="movimiento-recurrente"><span class="slider"></span></label>
-            <span>Recurrente</span>
         </div>
+        <div id="recurrent-options" class="hidden">
+            <select id="recurrent-frequency">
+                <option value="once">Única vez</option>
+                <option value="daily">Diaria</option>
+                <option value="weekly">Semanal</option>
+                <option value="monthly" selected>Mensual</option>
+                <option value="yearly">Anual</option>
+            </select>
+            <input type="date" id="recurrent-next-date">
+            <input type="date" id="recurrent-end-date" title="Finaliza el (opcional)">
+        </div>
+    </div>
+    
+    <!-- 4. CAMPO DE FECHA: También compactado. -->
+    <div class="form-field-compact" style="margin-top: var(--sp-3);">
+        <div class="input-wrapper">
+            <input type="date" id="movimiento-fecha" class="visually-hidden" required />
+            <button type="button" id="movimiento-fecha-display" class="date-button-compact">
+                <span class="material-icons">edit_calendar</span>
+                <span id="movimiento-fecha-text"></span>
+            </button>
+        </div>
+        <span class="form-error" id="movimiento-fecha-error"></span>
     </div>
 
-    <!-- 4. Opciones detalladas para recurrencia (ocultas por defecto) -->
-    <div id="recurrent-options" class="hidden" style="margin-top: var(--sp-2);">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: var(--sp-2);">
-            <div class="form-field-compact">
-                <label for="recurrent-frequency">Frecuencia</label>
-                <select id="recurrent-frequency">
-                    <option value="daily">Diaria</option>
-                    <option value="weekly">Semanal</option>
-                    <option value="monthly">Mensual</option>
-                    <option value="yearly">Anual</option>
-                    <option value="once">Única vez</option>
-                </select>
-            </div>
-            <div class="form-field-compact">
-                <label for="recurrent-next-date">Próximo</label>
-                <input type="date" id="recurrent-next-date">
-            </div>
-            <div class="form-field-compact">
-                <label for="recurrent-end-date">Finaliza</label>
-                <input type="date" id="recurrent-end-date">
-            </div>
+    <!-- 5. BOTONES DE ACCIÓN: CON LOS CAMBIOS APLICADOS -->
+    <div class="modal__actions" style="display:flex; justify-content: space-between; align-items:center; margin-top: var(--sp-4);">
+        <div class="left-actions" style="display:flex; gap: var(--sp-1);">
+            <!-- ▼▼▼ CAMBIO 1: ELIMINADO EL ESTILO INLINE ROJO ▼▼▼ -->
+            <button type="button" id="delete-movimiento-btn" data-action="delete-movement-from-modal" class="icon-btn hidden" title="Borrar"><span class="material-icons">delete</span></button>
+            <button type="button" id="duplicate-movimiento-btn" data-action="duplicate-movement" class="icon-btn hidden" title="Duplicar"><span class="material-icons">content_copy</span></button>
         </div>
-        <div id="recurrent-week-days" class="hidden" style="display:flex; justify-content: space-around; background: var(--c-surface); padding: var(--sp-2); border-radius: var(--border-radius-md); margin-top: var(--sp-2);">
-            <label><input type="checkbox" id="weekday-1" value="1"> L</label>
-            <label><input type="checkbox" id="weekday-2" value="2"> M</label>
-            <label><input type="checkbox" id="weekday-3" value="3"> X</label>
-            <label><input type="checkbox" id="weekday-4" value="4"> J</label>
-            <label><input type="checkbox" id="weekday-5" value="5"> V</label>
-            <label><input type="checkbox" id="weekday-6" value="6"> S</label>
-            <label><input type="checkbox" id="weekday-0" value="0"> D</label>
+        <div class="right-actions" style="display:flex; gap: var(--sp-2);">
+            <button id="save-and-new-movimiento-btn" type="button" data-action="save-and-new-movement" class="btn btn--secondary">Guardar y Nuevo</button>
+            <!-- ▼▼▼ CAMBIO 2: CAMBIADO de btn--primary A btn--secondary ▼▼▼ -->
+            <button id="save-movimiento-btn" type="submit" class="btn btn--primary">Guardar</button>
         </div>
     </div>
-
-    <!-- 5. Acciones del Formulario -->
-    <div class="modal__actions" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-2); margin-top: var(--sp-4);">
-        <button type="button" id="delete-movimiento-btn" class="btn btn--secondary hidden" data-action="delete-movement-from-modal" style="justify-content: flex-start;">
-            <span class="material-icons">delete</span>Borrar
-        </button>
-        <button type="button" id="duplicate-movimiento-btn" class="btn btn--secondary hidden" data-action="duplicate-movement">
-            <span class="material-icons">content_copy</span>Duplicar
-        </button>
-        <div style="grid-column: 2 / -1; display:flex; gap: var(--sp-2);">
-            <button type="submit" data-action="save-and-new-movement" id="save-and-new-movimiento-btn" class="btn btn--secondary" style="flex-grow:1;">Guardar y Nuevo</button>
-            <button type="submit" data-action="save-movement" id="save-movimiento-btn" class="btn btn--primary" style="flex-grow:2;">Guardar</button>
+</form>
+			</div>
+			
+    </div>
+                 
+    </div>
+	    <div id="generic-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="generic-modal-title">
+        <div class="modal">
+            <header class="modal__header">
+                <h3 id="generic-modal-title" class="modal__title"></h3>
+                <button class="icon-btn" data-action="close-modal" data-modal-id="generic-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
+            </header>
+            <div id="generic-modal-body" class="modal__body"></div>
         </div>
     </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div id="generic-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="generic-modal-title">
-        <div class="modal"><header class="modal__header"><h3 id="generic-modal-title" class="modal__title"></h3><button class="icon-btn" data-action="close-modal" data-modal-id="generic-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button></header><div id="generic-modal-body" class="modal__body"></div></div>
-    </div>
-
-    <div id="diario-filters-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="diario-filters-title">
+	 <div id="diario-filters-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="diario-filters-title">
+    <div class="modal">
         <div class="modal__grabber"></div>
         <header class="modal__header" style="padding-top: var(--sp-2);">
             <h3 id="diario-filters-title" class="modal__title">Filtrar Diario</h3>
@@ -453,41 +468,6 @@
     </div>
 </div>
 	<!-- ▼▼▼ AÑADE ESTE MENÚ OCULTO AL FINAL DE TU BODY ▼▼▼ -->
-
-	<div id="irr-history-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="irr-history-title">
-    <div class="modal">
-        <div class="modal__grabber"></div>
-        <header class="modal__header">
-            <h3 id="irr-history-title" class="modal__title">Evolución de la TIR</h3>
-            <button class="icon-btn" data-action="close-modal" data-modal-id="irr-history-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
-        </header>
-        <div id="irr-history-body" class="modal__body">
-            <div class="chart-container" style="height: 100%;">
-                <canvas id="irr-history-chart"></canvas>
-            </div>
-        </div>
-    </div>
-	</div>
-<div id="irr-history-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="irr-history-title">
-    <!-- ... contenido del modal ... -->
-</div> 
-
-<!-- ▼▼▼ AÑADE ESTE MENÚ OCULTO AL FINAL DE TU BODY ▼▼▼ -->
-<div id="main-menu-popover" class="popover-menu">
-    <button class="popover-menu__item" data-action="help">
-        <span class="material-icons">help_outline</span>
-        <span>Guía de Usuario</span>
-    </button>
-    <button id="theme-toggle-btn" class="popover-menu__item" data-action="toggle-theme">
-        <span class="material-icons">dark_mode</span>
-        <span>Cambiar Tema</span>
-    </button>
-    <div class="popover-menu__divider"></div>
-    <button class="popover-menu__item popover-menu__item--danger" data-action="exit">
-        <span class="material-icons">exit_to_app</span>
-        <span>Salir de la App</span>
-    </button>
-</div>	
 <div id="quick-add-menu">
     <div class="quick-add-item" data-action="quick-add-type" data-type="gasto">
         <span class="label">Nuevo Gasto</span>
@@ -501,7 +481,21 @@
         <span class="label">Nuevo Traspaso</span>
         <div class="icon-wrapper traspaso"><span class="material-icons">swap_horiz</span></div>
     </div>
-	</div>
+	</div> 
+	<div id="irr-history-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="irr-history-title">
+    <div class="modal">
+        <div class="modal__grabber"></div>
+        <header class="modal__header">
+            <h3 id="irr-history-title" class="modal__title">Evolución de la TIR</h3>
+            <button class="icon-btn" data-action="close-modal" data-modal-id="irr-history-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
+        </header>
+        <div id="irr-history-body" class="modal__body">
+            <div class="chart-container" style="height: 100%;">
+                <canvas id="irr-history-chart"></canvas>
+            </div>
+        </div>
+    </div>
+	</div> 
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>

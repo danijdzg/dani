@@ -1,6 +1,6 @@
 // service-worker.js
 
-const CACHE_NAME = 'CtasDani';
+const CACHE_NAME = 'DaniCtas';
 const URLS_TO_CACHE = [
   '.',
   'index.html',
