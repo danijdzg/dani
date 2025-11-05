@@ -402,24 +402,37 @@ const handleCalculatorInput = (key) => {
     } else {
         switch(key) {
             case 'done':
-                hapticFeedback('medium');
-                if (operand1 !== null && operator !== null && !waitingForNewValue) {
-                    calculate();
-                    displayValue = calculatorState.displayValue;
-                }
-                if (calculatorState.targetInput) {
-                    const finalValue = parseFloat(displayValue.replace(',', '.')) || 0;
-                    calculatorState.targetInput.value = finalValue.toLocaleString('es-ES', { 
-                        useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 
-                    });
-                    // Disparamos eventos para que cualquier otra lógica reaccione
-                    calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    calculatorState.targetInput.dispatchEvent(new Event('blur')); 
-                }
-                historyValue = '';
-                hideCalculator();
-                select('movimiento-descripcion').focus(); // Llevamos al usuario al siguiente paso
-                return;
+    hapticFeedback('medium');
+    
+    // Si estábamos en medio de una operación (ej: 5+5), la terminamos.
+    if (operand1 !== null && operator !== null && !waitingForNewValue) {
+        calculate();
+        displayValue = calculatorState.displayValue;
+    }
+
+    const finalValue = parseFloat(displayValue.replace(',', '.')) || 0;
+    const finalValueInCents = Math.round(finalValue * 100);
+
+    hideCalculator(); // Cerramos la calculadora.
+
+    // === CORRECCIÓN CLAVE INICIO ===
+    // Comprobamos si la calculadora se abrió desde el menú (+)
+    if (calculatorState.targetInput && calculatorState.targetInput.dataset.movementType) {
+        // Si es así, llamamos a nuestro "mensajero".
+        const type = calculatorState.targetInput.dataset.movementType;
+        startMovementFormWithAmount(finalValueInCents, type);
+    } else if (calculatorState.targetInput) {
+        // Si se abrió desde un campo de input existente, hacemos lo de antes.
+        calculatorState.targetInput.value = finalValue.toLocaleString('es-ES', {
+            useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2
+        });
+        calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+        calculatorState.targetInput.dispatchEvent(new Event('blur'));
+    }
+    // === CORRECCIÓN CLAVE FIN ===
+    
+    historyValue = ''; // Limpiamos el historial de la calculadora.
+    return; // Usamos 'return' en lugar de 'break' para salir limpiamente.
             case 'comma':
                 if (waitingForNewValue) {
                     displayValue = '0,';
@@ -5904,7 +5917,7 @@ const hideModal = (id) => {
             }
             hideCalculator();
         };       
-
+	
 		 const updateDoneButtonText = () => {
             const doneButton = select('calculator-btn-done');
             if (doneButton) {
@@ -6036,7 +6049,31 @@ const hideCalculator = () => {
         calculatorKeyboardHandler = null;
     }
 };		
-		
+	const startMovementFormWithAmount = (amountInCents, type) => {
+    // 1. Abrimos el formulario grande (ahora sí es el momento).
+    startMovementForm(); 
+
+    // 2. Usamos un pequeño retardo para asegurar que el modal es visible.
+    setTimeout(() => {
+        // 3. Rellenamos el formulario con los datos que ya tenemos.
+        const amountInput = select('movimiento-cantidad');
+        if (amountInput) {
+            // Convertimos los céntimos a un string con formato de euros para el input.
+            amountInput.value = (amountInCents / 100).toLocaleString('es-ES', {
+                useGrouping: false,
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        // 4. Seleccionamos el tipo correcto (gasto, ingreso o traspaso).
+        setMovimientoFormType(type);
+
+        // 5. Movemos el cursor al campo de descripción para un flujo rápido.
+        select('movimiento-descripcion').focus();
+
+    }, 100); // 100ms es suficiente para que el modal aparezca.
+};
 		
 // =================================================================
 // === INICIO: FUNCIÓN showToast (CORRECCIÓN CRÍTICA) ===
@@ -7545,6 +7582,15 @@ let longPressTimer = null;
 
     // Listener global para clics, ahora corregido
     document.body.addEventListener('click', (e) => {
+		if (e.target.classList.contains('modal-overlay')) {
+    const activeModal = e.target.closest('.modal-overlay--active');
+    if (activeModal && activeModal.id) {
+        // Excepción: no cerramos la calculadora al pinchar fuera, ya tiene su propia lógica.
+        if (activeModal.id !== 'calculator-overlay') {
+            hideModal(activeModal.id);
+        }
+    }
+}
         
         // --- INICIO DEL BLOQUE MOVIDO ---
         // Este código ahora está DENTRO del listener y tiene acceso a 'e'
@@ -7565,21 +7611,23 @@ let longPressTimer = null;
 
         // Mapa de acciones para un código más limpio.
         const actions = {
-            'quick-add-type': (e) => {
-                const quickAddItem = e.target.closest('[data-action="quick-add-type"]');
-                if (!quickAddItem) return;
-                const type = quickAddItem.dataset.type;
-                const menu = select('quick-add-menu');
-                if (menu) menu.classList.remove('visible');
-                startMovementForm();
-                setTimeout(() => {
-                    setMovimientoFormType(type);
-                    const amountInput = select('movimiento-cantidad');
-                    if (amountInput) {
-                        showCalculator(amountInput);
-                    }
-                }, 50);
-            },
+			'quick-add-type': (e) => {
+			const quickAddItem = e.target.closest('[data-action="quick-add-type"]');
+			if (!quickAddItem) return;
+
+			const type = quickAddItem.dataset.type;
+			const menu = select('quick-add-menu');
+			if (menu) menu.classList.remove('visible');
+    
+			// En lugar de abrir el formulario, abrimos la calculadora y le pasamos el tipo.
+			const calculatorTargetInput = {
+			// Creamos un "objetivo falso" para la calculadora con la información que necesitamos.
+			// La calculadora no necesita un campo de input real para funcionar en este flujo.
+			value: '',
+			dataset: { movementType: type } // Guardamos el tipo de movimiento aquí.
+			};
+			showCalculator(calculatorTargetInput);
+			},
             'swipe-show-irr-history': () => handleShowIrrHistory(type),
             'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
@@ -7673,11 +7721,62 @@ let longPressTimer = null;
             'navigate': () => { hapticFeedback('light'); navigateTo(page); },
             'help': showHelpModal,
             'exit': handleExitApp,
-            'forgot-password': (e) => { /* ... lógica forgot password ... */ },
-            'show-register': (e) => { /* ... lógica show register ... */ },
-            'show-login': (e) => { /* ... lógica show login ... */ },
+            'forgot-password': (e) => { e.preventDefault(); const email = prompt("Por favor, introduce el correo electrónico de tu cuenta para restablecer la contraseña:"); if (email) { firebase.auth().sendPasswordResetEmail(email).then(() => { showToast('Se ha enviado un correo para restablecer tu contraseña.', 'info', 5000); }).catch((error) => { console.error("Error al enviar correo de recuperación:", error); if (error.code === 'auth/user-not-found') { showToast('No se encontró ninguna cuenta con ese correo.', 'danger'); } else { showToast('Error al intentar restablecer la contraseña.', 'danger'); } }); } },
+            'show-register': (e) => { e.preventDefault(); const title = select('login-title'); const mainButton = document.querySelector('#login-form button[data-action="login"]'); const secondaryAction = document.querySelector('.login-view__secondary-action'); if (mainButton.dataset.action === 'login') { title.textContent = 'Crear una Cuenta Nueva'; mainButton.dataset.action = 'register'; mainButton.textContent = 'Registrarse'; secondaryAction.innerHTML = `<span>¿Ya tienes una cuenta?</span> <a href="#" class="login-view__link" data-action="show-login">Inicia sesión</a>`; } else { handleRegister(mainButton); } },
+            'show-login': (e) => { e.preventDefault(); const title = select('login-title'); const mainButton = document.querySelector('#login-form button[data-action="register"]'); const secondaryAction = document.querySelector('.login-view__secondary-action'); if (mainButton.dataset.action === 'register') { title.textContent = 'Bienvenido de nuevo'; mainButton.dataset.action = 'login'; mainButton.textContent = 'Iniciar Sesión'; secondaryAction.innerHTML = `<span>¿No tienes una cuenta?</span> <a href="#" class="login-view__link" data-action="show-register">Regístrate aquí</a>`; } },
             'import-csv': showCsvImportWizard,
-            'toggle-ledger': async () => { /* ... lógica toggle ledger ... */ },
+            'toggle-ledger': async () => {
+            hapticFeedback('medium');
+            
+            // 1. Cambiamos el estado global (esto no cambia)
+            isOffBalanceMode = !isOffBalanceMode;
+            document.body.dataset.ledgerMode = isOffBalanceMode ? 'B' : 'A';
+            showToast(`Mostrando Contabilidad ${isOffBalanceMode ? 'B' : 'A'}.`, 'info');
+
+            // 2. Obtenemos la página que está activa en este momento
+            const activePageEl = document.querySelector('.view--active');
+            if (!activePageEl) return;
+
+            // 3. Actualizamos manualmente el texto del botón A/B en la barra superior
+            const ledgerBtn = select('ledger-toggle-btn');
+            if (ledgerBtn) {
+                ledgerBtn.textContent = isOffBalanceMode ? 'B' : 'A';
+            }
+            
+            // 4. LÓGICA INTELIGENTE: En lugar de una recarga completa, ejecutamos
+            //    la acción de refresco más ligera posible para la página actual.
+            switch (activePageEl.id) {
+                case PAGE_IDS.INICIO:
+                    // El Panel necesita recalcular los KPIs, llamamos a su función de actualización.
+                    // Sigue siendo mucho más rápido que un navigateTo().
+                    scheduleDashboardUpdate();
+                    break;
+                    
+                case PAGE_IDS.DIARIO:
+                    // ¡LA OPTIMIZACIÓN CLAVE!
+                    // Simplemente le decimos a la lista virtual que se redibuje.
+                    // Esta función ya sabe cómo filtrar por la contabilidad activa (A o B)
+                    // y lo hace sobre los datos que YA ESTÁN EN MEMORIA, sin llamar a la base de datos.
+                    // El cambio es instantáneo.
+                    updateVirtualListUI();
+                    break;
+
+                case PAGE_IDS.INVERSIONES:
+                    // La vista de Inversiones necesita redibujar sus gráficos y listas.
+                    await renderInversionesView();
+                    break;
+
+                case PAGE_IDS.PLANIFICAR:
+                    // La vista de Planificar también necesita recalcular sus proyecciones.
+                    await renderEstrategiaPlanificacion();
+                    break;
+                
+                // La página de Ajustes no depende de la contabilidad, así que no hacemos nada.
+                case PAGE_IDS.AJUSTES:
+                default:
+                    break;
+            }
+        },
             'toggle-off-balance': async () => { const checkbox = actionTarget.closest('input[type="checkbox"]'); if (!checkbox) return; hapticFeedback('light'); await saveDoc('cuentas', checkbox.dataset.id, { offBalance: checkbox.checked }); },
             'apply-filters': () => { hapticFeedback('light'); scheduleDashboardUpdate(); },
             'delete-movement-from-modal': () => { const isRecurrent = (actionTarget.dataset.isRecurrent === 'true'); const idToDelete = select('movimiento-id').value; const message = isRecurrent ? '¿Seguro que quieres eliminar esta operación recurrente?' : '¿Seguro que quieres eliminar este movimiento?'; showConfirmationModal(message, async () => { hideModal('movimiento-modal'); await deleteMovementAndAdjustBalance(idToDelete, isRecurrent); }); },
@@ -7687,18 +7786,23 @@ let longPressTimer = null;
             'search-result-cuenta': (e) => { hideModal('global-search-modal'); showAccountMovementsModal(e.target.closest('[data-id]').dataset.id); },
             'search-result-concepto': (e) => { hideModal('global-search-modal'); /* Lógica futura para ver un informe de ese concepto */ },
             'delete-concepto': async () => { const movsCheck = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').where('conceptoId', '==', id).limit(1).get(); if(!movsCheck.empty) { showToast("Concepto en uso, no se puede borrar.","warning"); return; } showConfirmationModal('¿Seguro que quieres eliminar este concepto?', async () => { await deleteDoc('conceptos', id); hapticFeedback('success'); showToast("Concepto eliminado."); renderConceptosModalList(); }); },
-            'delete-cuenta': async () => { /* ... lógica delete cuenta ... */ },
-            'close-modal': () => { /* ... lógica close modal ... */ },
+            'delete-cuenta': async () => { const movsCheck = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').where('cuentaId', '==', id).limit(1).get(); if(!movsCheck.empty) { showToast("Cuenta con movimientos, no se puede borrar.","warning",3500); return; } showConfirmationModal('¿Seguro que quieres eliminar esta cuenta?', async () => { await deleteDoc('cuentas', id); hapticFeedback('success'); showToast("Cuenta eliminada."); renderCuentasModalList(); }); },
+            'close-modal': () => {
+				const modalId = actionTarget.dataset.modalId;
+				if (modalId) {
+				hideModal(modalId);
+				}
+				},
             'manage-conceptos': showConceptosModal, 'manage-cuentas': showCuentasModal,
             'save-config': () => handleSaveConfig(btn),
             'export-data': () => handleExportData(btn), 'export-csv': () => handleExportCsv(btn), 'import-data': () => showImportJSONWizard(),
-            'clear-data': () => { /* ... lógica clear data ... */ },
+            'clear-data': () => { showConfirmationModal('¿Borrar TODOS tus datos de la nube? Esta acción es IRREVERSIBLE y no se puede deshacer.', async () => { /* Lógica de borrado aquí */ }, 'Confirmación Final de Borrado'); },
             'update-budgets': handleUpdateBudgets, 'logout': () => fbAuth.signOut(), 'delete-account': () => { /* ... lógica delete account ... */ },
             'manage-investment-accounts': showManageInvestmentAccountsModal, 'update-asset-value': () => showValoracionModal(id),
             'global-search': () => { showGlobalSearchModal(); hapticFeedback('medium'); },
             'edit-concepto': () => showConceptoEditForm(id), 'cancel-edit-concepto': renderConceptosModalList, 'save-edited-concepto': () => handleSaveEditedConcept(id, btn),
             'edit-cuenta': () => showAccountEditForm(id), 'cancel-edit-cuenta': renderCuentasModalList, 'save-edited-cuenta': () => handleSaveEditedAccount(id, btn),
-            'duplicate-movement': () => { /* ... lógica duplicate movement ... */ },
+            'duplicate-movement': () => { hapticFeedback('medium'); select('movimiento-mode').value = 'new'; select('movimiento-id').value = ''; select('form-movimiento-title').textContent = 'Duplicar Movimiento'; select('delete-movimiento-btn').classList.add('hidden'); select('duplicate-movimiento-btn').classList.add('hidden'); const today = new Date(); const fechaInput = select('movimiento-fecha'); fechaInput.value = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10); updateDateDisplay(fechaInput); showToast('Datos duplicados. Ajusta y guarda como nuevo.', 'info'); },
             'save-and-new-movement': () => handleSaveMovement(document.getElementById('form-movimiento'), btn), 'set-movimiento-type': () => setMovimientoFormType(type),
             'recalculate-balances': () => { showConfirmationModal('¿Realizar auditoría completa de saldos? Esta operación es intensiva y puede tardar.', () => auditAndFixAllBalances(btn), 'Confirmar Auditoría'); },
             'json-wizard-back-2': () => goToJSONStep(1), 'json-wizard-import-final': () => handleFinalJsonImport(btn),
