@@ -175,7 +175,122 @@
             <header class="modal__header" style="padding-top: var(--sp-2);"><h3 id="form-movimiento-title" class="modal__title">Añadir Movimiento</h3><button class="icon-btn" data-action="close-modal" data-modal-id="movimiento-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button></header>
             <div class="modal__body">
                 <form id="form-movimiento" novalidate>
-                    <!-- Formulario de movimiento (contenido sin cambios) -->
+                   <input type="hidden" id="movimiento-mode" value="new">
+    <input type="hidden" id="movimiento-id" value="">
+    
+    <!-- Este input de fecha real estará oculto, lo controlaremos con nuestro botón personalizado -->
+    <input type="date" id="movimiento-fecha" class="visually-hidden">
+
+    <!-- 1. Píldoras de selección de tipo -->
+    <div class="filter-pills" style="justify-content: center; margin-bottom: var(--sp-4);">
+        <button type="button" class="filter-pill filter-pill--active" data-action="set-movimiento-type" data-type="gasto">Gasto</button>
+        <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="ingreso">Ingreso</button>
+        <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="traspaso">Traspaso</button>
+    </div>
+
+    <!-- 2. Rejilla principal del formulario denso (optimizada para móviles) -->
+    <div class="dense-form-grid">
+        <!-- Campo de Cantidad -->
+        <div id="movimiento-cantidad-form-group" class="form-field-compact" style="grid-area: amount;">
+            <label for="movimiento-cantidad">Importe (€)</label>
+            <div class="input-wrapper">
+                <input type="text" id="movimiento-cantidad" inputmode="decimal" placeholder="0,00" required>
+            </div>
+            <span class="form-error" id="movimiento-cantidad-error"></span>
+        </div>
+
+        <!-- Campo de Descripción -->
+        <div class="form-field-compact" style="grid-area: description; position: relative;">
+            <label for="movimiento-descripcion">Descripción</label>
+            <div class="input-wrapper">
+                <input type="text" id="movimiento-descripcion" placeholder="Ej: Compra semanal" autocomplete="off">
+            </div>
+            <div id="description-suggestions"></div> <!-- Contenedor para autocompletado -->
+        </div>
+
+        <!-- Campos para Ingreso/Gasto -->
+        <div id="movimiento-fields" style="grid-area: details; display: contents;">
+            <div class="form-field-compact">
+                <label for="movimiento-concepto">Concepto</label>
+                <select id="movimiento-concepto" required></select>
+            </div>
+            <div class="form-field-compact">
+                <label for="movimiento-cuenta">Cuenta</label>
+                <select id="movimiento-cuenta" required></select>
+            </div>
+        </div>
+
+        <!-- Campos para Traspaso (inicialmente ocultos) -->
+        <div id="traspaso-fields" class="hidden" style="grid-area: details; display: contents;">
+            <div class="form-field-compact">
+                <label for="movimiento-cuenta-origen">Desde Cuenta</label>
+                <select id="movimiento-cuenta-origen"></select>
+            </div>
+            <div class="form-field-compact">
+                <label for="movimiento-cuenta-destino">Hasta Cuenta</label>
+                <select id="movimiento-cuenta-destino"></select>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Contenedor de Fecha y Opciones Recurrentes -->
+    <div style="display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--sp-2); margin-top: var(--sp-3);">
+        <button type="button" id="movimiento-fecha-display" class="date-button-compact">
+            <span class="material-icons">calendar_today</span>
+            <span id="movimiento-fecha-text">Hoy</span>
+        </button>
+        <div class="recurrent-section__label" style="display: flex; align-items: center; gap: var(--sp-2);">
+            <label class="form-switch"><input type="checkbox" id="movimiento-recurrente"><span class="slider"></span></label>
+            <span>Recurrente</span>
+        </div>
+    </div>
+
+    <!-- 4. Opciones detalladas para recurrencia (ocultas por defecto) -->
+    <div id="recurrent-options" class="hidden" style="margin-top: var(--sp-2);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: var(--sp-2);">
+            <div class="form-field-compact">
+                <label for="recurrent-frequency">Frecuencia</label>
+                <select id="recurrent-frequency">
+                    <option value="daily">Diaria</option>
+                    <option value="weekly">Semanal</option>
+                    <option value="monthly">Mensual</option>
+                    <option value="yearly">Anual</option>
+                    <option value="once">Única vez</option>
+                </select>
+            </div>
+            <div class="form-field-compact">
+                <label for="recurrent-next-date">Próximo</label>
+                <input type="date" id="recurrent-next-date">
+            </div>
+            <div class="form-field-compact">
+                <label for="recurrent-end-date">Finaliza</label>
+                <input type="date" id="recurrent-end-date">
+            </div>
+        </div>
+        <div id="recurrent-week-days" class="hidden" style="display:flex; justify-content: space-around; background: var(--c-surface); padding: var(--sp-2); border-radius: var(--border-radius-md); margin-top: var(--sp-2);">
+            <label><input type="checkbox" id="weekday-1" value="1"> L</label>
+            <label><input type="checkbox" id="weekday-2" value="2"> M</label>
+            <label><input type="checkbox" id="weekday-3" value="3"> X</label>
+            <label><input type="checkbox" id="weekday-4" value="4"> J</label>
+            <label><input type="checkbox" id="weekday-5" value="5"> V</label>
+            <label><input type="checkbox" id="weekday-6" value="6"> S</label>
+            <label><input type="checkbox" id="weekday-0" value="0"> D</label>
+        </div>
+    </div>
+
+    <!-- 5. Acciones del Formulario -->
+    <div class="modal__actions" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-2); margin-top: var(--sp-4);">
+        <button type="button" id="delete-movimiento-btn" class="btn btn--secondary hidden" data-action="delete-movement-from-modal" style="justify-content: flex-start;">
+            <span class="material-icons">delete</span>Borrar
+        </button>
+        <button type="button" id="duplicate-movimiento-btn" class="btn btn--secondary hidden" data-action="duplicate-movement">
+            <span class="material-icons">content_copy</span>Duplicar
+        </button>
+        <div style="grid-column: 2 / -1; display:flex; gap: var(--sp-2);">
+            <button type="submit" data-action="save-and-new-movement" id="save-and-new-movimiento-btn" class="btn btn--secondary" style="flex-grow:1;">Guardar y Nuevo</button>
+            <button type="submit" data-action="save-movement" id="save-movimiento-btn" class="btn btn--primary" style="flex-grow:2;">Guardar</button>
+        </div>
+    </div>
                 </form>
             </div>
         </div>
