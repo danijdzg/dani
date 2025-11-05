@@ -7533,28 +7533,6 @@ const handleInteractionEnd = (e) => {
 
 let longPressTimer = null;
 
-const startPress = () => {
-    longPressState.isLongPress = false;
-    longPressTimer = setTimeout(() => {
-        longPressState.isLongPress = true;
-        hapticFeedback('medium');
-        // Acción de pulsación larga: abrir directamente el formulario de gasto
-        startMovementForm();
-        setTimeout(() => setMovimientoFormType('gasto'), 50);
-    }, 400); // 400ms para considerarse una pulsación larga
-};
-
-const endPress = () => {
-    clearTimeout(longPressTimer);
-    if (!longPressState.isLongPress) {
-        // Acción de toque corto: abrir el menú rápido
-        hapticFeedback('medium');
-        const quickMenu = select('quick-add-menu');
-        if (quickMenu) {
-            quickMenu.classList.toggle('visible');
-        }
-    }
-};
 
 // =================================================================
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
@@ -7572,47 +7550,24 @@ const addBtn = select('bottom-nav-add-btn');
 const quickMenu = select('quick-add-menu');
 
 if (addBtn && quickMenu) {
-    // Cuando haces clic en el botón (+)
-    addBtn.addEventListener('click', () => {
+    // Ahora, el botón (+) solo reacciona a un 'clic' simple.
+    addBtn.addEventListener('click', (e) => {
+        // Detenemos la propagación para evitar que el listener del documento
+        // que viene a continuación cierre el menú inmediatamente.
+        e.stopPropagation(); 
+        
         hapticFeedback('medium');
-        // Simplemente muestra u oculta el menú
-        quickMenu.classList.toggle('visible');
+        quickMenu.classList.toggle('visible'); // Muestra u oculta el menú.
     });
 
- // Cierra el menú rápido si se clica fuera.
+    // Este listener se encarga de cerrar el menú si se hace clic en cualquier otro lugar de la pantalla.
     document.addEventListener('click', (e) => {
-        const quickMenu = select('quick-add-menu');
-        if (quickMenu && !quickMenu.contains(e.target) && !fabButton.contains(e.target)) {
+        // Si el menú está visible y el clic no fue dentro del menú...
+        if (quickMenu.classList.contains('visible') && !quickMenu.contains(e.target)) {
             quickMenu.classList.remove('visible');
         }
     });
-    
-    // Asignamos los listeners
-    addBtn.addEventListener('mousedown', startPress);
-    addBtn.addEventListener('touchstart', startPress);
-    addBtn.addEventListener('mouseup', endPress);
-    addBtn.addEventListener('touchend', endPress);
-    // Si el usuario arrastra el dedo/ratón fuera del botón, cancelamos todo
-    addBtn.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
-
-    // Listener para cerrar el menú si se hace clic fuera
-    document.addEventListener('click', (e) => {
-        if (!quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
-            quickMenu.classList.remove('visible');
-        }
-    });
-
-    // Listener para las acciones del menú rápido (este ya estaba bien)
-    document.body.addEventListener('click', (e) => {
-        const quickAddAction = e.target.closest('[data-action="quick-add-type"]');
-        if (quickAddAction) {
-            const type = quickAddAction.dataset.type;
-            quickMenu.classList.remove('visible');
-            startMovementForm(); // Abre el formulario genérico
-            setTimeout(() => setMovimientoFormType(type), 50); // Lo ajusta al tipo seleccionado
-        }
-    });
-}
+}	
 const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
 const mainScrollerPtr = selectOne('.app-layout__main');
 if (mainScroller) {
