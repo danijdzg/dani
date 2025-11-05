@@ -7908,7 +7908,7 @@ if (ptrElement && mainScrollerPtr) {
         if (actions[action]) {
             actions[action](e);
         }
-    });
+    };
 
     document.body.addEventListener('toggle', (e) => {
         const detailsElement = e.target;
