@@ -6203,11 +6203,15 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
     // Reseteamos los días de la semana
     selectAll('#recurrent-week-days input').forEach(cb => cb.checked = false);
     
-    // CORRECCIÓN CLAVE: Verificamos si el elemento existe antes de usarlo
     const weekDaysEl = select('recurrent-week-days');
     if (weekDaysEl) {
         weekDaysEl.classList.add('hidden');
     }
+
+    // ▼▼▼ ¡LA MAGIA SUCEDE AQUÍ! MOSTRAMOS EL MODAL PRIMERO ▼▼▼
+    showModal('movimiento-modal');
+    initAmountInput();
+    // ▲▲▲ FIN DEL CAMBIO CLAVE ▲▲▲
 
     let data = null;
     let mode = 'new';
@@ -6232,6 +6236,7 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
         }
     }
 
+    // Ahora que el modal es visible, estas llamadas funcionarán sin problema
     setMovimientoFormType(initialType);
     select('movimiento-mode').value = mode;
     select('movimiento-id').value = id || '';
@@ -6272,7 +6277,6 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
             select('recurrent-next-date').value = data.nextDate;
             select('recurrent-end-date').value = data.endDate || '';
             
-            // Lógica para mostrar y marcar los días de la semana
             if (data.frequency === 'weekly' && data.daysOfWeek) {
                 if (weekDaysEl) weekDaysEl.classList.remove('hidden');
                 data.daysOfWeek.forEach(dayIndex => {
@@ -6296,9 +6300,7 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
     select('delete-movimiento-btn').dataset.isRecurrent = String(isRecurrent);
     select('duplicate-movimiento-btn').classList.toggle('hidden', !(mode === 'edit-single' && data));
 
-    showModal('movimiento-modal');
-    initAmountInput();
-    
+    // Si es un movimiento nuevo, abrimos la calculadora automáticamente para un flujo más rápido
     if (!id) {
         setTimeout(() => showCalculator(select('movimiento-cantidad')), 150);
     }
