@@ -3237,6 +3237,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
     const container = select(containerId);
     if (!container) return;
 
+    // (El código de carga de datos y renderizado del HTML es el mismo, pero lo incluyo todo para que solo tengas que copiar y pegar)
     container.innerHTML = `<div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>`;
 
     const visibleAccounts = getVisibleAccounts();
@@ -3311,13 +3312,11 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             const typeBalance = accountsInType.reduce((sum, acc) => sum + (saldos[acc.id] || 0), 0);
             const porcentajeGlobal = totalFiltrado > 0 ? (typeBalance / totalFiltrado) * 100 : 0;
             const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => 
-                // ⭐ INICIO DE LA MODIFICACIÓN: Añadimos un identificador para las cuentas de inversión ⭐
                 `<div class="modal__list-item" 
                      data-action="view-account-details" 
                      data-id="${c.id}" 
                      ${c.esInversion ? 'data-is-investment="true"' : ''}
                      style="cursor: pointer; padding: var(--sp-2) 0;">
-                
                     <div>
                         <span style="display: block;">${c.nombre}</span>
                         <small style="color: var(--c-on-surface-secondary);">${(saldos[c.id] || 0) / typeBalance * 100 > 0 ? ((saldos[c.id] || 0) / typeBalance * 100).toFixed(1) + '% de ' + tipo : ''}</small>
@@ -3327,12 +3326,10 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
                         <span class="material-icons" style="font-size: 18px;">chevron_right</span>
                     </div>
                 </div>`
-                // ⭐ FIN DE LA MODIFICACIÓN ⭐
             ).join('');
 
             if (!accountsHtml) return '';
 
-            // ⭐ Ya no necesitamos el contenedor de swipe aquí, lo simplificamos ⭐
             return `
                 <details class="accordion" style="margin-bottom: var(--sp-2);">
                     <summary>
@@ -3346,6 +3343,56 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
                     <div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div>
                 </details>`;
         }).join('');
+
+        // ⭐ INICIO DE LA LÓGICA DE DETECCIÓN DE "LONG PRESS" CORREGIDA ⭐
+        // Ahora, esta lógica se activa DESPUÉS de que la lista de cuentas se haya dibujado en la pantalla.
+        const investmentItems = listaContainer.querySelectorAll('[data-is-investment="true"]');
+        
+        investmentItems.forEach(item => {
+            let longPressTimer;
+            let startX, startY;
+            let longPressTriggered = false;
+
+            const startHandler = (e) => {
+                e.stopPropagation(); // Detenemos la propagación para evitar conflictos
+                const point = e.touches ? e.touches[0] : e;
+                startX = point.clientX;
+                startY = point.clientY;
+                longPressTriggered = false;
+
+                longPressTimer = setTimeout(() => {
+                    longPressTriggered = true;
+                    const accountId = item.dataset.id;
+                    handleShowIrrHistory({ accountId: accountId });
+                }, 500); // 500ms
+            };
+
+            const moveHandler = (e) => {
+                if (!longPressTimer) return;
+                const point = e.touches ? e.touches[0] : e;
+                if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+            };
+
+            const endHandler = (e) => {
+                clearTimeout(longPressTimer);
+                if (longPressTriggered) {
+                    e.preventDefault(); // Si fue pulsación larga, prevenimos la acción de 'click'
+                }
+            };
+            
+            // Asignamos los listeners para móvil y escritorio
+            item.addEventListener('mousedown', startHandler);
+            item.addEventListener('touchstart', startHandler, { passive: true });
+            item.addEventListener('mousemove', moveHandler);
+            item.addEventListener('touchmove', moveHandler, { passive: true });
+            item.addEventListener('mouseup', endHandler);
+            item.addEventListener('touchend', endHandler);
+            item.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
+        });
+        // ⭐ FIN DE LA LÓGICA CORREGIDA ⭐
     }
 };
        
@@ -7490,55 +7537,7 @@ if (ptrElement && mainScrollerPtr) {
         ptrState.distance = 0;
     });
 }
-// === INICIO: Lógica para Long Press en Cuentas de Inversión ===
-let longPressAccountTimer = null;
-    let startX, startY;
 
-    document.body.addEventListener('touchstart', (e) => {
-        const investmentItem = e.target.closest('[data-is-investment="true"]');
-        if (!investmentItem) return;
-        
-        const touch = e.touches[0];
-        startX = touch.clientX;
-        startY = touch.clientY;
-
-        longPressAccountTimer = setTimeout(() => {
-            longPressAccountTimer = null; // Previene que se dispare el 'click' normal
-            const accountId = investmentItem.dataset.id;
-            handleShowIrrHistory({ accountId: accountId });
-        }, 500); // 500ms para la pulsación larga
-    }, { passive: true });
-
-    document.body.addEventListener('touchmove', (e) => {
-        if (!longPressAccountTimer) return;
-        const touch = e.touches[0];
-        // Si el dedo se mueve más de 10px en cualquier dirección, cancelamos la pulsación larga
-        if (Math.abs(touch.clientX - startX) > 10 || Math.abs(touch.clientY - startY) > 10) {
-            clearTimeout(longPressAccountTimer);
-            longPressAccountTimer = null;
-        }
-    });
-
-    document.body.addEventListener('touchend', () => {
-        if (longPressAccountTimer) {
-            clearTimeout(longPressAccountTimer);
-            longPressAccountTimer = null;
-        }
-    });
-    
-    // Lo mismo para el ratón en escritorio
-    document.body.addEventListener('mousedown', (e) => {
-        const investmentItem = e.target.closest('[data-is-investment="true"]');
-        if (!investmentItem) return;
-        longPressAccountTimer = setTimeout(() => {
-            longPressAccountTimer = null;
-            const accountId = investmentItem.dataset.id;
-            handleShowIrrHistory({ accountId: accountId });
-        }, 500);
-    });
-    document.body.addEventListener('mouseup', () => clearTimeout(longPressAccountTimer));
-    document.body.addEventListener('mouseleave', () => clearTimeout(longPressAccountTimer));
-    // === FIN: Lógica para Long Press ===
 	
     const cantidadInput = document.getElementById("movimiento-cantidad");
     if (cantidadInput) {
