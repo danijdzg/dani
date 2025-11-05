@@ -2019,3 +2019,176 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 .icon-wrapper.ingreso { background-color: var(--c-success); }
 .icon-wrapper.traspaso { background-color: var(--c-info); }
 /* === FIN: Estilos Menú === */
+/* === INICIO: NUEVOS ESTILOS PARA ACTION SHEET === */
+#action-sheet-overlay .modal {
+    max-width: 100%; /* Ocupa todo el ancho en la parte inferior */
+    width: 100%;
+    margin: 0;
+    padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom)); /* Respeta el 'notch' inferior */
+}
+#action-sheet-overlay .modal__body {
+    padding: 0; /* Sin padding extra */
+}
+.action-sheet-title {
+    padding: var(--sp-2) var(--sp-4) var(--sp-3) var(--sp-4);
+    color: var(--c-on-surface-secondary);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    border-bottom: 1px solid var(--c-outline);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.action-sheet-options {
+    display: flex;
+    flex-direction: column;
+}
+.action-sheet-option {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+    padding: var(--sp-3) var(--sp-4);
+    font-size: var(--fs-base);
+    font-weight: 600;
+    color: var(--c-primary);
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--c-outline);
+}
+.action-sheet-option:last-child {
+    border-bottom: none;
+}
+.action-sheet-option .material-icons {
+    color: var(--c-on-surface-secondary);
+}
+.action-sheet-option.danger {
+    color: var(--c-danger);
+}
+/* === FIN: ESTILOS PARA ACTION SHEET === */
+
+
+/* === INICIO: NUEVOS ESTILOS PARA MENÚ FLOTANTE (+) === */
+#quick-add-menu {
+    position: fixed;
+    bottom: calc(48px + env(safe-area-inset-bottom) + 16px);
+    left: 50%;
+    z-index: 1080;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+    pointer-events: none;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#quick-add-menu.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+.quick-add-item {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Aumentamos el espacio */
+    cursor: pointer;
+}
+/* Invertimos el orden para un look más "conectado" */
+.quick-add-item .icon-wrapper {
+    order: 1; /* El icono ahora va a la derecha */
+}
+.quick-add-item .label {
+    order: 2; /* La etiqueta a la izquierda */
+    background-color: var(--c-surface);
+    color: var(--c-on-surface);
+    padding: 8px 14px;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+}
+.quick-add-item .icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--c-white);
+    box-shadow: var(--shadow-sm);
+}
+.icon-wrapper.gasto { background-color: var(--c-danger); }
+.icon-wrapper.ingreso { background-color: var(--c-success); }
+.icon-wrapper.traspaso { background-color: var(--c-info); }
+/* === FIN: ESTILOS MENÚ FLOTANTE (+) === */
+
+
+/* === INICIO: MEJORAS DE RESPONSIVIDAD PARA MÓVILES PEQUEÑOS (< 380px) === */
+@media (max-width: 380px) {
+    /* Optimizaciones generales para ganar espacio */
+    .view {
+        padding: 0 var(--sp-2); 
+    }
+    .card__content {
+        padding-left: var(--sp-3);
+        padding-right: var(--sp-3);
+    }
+    .card__title {
+        padding-left: var(--sp-3);
+        padding-right: var(--sp-3);
+    }
+
+    /* Solución para Portafolio: apilar KPIs verticalmente */
+    #estrategia-activos-content .card:first-child .card__content {
+        flex-direction: column;
+        gap: var(--sp-3);
+        align-items: center;
+    }
+
+    /* Forzar todos los grids a una sola columna */
+    .kpi-grid,
+    .form-grid {
+        grid-template-columns: 1fr !important;
+        gap: var(--sp-2);
+    }
+
+    /* Solución para Informe de Cuenta (Cartilla) */
+    .informe-linea-header {
+        display: none; /* Ocultamos la cabecera, ya no es necesaria */
+    }
+    .informe-linea-movimiento {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+        padding: var(--sp-3);
+        gap: 4px var(--sp-4);
+        align-items: center;
+    }
+    .informe-extracto-container {
+        border: none; /* Quitamos borde para un look de lista más limpio */
+    }
+    .informe-linea-movimiento .fecha {
+        grid-column: 1; grid-row: 1;
+        font-size: var(--fs-xs); color: var(--c-on-surface-secondary);
+    }
+    .informe-linea-movimiento .descripcion {
+        grid-column: 1; grid-row: 2;
+        width: 100%;
+    }
+    .informe-linea-movimiento .importe {
+        grid-column: 2; grid-row: 1;
+        font-size: 1.1em;
+    }
+    .informe-linea-movimiento .saldo {
+        grid-column: 2; grid-row: 2;
+        font-size: var(--fs-xs); color: var(--c-on-surface-secondary);
+    }
+    
+    /* Optimización de Barra Superior: Ocultar título para dar prioridad a acciones */
+    #page-title-display {
+        display: none; 
+    }
+}
+/* === FIN: MEJORAS DE RESPONSIVIDAD === */

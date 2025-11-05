@@ -62,13 +62,13 @@ const handleExportFilteredCsv = (btn) => {
     }
 };
 
-	import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm'
-        
-        const firebaseConfig = { apiKey: "AIzaSyAp-t-2qmbvSX-QEBW9B1aAJHBESqnXy9M", authDomain: "cuentas-aidanai.firebaseapp.com", projectId: "cuentas-aidanai", storageBucket: "cuentas-aidanai.appspot.com", messagingSenderId: "58244686591", appId: "1:58244686591:web:85c87256c2287d350322ca" };
+import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
+
+const firebaseConfig = { apiKey: "AIzaSyAp-t-2qmbvSX-QEBW9B1aAJHBESqnXy9M", authDomain: "cuentas-aidanai.firebaseapp.com", projectId: "cuentas-aidanai", storageBucket: "cuentas-aidanai.appspot.com", messagingSenderId: "58244686591", appId: "1:58244686591:web:85c87256c2287d350322ca" };
 const PAGE_IDS = {
     INICIO: 'inicio-page',
     DIARIO: 'diario-page',
-    ESTRATEGIA: 'estrategia-page', // <-- CORREGIDO Y AÑADIDO
+    ESTRATEGIA: 'estrategia-page',
     AJUSTES: 'ajustes-page',
 };
 
@@ -7383,34 +7383,46 @@ function createCustomSelect(selectElement) {
        
     selectElement.addEventListener('change', populateOptions);
 }
-const longPressState = { timer: null, isLongPress: false };
-const swipeState = { activeCard: null, startX: 0, currentX: 0, isSwiping: false, isSwipeIntent: false, threshold: 60 };
+// Estados globales para gestionar los gestos de swipe y pulsación larga.
+let longPressState = { timer: null, isLongPress: false };
+let swipeState = { activeCard: null, startX: 0, currentX: 0, isSwiping: false, isSwipeIntent: false, threshold: 60 };
 
+/**
+ * Se activa al iniciar un toque (ratón o dedo).
+ * Decide si es un posible swipe o una pulsación larga.
+ * @param {Event} e - El evento de inicio (mousedown o touchstart).
+ */
 const handleInteractionStart = (e) => {
-    // Buscamos el elemento interactuable más cercano (puede ser un movimiento o un activo)
+    // Buscamos el elemento interactuable más cercano. Puede ser un movimiento, un activo, etc.
     const targetItem = e.target.closest('[data-id]');
     if (!targetItem) return;
 
+    // Si la interacción es sobre una tarjeta de movimiento, reseteamos cualquier swipe anterior.
     const card = targetItem.classList.contains('transaction-card') ? targetItem : null;
-    if (card) resetActiveSwipe(); // Solo reseteamos swipes si estamos en una tarjeta de movimiento
+    if (card) {
+        resetActiveSwipe();
+    }
 
+    // Iniciamos el temporizador para la pulsación larga.
     longPressState.isLongPress = false;
     longPressState.timer = setTimeout(() => {
         longPressState.isLongPress = true;
-        swipeState.isSwiping = false; // Detenemos cualquier intención de swipe
+        swipeState.isSwiping = false; // Una pulsación larga cancela el swipe.
         hapticFeedback('medium');
         
-        // --- LÓGICA DE DECISIÓN DE CONTEXTO ---
-        if (targetItem.dataset.isInvestment === 'true') {
-            // Si es un activo de inversión, muestra el gráfico de TIR
+        // --- ¡LÓGICA CORREGIDA Y GLOBAL! ---
+        // Aquí decidimos qué hacer según el tipo de elemento pulsado.
+        if (targetItem.matches('.modal__list-item[data-is-investment="true"]')) {
+            // BUG CORREGIDO: Si es un activo de inversión, muestra el gráfico de TIR.
             handleShowIrrHistory({ accountId: targetItem.dataset.id });
         } else if (card) {
-            // Si es una tarjeta de movimiento, muestra el menú de acciones
+            // MEJORA UX: Si es una tarjeta de movimiento, muestra la nueva "Action Sheet".
             showContextMenuForMovement(card.dataset.id);
         }
         
-    }, 500);
+    }, 500); // 500ms es un buen tiempo para una pulsación larga.
 
+    // Preparamos el estado para un posible swipe.
     swipeState.isSwiping = true;
     swipeState.isSwipeIntent = false;
     swipeState.activeCard = card;
@@ -7420,47 +7432,48 @@ const handleInteractionStart = (e) => {
     swipeState.startY = point.clientY;
 };
 
-
+/**
+ * Gestiona el movimiento del dedo/ratón.
+ * Diferencia entre un scroll vertical y un swipe horizontal.
+ * @param {Event} e - El evento de movimiento (mousemove o touchmove).
+ */
 const handleInteractionMove = (e) => {
-    // Solo actuamos si hay una interacción activa
     if (!swipeState.isSwiping) return;
-
-    // Si la interacción es en algo que no sea una tarjeta de movimiento, cancelamos el swipe
-    if (!swipeState.activeCard) {
-        const point = e.type === 'touchmove' ? e.touches[0] : e;
-        const deltaY = point.clientY - swipeState.startY;
-        if (Math.abs(deltaY) > 10) { // Si hay scroll vertical
-             if (longPressState.timer) clearTimeout(longPressState.timer);
-        }
-        return;
-    }
 
     const point = e.type === 'touchmove' ? e.touches[0] : e;
     const deltaX = point.clientX - swipeState.startX;
     const deltaY = point.clientY - swipeState.startY;
 
+    // Si aún no hemos decidido si es un swipe...
     if (!swipeState.isSwipeIntent && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
-        if (Math.abs(deltaY) > Math.abs(deltaX)) { // Es scroll
-            if (longPressState.timer) clearTimeout(longPressState.timer);
+        // Si el movimiento vertical es mayor, es un scroll, no un swipe.
+        if (Math.abs(deltaY) > Math.abs(deltaX)) {
+            clearTimeout(longPressState.timer); // Cancelamos la pulsación larga.
             swipeState.isSwiping = false;
             return;
         }
+        // Es un swipe horizontal.
         swipeState.isSwipeIntent = true;
-        if (longPressState.timer) clearTimeout(longPressState.timer);
+        clearTimeout(longPressState.timer); // Cancelamos la pulsación larga.
     }
     
-    if (swipeState.isSwipeIntent) {
+    // Si estamos haciendo swipe en una tarjeta de movimiento...
+    if (swipeState.isSwipeIntent && swipeState.activeCard) {
         e.preventDefault();
         swipeState.currentX = point.clientX;
         const currentDiff = swipeState.currentX - swipeState.startX;
         const direction = currentDiff > 0 ? 'right' : 'left';
+
+        // Mostramos las acciones correspondientes (derecha o izquierda).
         const leftActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.left');
         const rightActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.right');
         const activeActions = direction === 'right' ? leftActions : rightActions;
         const inactiveActions = direction === 'right' ? rightActions : leftActions;
+        
         if (activeActions) activeActions.classList.add('swipe-actions-container--visible');
         if (inactiveActions) inactiveActions.classList.remove('swipe-actions-container--visible');
         
+        // Animamos el icono para dar feedback.
         const progress = Math.min(Math.abs(currentDiff) / swipeState.threshold, 1);
         const icon = activeActions ? activeActions.querySelector('.material-icons') : null;
         if (icon) {
@@ -7468,50 +7481,56 @@ const handleInteractionMove = (e) => {
             icon.style.opacity = progress;
         }
         
+        // Movemos la tarjeta con el dedo.
         swipeState.activeCard.style.transition = 'none';
         swipeState.activeCard.style.transform = `translateX(${currentDiff}px)`;
     }
 };
+
+/**
+ * Se activa al finalizar la interacción (levantar dedo o soltar ratón).
+ * Ejecuta la acción de swipe, un clic corto o simplemente resetea el estado.
+ * @param {Event} e - El evento de finalización (mouseup o touchend).
+ */
 const handleInteractionEnd = (e) => {
-    if (longPressState.timer) {
-        clearTimeout(longPressState.timer);
-        longPressState.timer = null;
-    }
-    
-    // Si la acción de pulsación larga ya se ejecutó, no hacemos nada más.
-    // O si no había una interacción activa, tampoco.
+    clearTimeout(longPressState.timer);
+
     if (longPressState.isLongPress || !swipeState.isSwiping) {
         longPressState.isLongPress = false;
         return;
     }
     
-    // Si no es un swipe y fue un toque corto en una tarjeta, lo tratamos como un clic normal
-    if (!swipeState.isSwipeIntent && swipeState.activeCard) {
-        const movementId = swipeState.activeCard.dataset.id;
-        startMovementForm(movementId, false);
-    } 
-    // Si fue un swipe, gestionamos la acción
-    else if (swipeState.isSwipeIntent && swipeState.activeCard) {
+    // Si fue un swipe, comprobamos si superó el umbral para activar la acción.
+    if (swipeState.isSwipeIntent && swipeState.activeCard) {
         const diff = swipeState.currentX - swipeState.startX;
         swipeState.activeCard.style.transition = 'transform 0.3s ease-out';
         
         if (Math.abs(diff) > swipeState.threshold) {
             const direction = diff > 0 ? 'right' : 'left';
-            const actionContainer = direction === 'right' 
-                ? swipeState.activeCard.parentElement.querySelector('.left .swipe-action-btn')
-                : swipeState.activeCard.parentElement.querySelector('.right .swipe-action-btn');
-            
-            // Lanzamos la acción programada en el botón (duplicate o delete)
-            if(actionContainer) actionContainer.click();
-
+            const actionBtn = swipeState.activeCard.parentElement.querySelector(`.${direction === 'right' ? 'left' : 'right'} .swipe-action-btn`);
+            if (actionBtn) {
+                actionBtn.click(); // Simulamos un clic en el botón de acción (borrar o duplicar).
+            }
         } else {
-            resetActiveSwipe();
+            resetActiveSwipe(); // No se superó el umbral, la tarjeta vuelve a su sitio.
         }
     } 
-
+    // Si fue un clic corto en una tarjeta, lo tratamos como una edición.
+    else if (!swipeState.isSwipeIntent && e.target.closest('.transaction-card')) {
+        const movementId = e.target.closest('[data-id]').dataset.id;
+        startMovementForm(movementId, false);
+    }
+    // Si fue un clic corto en un activo, mostramos sus movimientos.
+    else if (!swipeState.isSwipeIntent && e.target.closest('.modal__list-item[data-id]')) {
+         const accountId = e.target.closest('[data-id]').dataset.id;
+         showAccountMovementsModal(accountId);
+    }
+    
+    // Reseteamos todos los estados para la próxima interacción.
     swipeState.isSwiping = false;
     swipeState.isSwipeIntent = false;
 };
+
 let longPressTimer = null;
 
 const startPress = () => {
@@ -7541,6 +7560,14 @@ const endPress = () => {
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
 // =================================================================
  const attachEventListeners = () => {
+const fabButton = select('bottom-nav-add-btn');
+    if (fabButton) {
+        fabButton.addEventListener('mousedown', startFabPress);
+        fabButton.addEventListener('touchstart', startFabPress, { passive: true });
+        fabButton.addEventListener('mouseup', endFabPress);
+        fabButton.addEventListener('touchend', endFabPress);
+        fabButton.addEventListener('mouseleave', () => clearTimeout(longPressState.timer)); // Cancelar si se sale del botón
+    }	 
 const addBtn = select('bottom-nav-add-btn');
 const quickMenu = select('quick-add-menu');
 
@@ -7552,13 +7579,13 @@ if (addBtn && quickMenu) {
         quickMenu.classList.toggle('visible');
     });
 
-    // Listener para cerrar el menú si se hace clic fuera
+ // Cierra el menú rápido si se clica fuera.
     document.addEventListener('click', (e) => {
-        if (!quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
+        const quickMenu = select('quick-add-menu');
+        if (quickMenu && !quickMenu.contains(e.target) && !fabButton.contains(e.target)) {
             quickMenu.classList.remove('visible');
         }
     });
-}
     
     // Asignamos los listeners
     addBtn.addEventListener('mousedown', startPress);
@@ -7588,6 +7615,18 @@ if (addBtn && quickMenu) {
 }
 const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
 const mainScrollerPtr = selectOne('.app-layout__main');
+if (mainScroller) {
+        mainScroller.addEventListener('mousedown', handleInteractionStart);
+        mainScroller.addEventListener('touchstart', handleInteractionStart, { passive: true });
+        
+        // El 'listener' de movimiento es global para capturar el gesto aunque se salga del elemento.
+        document.addEventListener('mousemove', handleInteractionMove);
+        document.addEventListener('touchmove', handleInteractionMove, { passive: false });
+        
+        // El 'listener' de finalización también es global.
+        document.addEventListener('mouseup', handleInteractionEnd);
+        document.addEventListener('touchend', handleInteractionEnd);
+    }
 const ptrIndicator = document.createElement('div');
 ptrIndicator.id = 'pull-to-refresh-indicator';
 ptrIndicator.innerHTML = '<div class="spinner"></div>';
@@ -7713,44 +7752,35 @@ if (ptrElement && mainScrollerPtr) {
         }
     });
 
-    document.body.addEventListener('click', async (e) => {
-        const target = e.target;
-
-        if (!target.closest('.custom-select-wrapper')) {
+     // Cierra los selectores personalizados si se clica fuera.
+        if (!e.target.closest('.custom-select-wrapper')) {
             closeAllCustomSelects(null);
         }
 
-        if (target.matches('.input-amount-calculator')) {
-            e.preventDefault();
-            showCalculator(target);
-            return;
-        }
-        const actionTarget = target.closest('[data-action]');
+        const actionTarget = e.target.closest('[data-action]');
         if (!actionTarget) return;
 
-        const { action, id, page, type, modalId, reportId } = actionTarget.dataset;
+        const { action, id, page, type } = actionTarget.dataset;
         const btn = actionTarget.closest('button');
-        
+
+        // Mapa de acciones para un código más limpio.
         const actions = {
-			 'quick-add-type': (e) => {
-        const type = e.target.closest('[data-type]').dataset.type;
-        const menu = select('quick-add-menu');
-        if (menu) menu.classList.remove('visible');
-        
-        startMovementForm(); // Abre el formulario genérico...
-        
-        // ...y 50ms después (para que el modal se haya renderizado), 
-        // le decimos qué tipo de movimiento es.
-        setTimeout(() => {
-            setMovimientoFormType(type);
+            'navigate': () => navigateTo(page),
             
-            // ¡Paso final y crucial! Abrimos la calculadora automáticamente.
-            const amountInput = select('movimiento-cantidad');
-            if (amountInput) {
-                showCalculator(amountInput);
-            }
-        }, 50);
-    },
+            // Acciones del nuevo menú rápido (+)
+            'quick-add-type': () => {
+        const type = actionTarget.dataset.type;
+                const menu = select('quick-add-menu');
+                if (menu) menu.classList.remove('visible');
+                
+                startMovementForm(); // Abre el formulario...
+                setTimeout(() => { // ...y luego lo configura.
+                    setMovimientoFormType(type);
+                    const amountInput = select('movimiento-cantidad');
+                    if (amountInput) showCalculator(amountInput);
+                }, 50);
+            },
+			
 			'swipe-show-irr-history': () => handleShowIrrHistory(type),
 			'show-main-menu': () => {
     const menu = document.getElementById('main-menu-popover');
@@ -9594,34 +9624,76 @@ const showContextMenuForMovement = (movementId) => {
     const movement = db.movimientos.find(m => m.id === movementId);
     if (!movement) return;
 
-    const html = `
-        <div style="display: flex; flex-direction: column; gap: var(--sp-2);">
-            <button class="btn btn--secondary btn--full" data-action="context-edit" data-id="${movementId}">
-                <span class="material-icons">edit</span> Editar Movimiento
-            </button>
-            <button class="btn btn--secondary btn--full" data-action="context-duplicate" data-id="${movementId}">
-                <span class="material-icons">content_copy</span> Duplicar
-            </button>
-            <button class="btn btn--danger btn--full" data-action="context-delete" data-id="${movementId}">
-                <span class="material-icons">delete</span> Eliminar
-            </button>
+    const overlay = select('action-sheet-overlay');
+    const container = select('action-sheet-container');
+    if (!overlay || !container) return;
+
+    container.innerHTML = `
+        <div class="modal__grabber"></div>
+        <div class="action-sheet-title">${escapeHTML(movement.descripcion)}</div>
+        <div class="modal__body">
+            <div class="action-sheet-options">
+                <button class="action-sheet-option" data-action="context-edit" data-id="${movementId}">
+                    <span class="material-icons">edit</span> Editar Movimiento
+                </button>
+                <button class="action-sheet-option" data-action="context-duplicate" data-id="${movementId}">
+                    <span class="material-icons">content_copy</span> Duplicar Movimiento
+                </button>
+                <button class="action-sheet-option danger" data-action="context-delete" data-id="${movementId}">
+                    <span class="material-icons">delete</span> Eliminar Movimiento
+                </button>
+            </div>
         </div>
     `;
     
-    // Usamos el modal genérico para mostrar las opciones
-    showGenericModal(`Acciones para: ${movement.descripcion}`, html);
+    // Usamos nuestra función showModal mejorada.
+    showModal('action-sheet-overlay');
+};
+
+/**
+ * Cierra la Action Sheet. Es una versión especializada de hideModal.
+ */
+const hideActionSheet = () => {
+    hideModal('action-sheet-overlay');
 };
 // Asegúrate de que tu función resetActiveSwipe también oculte las acciones
 const resetActiveSwipe = () => {
-if (swipeState.activeCard) {
-swipeState.activeCard.style.transition = 'transform 0.3s ease-out';
-swipeState.activeCard.style.transform = 'translateX(0px)';
-// También nos aseguramos de ocultar las acciones aquí
-const parent = swipeState.activeCard.parentElement;
-parent.querySelector('.swipe-actions-container.left')?.classList.remove('swipe-actions-container--visible');
-parent.querySelector('.swipe-actions-container.right')?.classList.remove('swipe-actions-container--visible');
-}
-swipeState.activeCard = null;
+    if (swipeState.activeCard) {
+        swipeState.activeCard.style.transition = 'transform 0.3s ease-out';
+        swipeState.activeCard.style.transform = 'translateX(0px)';
+        const parent = swipeState.activeCard.parentElement;
+        parent.querySelector('.swipe-actions-container.left')?.classList.remove('swipe-actions-container--visible');
+        parent.querySelector('.swipe-actions-container.right')?.classList.remove('swipe-actions-container--visible');
+    }
+    swipeState.activeCard = null;
+};
+
+const startFabPress = () => {
+    longPressState.isLongPress = false;
+    longPressState.timer = setTimeout(() => {
+        // Si se mantiene pulsado, es una pulsación larga.
+        longPressState.isLongPress = true;
+        hapticFeedback('medium');
+        // BUG CORREGIDO: Pulsación larga = Atajo para "Nuevo Gasto".
+        startMovementForm();
+        setTimeout(() => {
+            setMovimientoFormType('gasto');
+            const amountInput = select('movimiento-cantidad');
+            if (amountInput) showCalculator(amountInput);
+        }, 50);
+    }, 400); // 400ms para una pulsación larga.
+};
+const endFabPress = () => {
+    clearTimeout(longPressState.timer);
+    // Si no fue una pulsación larga, fue un clic corto.
+    if (!longPressState.isLongPress) {
+        hapticFeedback('medium');
+        // BUG CORREGIDO: Pulsación corta = Mostrar el menú de opciones.
+        const quickMenu = select('quick-add-menu');
+        if (quickMenu) {
+            quickMenu.classList.toggle('visible');
+        }
+    }
 };
 
 const handleDescriptionInput = () => {
