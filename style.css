@@ -1783,6 +1783,10 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     border-radius: 6px;
     font-size: 0.8rem;
     padding: 6px 8px;
+    /* ▼▼▼ LÍNEAS AÑADIDAS PARA LA CORRECCIÓN ▼▼▼ */
+    color: var(--c-on-surface); /* Asegura que el texto use el color del tema */
+    border: 1px solid var(--c-outline); /* Añade un borde consistente */
+    /* ▲▲▲ FIN DE LAS LÍNEAS AÑADIDAS ▲▲▲ */
 }
 
 /* 4. Botón de fecha compacto */
