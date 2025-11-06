@@ -293,6 +293,7 @@ const clearDiarioFilters = async () => {
 
 // ▲▲▲ FIN DEL BLOQUE A PEGAR ▲▲▲
         let currentUser = null, unsubscribeListeners = [], db = getInitialDb(), deselectedAccountTypesFilter = new Set();
+		let userHasInteracted = false;
 		let ptrState = {
 			startY: 0,
 			isPulling: false,
@@ -889,21 +890,26 @@ const calculatePreviousDueDate = (currentDueDate, frequency, weekDays = []) => {
     console.log('Alturas de elementos definidas (Robusto):', vList.heights);
 };
         const hapticFeedback = (type = 'light') => {
-            if ('vibrate' in navigator) {
-                try {
-                    let pattern;
-                    switch (type) {
-                        case 'light':   pattern = 10; break;
-                        case 'medium':  pattern = 25; break;
-                        case 'success': pattern = [15, 60, 15]; break;
-                        case 'warning': pattern = [30, 40, 30]; break;
-                        case 'error':   pattern = [50, 50, 50]; break;
-                        default:        pattern = 10;
-                    }
-                    navigator.vibrate(pattern);
-                } catch (e) {}
-            }
-        };
+    // Solo vibra si el navegador lo soporta Y el usuario ya ha interactuado.
+    if (!userHasInteracted || !('vibrate' in navigator)) {
+        return;
+    }
+    
+    try {
+        let pattern;
+        switch (type) {
+            case 'light':   pattern = 10; break;
+            case 'medium':  pattern = 25; break;
+            case 'success': pattern = [15, 60, 15]; break;
+            case 'warning': pattern = [30, 40, 30]; break;
+            case 'error':   pattern = [50, 50, 50]; break;
+            default:        pattern = 10;
+        }
+        navigator.vibrate(pattern);
+    } catch (e) {
+        // La vibración puede fallar silenciosamente. No es un error crítico.
+    }
+};
 
         const parseDateStringAsUTC = (dateString) => {
             if (!dateString) return null;
@@ -7472,16 +7478,26 @@ function createCustomSelect(selectElement) {
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
 // =================================================================
  const attachEventListeners = () => {
-	let longPressTimer;
+const enableHaptics = () => {
+        userHasInteracted = true;
+        document.body.removeEventListener('touchstart', enableHaptics, { once: true });
+        document.body.removeEventListener('click', enableHaptics, { once: true });
+    };
+    document.body.addEventListener('touchstart', enableHaptics, { once: true, passive: true });
+    document.body.addEventListener('click', enableHaptics, { once: true });
+    // ▲▲▲ FIN DEL BLOQUE A AÑADIR ▲▲▲
+
+	let longPressTimer;	 
+
 const addBtn = select('bottom-nav-add-btn');
 const quickMenu = select('quick-add-menu');
 
 if (addBtn && quickMenu) {
     addBtn.addEventListener('mousedown', startLongPress);
-    addBtn.addEventListener('touchstart', startLongPress, { passive: true }); // passive:true para mejor rendimiento en scroll
+    addBtn.addEventListener('touchstart', startLongPress); // ¡CORRECCIÓN APLICADA AQUÍ!
     addBtn.addEventListener('mouseup', endPress);
     addBtn.addEventListener('touchend', endPress);
-    addBtn.addEventListener('mouseleave', cancelPress); // 'mouseleave' ahora solo cancela
+    addBtn.addEventListener('mouseleave', cancelPress);
 	
     document.addEventListener('click', (e) => {
         if (!quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
