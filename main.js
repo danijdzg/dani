@@ -912,9 +912,13 @@ const calculatePreviousDueDate = (currentDueDate, frequency, weekDays = []) => {
 };
 
         const parseDateStringAsUTC = (dateString) => {
-            if (!dateString) return null;
-            return new Date(dateString + 'T12:00:00Z');
-        };
+    // 1. Verificamos si la entrada es nula, indefinida, o un string vacío.
+    if (!dateString || typeof dateString !== 'string' || dateString.trim() === '') {
+        return null;
+    }
+    // 2. Solo si la validación pasa, creamos la fecha.
+    return new Date(dateString + 'T12:00:00Z');
+};
 		const generateReportFilterControls = (reportId, defaultPeriod = 'año-actual') => {
     return `
         <div class="report-filters" data-report-id="${reportId}" style="margin-bottom: var(--sp-4); padding: var(--sp-3); background-color: var(--c-surface-variant); border-radius: var(--border-radius-md);">
@@ -9177,79 +9181,74 @@ const handleAddConcept = async (btn) => {
 // ==============================================================
 const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
     const collection = isRecurrent ? 'recurrentes' : 'movimientos';
-    const ANIMATION_DURATION = 400; // Debe coincidir con la duración en el CSS
+    const ANIMATION_DURATION = 400;
 
     const itemElement = document.querySelector(`.transaction-card[data-id="${id}"]`)?.closest('.swipe-container');
 
-    let itemToDelete; // Declaramos aquí para que sea accesible en el catch
+    // 1. Declaramos la variable aquí y la inicializamos a null. Es crucial.
+    let itemToDelete = null;
 
     try {
-        // 1. ACTUALIZACIÓN OPTIMISTA DE DATOS
+        // --- ACTUALIZACIÓN OPTIMISTA DE DATOS ---
         if (isRecurrent) {
             const index = db.recurrentes.findIndex(r => r.id === id);
-            if (index === -1) throw new Error("Recurrente no encontrado.");
-            [itemToDelete] = db.recurrentes.splice(index, 1);
+            if (index === -1) throw new Error("Recurrente no encontrado localmente.");
+            // Asignamos el valor a itemToDelete ANTES de cualquier posible fallo.
+            itemToDelete = db.recurrentes[index];
+            db.recurrentes.splice(index, 1);
         } else {
             const index = db.movimientos.findIndex(m => m.id === id);
-            if (index === -1) throw new Error("Movimiento no encontrado.");
-            [itemToDelete] = db.movimientos.splice(index, 1);
-            // Revertimos el saldo en la caché local ANTES de redibujar
+            if (index === -1) throw new Error("Movimiento no encontrado localmente.");
+            // Asignamos el valor a itemToDelete.
+            itemToDelete = db.movimientos[index];
+            db.movimientos.splice(index, 1);
             applyOptimisticBalanceUpdate(null, itemToDelete); 
         }
     
-        // 2. EFECTO VISUAL (Si el elemento está en pantalla)
         if (itemElement) {
             itemElement.classList.add('item-deleting');
         }
 
-        // 3. ACTUALIZACIÓN DE LA UI (Después de la animación o inmediatamente si no hay elemento)
         setTimeout(() => {
-            updateLocalDataAndRefreshUI(); // Recalcula saldos y redibuja la lista
-            if (isRecurrent) renderEstrategiaPlanificacion(); // Refresca la vista de planificación si es necesario
+            updateLocalDataAndRefreshUI();
+            if (isRecurrent) renderEstrategiaPlanificacion();
         }, itemElement ? ANIMATION_DURATION : 0);
 
-        // 4. PERSISTENCIA EN SEGUNDO PLANO (LA ACCIÓN REAL EN LA BASE DE DATOS)
+        // --- PERSISTENCIA EN SEGUNDO PLANO (LA PARTE QUE PUEDE FALLAR) ---
         if (!isRecurrent) {
+            // ... (la lógica del batch de Firebase se mantiene igual)
             const batch = fbDb.batch();
             const userRef = fbDb.collection('users').doc(currentUser.uid);
-            
-            // Revertir el saldo en Firebase es CRÍTICO
             if (itemToDelete.tipo === 'traspaso') {
-                const origenRef = userRef.collection('cuentas').doc(itemToDelete.cuentaOrigenId);
-                const destinoRef = userRef.collection('cuentas').doc(itemToDelete.cuentaDestinoId);
-                batch.update(origenRef, { saldo: firebase.firestore.FieldValue.increment(itemToDelete.cantidad) });
-                batch.update(destinoRef, { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
+                batch.update(userRef.collection('cuentas').doc(itemToDelete.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(itemToDelete.cantidad) });
+                batch.update(userRef.collection('cuentas').doc(itemToDelete.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
             } else {
-                const cuentaRef = userRef.collection('cuentas').doc(itemToDelete.cuentaId);
-                batch.update(cuentaRef, { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
+                batch.update(userRef.collection('cuentas').doc(itemToDelete.cuentaId), { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
             }
-            // Finalmente, borramos el documento del movimiento
             batch.delete(userRef.collection(collection).doc(id));
-            await batch.commit(); // Todas las operaciones se ejecutan juntas
+            await batch.commit();
         } else {
-            await deleteDoc(collection, id); // Borrado simple para recurrentes
+            await deleteDoc(collection, id);
         }
 
         hapticFeedback('success');
         showToast("Elemento eliminado.", "info");
 
     } catch (error) {
-         // ¡PLAN B! Si Firebase falla, revertimos el cambio optimista en la UI
-        console.error("Firebase falló. Revirtiendo cambio optimista:", error);
-        showToast("Error de sincronización. Reestableciendo estado.", "danger");
-        
-        // Volvemos a añadir el item que borramos localmente
-        if(itemToDelete){
+        console.error("Fallo en el borrado. Revirtiendo cambio optimista:", error);
+        showToast("Error de sincronización. No se pudo eliminar.", "danger");
+
+        // 2. ¡LA CORRECCIÓN CLAVE! Solo revertimos si 'itemToDelete' tiene un valor.
+        if (itemToDelete) {
             if (isRecurrent) {
                 db.recurrentes.push(itemToDelete);
             } else {
                 db.movimientos.push(itemToDelete);
-                // Recalculamos el saldo con el item restaurado
                 applyOptimisticBalanceUpdate(itemToDelete, null);
             }
         }
         
-        // Forzamos un re-renderizado completo para asegurar la consistencia
+        // Forzamos un re-renderizado completo para asegurar la consistencia visual.
         updateLocalDataAndRefreshUI(); 
     }
 };
