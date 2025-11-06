@@ -1730,10 +1730,52 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 }
 #recurrent-options {
     display: flex;
-    gap: var(--sp-2);
-    padding: var(--sp-2) 0 var(--sp-3) 0;
+    flex-direction: column; /* Apila las opciones principales y el selector de días */
+    gap: var(--sp-3);
+    padding: var(--sp-3);
     border-top: 1px solid var(--c-outline);
     margin-top: var(--sp-2);
+}
+.recurrent-options__main {
+    display: flex;
+    gap: var(--sp-2);
+}
+
+.recurrent-options__main > * {
+    background-color: var(--c-surface);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    padding: 6px 8px;
+    border: 1px solid var(--c-outline);
+}
+
+#weekly-day-selector-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.day-selector-btn {
+    flex: 1;
+    height: 36px;
+    border: 1px solid var(--c-outline);
+    background-color: var(--c-surface);
+    color: var(--c-on-surface-secondary);
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.day-selector-btn:hover {
+    border-color: var(--c-primary);
+}
+
+.day-selector-btn.active {
+    background-color: var(--c-primary);
+    border-color: var(--c-primary);
+    color: var(--c-white);
+    transform: scale(1.05);
 }
 #recurrent-options select,
 #recurrent-options input {

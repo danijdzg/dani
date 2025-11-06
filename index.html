@@ -170,16 +170,13 @@
     <input type="hidden" id="movimiento-id" />
     <input type="hidden" id="movimiento-mode" value="new" />
 
-    <!-- 1. SELECTOR DE TIPO: Se mantiene igual, es compacto. -->
     <div class="filter-pills" style="justify-content: center; margin-bottom: var(--sp-3);">
         <button type="button" class="filter-pill filter-pill--active" data-action="set-movimiento-type" data-type="gasto">Gasto</button>
         <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="ingreso">Ingreso</button>
         <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="traspaso">Traspaso</button>
     </div>
 
-    <!-- 2. REJILLA DE DATOS PRINCIPAL: Aquí está la mayor optimización de espacio. -->
     <div class="dense-form-grid">
-        <!-- Cantidad -->
         <div class="form-field-compact" id="movimiento-cantidad-form-group" style="grid-area: amount;">
             <label for="movimiento-cantidad">Cantidad</label>
             <div class="input-wrapper">
@@ -191,7 +188,6 @@
             <span class="form-error" id="movimiento-cantidad-error"></span>
         </div>
         
-        <!-- Descripción -->
         <div class="form-field-compact" style="grid-area: description;">
             <label for="movimiento-descripcion">Descripción</label>
             <div class="input-wrapper">
@@ -201,7 +197,6 @@
             <div id="description-suggestions"></div>
         </div>
         
-        <!-- Contenedor para campos de movimiento normal -->
         <div id="movimiento-fields" style="grid-area: details; display: contents;">
             <div class="form-field-compact">
                 <label for="movimiento-concepto">Concepto</label>
@@ -221,7 +216,6 @@
             </div>
         </div>
 
-        <!-- Contenedor para campos de traspaso -->
         <div id="traspaso-fields" class="hidden" style="grid-area: details; display: contents;">
             <div class="form-field-compact">
                 <label for="movimiento-cuenta-origen">Origen</label>
@@ -240,26 +234,41 @@
         </div>
     </div>
     
-    <!-- 3. SECCIÓN RECURRENTE: Ahora mucho más compacta. -->
+    <!-- ▼▼▼ SECCIÓN DE RECURRENCIA ACTUALIZADA ▼▼▼ -->
     <div class="recurrent-section">
         <div class="form-switch-group">
             <label for="movimiento-recurrente" class="recurrent-section__label">Programar como recurrente</label>
             <label class="form-switch"><input type="checkbox" id="movimiento-recurrente"><span class="slider"></span></label>
         </div>
         <div id="recurrent-options" class="hidden">
-            <select id="recurrent-frequency">
-                <option value="once">Única vez</option>
-                <option value="daily">Diaria</option>
-                <option value="weekly">Semanal</option>
-                <option value="monthly" selected>Mensual</option>
-                <option value="yearly">Anual</option>
-            </select>
-            <input type="date" id="recurrent-next-date">
-            <input type="date" id="recurrent-end-date" title="Finaliza el (opcional)">
+            <div class="recurrent-options__main">
+                <select id="recurrent-frequency">
+                    <option value="once">Única vez</option>
+                    <option value="daily">Diaria</option>
+                    <option value="weekly">Semanal</option>
+                    <option value="monthly" selected>Mensual</option>
+                    <option value="yearly">Anual</option>
+                </select>
+                <input type="date" id="recurrent-next-date" title="Próxima ejecución">
+                <input type="date" id="recurrent-end-date" title="Finaliza el (opcional)">
+            </div>
+            <!-- NUEVO SELECTOR DE DÍAS DE LA SEMANA -->
+            <div id="weekly-day-selector" class="hidden">
+                <div id="weekly-day-selector-buttons">
+                    <button type="button" class="day-selector-btn" data-day="1">L</button>
+                    <button type="button" class="day-selector-btn" data-day="2">M</button>
+                    <button type="button" class="day-selector-btn" data-day="3">X</button>
+                    <button type="button" class="day-selector-btn" data-day="4">J</button>
+                    <button type="button" class="day-selector-btn" data-day="5">V</button>
+                    <button type="button" class="day-selector-btn" data-day="6">S</button>
+                    <button type="button" class="day-selector-btn" data-day="0">D</button>
+                </div>
+            </div>
+            <span class="form-error" id="recurrent-frequency-error"></span>
         </div>
     </div>
+    <!-- ▲▲▲ FIN DE LA SECCIÓN ACTUALIZADA ▲▲▲ -->
     
-    <!-- 4. CAMPO DE FECHA: También compactado. -->
     <div class="form-field-compact" style="margin-top: var(--sp-3);">
         <div class="input-wrapper">
             <input type="date" id="movimiento-fecha" class="visually-hidden" required />
@@ -271,16 +280,13 @@
         <span class="form-error" id="movimiento-fecha-error"></span>
     </div>
 
-    <!-- 5. BOTONES DE ACCIÓN: CON LOS CAMBIOS APLICADOS -->
     <div class="modal__actions" style="display:flex; justify-content: space-between; align-items:center; margin-top: var(--sp-4);">
         <div class="left-actions" style="display:flex; gap: var(--sp-1);">
-            <!-- ▼▼▼ CAMBIO 1: ELIMINADO EL ESTILO INLINE ROJO ▼▼▼ -->
             <button type="button" id="delete-movimiento-btn" data-action="delete-movement-from-modal" class="icon-btn hidden" title="Borrar"><span class="material-icons">delete</span></button>
             <button type="button" id="duplicate-movimiento-btn" data-action="duplicate-movement" class="icon-btn hidden" title="Duplicar"><span class="material-icons">content_copy</span></button>
         </div>
         <div class="right-actions" style="display:flex; gap: var(--sp-2);">
             <button id="save-and-new-movimiento-btn" type="button" data-action="save-and-new-movement" class="btn btn--secondary">Guardar y Nuevo</button>
-            <!-- ▼▼▼ CAMBIO 2: CAMBIADO de btn--primary A btn--secondary ▼▼▼ -->
             <button id="save-movimiento-btn" type="submit" class="btn btn--primary">Guardar</button>
         </div>
     </div>
