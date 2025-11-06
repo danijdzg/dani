@@ -3395,7 +3395,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
                     <div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div>
                 </details>`;
         }).join('');
-
+		
         const investmentItems = listaContainer.querySelectorAll('[data-is-investment="true"]');
         
         investmentItems.forEach(item => {
@@ -9303,6 +9303,69 @@ const auditAndFixAllBalances = async (btn) => {
         setButtonLoading(btn, false);
     }
 };    
+const applyInvestmentItemInteractions = (containerElement) => {
+    if (!containerElement) return;
+
+    // Buscamos todos los elementos que sean activos de inversión y tengan una acción de click.
+    const investmentItems = containerElement.querySelectorAll('[data-action="view-account-details"][data-id]');
+
+    investmentItems.forEach(item => {
+        // Obtenemos la cuenta para verificar si es de inversión ANTES de añadir listeners.
+        const cuenta = db.cuentas.find(c => c.id === item.dataset.id);
+        if (!cuenta || !cuenta.esInversion) {
+            return; // Si no es una cuenta de inversión, no hacemos nada.
+        }
+
+        // Si ya tiene listeners de este tipo, los removemos para evitar duplicados.
+        // (Esto es una salvaguarda por si se llama la función múltiples veces)
+        if (item.dataset.longPressApplied) return;
+        item.dataset.longPressApplied = 'true';
+
+        let longPressTimer;
+        let startX, startY;
+        let longPressTriggered = false;
+
+        const startHandler = (e) => {
+            const point = e.type === 'touchstart' ? e.touches[0] : e;
+            startX = point.clientX;
+            startY = point.clientY;
+            longPressTriggered = false;
+
+            e.stopPropagation();
+
+            longPressTimer = setTimeout(() => {
+                longPressTriggered = true;
+                const accountId = item.dataset.id;
+                handleShowIrrHistory({ accountId: accountId });
+            }, 500); // 500ms para la pulsación larga
+        };
+
+        const moveHandler = (e) => {
+            if (!longPressTimer) return;
+            const point = e.type === 'touchmove' ? e.touches[0] : e;
+            if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
+                clearTimeout(longPressTimer);
+            }
+        };
+
+        const endHandler = (e) => {
+            clearTimeout(longPressTimer);
+            if (longPressTriggered) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
+
+        item.addEventListener('mousedown', startHandler);
+        item.addEventListener('touchstart', startHandler, { passive: true });
+        item.addEventListener('mousemove', moveHandler);
+        item.addEventListener('touchmove', moveHandler, { passive: true });
+        item.addEventListener('mouseup', endHandler);
+        item.addEventListener('touchend', endHandler);
+        item.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
+        item.addEventListener('contextmenu', e => e.preventDefault()); // Evitar menú contextual
+    });
+};
 
 const handleSaveInvestmentAccounts = async (form, btn) => {
     setButtonLoading(btn, true);

@@ -431,11 +431,12 @@ body[data-ledger-mode="B"] .top-bar {
 }
 
 /* 4. Asegura que el texto y botones dentro del encabezado SIEMPRE sean blancos y legibles */
-.top-bar, 
-.top-bar .btn, 
-.top-bar .icon-btn, 
-#page-title-display {
-    color: var(--c-white) !important; /* !important es clave para anular los temas */
+/* Refactorización Profesional en style.css */
+body[data-theme] .top-bar,
+body[data-theme] .top-bar .btn,
+body[data-theme] .top-bar .icon-btn,
+body[data-theme] .top-bar #page-title-display {
+    color: var(--c-white); /* Sin !important, pero ahora es más específico que las reglas del tema */
 }
 
 /* ================================================================= */
