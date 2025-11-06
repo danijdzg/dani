@@ -8395,7 +8395,7 @@ const handleSaveMovement = async (form, btn) => {
                 frequency: frequency,
                 nextDate: select('recurrent-next-date').value,
                 endDate: select('recurrent-end-date').value || null,
-                weekDays: weekDays, // Guardamos los días de la semana
+                weekDays: weekDays,
             };
 
             if (tipoRecurrente === 'traspaso') {
@@ -8416,34 +8416,19 @@ const handleSaveMovement = async (form, btn) => {
                 });
             }
             
-            const existingIndex = db.recurrentes.findIndex(r => r.id === id);
-            if (existingIndex > -1) {
-                // Estamos editando, así que reemplazamos el antiguo en nuestra lista local.
-                db.recurrentes[existingIndex] = dataToSave;
-            } else {
-                // Es nuevo, así que lo añadimos al principio de nuestra lista local.
-                db.recurrentes.unshift(dataToSave);
-            }
-            // ▲▲▲ FIN DE LA CORRECCIÓN ▲▲▲
-
-            // Ahora sí, guardamos en la base de datos en segundo plano.
+            // Simplemente guardamos. El listener `onSnapshot` se encargará de actualizar la UI.
             await saveDoc('recurrentes', id, dataToSave);
 
             releaseButtons();
             hapticFeedback('success');
-            triggerSaveAnimation(btn, dataToSave.cantidad >= 0 ? 'green' : 'red');
             
             if (!isSaveAndNew) {
                 hideModal('movimiento-modal');
-                showToast(select('movimiento-mode').value.startsWith('edit') ? 'Operación programada actualizada.' : 'Operación programada.');
+                showToast(select('movimiento-mode').value.startsWith('edit') ? 'Operación programada actualizada.' : 'Operación programada guardada.');
             } else {
-                startMovementForm(); // Reinicia el formulario por completo
-                showToast('Operación guardada, puedes añadir otra.', 'info');
+                startMovementForm();
+                showToast('Operación guardada. Puedes añadir otra.', 'info');
             }
-            
-            const activePage = document.querySelector('.view--active');
-            if (activePage && activePage.id === PAGE_IDS.ESTRATEGIA) renderEstrategiaPlanificacion();
-            if (activePage && activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
             return true;
 
         } catch (error) {
@@ -8452,7 +8437,6 @@ const handleSaveMovement = async (form, btn) => {
             releaseButtons();
             return false;
         }
-
     } else { // Movimiento normal (no recurrente)
         const mode = select('movimiento-mode').value;
         const movementId = select('movimiento-id').value;
