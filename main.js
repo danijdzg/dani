@@ -644,32 +644,56 @@ async function loadCoreData(uid) {
     dataLoaded = { presupuestos: false, recurrentes: false, inversiones: false };
 
     const userRef = fbDb.collection('users').doc(uid);
+    const collectionsToLoad = ['cuentas', 'conceptos'];
 
-    const collectionsToLoadInitially = ['cuentas', 'conceptos', 'recurrentes'];
-
-    collectionsToLoadInitially.forEach(collectionName => {
+    // Carga inicial para colecciones que no necesitan lógica compleja de actualización.
+    collectionsToLoad.forEach(collectionName => {
         const unsubscribe = userRef.collection(collectionName).onSnapshot(snapshot => {
             db[collectionName] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-   if (collectionName === 'recurrentes') {
-        dataLoaded.recurrentes = true;
-        const activePage = document.querySelector('.view--active');
-        if (activePage && (activePage.id === PAGE_IDS.DIARIO)) {
-            updateVirtualListUI(); 
-        }
-        // AHORA UTILIZA LA CONSTANTE CORRECTA
-        if (activePage && (activePage.id === PAGE_IDS.ESTRATEGIA)) {
-            renderEstrategiaPlanificacion(); 
-        }
-    }
-            
             populateAllDropdowns();
-            
-            if (select(PAGE_IDS.INICIO)?.classList.contains('view--active')) scheduleDashboardUpdate();
-            
+            if (select(PAGE_IDS.INICIO)?.classList.contains('view--active')) {
+                scheduleDashboardUpdate();
+            }
         }, error => console.error(`Error escuchando ${collectionName}: `, error));
         unsubscribeListeners.push(unsubscribe);
     });
+    
+    // ▼▼▼ INICIO DE LA LÓGICA CORREGIDA PARA RECURRENTES ▼▼▼
+    const unsubRecurrentes = userRef.collection('recurrentes').onSnapshot(snapshot => {
+        // En la carga inicial, inicializamos el array.
+        if (db.recurrentes.length === 0) {
+            db.recurrentes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } else {
+            // Para actualizaciones posteriores, procesamos solo los cambios.
+            snapshot.docChanges().forEach(change => {
+                const data = { id: change.doc.id, ...change.doc.data() };
+                const index = db.recurrentes.findIndex(item => item.id === change.doc.id);
+
+                if (change.type === 'added') {
+                    if (index === -1) db.recurrentes.push(data);
+                }
+                if (change.type === 'modified') {
+                    if (index > -1) db.recurrentes[index] = data;
+                }
+                if (change.type === 'removed') {
+                    if (index > -1) db.recurrentes.splice(index, 1);
+                }
+            });
+        }
+        
+        // Reordenamos después de cualquier cambio.
+        db.recurrentes.sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
+        
+        // Refrescamos la UI si es relevante.
+        const activePage = document.querySelector('.view--active');
+        if (activePage) {
+            if (activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
+            if (activePage.id === PAGE_IDS.ESTRATEGIA) renderEstrategiaPlanificacion();
+        }
+
+    }, error => console.error(`Error escuchando recurrentes: `, error));
+    unsubscribeListeners.push(unsubRecurrentes);
+    // ▲▲▲ FIN DE LA LÓGICA CORREGIDA ▲▲▲
 
     const unsubConfig = userRef.onSnapshot(doc => {
         db.config = doc.exists && doc.data().config ? doc.data().config : getInitialDb().config;
@@ -677,35 +701,21 @@ async function loadCoreData(uid) {
         loadConfig();
     }, error => console.error("Error escuchando la configuración del usuario: ", error));
     unsubscribeListeners.push(unsubConfig);
-
-    // =====================================================================
-    // === INICIO: LÓGICA DE CARGA INTELIGENTE PARA EL DASHBOARD (EL MANANTIAL) ===
-    // =====================================================================
-    // Desconectamos cualquier listener anterior para evitar duplicados al iniciar sesión de nuevo.
+    
+    // (El resto de la función para la carga de movimientos recientes se mantiene igual)
     if (unsubscribeRecientesListener) unsubscribeRecientesListener();
-
-    // Creamos una consulta para los últimos 3 meses de movimientos. Esto es suficiente
-    // para los cálculos de "vs mes anterior" y "vs año anterior" del dashboard.
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
     
-    // Este listener mantendrá nuestra caché `recentMovementsCache` siempre actualizada en tiempo real.
     unsubscribeRecientesListener = userRef.collection('movimientos')
         .where('fecha', '>=', threeMonthsAgo.toISOString())
         .onSnapshot(snapshot => {
-            console.log("Listener de recientes: Datos actualizados en la caché.");
-            // Actualizamos la caché con los datos más frescos.
             recentMovementsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            // Si el usuario está en la página de Inicio, la actualizamos inmediatamente.
             const activePage = document.querySelector('.view--active');
             if (activePage && activePage.id === PAGE_IDS.INICIO) {
                 scheduleDashboardUpdate();
             }
         }, error => console.error("Error escuchando movimientos recientes: ", error));
-    // ===================================================================
-    // === FIN: LÓGICA DE CARGA INTELIGENTE ==============================
-    // ===================================================================
                         
     buildDescriptionIndex();
     startMainApp();
