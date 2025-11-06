@@ -8400,7 +8400,6 @@ const handleSaveMovement = async (form, btn) => {
                 }
             }
 
-            // 1. Construimos el objeto final de datos.
             const dataToSave = {
                 id: id,
                 descripcion: select('movimiento-descripcion').value.trim(),
@@ -8412,38 +8411,23 @@ const handleSaveMovement = async (form, btn) => {
 
             if (tipoRecurrente === 'traspaso') {
                 Object.assign(dataToSave, {
-                    tipo: 'traspaso',
-                    cantidad: Math.abs(cantidadEnCentimos),
+                    tipo: 'traspaso', cantidad: Math.abs(cantidadEnCentimos),
                     cuentaOrigenId: select('movimiento-cuenta-origen').value,
                     cuentaDestinoId: select('movimiento-cuenta-destino').value,
                     cuentaId: null, conceptoId: null,
                 });
             } else {
                 Object.assign(dataToSave, {
-                    tipo: 'movimiento',
-                    cantidad: tipoRecurrente === 'gasto' ? -Math.abs(cantidadEnCentimos) : Math.abs(cantidadEnCentimos),
+                    tipo: 'movimiento', cantidad: tipoRecurrente === 'gasto' ? -Math.abs(cantidadEnCentimos) : Math.abs(cantidadEnCentimos),
                     cuentaId: select('movimiento-cuenta').value,
                     conceptoId: select('movimiento-concepto').value,
                     cuentaOrigenId: null, cuentaDestinoId: null,
                 });
             }
             
-            // 2. REALIZAMOS LA ACTUALIZACIÓN OPTIMISTA
-            const existingIndex = db.recurrentes.findIndex(r => r.id === id);
-            if (existingIndex > -1) {
-                // Si editamos, reemplazamos el existente.
-                db.recurrentes[existingIndex] = dataToSave;
-            } else {
-                // Si es nuevo, lo añadimos.
-                db.recurrentes.push(dataToSave);
-            }
-            // Reordenamos la lista local por fecha para consistencia inmediata.
-            db.recurrentes.sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
-            
-            // 3. Guardamos en Firebase en segundo plano.
+            // Simplemente guardamos. El listener 'onSnapshot' corregido hará todo el trabajo de UI.
             await saveDoc('recurrentes', id, dataToSave);
 
-            // 4. Manejamos la UI después de que la lógica local y de guardado se ha completado.
             releaseButtons();
             hapticFeedback('success');
             
@@ -8454,102 +8438,14 @@ const handleSaveMovement = async (form, btn) => {
                 startMovementForm();
                 showToast('Operación guardada. Puedes añadir otra.', 'info');
             }
+            // Ya no necesitamos refrescar la UI manualmente aquí.
 
-            // 5. FORZAMOS EL RE-DIBUJADO de las vistas que muestran recurrentes.
-            const activePage = document.querySelector('.view--active');
-            if (activePage) {
-                if (activePage.id === PAGE_IDS.ESTRATEGIA) {
-                    renderEstrategiaPlanificacion();
-                }
-                if (activePage.id === PAGE_IDS.DIARIO) {
-                    renderDiarioPage(); // Refresca los pendientes en el diario.
-                }
-            }
             return true;
 
         } catch (error) {
             console.error("Error al guardar la operación recurrente:", error);
             showToast("No se pudo guardar la operación recurrente.", "danger");
             releaseButtons();
-            return false;
-        }
-
-    } else { // Movimiento normal (no recurrente)
-        const mode = select('movimiento-mode').value;
-        const movementId = select('movimiento-id').value;
-        const selectedType = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
-        const cantidadPositiva = parseCurrencyString(select('movimiento-cantidad').value);
-        let cantidadFinal = Math.round(Math.abs(cantidadPositiva) * 100);
-        if (selectedType === 'gasto') { cantidadFinal = -cantidadFinal; }
-        
-        const dataFromForm = {
-            id: movementId || generateId(),
-            cantidad: cantidadFinal,
-            tipo: selectedType === 'traspaso' ? 'traspaso' : 'movimiento',
-            descripcion: select('movimiento-descripcion').value.trim(),
-            fecha: parseDateStringAsUTC(select('movimiento-fecha').value).toISOString(),
-            cuentaId: select('movimiento-cuenta').value,
-            conceptoId: select('movimiento-concepto').value,
-            cuentaOrigenId: select('movimiento-cuenta-origen').value,
-            cuentaDestinoId: select('movimiento-cuenta-destino').value,
-        };
-        //... (el resto de tu lógica para movimientos normales es correcta y se mantiene)
-        try {
-            let oldMovementData = null;
-            if (mode.startsWith('edit')) {
-                oldMovementData = db.movimientos.find(m => m.id === dataFromForm.id) || null;
-            }
-            applyOptimisticBalanceUpdate(dataFromForm, oldMovementData);
-            if (mode.startsWith('edit')) {
-                const index = db.movimientos.findIndex(m => m.id === dataFromForm.id);
-                if (index !== -1) db.movimientos[index] = dataFromForm;
-            } else {
-                db.movimientos.unshift(dataFromForm);
-                newMovementIdToHighlight = dataFromForm.id;
-            }
-            db.movimientos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id.localeCompare(a.id));
-            updateLocalDataAndRefreshUI();
-            
-            await fbDb.runTransaction(async (transaction) => {
-                 let oldDataForTx = null;
-                if (mode.startsWith('edit')) {
-                    const oldDocRef = fbDb.collection('users').doc(currentUser.uid).collection('movimientos').doc(movementId);
-                    const oldDoc = await transaction.get(oldDocRef);
-                    if (oldDoc.exists) oldDataForTx = oldDoc.data();
-                }
-                if (oldDataForTx) {
-                    if (oldDataForTx.tipo === 'traspaso') {
-                        transaction.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(oldDataForTx.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(oldDataForTx.cantidad) });
-                        transaction.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(oldDataForTx.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(-oldDataForTx.cantidad) });
-                    } else {
-                        transaction.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(oldDataForTx.cuentaId), { saldo: firebase.firestore.FieldValue.increment(-oldDataForTx.cantidad) });
-                    }
-                }
-                if (dataFromForm.tipo === 'traspaso') {
-                    transaction.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(dataFromForm.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-dataFromForm.cantidad) });
-                    transaction.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(dataFromForm.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(dataFromForm.cantidad) });
-                } else {
-                    transaction.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(dataFromForm.cuentaId), { saldo: firebase.firestore.FieldValue.increment(dataFromForm.cantidad) });
-                }
-                const movRef = fbDb.collection('users').doc(currentUser.uid).collection('movimientos').doc(dataFromForm.id);
-                transaction.set(movRef, dataFromForm);
-            });
-            
-            hapticFeedback('success');
-            triggerSaveAnimation(btn, dataFromForm.cantidad >= 0 ? 'green' : 'red');
-
-            if (!isSaveAndNew) {
-                setTimeout(() => hideModal('movimiento-modal'), 200);
-                showToast(mode === 'new' ? 'Movimiento guardado.' : 'Movimiento actualizado.');
-            } else {
-                startMovementForm();
-                showToast('Movimiento guardado. Puedes añadir otro.', 'info');
-            }
-            return true;
-
-        } catch (error) {
-            console.error("Error al guardar el movimiento:", error);
-            showToast("Error crítico al guardar. La operación fue cancelada.", "danger");
             return false;
         } finally {
             releaseButtons();
