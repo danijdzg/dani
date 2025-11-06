@@ -8121,33 +8121,45 @@ if (ptrElement && mainScrollerPtr) {
 // =================================================================
 const handleConfirmRecurrent = async (id, btn) => {
     if (btn) setButtonLoading(btn, true);
+
     const recurrenteIndex = db.recurrentes.findIndex(r => r.id === id);
-    if (recurrenteIndex === -1) { /* ... (código sin cambios) */ }
+    if (recurrenteIndex === -1) {
+        showToast("Error: no se encontró la operación programada.", "danger");
+        if(btn) setButtonLoading(btn, false);
+        return;
+    }
     const recurrente = db.recurrentes[recurrenteIndex];
     
     try {
+        // --- 1. Creación del nuevo movimiento (Datos para la UI y la DB) ---
         const newMovementId = generateId();
         const newMovementData = {
             id: newMovementId,
             cantidad: recurrente.cantidad,
             descripcion: recurrente.descripcion,
-            fecha: new Date().toISOString(), // Se crea con fecha de hoy
+            fecha: new Date().toISOString(), // Se crea con fecha de HOY
             tipo: recurrente.tipo,
             cuentaId: recurrente.cuentaId,
             conceptoId: recurrente.conceptoId,
             cuentaOrigenId: recurrente.cuentaOrigenId,
             cuentaDestinoId: recurrente.cuentaDestinoId
         };
-        db.movimientos.unshift(newMovementData);
         
-        const nextDueDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency, recurrente.weekDays); // <-- ¡USA LOS DÍAS DE LA SEMANA!
+        // --- 2. Actualización Optimista de la UI ---
+        db.movimientos.unshift(newMovementData); // Añadimos al instante a la lista de movimientos
         
-        if (recurrente.frequency === 'once' || (recurrente.endDate && nextDueDate > parseDateStringAsUTC(recurrente.endDate))) {
+        const nextDueDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency, recurrente.weekDays);
+        
+        // Decidimos si el recurrente se borra o se actualiza
+        const isFinished = recurrente.frequency === 'once' || (recurrente.endDate && nextDueDate > parseDateStringAsUTC(recurrente.endDate));
+
+        if (isFinished) {
             db.recurrentes.splice(recurrenteIndex, 1);
         } else {
             db.recurrentes[recurrenteIndex].nextDate = nextDueDate.toISOString().slice(0, 10);
         }
-
+        
+        // Animación para eliminar el item de la lista de pendientes
         const itemEl = document.getElementById(`pending-recurrente-${id}`);
         if(itemEl){
             itemEl.classList.add('item-deleting');
@@ -8158,23 +8170,29 @@ const handleConfirmRecurrent = async (id, btn) => {
             }, { once: true });
         }
         
+        // --- 3. Persistencia Atómica en Firebase ---
         const batch = fbDb.batch();
+        
+        // a) Añade el nuevo movimiento
         batch.set(fbDb.collection('users').doc(currentUser.uid).collection('movimientos').doc(newMovementId), newMovementData);
+        
         const recurrenteRef = fbDb.collection('users').doc(currentUser.uid).collection('recurrentes').doc(id);
-
-        if (recurrente.frequency === 'once' || (recurrente.endDate && nextDueDate > parseDateStringAsUTC(recurrente.endDate))) {
+        // b) Actualiza o borra el recurrente
+        if (isFinished) {
             batch.delete(recurrenteRef);
         } else {
             batch.update(recurrenteRef, { nextDate: nextDueDate.toISOString().slice(0, 10) });
         }
 
+        // c) Actualiza los saldos de las cuentas (¡CRÍTICO!)
         if (recurrente.tipo === 'traspaso') {
             batch.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-recurrente.cantidad) });
             batch.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
         } else {
             batch.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
         }
-        await batch.commit();
+        
+        await batch.commit(); // Ejecutamos todo en una sola transacción
 
         hapticFeedback('success');
         showToast("Movimiento añadido desde recurrente.", "info");
@@ -8182,6 +8200,7 @@ const handleConfirmRecurrent = async (id, btn) => {
     } catch (error) {
         console.error("Error al confirmar recurrente:", error);
         showToast("No se pudo añadir el movimiento.", "danger");
+        // Aquí se podría añadir lógica para revertir el cambio optimista si falla Firebase
     } finally {
         if (btn) setButtonLoading(btn, false);
     }
@@ -9162,9 +9181,10 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
 
     const itemElement = document.querySelector(`.transaction-card[data-id="${id}"]`)?.closest('.swipe-container');
 
+    let itemToDelete; // Declaramos aquí para que sea accesible en el catch
+
     try {
         // 1. ACTUALIZACIÓN OPTIMISTA DE DATOS
-        let itemToDelete;
         if (isRecurrent) {
             const index = db.recurrentes.findIndex(r => r.id === id);
             if (index === -1) throw new Error("Recurrente no encontrado.");
@@ -9182,16 +9202,18 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
             itemElement.classList.add('item-deleting');
         }
 
-        // 3. ACTUALIZACIÓN DE LA UI (Después de la animación)
+        // 3. ACTUALIZACIÓN DE LA UI (Después de la animación o inmediatamente si no hay elemento)
         setTimeout(() => {
-    updateLocalDataAndRefreshUI();
-    if (isRecurrent) renderEstrategiaPlanificacion();
-}, itemElement ? 400 : 0); // 400ms es la duración de la animación
+            updateLocalDataAndRefreshUI(); // Recalcula saldos y redibuja la lista
+            if (isRecurrent) renderEstrategiaPlanificacion(); // Refresca la vista de planificación si es necesario
+        }, itemElement ? ANIMATION_DURATION : 0);
 
-        // 4. PERSISTENCIA EN SEGUNDO PLANO
+        // 4. PERSISTENCIA EN SEGUNDO PLANO (LA ACCIÓN REAL EN LA BASE DE DATOS)
         if (!isRecurrent) {
             const batch = fbDb.batch();
             const userRef = fbDb.collection('users').doc(currentUser.uid);
+            
+            // Revertir el saldo en Firebase es CRÍTICO
             if (itemToDelete.tipo === 'traspaso') {
                 const origenRef = userRef.collection('cuentas').doc(itemToDelete.cuentaOrigenId);
                 const destinoRef = userRef.collection('cuentas').doc(itemToDelete.cuentaDestinoId);
@@ -9201,27 +9223,35 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
                 const cuentaRef = userRef.collection('cuentas').doc(itemToDelete.cuentaId);
                 batch.update(cuentaRef, { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
             }
+            // Finalmente, borramos el documento del movimiento
             batch.delete(userRef.collection(collection).doc(id));
-            await batch.commit();
+            await batch.commit(); // Todas las operaciones se ejecutan juntas
         } else {
-            await deleteDoc(collection, id);
+            await deleteDoc(collection, id); // Borrado simple para recurrentes
         }
 
         hapticFeedback('success');
         showToast("Elemento eliminado.", "info");
 
     } catch (error) {
-         // ¡PLAN B! Si Firebase falla, revertimos el cambio en la UI
-    console.error("Firebase falló. Revirtiendo cambio optimista:", error);
-    showToast("Error de sincronización. Reestableciendo estado.", "danger");
-    // Volvemos a añadir el item que borramos localmente
-    if (isRecurrent) db.recurrentes.push(itemToDelete);
-    else db.movimientos.push(itemToDelete);
-    // Recalculamos el saldo con el item restaurado
-    if (!isRecurrent) applyOptimisticBalanceUpdate(itemToDelete, null);
-    // Forzamos un re-renderizado completo para asegurar la consistencia
-    updateLocalDataAndRefreshUI(); 
-}
+         // ¡PLAN B! Si Firebase falla, revertimos el cambio optimista en la UI
+        console.error("Firebase falló. Revirtiendo cambio optimista:", error);
+        showToast("Error de sincronización. Reestableciendo estado.", "danger");
+        
+        // Volvemos a añadir el item que borramos localmente
+        if(itemToDelete){
+            if (isRecurrent) {
+                db.recurrentes.push(itemToDelete);
+            } else {
+                db.movimientos.push(itemToDelete);
+                // Recalculamos el saldo con el item restaurado
+                applyOptimisticBalanceUpdate(itemToDelete, null);
+            }
+        }
+        
+        // Forzamos un re-renderizado completo para asegurar la consistencia
+        updateLocalDataAndRefreshUI(); 
+    }
 };
 // ============================================================
 // === FIN: FUNCIÓN DE BORRADO OPTIMIZADA ===
