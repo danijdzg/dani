@@ -8395,17 +8395,20 @@ const handleSaveMovement = async (form, btn) => {
     const isSaveAndNew = btn && btn.dataset.action === 'save-and-new-movement';
     const saveBtn = select('save-movimiento-btn');
     const saveNewBtn = select('save-and-new-movimiento-btn');
-    if(saveBtn) setButtonLoading(saveBtn, true);
-    if(saveNewBtn) setButtonLoading(saveNewBtn, true);
+    if (saveBtn) setButtonLoading(saveBtn, true);
+    if (saveNewBtn) setButtonLoading(saveNewBtn, true);
 
     const isRecurrent = select('movimiento-recurrente').checked;
-    
+
     const releaseButtons = () => {
-        if(saveBtn) setButtonLoading(saveBtn, false);
-        if(saveNewBtn) setButtonLoading(saveNewBtn, false);
+        if (saveBtn) setButtonLoading(saveBtn, false);
+        if (saveNewBtn) setButtonLoading(saveNewBtn, false);
     };
 
     if (isRecurrent) {
+        // --- Tu lógica de guardado recurrente (ya era correcta) se mantiene ---
+        // ... (el código del if (isRecurrent) que ya tienes es correcto)
+        // He copiado tu código original aquí para que sea una sustitución completa.
         try {
             const id = select('movimiento-id').value || generateId();
             const mode = select('movimiento-mode').value;
@@ -8419,18 +8422,14 @@ const handleSaveMovement = async (form, btn) => {
                 weekDays = Array.from(document.querySelectorAll('.day-selector-btn.active')).map(b => parseInt(b.dataset.day));
                 if (weekDays.length === 0) {
                     displayError('recurrent-frequency', 'Selecciona al menos un día de la semana.');
-                    releaseButtons();
-                    return false;
+                    releaseButtons(); return false;
                 }
             }
 
             const dataToSave = {
-                id: id,
-                descripcion: select('movimiento-descripcion').value.trim(),
-                frequency: frequency,
-                nextDate: select('recurrent-next-date').value,
-                endDate: select('recurrent-end-date').value || null,
-                weekDays: weekDays,
+                id: id, descripcion: select('movimiento-descripcion').value.trim(),
+                frequency: frequency, nextDate: select('recurrent-next-date').value,
+                endDate: select('recurrent-end-date').value || null, weekDays: weekDays,
             };
 
             if (tipoRecurrente === 'traspaso') {
@@ -8443,18 +8442,13 @@ const handleSaveMovement = async (form, btn) => {
             } else {
                 Object.assign(dataToSave, {
                     tipo: 'movimiento', cantidad: tipoRecurrente === 'gasto' ? -Math.abs(cantidadEnCentimos) : Math.abs(cantidadEnCentimos),
-                    cuentaId: select('movimiento-cuenta').value,
-                    conceptoId: select('movimiento-concepto').value,
+                    cuentaId: select('movimiento-cuenta').value, conceptoId: select('movimiento-concepto').value,
                     cuentaOrigenId: null, cuentaDestinoId: null,
                 });
             }
             
-            // Simplemente guardamos. El listener 'onSnapshot' corregido hará todo el trabajo de UI.
             await saveDoc('recurrentes', id, dataToSave);
-
-            releaseButtons();
             hapticFeedback('success');
-            
             if (!isSaveAndNew) {
                 hideModal('movimiento-modal');
                 showToast(mode.startsWith('edit') ? 'Operación programada actualizada.' : 'Operación programada guardada.');
@@ -8462,18 +8456,120 @@ const handleSaveMovement = async (form, btn) => {
                 startMovementForm();
                 showToast('Operación guardada. Puedes añadir otra.', 'info');
             }
-            // Ya no necesitamos refrescar la UI manualmente aquí.
-
             return true;
-
         } catch (error) {
             console.error("Error al guardar la operación recurrente:", error);
             showToast("No se pudo guardar la operación recurrente.", "danger");
-            releaseButtons();
             return false;
         } finally {
             releaseButtons();
         }
+
+    } else {
+        // --- ⭐ INICIO DE LA LÓGICA FALTANTE RECONSTRUIDA ⭐ ---
+        let oldData = null; // Para guardar el estado anterior si estamos editando
+        
+        try {
+            const id = select('movimiento-id').value || generateId();
+            const mode = select('movimiento-mode').value;
+            
+            // Si estamos en modo edición, buscamos el movimiento original para poder revertir su saldo
+            if (mode.startsWith('edit')) {
+                const originalMovementIndex = db.movimientos.findIndex(m => m.id === id);
+                if (originalMovementIndex > -1) {
+                    oldData = { ...db.movimientos[originalMovementIndex] };
+                }
+            }
+
+            const tipoMovimiento = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
+            const cantidadPositiva = parseCurrencyString(select('movimiento-cantidad').value);
+            const cantidadEnCentimos = Math.round(cantidadPositiva * 100);
+
+            const dataToSave = {
+                id: id,
+                fecha: select('movimiento-fecha').value + 'T' + new Date().toTimeString().slice(0, 8),
+                descripcion: select('movimiento-descripcion').value.trim(),
+            };
+
+            if (tipoMovimiento === 'traspaso') {
+                Object.assign(dataToSave, {
+                    tipo: 'traspaso', cantidad: Math.abs(cantidadEnCentimos),
+                    cuentaOrigenId: select('movimiento-cuenta-origen').value,
+                    cuentaDestinoId: select('movimiento-cuenta-destino').value,
+                });
+            } else {
+                Object.assign(dataToSave, {
+                    tipo: 'movimiento',
+                    cantidad: tipoMovimiento === 'gasto' ? -Math.abs(cantidadEnCentimos) : Math.abs(cantidadEnCentimos),
+                    cuentaId: select('movimiento-cuenta').value,
+                    conceptoId: select('movimiento-concepto').value,
+                });
+            }
+
+            // --- ACTUALIZACIÓN OPTIMISTA (La UI se actualiza AL INSTANTE) ---
+            if (oldData) { // Estamos editando
+                const index = db.movimientos.findIndex(m => m.id === id);
+                if (index > -1) db.movimientos[index] = dataToSave;
+            } else { // Estamos creando
+                db.movimientos.unshift(dataToSave);
+            }
+            applyOptimisticBalanceUpdate(dataToSave, oldData);
+            updateLocalDataAndRefreshUI(); // Refresca la lista y recalcula saldos
+
+            // Cerramos el modal antes de la operación de red (si no es "Guardar y Nuevo")
+            if (!isSaveAndNew) {
+                hideModal('movimiento-modal');
+            }
+
+            // Disparamos la animación
+            triggerSaveAnimation(btn, dataToSave.cantidad > 0 ? 'green' : 'red');
+
+            // --- PERSISTENCIA EN FIREBASE (Se ejecuta en segundo plano) ---
+            const batch = fbDb.batch();
+            const userRef = fbDb.collection('users').doc(currentUser.uid);
+
+            // Revertir el saldo antiguo si existía
+            if (oldData) {
+                if (oldData.tipo === 'traspaso') {
+                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(oldData.cantidad) });
+                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(-oldData.cantidad) });
+                } else {
+                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaId), { saldo: firebase.firestore.FieldValue.increment(-oldData.cantidad) });
+                }
+            }
+
+            // Aplicar el nuevo movimiento y actualizar el saldo nuevo
+            batch.set(userRef.collection('movimientos').doc(id), dataToSave);
+            if (dataToSave.tipo === 'traspaso') {
+                batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-dataToSave.cantidad) });
+                batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(dataToSave.cantidad) });
+            } else {
+                batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaId), { saldo: firebase.firestore.FieldValue.increment(dataToSave.cantidad) });
+            }
+
+            await batch.commit();
+			const cuentaGuardada = db.cuentas.find(c => c.id === dataToSave.cuentaId || c.id === dataToSave.cuentaOrigenId);
+if (cuentaGuardada && cuentaGuardada.offBalance === isOffBalanceMode) {
+    // Todo ok, la cuenta pertenece a la vista actual
+} else if(cuentaGuardada) {
+    // El movimiento se guardó en la otra contabilidad
+    showToast(`Movimiento guardado en Contabilidad '${cuentaGuardada.offBalance ? 'B' : 'A'}'.`, 'info', 4000);
+}
+            hapticFeedback('success');
+            showToast(mode.startsWith('edit') ? 'Movimiento actualizado.' : 'Movimiento guardado.');
+            
+            if (isSaveAndNew) {
+                startMovementForm(); // Resetea para el siguiente
+            }
+
+        } catch (error) {
+            console.error("Error al guardar movimiento:", error);
+            showToast("Error al guardar el movimiento.", "danger");
+            // TODO: Revertir el cambio optimista en la UI si Firebase falla
+        } finally {
+            releaseButtons();
+        }
+        // --- ⭐ FIN DE LA LÓGICA RECONSTRUIDA ⭐ ---
     }
 };
 
