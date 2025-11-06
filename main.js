@@ -8373,32 +8373,6 @@ const renderDiarioCalendar = async () => {
 };
 
 
-const applyOptimisticBalanceUpdate = (newData, oldData = null) => {
-    // Revertir el impacto del movimiento antiguo si estamos editando
-    if (oldData) {
-        if (oldData.tipo === 'traspaso') {
-            const origen = db.cuentas.find(c => c.id === oldData.cuentaOrigenId);
-            if (origen) origen.saldo += oldData.cantidad;
-            const destino = db.cuentas.find(c => c.id === oldData.cuentaDestinoId);
-            if (destino) destino.saldo -= oldData.cantidad;
-        } else {
-            const cuenta = db.cuentas.find(c => c.id === oldData.cuentaId);
-            if (cuenta) cuenta.saldo -= oldData.cantidad;
-        }
-    }
-
-    // Aplicar el impacto del nuevo movimiento
-    if (newData.tipo === 'traspaso') {
-        const origen = db.cuentas.find(c => c.id === newData.cuentaOrigenId);
-        if (origen) origen.saldo -= newData.cantidad;
-        const destino = db.cuentas.find(c => c.id === newData.cuentaDestinoId);
-        if (destino) destino.saldo += newData.cantidad;
-    } else {
-        const cuenta = db.cuentas.find(c => c.id === newData.cuentaId);
-        if (cuenta) cuenta.saldo += newData.cantidad;
-    }
-};
-
 const handleSaveMovement = async (form, btn) => {
     clearAllErrors(form.id);
     if (!validateMovementForm()) {
@@ -8551,7 +8525,31 @@ const handleSaveMovement = async (form, btn) => {
             batch.set(userRef.collection('movimientos').doc(id), newData);
 
             await batch.commit();
+			const applyOptimisticBalanceUpdate = (newData, oldData = null) => {
+    // Revertir el impacto del movimiento antiguo si estamos editando
+    if (oldData) {
+        if (oldData.tipo === 'traspaso') {
+            const origen = db.cuentas.find(c => c.id === oldData.cuentaOrigenId);
+            if (origen) origen.saldo += oldData.cantidad;
+            const destino = db.cuentas.find(c => c.id === oldData.cuentaDestinoId);
+            if (destino) destino.saldo -= oldData.cantidad;
+        } else {
+            const cuenta = db.cuentas.find(c => c.id === oldData.cuentaId);
+            if (cuenta) cuenta.saldo -= oldData.cantidad;
+        }
+    }
 
+    // Aplicar el impacto del nuevo movimiento
+    if (newData.tipo === 'traspaso') {
+        const origen = db.cuentas.find(c => c.id === newData.cuentaOrigenId);
+        if (origen) origen.saldo -= newData.cantidad;
+        const destino = db.cuentas.find(c => c.id === newData.cuentaDestinoId);
+        if (destino) destino.saldo += newData.cantidad;
+    } else {
+        const cuenta = db.cuentas.find(c => c.id === newData.cuentaId);
+        if (cuenta) cuenta.saldo += newData.cantidad;
+    }
+};
             const toastMessage = mode.startsWith('edit') ? 'Movimiento actualizado.' : 'Movimiento añadido.';
             const animationColor = newData.cantidad > 0 ? 'green' : 'red';
             triggerSaveAnimation(btn, animationColor);

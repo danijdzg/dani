@@ -727,14 +727,6 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 .kpi-item__comparison { font-size: var(--fs-xs); font-weight: 500; margin-top: var(--sp-1); height: 14px; }
 /* --- AÑADE ESTE BLOQUE A TU CSS --- */
 .kpi-item[data-action] {
-    /* Reseteamos la apariencia de botón */
-    border: none;
-    background: none;
-    padding: 0;
-    text-align: inherit;
-    font-family: inherit;
-    
-    /* Añadimos la interactividad visual */
     cursor: pointer;
     transition: transform 0.2s, background-color 0.2s;
 }
