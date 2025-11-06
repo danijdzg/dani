@@ -6349,13 +6349,17 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
         select('movimiento-cantidad').value = `${(Math.abs(data.cantidad) / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, useGrouping: false })}`;
         
         const fechaInput = select('movimiento-fecha');
-        const dateStringForInput = isRecurrent ? data.nextDate : data.fecha;
+const dateStringForInput = isRecurrent ? data.nextDate : data.fecha;
 
-        if (dateStringForInput) {
-            const fecha = parseDateStringAsUTC(dateStringForInput);
-            fechaInput.value = fecha.toISOString().slice(0,10);
-            updateDateDisplay(fechaInput);
-        }
+// --- ⭐ INICIO DE LA CORRECCIÓN ⭐ ---
+if (dateStringForInput) {
+    const fecha = parseDateStringAsUTC(dateStringForInput);
+    // Comprobamos que la fecha parseada es válida antes de usarla
+    if (fecha && !isNaN(fecha)) {
+        fechaInput.value = fecha.toISOString().slice(0,10);
+        updateDateDisplay(fechaInput);
+    }
+}
 
         select('movimiento-descripcion').value = data.descripcion || '';
 
@@ -8351,6 +8355,8 @@ const renderDiarioCalendar = async () => {
 
 
 const applyOptimisticBalanceUpdate = (newData, oldData = null) => {
+    // --- ⭐ INICIO DE LA CORRECCIÓN 2: NULL SAFETY ⭐ ---
+    
     // Revertir el impacto del movimiento antiguo si estamos editando
     if (oldData) {
         if (oldData.tipo === 'traspaso') {
@@ -8365,17 +8371,19 @@ const applyOptimisticBalanceUpdate = (newData, oldData = null) => {
     }
 
     // Aplicar el impacto del nuevo movimiento
-    if (newData.tipo === 'traspaso') {
-        const origen = db.cuentas.find(c => c.id === newData.cuentaOrigenId);
-        if (origen) origen.saldo -= newData.cantidad;
-        const destino = db.cuentas.find(c => c.id === newData.cuentaDestinoId);
-        if (destino) destino.saldo += newData.cantidad;
-    } else {
-        const cuenta = db.cuentas.find(c => c.id === newData.cuentaId);
-        if (cuenta) cuenta.saldo += newData.cantidad;
+    if (newData) {
+        if (newData.tipo === 'traspaso') {
+            const origen = db.cuentas.find(c => c.id === newData.cuentaOrigenId);
+            if (origen) origen.saldo -= newData.cantidad;
+            const destino = db.cuentas.find(c => c.id === newData.cuentaDestinoId);
+            if (destino) destino.saldo += newData.cantidad;
+        } else {
+            const cuenta = db.cuentas.find(c => c.id === newData.cuentaId);
+            if (cuenta) cuenta.saldo += newData.cantidad;
+        }
     }
+    // --- ⭐ FIN DE LA CORRECCIÓN 2 ⭐ ---
 };
-
 const handleSaveMovement = async (form, btn) => {
     clearAllErrors(form.id);
     if (!validateMovementForm()) {
@@ -9076,10 +9084,9 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
     const ANIMATION_DURATION = 400; // Debe coincidir con la duración en el CSS
 
     const itemElement = document.querySelector(`.transaction-card[data-id="${id}"]`)?.closest('.swipe-container');
-
+	let itemToDelete;
     try {
-        // 1. ACTUALIZACIÓN OPTIMISTA DE DATOS
-        let itemToDelete;
+        
         if (isRecurrent) {
             const index = db.recurrentes.findIndex(r => r.id === id);
             if (index === -1) throw new Error("Recurrente no encontrado.");
