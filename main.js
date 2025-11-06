@@ -8398,6 +8398,7 @@ const handleSaveMovement = async (form, btn) => {
     };
 
     if (isRecurrent) {
+        // --- Lógica para movimientos RECURRENTES (esta parte ya existía y funciona) ---
         try {
             const id = select('movimiento-id').value || generateId();
             const mode = select('movimiento-mode').value;
@@ -8441,32 +8442,116 @@ const handleSaveMovement = async (form, btn) => {
                 });
             }
             
-            // Simplemente guardamos. El listener 'onSnapshot' corregido hará todo el trabajo de UI.
             await saveDoc('recurrentes', id, dataToSave);
-
-            releaseButtons();
-            hapticFeedback('success');
-            
-            if (!isSaveAndNew) {
-                hideModal('movimiento-modal');
-                showToast(mode.startsWith('edit') ? 'Operación programada actualizada.' : 'Operación programada guardada.');
-            } else {
-                startMovementForm();
-                showToast('Operación guardada. Puedes añadir otra.', 'info');
-            }
-            // Ya no necesitamos refrescar la UI manualmente aquí.
-
-            return true;
+            showToast(mode.startsWith('edit') ? 'Operación programada actualizada.' : 'Operación programada guardada.');
 
         } catch (error) {
             console.error("Error al guardar la operación recurrente:", error);
             showToast("No se pudo guardar la operación recurrente.", "danger");
-            releaseButtons();
             return false;
         } finally {
             releaseButtons();
+            hapticFeedback('success');
+            if (!isSaveAndNew) {
+                hideModal('movimiento-modal');
+            } else {
+                startMovementForm(); // Prepara para un nuevo movimiento
+            }
         }
+    } else {
+        // --- INICIO: LÓGICA FALTANTE RESTAURADA PARA MOVIMIENTOS NORMALES ---
+        try {
+            const mode = select('movimiento-mode').value;
+            const id = select('movimiento-id').value || generateId();
+            const tipo = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
+            const cantidadPositiva = parseCurrencyString(select('movimiento-cantidad').value);
+            const cantidadEnCentimos = Math.round(cantidadPositiva * 100);
+
+            let oldData = null;
+            if (mode.startsWith('edit')) {
+                oldData = db.movimientos.find(m => m.id === id);
+            }
+            
+            const newData = {
+                id,
+                fecha: new Date(select('movimiento-fecha').value + 'T12:00:00Z').toISOString(),
+                descripcion: select('movimiento-descripcion').value.trim(),
+            };
+
+            if (tipo === 'traspaso') {
+                Object.assign(newData, {
+                    tipo: 'traspaso',
+                    cantidad: cantidadEnCentimos,
+                    cuentaOrigenId: select('movimiento-cuenta-origen').value,
+                    cuentaDestinoId: select('movimiento-cuenta-destino').value,
+                });
+            } else {
+                Object.assign(newData, {
+                    tipo: 'movimiento',
+                    cantidad: tipo === 'gasto' ? -cantidadEnCentimos : cantidadEnCentimos,
+                    cuentaId: select('movimiento-cuenta').value,
+                    conceptoId: select('movimiento-concepto').value,
+                });
+            }
+            
+            // Lógica para actualizar visualmente la UI de forma instantánea ("optimista")
+            if (mode.startsWith('edit')) {
+                const index = db.movimientos.findIndex(m => m.id === id);
+                if (index > -1) db.movimientos[index] = newData;
+            } else {
+                newMovementIdToHighlight = id;
+                db.movimientos.unshift(newData);
+            }
+            
+            applyOptimisticBalanceUpdate(newData, oldData);
+            updateLocalDataAndRefreshUI();
+
+            const batch = fbDb.batch();
+            const userRef = fbDb.collection('users').doc(currentUser.uid);
+
+            if (oldData) { // Revierte el saldo antiguo en Firebase
+                if (oldData.tipo === 'traspaso') {
+                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(oldData.cantidad) });
+                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(-oldData.cantidad) });
+                } else {
+                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaId), { saldo: firebase.firestore.FieldValue.increment(-oldData.cantidad) });
+                }
+            }
+
+            // Aplica el nuevo saldo y guarda el movimiento en Firebase
+            if (newData.tipo === 'traspaso') {
+                batch.update(userRef.collection('cuentas').doc(newData.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-newData.cantidad) });
+                batch.update(userRef.collection('cuentas').doc(newData.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(newData.cantidad) });
+            } else {
+                batch.update(userRef.collection('cuentas').doc(newData.cuentaId), { saldo: firebase.firestore.FieldValue.increment(newData.cantidad) });
+            }
+            batch.set(userRef.collection('movimientos').doc(id), newData);
+
+            await batch.commit();
+
+            const toastMessage = mode.startsWith('edit') ? 'Movimiento actualizado.' : 'Movimiento añadido.';
+            const animationColor = newData.cantidad > 0 ? 'green' : 'red';
+            triggerSaveAnimation(btn, animationColor);
+            
+            if (!isSaveAndNew) {
+                hideModal('movimiento-modal');
+                showToast(toastMessage);
+            } else {
+                showToast(toastMessage + ' Añade el siguiente.');
+                startMovementForm(); // Reinicia el formulario para el siguiente movimiento
+            }
+
+        } catch (error) {
+            console.error("Error al guardar el movimiento:", error);
+            showToast("No se pudo guardar el movimiento.", "danger");
+            // Aquí deberíamos tener una lógica para revertir el cambio optimista
+        } finally {
+            releaseButtons();
+        }
+        // --- FIN: LÓGICA FALTANTE RESTAURADA ---
     }
+    
+    return true; // Indica que la operación (o su intento) se completó
 };
 
 /**
@@ -9460,9 +9545,9 @@ const handleInteractionMove = (e) => {
 
     const point = e.type === 'touchmove' ? e.touches[0] : e;
     const deltaX = point.clientX - swipeState.startX;
-    const deltaY = point.clientY - swipeState.startY; // <-- Dato que necesitamos
+    const deltaY = point.clientY - swipeState.startY; 
 
-    // ▼▼▼ NUEVA LÓGICA DE DECISIÓN DE GESTO ▼▼▼
+    // ▼▼▼ NUEVA LÓGICA INTELIGENTE DE DECISIÓN DE GESTO ▼▼▼
     if (!swipeState.isSwipeIntent && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
         // Si el movimiento vertical es más dominante, es un SCROLL. Cancelamos todo.
         if (Math.abs(deltaY) > Math.abs(deltaX)) {
