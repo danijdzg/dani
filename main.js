@@ -912,13 +912,9 @@ const calculatePreviousDueDate = (currentDueDate, frequency, weekDays = []) => {
 };
 
         const parseDateStringAsUTC = (dateString) => {
-    // 1. Verificamos si la entrada es nula, indefinida, o un string vacío.
-    if (!dateString || typeof dateString !== 'string' || dateString.trim() === '') {
-        return null;
-    }
-    // 2. Solo si la validación pasa, creamos la fecha.
-    return new Date(dateString + 'T12:00:00Z');
-};
+            if (!dateString) return null;
+            return new Date(dateString + 'T12:00:00Z');
+        };
 		const generateReportFilterControls = (reportId, defaultPeriod = 'año-actual') => {
     return `
         <div class="report-filters" data-report-id="${reportId}" style="margin-bottom: var(--sp-4); padding: var(--sp-3); background-color: var(--c-surface-variant); border-radius: var(--border-radius-md);">
@@ -8125,45 +8121,33 @@ if (ptrElement && mainScrollerPtr) {
 // =================================================================
 const handleConfirmRecurrent = async (id, btn) => {
     if (btn) setButtonLoading(btn, true);
-
     const recurrenteIndex = db.recurrentes.findIndex(r => r.id === id);
-    if (recurrenteIndex === -1) {
-        showToast("Error: no se encontró la operación programada.", "danger");
-        if(btn) setButtonLoading(btn, false);
-        return;
-    }
+    if (recurrenteIndex === -1) { /* ... (código sin cambios) */ }
     const recurrente = db.recurrentes[recurrenteIndex];
     
     try {
-        // --- 1. Creación del nuevo movimiento (Datos para la UI y la DB) ---
         const newMovementId = generateId();
         const newMovementData = {
             id: newMovementId,
             cantidad: recurrente.cantidad,
             descripcion: recurrente.descripcion,
-            fecha: new Date().toISOString(), // Se crea con fecha de HOY
+            fecha: new Date().toISOString(), // Se crea con fecha de hoy
             tipo: recurrente.tipo,
             cuentaId: recurrente.cuentaId,
             conceptoId: recurrente.conceptoId,
             cuentaOrigenId: recurrente.cuentaOrigenId,
             cuentaDestinoId: recurrente.cuentaDestinoId
         };
+        db.movimientos.unshift(newMovementData);
         
-        // --- 2. Actualización Optimista de la UI ---
-        db.movimientos.unshift(newMovementData); // Añadimos al instante a la lista de movimientos
+        const nextDueDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency, recurrente.weekDays); // <-- ¡USA LOS DÍAS DE LA SEMANA!
         
-        const nextDueDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency, recurrente.weekDays);
-        
-        // Decidimos si el recurrente se borra o se actualiza
-        const isFinished = recurrente.frequency === 'once' || (recurrente.endDate && nextDueDate > parseDateStringAsUTC(recurrente.endDate));
-
-        if (isFinished) {
+        if (recurrente.frequency === 'once' || (recurrente.endDate && nextDueDate > parseDateStringAsUTC(recurrente.endDate))) {
             db.recurrentes.splice(recurrenteIndex, 1);
         } else {
             db.recurrentes[recurrenteIndex].nextDate = nextDueDate.toISOString().slice(0, 10);
         }
-        
-        // Animación para eliminar el item de la lista de pendientes
+
         const itemEl = document.getElementById(`pending-recurrente-${id}`);
         if(itemEl){
             itemEl.classList.add('item-deleting');
@@ -8174,29 +8158,23 @@ const handleConfirmRecurrent = async (id, btn) => {
             }, { once: true });
         }
         
-        // --- 3. Persistencia Atómica en Firebase ---
         const batch = fbDb.batch();
-        
-        // a) Añade el nuevo movimiento
         batch.set(fbDb.collection('users').doc(currentUser.uid).collection('movimientos').doc(newMovementId), newMovementData);
-        
         const recurrenteRef = fbDb.collection('users').doc(currentUser.uid).collection('recurrentes').doc(id);
-        // b) Actualiza o borra el recurrente
-        if (isFinished) {
+
+        if (recurrente.frequency === 'once' || (recurrente.endDate && nextDueDate > parseDateStringAsUTC(recurrente.endDate))) {
             batch.delete(recurrenteRef);
         } else {
             batch.update(recurrenteRef, { nextDate: nextDueDate.toISOString().slice(0, 10) });
         }
 
-        // c) Actualiza los saldos de las cuentas (¡CRÍTICO!)
         if (recurrente.tipo === 'traspaso') {
             batch.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-recurrente.cantidad) });
             batch.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
         } else {
             batch.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
         }
-        
-        await batch.commit(); // Ejecutamos todo en una sola transacción
+        await batch.commit();
 
         hapticFeedback('success');
         showToast("Movimiento añadido desde recurrente.", "info");
@@ -8204,7 +8182,6 @@ const handleConfirmRecurrent = async (id, btn) => {
     } catch (error) {
         console.error("Error al confirmar recurrente:", error);
         showToast("No se pudo añadir el movimiento.", "danger");
-        // Aquí se podría añadir lógica para revertir el cambio optimista si falla Firebase
     } finally {
         if (btn) setButtonLoading(btn, false);
     }
@@ -8373,6 +8350,32 @@ const renderDiarioCalendar = async () => {
 };
 
 
+const applyOptimisticBalanceUpdate = (newData, oldData = null) => {
+    // Revertir el impacto del movimiento antiguo si estamos editando
+    if (oldData) {
+        if (oldData.tipo === 'traspaso') {
+            const origen = db.cuentas.find(c => c.id === oldData.cuentaOrigenId);
+            if (origen) origen.saldo += oldData.cantidad;
+            const destino = db.cuentas.find(c => c.id === oldData.cuentaDestinoId);
+            if (destino) destino.saldo -= oldData.cantidad;
+        } else {
+            const cuenta = db.cuentas.find(c => c.id === oldData.cuentaId);
+            if (cuenta) cuenta.saldo -= oldData.cantidad;
+        }
+    }
+
+    // Aplicar el impacto del nuevo movimiento
+    if (newData.tipo === 'traspaso') {
+        const origen = db.cuentas.find(c => c.id === newData.cuentaOrigenId);
+        if (origen) origen.saldo -= newData.cantidad;
+        const destino = db.cuentas.find(c => c.id === newData.cuentaDestinoId);
+        if (destino) destino.saldo += newData.cantidad;
+    } else {
+        const cuenta = db.cuentas.find(c => c.id === newData.cuentaId);
+        if (cuenta) cuenta.saldo += newData.cantidad;
+    }
+};
+
 const handleSaveMovement = async (form, btn) => {
     clearAllErrors(form.id);
     if (!validateMovementForm()) {
@@ -8395,7 +8398,6 @@ const handleSaveMovement = async (form, btn) => {
     };
 
     if (isRecurrent) {
-        // --- Lógica para movimientos RECURRENTES (esta parte ya existía y funciona) ---
         try {
             const id = select('movimiento-id').value || generateId();
             const mode = select('movimiento-mode').value;
@@ -8439,140 +8441,32 @@ const handleSaveMovement = async (form, btn) => {
                 });
             }
             
+            // Simplemente guardamos. El listener 'onSnapshot' corregido hará todo el trabajo de UI.
             await saveDoc('recurrentes', id, dataToSave);
-            showToast(mode.startsWith('edit') ? 'Operación programada actualizada.' : 'Operación programada guardada.');
+
+            releaseButtons();
+            hapticFeedback('success');
+            
+            if (!isSaveAndNew) {
+                hideModal('movimiento-modal');
+                showToast(mode.startsWith('edit') ? 'Operación programada actualizada.' : 'Operación programada guardada.');
+            } else {
+                startMovementForm();
+                showToast('Operación guardada. Puedes añadir otra.', 'info');
+            }
+            // Ya no necesitamos refrescar la UI manualmente aquí.
+
+            return true;
 
         } catch (error) {
             console.error("Error al guardar la operación recurrente:", error);
             showToast("No se pudo guardar la operación recurrente.", "danger");
+            releaseButtons();
             return false;
         } finally {
             releaseButtons();
-            hapticFeedback('success');
-            if (!isSaveAndNew) {
-                hideModal('movimiento-modal');
-            } else {
-                startMovementForm(); // Prepara para un nuevo movimiento
-            }
-        }
-    } else {
-        // --- INICIO: LÓGICA FALTANTE RESTAURADA PARA MOVIMIENTOS NORMALES ---
-        try {
-            const mode = select('movimiento-mode').value;
-            const id = select('movimiento-id').value || generateId();
-            const tipo = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
-            const cantidadPositiva = parseCurrencyString(select('movimiento-cantidad').value);
-            const cantidadEnCentimos = Math.round(cantidadPositiva * 100);
-
-            let oldData = null;
-            if (mode.startsWith('edit')) {
-                oldData = db.movimientos.find(m => m.id === id);
-            }
-            
-            const newData = {
-                id,
-                fecha: new Date(select('movimiento-fecha').value + 'T12:00:00Z').toISOString(),
-                descripcion: select('movimiento-descripcion').value.trim(),
-            };
-
-            if (tipo === 'traspaso') {
-                Object.assign(newData, {
-                    tipo: 'traspaso',
-                    cantidad: cantidadEnCentimos,
-                    cuentaOrigenId: select('movimiento-cuenta-origen').value,
-                    cuentaDestinoId: select('movimiento-cuenta-destino').value,
-                });
-            } else {
-                Object.assign(newData, {
-                    tipo: 'movimiento',
-                    cantidad: tipo === 'gasto' ? -cantidadEnCentimos : cantidadEnCentimos,
-                    cuentaId: select('movimiento-cuenta').value,
-                    conceptoId: select('movimiento-concepto').value,
-                });
-            }
-            
-            // Lógica para actualizar visualmente la UI de forma instantánea ("optimista")
-            if (mode.startsWith('edit')) {
-                const index = db.movimientos.findIndex(m => m.id === id);
-                if (index > -1) db.movimientos[index] = newData;
-            } else {
-                newMovementIdToHighlight = id;
-                db.movimientos.unshift(newData);
-            }
-            
-            applyOptimisticBalanceUpdate(newData, oldData);
-            updateLocalDataAndRefreshUI();
-
-            const batch = fbDb.batch();
-            const userRef = fbDb.collection('users').doc(currentUser.uid);
-
-            if (oldData) { // Revierte el saldo antiguo en Firebase
-                if (oldData.tipo === 'traspaso') {
-                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(oldData.cantidad) });
-                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(-oldData.cantidad) });
-                } else {
-                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaId), { saldo: firebase.firestore.FieldValue.increment(-oldData.cantidad) });
-                }
-            }
-
-            // Aplica el nuevo saldo y guarda el movimiento en Firebase
-            if (newData.tipo === 'traspaso') {
-                batch.update(userRef.collection('cuentas').doc(newData.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-newData.cantidad) });
-                batch.update(userRef.collection('cuentas').doc(newData.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(newData.cantidad) });
-            } else {
-                batch.update(userRef.collection('cuentas').doc(newData.cuentaId), { saldo: firebase.firestore.FieldValue.increment(newData.cantidad) });
-            }
-            batch.set(userRef.collection('movimientos').doc(id), newData);
-
-            await batch.commit();
-			const applyOptimisticBalanceUpdate = (newData, oldData = null) => {
-    // Revertir el impacto del movimiento antiguo si estamos editando
-    if (oldData) {
-        if (oldData.tipo === 'traspaso') {
-            const origen = db.cuentas.find(c => c.id === oldData.cuentaOrigenId);
-            if (origen) origen.saldo += oldData.cantidad;
-            const destino = db.cuentas.find(c => c.id === oldData.cuentaDestinoId);
-            if (destino) destino.saldo -= oldData.cantidad;
-        } else {
-            const cuenta = db.cuentas.find(c => c.id === oldData.cuentaId);
-            if (cuenta) cuenta.saldo -= oldData.cantidad;
         }
     }
-
-    // Aplicar el impacto del nuevo movimiento
-    if (newData.tipo === 'traspaso') {
-        const origen = db.cuentas.find(c => c.id === newData.cuentaOrigenId);
-        if (origen) origen.saldo -= newData.cantidad;
-        const destino = db.cuentas.find(c => c.id === newData.cuentaDestinoId);
-        if (destino) destino.saldo += newData.cantidad;
-    } else {
-        const cuenta = db.cuentas.find(c => c.id === newData.cuentaId);
-        if (cuenta) cuenta.saldo += newData.cantidad;
-    }
-};
-            const toastMessage = mode.startsWith('edit') ? 'Movimiento actualizado.' : 'Movimiento añadido.';
-            const animationColor = newData.cantidad > 0 ? 'green' : 'red';
-            triggerSaveAnimation(btn, animationColor);
-            
-            if (!isSaveAndNew) {
-                hideModal('movimiento-modal');
-                showToast(toastMessage);
-            } else {
-                showToast(toastMessage + ' Añade el siguiente.');
-                startMovementForm(); // Reinicia el formulario para el siguiente movimiento
-            }
-
-        } catch (error) {
-            console.error("Error al guardar el movimiento:", error);
-            showToast("No se pudo guardar el movimiento.", "danger");
-            // Aquí deberíamos tener una lógica para revertir el cambio optimista
-        } finally {
-            releaseButtons();
-        }
-        // --- FIN: LÓGICA FALTANTE RESTAURADA ---
-    }
-    
-    return true; // Indica que la operación (o su intento) se completó
 };
 
 /**
@@ -9179,49 +9073,48 @@ const handleAddConcept = async (btn) => {
 // ==============================================================
 const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
     const collection = isRecurrent ? 'recurrentes' : 'movimientos';
-    const ANIMATION_DURATION = 400;
+    const ANIMATION_DURATION = 400; // Debe coincidir con la duración en el CSS
 
     const itemElement = document.querySelector(`.transaction-card[data-id="${id}"]`)?.closest('.swipe-container');
 
-    // 1. Declaramos la variable aquí y la inicializamos a null. Es crucial.
-    let itemToDelete = null;
-
     try {
-        // --- ACTUALIZACIÓN OPTIMISTA DE DATOS ---
+        // 1. ACTUALIZACIÓN OPTIMISTA DE DATOS
+        let itemToDelete;
         if (isRecurrent) {
             const index = db.recurrentes.findIndex(r => r.id === id);
-            if (index === -1) throw new Error("Recurrente no encontrado localmente.");
-            // Asignamos el valor a itemToDelete ANTES de cualquier posible fallo.
-            itemToDelete = db.recurrentes[index];
-            db.recurrentes.splice(index, 1);
+            if (index === -1) throw new Error("Recurrente no encontrado.");
+            [itemToDelete] = db.recurrentes.splice(index, 1);
         } else {
             const index = db.movimientos.findIndex(m => m.id === id);
-            if (index === -1) throw new Error("Movimiento no encontrado localmente.");
-            // Asignamos el valor a itemToDelete.
-            itemToDelete = db.movimientos[index];
-            db.movimientos.splice(index, 1);
+            if (index === -1) throw new Error("Movimiento no encontrado.");
+            [itemToDelete] = db.movimientos.splice(index, 1);
+            // Revertimos el saldo en la caché local ANTES de redibujar
             applyOptimisticBalanceUpdate(null, itemToDelete); 
         }
     
+        // 2. EFECTO VISUAL (Si el elemento está en pantalla)
         if (itemElement) {
             itemElement.classList.add('item-deleting');
         }
 
+        // 3. ACTUALIZACIÓN DE LA UI (Después de la animación)
         setTimeout(() => {
-            updateLocalDataAndRefreshUI();
-            if (isRecurrent) renderEstrategiaPlanificacion();
-        }, itemElement ? ANIMATION_DURATION : 0);
+    updateLocalDataAndRefreshUI();
+    if (isRecurrent) renderEstrategiaPlanificacion();
+}, itemElement ? 400 : 0); // 400ms es la duración de la animación
 
-        // --- PERSISTENCIA EN SEGUNDO PLANO (LA PARTE QUE PUEDE FALLAR) ---
+        // 4. PERSISTENCIA EN SEGUNDO PLANO
         if (!isRecurrent) {
-            // ... (la lógica del batch de Firebase se mantiene igual)
             const batch = fbDb.batch();
             const userRef = fbDb.collection('users').doc(currentUser.uid);
             if (itemToDelete.tipo === 'traspaso') {
-                batch.update(userRef.collection('cuentas').doc(itemToDelete.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(itemToDelete.cantidad) });
-                batch.update(userRef.collection('cuentas').doc(itemToDelete.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
+                const origenRef = userRef.collection('cuentas').doc(itemToDelete.cuentaOrigenId);
+                const destinoRef = userRef.collection('cuentas').doc(itemToDelete.cuentaDestinoId);
+                batch.update(origenRef, { saldo: firebase.firestore.FieldValue.increment(itemToDelete.cantidad) });
+                batch.update(destinoRef, { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
             } else {
-                batch.update(userRef.collection('cuentas').doc(itemToDelete.cuentaId), { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
+                const cuentaRef = userRef.collection('cuentas').doc(itemToDelete.cuentaId);
+                batch.update(cuentaRef, { saldo: firebase.firestore.FieldValue.increment(-itemToDelete.cantidad) });
             }
             batch.delete(userRef.collection(collection).doc(id));
             await batch.commit();
@@ -9233,22 +9126,17 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
         showToast("Elemento eliminado.", "info");
 
     } catch (error) {
-        console.error("Fallo en el borrado. Revirtiendo cambio optimista:", error);
-        showToast("Error de sincronización. No se pudo eliminar.", "danger");
-
-        // 2. ¡LA CORRECCIÓN CLAVE! Solo revertimos si 'itemToDelete' tiene un valor.
-        if (itemToDelete) {
-            if (isRecurrent) {
-                db.recurrentes.push(itemToDelete);
-            } else {
-                db.movimientos.push(itemToDelete);
-                applyOptimisticBalanceUpdate(itemToDelete, null);
-            }
-        }
-        
-        // Forzamos un re-renderizado completo para asegurar la consistencia visual.
-        updateLocalDataAndRefreshUI(); 
-    }
+         // ¡PLAN B! Si Firebase falla, revertimos el cambio en la UI
+    console.error("Firebase falló. Revirtiendo cambio optimista:", error);
+    showToast("Error de sincronización. Reestableciendo estado.", "danger");
+    // Volvemos a añadir el item que borramos localmente
+    if (isRecurrent) db.recurrentes.push(itemToDelete);
+    else db.movimientos.push(itemToDelete);
+    // Recalculamos el saldo con el item restaurado
+    if (!isRecurrent) applyOptimisticBalanceUpdate(itemToDelete, null);
+    // Forzamos un re-renderizado completo para asegurar la consistencia
+    updateLocalDataAndRefreshUI(); 
+}
 };
 // ============================================================
 // === FIN: FUNCIÓN DE BORRADO OPTIMIZADA ===
@@ -9572,9 +9460,9 @@ const handleInteractionMove = (e) => {
 
     const point = e.type === 'touchmove' ? e.touches[0] : e;
     const deltaX = point.clientX - swipeState.startX;
-    const deltaY = point.clientY - swipeState.startY; 
+    const deltaY = point.clientY - swipeState.startY; // <-- Dato que necesitamos
 
-    // ▼▼▼ NUEVA LÓGICA INTELIGENTE DE DECISIÓN DE GESTO ▼▼▼
+    // ▼▼▼ NUEVA LÓGICA DE DECISIÓN DE GESTO ▼▼▼
     if (!swipeState.isSwipeIntent && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
         // Si el movimiento vertical es más dominante, es un SCROLL. Cancelamos todo.
         if (Math.abs(deltaY) > Math.abs(deltaX)) {

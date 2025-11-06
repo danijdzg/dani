@@ -45,11 +45,10 @@
 
         <form id="login-form" noValidate>
             <div class="form-group form-group--with-icon">
-    <label for="login-email">
-        <span class="material-icons" aria-hidden="true">alternate_email</span>
-        <input type="email" id="login-email" ... />
-    </label>
-</div>
+                <span class="material-icons">alternate_email</span>
+                <input type="email" id="login-email" class="form-input" placeholder="Correo electrónico" required autoComplete="email" autoCapitalize="none" aria-describedby="login-email-error" />
+                <span class="form-error" id="login-email-error"></span>
+            </div>
             <div class="form-group form-group--with-icon">
                 <span class="material-icons">lock</span>
                 <input type="password" id="login-password" class="form-input" placeholder="Contraseña" required autoComplete="current-password" aria-describedby="login-password-error" />
@@ -140,10 +139,7 @@
                 </div>
             </div>
 
-            <div id="top-bar-left-button" class="top-bar__left-button">
-    <button id="ledger-toggle-btn" ...>A</button>
-    <h1 id="page-title-display">Panel</h1> <!-- Ahora es un H1 -->
-</div>
+            <h1 id="top-bar-title" class="top-bar__title"></h1>
 
             <div id="top-bar-actions" class="top-bar__actions"></div>
 			 <span id="sync-status-icon" class="material-icons"></span>
