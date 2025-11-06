@@ -8374,6 +8374,7 @@ const handleSaveMovement = async (form, btn) => {
     if (isRecurrent) {
         try {
             const id = select('movimiento-id').value || generateId();
+            const mode = select('movimiento-mode').value;
             const tipoRecurrente = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
             const cantidadPositiva = parseCurrencyString(select('movimiento-cantidad').value);
             const cantidadEnCentimos = Math.round(cantidadPositiva * 100);
@@ -8389,6 +8390,7 @@ const handleSaveMovement = async (form, btn) => {
                 }
             }
 
+            // 1. Construimos el objeto final de datos.
             const dataToSave = {
                 id: id,
                 descripcion: select('movimiento-descripcion').value.trim(),
@@ -8416,18 +8418,42 @@ const handleSaveMovement = async (form, btn) => {
                 });
             }
             
-            // Simplemente guardamos. El listener `onSnapshot` se encargará de actualizar la UI.
+            // 2. REALIZAMOS LA ACTUALIZACIÓN OPTIMISTA
+            const existingIndex = db.recurrentes.findIndex(r => r.id === id);
+            if (existingIndex > -1) {
+                // Si editamos, reemplazamos el existente.
+                db.recurrentes[existingIndex] = dataToSave;
+            } else {
+                // Si es nuevo, lo añadimos.
+                db.recurrentes.push(dataToSave);
+            }
+            // Reordenamos la lista local por fecha para consistencia inmediata.
+            db.recurrentes.sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
+            
+            // 3. Guardamos en Firebase en segundo plano.
             await saveDoc('recurrentes', id, dataToSave);
 
+            // 4. Manejamos la UI después de que la lógica local y de guardado se ha completado.
             releaseButtons();
             hapticFeedback('success');
             
             if (!isSaveAndNew) {
                 hideModal('movimiento-modal');
-                showToast(select('movimiento-mode').value.startsWith('edit') ? 'Operación programada actualizada.' : 'Operación programada guardada.');
+                showToast(mode.startsWith('edit') ? 'Operación programada actualizada.' : 'Operación programada guardada.');
             } else {
                 startMovementForm();
                 showToast('Operación guardada. Puedes añadir otra.', 'info');
+            }
+
+            // 5. FORZAMOS EL RE-DIBUJADO de las vistas que muestran recurrentes.
+            const activePage = document.querySelector('.view--active');
+            if (activePage) {
+                if (activePage.id === PAGE_IDS.ESTRATEGIA) {
+                    renderEstrategiaPlanificacion();
+                }
+                if (activePage.id === PAGE_IDS.DIARIO) {
+                    renderDiarioPage(); // Refresca los pendientes en el diario.
+                }
             }
             return true;
 
@@ -8437,6 +8463,7 @@ const handleSaveMovement = async (form, btn) => {
             releaseButtons();
             return false;
         }
+
     } else { // Movimiento normal (no recurrente)
         const mode = select('movimiento-mode').value;
         const movementId = select('movimiento-id').value;
