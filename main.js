@@ -7468,11 +7468,11 @@ const quickMenu = select('quick-add-menu');
 
 if (addBtn && quickMenu) {
     addBtn.addEventListener('mousedown', startLongPress);
-    addBtn.addEventListener('touchstart', startLongPress);
-    addBtn.addEventListener('mouseup', cancelLongPress);
-    addBtn.addEventListener('mouseleave', cancelLongPress);
-    addBtn.addEventListener('touchend', cancelLongPress);
-    
+    addBtn.addEventListener('touchstart', startLongPress, { passive: true }); // passive:true para mejor rendimiento en scroll
+    addBtn.addEventListener('mouseup', endPress);
+    addBtn.addEventListener('touchend', endPress);
+    addBtn.addEventListener('mouseleave', cancelPress); // 'mouseleave' ahora solo cancela
+	
     document.addEventListener('click', (e) => {
         if (!quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
             quickMenu.classList.remove('visible');
@@ -7481,20 +7481,28 @@ if (addBtn && quickMenu) {
 }
 
 function startLongPress(e) {
+    // Inicia el temporizador para la pulsación larga.
     e.preventDefault();
     longPressTimer = setTimeout(() => {
         hapticFeedback('medium');
         quickMenu.classList.add('visible');
-        longPressTimer = null; // Marcar como ejecutado
-    }, 400); // 400ms para considerar pulsación larga
+        longPressTimer = null; // Marcamos que la pulsación larga ya se ejecutó.
+    }, 400);
 }
 
-function cancelLongPress() {
+function endPress() {
+    // Se ejecuta al soltar el botón (mouseup, touchend).
     if (longPressTimer) {
+        // Si el temporizador todavía existe, significa que fue un clic corto.
         clearTimeout(longPressTimer);
-        // Si el tiempo fue corto, es un clic normal
-        startMovementForm();
+        startMovementForm(); // Abrimos el formulario.
     }
+    // Si longPressTimer es null, la pulsación larga ya se activó, así que no hacemos nada.
+}
+
+function cancelPress() {
+    // Se ejecuta si el ratón sale del botón. Solo cancela la acción.
+    clearTimeout(longPressTimer);
 }
 
 document.body.addEventListener('click', (e) => {
@@ -8408,6 +8416,17 @@ const handleSaveMovement = async (form, btn) => {
                 });
             }
             
+            const existingIndex = db.recurrentes.findIndex(r => r.id === id);
+            if (existingIndex > -1) {
+                // Estamos editando, así que reemplazamos el antiguo en nuestra lista local.
+                db.recurrentes[existingIndex] = dataToSave;
+            } else {
+                // Es nuevo, así que lo añadimos al principio de nuestra lista local.
+                db.recurrentes.unshift(dataToSave);
+            }
+            // ▲▲▲ FIN DE LA CORRECCIÓN ▲▲▲
+
+            // Ahora sí, guardamos en la base de datos en segundo plano.
             await saveDoc('recurrentes', id, dataToSave);
 
             releaseButtons();
