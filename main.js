@@ -5870,7 +5870,7 @@ const applyDescriptionSuggestion = (target) => {
 
     // ¡La magia final! Movemos el foco al campo de la cantidad.
     select('movimiento-cantidad').focus();
-;
+};
 
 // =================================================================
 // === INICIO: CÓDIGO UNIFICADO PARA MODALES ARRASTRABLES ===
@@ -9719,6 +9719,7 @@ const handleDescriptionInput = () => {
             suggestionsBox.style.display = 'none';
         }
     }, 250);
+};
 };
 // EN main.js - AÑADE ESTO AL FINAL DEL FICHERO
 
