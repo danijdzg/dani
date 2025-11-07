@@ -3395,7 +3395,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
                     <div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div>
                 </details>`;
         }).join('');
-
+		
         const investmentItems = listaContainer.querySelectorAll('[data-is-investment="true"]');
         
         investmentItems.forEach(item => {
@@ -6349,13 +6349,17 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
         select('movimiento-cantidad').value = `${(Math.abs(data.cantidad) / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, useGrouping: false })}`;
         
         const fechaInput = select('movimiento-fecha');
-        const dateStringForInput = isRecurrent ? data.nextDate : data.fecha;
+const dateStringForInput = isRecurrent ? data.nextDate : data.fecha;
 
-        if (dateStringForInput) {
-            const fecha = parseDateStringAsUTC(dateStringForInput);
-            fechaInput.value = fecha.toISOString().slice(0,10);
-            updateDateDisplay(fechaInput);
-        }
+// --- ⭐ INICIO DE LA CORRECCIÓN ⭐ ---
+if (dateStringForInput) {
+    const fecha = parseDateStringAsUTC(dateStringForInput);
+    // Comprobamos que la fecha parseada es válida antes de usarla
+    if (fecha && !isNaN(fecha)) {
+        fechaInput.value = fecha.toISOString().slice(0,10);
+        updateDateDisplay(fechaInput);
+    }
+}
 
         select('movimiento-descripcion').value = data.descripcion || '';
 
@@ -7487,59 +7491,38 @@ const enableHaptics = () => {
     document.body.addEventListener('click', enableHaptics, { once: true });
     // ▲▲▲ FIN DEL BLOQUE A AÑADIR ▲▲▲
 
-	let longPressTimer;	 
-
 const addBtn = select('bottom-nav-add-btn');
 const quickMenu = select('quick-add-menu');
 
 if (addBtn && quickMenu) {
-    addBtn.addEventListener('mousedown', startLongPress);
-    addBtn.addEventListener('touchstart', startLongPress); // ¡CORRECCIÓN APLICADA AQUÍ!
-    addBtn.addEventListener('mouseup', endPress);
-    addBtn.addEventListener('touchend', endPress);
-    addBtn.addEventListener('mouseleave', cancelPress);
-	
+    // 1. Un único listener de 'click' para el botón principal.
+    addBtn.addEventListener('click', (e) => {
+		const iconEl = addBtn.querySelector('.material-icons');
+quickMenu.classList.toggle('visible');
+
+// Añade esta lógica de transformación
+if (quickMenu.classList.contains('visible')) {
+    addBtn.style.transform = 'rotate(45deg)';
+    if (iconEl) iconEl.textContent = 'close';
+} else {
+    addBtn.style.transform = 'rotate(0deg)';
+    if (iconEl) iconEl.textContent = 'add';
+}
+        e.stopPropagation(); // Evita que el clic se propague al documento.
+        hapticFeedback('medium');
+        // Simplemente alterna la visibilidad del menú.
+        quickMenu.classList.toggle('visible'); 
+    });
+
+    // 2. Un listener en el documento para cerrar el menú si se hace clic fuera.
     document.addEventListener('click', (e) => {
-        if (!quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
-            quickMenu.classList.remove('visible');
+        // Si el menú está visible y el clic NO fue dentro del menú...
+        if (quickMenu.classList.contains('visible') && !quickMenu.contains(e.target)) {
+            quickMenu.classList.remove('visible'); // ...lo cerramos.
         }
     });
 }
 
-function startLongPress(e) {
-    // Inicia el temporizador para la pulsación larga.
-    e.preventDefault();
-    longPressTimer = setTimeout(() => {
-        hapticFeedback('medium');
-        quickMenu.classList.add('visible');
-        longPressTimer = null; // Marcamos que la pulsación larga ya se ejecutó.
-    }, 400);
-}
-
-function endPress() {
-    // Se ejecuta al soltar el botón (mouseup, touchend).
-    if (longPressTimer) {
-        // Si el temporizador todavía existe, significa que fue un clic corto.
-        clearTimeout(longPressTimer);
-        startMovementForm(); // Abrimos el formulario.
-    }
-    // Si longPressTimer es null, la pulsación larga ya se activó, así que no hacemos nada.
-}
-
-function cancelPress() {
-    // Se ejecuta si el ratón sale del botón. Solo cancela la acción.
-    clearTimeout(longPressTimer);
-}
-
-document.body.addEventListener('click', (e) => {
-	const quickAddAction = e.target.closest('[data-action="quick-add-type"]');
-    if(quickAddAction) {
-        const type = quickAddAction.dataset.type;
-        quickMenu.classList.remove('visible');
-        startMovementForm(); // Abre el formulario genérico
-        setTimeout(() => setMovimientoFormType(type), 50); // Lo ajusta al tipo seleccionado
-    }
-});
 
 	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
 const mainScrollerPtr = selectOne('.app-layout__main');
@@ -8351,6 +8334,8 @@ const renderDiarioCalendar = async () => {
 
 
 const applyOptimisticBalanceUpdate = (newData, oldData = null) => {
+    // --- ⭐ INICIO DE LA CORRECCIÓN 2: NULL SAFETY ⭐ ---
+    
     // Revertir el impacto del movimiento antiguo si estamos editando
     if (oldData) {
         if (oldData.tipo === 'traspaso') {
@@ -8365,17 +8350,19 @@ const applyOptimisticBalanceUpdate = (newData, oldData = null) => {
     }
 
     // Aplicar el impacto del nuevo movimiento
-    if (newData.tipo === 'traspaso') {
-        const origen = db.cuentas.find(c => c.id === newData.cuentaOrigenId);
-        if (origen) origen.saldo -= newData.cantidad;
-        const destino = db.cuentas.find(c => c.id === newData.cuentaDestinoId);
-        if (destino) destino.saldo += newData.cantidad;
-    } else {
-        const cuenta = db.cuentas.find(c => c.id === newData.cuentaId);
-        if (cuenta) cuenta.saldo += newData.cantidad;
+    if (newData) {
+        if (newData.tipo === 'traspaso') {
+            const origen = db.cuentas.find(c => c.id === newData.cuentaOrigenId);
+            if (origen) origen.saldo -= newData.cantidad;
+            const destino = db.cuentas.find(c => c.id === newData.cuentaDestinoId);
+            if (destino) destino.saldo += newData.cantidad;
+        } else {
+            const cuenta = db.cuentas.find(c => c.id === newData.cuentaId);
+            if (cuenta) cuenta.saldo += newData.cantidad;
+        }
     }
+    // --- ⭐ FIN DE LA CORRECCIÓN 2 ⭐ ---
 };
-
 const handleSaveMovement = async (form, btn) => {
     clearAllErrors(form.id);
     if (!validateMovementForm()) {
@@ -8387,17 +8374,20 @@ const handleSaveMovement = async (form, btn) => {
     const isSaveAndNew = btn && btn.dataset.action === 'save-and-new-movement';
     const saveBtn = select('save-movimiento-btn');
     const saveNewBtn = select('save-and-new-movimiento-btn');
-    if(saveBtn) setButtonLoading(saveBtn, true);
-    if(saveNewBtn) setButtonLoading(saveNewBtn, true);
+    if (saveBtn) setButtonLoading(saveBtn, true);
+    if (saveNewBtn) setButtonLoading(saveNewBtn, true);
 
     const isRecurrent = select('movimiento-recurrente').checked;
-    
+
     const releaseButtons = () => {
-        if(saveBtn) setButtonLoading(saveBtn, false);
-        if(saveNewBtn) setButtonLoading(saveNewBtn, false);
+        if (saveBtn) setButtonLoading(saveBtn, false);
+        if (saveNewBtn) setButtonLoading(saveNewBtn, false);
     };
 
     if (isRecurrent) {
+        // --- Tu lógica de guardado recurrente (ya era correcta) se mantiene ---
+        // ... (el código del if (isRecurrent) que ya tienes es correcto)
+        // He copiado tu código original aquí para que sea una sustitución completa.
         try {
             const id = select('movimiento-id').value || generateId();
             const mode = select('movimiento-mode').value;
@@ -8411,18 +8401,14 @@ const handleSaveMovement = async (form, btn) => {
                 weekDays = Array.from(document.querySelectorAll('.day-selector-btn.active')).map(b => parseInt(b.dataset.day));
                 if (weekDays.length === 0) {
                     displayError('recurrent-frequency', 'Selecciona al menos un día de la semana.');
-                    releaseButtons();
-                    return false;
+                    releaseButtons(); return false;
                 }
             }
 
             const dataToSave = {
-                id: id,
-                descripcion: select('movimiento-descripcion').value.trim(),
-                frequency: frequency,
-                nextDate: select('recurrent-next-date').value,
-                endDate: select('recurrent-end-date').value || null,
-                weekDays: weekDays,
+                id: id, descripcion: select('movimiento-descripcion').value.trim(),
+                frequency: frequency, nextDate: select('recurrent-next-date').value,
+                endDate: select('recurrent-end-date').value || null, weekDays: weekDays,
             };
 
             if (tipoRecurrente === 'traspaso') {
@@ -8435,18 +8421,13 @@ const handleSaveMovement = async (form, btn) => {
             } else {
                 Object.assign(dataToSave, {
                     tipo: 'movimiento', cantidad: tipoRecurrente === 'gasto' ? -Math.abs(cantidadEnCentimos) : Math.abs(cantidadEnCentimos),
-                    cuentaId: select('movimiento-cuenta').value,
-                    conceptoId: select('movimiento-concepto').value,
+                    cuentaId: select('movimiento-cuenta').value, conceptoId: select('movimiento-concepto').value,
                     cuentaOrigenId: null, cuentaDestinoId: null,
                 });
             }
             
-            // Simplemente guardamos. El listener 'onSnapshot' corregido hará todo el trabajo de UI.
             await saveDoc('recurrentes', id, dataToSave);
-
-            releaseButtons();
             hapticFeedback('success');
-            
             if (!isSaveAndNew) {
                 hideModal('movimiento-modal');
                 showToast(mode.startsWith('edit') ? 'Operación programada actualizada.' : 'Operación programada guardada.');
@@ -8454,18 +8435,120 @@ const handleSaveMovement = async (form, btn) => {
                 startMovementForm();
                 showToast('Operación guardada. Puedes añadir otra.', 'info');
             }
-            // Ya no necesitamos refrescar la UI manualmente aquí.
-
             return true;
-
         } catch (error) {
             console.error("Error al guardar la operación recurrente:", error);
             showToast("No se pudo guardar la operación recurrente.", "danger");
-            releaseButtons();
             return false;
         } finally {
             releaseButtons();
         }
+
+    } else {
+        // --- ⭐ INICIO DE LA LÓGICA FALTANTE RECONSTRUIDA ⭐ ---
+        let oldData = null; // Para guardar el estado anterior si estamos editando
+        
+        try {
+            const id = select('movimiento-id').value || generateId();
+            const mode = select('movimiento-mode').value;
+            
+            // Si estamos en modo edición, buscamos el movimiento original para poder revertir su saldo
+            if (mode.startsWith('edit')) {
+                const originalMovementIndex = db.movimientos.findIndex(m => m.id === id);
+                if (originalMovementIndex > -1) {
+                    oldData = { ...db.movimientos[originalMovementIndex] };
+                }
+            }
+
+            const tipoMovimiento = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
+            const cantidadPositiva = parseCurrencyString(select('movimiento-cantidad').value);
+            const cantidadEnCentimos = Math.round(cantidadPositiva * 100);
+
+            const dataToSave = {
+                id: id,
+                fecha: select('movimiento-fecha').value + 'T' + new Date().toTimeString().slice(0, 8),
+                descripcion: select('movimiento-descripcion').value.trim(),
+            };
+
+            if (tipoMovimiento === 'traspaso') {
+                Object.assign(dataToSave, {
+                    tipo: 'traspaso', cantidad: Math.abs(cantidadEnCentimos),
+                    cuentaOrigenId: select('movimiento-cuenta-origen').value,
+                    cuentaDestinoId: select('movimiento-cuenta-destino').value,
+                });
+            } else {
+                Object.assign(dataToSave, {
+                    tipo: 'movimiento',
+                    cantidad: tipoMovimiento === 'gasto' ? -Math.abs(cantidadEnCentimos) : Math.abs(cantidadEnCentimos),
+                    cuentaId: select('movimiento-cuenta').value,
+                    conceptoId: select('movimiento-concepto').value,
+                });
+            }
+
+            // --- ACTUALIZACIÓN OPTIMISTA (La UI se actualiza AL INSTANTE) ---
+            if (oldData) { // Estamos editando
+                const index = db.movimientos.findIndex(m => m.id === id);
+                if (index > -1) db.movimientos[index] = dataToSave;
+            } else { // Estamos creando
+                db.movimientos.unshift(dataToSave);
+            }
+            applyOptimisticBalanceUpdate(dataToSave, oldData);
+            updateLocalDataAndRefreshUI(); // Refresca la lista y recalcula saldos
+
+            // Cerramos el modal antes de la operación de red (si no es "Guardar y Nuevo")
+            if (!isSaveAndNew) {
+                hideModal('movimiento-modal');
+            }
+
+            // Disparamos la animación
+            triggerSaveAnimation(btn, dataToSave.cantidad > 0 ? 'green' : 'red');
+
+            // --- PERSISTENCIA EN FIREBASE (Se ejecuta en segundo plano) ---
+            const batch = fbDb.batch();
+            const userRef = fbDb.collection('users').doc(currentUser.uid);
+
+            // Revertir el saldo antiguo si existía
+            if (oldData) {
+                if (oldData.tipo === 'traspaso') {
+                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(oldData.cantidad) });
+                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(-oldData.cantidad) });
+                } else {
+                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaId), { saldo: firebase.firestore.FieldValue.increment(-oldData.cantidad) });
+                }
+            }
+
+            // Aplicar el nuevo movimiento y actualizar el saldo nuevo
+            batch.set(userRef.collection('movimientos').doc(id), dataToSave);
+            if (dataToSave.tipo === 'traspaso') {
+                batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-dataToSave.cantidad) });
+                batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(dataToSave.cantidad) });
+            } else {
+                batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaId), { saldo: firebase.firestore.FieldValue.increment(dataToSave.cantidad) });
+            }
+
+            await batch.commit();
+			const cuentaGuardada = db.cuentas.find(c => c.id === dataToSave.cuentaId || c.id === dataToSave.cuentaOrigenId);
+if (cuentaGuardada && cuentaGuardada.offBalance === isOffBalanceMode) {
+    // Todo ok, la cuenta pertenece a la vista actual
+} else if(cuentaGuardada) {
+    // El movimiento se guardó en la otra contabilidad
+    showToast(`Movimiento guardado en Contabilidad '${cuentaGuardada.offBalance ? 'B' : 'A'}'.`, 'info', 4000);
+}
+            hapticFeedback('success');
+            showToast(mode.startsWith('edit') ? 'Movimiento actualizado.' : 'Movimiento guardado.');
+            
+            if (isSaveAndNew) {
+                startMovementForm(); // Resetea para el siguiente
+            }
+
+        } catch (error) {
+            console.error("Error al guardar movimiento:", error);
+            showToast("Error al guardar el movimiento.", "danger");
+            // TODO: Revertir el cambio optimista en la UI si Firebase falla
+        } finally {
+            releaseButtons();
+        }
+        // --- ⭐ FIN DE LA LÓGICA RECONSTRUIDA ⭐ ---
     }
 };
 
@@ -9076,10 +9159,9 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
     const ANIMATION_DURATION = 400; // Debe coincidir con la duración en el CSS
 
     const itemElement = document.querySelector(`.transaction-card[data-id="${id}"]`)?.closest('.swipe-container');
-
+	let itemToDelete;
     try {
-        // 1. ACTUALIZACIÓN OPTIMISTA DE DATOS
-        let itemToDelete;
+        
         if (isRecurrent) {
             const index = db.recurrentes.findIndex(r => r.id === id);
             if (index === -1) throw new Error("Recurrente no encontrado.");
@@ -9200,6 +9282,69 @@ const auditAndFixAllBalances = async (btn) => {
         setButtonLoading(btn, false);
     }
 };    
+const applyInvestmentItemInteractions = (containerElement) => {
+    if (!containerElement) return;
+
+    // Buscamos todos los elementos que sean activos de inversión y tengan una acción de click.
+    const investmentItems = containerElement.querySelectorAll('[data-action="view-account-details"][data-id]');
+
+    investmentItems.forEach(item => {
+        // Obtenemos la cuenta para verificar si es de inversión ANTES de añadir listeners.
+        const cuenta = db.cuentas.find(c => c.id === item.dataset.id);
+        if (!cuenta || !cuenta.esInversion) {
+            return; // Si no es una cuenta de inversión, no hacemos nada.
+        }
+
+        // Si ya tiene listeners de este tipo, los removemos para evitar duplicados.
+        // (Esto es una salvaguarda por si se llama la función múltiples veces)
+        if (item.dataset.longPressApplied) return;
+        item.dataset.longPressApplied = 'true';
+
+        let longPressTimer;
+        let startX, startY;
+        let longPressTriggered = false;
+
+        const startHandler = (e) => {
+            const point = e.type === 'touchstart' ? e.touches[0] : e;
+            startX = point.clientX;
+            startY = point.clientY;
+            longPressTriggered = false;
+
+            e.stopPropagation();
+
+            longPressTimer = setTimeout(() => {
+                longPressTriggered = true;
+                const accountId = item.dataset.id;
+                handleShowIrrHistory({ accountId: accountId });
+            }, 500); // 500ms para la pulsación larga
+        };
+
+        const moveHandler = (e) => {
+            if (!longPressTimer) return;
+            const point = e.type === 'touchmove' ? e.touches[0] : e;
+            if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
+                clearTimeout(longPressTimer);
+            }
+        };
+
+        const endHandler = (e) => {
+            clearTimeout(longPressTimer);
+            if (longPressTriggered) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
+
+        item.addEventListener('mousedown', startHandler);
+        item.addEventListener('touchstart', startHandler, { passive: true });
+        item.addEventListener('mousemove', moveHandler);
+        item.addEventListener('touchmove', moveHandler, { passive: true });
+        item.addEventListener('mouseup', endHandler);
+        item.addEventListener('touchend', endHandler);
+        item.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
+        item.addEventListener('contextmenu', e => e.preventDefault()); // Evitar menú contextual
+    });
+};
 
 const handleSaveInvestmentAccounts = async (form, btn) => {
     setButtonLoading(btn, true);
