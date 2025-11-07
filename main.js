@@ -7481,170 +7481,63 @@ function createCustomSelect(selectElement) {
 // =================================================================
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
 // =================================================================
- const attachEventListeners = () => {
-const enableHaptics = () => {
+const attachEventListeners = () => {
+    // Listener para habilitar vibración con la primera interacción
+    const enableHaptics = () => {
         userHasInteracted = true;
         document.body.removeEventListener('touchstart', enableHaptics, { once: true });
         document.body.removeEventListener('click', enableHaptics, { once: true });
     };
     document.body.addEventListener('touchstart', enableHaptics, { once: true, passive: true });
     document.body.addEventListener('click', enableHaptics, { once: true });
-    // ▲▲▲ FIN DEL BLOQUE A AÑADIR ▲▲▲
 
-
-
-	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
-const mainScrollerPtr = selectOne('.app-layout__main');
-const ptrIndicator = document.createElement('div');
-ptrIndicator.id = 'pull-to-refresh-indicator';
-ptrIndicator.innerHTML = '<div class="spinner"></div>';
-if (ptrElement) ptrElement.prepend(ptrIndicator);
-
-let ptrState = {
-    startY: 0,
-    isPulling: false,
-    distance: 0,
-    threshold: 80 // Distancia necesaria para activar
-};
-
-if (ptrElement && mainScrollerPtr) {
-    ptrElement.addEventListener('touchstart', (e) => {
-        if (mainScrollerPtr.scrollTop === 0) { // Solo si estamos arriba del todo
-            ptrState.startY = e.touches[0].clientY;
-            ptrState.isPulling = true;
-        }
-    }, { passive: true });
-
-    ptrElement.addEventListener('touchmove', (e) => {
-        if (!ptrState.isPulling) return;
-        
-        const currentY = e.touches[0].clientY;
-        ptrState.distance = currentY - ptrState.startY;
-
-        if (ptrState.distance > 0) {
-            e.preventDefault(); // Evita el scroll del navegador
-            ptrIndicator.classList.add('visible');
-            const rotation = Math.min(ptrState.distance * 2.5, 360);
-            ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
-            ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
-        }
-    }, { passive: false });
-
-    ptrElement.addEventListener('touchend', async () => {
-        if (ptrState.isPulling && ptrState.distance > ptrState.threshold) {
-            hapticFeedback('medium');
-            ptrIndicator.querySelector('.spinner').style.transform = '';
-            ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
-            
-            // Acción de refresco: Recargamos los movimientos del diario
-            await renderDiarioPage();
-
-            // Ocultar indicador después de refrescar
-            setTimeout(() => {
-                ptrIndicator.classList.remove('visible');
-                ptrIndicator.querySelector('.spinner').style.animation = '';
-            }, 500);
-        } else {
-            ptrIndicator.classList.remove('visible');
-        }
-
-        ptrState.isPulling = false;
-        ptrState.distance = 0;
-    });
-}
-
-	
-    const cantidadInput = document.getElementById("movimiento-cantidad");
-    if (cantidadInput) {
-        const cantidadError = document.getElementById("movimiento-cantidad-error");
-        cantidadInput.addEventListener("input", () => {
-            let valor = cantidadInput.value.trim();
-            valor = valor.replace(",", ".");
-            const regex = /^\d+(.\d{0,2})?$/;
-            if (valor === "" || !regex.test(valor)) {
-                cantidadError.textContent = "Introduce un número positivo (ej: 2,50 o 15.00)";
-                cantidadInput.classList.add("form-input--error");
-            } else {
-                cantidadError.textContent = "";
-                cantidadInput.classList.remove("form--error");
-            }
-        });
-        const descripcionInput = document.getElementById("movimiento-descripcion");
-        const cuentaSelect = document.getElementById("movimiento-cuenta");
-        const saveBtn = document.getElementById("save-movimiento-btn");
-        document.addEventListener("show-modal", (e) => {
-            if (e.detail.modalId === "movimiento-modal") {
-                setTimeout(() => cantidadInput.focus(), 100);
-            }
-        });
-        cantidadInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                descripcionInput.focus();
-            }
-        });
-        descripcionInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                cuentaSelect.focus();
-            }
-        });
-        cuentaSelect.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                saveBtn.click();
-            }
-        });
-    }
-
-    const amountInputForFormatting = select('movimiento-cantidad');
-    if (amountInputForFormatting) {
-        amountInputForFormatting.addEventListener('focus', (e) => {
-            const input = e.target;
-            if (input.value === '') return;
-            const rawValue = input.value.replace(/\./g, '');
-            input.value = rawValue;
-        });
-        amountInputForFormatting.addEventListener('blur', (e) => {
-            const input = e.target;
-            if (input.value === '') return;
-            const numericValue = parseCurrencyString(input.value);
-            input.value = formatAsCurrencyInput(numericValue);
-        });
-    }
-
-    window.addEventListener('popstate', (event) => {
-        const activeModal = document.querySelector('.modal-overlay--active');
-        if (activeModal) {
-            hideModal(activeModal.id);
-            history.pushState({ page: window.history.state?.page }, '', `#${window.history.state?.page || 'panel-page'}`);
-            return;
-        }
-        const pageToNavigate = event.state ? event.state.page : PAGE_IDS.INICIO;
-        if (pageToNavigate) {
-            navigateTo(pageToNavigate, false);
-        }
-    });
-
+    // =========================================================================
+    // === INICIO: EL ÚNICO Y DEFINITIVO LISTENER DE CLICS PARA TODA LA APP ===
+    // =========================================================================
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
-		const quickMenu = select('quick-add-menu');
-const addBtn = select('bottom-nav-add-btn');
 
-// Lógica para cerrar el menú si se hace clic fuera
-if (quickMenu && quickMenu.classList.contains('visible') && !addBtn.contains(target) && !quickMenu.contains(target)) {
-    quickMenu.classList.remove('visible');
-}
+        // --- 1. LÓGICA PARA GESTIONAR EL MENÚ DE AÑADIR (AÑADIDO Y CORREGIDO) ---
+        const quickMenu = select('quick-add-menu');
+        const addBtn = select('bottom-nav-add-btn');
 
+        // Cerrar el menú si se hace clic fuera de él. Esto se ejecuta ANTES de cualquier otra acción.
+        if (quickMenu && quickMenu.classList.contains('visible') && !addBtn.contains(target) && !quickMenu.contains(target.closest('#quick-add-menu'))) {
+            quickMenu.classList.remove('visible');
+            addBtn.style.transform = 'rotate(0deg)';
+            addBtn.querySelector('.material-icons').textContent = 'add';
+        }
+
+        // --- 2. GESTIÓN DE ACCIONES DENTRO DEL SUBMENÚ (AÑADIDO Y CORREGIDO) ---
+        const quickAddAction = target.closest('[data-action="quick-add-type"]');
+        if (quickAddAction) {
+            const type = quickAddAction.dataset.type;
+            if (quickMenu) quickMenu.classList.remove('visible'); // Cierra el menú
+            
+            // Restablece el botón principal
+            if (addBtn) {
+                addBtn.style.transform = 'rotate(0deg)';
+                addBtn.querySelector('.material-icons').textContent = 'add';
+            }
+            
+            startMovementForm();
+            setTimeout(() => setMovimientoFormType(type), 50); // Ajusta el formulario al tipo seleccionado
+            return; // Detenemos la ejecución aquí porque ya hemos manejado la acción.
+        }
+        
+        // Cierra los dropdowns personalizados si se hace clic fuera
         if (!target.closest('.custom-select-wrapper')) {
             closeAllCustomSelects(null);
         }
 
+        // Abre la calculadora para inputs específicos
         if (target.matches('.input-amount-calculator')) {
             e.preventDefault();
             showCalculator(target);
             return;
         }
+
+        // --- 3. GESTIÓN CENTRALIZADA DE TODAS LAS DEMÁS ACCIONES 'data-action' ---
         const actionTarget = target.closest('[data-action]');
         if (!actionTarget) return;
 
@@ -7652,6 +7545,24 @@ if (quickMenu && quickMenu.classList.contains('visible') && !addBtn.contains(tar
         const btn = actionTarget.closest('button');
         
         const actions = {
+            'open-main-add-modal': () => {
+                hapticFeedback('medium');
+                const quickMenu = select('quick-add-menu');
+                const addBtn = select('bottom-nav-add-btn');
+                const iconEl = addBtn.querySelector('.material-icons');
+
+                if (quickMenu) {
+                    const isVisible = quickMenu.classList.toggle('visible');
+                    
+                    if (isVisible) {
+                        addBtn.style.transform = 'rotate(135deg)';
+                        if (iconEl) iconEl.textContent = 'close';
+                    } else {
+                        addBtn.style.transform = 'rotate(0deg)';
+                        if (iconEl) iconEl.textContent = 'add';
+                    }
+                }
+            },
 			'swipe-show-irr-history': () => handleShowIrrHistory(type),
 			'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
@@ -7669,25 +7580,7 @@ if (quickMenu && quickMenu.classList.contains('visible') && !addBtn.contains(tar
                     }, 0);
                 }
             },
-            'open-main-add-modal': () => {
-    hapticFeedback('medium');
-    const quickMenu = select('quick-add-menu');
-    const addBtn = select('bottom-nav-add-btn'); // Necesitamos la referencia al botón
-    const iconEl = addBtn.querySelector('.material-icons');
-
-    if (quickMenu) {
-        const isVisible = quickMenu.classList.toggle('visible');
-        
-        // Anima el botón y cambia el icono según la visibilidad del menú
-        if (isVisible) {
-            addBtn.style.transform = 'rotate(135deg)'; // Gira para parecer una X
-            if (iconEl) iconEl.textContent = 'close';
-        } else {
-            addBtn.style.transform = 'rotate(0deg)';
-            if (iconEl) iconEl.textContent = 'add';
-        }
-    }
-},
+           
             'export-filtered-csv': () => handleExportFilteredCsv(btn),
             'show-diario-filters': showDiarioFiltersModal,
             'clear-diario-filters': clearDiarioFilters,
