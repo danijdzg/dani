@@ -7481,10 +7481,10 @@ function createCustomSelect(selectElement) {
 // =================================================================
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
 // =================================================================
-// main.js -> REEMPLAZA TU FUNCIÓN attachEventListeners EXISTENTE CON ESTA VERSIÓN COMPLETA
+// main.js -> REEMPLAZA ESTA FUNCIÓN COMPLETA
 
 const attachEventListeners = () => {
-    // Listener para habilitar vibración con la primera interacción del usuario
+    // Listener para habilitar vibración (sin cambios)
     const enableHaptics = () => {
         userHasInteracted = true;
         document.body.removeEventListener('touchstart', enableHaptics, { once: true });
@@ -7494,108 +7494,61 @@ const attachEventListeners = () => {
     document.body.addEventListener('click', enableHaptics, { once: true });
 
     // =======================================================================================
-    // === INICIO: EL ÚNICO Y DEFINITIVO OYENTE DE CLICS (EVENT LISTENER) PARA TODA LA APP ===
+    // === INICIO: EL GESTOR DE CLICS DEFINITIVO Y CORREGIDO PARA TODA LA APP ===
     // =======================================================================================
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
+        const actionTarget = target.closest('[data-action]');
 
-        // ▼▼▼ AÑADE ESTE BLOQUE AL INICIO DE LA FUNCIÓN ▼▼▼
-    const quickMenu = select('quick-add-menu');
-    const addBtn = select('bottom-nav-add-btn');
+        const quickMenu = select('quick-add-menu');
+        const addBtn = select('bottom-nav-add-btn');
 
-    // Comprueba si el menú está visible Y si el clic fue FUERA tanto del menú como del botón que lo abre
-    if (quickMenu && quickMenu.classList.contains('visible') && addBtn && !addBtn.contains(target) && !quickMenu.contains(target)) {
-        quickMenu.classList.remove('visible'); // Oculta el menú
-        // Restablece el icono del botón principal
-        addBtn.style.transform = 'rotate(0deg)';
-        const iconEl = addBtn.querySelector('.material-icons');
-        if (iconEl) iconEl.textContent = 'add';
-    }
-    // ▲▲▲ FIN DEL BLOQUE A AÑADIR ▲▲▲
-        // --- 2. GESTIÓN DE ACCIONES DENTRO DEL SUBMENÚ (AÑADIDO Y CORREGIDO) ---
-        const quickAddAction = target.closest('[data-action="quick-add-type"]');
-        if (quickAddAction) {
-            const type = quickAddAction.dataset.type;
-            
-            // Cierra el menú y restablece el botón principal
-            if (quickMenu) quickMenu.classList.remove('visible');
+        // --- LÓGICA DE CIERRE DEL MENÚ ---
+        // Si el menú está visible Y el clic fue FUERA tanto del botón de abrir como del propio menú, lo cerramos.
+        if (quickMenu && quickMenu.classList.contains('visible') && !target.closest('#bottom-nav-add-btn') && !target.closest('#quick-add-menu')) {
+            quickMenu.classList.remove('visible');
             if (addBtn) {
                 addBtn.style.transform = 'rotate(0deg)';
                 const iconEl = addBtn.querySelector('.material-icons');
                 if (iconEl) iconEl.textContent = 'add';
             }
-            
-            startMovementForm(); // Abre el formulario de movimiento
-            // Espera un momento para que el modal esté visible y luego establece el tipo
-            setTimeout(() => setMovimientoFormType(type), 50);
-            return; // Detenemos la ejecución aquí, la acción ya fue manejada.
-        }
-        
-        // Cierra los dropdowns personalizados si se hace clic fuera
-        if (!target.closest('.custom-select-wrapper')) {
-            closeAllCustomSelects(null);
         }
 
-        // Abre la calculadora para inputs específicos
-        if (target.matches('.input-amount-calculator')) {
-            e.preventDefault();
-            showCalculator(target);
-            return;
-        }
-
-        // --- 3. GESTIÓN CENTRALIZADA DE TODAS LAS DEMÁS ACCIONES 'data-action' ---
-        const actionTarget = target.closest('[data-action]');
+        // Si el elemento clicado no tiene una acción definida, no hacemos nada más.
         if (!actionTarget) return;
 
+        // Extraemos los datos del elemento clicado
         const { action, id, page, type, modalId } = actionTarget.dataset;
         const btn = actionTarget.closest('button');
-        
-        // Objeto que mapea cada 'data-action' a su función correspondiente
+
+        // --- LÓGICA CENTRAL DE ACCIONES ---
+        // Este es el "cerebro" que decide qué hacer para cada 'data-action'
         const actions = {
             'open-main-add-modal': () => {
-        hapticFeedback('medium');
-        const quickMenu = select('quick-add-menu');
-        const addBtn = select('bottom-nav-add-btn');
-
-        if (quickMenu && addBtn) {
-            const iconEl = addBtn.querySelector('.material-icons');
-            // Muestra u oculta el menú
-            const isVisible = quickMenu.classList.toggle('visible');
-            
-            // Anima el botón y cambia el icono
-            if (isVisible) {
-                addBtn.style.transform = 'rotate(135deg)';
-                if (iconEl) iconEl.textContent = 'close';
-            } else {
-                addBtn.style.transform = 'rotate(0deg)';
-                if (iconEl) iconEl.textContent = 'add';
-            }
-        }
-    },
-
-    // ▼▼▼ ESTA ES LA ACCIÓN QUE SE DISPARA AL CLICAR EN EL SUBMENÚ ▼▼▼
-    'quick-add-type': (e) => {
-        const quickAddItem = e.target.closest('[data-action="quick-add-type"]');
-        const type = quickAddItem.dataset.type;
-        const quickMenu = select('quick-add-menu');
-        const addBtn = select('bottom-nav-add-btn');
-
-        // Oculta el menú y restaura el botón principal
-        if (quickMenu) quickMenu.classList.remove('visible');
-        if (addBtn) {
-            addBtn.style.transform = 'rotate(0deg)';
-            const iconEl = addBtn.querySelector('.material-icons');
-            if (iconEl) iconEl.textContent = 'add';
-        }
-
-        startMovementForm(); // Abre el formulario de movimiento
-        // Espera un momento para que el modal esté visible y luego establece el tipo
-        setTimeout(() => setMovimientoFormType(type), 50);
-    },
-            
-            // A partir de aquí, es tu código original de acciones, que ya era correcto.
-			'swipe-show-irr-history': () => handleShowIrrHistory(type),
-			'show-main-menu': () => {
+                hapticFeedback('medium');
+                if (quickMenu && addBtn) {
+                    const iconEl = addBtn.querySelector('.material-icons');
+                    const isVisible = quickMenu.classList.toggle('visible');
+                    addBtn.style.transform = isVisible ? 'rotate(135deg)' : 'rotate(0deg)';
+                    if (iconEl) iconEl.textContent = isVisible ? 'close' : 'add';
+                }
+            },
+            'quick-add-type': () => {
+                // Ocultar menú y restaurar botón
+                if (quickMenu) quickMenu.classList.remove('visible');
+                if (addBtn) {
+                    addBtn.style.transform = 'rotate(0deg)';
+                    const iconEl = addBtn.querySelector('.material-icons');
+                    if (iconEl) iconEl.textContent = 'add';
+                }
+                
+                // Abrir el formulario con el tipo correcto
+                startMovementForm();
+                setTimeout(() => setMovimientoFormType(type), 50);
+            },
+            // ... (AQUÍ ESTÁ EL RESTO DE TU CÓDIGO DE ACCIONES, SIN CAMBIOS)
+            'swipe-show-irr-history': () => handleShowIrrHistory(type),
+            'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
                 if (!menu) return;
                 menu.classList.toggle('popover-menu--visible');
@@ -7625,14 +7578,13 @@ const attachEventListeners = () => {
                 amountInput.value = newValue.toLocaleString('es-ES', { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 updateAmountTypeUI(!isCurrentlyGasto);
             },
-			
             'context-edit': () => { hideModal('generic-modal'); startMovementForm(id, false); },
             'context-duplicate': () => { hideModal('generic-modal'); const movement = db.movimientos.find(m => m.id === id); if(movement) handleDuplicateMovement(movement); },
             'context-delete': () => { hideModal('generic-modal'); showConfirmationModal('¿Seguro que quieres eliminar este movimiento?', async () => { await deleteMovementAndAdjustBalance(id, false); }); },
             'show-kpi-drilldown': () => handleKpiDrilldown(actionTarget),
             'edit-movement-from-modal': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; hideModal('generic-modal'); startMovementForm(movementId, false); },
             'edit-movement-from-list': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; startMovementForm(movementId, false); },
-			'edit-recurrente': () => { hideModal('generic-modal'); startMovementForm(id, true); },
+            'edit-recurrente': () => { hideModal('generic-modal'); startMovementForm(id, true); },
             'view-account-details': (e) => { const accountId = e.target.closest('[data-id]').dataset.id; showAccountMovementsModal(accountId); },
             'apply-description-suggestion': (e) => {
                 const suggestionItem = e.target.closest('.suggestion-item');
@@ -7668,11 +7620,11 @@ const attachEventListeners = () => {
             },
             'toggle-investment-type-filter': () => handleToggleInvestmentTypeFilter(type),
             'toggle-account-type-filter': () => { hapticFeedback('light'); if (deselectedAccountTypesFilter.has(type)) { deselectedAccountTypesFilter.delete(type); } else { deselectedAccountTypesFilter.add(type); } renderPatrimonioOverviewWidget('patrimonio-overview-container'); },
-			 'switch-estrategia-tab': () => {
-        const tabName = actionTarget.dataset.tab;
-        showEstrategiaTab(tabName);
-    },
-			'show-help-topic': () => {
+             'switch-estrategia-tab': () => {
+                const tabName = actionTarget.dataset.tab;
+                showEstrategiaTab(tabName);
+            },
+            'show-help-topic': () => {
                 const topic = actionTarget.dataset.topic;
                 if(topic) {
                     let title, content;
@@ -7699,37 +7651,21 @@ const attachEventListeners = () => {
             'show-login': (e) => { e.preventDefault(); const title = select('login-title'); const mainButton = document.querySelector('#login-form button[data-action="register"]'); const secondaryAction = document.querySelector('.login-view__secondary-action'); if (mainButton.dataset.action === 'register') { title.textContent = 'Bienvenido de nuevo'; mainButton.dataset.action = 'login'; mainButton.textContent = 'Iniciar Sesión'; secondaryAction.innerHTML = `<span>¿No tienes una cuenta?</span> <a href="#" class="login-view__link" data-action="show-register">Regístrate aquí</a>`; } },
             'import-csv': showCsvImportWizard,
             'toggle-ledger': async () => {
-            hapticFeedback('medium');
-            
-            isOffBalanceMode = !isOffBalanceMode;
-            document.body.dataset.ledgerMode = isOffBalanceMode ? 'B' : 'A';
-            showToast(`Mostrando Contabilidad ${isOffBalanceMode ? 'B' : 'A'}.`, 'info');
-
-            const activePageEl = document.querySelector('.view--active');
-            if (!activePageEl) return;
-
-            const ledgerBtn = select('ledger-toggle-btn');
-            if (ledgerBtn) {
-                ledgerBtn.textContent = isOffBalanceMode ? 'B' : 'A';
-            }
-            
-            switch (activePageEl.id) {
-                case PAGE_IDS.INICIO:
-                    scheduleDashboardUpdate();
-                    break;
-                case PAGE_IDS.DIARIO:
-                    updateVirtualListUI();
-                    break;
-                case PAGE_IDS.ESTRATEGIA: // Asumiendo que esta es la página de patrimonio
-                    renderEstrategiaActivos();
-                    break;
-                case PAGE_IDS.AJUSTES:
-                default:
-                    // Recargamos si no hay una acción específica para asegurar consistencia
-                    navigateTo(activePageEl.id, true);
-                    break;
-            }
-        },
+                hapticFeedback('medium');
+                isOffBalanceMode = !isOffBalanceMode;
+                document.body.dataset.ledgerMode = isOffBalanceMode ? 'B' : 'A';
+                showToast(`Mostrando Contabilidad ${isOffBalanceMode ? 'B' : 'A'}.`, 'info');
+                const activePageEl = document.querySelector('.view--active');
+                if (!activePageEl) return;
+                const ledgerBtn = select('ledger-toggle-btn');
+                if (ledgerBtn) { ledgerBtn.textContent = isOffBalanceMode ? 'B' : 'A'; }
+                switch (activePageEl.id) {
+                    case PAGE_IDS.INICIO: scheduleDashboardUpdate(); break;
+                    case PAGE_IDS.DIARIO: updateVirtualListUI(); break;
+                    case PAGE_IDS.ESTRATEGIA: renderEstrategiaActivos(); break;
+                    default: navigateTo(activePageEl.id, true); break;
+                }
+            },
             'toggle-off-balance': async () => { const checkbox = target.closest('input[type="checkbox"]'); if (!checkbox) return; hapticFeedback('light'); await saveDoc('cuentas', checkbox.dataset.id, { offBalance: checkbox.checked }); },
             'apply-filters': () => { hapticFeedback('light'); scheduleDashboardUpdate(); },
             'delete-movement-from-modal': () => { const isRecurrent = (actionTarget.dataset.isRecurrent === 'true'); const idToDelete = select('movimiento-id').value; const message = isRecurrent ? '¿Seguro que quieres eliminar esta operación recurrente?' : '¿Seguro que quieres eliminar este movimiento?'; showConfirmationModal(message, async () => { hideModal('movimiento-modal'); await deleteMovementAndAdjustBalance(idToDelete, isRecurrent); }); },
@@ -7755,69 +7691,68 @@ const attachEventListeners = () => {
             'toggle-traspaso-accounts-filter': () => populateTraspasoDropdowns(), 'set-pin': async () => { const pin = prompt("Introduce tu nuevo PIN de 4 dígitos. Déjalo en blanco para eliminarlo."); if (pin === null) return; if (pin === "") { localStorage.removeItem('pinUserHash'); localStorage.removeItem('pinUserEmail'); showToast('PIN de acceso rápido eliminado.', 'info'); return; } if (!/^\d{4}$/.test(pin)) { showToast('El PIN debe contener exactamente 4 dígitos numéricos.', 'danger'); return; } const pinConfirm = prompt("Confirma tu nuevo PIN de 4 dígitos."); if (pin !== pinConfirm) { showToast('Los PINs no coinciden. Inténtalo de nuevo.', 'danger'); return; } const pinHash = await hashPin(pin); localStorage.setItem('pinUserHash', pinHash); localStorage.setItem('pinUserEmail', currentUser.email); hapticFeedback('success'); showToast('¡PIN de acceso rápido configurado con éxito!', 'info'); },
             'edit-recurrente-from-pending': () => startMovementForm(id, true),
             'confirm-recurrent': () => handleConfirmRecurrent(id, btn), 'skip-recurrent': () => handleSkipRecurrent(id, btn),
-			'show-informe-builder': showInformeBuilderModal, 'save-informe': () => handleSaveInforme(btn),
+            'show-informe-builder': showInformeBuilderModal, 'save-informe': () => handleSaveInforme(btn),
         };
         
+        // Ejecuta la función correspondiente si existe
         if (actions[action]) {
             actions[action](e);
         }
     });
+
+    // ... (El resto de tus listeners como 'submit', 'input', etc. van aquí sin cambios)
     
-    // El resto de tus listeners (`submit`, `input`, `change`, `keydown`, etc.) van aquí.
-    // ... pégalos a continuación de este listener de 'click'.
-    // Ejemplo:
-	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
-const mainScrollerPtr = selectOne('.app-layout__main');
-const ptrIndicator = document.createElement('div');
-ptrIndicator.id = 'pull-to-refresh-indicator';
-ptrIndicator.innerHTML = '<div class="spinner"></div>';
-if (ptrElement) ptrElement.prepend(ptrIndicator);
+    // El resto de la función 'attachEventListeners' continúa aquí...
+    const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
+    const mainScrollerPtr = selectOne('.app-layout__main');
+    const ptrIndicator = document.createElement('div');
+    ptrIndicator.id = 'pull-to-refresh-indicator';
+    ptrIndicator.innerHTML = '<div class="spinner"></div>';
+    if (ptrElement) ptrElement.prepend(ptrIndicator);
 
-if (ptrElement && mainScrollerPtr) {
-    ptrElement.addEventListener('touchstart', (e) => {
-        if (mainScrollerPtr.scrollTop === 0) { // Solo si estamos arriba del todo
-            ptrState.startY = e.touches[0].clientY;
-            ptrState.isPulling = true;
-        }
-    }, { passive: true });
+    if (ptrElement && mainScrollerPtr) {
+        ptrElement.addEventListener('touchstart', (e) => {
+            if (mainScrollerPtr.scrollTop === 0) { // Solo si estamos arriba del todo
+                ptrState.startY = e.touches[0].clientY;
+                ptrState.isPulling = true;
+            }
+        }, { passive: true });
 
-    ptrElement.addEventListener('touchmove', (e) => {
-        if (!ptrState.isPulling) return;
-        
-        const currentY = e.touches[0].clientY;
-        ptrState.distance = currentY - ptrState.startY;
-
-        if (ptrState.distance > 0) {
-            e.preventDefault(); // Evita el scroll del navegador
-            ptrIndicator.classList.add('visible');
-            const rotation = Math.min(ptrState.distance * 2.5, 360);
-            ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
-            ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
-        }
-    }, { passive: false });
-
-    ptrElement.addEventListener('touchend', async () => {
-        if (ptrState.isPulling && ptrState.distance > ptrState.threshold) {
-            hapticFeedback('medium');
-            ptrIndicator.querySelector('.spinner').style.transform = '';
-            ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
+        ptrElement.addEventListener('touchmove', (e) => {
+            if (!ptrState.isPulling) return;
             
-            // Acción de refresco: Recargamos los movimientos del diario
-            await renderDiarioPage();
+            const currentY = e.touches[0].clientY;
+            ptrState.distance = currentY - ptrState.startY;
 
-            // Ocultar indicador después de refrescar
-            setTimeout(() => {
+            if (ptrState.distance > 0) {
+                e.preventDefault(); // Evita el scroll del navegador
+                ptrIndicator.classList.add('visible');
+                const rotation = Math.min(ptrState.distance * 2.5, 360);
+                ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
+                ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
+            }
+        }, { passive: false });
+
+        ptrElement.addEventListener('touchend', async () => {
+            if (ptrState.isPulling && ptrState.distance > ptrState.threshold) {
+                hapticFeedback('medium');
+                ptrIndicator.querySelector('.spinner').style.transform = '';
+                ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
+                
+                await renderDiarioPage();
+
+                setTimeout(() => {
+                    ptrIndicator.classList.remove('visible');
+                    ptrIndicator.querySelector('.spinner').style.animation = '';
+                }, 500);
+            } else {
                 ptrIndicator.classList.remove('visible');
-                ptrIndicator.querySelector('.spinner').style.animation = '';
-            }, 500);
-        } else {
-            ptrIndicator.classList.remove('visible');
-        }
+            }
 
-        ptrState.isPulling = false;
-        ptrState.distance = 0;
-    });
-}
+            ptrState.isPulling = false;
+            ptrState.distance = 0;
+        });
+    }
     const cantidadInput = document.getElementById("movimiento-cantidad");
     if (cantidadInput) {
         const cantidadError = document.getElementById("movimiento-cantidad-error");
@@ -7948,7 +7883,7 @@ if (ptrElement && mainScrollerPtr) {
     const diarioContainer = select('diario-page'); if (diarioContainer) { const mainScroller = selectOne('.app-layout__main'); diarioContainer.addEventListener('touchstart', (e) => { if (mainScroller.scrollTop > 0) return; ptrState.startY = e.touches[0].clientY; ptrState.isPulling = true; if (e.target.closest('.transaction-card')) { handleInteractionStart(e); } }, { passive: true }); diarioContainer.addEventListener('touchmove', (e) => { if (!ptrState.isPulling) { handleInteractionMove(e); return; } const currentY = e.touches[0].clientY; ptrState.distance = currentY - ptrState.startY; if (ptrState.distance > 0) { e.preventDefault(); const indicator = select('pull-to-refresh-indicator'); if (indicator) { indicator.classList.add('visible'); const rotation = Math.min(ptrState.distance * 2, 360); indicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`; } } }, { passive: false }); diarioContainer.addEventListener('touchend', async (e) => { const indicator = select('pull-to-refresh-indicator'); if (ptrState.isPulling && ptrState.distance > ptrState.threshold) { hapticFeedback('medium'); if (indicator) { indicator.querySelector('.spinner').style.animation = 'spin 1s linear infinite'; } await loadMoreMovements(true); setTimeout(() => { if (indicator) { indicator.classList.remove('visible'); indicator.querySelector('.spinner').style.animation = ''; } }, 500); } else if (indicator) { indicator.classList.remove('visible'); } ptrState.isPulling = false; ptrState.distance = 0; handleInteractionEnd(e); }); diarioContainer.addEventListener('mousedown', (e) => e.target.closest('.transaction-card') && handleInteractionStart(e)); diarioContainer.addEventListener('mousemove', handleInteractionMove); diarioContainer.addEventListener('mouseup', handleInteractionEnd); diarioContainer.addEventListener('mouseleave', handleInteractionEnd); }
     const mainScroller = selectOne('.app-layout__main'); if (mainScroller) { let scrollRAF = null; mainScroller.addEventListener('scroll', () => { if (scrollRAF) window.cancelAnimationFrame(scrollRAF); scrollRAF = window.requestAnimationFrame(() => { if (diarioViewMode === 'list' && select('diario-page')?.classList.contains('view--active')) { renderVisibleItems(); } }); }, { passive: true }); }
     document.body.addEventListener('toggle', (e) => { const detailsElement = e.target; if (detailsElement.tagName !== 'DETAILS' || !detailsElement.classList.contains('informe-acordeon')) { return; } if (detailsElement.open) { const id = detailsElement.id; const informeId = id.replace('acordeon-', ''); const container = select(`informe-content-${informeId}`); if (container && container.querySelector('.form-label')) { renderInformeDetallado(informeId); } } }, true);
-	const frequencySelect = select('recurrent-frequency');
+    const frequencySelect = select('recurrent-frequency');
     if (frequencySelect) {
         frequencySelect.addEventListener('change', (e) => {
             select('weekly-day-selector').classList.toggle('hidden', e.target.value !== 'weekly');
