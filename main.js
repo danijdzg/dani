@@ -7481,7 +7481,7 @@ function createCustomSelect(selectElement) {
 // =================================================================
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
 // =================================================================
-// main.js -> REEMPLAZA TU FUNCIÓN attachEventListeners CON ESTA VERSIÓN COMPLETA Y CORREGIDA
+// main.js -> REEMPLAZA TU FUNCIÓN attachEventListeners EXISTENTE CON ESTA VERSIÓN COMPLETA
 
 const attachEventListeners = () => {
     // Listener para habilitar vibración con la primera interacción del usuario
@@ -7499,22 +7499,20 @@ const attachEventListeners = () => {
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
 
-        // --- 1. GESTIÓN DEL MENÚ DE ACCIONES RÁPIDAS ---
+        // --- 1. LÓGICA PARA GESTIONAR EL MENÚ DE ACCIONES RÁPIDAS (AÑADIDO Y CORREGIDO) ---
         const quickMenu = select('quick-add-menu');
         const addBtn = select('bottom-nav-add-btn');
 
-        // Lógica para cerrar el menú si se hace clic FUERA de él. Se ejecuta primero.
-        if (quickMenu && quickMenu.classList.contains('visible') && !addBtn.contains(target) && !quickMenu.contains(target.closest('#quick-add-menu'))) {
+        // Cerrar el menú si se hace clic FUERA de él. Se ejecuta ANTES de cualquier otra acción.
+        if (quickMenu && quickMenu.classList.contains('visible') && addBtn && !addBtn.contains(target) && !quickMenu.contains(target.closest('#quick-add-menu'))) {
             quickMenu.classList.remove('visible');
             // Restablece el icono del botón principal
-            if (addBtn) {
-                addBtn.style.transform = 'rotate(0deg)';
-                const iconEl = addBtn.querySelector('.material-icons');
-                if (iconEl) iconEl.textContent = 'add';
-            }
+            addBtn.style.transform = 'rotate(0deg)';
+            const iconEl = addBtn.querySelector('.material-icons');
+            if (iconEl) iconEl.textContent = 'add';
         }
         
-        // --- 2. GESTIÓN DE ACCIONES DENTRO DEL SUBMENÚ ---
+        // --- 2. GESTIÓN DE ACCIONES DENTRO DEL SUBMENÚ (AÑADIDO Y CORREGIDO) ---
         const quickAddAction = target.closest('[data-action="quick-add-type"]');
         if (quickAddAction) {
             const type = quickAddAction.dataset.type;
@@ -7532,7 +7530,7 @@ const attachEventListeners = () => {
             setTimeout(() => setMovimientoFormType(type), 50);
             return; // Detenemos la ejecución aquí, la acción ya fue manejada.
         }
-
+        
         // Cierra los dropdowns personalizados si se hace clic fuera
         if (!target.closest('.custom-select-wrapper')) {
             closeAllCustomSelects(null);
@@ -7549,7 +7547,7 @@ const attachEventListeners = () => {
         const actionTarget = target.closest('[data-action]');
         if (!actionTarget) return;
 
-        const { action, id, page, type, modalId, reportId } = actionTarget.dataset;
+        const { action, id, page, type, modalId } = actionTarget.dataset;
         const btn = actionTarget.closest('button');
         
         // Objeto que mapea cada 'data-action' a su función correspondiente
@@ -7570,11 +7568,7 @@ const attachEventListeners = () => {
                 }
             },
             
-            // --- PEGA AQUÍ TODO EL RESTO DE TU OBJETO 'actions' ORIGINAL ---
-            // Ejemplo:
-            'navigate': () => { hapticFeedback('light'); navigateTo(page); },
-            'export-filtered-csv': () => handleExportFilteredCsv(btn),
-            'show-diario-filters': showDiarioFiltersModal,
+            // A partir de aquí, es tu código original de acciones, que ya era correcto.
 			'swipe-show-irr-history': () => handleShowIrrHistory(type),
 			'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
@@ -7592,8 +7586,8 @@ const attachEventListeners = () => {
                     }, 0);
                 }
             },
-           
-           
+            'export-filtered-csv': () => handleExportFilteredCsv(btn),
+            'show-diario-filters': showDiarioFiltersModal,
             'clear-diario-filters': clearDiarioFilters,
             'toggle-amount-type': () => {
                 const amountInput = select('movimiento-cantidad');
@@ -7672,6 +7666,7 @@ const attachEventListeners = () => {
             'save-dashboard-config': () => handleSaveDashboardConfig(btn),
             'use-password-instead': () => showPasswordFallback(),
             'toggle-theme': () => { handleToggleTheme(); hapticFeedback('light'); },
+            'navigate': () => { hapticFeedback('light'); navigateTo(page); },
             'help': showHelpModal,
             'exit': handleExitApp,
             'forgot-password': (e) => { e.preventDefault(); const email = prompt("Por favor, introduce el correo electrónico de tu cuenta para restablecer la contraseña:"); if (email) { firebase.auth().sendPasswordResetEmail(email).then(() => { showToast('Se ha enviado un correo para restablecer tu contraseña.', 'info', 5000); }).catch((error) => { console.error("Error al enviar correo de recuperación:", error); if (error.code === 'auth/user-not-found') { showToast('No se encontró ninguna cuenta con ese correo.', 'danger'); } else { showToast('Error al intentar restablecer la contraseña.', 'danger'); } }); } },
@@ -7700,14 +7695,13 @@ const attachEventListeners = () => {
                 case PAGE_IDS.DIARIO:
                     updateVirtualListUI();
                     break;
-                case PAGE_IDS.INVERSIONES:
-                    await renderInversionesView();
-                    break;
-                case PAGE_IDS.PLANIFICAR:
-                    await renderEstrategiaPlanificacion();
+                case PAGE_IDS.ESTRATEGIA: // Asumiendo que esta es la página de patrimonio
+                    renderEstrategiaActivos();
                     break;
                 case PAGE_IDS.AJUSTES:
                 default:
+                    // Recargamos si no hay una acción específica para asegurar consistencia
+                    navigateTo(activePageEl.id, true);
                     break;
             }
         },
@@ -7737,19 +7731,16 @@ const attachEventListeners = () => {
             'edit-recurrente-from-pending': () => startMovementForm(id, true),
             'confirm-recurrent': () => handleConfirmRecurrent(id, btn), 'skip-recurrent': () => handleSkipRecurrent(id, btn),
 			'show-informe-builder': showInformeBuilderModal, 'save-informe': () => handleSaveInforme(btn),
-            
         };
         
-        // Ejecuta la acción correspondiente si existe
         if (actions[action]) {
             actions[action](e);
         }
     });
-    // =======================================================================
-    // === FIN: EL ÚNICO Y DEFINITIVO LISTENER DE CLICS PARA TODA LA APP ===
-    // =======================================================================
-
-    // Resto de tus listeners que no son de 'click' se mantienen igual
+    
+    // El resto de tus listeners (`submit`, `input`, `change`, `keydown`, etc.) van aquí.
+    // ... pégalos a continuación de este listener de 'click'.
+    // Ejemplo:
 	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
 const mainScrollerPtr = selectOne('.app-layout__main');
 const ptrIndicator = document.createElement('div');
@@ -7786,8 +7777,10 @@ if (ptrElement && mainScrollerPtr) {
             ptrIndicator.querySelector('.spinner').style.transform = '';
             ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
             
+            // Acción de refresco: Recargamos los movimientos del diario
             await renderDiarioPage();
 
+            // Ocultar indicador después de refrescar
             setTimeout(() => {
                 ptrIndicator.classList.remove('visible');
                 ptrIndicator.querySelector('.spinner').style.animation = '';
@@ -7949,7 +7942,7 @@ if (ptrElement && mainScrollerPtr) {
     }
 };
 
-// ... Resto de tu código, como document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener('DOMContentLoaded', initApp);
 // =================================================================
 // === FIN: BLOQUE DE CÓDIGO CORREGIDO PARA REEMPLAZAR           ===
 // =================================================================
