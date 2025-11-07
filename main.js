@@ -4332,7 +4332,7 @@ const renderDashboardSuperCentroOperaciones = () => {
                             <input type="date" id="filter-fecha-inicio" class="form-input">
                             <input type="date" id="filter-fecha-fin" class="form-input">
                         </div>
-                        <button class="btn btn--secondary btn--full hidden" data-action="apply-filters" style="margin-top:var(--sp-2)">Aplicar</button>
+                       
                     </div>
                     <!-- ▲▲▲ FIN DEL BLOQUE DE FILTROS MOVIDO ▲▲▲ -->
 
@@ -7855,10 +7855,21 @@ if (ptrElement && mainScrollerPtr) {
         if (target.id === 'filter-periodo') {
             const el = select('custom-date-filters');
             if (el) el.classList.toggle('hidden', target.value !== 'custom');
-            const applyBtnEl = document.querySelector('[data-action="apply-filters"]');
-            const isCustom = target.value === 'custom';
-            if (applyBtnEl) applyBtnEl.classList.toggle('hidden', !isCustom);
-            if (!isCustom) { hapticFeedback('light'); scheduleDashboardUpdate(); }
+            // Si el valor NO es 'custom', actualiza inmediatamente.
+            if (target.value !== 'custom') { 
+                hapticFeedback('light'); 
+                scheduleDashboardUpdate(); 
+            }
+        }
+		if (target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
+            const startDate = select('filter-fecha-inicio').value;
+            const endDate = select('filter-fecha-fin').value;
+
+            // Solo si AMBOS campos tienen una fecha, se actualiza el dashboard
+            if (startDate && endDate) {
+                hapticFeedback('light');
+                scheduleDashboardUpdate();
+            }
         }
         if (target.id === 'movimiento-recurrente') {
             select('recurrent-options').classList.toggle('hidden', !target.checked);
