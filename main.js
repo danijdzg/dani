@@ -7474,67 +7474,227 @@ function createCustomSelect(selectElement) {
 }
 
 
-// ▼▼▼ REEMPLAZA TU FUNCIÓN attachEventListeners ACTUAL CON ESTE BLOQUE COMPLETO ▼▼▼
-
-const attachEventListeners = () => {
-    // Habilita la vibración táctil tras la primera interacción del usuario
-    const enableHaptics = () => {
+// =================================================================
+// === FIN DEL BLOQUE DEFINITIVO                                 ===
+// =================================================================
+ const attachEventListeners = () => {
+const enableHaptics = () => {
         userHasInteracted = true;
         document.body.removeEventListener('touchstart', enableHaptics, { once: true });
         document.body.removeEventListener('click', enableHaptics, { once: true });
     };
     document.body.addEventListener('touchstart', enableHaptics, { once: true, passive: true });
     document.body.addEventListener('click', enableHaptics, { once: true });
+    // ▲▲▲ FIN DEL BLOQUE A AÑADIR ▲▲▲
 
-    // --- MANEJADOR DE EVENTOS DE CLIC CENTRALIZADO Y CORREGIDO ---
+	let longPressTimer;	 
+
+const addBtn = select('bottom-nav-add-btn');
+const quickMenu = select('quick-add-menu');
+
+if (addBtn && quickMenu) {
+    addBtn.addEventListener('mousedown', startLongPress);
+    addBtn.addEventListener('touchstart', startLongPress); // ¡CORRECCIÓN APLICADA AQUÍ!
+    addBtn.addEventListener('mouseup', endPress);
+    addBtn.addEventListener('touchend', endPress);
+    addBtn.addEventListener('mouseleave', cancelPress);
+	
+    document.addEventListener('click', (e) => {
+        if (!quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
+            quickMenu.classList.remove('visible');
+        }
+    });
+}
+
+function startLongPress(e) {
+    // Inicia el temporizador para la pulsación larga.
+    e.preventDefault();
+    longPressTimer = setTimeout(() => {
+        hapticFeedback('medium');
+        quickMenu.classList.add('visible');
+        longPressTimer = null; // Marcamos que la pulsación larga ya se ejecutó.
+    }, 400);
+}
+
+function endPress() {
+    // Se ejecuta al soltar el botón (mouseup, touchend).
+    if (longPressTimer) {
+        // Si el temporizador todavía existe, significa que fue un clic corto.
+        clearTimeout(longPressTimer);
+        startMovementForm(); // Abrimos el formulario.
+    }
+    // Si longPressTimer es null, la pulsación larga ya se activó, así que no hacemos nada.
+}
+
+function cancelPress() {
+    // Se ejecuta si el ratón sale del botón. Solo cancela la acción.
+    clearTimeout(longPressTimer);
+}
+
+document.body.addEventListener('click', (e) => {
+	const quickAddAction = e.target.closest('[data-action="quick-add-type"]');
+    if(quickAddAction) {
+        const type = quickAddAction.dataset.type;
+        quickMenu.classList.remove('visible');
+        startMovementForm(); // Abre el formulario genérico
+        setTimeout(() => setMovimientoFormType(type), 50); // Lo ajusta al tipo seleccionado
+    }
+});
+
+	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
+const mainScrollerPtr = selectOne('.app-layout__main');
+const ptrIndicator = document.createElement('div');
+ptrIndicator.id = 'pull-to-refresh-indicator';
+ptrIndicator.innerHTML = '<div class="spinner"></div>';
+if (ptrElement) ptrElement.prepend(ptrIndicator);
+
+let ptrState = {
+    startY: 0,
+    isPulling: false,
+    distance: 0,
+    threshold: 80 // Distancia necesaria para activar
+};
+
+if (ptrElement && mainScrollerPtr) {
+    ptrElement.addEventListener('touchstart', (e) => {
+        if (mainScrollerPtr.scrollTop === 0) { // Solo si estamos arriba del todo
+            ptrState.startY = e.touches[0].clientY;
+            ptrState.isPulling = true;
+        }
+    }, { passive: true });
+
+    ptrElement.addEventListener('touchmove', (e) => {
+        if (!ptrState.isPulling) return;
+        
+        const currentY = e.touches[0].clientY;
+        ptrState.distance = currentY - ptrState.startY;
+
+        if (ptrState.distance > 0) {
+            e.preventDefault(); // Evita el scroll del navegador
+            ptrIndicator.classList.add('visible');
+            const rotation = Math.min(ptrState.distance * 2.5, 360);
+            ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
+            ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
+        }
+    }, { passive: false });
+
+    ptrElement.addEventListener('touchend', async () => {
+        if (ptrState.isPulling && ptrState.distance > ptrState.threshold) {
+            hapticFeedback('medium');
+            ptrIndicator.querySelector('.spinner').style.transform = '';
+            ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
+            
+            // Acción de refresco: Recargamos los movimientos del diario
+            await renderDiarioPage();
+
+            // Ocultar indicador después de refrescar
+            setTimeout(() => {
+                ptrIndicator.classList.remove('visible');
+                ptrIndicator.querySelector('.spinner').style.animation = '';
+            }, 500);
+        } else {
+            ptrIndicator.classList.remove('visible');
+        }
+
+        ptrState.isPulling = false;
+        ptrState.distance = 0;
+    });
+}
+
+	
+    const cantidadInput = document.getElementById("movimiento-cantidad");
+    if (cantidadInput) {
+        const cantidadError = document.getElementById("movimiento-cantidad-error");
+        cantidadInput.addEventListener("input", () => {
+            let valor = cantidadInput.value.trim();
+            valor = valor.replace(",", ".");
+            const regex = /^\d+(.\d{0,2})?$/;
+            if (valor === "" || !regex.test(valor)) {
+                cantidadError.textContent = "Introduce un número positivo (ej: 2,50 o 15.00)";
+                cantidadInput.classList.add("form-input--error");
+            } else {
+                cantidadError.textContent = "";
+                cantidadInput.classList.remove("form--error");
+            }
+        });
+        const descripcionInput = document.getElementById("movimiento-descripcion");
+        const cuentaSelect = document.getElementById("movimiento-cuenta");
+        const saveBtn = document.getElementById("save-movimiento-btn");
+        document.addEventListener("show-modal", (e) => {
+            if (e.detail.modalId === "movimiento-modal") {
+                setTimeout(() => cantidadInput.focus(), 100);
+            }
+        });
+        cantidadInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                descripcionInput.focus();
+            }
+        });
+        descripcionInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                cuentaSelect.focus();
+            }
+        });
+        cuentaSelect.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                saveBtn.click();
+            }
+        });
+    }
+
+    const amountInputForFormatting = select('movimiento-cantidad');
+    if (amountInputForFormatting) {
+        amountInputForFormatting.addEventListener('focus', (e) => {
+            const input = e.target;
+            if (input.value === '') return;
+            const rawValue = input.value.replace(/\./g, '');
+            input.value = rawValue;
+        });
+        amountInputForFormatting.addEventListener('blur', (e) => {
+            const input = e.target;
+            if (input.value === '') return;
+            const numericValue = parseCurrencyString(input.value);
+            input.value = formatAsCurrencyInput(numericValue);
+        });
+    }
+
+    window.addEventListener('popstate', (event) => {
+        const activeModal = document.querySelector('.modal-overlay--active');
+        if (activeModal) {
+            hideModal(activeModal.id);
+            history.pushState({ page: window.history.state?.page }, '', `#${window.history.state?.page || 'panel-page'}`);
+            return;
+        }
+        const pageToNavigate = event.state ? event.state.page : PAGE_IDS.INICIO;
+        if (pageToNavigate) {
+            navigateTo(pageToNavigate, false);
+        }
+    });
+
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
 
-        // Lógica para cerrar menús contextuales si se hace clic fuera
-        const quickMenu = select('quick-add-menu');
-        if (quickMenu && quickMenu.classList.contains('visible') && !target.closest('#bottom-nav-add-btn') && !target.closest('#quick-add-menu')) {
-            quickMenu.classList.remove('visible');
-        }
         if (!target.closest('.custom-select-wrapper')) {
             closeAllCustomSelects(null);
         }
 
-        // Lógica para abrir la calculadora desde un campo de texto
         if (target.matches('.input-amount-calculator')) {
             e.preventDefault();
             showCalculator(target);
             return;
         }
-
-        // Buscamos el elemento interactivo más cercano que tenga un `data-action`
         const actionTarget = target.closest('[data-action]');
-        if (!actionTarget) return; // Si no hay acción, no hacemos nada más
+        if (!actionTarget) return;
 
-        // Extraemos los datos de la acción
-        const { action, id, page, type, modalId } = actionTarget.dataset;
+        const { action, id, page, type, modalId, reportId } = actionTarget.dataset;
         const btn = actionTarget.closest('button');
         
-        // Objeto central que contiene TODAS las acciones de la aplicación
         const actions = {
-            // --- INICIO: LÓGICA CORREGIDA PARA EL BOTÓN (+) Y SU MENÚ ---
-            'toggle-quick-add': () => {
-                const menu = select('quick-add-menu');
-                if (menu) {
-                    hapticFeedback('medium');
-                    menu.classList.toggle('visible');
-                }
-            },
-            'quick-add-type': () => {
-                const menu = select('quick-add-menu');
-                if (menu) menu.classList.remove('visible');
-                startMovementForm(); // Abre el formulario genérico
-                setTimeout(() => setMovimientoFormType(type), 50); // Lo ajusta al tipo seleccionado
-            },
-            // --- FIN: LÓGICA CORREGIDA ---
-            
-            // --- RESTO DE ACCIONES DE LA APLICACIÓN (SIN CAMBIOS) ---
-            'swipe-show-irr-history': () => handleShowIrrHistory({ accountId: id }),
-            'show-main-menu': () => {
+			'swipe-show-irr-history': () => handleShowIrrHistory(type),
+			'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
                 if (!menu) return;
                 menu.classList.toggle('popover-menu--visible');
@@ -7554,15 +7714,32 @@ const attachEventListeners = () => {
             'export-filtered-csv': () => handleExportFilteredCsv(btn),
             'show-diario-filters': showDiarioFiltersModal,
             'clear-diario-filters': clearDiarioFilters,
+            'toggle-amount-type': () => {
+                const amountInput = select('movimiento-cantidad');
+                const amountGroup = select('movimiento-cantidad-form-group');
+                if (!amountInput || !amountGroup) return;
+                hapticFeedback('light');
+                const currentValue = parseCurrencyString(amountInput.value) || 0;
+                const isCurrentlyGasto = amountGroup.classList.contains('is-gasto');
+                const newValue = currentValue === 0 ? 0 : -currentValue;
+                amountInput.value = newValue.toLocaleString('es-ES', { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                updateAmountTypeUI(!isCurrentlyGasto);
+            },
+			
             'context-edit': () => { hideModal('generic-modal'); startMovementForm(id, false); },
             'context-duplicate': () => { hideModal('generic-modal'); const movement = db.movimientos.find(m => m.id === id); if(movement) handleDuplicateMovement(movement); },
             'context-delete': () => { hideModal('generic-modal'); showConfirmationModal('¿Seguro que quieres eliminar este movimiento?', async () => { await deleteMovementAndAdjustBalance(id, false); }); },
             'show-kpi-drilldown': () => handleKpiDrilldown(actionTarget),
-            'edit-movement-from-modal': () => { const movementId = actionTarget.dataset.id; hideModal('generic-modal'); startMovementForm(movementId, false); },
-            'edit-movement-from-list': () => { const movementId = actionTarget.dataset.id; startMovementForm(movementId, false); },
+            'edit-movement-from-modal': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; hideModal('generic-modal'); startMovementForm(movementId, false); },
+            'edit-movement-from-list': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; startMovementForm(movementId, false); },
 			'edit-recurrente': () => { hideModal('generic-modal'); startMovementForm(id, true); },
-            'view-account-details': () => showAccountMovementsModal(id),
-            'apply-description-suggestion': () => applyDescriptionSuggestion(actionTarget),
+            'view-account-details': (e) => { const accountId = e.target.closest('[data-id]').dataset.id; showAccountMovementsModal(accountId); },
+            'apply-description-suggestion': (e) => {
+                const suggestionItem = e.target.closest('.suggestion-item');
+                if (suggestionItem) {
+                    applyDescriptionSuggestion(suggestionItem);
+                }
+            },
             'show-concept-drilldown': () => {
                 const conceptId = actionTarget.dataset.conceptId;
                 const conceptName = actionTarget.dataset.conceptName;
@@ -7591,11 +7768,24 @@ const attachEventListeners = () => {
             },
             'toggle-investment-type-filter': () => handleToggleInvestmentTypeFilter(type),
             'toggle-account-type-filter': () => { hapticFeedback('light'); if (deselectedAccountTypesFilter.has(type)) { deselectedAccountTypesFilter.delete(type); } else { deselectedAccountTypesFilter.add(type); } renderPatrimonioOverviewWidget('patrimonio-overview-container'); },
-			'switch-estrategia-tab': () => showEstrategiaTab(actionTarget.dataset.tab),
+			 'switch-estrategia-tab': () => {
+        const tabName = actionTarget.dataset.tab;
+        showEstrategiaTab(tabName);
+    },
 			'show-help-topic': () => {
                 const topic = actionTarget.dataset.topic;
-                // (La lógica interna de show-help-topic se mantiene)
-                // ...
+                if(topic) {
+                    let title, content;
+                    if (topic === 'tasa-ahorro') { title = '¿Cómo se calcula la Tasa de Ahorro?'; content = `<p>Mide qué porcentaje de tus ingresos consigues guardar después de cubrir todos tus gastos en el periodo seleccionado.</p><h4>Fórmula:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">(Saldo Neto del Periodo / Ingresos Totales del Periodo) * 100</code><p style="margin-top: var(--sp-2);">Es el indicador clave de tu capacidad para generar riqueza.</p>`; }
+                    else if (topic === 'patrimonio-neto') { title = '¿Cómo se calcula el Patrimonio Neto?'; content = `<p>Representa tu riqueza total. Es la suma de todo lo que tienes (activos) menos todo lo que debes (pasivos).</p><h4>Fórmula:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">Suma de los saldos de todas tus cuentas.</code><p style="margin-top: var(--sp-2);"><strong>Importante:</strong> Este valor es siempre tu situación global actual y no se ve afectado por los filtros de fecha del panel.</p>`; }
+                    else if (topic === 'pnl-inversion') { title = '¿Cómo se calcula el P&L de Inversión?'; content = `<p>P&L son las siglas de "Profits and Losses" (Ganancias y Pérdidas). Mide el <strong>flujo de caja neto</strong> de tus cuentas de inversión durante el periodo seleccionado.</p><h4>Fórmula:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">Suma de todos los movimientos en cuentas de inversión.</code><p style="margin-top: var(--sp-2);">No incluye la revalorización de activos que no hayas vendido. Es útil para saber si tus inversiones te están dando dinero (dividendos, ventas) o si estás invirtiendo más capital (compras).</p>`; }
+                    else if (topic === 'progreso-presupuesto') { title = '¿Cómo se calcula el Progreso del Presupuesto?'; content = `<p>Compara tus gastos reales con tu plan de gastos para el periodo seleccionado.</p><h4>Fórmula:</h4><ol style="list-style-position: inside; padding-left: var(--sp-2);"><li style="margin-bottom: 6px;">Se calcula tu <strong>límite de gasto proporcional</strong> para el periodo (ej. Presupuesto Anual / 12 para un mes).</li><li style="margin-bottom: 6px;">Se comparan tus <strong>gastos reales</strong> del periodo con ese límite.</li></ol><p style="margin-top: var(--sp-2);">Te ayuda a ver si te estás ciñendo a tu plan financiero y a corregir desviaciones a tiempo.</p>`; }
+                    else if (topic === 'colchon-emergencia') { title = 'Colchón de Emergencia'; content = `<p>Es tu red de seguridad financiera. Mide cuántos meses podrías vivir cubriendo tus gastos si dejaras de tener ingresos hoy mismo.</p><h4>Fórmula:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">Dinero Líquido Total / Gasto Mensual Promedio</code><p style="margin-top: var(--sp-2);">Se considera "dinero líquido" el saldo de tus cuentas de tipo Banco, Ahorro y Efectivo.</p>`; }
+                    else if (topic === 'independencia-financiera') { title = 'Independencia Financiera (I.F.)'; content = `<p>Mide tu progreso para alcanzar el punto en el que tus inversiones podrían cubrir tus gastos para siempre, sin necesidad de trabajar.</p><h4>Fórmula del Objetivo:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">(Gasto Mensual Promedio * 12) * 30</code><p style="margin-top: var(--sp-2);">El porcentaje muestra qué parte de ese objetivo ya has alcanzado con tu patrimonio neto actual.</p>`; }
+                    const titleEl = select('help-modal-title'); const bodyEl = select('help-modal-body');
+                    if(titleEl) titleEl.textContent = title; if(bodyEl) bodyEl.innerHTML = `<div style="padding: 0 var(--sp-2);">${content}</div>`;
+                    showModal('help-modal');
+                }
             },
             'configure-dashboard': (e) => { e.preventDefault(); showDashboardConfigModal(); },
             'save-dashboard-config': () => handleSaveDashboardConfig(btn),
@@ -7609,31 +7799,63 @@ const attachEventListeners = () => {
             'show-login': (e) => { e.preventDefault(); const title = select('login-title'); const mainButton = document.querySelector('#login-form button[data-action="register"]'); const secondaryAction = document.querySelector('.login-view__secondary-action'); if (mainButton.dataset.action === 'register') { title.textContent = 'Bienvenido de nuevo'; mainButton.dataset.action = 'login'; mainButton.textContent = 'Iniciar Sesión'; secondaryAction.innerHTML = `<span>¿No tienes una cuenta?</span> <a href="#" class="login-view__link" data-action="show-register">Regístrate aquí</a>`; } },
             'import-csv': showCsvImportWizard,
             'toggle-ledger': async () => {
-                hapticFeedback('medium');
-                isOffBalanceMode = !isOffBalanceMode;
-                document.body.dataset.ledgerMode = isOffBalanceMode ? 'B' : 'A';
-                showToast(`Mostrando Contabilidad ${isOffBalanceMode ? 'B' : 'A'}.`, 'info');
-                const activePageEl = document.querySelector('.view--active');
-                if (!activePageEl) return;
-                const ledgerBtn = select('ledger-toggle-btn');
-                if (ledgerBtn) ledgerBtn.textContent = isOffBalanceMode ? 'B' : 'A';
+            hapticFeedback('medium');
+            
+            // 1. Cambiamos el estado global (esto no cambia)
+            isOffBalanceMode = !isOffBalanceMode;
+            document.body.dataset.ledgerMode = isOffBalanceMode ? 'B' : 'A';
+            showToast(`Mostrando Contabilidad ${isOffBalanceMode ? 'B' : 'A'}.`, 'info');
+
+            // 2. Obtenemos la página que está activa en este momento
+            const activePageEl = document.querySelector('.view--active');
+            if (!activePageEl) return;
+
+            // 3. Actualizamos manualmente el texto del botón A/B en la barra superior
+            const ledgerBtn = select('ledger-toggle-btn');
+            if (ledgerBtn) {
+                ledgerBtn.textContent = isOffBalanceMode ? 'B' : 'A';
+            }
+            
+            // 4. LÓGICA INTELIGENTE: En lugar de una recarga completa, ejecutamos
+            //    la acción de refresco más ligera posible para la página actual.
+            switch (activePageEl.id) {
+                case PAGE_IDS.INICIO:
+                    // El Panel necesita recalcular los KPIs, llamamos a su función de actualización.
+                    // Sigue siendo mucho más rápido que un navigateTo().
+                    scheduleDashboardUpdate();
+                    break;
+                    
+                case PAGE_IDS.DIARIO:
+                    // ¡LA OPTIMIZACIÓN CLAVE!
+                    // Simplemente le decimos a la lista virtual que se redibuje.
+                    // Esta función ya sabe cómo filtrar por la contabilidad activa (A o B)
+                    // y lo hace sobre los datos que YA ESTÁN EN MEMORIA, sin llamar a la base de datos.
+                    // El cambio es instantáneo.
+                    updateVirtualListUI();
+                    break;
+
+                case PAGE_IDS.INVERSIONES:
+                    // La vista de Inversiones necesita redibujar sus gráficos y listas.
+                    await renderInversionesView();
+                    break;
+
+                case PAGE_IDS.PLANIFICAR:
+                    // La vista de Planificar también necesita recalcular sus proyecciones.
+                    await renderEstrategiaPlanificacion();
+                    break;
                 
-                switch (activePageEl.id) {
-                    case PAGE_IDS.INICIO: scheduleDashboardUpdate(); break;
-                    case PAGE_IDS.DIARIO: updateVirtualListUI(); break;
-                    case PAGE_IDS.ESTRATEGIA: 
-                        const activeTab = document.querySelector('.tab-item--active');
-                        if (activeTab) showEstrategiaTab(activeTab.dataset.tab);
-                        break;
-                    default: break;
-                }
-            },
+                // La página de Ajustes no depende de la contabilidad, así que no hacemos nada.
+                case PAGE_IDS.AJUSTES:
+                default:
+                    break;
+            }
+        },
             'toggle-off-balance': async () => { const checkbox = target.closest('input[type="checkbox"]'); if (!checkbox) return; hapticFeedback('light'); await saveDoc('cuentas', checkbox.dataset.id, { offBalance: checkbox.checked }); },
             'apply-filters': () => { hapticFeedback('light'); scheduleDashboardUpdate(); },
             'delete-movement-from-modal': () => { const isRecurrent = (actionTarget.dataset.isRecurrent === 'true'); const idToDelete = select('movimiento-id').value; const message = isRecurrent ? '¿Seguro que quieres eliminar esta operación recurrente?' : '¿Seguro que quieres eliminar este movimiento?'; showConfirmationModal(message, async () => { hideModal('movimiento-modal'); await deleteMovementAndAdjustBalance(idToDelete, isRecurrent); }); },
             'swipe-delete-movement': () => { const isRecurrent = actionTarget.dataset.isRecurrent === 'true'; showConfirmationModal('¿Seguro que quieres eliminar este movimiento?', async () => { await deleteMovementAndAdjustBalance(id, isRecurrent); }); },
             'swipe-duplicate-movement': () => { const movement = db.movimientos.find(m => m.id === id) || recentMovementsCache.find(m => m.id === id); if (movement) handleDuplicateMovement(movement); },
-            'search-result-movimiento': () => { hideModal('global-search-modal'); startMovementForm(id, false); },
+            'search-result-movimiento': (e) => { hideModal('global-search-modal'); startMovementForm(e.target.closest('[data-id]').dataset.id, false); },
             'delete-concepto': async () => { const movsCheck = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').where('conceptoId', '==', id).limit(1).get(); if(!movsCheck.empty) { showToast("Concepto en uso, no se puede borrar.","warning"); return; } showConfirmationModal('¿Seguro que quieres eliminar este concepto?', async () => { await deleteDoc('conceptos', id); hapticFeedback('success'); showToast("Concepto eliminado."); renderConceptosModalList(); }); },
             'delete-cuenta': async () => { const movsCheck = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').where('cuentaId', '==', id).limit(1).get(); if(!movsCheck.empty) { showToast("Cuenta con movimientos, no se puede borrar.","warning",3500); return; } showConfirmationModal('¿Seguro que quieres eliminar esta cuenta?', async () => { await deleteDoc('cuentas', id); hapticFeedback('success'); showToast("Cuenta eliminada."); renderCuentasModalList(); }); },
             'close-modal': () => { const closestOverlay = target.closest('.modal-overlay'); const effectiveModalId = modalId || (closestOverlay ? closestOverlay.id : null); if (effectiveModalId) hideModal(effectiveModalId); },
@@ -7657,12 +7879,18 @@ const attachEventListeners = () => {
         };
         
         if (actions[action]) {
-            actions[action]();
+            actions[action](e);
         }
     });
 
-    // --- RESTO DE EVENT LISTENERS (submit, input, etc.) ---
-    // (Estos se mantienen igual que en tu código original)
+    document.body.addEventListener('toggle', (e) => {
+        const detailsElement = e.target;
+        if (detailsElement.tagName !== 'DETAILS' || !detailsElement.classList.contains('informe-acordeon')) { return; }
+        if (detailsElement.open) {
+            const informeId = detailsElement.id.replace('acordeon-', '');
+            renderInformeDetallado(informeId);
+        }
+    }, true);
     
     document.body.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -7682,38 +7910,67 @@ const attachEventListeners = () => {
         if (handlers[target.id]) { handlers[target.id](); }
     });
     
-    // ... (incluye aquí el resto de tus listeners: 'input', 'blur', 'focusin', 'keydown', etc., sin cambios) ...
-    // Ejemplo:
-    document.body.addEventListener('input', (e) => {
-        const id = e.target.id;
-        if (id) {
-            clearError(id);
-            if (id === 'movimiento-cantidad') validateField('movimiento-cantidad', true);
-            if (id === 'movimiento-descripcion') handleDescriptionInput();
-            if (id === 'movimiento-concepto' || id === 'movimiento-cuenta') validateField(id, true);
-            if (id === 'movimiento-cuenta-origen' || id === 'movimiento-cuenta-destino') { validateField('movimiento-cuenta-origen', true); validateField('movimiento-cuenta-destino', true); }
-            if (id === 'concepto-search-input') { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => renderConceptosModalList(), 200); }
-            if (id === 'cuenta-search-input') { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => renderCuentasModalList(), 200); }
+    document.body.addEventListener('input', (e) => { const id = e.target.id; if (id) { clearError(id); if (id === 'movimiento-cantidad') validateField('movimiento-cantidad', true); if (id === 'movimiento-descripcion') handleDescriptionInput(); if (id === 'movimiento-concepto' || id === 'movimiento-cuenta') validateField(id, true); if (id === 'movimiento-cuenta-origen' || id === 'movimiento-cuenta-destino') { validateField('movimiento-cuenta-origen', true); validateField('movimiento-cuenta-destino', true); } if (id === 'concepto-search-input') { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => renderConceptosModalList(), 200); } if (id === 'cuenta-search-input') { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => renderCuentasModalList(), 200); } } });
+    
+    document.body.addEventListener('blur', (e) => { const id = e.target.id; if (id) { if (id === 'movimiento-cantidad') validateField('movimiento-cantidad'); if (id === 'movimiento-concepto' || id === 'movimiento-cuenta') validateField(id); } }, true);
+    
+    document.body.addEventListener('focusin', (e) => { if (e.target.matches('.pin-input')) { handlePinInputInteraction(); } if (e.target.id === 'movimiento-descripcion') { handleDescriptionInput(); } });
+    
+    document.addEventListener('change', e => {
+        const target = e.target;
+        if (target.id === 'filter-periodo') {
+            const el = select('custom-date-filters');
+            if (el) el.classList.toggle('hidden', target.value !== 'custom');
+            const applyBtnEl = document.querySelector('[data-action="apply-filters"]');
+            const isCustom = target.value === 'custom';
+            if (applyBtnEl) applyBtnEl.classList.toggle('hidden', !isCustom);
+            if (!isCustom) { hapticFeedback('light'); scheduleDashboardUpdate(); }
+        }
+        if (target.id === 'movimiento-recurrente') {
+            select('recurrent-options').classList.toggle('hidden', !target.checked);
+            if(target.checked && !select('recurrent-next-date').value) {
+                select('recurrent-next-date').value = select('movimiento-fecha').value;
+            }
+        }
+        if (target.id === 'recurrent-frequency') {
+            const endDateGroup = select('recurrent-end-date').closest('.form-group');
+            if (endDateGroup) {
+                endDateGroup.classList.toggle('hidden', target.value === 'once');
+            }
         }
     });
-    // Y así con todos los demás...
+    
+    const importFileInput = select('import-file-input'); if (importFileInput) importFileInput.addEventListener('change', (e) => { if(e.target.files) handleJSONFileSelect(e.target.files[0]); });
+    const calculatorGrid = select('calculator-grid'); if (calculatorGrid) calculatorGrid.addEventListener('click', (e) => { const btn = e.target.closest('button'); if(btn && btn.dataset.key) handleCalculatorInput(btn.dataset.key); });
+    const searchInput = select('global-search-input'); if (searchInput) searchInput.addEventListener('input', () => { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => { performGlobalSearch(searchInput.value); }, 250); });
+    document.body.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); e.stopPropagation(); showGlobalSearchModal(); } });
+    const dropZone = select('json-drop-zone'); if (dropZone) { dropZone.addEventListener('click', () => { const el = select('import-file-input'); if (el) el.click() }); dropZone.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('drag-over'); }); dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); }); dropZone.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); const files = e.dataTransfer.files; if (files && files.length > 0) handleJSONFileSelect(files); }); }
+    const suggestionsBox = select('description-suggestions'); if (suggestionsBox) { suggestionsBox.addEventListener('click', (e) => { const suggestionItem = e.target.closest('.suggestion-item'); if (suggestionItem) { const { description, conceptoId, cuentaId } = suggestionItem.dataset; applyDescriptionSuggestion(description, conceptoId, cuentaId); } }); }
+    const fechaDisplayButton = select('movimiento-fecha-display'); const fechaRealInput = select('movimiento-fecha'); if (fechaDisplayButton && fechaRealInput) { fechaDisplayButton.addEventListener('click', () => fechaRealInput.showPicker()); fechaRealInput.addEventListener('input', () => updateDateDisplay(fechaRealInput)); }
+    const diarioContainer = select('diario-page'); if (diarioContainer) { const mainScroller = selectOne('.app-layout__main'); diarioContainer.addEventListener('touchstart', (e) => { if (mainScroller.scrollTop > 0) return; ptrState.startY = e.touches[0].clientY; ptrState.isPulling = true; if (e.target.closest('.transaction-card')) { handleInteractionStart(e); } }, { passive: true }); diarioContainer.addEventListener('touchmove', (e) => { if (!ptrState.isPulling) { handleInteractionMove(e); return; } const currentY = e.touches[0].clientY; ptrState.distance = currentY - ptrState.startY; if (ptrState.distance > 0) { e.preventDefault(); const indicator = select('pull-to-refresh-indicator'); if (indicator) { indicator.classList.add('visible'); const rotation = Math.min(ptrState.distance * 2, 360); indicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`; } } }, { passive: false }); diarioContainer.addEventListener('touchend', async (e) => { const indicator = select('pull-to-refresh-indicator'); if (ptrState.isPulling && ptrState.distance > ptrState.threshold) { hapticFeedback('medium'); if (indicator) { indicator.querySelector('.spinner').style.animation = 'spin 1s linear infinite'; } await loadMoreMovements(true); setTimeout(() => { if (indicator) { indicator.classList.remove('visible'); indicator.querySelector('.spinner').style.animation = ''; } }, 500); } else if (indicator) { indicator.classList.remove('visible'); } ptrState.isPulling = false; ptrState.distance = 0; handleInteractionEnd(e); }); diarioContainer.addEventListener('mousedown', (e) => e.target.closest('.transaction-card') && handleInteractionStart(e)); diarioContainer.addEventListener('mousemove', handleInteractionMove); diarioContainer.addEventListener('mouseup', handleInteractionEnd); diarioContainer.addEventListener('mouseleave', handleInteractionEnd); }
+    const mainScroller = selectOne('.app-layout__main'); if (mainScroller) { let scrollRAF = null; mainScroller.addEventListener('scroll', () => { if (scrollRAF) window.cancelAnimationFrame(scrollRAF); scrollRAF = window.requestAnimationFrame(() => { if (diarioViewMode === 'list' && select('diario-page')?.classList.contains('view--active')) { renderVisibleItems(); } }); }, { passive: true }); }
+    document.body.addEventListener('toggle', (e) => { const detailsElement = e.target; if (detailsElement.tagName !== 'DETAILS' || !detailsElement.classList.contains('informe-acordeon')) { return; } if (detailsElement.open) { const id = detailsElement.id; const informeId = id.replace('acordeon-', ''); const container = select(`informe-content-${informeId}`); if (container && container.querySelector('.form-label')) { renderInformeDetallado(informeId); } } }, true);
+	const frequencySelect = select('recurrent-frequency');
+    if (frequencySelect) {
+        frequencySelect.addEventListener('change', (e) => {
+            select('weekly-day-selector').classList.toggle('hidden', e.target.value !== 'weekly');
+        });
+    }
 
-    // Listener para el scroll de la lista virtual
-    const mainScroller = selectOne('.app-layout__main'); 
-    if (mainScroller) { 
-        let scrollRAF = null; 
-        mainScroller.addEventListener('scroll', () => { 
-            if (scrollRAF) window.cancelAnimationFrame(scrollRAF); 
-            scrollRAF = window.requestAnimationFrame(() => { 
-                if (diarioViewMode === 'list' && select('diario-page')?.classList.contains('view--active')) { 
-                    renderVisibleItems(); 
-                } 
-            }); 
-        }, { passive: true }); 
+    const daySelector = select('weekly-day-selector-buttons');
+    if (daySelector) {
+        daySelector.addEventListener('click', (e) => {
+            const btn = e.target.closest('.day-selector-btn');
+            if (btn) {
+                btn.classList.toggle('active');
+                hapticFeedback('light');
+            }
+        });
     }
 };
-
-// ▲▲▲ FIN DEL BLOQUE A PEGAR ▲▲▲
+// =================================================================
+// === FIN: BLOQUE DE CÓDIGO CORREGIDO PARA REEMPLAZAR           ===
+// =================================================================
            
         const showImportJSONWizard = () => {
             jsonWizardState = { file: null, data: null, preview: { counts: {}, meta: {} } };
