@@ -7853,40 +7853,44 @@ if (ptrElement && mainScrollerPtr) {
     document.addEventListener('change', e => {
         const target = e.target;
         
-        // --- INICIO DEL BLOQUE MODIFICADO ---
+        // --- INICIO DEL NUEVO BLOQUE PROFESIONAL Y SEGURO ---
 
-        if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
-            
-            // --> ESTA ES LA GUARDIA DE CONTEXTO <--
-            // Comprueba si la página de inicio ('inicio-page') está activa. Si no, no hace nada.
-            const inicioPage = select('inicio-page');
-            if (!inicioPage || !inicioPage.classList.contains('view--active')) {
-                return; // Aborta la ejecución si no estamos en el dashboard.
-            }
+// Unificamos la detección de cualquier cambio en los filtros del dashboard
+if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
+    
+    // --> ¡LA LÍNEA MÁS IMPORTANTE! ESTA ES LA GUARDIA DE CONTEXTO <--
+    // Comprueba si la página de inicio ('inicio-page') está activa. Si no, no hace nada.
+    const inicioPage = select('inicio-page');
+    if (!inicioPage || !inicioPage.classList.contains('view--active')) {
+        return; // Aborta la ejecución si no estamos en el dashboard.
+    }
 
-            // Si es el selector de periodo, gestiona la visibilidad y actualiza si no es 'custom'
-            if (target.id === 'filter-periodo') {
-                const customDateFilters = select('custom-date-filters');
-                if (customDateFilters) {
-                    customDateFilters.classList.toggle('hidden', target.value !== 'custom');
-                }
-                if (target.value !== 'custom') {
-                    hapticFeedback('light');
-                    scheduleDashboardUpdate();
-                }
-            }
-
-            // Si es uno de los campos de fecha, comprueba si ambos están rellenos para actualizar
-            if (target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
-                const startDate = select('filter-fecha-inicio').value;
-                const endDate = select('filter-fecha-fin').value;
-
-                if (startDate && endDate) {
-                    hapticFeedback('light');
-                    scheduleDashboardUpdate();
-                }
-            }
+    // Si es el selector de periodo, gestiona la visibilidad y actualiza si no es 'custom'
+    if (target.id === 'filter-periodo') {
+        const customDateFilters = select('custom-date-filters');
+        if (customDateFilters) {
+            customDateFilters.classList.toggle('hidden', target.value !== 'custom');
         }
+        if (target.value !== 'custom') {
+            hapticFeedback('light');
+            scheduleDashboardUpdate();
+        }
+    }
+
+    // Si es uno de los campos de fecha, comprueba si ambos están rellenos para actualizar
+    if (target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
+        const startDateInput = select('filter-fecha-inicio');
+        const endDateInput = select('filter-fecha-fin');
+        
+        // Comprobación adicional para asegurarse de que los inputs existen antes de leer su valor
+        if (startDateInput && endDateInput && startDateInput.value && endDateInput.value) {
+            hapticFeedback('light');
+            scheduleDashboardUpdate();
+        }
+    }
+}
+
+// --- FIN DEL NUEVO BLOQUE PROFESIONAL Y SEGURO ---
 
          if (target.id === 'movimiento-recurrente') {
             select('recurrent-options').classList.toggle('hidden', !target.checked);
