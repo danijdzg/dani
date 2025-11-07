@@ -7474,61 +7474,7 @@ const enableHaptics = () => {
     document.body.addEventListener('touchstart', enableHaptics, { once: true, passive: true });
     document.body.addEventListener('click', enableHaptics, { once: true });
     // ▲▲▲ FIN DEL BLOQUE A AÑADIR ▲▲▲
-
-	let longPressTimer;	 
-
-const addBtn = select('bottom-nav-add-btn');
-const quickMenu = select('quick-add-menu');
-
-if (addBtn && quickMenu) {
-    addBtn.addEventListener('mousedown', startLongPress);
-    addBtn.addEventListener('touchstart', startLongPress); // ¡CORRECCIÓN APLICADA AQUÍ!
-    addBtn.addEventListener('mouseup', endPress);
-    addBtn.addEventListener('touchend', endPress);
-    addBtn.addEventListener('mouseleave', cancelPress);
 	
-    document.addEventListener('click', (e) => {
-        if (!quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
-            quickMenu.classList.remove('visible');
-        }
-    });
-}
-
-function startLongPress(e) {
-    // Inicia el temporizador para la pulsación larga.
-    e.preventDefault();
-    longPressTimer = setTimeout(() => {
-        hapticFeedback('medium');
-        quickMenu.classList.add('visible');
-        longPressTimer = null; // Marcamos que la pulsación larga ya se ejecutó.
-    }, 400);
-}
-
-function endPress() {
-    // Se ejecuta al soltar el botón (mouseup, touchend).
-    if (longPressTimer) {
-        // Si el temporizador todavía existe, significa que fue un clic corto.
-        clearTimeout(longPressTimer);
-        startMovementForm(); // Abrimos el formulario.
-    }
-    // Si longPressTimer es null, la pulsación larga ya se activó, así que no hacemos nada.
-}
-
-function cancelPress() {
-    // Se ejecuta si el ratón sale del botón. Solo cancela la acción.
-    clearTimeout(longPressTimer);
-}
-
-document.body.addEventListener('click', (e) => {
-	const quickAddAction = e.target.closest('[data-action="quick-add-type"]');
-    if(quickAddAction) {
-        const type = quickAddAction.dataset.type;
-        quickMenu.classList.remove('visible');
-        startMovementForm(); // Abre el formulario genérico
-        setTimeout(() => setMovimientoFormType(type), 50); // Lo ajusta al tipo seleccionado
-    }
-});
-
 	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
 const mainScrollerPtr = selectOne('.app-layout__main');
 const ptrIndicator = document.createElement('div');
