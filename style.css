@@ -1518,7 +1518,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     box-shadow: var(--shadow-md);
     
     cursor: pointer;
-    transition: all 0.2s ease-in-out; transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease-in-out;
 }
 
 #bottom-nav-add-btn:hover {
@@ -2046,20 +2046,3 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 }
 /* === FIN: Estilos para Navegación por Pestañas === */
 
-#quick-add-menu.visible .quick-add-item {
-    opacity: 0;
-    transform: translateY(15px);
-    animation: pop-up 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-/* Animación escalonada con retraso para cada ítem */
-#quick-add-menu.visible .quick-add-item:nth-child(1) { animation-delay: 0.05s; }
-#quick-add-menu.visible .quick-add-item:nth-child(2) { animation-delay: 0.1s; }
-#quick-add-menu.visible .quick-add-item:nth-child(3) { animation-delay: 0.15s; }
-
-@keyframes pop-up {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}

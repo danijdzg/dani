@@ -7477,75 +7477,228 @@ function createCustomSelect(selectElement) {
     selectElement.addEventListener('change', populateOptions);
 }
 
-// =================================================================
-// === INICIO: REEMPLAZO COMPLETO DE LA FUNCIÓN attachEventListeners ===
-// =================================================================
 
-const attachEventListeners = () => {
-    // Listener para habilitar vibración con la primera interacción del usuario
-    const enableHaptics = () => {
+// =================================================================
+// === FIN DEL BLOQUE DEFINITIVO                                 ===
+// =================================================================
+ const attachEventListeners = () => {
+const enableHaptics = () => {
         userHasInteracted = true;
         document.body.removeEventListener('touchstart', enableHaptics, { once: true });
         document.body.removeEventListener('click', enableHaptics, { once: true });
     };
     document.body.addEventListener('touchstart', enableHaptics, { once: true, passive: true });
     document.body.addEventListener('click', enableHaptics, { once: true });
+    // ▲▲▲ FIN DEL BLOQUE A AÑADIR ▲▲▲
 
-    // -----------------------------------------------------------------
-    // --- GESTOR DE CLICS UNIFICADO PARA TODA LA APLICACIÓN ---
-    // -----------------------------------------------------------------
+	let longPressTimer;	 
+
+const addBtn = select('bottom-nav-add-btn');
+const quickMenu = select('quick-add-menu');
+
+if (addBtn && quickMenu) {
+    addBtn.addEventListener('mousedown', startLongPress);
+    addBtn.addEventListener('touchstart', startLongPress); // ¡CORRECCIÓN APLICADA AQUÍ!
+    addBtn.addEventListener('mouseup', endPress);
+    addBtn.addEventListener('touchend', endPress);
+    addBtn.addEventListener('mouseleave', cancelPress);
+	
+    document.addEventListener('click', (e) => {
+        if (!quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
+            quickMenu.classList.remove('visible');
+        }
+    });
+}
+
+function startLongPress(e) {
+    // Inicia el temporizador para la pulsación larga.
+    e.preventDefault();
+    longPressTimer = setTimeout(() => {
+        hapticFeedback('medium');
+        quickMenu.classList.add('visible');
+        longPressTimer = null; // Marcamos que la pulsación larga ya se ejecutó.
+    }, 400);
+}
+
+function endPress() {
+    // Se ejecuta al soltar el botón (mouseup, touchend).
+    if (longPressTimer) {
+        // Si el temporizador todavía existe, significa que fue un clic corto.
+        clearTimeout(longPressTimer);
+        startMovementForm(); // Abrimos el formulario.
+    }
+    // Si longPressTimer es null, la pulsación larga ya se activó, así que no hacemos nada.
+}
+
+function cancelPress() {
+    // Se ejecuta si el ratón sale del botón. Solo cancela la acción.
+    clearTimeout(longPressTimer);
+}
+
+document.body.addEventListener('click', (e) => {
+	const quickAddAction = e.target.closest('[data-action="quick-add-type"]');
+    if(quickAddAction) {
+        const type = quickAddAction.dataset.type;
+        quickMenu.classList.remove('visible');
+        startMovementForm(); // Abre el formulario genérico
+        setTimeout(() => setMovimientoFormType(type), 50); // Lo ajusta al tipo seleccionado
+    }
+});
+
+	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
+const mainScrollerPtr = selectOne('.app-layout__main');
+const ptrIndicator = document.createElement('div');
+ptrIndicator.id = 'pull-to-refresh-indicator';
+ptrIndicator.innerHTML = '<div class="spinner"></div>';
+if (ptrElement) ptrElement.prepend(ptrIndicator);
+
+let ptrState = {
+    startY: 0,
+    isPulling: false,
+    distance: 0,
+    threshold: 80 // Distancia necesaria para activar
+};
+
+if (ptrElement && mainScrollerPtr) {
+    ptrElement.addEventListener('touchstart', (e) => {
+        if (mainScrollerPtr.scrollTop === 0) { // Solo si estamos arriba del todo
+            ptrState.startY = e.touches[0].clientY;
+            ptrState.isPulling = true;
+        }
+    }, { passive: true });
+
+    ptrElement.addEventListener('touchmove', (e) => {
+        if (!ptrState.isPulling) return;
+        
+        const currentY = e.touches[0].clientY;
+        ptrState.distance = currentY - ptrState.startY;
+
+        if (ptrState.distance > 0) {
+            e.preventDefault(); // Evita el scroll del navegador
+            ptrIndicator.classList.add('visible');
+            const rotation = Math.min(ptrState.distance * 2.5, 360);
+            ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
+            ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
+        }
+    }, { passive: false });
+
+    ptrElement.addEventListener('touchend', async () => {
+        if (ptrState.isPulling && ptrState.distance > ptrState.threshold) {
+            hapticFeedback('medium');
+            ptrIndicator.querySelector('.spinner').style.transform = '';
+            ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
+            
+            // Acción de refresco: Recargamos los movimientos del diario
+            await renderDiarioPage();
+
+            // Ocultar indicador después de refrescar
+            setTimeout(() => {
+                ptrIndicator.classList.remove('visible');
+                ptrIndicator.querySelector('.spinner').style.animation = '';
+            }, 500);
+        } else {
+            ptrIndicator.classList.remove('visible');
+        }
+
+        ptrState.isPulling = false;
+        ptrState.distance = 0;
+    });
+}
+
+	
+    const cantidadInput = document.getElementById("movimiento-cantidad");
+    if (cantidadInput) {
+        const cantidadError = document.getElementById("movimiento-cantidad-error");
+        cantidadInput.addEventListener("input", () => {
+            let valor = cantidadInput.value.trim();
+            valor = valor.replace(",", ".");
+            const regex = /^\d+(.\d{0,2})?$/;
+            if (valor === "" || !regex.test(valor)) {
+                cantidadError.textContent = "Introduce un número positivo (ej: 2,50 o 15.00)";
+                cantidadInput.classList.add("form-input--error");
+            } else {
+                cantidadError.textContent = "";
+                cantidadInput.classList.remove("form--error");
+            }
+        });
+        const descripcionInput = document.getElementById("movimiento-descripcion");
+        const cuentaSelect = document.getElementById("movimiento-cuenta");
+        const saveBtn = document.getElementById("save-movimiento-btn");
+        document.addEventListener("show-modal", (e) => {
+            if (e.detail.modalId === "movimiento-modal") {
+                setTimeout(() => cantidadInput.focus(), 100);
+            }
+        });
+        cantidadInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                descripcionInput.focus();
+            }
+        });
+        descripcionInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                cuentaSelect.focus();
+            }
+        });
+        cuentaSelect.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                saveBtn.click();
+            }
+        });
+    }
+
+    const amountInputForFormatting = select('movimiento-cantidad');
+    if (amountInputForFormatting) {
+        amountInputForFormatting.addEventListener('focus', (e) => {
+            const input = e.target;
+            if (input.value === '') return;
+            const rawValue = input.value.replace(/\./g, '');
+            input.value = rawValue;
+        });
+        amountInputForFormatting.addEventListener('blur', (e) => {
+            const input = e.target;
+            if (input.value === '') return;
+            const numericValue = parseCurrencyString(input.value);
+            input.value = formatAsCurrencyInput(numericValue);
+        });
+    }
+
+    window.addEventListener('popstate', (event) => {
+        const activeModal = document.querySelector('.modal-overlay--active');
+        if (activeModal) {
+            hideModal(activeModal.id);
+            history.pushState({ page: window.history.state?.page }, '', `#${window.history.state?.page || 'panel-page'}`);
+            return;
+        }
+        const pageToNavigate = event.state ? event.state.page : PAGE_IDS.INICIO;
+        if (pageToNavigate) {
+            navigateTo(pageToNavigate, false);
+        }
+    });
+
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
-        const actionTarget = target.closest('[data-action]');
 
-        const quickMenu = select('quick-add-menu');
-        const addBtn = select('bottom-nav-add-btn');
-
-        // Lógica para cerrar el menú si se hace clic FUERA de él.
-        if (quickMenu && quickMenu.classList.contains('visible') && !target.closest('#bottom-nav-add-btn') && !target.closest('#quick-add-menu')) {
-            quickMenu.classList.remove('visible');
-            if (addBtn) {
-                addBtn.style.transform = 'rotate(0deg)';
-                const iconEl = addBtn.querySelector('.material-icons');
-                if (iconEl) iconEl.textContent = 'add';
-            }
-        }
-        
-        // Cierra los dropdowns personalizados si se hace clic fuera
         if (!target.closest('.custom-select-wrapper')) {
             closeAllCustomSelects(null);
         }
 
-        // Si el elemento clicado no tiene una acción definida, detenemos aquí.
+        if (target.matches('.input-amount-calculator')) {
+            e.preventDefault();
+            showCalculator(target);
+            return;
+        }
+        const actionTarget = target.closest('[data-action]');
         if (!actionTarget) return;
 
-        // Extraemos los datos de la acción
-        const { action, id, page, type, modalId } = actionTarget.dataset;
+        const { action, id, page, type, modalId, reportId } = actionTarget.dataset;
         const btn = actionTarget.closest('button');
-
-        // "Cerebro" central que mapea cada data-action a su función
+        
         const actions = {
-            'open-main-add-modal': () => {
-                hapticFeedback('medium');
-                if (quickMenu && addBtn) {
-                    const iconEl = addBtn.querySelector('.material-icons');
-                    const isVisible = quickMenu.classList.toggle('visible');
-                    addBtn.style.transform = isVisible ? 'rotate(135deg)' : 'rotate(0deg)';
-                    if (iconEl) iconEl.textContent = isVisible ? 'close' : 'add';
-                }
-            },
-            'quick-add-type': () => {
-                if (quickMenu) quickMenu.classList.remove('visible');
-                if (addBtn) {
-                    addBtn.style.transform = 'rotate(0deg)';
-                    const iconEl = addBtn.querySelector('.material-icons');
-                    if (iconEl) iconEl.textContent = 'add';
-                }
-                startMovementForm();
-                setTimeout(() => setMovimientoFormType(type), 50);
-            },
-            'swipe-show-irr-history': () => handleShowIrrHistory(type),
-            'show-main-menu': () => {
+			'swipe-show-irr-history': () => handleShowIrrHistory(type),
+			'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
                 if (!menu) return;
                 menu.classList.toggle('popover-menu--visible');
@@ -7561,6 +7714,7 @@ const attachEventListeners = () => {
                     }, 0);
                 }
             },
+            'open-main-add-modal': () => startMovementForm(),
             'export-filtered-csv': () => handleExportFilteredCsv(btn),
             'show-diario-filters': showDiarioFiltersModal,
             'clear-diario-filters': clearDiarioFilters,
@@ -7575,13 +7729,14 @@ const attachEventListeners = () => {
                 amountInput.value = newValue.toLocaleString('es-ES', { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 updateAmountTypeUI(!isCurrentlyGasto);
             },
+			
             'context-edit': () => { hideModal('generic-modal'); startMovementForm(id, false); },
             'context-duplicate': () => { hideModal('generic-modal'); const movement = db.movimientos.find(m => m.id === id); if(movement) handleDuplicateMovement(movement); },
             'context-delete': () => { hideModal('generic-modal'); showConfirmationModal('¿Seguro que quieres eliminar este movimiento?', async () => { await deleteMovementAndAdjustBalance(id, false); }); },
             'show-kpi-drilldown': () => handleKpiDrilldown(actionTarget),
             'edit-movement-from-modal': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; hideModal('generic-modal'); startMovementForm(movementId, false); },
             'edit-movement-from-list': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; startMovementForm(movementId, false); },
-            'edit-recurrente': () => { hideModal('generic-modal'); startMovementForm(id, true); },
+			'edit-recurrente': () => { hideModal('generic-modal'); startMovementForm(id, true); },
             'view-account-details': (e) => { const accountId = e.target.closest('[data-id]').dataset.id; showAccountMovementsModal(accountId); },
             'apply-description-suggestion': (e) => {
                 const suggestionItem = e.target.closest('.suggestion-item');
@@ -7617,11 +7772,11 @@ const attachEventListeners = () => {
             },
             'toggle-investment-type-filter': () => handleToggleInvestmentTypeFilter(type),
             'toggle-account-type-filter': () => { hapticFeedback('light'); if (deselectedAccountTypesFilter.has(type)) { deselectedAccountTypesFilter.delete(type); } else { deselectedAccountTypesFilter.add(type); } renderPatrimonioOverviewWidget('patrimonio-overview-container'); },
-             'switch-estrategia-tab': () => {
-                const tabName = actionTarget.dataset.tab;
-                showEstrategiaTab(tabName);
-            },
-            'show-help-topic': () => {
+			 'switch-estrategia-tab': () => {
+        const tabName = actionTarget.dataset.tab;
+        showEstrategiaTab(tabName);
+    },
+			'show-help-topic': () => {
                 const topic = actionTarget.dataset.topic;
                 if(topic) {
                     let title, content;
@@ -7648,21 +7803,57 @@ const attachEventListeners = () => {
             'show-login': (e) => { e.preventDefault(); const title = select('login-title'); const mainButton = document.querySelector('#login-form button[data-action="register"]'); const secondaryAction = document.querySelector('.login-view__secondary-action'); if (mainButton.dataset.action === 'register') { title.textContent = 'Bienvenido de nuevo'; mainButton.dataset.action = 'login'; mainButton.textContent = 'Iniciar Sesión'; secondaryAction.innerHTML = `<span>¿No tienes una cuenta?</span> <a href="#" class="login-view__link" data-action="show-register">Regístrate aquí</a>`; } },
             'import-csv': showCsvImportWizard,
             'toggle-ledger': async () => {
-                hapticFeedback('medium');
-                isOffBalanceMode = !isOffBalanceMode;
-                document.body.dataset.ledgerMode = isOffBalanceMode ? 'B' : 'A';
-                showToast(`Mostrando Contabilidad ${isOffBalanceMode ? 'B' : 'A'}.`, 'info');
-                const activePageEl = document.querySelector('.view--active');
-                if (!activePageEl) return;
-                const ledgerBtn = select('ledger-toggle-btn');
-                if (ledgerBtn) { ledgerBtn.textContent = isOffBalanceMode ? 'B' : 'A'; }
-                switch (activePageEl.id) {
-                    case PAGE_IDS.INICIO: scheduleDashboardUpdate(); break;
-                    case PAGE_IDS.DIARIO: renderDiarioPage(); break;
-                    case PAGE_IDS.ESTRATEGIA: renderEstrategiaActivos(); break;
-                    default: navigateTo(activePageEl.id, true); break;
-                }
-            },
+            hapticFeedback('medium');
+            
+            // 1. Cambiamos el estado global (esto no cambia)
+            isOffBalanceMode = !isOffBalanceMode;
+            document.body.dataset.ledgerMode = isOffBalanceMode ? 'B' : 'A';
+            showToast(`Mostrando Contabilidad ${isOffBalanceMode ? 'B' : 'A'}.`, 'info');
+
+            // 2. Obtenemos la página que está activa en este momento
+            const activePageEl = document.querySelector('.view--active');
+            if (!activePageEl) return;
+
+            // 3. Actualizamos manualmente el texto del botón A/B en la barra superior
+            const ledgerBtn = select('ledger-toggle-btn');
+            if (ledgerBtn) {
+                ledgerBtn.textContent = isOffBalanceMode ? 'B' : 'A';
+            }
+            
+            // 4. LÓGICA INTELIGENTE: En lugar de una recarga completa, ejecutamos
+            //    la acción de refresco más ligera posible para la página actual.
+            switch (activePageEl.id) {
+                case PAGE_IDS.INICIO:
+                    // El Panel necesita recalcular los KPIs, llamamos a su función de actualización.
+                    // Sigue siendo mucho más rápido que un navigateTo().
+                    scheduleDashboardUpdate();
+                    break;
+                    
+                case PAGE_IDS.DIARIO:
+                    // ¡LA OPTIMIZACIÓN CLAVE!
+                    // Simplemente le decimos a la lista virtual que se redibuje.
+                    // Esta función ya sabe cómo filtrar por la contabilidad activa (A o B)
+                    // y lo hace sobre los datos que YA ESTÁN EN MEMORIA, sin llamar a la base de datos.
+                    // El cambio es instantáneo.
+                    updateVirtualListUI();
+                    break;
+
+                case PAGE_IDS.INVERSIONES:
+                    // La vista de Inversiones necesita redibujar sus gráficos y listas.
+                    await renderInversionesView();
+                    break;
+
+                case PAGE_IDS.PLANIFICAR:
+                    // La vista de Planificar también necesita recalcular sus proyecciones.
+                    await renderEstrategiaPlanificacion();
+                    break;
+                
+                // La página de Ajustes no depende de la contabilidad, así que no hacemos nada.
+                case PAGE_IDS.AJUSTES:
+                default:
+                    break;
+            }
+        },
             'toggle-off-balance': async () => { const checkbox = target.closest('input[type="checkbox"]'); if (!checkbox) return; hapticFeedback('light'); await saveDoc('cuentas', checkbox.dataset.id, { offBalance: checkbox.checked }); },
             'apply-filters': () => { hapticFeedback('light'); scheduleDashboardUpdate(); },
             'delete-movement-from-modal': () => { const isRecurrent = (actionTarget.dataset.isRecurrent === 'true'); const idToDelete = select('movimiento-id').value; const message = isRecurrent ? '¿Seguro que quieres eliminar esta operación recurrente?' : '¿Seguro que quieres eliminar este movimiento?'; showConfirmationModal(message, async () => { hideModal('movimiento-modal'); await deleteMovementAndAdjustBalance(idToDelete, isRecurrent); }); },
@@ -7688,16 +7879,24 @@ const attachEventListeners = () => {
             'toggle-traspaso-accounts-filter': () => populateTraspasoDropdowns(), 'set-pin': async () => { const pin = prompt("Introduce tu nuevo PIN de 4 dígitos. Déjalo en blanco para eliminarlo."); if (pin === null) return; if (pin === "") { localStorage.removeItem('pinUserHash'); localStorage.removeItem('pinUserEmail'); showToast('PIN de acceso rápido eliminado.', 'info'); return; } if (!/^\d{4}$/.test(pin)) { showToast('El PIN debe contener exactamente 4 dígitos numéricos.', 'danger'); return; } const pinConfirm = prompt("Confirma tu nuevo PIN de 4 dígitos."); if (pin !== pinConfirm) { showToast('Los PINs no coinciden. Inténtalo de nuevo.', 'danger'); return; } const pinHash = await hashPin(pin); localStorage.setItem('pinUserHash', pinHash); localStorage.setItem('pinUserEmail', currentUser.email); hapticFeedback('success'); showToast('¡PIN de acceso rápido configurado con éxito!', 'info'); },
             'edit-recurrente-from-pending': () => startMovementForm(id, true),
             'confirm-recurrent': () => handleConfirmRecurrent(id, btn), 'skip-recurrent': () => handleSkipRecurrent(id, btn),
-            'show-informe-builder': showInformeBuilderModal, 'save-informe': () => handleSaveInforme(btn),
+			'show-informe-builder': showInformeBuilderModal, 'save-informe': () => handleSaveInforme(btn),
         };
-
-        // Ejecutamos la acción correspondiente si existe en nuestro "cerebro"
+        
         if (actions[action]) {
             actions[action](e);
         }
     });
 
-     document.body.addEventListener('submit', (e) => {
+    document.body.addEventListener('toggle', (e) => {
+        const detailsElement = e.target;
+        if (detailsElement.tagName !== 'DETAILS' || !detailsElement.classList.contains('informe-acordeon')) { return; }
+        if (detailsElement.open) {
+            const informeId = detailsElement.id.replace('acordeon-', '');
+            renderInformeDetallado(informeId);
+        }
+    }, true);
+    
+    document.body.addEventListener('submit', (e) => {
         e.preventDefault();
         const target = e.target;
         const submitter = e.submitter;
@@ -7744,193 +7943,6 @@ const attachEventListeners = () => {
             }
         }
     });
-    const ptrElement = select('diario-page');
-    const mainScrollerPtr = selectOne('.app-layout__main');
-    const ptrIndicator = document.createElement('div');
-    ptrIndicator.id = 'pull-to-refresh-indicator';
-    ptrIndicator.innerHTML = '<div class="spinner"></div>';
-    if (ptrElement) ptrElement.prepend(ptrIndicator);
-
-    if (ptrElement && mainScrollerPtr) {
-        ptrElement.addEventListener('touchstart', (e) => {
-            if (mainScrollerPtr.scrollTop === 0) {
-                ptrState.startY = e.touches[0].clientY;
-                ptrState.isPulling = true;
-            }
-        }, { passive: true });
-
-        ptrElement.addEventListener('touchmove', (e) => {
-            if (!ptrState.isPulling) return;
-            const currentY = e.touches[0].clientY;
-            ptrState.distance = currentY - ptrState.startY;
-            if (ptrState.distance > 0) {
-                e.preventDefault();
-                ptrIndicator.classList.add('visible');
-                const rotation = Math.min(ptrState.distance * 2.5, 360);
-                ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
-                ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
-            }
-        }, { passive: false });
-
-        ptrElement.addEventListener('touchend', async () => {
-            if (ptrState.isPulling && ptrState.distance > ptrState.threshold) {
-                hapticFeedback('medium');
-                ptrIndicator.querySelector('.spinner').style.transform = '';
-                ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
-                await renderDiarioPage();
-                setTimeout(() => {
-                    ptrIndicator.classList.remove('visible');
-                    ptrIndicator.querySelector('.spinner').style.animation = '';
-                }, 500);
-            } else {
-                ptrIndicator.classList.remove('visible');
-            }
-            ptrState.isPulling = false;
-            ptrState.distance = 0;
-        });
-    }
-
-    document.body.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const target = e.target;
-        const submitter = e.submitter;
-        const handlers = {
-            'login-form': () => { const action = submitter ? submitter.dataset.action : 'login'; if (action === 'login') { handleLogin(submitter); } else if (action === 'register') { handleRegister(submitter); } },
-            'pin-form': handlePinSubmit,
-            'form-movimiento': () => handleSaveMovement(target, submitter),
-            'add-concepto-form': () => handleAddConcept(submitter),
-            'add-cuenta-form': () => handleAddAccount(submitter),
-            'informe-cuenta-form': () => handleGenerateInformeCuenta(target, submitter),
-            'manage-investment-accounts-form': () => handleSaveInvestmentAccounts(target, submitter),
-            'form-valoracion': () => handleSaveValoracion(target, submitter),
-            'diario-filters-form': applyDiarioFilters
-        };
-        if (handlers[target.id]) { handlers[target.id](); }
-    });
-    
-    document.body.addEventListener('input', (e) => { 
-        const id = e.target.id; 
-        if (!id) return;
-        clearError(id); 
-        if (id === 'movimiento-cantidad') validateField('movimiento-cantidad', true);
-        if (id === 'movimiento-descripcion') handleDescriptionInput();
-        if (id === 'movimiento-concepto' || id === 'movimiento-cuenta' || id === 'movimiento-cuenta-origen' || id === 'movimiento-cuenta-destino') validateField(id, true);
-        if (id === 'concepto-search-input') { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => renderConceptosModalList(), 200); }
-        if (id === 'cuenta-search-input') { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => renderCuentasModalList(), 200); }
-    });
-    
-    document.body.addEventListener('blur', (e) => { 
-        const id = e.target.id; 
-        if (id) { 
-            if (id === 'movimiento-cantidad') validateField('movimiento-cantidad');
-            if (id === 'movimiento-concepto' || id === 'movimiento-cuenta') validateField(id); 
-        } 
-    }, true);
-    
-    document.body.addEventListener('focusin', (e) => { 
-        if (e.target.matches('.pin-input')) { handlePinInputInteraction(); } 
-        if (e.target.id === 'movimiento-descripcion') { handleDescriptionInput(); } 
-    });
-    
-    document.addEventListener('change', e => {
-        const target = e.target;
-        if (target.id === 'filter-periodo') {
-            const el = select('custom-date-filters');
-            if (el) el.classList.toggle('hidden', target.value !== 'custom');
-            const applyBtnEl = document.querySelector('[data-action="apply-filters"]');
-            const isCustom = target.value === 'custom';
-            if (applyBtnEl) applyBtnEl.classList.toggle('hidden', !isCustom);
-            if (!isCustom) { hapticFeedback('light'); scheduleDashboardUpdate(); }
-        }
-        if (target.id === 'movimiento-recurrente') {
-            select('recurrent-options').classList.toggle('hidden', !target.checked);
-            if(target.checked && !select('recurrent-next-date').value) {
-                select('recurrent-next-date').value = select('movimiento-fecha').value;
-            }
-        }
-        if (target.id === 'recurrent-frequency') {
-            const isWeekly = target.value === 'weekly';
-            select('weekly-day-selector').classList.toggle('hidden', !isWeekly);
-        }
-    });
-    
-    const calculatorGrid = select('calculator-grid'); 
-    if (calculatorGrid) calculatorGrid.addEventListener('click', (e) => { const btn = e.target.closest('button'); if(btn && btn.dataset.key) handleCalculatorInput(btn.dataset.key); });
-    
-    const searchInput = select('global-search-input'); 
-    if (searchInput) searchInput.addEventListener('input', () => { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => { performGlobalSearch(searchInput.value); }, 250); });
-    
-    document.body.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); e.stopPropagation(); showGlobalSearchModal(); } });
-    
-    const dropZone = select('json-drop-zone'); 
-    if (dropZone) { 
-        dropZone.addEventListener('click', () => { const el = select('import-file-input'); if (el) el.click() }); 
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('drag-over'); }); 
-        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); }); 
-        dropZone.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); const files = e.dataTransfer.files; if (files && files.length > 0) handleJSONFileSelect(files); }); 
-    }
-
-    const suggestionsBox = select('description-suggestions'); 
-    if (suggestionsBox) { 
-        suggestionsBox.addEventListener('click', (e) => { 
-            const suggestionItem = e.target.closest('.suggestion-item'); 
-            if (suggestionItem) { 
-                applyDescriptionSuggestion(suggestionItem); 
-            } 
-        }); 
-    }
-    
-    const fechaDisplayButton = select('movimiento-fecha-display'); 
-    const fechaRealInput = select('movimiento-fecha'); 
-    if (fechaDisplayButton && fechaRealInput) { 
-        fechaDisplayButton.addEventListener('click', () => fechaRealInput.showPicker()); 
-        fechaRealInput.addEventListener('input', () => updateDateDisplay(fechaRealInput)); 
-    }
-
-    const diarioContainer = select('diario-page'); 
-    if (diarioContainer) { 
-        diarioContainer.addEventListener('mousedown', (e) => e.target.closest('.transaction-card') && handleInteractionStart(e)); 
-        diarioContainer.addEventListener('mousemove', handleInteractionMove); 
-        diarioContainer.addEventListener('mouseup', handleInteractionEnd); 
-        diarioContainer.addEventListener('mouseleave', handleInteractionEnd); 
-        diarioContainer.addEventListener('touchstart', (e) => e.target.closest('.transaction-card') && handleInteractionStart(e), { passive: true });
-        diarioContainer.addEventListener('touchmove', handleInteractionMove, { passive: false });
-        diarioContainer.addEventListener('touchend', handleInteractionEnd);
-    }
-    
-    const mainScroller = selectOne('.app-layout__main'); 
-    if (mainScroller) { 
-        let scrollRAF = null; 
-        mainScroller.addEventListener('scroll', () => { 
-            if (scrollRAF) window.cancelAnimationFrame(scrollRAF); 
-            scrollRAF = window.requestAnimationFrame(() => { 
-                if (diarioViewMode === 'list' && select('diario-page')?.classList.contains('view--active')) { 
-                    renderVisibleItems(); 
-                } 
-            }); 
-        }, { passive: true }); 
-    }
-
-    window.addEventListener('popstate', (event) => {
-        const activeModal = document.querySelector('.modal-overlay--active');
-        if (activeModal) {
-            hideModal(activeModal.id);
-            history.pushState({ page: window.history.state?.page }, '', `#${window.history.state?.page || 'panel-page'}`);
-            return;
-        }
-        const pageToNavigate = event.state ? event.state.page : PAGE_IDS.INICIO;
-        if (pageToNavigate) {
-            navigateTo(pageToNavigate, false);
-        }
-    });
-};
-
-// =================================================================
-// === FIN: REEMPLAZO COMPLETO DE LA FUNCIÓN attachEventListeners ===
-// =================================================================
-
-    
-   
     
     const importFileInput = select('import-file-input'); if (importFileInput) importFileInput.addEventListener('change', (e) => { if(e.target.files) handleJSONFileSelect(e.target.files[0]); });
     const calculatorGrid = select('calculator-grid'); if (calculatorGrid) calculatorGrid.addEventListener('click', (e) => { const btn = e.target.closest('button'); if(btn && btn.dataset.key) handleCalculatorInput(btn.dataset.key); });
@@ -7942,7 +7954,7 @@ const attachEventListeners = () => {
     const diarioContainer = select('diario-page'); if (diarioContainer) { const mainScroller = selectOne('.app-layout__main'); diarioContainer.addEventListener('touchstart', (e) => { if (mainScroller.scrollTop > 0) return; ptrState.startY = e.touches[0].clientY; ptrState.isPulling = true; if (e.target.closest('.transaction-card')) { handleInteractionStart(e); } }, { passive: true }); diarioContainer.addEventListener('touchmove', (e) => { if (!ptrState.isPulling) { handleInteractionMove(e); return; } const currentY = e.touches[0].clientY; ptrState.distance = currentY - ptrState.startY; if (ptrState.distance > 0) { e.preventDefault(); const indicator = select('pull-to-refresh-indicator'); if (indicator) { indicator.classList.add('visible'); const rotation = Math.min(ptrState.distance * 2, 360); indicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`; } } }, { passive: false }); diarioContainer.addEventListener('touchend', async (e) => { const indicator = select('pull-to-refresh-indicator'); if (ptrState.isPulling && ptrState.distance > ptrState.threshold) { hapticFeedback('medium'); if (indicator) { indicator.querySelector('.spinner').style.animation = 'spin 1s linear infinite'; } await loadMoreMovements(true); setTimeout(() => { if (indicator) { indicator.classList.remove('visible'); indicator.querySelector('.spinner').style.animation = ''; } }, 500); } else if (indicator) { indicator.classList.remove('visible'); } ptrState.isPulling = false; ptrState.distance = 0; handleInteractionEnd(e); }); diarioContainer.addEventListener('mousedown', (e) => e.target.closest('.transaction-card') && handleInteractionStart(e)); diarioContainer.addEventListener('mousemove', handleInteractionMove); diarioContainer.addEventListener('mouseup', handleInteractionEnd); diarioContainer.addEventListener('mouseleave', handleInteractionEnd); }
     const mainScroller = selectOne('.app-layout__main'); if (mainScroller) { let scrollRAF = null; mainScroller.addEventListener('scroll', () => { if (scrollRAF) window.cancelAnimationFrame(scrollRAF); scrollRAF = window.requestAnimationFrame(() => { if (diarioViewMode === 'list' && select('diario-page')?.classList.contains('view--active')) { renderVisibleItems(); } }); }, { passive: true }); }
     document.body.addEventListener('toggle', (e) => { const detailsElement = e.target; if (detailsElement.tagName !== 'DETAILS' || !detailsElement.classList.contains('informe-acordeon')) { return; } if (detailsElement.open) { const id = detailsElement.id; const informeId = id.replace('acordeon-', ''); const container = select(`informe-content-${informeId}`); if (container && container.querySelector('.form-label')) { renderInformeDetallado(informeId); } } }, true);
-    const frequencySelect = select('recurrent-frequency');
+	const frequencySelect = select('recurrent-frequency');
     if (frequencySelect) {
         frequencySelect.addEventListener('change', (e) => {
             select('weekly-day-selector').classList.toggle('hidden', e.target.value !== 'weekly');
@@ -7960,8 +7972,6 @@ const attachEventListeners = () => {
         });
     }
 };
-
-document.addEventListener('DOMContentLoaded', initApp);
 // =================================================================
 // === FIN: BLOQUE DE CÓDIGO CORREGIDO PARA REEMPLAZAR           ===
 // =================================================================
