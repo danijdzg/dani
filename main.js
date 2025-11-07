@@ -5855,22 +5855,6 @@ const applyDescriptionSuggestion = (target) => {
     select('movimiento-concepto').dispatchEvent(new Event('change'));
     select('movimiento-cuenta').dispatchEvent(new Event('change'));
     
-    // Ocultamos las sugerencias
-    select('description-suggestions').style.display = 'none';
-
-    // Damos feedback visual de los campos que se han rellenado
-    hapticFeedback('light');
-    [select('movimiento-concepto'), select('movimiento-cuenta')].forEach(el => {
-        const parent = el.closest('.form-field-compact'); 
-        if(parent) {
-            parent.classList.add('field-highlighted');
-            setTimeout(() => parent.classList.remove('field-highlighted'), 1500);
-        }
-    });
-
-    // Movemos el foco al campo de cantidad para un flujo ultra-rápido
-    select('movimiento-cantidad').focus();
-};
     // Ocultamos la caja de sugerencias
     select('description-suggestions').style.display = 'none';
 
