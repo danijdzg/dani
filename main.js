@@ -9720,6 +9720,7 @@ const handleDescriptionInput = () => {
         }
     }, 250);
 };
+};
 // EN main.js - AÑADE ESTO AL FINAL DEL FICHERO
 
 // --- REGISTRO DEL SERVICE WORKER ---
