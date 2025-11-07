@@ -7499,19 +7499,19 @@ const attachEventListeners = () => {
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
 
-        // --- 1. LÓGICA PARA GESTIONAR EL MENÚ DE ACCIONES RÁPIDAS (AÑADIDO Y CORREGIDO) ---
-        const quickMenu = select('quick-add-menu');
-        const addBtn = select('bottom-nav-add-btn');
+        // ▼▼▼ AÑADE ESTE BLOQUE AL INICIO DE LA FUNCIÓN ▼▼▼
+    const quickMenu = select('quick-add-menu');
+    const addBtn = select('bottom-nav-add-btn');
 
-        // Cerrar el menú si se hace clic FUERA de él. Se ejecuta ANTES de cualquier otra acción.
-        if (quickMenu && quickMenu.classList.contains('visible') && addBtn && !addBtn.contains(target) && !quickMenu.contains(target.closest('#quick-add-menu'))) {
-            quickMenu.classList.remove('visible');
-            // Restablece el icono del botón principal
-            addBtn.style.transform = 'rotate(0deg)';
-            const iconEl = addBtn.querySelector('.material-icons');
-            if (iconEl) iconEl.textContent = 'add';
-        }
-        
+    // Comprueba si el menú está visible Y si el clic fue FUERA tanto del menú como del botón que lo abre
+    if (quickMenu && quickMenu.classList.contains('visible') && addBtn && !addBtn.contains(target) && !quickMenu.contains(target)) {
+        quickMenu.classList.remove('visible'); // Oculta el menú
+        // Restablece el icono del botón principal
+        addBtn.style.transform = 'rotate(0deg)';
+        const iconEl = addBtn.querySelector('.material-icons');
+        if (iconEl) iconEl.textContent = 'add';
+    }
+    // ▲▲▲ FIN DEL BLOQUE A AÑADIR ▲▲▲
         // --- 2. GESTIÓN DE ACCIONES DENTRO DEL SUBMENÚ (AÑADIDO Y CORREGIDO) ---
         const quickAddAction = target.closest('[data-action="quick-add-type"]');
         if (quickAddAction) {
@@ -7553,8 +7553,45 @@ const attachEventListeners = () => {
         // Objeto que mapea cada 'data-action' a su función correspondiente
         const actions = {
             'open-main-add-modal': () => {
-    startMovementForm(); // Llama directamente a la función para abrir el modal
-},
+        hapticFeedback('medium');
+        const quickMenu = select('quick-add-menu');
+        const addBtn = select('bottom-nav-add-btn');
+
+        if (quickMenu && addBtn) {
+            const iconEl = addBtn.querySelector('.material-icons');
+            // Muestra u oculta el menú
+            const isVisible = quickMenu.classList.toggle('visible');
+            
+            // Anima el botón y cambia el icono
+            if (isVisible) {
+                addBtn.style.transform = 'rotate(135deg)';
+                if (iconEl) iconEl.textContent = 'close';
+            } else {
+                addBtn.style.transform = 'rotate(0deg)';
+                if (iconEl) iconEl.textContent = 'add';
+            }
+        }
+    },
+
+    // ▼▼▼ ESTA ES LA ACCIÓN QUE SE DISPARA AL CLICAR EN EL SUBMENÚ ▼▼▼
+    'quick-add-type': (e) => {
+        const quickAddItem = e.target.closest('[data-action="quick-add-type"]');
+        const type = quickAddItem.dataset.type;
+        const quickMenu = select('quick-add-menu');
+        const addBtn = select('bottom-nav-add-btn');
+
+        // Oculta el menú y restaura el botón principal
+        if (quickMenu) quickMenu.classList.remove('visible');
+        if (addBtn) {
+            addBtn.style.transform = 'rotate(0deg)';
+            const iconEl = addBtn.querySelector('.material-icons');
+            if (iconEl) iconEl.textContent = 'add';
+        }
+
+        startMovementForm(); // Abre el formulario de movimiento
+        // Espera un momento para que el modal esté visible y luego establece el tipo
+        setTimeout(() => setMovimientoFormType(type), 50);
+    },
             
             // A partir de aquí, es tu código original de acciones, que ya era correcto.
 			'swipe-show-irr-history': () => handleShowIrrHistory(type),
