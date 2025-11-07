@@ -7699,7 +7699,95 @@ const attachEventListeners = () => {
             actions[action](e);
         }
     });
+	document.body.addEventListener('toggle', (e) => {
+    const detailsElement = e.target;
+    // Nos aseguramos de que solo reaccione a los acordeones de la página de informes
+    if (detailsElement.tagName !== 'DETAILS' || !detailsElement.classList.contains('informe-acordeon')) {
+        return;
+    }
+    
+    if (detailsElement.open) {
+        const informeId = detailsElement.id.replace('acordeon-', '');
+        // Llamamos a nuestra nueva función router, que sabe qué hacer con cada ID
+        renderInformeDetallado(informeId);
+    }
+}, true);
+    // ▼▼▼ REEMPLAZA TU BLOQUE 'submit' ENTERO POR ESTE ▼▼▼
+    document.body.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const target = e.target;
+        const submitter = e.submitter;
+        const handlers = {
+            'login-form': () => {
+                const action = submitter ? submitter.dataset.action : 'login';
+                if (action === 'login') {
+                    handleLogin(submitter);
+                } else if (action === 'register') {
+                    handleRegister(submitter);
+                }
+            },
+            'pin-form': handlePinSubmit,
+            'form-movimiento': () => handleSaveMovement(target, submitter),
+            'add-concepto-form': () => handleAddConcept(submitter),
+            'add-cuenta-form': () => handleAddAccount(submitter),
+            
+            // --- ¡AQUÍ ESTÁ LA CONEXIÓN QUE FALTABA! ---
+            'informe-cuenta-form': () => handleGenerateInformeCuenta(target, submitter),
+            // --- FIN DE LA CONEXIÓN ---
 
+            'manage-investment-accounts-form': () => handleSaveInvestmentAccounts(target, submitter),
+            'form-valoracion': () => handleSaveValoracion(target, submitter),
+            'diario-filters-form': applyDiarioFilters
+        };
+
+        if (handlers[target.id]) {
+            handlers[target.id]();
+        }
+    });
+// ▲▲▲ FIN DEL BLOQUE DE REEMPLAZO ▲▲▲
+    document.body.addEventListener('input', (e) => { const id = e.target.id; if (id) { clearError(id); if (id === 'movimiento-cantidad') validateField('movimiento-cantidad', true); if (id === 'movimiento-descripcion') handleDescriptionInput(); if (id === 'movimiento-concepto' || id === 'movimiento-cuenta') validateField(id, true); if (id === 'movimiento-cuenta-origen' || id === 'movimiento-cuenta-destino') { validateField('movimiento-cuenta-origen', true); validateField('movimiento-cuenta-destino', true); } if (id === 'concepto-search-input') { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => renderConceptosModalList(), 200); } if (id === 'cuenta-search-input') { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => renderCuentasModalList(), 200); } } });
+    document.body.addEventListener('blur', (e) => {
+    const id = e.target.id;
+    if (id) {
+        if (id === 'movimiento-cantidad') validateField('movimiento-cantidad');  
+        if (id === 'movimiento-concepto' || id === 'movimiento-cuenta') validateField(id);
+        }
+}, true);
+    document.body.addEventListener('focusin', (e) => { if (e.target.matches('.pin-input')) { handlePinInputInteraction(); } if (e.target.id === 'movimiento-descripcion') { handleDescriptionInput(); } });
+    document.addEventListener('change', e => {
+    const target = e.target;
+
+    if (target.id === 'filter-periodo') {
+        const el = select('custom-date-filters');
+        if (el) el.classList.toggle('hidden', target.value !== 'custom');
+    }
+    if (target.id === 'filter-periodo') {
+    const customFiltersEl = select('custom-date-filters');
+    const applyBtnEl = document.querySelector('[data-action="apply-filters"]');
+    const isCustom = target.value === 'custom';
+
+    if (customFiltersEl) customFiltersEl.classList.toggle('hidden', !isCustom);
+    if (applyBtnEl) applyBtnEl.classList.toggle('hidden', !isCustom);
+
+    if (!isCustom) {
+        hapticFeedback('light');
+        scheduleDashboardUpdate();
+    }
+}
+    if (target.id === 'movimiento-recurrente') {
+        select('recurrent-options').classList.toggle('hidden', !target.checked);
+        if(target.checked && !select('recurrent-next-date').value) {
+            select('recurrent-next-date').value = select('movimiento-fecha').value;
+        }
+    }
+    
+    if (target.id === 'recurrent-frequency') {
+        const endDateGroup = select('recurrent-end-date').closest('.form-group');
+        if (endDateGroup) {
+            endDateGroup.classList.toggle('hidden', target.value === 'once');
+        }
+    }
+});
     // ... (El resto de tus listeners como 'submit', 'input', etc. van aquí sin cambios)
     
     // El resto de la función 'attachEventListeners' continúa aquí...
