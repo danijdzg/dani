@@ -7553,20 +7553,8 @@ const attachEventListeners = () => {
         // Objeto que mapea cada 'data-action' a su función correspondiente
         const actions = {
             'open-main-add-modal': () => {
-                hapticFeedback('medium');
-                if (quickMenu && addBtn) {
-                    const iconEl = addBtn.querySelector('.material-icons');
-                    const isVisible = quickMenu.classList.toggle('visible');
-                    
-                    if (isVisible) {
-                        addBtn.style.transform = 'rotate(135deg)';
-                        if (iconEl) iconEl.textContent = 'close';
-                    } else {
-                        addBtn.style.transform = 'rotate(0deg)';
-                        if (iconEl) iconEl.textContent = 'add';
-                    }
-                }
-            },
+    startMovementForm(); // Llama directamente a la función para abrir el modal
+},
             
             // A partir de aquí, es tu código original de acciones, que ya era correcto.
 			'swipe-show-irr-history': () => handleShowIrrHistory(type),
