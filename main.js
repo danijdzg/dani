@@ -7855,21 +7855,36 @@ if (ptrElement && mainScrollerPtr) {
         
         // --- INICIO DEL BLOQUE MODIFICADO ---
 
-        if (target.id === 'filter-periodo') {
-            const el = select('custom-date-filters');
-            if (el) el.classList.toggle('hidden', target.value !== 'custom');
-            if (target.value !== 'custom') { 
-                hapticFeedback('light'); 
-                scheduleDashboardUpdate(); 
+        if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
+            
+            // --> ESTA ES LA GUARDIA DE CONTEXTO <--
+            // Comprueba si la página de inicio ('inicio-page') está activa. Si no, no hace nada.
+            const inicioPage = select('inicio-page');
+            if (!inicioPage || !inicioPage.classList.contains('view--active')) {
+                return; // Aborta la ejecución si no estamos en el dashboard.
             }
-        }
-        
-        if (target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
-            const startDate = select('filter-fecha-inicio').value;
-            const endDate = select('filter-fecha-fin').value;
-            if (startDate && endDate) {
-                hapticFeedback('light');
-                scheduleDashboardUpdate();
+
+            // Si es el selector de periodo, gestiona la visibilidad y actualiza si no es 'custom'
+            if (target.id === 'filter-periodo') {
+                const customDateFilters = select('custom-date-filters');
+                if (customDateFilters) {
+                    customDateFilters.classList.toggle('hidden', target.value !== 'custom');
+                }
+                if (target.value !== 'custom') {
+                    hapticFeedback('light');
+                    scheduleDashboardUpdate();
+                }
+            }
+
+            // Si es uno de los campos de fecha, comprueba si ambos están rellenos para actualizar
+            if (target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
+                const startDate = select('filter-fecha-inicio').value;
+                const endDate = select('filter-fecha-fin').value;
+
+                if (startDate && endDate) {
+                    hapticFeedback('light');
+                    scheduleDashboardUpdate();
+                }
             }
         }
 
