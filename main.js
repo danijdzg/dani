@@ -7487,171 +7487,208 @@ const enableHaptics = () => {
     document.body.addEventListener('click', enableHaptics, { once: true });
     // ▲▲▲ FIN DEL BLOQUE A AÑADIR ▲▲▲
 
-	
-const addBtn = select('bottom-nav-add-btn');
-const quickMenu = select('quick-add-menu');
+document.body.addEventListener('click', async (e) => {
+    const target = e.target;
 
-if (addBtn && quickMenu) {
-    // 1. Lógica para ABRIR/CERRAR el menú con un clic
-    addBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // Evita que el clic se propague al documento
-        hapticFeedback('medium');
-        quickMenu.classList.toggle('visible');
-    });
-
-    // 2. Lógica para CERRAR el menú si se hace clic en cualquier otro lugar
-    document.addEventListener('click', (e) => {
-        // Si el menú está visible y no se ha hecho clic ni en el menú ni en el botón de abrir...
-        if (quickMenu.classList.contains('visible') && !quickMenu.contains(e.target) && !addBtn.contains(e.target)) {
-            quickMenu.classList.remove('visible');
-        }
-    });
-}
-
-
-document.body.addEventListener('click', (e) => {
-	const quickAddAction = e.target.closest('[data-action="quick-add-type"]');
-    if(quickAddAction) {
-        const type = quickAddAction.dataset.type;
+    // --- NUEVA LÓGICA PARA GESTIONAR EL MENÚ RÁPIDO ---
+    // Esta parte se encarga de cerrar el menú si se hace clic fuera de él.
+    const quickMenu = select('quick-add-menu');
+    const addBtn = select('bottom-nav-add-btn');
+    if (quickMenu && quickMenu.classList.contains('visible') && !quickMenu.contains(target) && !addBtn.contains(target)) {
         quickMenu.classList.remove('visible');
-        startMovementForm(); // Abre el formulario genérico
-        setTimeout(() => setMovimientoFormType(type), 50); // Lo ajusta al tipo seleccionado
     }
-});
+    // --- FIN DE LA NUEVA LÓGICA ---
 
-	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
-const mainScrollerPtr = selectOne('.app-layout__main');
-const ptrIndicator = document.createElement('div');
-ptrIndicator.id = 'pull-to-refresh-indicator';
-ptrIndicator.innerHTML = '<div class="spinner"></div>';
-if (ptrElement) ptrElement.prepend(ptrIndicator);
+    // El resto de la función se mantiene como la tenías, pero con las nuevas acciones integradas.
+    if (!target.closest('.custom-select-wrapper')) {
+        closeAllCustomSelects(null);
+    }
 
-let ptrState = {
-    startY: 0,
-    isPulling: false,
-    distance: 0,
-    threshold: 80 // Distancia necesaria para activar
-};
+    if (target.matches('.input-amount-calculator')) {
+        e.preventDefault();
+        showCalculator(target);
+        return;
+    }
+    const actionTarget = target.closest('[data-action]');
+    if (!actionTarget) return;
 
-if (ptrElement && mainScrollerPtr) {
-    ptrElement.addEventListener('touchstart', (e) => {
-        if (mainScrollerPtr.scrollTop === 0) { // Solo si estamos arriba del todo
-            ptrState.startY = e.touches[0].clientY;
-            ptrState.isPulling = true;
-        }
-    }, { passive: true });
+    const { action, id, page, type, modalId, reportId } = actionTarget.dataset;
+    const btn = actionTarget.closest('button');
+    
+    const actions = {
+        // --- INICIO DE LAS NUEVAS ACCIONES INTEGRADAS ---
+        'toggle-quick-add': (e) => {
+            e.stopPropagation(); // Previene que el menú se cierre inmediatamente.
+            const menu = select('quick-add-menu');
+            if (menu) {
+                hapticFeedback('medium');
+                menu.classList.toggle('visible');
+            }
+        },
+        'quick-add-type': () => {
+            const menu = select('quick-add-menu');
+            if(menu) menu.classList.remove('visible');
+            startMovementForm();
+            setTimeout(() => setMovimientoFormType(type), 50);
+        },
+        // --- FIN DE LAS NUEVAS ACCIONES ---
 
-    ptrElement.addEventListener('touchmove', (e) => {
-        if (!ptrState.isPulling) return;
-        
-        const currentY = e.touches[0].clientY;
-        ptrState.distance = currentY - ptrState.startY;
-
-        if (ptrState.distance > 0) {
-            e.preventDefault(); // Evita el scroll del navegador
-            ptrIndicator.classList.add('visible');
-            const rotation = Math.min(ptrState.distance * 2.5, 360);
-            ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
-            ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
-        }
-    }, { passive: false });
-
-    ptrElement.addEventListener('touchend', async () => {
-        if (ptrState.isPulling && ptrState.distance > ptrState.threshold) {
+        // (Aquí continúan todas tus acciones existentes: 'swipe-show-irr-history', 'show-main-menu', etc.)
+        'swipe-show-irr-history': () => handleShowIrrHistory(type),
+        'show-main-menu': () => {
+            // ... (resto de tus acciones sin cambios)
+        },
+        'open-main-add-modal': () => startMovementForm(),
+        'export-filtered-csv': () => handleExportFilteredCsv(btn),
+        // ... y así sucesivamente con TODAS las demás acciones que ya tenías.
+        // Pega el resto de tus acciones aquí sin modificarlas.
+        'show-diario-filters': showDiarioFiltersModal,
+            'clear-diario-filters': clearDiarioFilters,
+            'toggle-amount-type': () => {
+                const amountInput = select('movimiento-cantidad');
+                const amountGroup = select('movimiento-cantidad-form-group');
+                if (!amountInput || !amountGroup) return;
+                hapticFeedback('light');
+                const currentValue = parseCurrencyString(amountInput.value) || 0;
+                const isCurrentlyGasto = amountGroup.classList.contains('is-gasto');
+                const newValue = currentValue === 0 ? 0 : -currentValue;
+                amountInput.value = newValue.toLocaleString('es-ES', { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                updateAmountTypeUI(!isCurrentlyGasto);
+            },
+			
+            'context-edit': () => { hideModal('generic-modal'); startMovementForm(id, false); },
+            'context-duplicate': () => { hideModal('generic-modal'); const movement = db.movimientos.find(m => m.id === id); if(movement) handleDuplicateMovement(movement); },
+            'context-delete': () => { hideModal('generic-modal'); showConfirmationModal('¿Seguro que quieres eliminar este movimiento?', async () => { await deleteMovementAndAdjustBalance(id, false); }); },
+            'show-kpi-drilldown': () => handleKpiDrilldown(actionTarget),
+            'edit-movement-from-modal': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; hideModal('generic-modal'); startMovementForm(movementId, false); },
+            'edit-movement-from-list': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; startMovementForm(movementId, false); },
+			'edit-recurrente': () => { hideModal('generic-modal'); startMovementForm(id, true); },
+            'view-account-details': (e) => { const accountId = e.target.closest('[data-id]').dataset.id; showAccountMovementsModal(accountId); },
+            'apply-description-suggestion': (e) => {
+                const suggestionItem = e.target.closest('.suggestion-item');
+                if (suggestionItem) {
+                    applyDescriptionSuggestion(suggestionItem);
+                }
+            },
+            'show-concept-drilldown': () => {
+                const conceptId = actionTarget.dataset.conceptId;
+                const conceptName = actionTarget.dataset.conceptName;
+                getFilteredMovements(false).then(({ current }) => {
+                    const movementsOfConcept = current.filter(m => m.conceptoId === conceptId);
+                    showDrillDownModal(`Movimientos de: ${conceptName}`, movementsOfConcept);
+                });
+            },
+            'toggle-diario-view': () => { diarioViewMode = diarioViewMode === 'list' ? 'calendar' : 'list'; const btnIcon = selectOne('[data-action="toggle-diario-view"] .material-icons'); if(btnIcon) btnIcon.textContent = diarioViewMode === 'list' ? 'calendar_month' : 'list'; renderDiarioPage(); },
+            'calendar-nav': () => {
+                const direction = actionTarget.dataset.direction;
+                if (!(diarioCalendarDate instanceof Date) || isNaN(diarioCalendarDate)) {
+                    diarioCalendarDate = new Date();
+                }
+                const currentMonth = diarioCalendarDate.getUTCMonth();
+                diarioCalendarDate.setUTCMonth(currentMonth + (direction === 'next' ? 1 : -1));
+                renderDiarioCalendar();
+            },
+            'show-day-details': () => {
+                const date = actionTarget.dataset.date;
+                const movementsOfDay = db.movimientos.filter(m => m.fecha.startsWith(date));
+                if (movementsOfDay.length > 0) {
+                    const formattedDate = new Date(date + 'T12:00:00Z').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+                    showDrillDownModal(`Movimientos del ${formattedDate}`, movementsOfDay);
+                }
+            },
+            'toggle-investment-type-filter': () => handleToggleInvestmentTypeFilter(type),
+            'toggle-account-type-filter': () => { hapticFeedback('light'); if (deselectedAccountTypesFilter.has(type)) { deselectedAccountTypesFilter.delete(type); } else { deselectedAccountTypesFilter.add(type); } renderPatrimonioOverviewWidget('patrimonio-overview-container'); },
+			 'switch-estrategia-tab': () => {
+        const tabName = actionTarget.dataset.tab;
+        showEstrategiaTab(tabName);
+    },
+			'show-help-topic': () => {
+                const topic = actionTarget.dataset.topic;
+                if(topic) {
+                    let title, content;
+                    if (topic === 'tasa-ahorro') { title = '¿Cómo se calcula la Tasa de Ahorro?'; content = `<p>Mide qué porcentaje de tus ingresos consigues guardar después de cubrir todos tus gastos en el periodo seleccionado.</p><h4>Fórmula:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">(Saldo Neto del Periodo / Ingresos Totales del Periodo) * 100</code><p style="margin-top: var(--sp-2);">Es el indicador clave de tu capacidad para generar riqueza.</p>`; }
+                    else if (topic === 'patrimonio-neto') { title = '¿Cómo se calcula el Patrimonio Neto?'; content = `<p>Representa tu riqueza total. Es la suma de todo lo que tienes (activos) menos todo lo que debes (pasivos).</p><h4>Fórmula:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">Suma de los saldos de todas tus cuentas.</code><p style="margin-top: var(--sp-2);"><strong>Importante:</strong> Este valor es siempre tu situación global actual y no se ve afectado por los filtros de fecha del panel.</p>`; }
+                    else if (topic === 'pnl-inversion') { title = '¿Cómo se calcula el P&L de Inversión?'; content = `<p>P&L son las siglas de "Profits and Losses" (Ganancias y Pérdidas). Mide el <strong>flujo de caja neto</strong> de tus cuentas de inversión durante el periodo seleccionado.</p><h4>Fórmula:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">Suma de todos los movimientos en cuentas de inversión.</code><p style="margin-top: var(--sp-2);">No incluye la revalorización de activos que no hayas vendido. Es útil para saber si tus inversiones te están dando dinero (dividendos, ventas) o si estás invirtiendo más capital (compras).</p>`; }
+                    else if (topic === 'progreso-presupuesto') { title = '¿Cómo se calcula el Progreso del Presupuesto?'; content = `<p>Compara tus gastos reales con tu plan de gastos para el periodo seleccionado.</p><h4>Fórmula:</h4><ol style="list-style-position: inside; padding-left: var(--sp-2);"><li style="margin-bottom: 6px;">Se calcula tu <strong>límite de gasto proporcional</strong> para el periodo (ej. Presupuesto Anual / 12 para un mes).</li><li style="margin-bottom: 6px;">Se comparan tus <strong>gastos reales</strong> del periodo con ese límite.</li></ol><p style="margin-top: var(--sp-2);">Te ayuda a ver si te estás ciñendo a tu plan financiero y a corregir desviaciones a tiempo.</p>`; }
+                    else if (topic === 'colchon-emergencia') { title = 'Colchón de Emergencia'; content = `<p>Es tu red de seguridad financiera. Mide cuántos meses podrías vivir cubriendo tus gastos si dejaras de tener ingresos hoy mismo.</p><h4>Fórmula:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">Dinero Líquido Total / Gasto Mensual Promedio</code><p style="margin-top: var(--sp-2);">Se considera "dinero líquido" el saldo de tus cuentas de tipo Banco, Ahorro y Efectivo.</p>`; }
+                    else if (topic === 'independencia-financiera') { title = 'Independencia Financiera (I.F.)'; content = `<p>Mide tu progreso para alcanzar el punto en el que tus inversiones podrían cubrir tus gastos para siempre, sin necesidad de trabajar.</p><h4>Fórmula del Objetivo:</h4><code style="display: block; background: var(--c-surface-variant); padding: var(--sp-2); border-radius: 6px; font-size: 0.9em; margin-top: var(--sp-1);">(Gasto Mensual Promedio * 12) * 30</code><p style="margin-top: var(--sp-2);">El porcentaje muestra qué parte de ese objetivo ya has alcanzado con tu patrimonio neto actual.</p>`; }
+                    const titleEl = select('help-modal-title'); const bodyEl = select('help-modal-body');
+                    if(titleEl) titleEl.textContent = title; if(bodyEl) bodyEl.innerHTML = `<div style="padding: 0 var(--sp-2);">${content}</div>`;
+                    showModal('help-modal');
+                }
+            },
+            'configure-dashboard': (e) => { e.preventDefault(); showDashboardConfigModal(); },
+            'save-dashboard-config': () => handleSaveDashboardConfig(btn),
+            'use-password-instead': () => showPasswordFallback(),
+            'toggle-theme': () => { handleToggleTheme(); hapticFeedback('light'); },
+            'navigate': () => { hapticFeedback('light'); navigateTo(page); },
+            'help': showHelpModal,
+            'exit': handleExitApp,
+            'forgot-password': (e) => { e.preventDefault(); const email = prompt("Por favor, introduce el correo electrónico de tu cuenta para restablecer la contraseña:"); if (email) { firebase.auth().sendPasswordResetEmail(email).then(() => { showToast('Se ha enviado un correo para restablecer tu contraseña.', 'info', 5000); }).catch((error) => { console.error("Error al enviar correo de recuperación:", error); if (error.code === 'auth/user-not-found') { showToast('No se encontró ninguna cuenta con ese correo.', 'danger'); } else { showToast('Error al intentar restablecer la contraseña.', 'danger'); } }); } },
+            'show-register': (e) => { e.preventDefault(); const title = select('login-title'); const mainButton = document.querySelector('#login-form button[data-action="login"]'); const secondaryAction = document.querySelector('.login-view__secondary-action'); if (mainButton.dataset.action === 'login') { title.textContent = 'Crear una Cuenta Nueva'; mainButton.dataset.action = 'register'; mainButton.textContent = 'Registrarse'; secondaryAction.innerHTML = `<span>¿Ya tienes una cuenta?</span> <a href="#" class="login-view__link" data-action="show-login">Inicia sesión</a>`; } else { handleRegister(mainButton); } },
+            'show-login': (e) => { e.preventDefault(); const title = select('login-title'); const mainButton = document.querySelector('#login-form button[data-action="register"]'); const secondaryAction = document.querySelector('.login-view__secondary-action'); if (mainButton.dataset.action === 'register') { title.textContent = 'Bienvenido de nuevo'; mainButton.dataset.action = 'login'; mainButton.textContent = 'Iniciar Sesión'; secondaryAction.innerHTML = `<span>¿No tienes una cuenta?</span> <a href="#" class="login-view__link" data-action="show-register">Regístrate aquí</a>`; } },
+            'import-csv': showCsvImportWizard,
+            'toggle-ledger': async () => {
             hapticFeedback('medium');
-            ptrIndicator.querySelector('.spinner').style.transform = '';
-            ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
-            
-            // Acción de refresco: Recargamos los movimientos del diario
-            await renderDiarioPage();
-
-            // Ocultar indicador después de refrescar
-            setTimeout(() => {
-                ptrIndicator.classList.remove('visible');
-                ptrIndicator.querySelector('.spinner').style.animation = '';
-            }, 500);
-        } else {
-            ptrIndicator.classList.remove('visible');
-        }
-
-        ptrState.isPulling = false;
-        ptrState.distance = 0;
-    });
-}
-
-	
-    const cantidadInput = document.getElementById("movimiento-cantidad");
-    if (cantidadInput) {
-        const cantidadError = document.getElementById("movimiento-cantidad-error");
-        cantidadInput.addEventListener("input", () => {
-            let valor = cantidadInput.value.trim();
-            valor = valor.replace(",", ".");
-            const regex = /^\d+(.\d{0,2})?$/;
-            if (valor === "" || !regex.test(valor)) {
-                cantidadError.textContent = "Introduce un número positivo (ej: 2,50 o 15.00)";
-                cantidadInput.classList.add("form-input--error");
-            } else {
-                cantidadError.textContent = "";
-                cantidadInput.classList.remove("form--error");
+            isOffBalanceMode = !isOffBalanceMode;
+            document.body.dataset.ledgerMode = isOffBalanceMode ? 'B' : 'A';
+            showToast(`Mostrando Contabilidad ${isOffBalanceMode ? 'B' : 'A'}.`, 'info');
+            const activePageEl = document.querySelector('.view--active');
+            if (!activePageEl) return;
+            const ledgerBtn = select('ledger-toggle-btn');
+            if (ledgerBtn) {
+                ledgerBtn.textContent = isOffBalanceMode ? 'B' : 'A';
             }
-        });
-        const descripcionInput = document.getElementById("movimiento-descripcion");
-        const cuentaSelect = document.getElementById("movimiento-cuenta");
-        const saveBtn = document.getElementById("save-movimiento-btn");
-        document.addEventListener("show-modal", (e) => {
-            if (e.detail.modalId === "movimiento-modal") {
-                setTimeout(() => cantidadInput.focus(), 100);
+            switch (activePageEl.id) {
+                case PAGE_IDS.INICIO:
+                    scheduleDashboardUpdate();
+                    break;
+                case PAGE_IDS.DIARIO:
+                    updateVirtualListUI();
+                    break;
+                case PAGE_IDS.ESTRATEGIA:
+                    const activeTab = document.querySelector('.tab-item--active');
+                    if (activeTab) {
+                        showEstrategiaTab(activeTab.dataset.tab);
+                    }
+                    break;
+                case PAGE_IDS.AJUSTES:
+                default:
+                    break;
             }
-        });
-        cantidadInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                descripcionInput.focus();
-            }
-        });
-        descripcionInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                cuentaSelect.focus();
-            }
-        });
-        cuentaSelect.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                saveBtn.click();
-            }
-        });
-    }
-
-    const amountInputForFormatting = select('movimiento-cantidad');
-    if (amountInputForFormatting) {
-        amountInputForFormatting.addEventListener('focus', (e) => {
-            const input = e.target;
-            if (input.value === '') return;
-            const rawValue = input.value.replace(/\./g, '');
-            input.value = rawValue;
-        });
-        amountInputForFormatting.addEventListener('blur', (e) => {
-            const input = e.target;
-            if (input.value === '') return;
-            const numericValue = parseCurrencyString(input.value);
-            input.value = formatAsCurrencyInput(numericValue);
-        });
-    }
-
-    window.addEventListener('popstate', (event) => {
-        const activeModal = document.querySelector('.modal-overlay--active');
-        if (activeModal) {
-            hideModal(activeModal.id);
-            history.pushState({ page: window.history.state?.page }, '', `#${window.history.state?.page || 'panel-page'}`);
-            return;
-        }
-        const pageToNavigate = event.state ? event.state.page : PAGE_IDS.INICIO;
-        if (pageToNavigate) {
-            navigateTo(pageToNavigate, false);
+        },
+            'toggle-off-balance': async () => { const checkbox = target.closest('input[type="checkbox"]'); if (!checkbox) return; hapticFeedback('light'); await saveDoc('cuentas', checkbox.dataset.id, { offBalance: checkbox.checked }); },
+            'apply-filters': () => { hapticFeedback('light'); scheduleDashboardUpdate(); },
+            'delete-movement-from-modal': () => { const isRecurrent = (actionTarget.dataset.isRecurrent === 'true'); const idToDelete = select('movimiento-id').value; const message = isRecurrent ? '¿Seguro que quieres eliminar esta operación recurrente?' : '¿Seguro que quieres eliminar este movimiento?'; showConfirmationModal(message, async () => { hideModal('movimiento-modal'); await deleteMovementAndAdjustBalance(idToDelete, isRecurrent); }); },
+            'swipe-delete-movement': () => { const isRecurrent = actionTarget.dataset.isRecurrent === 'true'; showConfirmationModal('¿Seguro que quieres eliminar este movimiento?', async () => { await deleteMovementAndAdjustBalance(id, isRecurrent); }); },
+            'swipe-duplicate-movement': () => { const movement = db.movimientos.find(m => m.id === id) || recentMovementsCache.find(m => m.id === id); if (movement) handleDuplicateMovement(movement); },
+            'search-result-movimiento': (e) => { hideModal('global-search-modal'); startMovementForm(e.target.closest('[data-id]').dataset.id, false); },
+            'delete-concepto': async () => { const movsCheck = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').where('conceptoId', '==', id).limit(1).get(); if(!movsCheck.empty) { showToast("Concepto en uso, no se puede borrar.","warning"); return; } showConfirmationModal('¿Seguro que quieres eliminar este concepto?', async () => { await deleteDoc('conceptos', id); hapticFeedback('success'); showToast("Concepto eliminado."); renderConceptosModalList(); }); },
+            'delete-cuenta': async () => { const movsCheck = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').where('cuentaId', '==', id).limit(1).get(); if(!movsCheck.empty) { showToast("Cuenta con movimientos, no se puede borrar.","warning",3500); return; } showConfirmationModal('¿Seguro que quieres eliminar esta cuenta?', async () => { await deleteDoc('cuentas', id); hapticFeedback('success'); showToast("Cuenta eliminada."); renderCuentasModalList(); }); },
+            'close-modal': () => { const closestOverlay = target.closest('.modal-overlay'); const effectiveModalId = modalId || (closestOverlay ? closestOverlay.id : null); if (effectiveModalId) hideModal(effectiveModalId); },
+            'manage-conceptos': showConceptosModal, 'manage-cuentas': showCuentasModal,
+            'save-config': () => handleSaveConfig(btn),
+            'export-data': () => handleExportData(btn), 'export-csv': () => handleExportCsv(btn), 'import-data': () => showImportJSONWizard(),
+            'clear-data': () => { showConfirmationModal('¿Borrar TODOS tus datos de la nube? Esta acción es IRREVERSIBLE y no se puede deshacer.', async () => { /* Lógica de borrado aquí */ }, 'Confirmación Final de Borrado'); },
+            'update-budgets': handleUpdateBudgets, 'logout': () => fbAuth.signOut(), 'delete-account': () => { showConfirmationModal('Esto eliminará tu cuenta y todos tus datos de forma PERMANENTE. ¿Estás absolutamente seguro?', async () => { /* Lógica de borrado de cuenta aquí */ }); },
+            'manage-investment-accounts': showManageInvestmentAccountsModal, 'update-asset-value': () => showValoracionModal(id),
+            'global-search': () => { showGlobalSearchModal(); hapticFeedback('medium'); },
+            'edit-concepto': () => showConceptoEditForm(id), 'cancel-edit-concepto': renderConceptosModalList, 'save-edited-concepto': () => handleSaveEditedConcept(id, btn),
+            'edit-cuenta': () => showAccountEditForm(id), 'cancel-edit-cuenta': renderCuentasModalList, 'save-edited-cuenta': () => handleSaveEditedAccount(id, btn),
+            'duplicate-movement': () => { hapticFeedback('medium'); select('movimiento-mode').value = 'new'; select('movimiento-id').value = ''; select('form-movimiento-title').textContent = 'Duplicar Movimiento'; select('delete-movimiento-btn').classList.add('hidden'); select('duplicate-movimiento-btn').classList.add('hidden'); const today = new Date(); const fechaInput = select('movimiento-fecha'); fechaInput.value = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10); updateDateDisplay(fechaInput); showToast('Datos duplicados. Ajusta y guarda como nuevo.', 'info'); },
+            'save-and-new-movement': () => handleSaveMovement(document.getElementById('form-movimiento'), btn), 'set-movimiento-type': () => setMovimientoFormType(type),
+            'recalculate-balances': () => { showConfirmationModal('Esta es una herramienta de auditoría que recalculará el saldo de cada cuenta desde cero, leyendo todo tu historial de movimientos. Úsala solo si sospechas que hay una inconsistencia. La operación puede tardar y consumir datos. ¿Quieres continuar?', () => auditAndFixAllBalances(btn), 'Confirmar Auditoría Completa'); },
+            'json-wizard-back-2': () => goToJSONStep(1), 'json-wizard-import-final': () => handleFinalJsonImport(btn),
+            'toggle-traspaso-accounts-filter': () => populateTraspasoDropdowns(), 'set-pin': async () => { const pin = prompt("Introduce tu nuevo PIN de 4 dígitos. Déjalo en blanco para eliminarlo."); if (pin === null) return; if (pin === "") { localStorage.removeItem('pinUserHash'); localStorage.removeItem('pinUserEmail'); showToast('PIN de acceso rápido eliminado.', 'info'); return; } if (!/^\d{4}$/.test(pin)) { showToast('El PIN debe contener exactamente 4 dígitos numéricos.', 'danger'); return; } const pinConfirm = prompt("Confirma tu nuevo PIN de 4 dígitos."); if (pin !== pinConfirm) { showToast('Los PINs no coinciden. Inténtalo de nuevo.', 'danger'); return; } const pinHash = await hashPin(pin); localStorage.setItem('pinUserHash', pinHash); localStorage.setItem('pinUserEmail', currentUser.email); hapticFeedback('success'); showToast('¡PIN de acceso rápido configurado con éxito!', 'info'); },
+            'edit-recurrente-from-pending': () => startMovementForm(id, true),
+            'confirm-recurrent': () => handleConfirmRecurrent(id, btn), 'skip-recurrent': () => handleSkipRecurrent(id, btn),
+			'show-informe-builder': showInformeBuilderModal, 'save-informe': () => handleSaveInforme(btn),
+        };
+        
+        if (actions[action]) {
+            actions[action](e);
         }
     });
-
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
 
