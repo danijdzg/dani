@@ -7491,37 +7491,6 @@ const enableHaptics = () => {
     document.body.addEventListener('click', enableHaptics, { once: true });
     // ▲▲▲ FIN DEL BLOQUE A AÑADIR ▲▲▲
 
-const addBtn = select('bottom-nav-add-btn');
-const quickMenu = select('quick-add-menu');
-
-if (addBtn && quickMenu) {
-    // 1. Un único listener de 'click' para el botón principal.
-    addBtn.addEventListener('click', (e) => {
-		const iconEl = addBtn.querySelector('.material-icons');
-quickMenu.classList.toggle('visible');
-
-// Añade esta lógica de transformación
-if (quickMenu.classList.contains('visible')) {
-    addBtn.style.transform = 'rotate(45deg)';
-    if (iconEl) iconEl.textContent = 'close';
-} else {
-    addBtn.style.transform = 'rotate(0deg)';
-    if (iconEl) iconEl.textContent = 'add';
-}
-        e.stopPropagation(); // Evita que el clic se propague al documento.
-        hapticFeedback('medium');
-        // Simplemente alterna la visibilidad del menú.
-        quickMenu.classList.toggle('visible'); 
-    });
-
-    // 2. Un listener en el documento para cerrar el menú si se hace clic fuera.
-    document.addEventListener('click', (e) => {
-        // Si el menú está visible y el clic NO fue dentro del menú...
-        if (quickMenu.classList.contains('visible') && !quickMenu.contains(e.target)) {
-            quickMenu.classList.remove('visible'); // ...lo cerramos.
-        }
-    });
-}
 
 
 	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
@@ -7659,6 +7628,13 @@ if (ptrElement && mainScrollerPtr) {
 
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
+		const quickMenu = select('quick-add-menu');
+const addBtn = select('bottom-nav-add-btn');
+
+// Lógica para cerrar el menú si se hace clic fuera
+if (quickMenu && quickMenu.classList.contains('visible') && !addBtn.contains(target) && !quickMenu.contains(target)) {
+    quickMenu.classList.remove('visible');
+}
 
         if (!target.closest('.custom-select-wrapper')) {
             closeAllCustomSelects(null);
@@ -7693,7 +7669,25 @@ if (ptrElement && mainScrollerPtr) {
                     }, 0);
                 }
             },
-            'open-main-add-modal': () => startMovementForm(),
+            'open-main-add-modal': () => {
+    hapticFeedback('medium');
+    const quickMenu = select('quick-add-menu');
+    const addBtn = select('bottom-nav-add-btn'); // Necesitamos la referencia al botón
+    const iconEl = addBtn.querySelector('.material-icons');
+
+    if (quickMenu) {
+        const isVisible = quickMenu.classList.toggle('visible');
+        
+        // Anima el botón y cambia el icono según la visibilidad del menú
+        if (isVisible) {
+            addBtn.style.transform = 'rotate(135deg)'; // Gira para parecer una X
+            if (iconEl) iconEl.textContent = 'close';
+        } else {
+            addBtn.style.transform = 'rotate(0deg)';
+            if (iconEl) iconEl.textContent = 'add';
+        }
+    }
+},
             'export-filtered-csv': () => handleExportFilteredCsv(btn),
             'show-diario-filters': showDiarioFiltersModal,
             'clear-diario-filters': clearDiarioFilters,
