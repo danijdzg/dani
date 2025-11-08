@@ -1,77 +1,14 @@
 
 /* === INICIO: Estilos para el Informe de Cuenta (Cartilla) - VERSIÓN FINAL CORREGIDA === */
-
-.informe-extracto-container {
-    border: 1px solid var(--c-outline);
-    border-radius: var(--border-radius-lg);
-    background-color: var(--c-surface);
-    overflow: hidden; 
-}
-
-/* Estilo común para la cabecera y las filas de movimiento */
-.informe-linea-header,
-.informe-linea-movimiento {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-2);
-    padding: var(--sp-2) var(--sp-3);
-    font-size: 0.8rem;
-    line-height: 1.3;
-}
-
-.informe-linea-header {
-    font-weight: 700;
-    color: var(--c-on-surface-secondary);
-    background-color: var(--c-surface-variant);
-    border-bottom: 1px solid var(--c-outline);
-}
-
-.informe-linea-movimiento {
-    border-bottom: 1px solid var(--c-outline);
-}
-.informe-linea-movimiento:last-child {
-    border-bottom: none;
-}
-
-/* Definición del comportamiento de cada campo */
-
-.informe-linea-header > *,
-.informe-linea-movimiento > * {
-    flex-shrink: 0;
-}
-
-/* CAMPO 1: Fecha */
-.informe-linea-movimiento .fecha,
-.informe-linea-header .fecha {
-    width: 45px;
-}
-
-/* CAMPO 2: Descripción (el campo flexible) */
-.informe-linea-movimiento .descripcion,
-.informe-linea-header .descripcion {
-    flex-grow: 1;
-    flex-shrink: 1;
-    min-width: 0;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* CAMPO 3 y 4: Importe y Saldo AHORA COMPARTEN EXACTAMENTE EL MISMO ESTILO */
-.informe-linea-movimiento .importe,
-.informe-linea-movimiento .saldo,
-.informe-linea-header .importe,
-.informe-linea-header .saldo {
-    width: 90px; /* Ancho fijo para alinear bien las cifras */
-    text-align: right;
-    font-family: monospace, sans-serif;
-    font-weight: 600;
-    font-size: 0.9em; /* Mismo tamaño de fuente para ambos */
-}
-
-
-/* Se mantiene la regla de color solo para el importe para diferenciarlo */
+.informe-extracto-container { border: 1px solid var(--c-outline); border-radius: var(--border-radius-lg); background-color: var(--c-surface); overflow: hidden; }
+.informe-linea-header, .informe-linea-movimiento { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); font-size: 0.8rem; line-height: 1.3; }
+.informe-linea-header { font-weight: 700; color: var(--c-on-surface-secondary); background-color: var(--c-surface-variant); border-bottom: 1px solid var(--c-outline); }
+.informe-linea-movimiento { border-bottom: 1px solid var(--c-outline); }
+.informe-linea-movimiento:last-child { border-bottom: none; }
+.informe-linea-header > *, .informe-linea-movimiento > * { flex-shrink: 0; }
+.informe-linea-movimiento .fecha, .informe-linea-header .fecha { width: 45px; }
+.informe-linea-movimiento .descripcion, .informe-linea-header .descripcion { flex-grow: 1; flex-shrink: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.informe-linea-movimiento .importe, .informe-linea-movimiento .saldo, .informe-linea-header .importe, .informe-linea-header .saldo { width: 90px; text-align: right; font-family: monospace, sans-serif; font-weight: 600; font-size: 0.9em; }
 .text-ingreso { color: var(--c-success); }
 .text-gasto { color: var(--c-danger); }
 
@@ -1989,3 +1926,223 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 }
 /* === FIN: Estilos para Navegación por Pestañas === */
 
+/* === INICIO: ESTILOS PARA FORMULARIO DE ALTA DENSIDAD Y NAVEGACIÓN === */
+
+/* 1. Nuevo Botón de Navegación Central */
+.bottom-nav {
+    align-items: flex-end; 
+}
+#bottom-nav-add-btn {
+    width: 56px;
+    height: 56px;
+    background-color: var(--c-primary);
+    color: var(--c-white);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+#bottom-nav-add-btn:hover {
+    transform: scale(1.1) rotate(15deg);
+    background-color: var(--c-primary-hover);
+}
+#bottom-nav-add-btn:active {
+    transform: scale(0.95);
+}
+#bottom-nav-add-btn .material-icons {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+/* 2. Rejilla principal del formulario denso */
+.dense-form-grid {
+    display: grid;
+    grid-template-columns: 40% 1fr;
+    grid-template-areas:
+        "amount      description"
+        "details     details";
+    gap: var(--sp-3) var(--sp-2);
+    align-items: start;
+}
+#movimiento-fields, #traspaso-fields {
+    grid-area: details;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-3) var(--sp-2);
+}
+
+/* 3. Componente de campo de formulario compacto */
+.form-field-compact {
+    position: relative;
+    font-size: var(--fs-sm);
+}
+.form-field-compact > label {
+    position: absolute;
+    top: 5px;
+    left: 12px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--c-on-surface-secondary);
+    pointer-events: none;
+}
+.form-field-compact .input-wrapper {
+    display: flex;
+    align-items: center;
+    border-radius: var(--border-radius-md);
+    background: var(--c-surface-variant);
+    border: 1px solid var(--c-outline);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-field-compact .input-wrapper:focus-within {
+    border-color: var(--c-primary);
+    box-shadow: var(--c-border-glow);
+}
+.form-field-compact input,
+.form-field-compact select {
+    width: 100%;
+    padding: 22px 12px 6px 12px;
+    border: none;
+    background: transparent;
+    color: var(--c-on-surface);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+.form-field-compact input:focus,
+.form-field-compact select:focus {
+    outline: none;
+}
+.form-field-compact .form-error {
+    margin-top: 4px;
+    padding-left: 4px;
+}
+#movimiento-cantidad-form-group input {
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-align: right;
+    padding-right: 4px;
+}
+#movimiento-cantidad-form-group .icon-btn {
+    margin-right: 4px;
+}
+.input-wrapper--with-addon .icon-btn {
+    flex-shrink: 0;
+}
+
+/* 4. Sección Recurrente compacta */
+.recurrent-section {
+    background-color: var(--c-surface-variant);
+    border: 1px solid var(--c-outline);
+    border-radius: var(--border-radius-md);
+    margin-top: var(--sp-3);
+    padding: 0 var(--sp-3);
+}
+.recurrent-section__label {
+    font-weight: 600;
+    font-size: var(--fs-sm);
+    color: var(--c-on-surface);
+}
+#recurrent-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    border-top: 1px solid var(--c-outline);
+    margin-top: var(--sp-2);
+}
+.recurrent-options__main {
+    display: flex;
+    gap: var(--sp-2);
+}
+#recurrent-options select,
+#recurrent-options input {
+    background-color: var(--c-surface);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    padding: 6px 8px;
+    color: var(--c-on-surface);
+    border: 1px solid var(--c-outline);
+}
+#weekly-day-selector-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+}
+.day-selector-btn {
+    flex: 1;
+    height: 36px;
+    border: 1px solid var(--c-outline);
+    background-color: var(--c-surface);
+    color: var(--c-on-surface-secondary);
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+.day-selector-btn:hover {
+    border-color: var(--c-primary);
+}
+.day-selector-btn.active {
+    background-color: var(--c-primary);
+    border-color: var(--c-primary);
+    color: var(--c-white);
+    transform: scale(1.05);
+}
+
+/* 5. Botón de fecha compacto */
+.date-button-compact {
+    width: 100%;
+    justify-content: center;
+    gap: var(--sp-2);
+    font-weight: 600;
+    padding: var(--sp-2);
+    font-size: var(--fs-sm);
+    background-color: var(--c-surface-variant);
+    color: var(--c-on-surface);
+    border: none;
+}
+.date-button-compact .material-icons {
+    color: var(--c-on-surface-secondary);
+}
+
+/* 6. Eliminamos márgenes para máxima densidad */
+#movimiento-modal .modal__body,
+#movimiento-modal .modal__header {
+    padding-left: var(--sp-3);
+    padding-right: var(--sp-3);
+}
+
+/* 7. Dropdown Personalizado */
+.custom-select-wrapper { position: relative; width: 100%; }
+.custom-select__trigger { position: relative; width: 100%; padding: 22px 12px 6px 12px; border: 1px solid var(--c-outline); border-radius: var(--border-radius-md); background: var(--c-surface-variant); color: var(--c-on-surface); font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.custom-select-wrapper.is-open .custom-select__trigger { border-color: var(--c-primary); box-shadow: var(--c-border-glow); }
+.custom-select__trigger::after { content: ''; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--c-on-surface-secondary); transition: transform 0.2s ease-in-out; }
+.custom-select-wrapper.is-open .custom-select__trigger::after { transform: translateY(-50%) rotate(180deg); }
+.custom-select__options { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background-color: var(--c-surface); border: 1px solid var(--c-outline); border-radius: var(--border-radius-md); box-shadow: var(--shadow-md); z-index: 1070; max-height: 200px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; }
+.custom-select-wrapper.is-open .custom-select__options { opacity: 1; visibility: visible; transform: translateY(0); }
+.custom-select__option { padding: var(--sp-2) var(--sp-3); color: var(--c-on-surface-secondary); font-weight: 500; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+.custom-select__option:hover { background-color: var(--c-surface-variant); color: var(--c-on-surface); }
+.custom-select__option.is-selected { background-color: var(--c-primary); color: var(--c-white); font-weight: 600; }
+.custom-select-wrapper .form-select-hidden { position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+/* 8. Media Query para pantallas ultra pequeñas */
+@media (max-width: 380px) {
+    .view { padding: 0 var(--sp-2); }
+    .card__content { padding: var(--sp-2); }
+    .card__title { padding: var(--sp-3) var(--sp-2) 0 var(--sp-2); }
+    #inversiones-page .card__content { flex-direction: column; gap: var(--sp-3); align-items: center; }
+    .kpi-grid, .form-grid { grid-template-columns: 1fr !important; gap: var(--sp-2); }
+    #custom-date-filters.form-grid { grid-template-columns: 1fr !important; }
+    .top-bar__left-button { flex-shrink: 1; min-width: 0; flex-grow: 1; }
+    #page-title-display { display: none; }
+    .top-bar__left-group { gap: var(--sp-1); }
+    .top-bar__actions { gap: 0; }
+    .top-bar .top-bar__actions .icon-btn { width: 38px; height: 38px; }
+    .top-bar .top-bar__actions .icon-btn .material-icons { font-size: 22px; }
+}
+
+/* === FIN: ESTILOS PARA FORMULARIO DE ALTA DENSIDAD Y NAVEGACIÓN === */

@@ -3443,6 +3443,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             item.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
         });
     }
+	applyInvestmentItemInteractions(listaContainer);
 };
 
 const handleShowIrrHistory = async (options) => {
@@ -6057,6 +6058,9 @@ const showDrillDownModal = (title, movements) => {
             });
         }
     }, 50); // Un pequeño retardo para asegurar que el modal es visible
+	setTimeout(() => {
+        applyInvestmentItemInteractions(document.getElementById('generic-modal-body'));
+    }, 100);
 };
         const showConfirmationModal=(msg, onConfirm, title="Confirmar Acción")=>{ hapticFeedback('medium'); const id='confirmation-modal';const existingModal = document.getElementById(id); if(existingModal) existingModal.remove(); const overlay=document.createElement('div');overlay.id=id;overlay.className='modal-overlay modal-overlay--active'; overlay.innerHTML=`<div class="modal" role="alertdialog" style="border-radius:var(--border-radius-lg)"><div class="modal__header"><h3 class="modal__title">${title}</h3></div><div class="modal__body"><p>${msg}</p><div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-4);"><button class="btn btn--secondary btn--full" data-action="close-modal" data-modal-id="confirmation-modal">Cancelar</button><button class="btn btn--danger btn--full" data-action="confirm-action">Sí, continuar</button></div></div></div>`; document.body.appendChild(overlay); (overlay.querySelector('[data-action="confirm-action"]')).onclick=()=>{hapticFeedback('medium');onConfirm();overlay.remove();}; (overlay.querySelector('[data-action="close-modal"]')).onclick=()=>overlay.remove(); };
 
@@ -6067,22 +6071,22 @@ const initAmountInput = () => {
     const calculatorToggle = select('calculator-toggle-btn');
     if (!amountInput || !calculatorToggle) return;
     
+    // Limpiamos listeners anteriores para evitar duplicados
+    amountInput.onclick = null;
+    calculatorToggle.onclick = null;
+    
     if (isMobileDevice()) {
-        // MÓVIL: Hacemos que el input no saque el teclado y que al tocarlo, se abra nuestra calculadora.
         amountInput.setAttribute('inputmode', 'none');
-        calculatorToggle.style.display = 'none'; // Ocultamos el botón del icono en móvil
+        calculatorToggle.style.display = 'none';
         
-        // Usamos un listener de 'click' porque 'focus' puede ser problemático en algunos móviles
         amountInput.onclick = (e) => {
             e.preventDefault();
             showCalculator(amountInput);
         };
 
     } else {
-        // ESCRITORIO: Permitimos escribir normalmente y el botón del icono abre la calculadora.
         amountInput.setAttribute('inputmode', 'decimal');
         calculatorToggle.style.display = 'inline-flex';
-        amountInput.onclick = null; // Quitamos el listener de móvil por si acaso
         calculatorToggle.onclick = () => showCalculator(amountInput);
     }
 };
@@ -9268,18 +9272,15 @@ const auditAndFixAllBalances = async (btn) => {
 const applyInvestmentItemInteractions = (containerElement) => {
     if (!containerElement) return;
 
-    // Buscamos todos los elementos que sean activos de inversión y tengan una acción de click.
-    const investmentItems = containerElement.querySelectorAll('[data-action="view-account-details"][data-id]');
+    const investmentItems = containerElement.querySelectorAll('[data-action="view-account-details"]');
 
     investmentItems.forEach(item => {
-        // Obtenemos la cuenta para verificar si es de inversión ANTES de añadir listeners.
         const cuenta = db.cuentas.find(c => c.id === item.dataset.id);
         if (!cuenta || !cuenta.esInversion) {
-            return; // Si no es una cuenta de inversión, no hacemos nada.
+            return;
         }
 
-        // Si ya tiene listeners de este tipo, los removemos para evitar duplicados.
-        // (Esto es una salvaguarda por si se llama la función múltiples veces)
+        // Evita añadir listeners duplicados
         if (item.dataset.longPressApplied) return;
         item.dataset.longPressApplied = 'true';
 
@@ -9292,14 +9293,14 @@ const applyInvestmentItemInteractions = (containerElement) => {
             startX = point.clientX;
             startY = point.clientY;
             longPressTriggered = false;
-
-            e.stopPropagation();
+            
+            e.stopPropagation(); // Evita que se disparen otros eventos de click en el contenedor
 
             longPressTimer = setTimeout(() => {
                 longPressTriggered = true;
                 const accountId = item.dataset.id;
                 handleShowIrrHistory({ accountId: accountId });
-            }, 500); // 500ms para la pulsación larga
+            }, 500);
         };
 
         const moveHandler = (e) => {
@@ -9314,7 +9315,7 @@ const applyInvestmentItemInteractions = (containerElement) => {
             clearTimeout(longPressTimer);
             if (longPressTriggered) {
                 e.preventDefault();
-                e.stopPropagation();
+                e.stopPropagation(); // ¡LA CORRECCIÓN CLAVE! Evita que se dispare el click normal.
             }
         };
 
@@ -9325,7 +9326,7 @@ const applyInvestmentItemInteractions = (containerElement) => {
         item.addEventListener('mouseup', endHandler);
         item.addEventListener('touchend', endHandler);
         item.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
-        item.addEventListener('contextmenu', e => e.preventDefault()); // Evitar menú contextual
+        item.addEventListener('contextmenu', e => e.preventDefault());
     });
 };
 
@@ -9564,49 +9565,39 @@ const handleInteractionStart = (e) => {
     longPressState.timer = setTimeout(() => {
         longPressState.isLongPress = true;
         swipeState.isSwiping = false;
-        
         hapticFeedback('medium');
-        
         showContextMenuForMovement(card.dataset.id);
-        
     }, 500);
 
     swipeState.isSwiping = true;
     swipeState.isSwipeIntent = false;
     swipeState.activeCard = card;
-    // --- INICIO DE LA MODIFICACIÓN ---
     const point = e.type === 'touchstart' ? e.touches[0] : e;
     swipeState.startX = point.clientX;
     swipeState.currentX = swipeState.startX;
-    swipeState.startY = point.clientY; // <-- AÑADE ESTA LÍNEA
-    // --- FIN DE LA MODIFICACIÓN ---
+    swipeState.startY = point.clientY;
 };
-
 
 const handleInteractionMove = (e) => {
     if (!swipeState.isSwiping || !swipeState.activeCard) return;
 
     const point = e.type === 'touchmove' ? e.touches[0] : e;
     const deltaX = point.clientX - swipeState.startX;
-    const deltaY = point.clientY - swipeState.startY; // <-- Dato que necesitamos
+    const deltaY = point.clientY - swipeState.startY;
 
-    // ▼▼▼ NUEVA LÓGICA DE DECISIÓN DE GESTO ▼▼▼
     if (!swipeState.isSwipeIntent && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
-        // Si el movimiento vertical es más dominante, es un SCROLL. Cancelamos todo.
         if (Math.abs(deltaY) > Math.abs(deltaX)) {
             if (longPressState.timer) clearTimeout(longPressState.timer);
-            swipeState.isSwiping = false; // Detenemos la lógica de swipe
+            swipeState.isSwiping = false;
             return;
         }
-        // Si es más horizontal, es un SWIPE. Confirmamos la intención.
         swipeState.isSwipeIntent = true;
         if (longPressState.timer) clearTimeout(longPressState.timer);
     }
-    // ▲▲▲ FIN DE LA NUEVA LÓGICA ▲▲▲
 
-    // El resto de la función solo se ejecuta si la intención es de swipe
     if (swipeState.isSwipeIntent) {
-        e.preventDefault(); // Evitamos el scroll del navegador solo si estamos haciendo swipe
+        e.preventDefault();
+        // ... (El resto de la lógica de movimiento para el swipe se mantiene igual)
         swipeState.currentX = point.clientX;
         const currentDiff = swipeState.currentX - swipeState.startX;
         const direction = currentDiff > 0 ? 'right' : 'left';
@@ -9629,20 +9620,21 @@ const handleInteractionMove = (e) => {
         swipeState.activeCard.style.transform = `translateX(${currentDiff}px)`;
     }
 };
+
 const handleInteractionEnd = (e) => {
-    // Siempre limpiamos el cronómetro al soltar, por si no se había disparado.
     if (longPressState.timer) {
         clearTimeout(longPressState.timer);
         longPressState.timer = null;
     }
     
-    // Si ya se ejecutó la acción de pulsación larga, no hacemos nada más.
     if (longPressState.isLongPress) {
-        longPressState.isLongPress = false; // Reseteamos para la próxima vez
+        longPressState.isLongPress = false;
+        // ¡LA CORRECCIÓN! Prevenimos el click si fue una pulsación larga
+        e.preventDefault();
+        e.stopPropagation();
         return;
     }
 
-    // El resto de tu lógica de swipe se mantiene igual.
     if (!swipeState.isSwiping || !swipeState.activeCard) return;
     
     if (swipeState.isSwipeIntent) {
@@ -9662,6 +9654,7 @@ const handleInteractionEnd = (e) => {
     swipeState.isSwiping = false;
     swipeState.isSwipeIntent = false;
 };
+
 const showContextMenuForMovement = (movementId) => {
     const movement = db.movimientos.find(m => m.id === movementId);
     if (!movement) return;
