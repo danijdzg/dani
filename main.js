@@ -6309,8 +6309,7 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
     
     let data = null;
     let mode = 'new';
-    let initialType = 'gasto';
-
+    
     if (id) {
         try {
             const collectionName = isRecurrent ? 'recurrentes' : 'movimientos';
