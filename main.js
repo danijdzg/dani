@@ -1054,6 +1054,44 @@ document.body.addEventListener('change', e => {
     const number = (numInCents || 0) / 100;
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(number);
 };
+/**
+ * Gestiona la vibración táctil (Haptic Feedback) si el navegador lo soporta.
+ * @param {string} type - El tipo de feedback: 'light', 'medium', 'success', 'warning', 'error'.
+ */
+const hapticFeedback = (type = 'light') => {
+    // Medida de seguridad: solo vibra si el usuario ya ha interactuado con la app
+    // y si el navegador del móvil soporta la vibración.
+    if (!userHasInteracted || !('vibrate' in navigator)) {
+        return;
+    }
+    
+    try {
+        let pattern;
+        switch (type) {
+            case 'light':   pattern = 10; break; // Una vibración muy corta para clics simples
+            case 'medium':  pattern = 25; break; // Un poco más intensa para confirmaciones
+            case 'success': pattern = [15, 60, 15]; break; // Patrón corto de "éxito"
+            case 'warning': pattern = [30, 40, 30]; break; // Patrón de "atención"
+            case 'error':   pattern = [50, 50, 50]; break; // Patrón más largo para errores
+            default:        pattern = 10;
+        }
+        navigator.vibrate(pattern);
+    } catch (e) {
+        // La vibración puede fallar silenciosamente. No es un error crítico.
+    }
+};
+
+// --- Habilitador de Interacción ---
+// Los navegadores modernos, por seguridad, solo permiten la vibración DESPUÉS de que el usuario
+// haya tocado la pantalla al menos una vez. Esta pequeña pieza de código se encarga de eso.
+const enableHaptics = () => {
+    userHasInteracted = true;
+    // Una vez que el usuario ha interactuado, eliminamos los listeners para no ejecutarlos más.
+    document.body.removeEventListener('touchstart', enableHaptics, { once: true });
+    document.body.removeEventListener('click', enableHaptics, { once: true });
+};
+
+// ▲▲▲ FIN DEL BLOQUE A PEGAR ▲▲▲
 
 // ▼▼▼ PÉGALA AQUÍ ▼▼▼
 const showToast = (message, type = 'info', duration = 3000) => {
@@ -1175,19 +1213,35 @@ const initWidgetObserver = () => {
  */
 const triggerSaveAnimation = (fromElement, color) => {
     if (!fromElement) return;
+
+    // 1. Encuentra la posición del botón de "Guardar" y la lista de destino.
     const startRect = fromElement.getBoundingClientRect();
     const listElement = select('movimientos-list-container') || select('diario-page');
     const endRect = listElement.getBoundingClientRect();
+
+    // 2. Crea la burbuja dinámicamente.
     const bubble = document.createElement('div');
     bubble.className = 'save-animation-bubble';
     bubble.style.backgroundColor = color === 'green' ? 'var(--c-success)' : 'var(--c-danger)';
+    
+    // 3. Posiciona la burbuja justo encima del botón "Guardar".
     bubble.style.left = `${startRect.left + startRect.width / 2 - 10}px`;
     bubble.style.top = `${startRect.top + startRect.height / 2 - 10}px`;
+    
+    // 4. La añade al cuerpo de la página.
     document.body.appendChild(bubble);
-    void bubble.offsetWidth; // Force reflow
-    bubble.style.animation = `fly-to-list 0.7s cubic-bezier(0.5, 0, 1, 0.5) forwards`;
-    bubble.style.transform = `translate(${endRect.left + endRect.width / 2 - (startRect.left + startRect.width / 2)}px, ${endRect.top - (startRect.top + startRect.height / 2)}px) scale(0)`;
-    bubble.addEventListener('animationend', () => bubble.remove(), { once: true });
+
+    // 5. Un pequeño truco para asegurar que la animación se inicie correctamente.
+    requestAnimationFrame(() => {
+        bubble.style.opacity = '1';
+        bubble.style.transform = `translate(
+            ${endRect.left + endRect.width / 2 - (startRect.left + startRect.width / 2)}px, 
+            ${endRect.top - (startRect.top + startRect.height / 2)}px
+        ) scale(0)`;
+    });
+
+    // 6. Cuando la animación termine, la burbuja se autodestruye para limpiar.
+    bubble.addEventListener('transitionend', () => bubble.remove(), { once: true });
 };
         const displayError = (id, msg) => { const err = select(`${id}-error`); if (err) { err.textContent = msg; err.setAttribute('role', 'alert'); } const inp = select(id); if (inp) inp.classList.add('form-input--invalid'); };
         const clearError = (id) => { const err = select(`${id}-error`); if (err) { err.textContent = ''; err.removeAttribute('role'); } const inp = select(id); if (inp) inp.classList.remove('form-input--invalid'); };
@@ -8466,7 +8520,7 @@ const handleSaveMovement = async (form, btn) => {
 
             // Disparamos la animación
             triggerSaveAnimation(btn, dataToSave.cantidad > 0 ? 'green' : 'red');
-
+			 hapticFeedback('success');
             // --- PERSISTENCIA EN FIREBASE (Se ejecuta en segundo plano) ---
             const batch = fbDb.batch();
             const userRef = fbDb.collection('users').doc(currentUser.uid);
@@ -9525,7 +9579,9 @@ const validateMovementForm = () => {
         if (!validateField('movimiento-concepto')) isValid = false;
         if (!validateField('movimiento-cuenta')) isValid = false;
     }
-    
+    if (!isValid) { // <-- AÑADE ESTE BLOQUE IF AL FINAL
+        hapticFeedback('error'); 
+    }
     return isValid;
 };
  
