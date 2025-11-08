@@ -72,8 +72,8 @@ const PAGE_IDS = {
 
 
 	const THEMES = {
-    'default': { name: 'Neon Blade', icon: 'dark_mode' },
-    'sunset-groove': { name: 'Sunset Groove', icon: 'light_mode' }
+    'default': { name: 'Abismo Digital', icon: 'dark_mode' },
+    'sunset-groove': { name: 'Brisa Alpina', icon: 'light_mode' }
 };
 	        
 // CÓDIGO CORRECTO Y ÚNICO QUE DEBE QUEDAR EN TU ARCHIVO

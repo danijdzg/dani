@@ -286,32 +286,32 @@
 .drag-handle:active { cursor: grabbing; }
 
 :root {
-    /* TEMA 1: "NEON BLADE" (Oscuro por defecto) */
-    /* PALETA: Inspirada en estética ciber-neón sobre negro puro. */
-    --c-primary: #00B34D;       /* Verde Esmeralda Profundo (Tu color de manifest) */
-    --c-primary-hover: #00CC55; /* Versión más brillante para interacciones */
-    --c-danger: #FF3B30;        /* Rojo Neón Intenso */
-    --c-success: #39FF14;       /* Verde Lima Eléctrico */
-    --c-warning: #FFD60A;       /* Amarillo Neón Vibrante */
-    --c-info: #BF5AF2;          /* Púrpura Neón (para traspasos e info) */
+    /* TEMA 1: "ABISMO DIGITAL" (Oscuro Profesional) */
+    /* PALETA: Inspirada en fintech de lujo, con un fondo azul noche profundo. */
+    --c-primary: #00B34D;       /* Verde Esmeralda, reservado para acciones clave. */
+    --c-primary-hover: #00CC55;
+    --c-danger: #FF3B30;
+    --c-success: #39FF14;
+    --c-warning: #FFD60A;
+    --c-info: #BF5AF2;
     
-    /* FONDOS Y SUPERFICIES: Negro AMOLED y "cristal" oscuro. */
-    --c-background: #000000;    /* Negro Puro para pantallas AMOLED */
-    --c-surface: rgba(10, 25, 40, 0.75); /* Tinte azulado oscuro translúcido, más opaco para legibilidad */
-    --c-surface-variant: rgba(20, 35, 50, 0.70);
+    /* FONDOS Y SUPERFICIES: Elegancia y profundidad. */
+    --c-background: #0A121A;    /* AZUL NOCHE PROFUNDO - Casi negro, pero más rico. */
+    --c-surface: rgba(28, 42, 58, 0.6); /* Glassmorphism sutil sobre el fondo. */
+    --c-surface-variant: rgba(42, 58, 78, 0.5);
     
-    /* BORDES Y RESPLANDOR: El alma del efecto neón. */
-    --c-outline: rgba(0, 255, 255, 0.35); /* Cian para los bordes */
-    --c-border-glow: 0 0 12px rgba(0, 255, 255, 0.4);
+    /* BORDES Y LÍNEAS: Definición sin distracción. */
+    --c-outline: rgba(255, 255, 255, 0.1); /* Blanco de baja opacidad. */
+    --c-border-glow: 0 0 12px rgba(0, 179, 77, 0.4); /* Resplandor ahora en verde primario. */
     
-    /* TEXTOS: Optimizados para brillar con alto contraste. */
-    --c-on-surface: #F0F8FF;             /* Blanco "Alice Blue" (casi blanco) */
-    --c-on-surface-secondary: rgba(240, 248, 255, 0.80); /* WCAG: Opacidad aumentada para >4.5:1 */
-    --c-on-surface-tertiary: rgba(240, 248, 255, 0.65); /* WCAG: Opacidad aumentada para >4.5:1 */
+    /* TEXTOS: Optimizados para legibilidad. */
+    --c-on-surface: #F0F8FF;
+    --c-on-surface-secondary: rgba(240, 248, 255, 0.85); /* Contraste mejorado. */
+    --c-on-surface-tertiary: rgba(240, 248, 255, 0.70); /* Contraste mejorado. */
     
-    /* SOMBRAS: Efecto "Bloom" de resplandor neón. */
-    --shadow-sm: 0 0 8px rgba(0, 255, 255, 0.25);
-    --shadow-md: 0 0 20px rgba(0, 255, 255, 0.45);
+    /* SOMBRAS: Resplandor suave. */
+    --shadow-sm: 0 0 8px rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 0 20px rgba(0, 0, 0, 0.45);
     --glow-red: 0 0 20px rgba(255, 59, 48, 0.55);
 
     /* VARIABLES BASE (No se tocan) */
@@ -323,49 +323,24 @@
     --border-radius-md: 10px; --border-radius-lg: 16px;
 }
 
-body[data-theme="default"]::before {
-    content: '';
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: -1;
-    pointer-events: none;
-    opacity: 0.1;
-    background-image:
-        linear-gradient(rgba(0, 179, 77, 0.25) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 179, 77, 0.25) 1px, transparent 1px);
-    background-size: 35px 35px;
-    animation: pan-grid 60s linear infinite;
-}
-
-@keyframes pan-grid {
-    0% { background-position: 0 0; }
-    100% { background-position: 350px 350px; }
-}
-
-/* Opcional: Elimina la rejilla del tema claro si no te gusta */
-body[data-theme="sunset-groove"]::before {
-    display: none;
-}
-
 body[data-theme="sunset-groove"] {
-    /* TEMA 2: "SUNSET GROOVE" (Claro profesional) */
-    /* PALETA: Vibrante y colorida sobre fondo gris claro. */
-    --c-primary: #0060C0;       /* WCAG: Azul oscurecido para un contraste >4.5:1 sobre el fondo */
-    --c-primary-hover: #007AFF; /* Azul original para interacciones */
-    --c-danger: #D92A2A;        /* WCAG: Rojo oscurecido para contraste */
-    --c-success: #28a745;       /* WCAG: Verde oscurecido para contraste */
+    /* TEMA 2: "BRISA ALPINA" (Claro y Profesional) */
+    /* PALETA: Inspirada en la claridad y limpieza del diseño de apps nativas modernas. */
+    --c-primary: #007AFF;       /* Azul más vibrante y moderno. */
+    --c-primary-hover: #0056b3;
+    --c-danger: #D92A2A;
+    --c-success: #28a745;
     --c-warning: #FF9500;
     --c-info: #5856D6;
     
-    /* FONDOS Y SUPERFICIES: Glassmorphism sobre gris pizarra. */
-    --c-background: #E5E5EA;    /* Gris pizarra muy claro */
-    --c-surface: rgba(252, 252, 252, 0.85); /* "Cristal esmerilado", más opaco para legibilidad */
-    --c-surface-variant: rgba(255, 255, 255, 0.6);
-    --c-outline: rgba(60, 60, 67, 0.25);  /* Borde más oscuro para mejor definición */
+    /* FONDOS Y SUPERFICIES: Limpieza y aire. */
+    --c-background: #F7F7F7;    /* FONDO CASI BLANCO - Para una sensación más nítida. */
+    --c-surface: rgba(255, 255, 255, 0.8); /* Glassmorphism muy sutil. */
+    --c-surface-variant: rgba(255, 255, 255, 0.7);
+    --c-outline: rgba(60, 60, 67, 0.12);  /* Borde más claro, casi imperceptible. */
     
-    /* TEXTOS: Oscuros para un contraste perfecto. */
-    --c-on-surface: #1C1C1E; /* Negro suave, no puro */
+    /* TEXTOS: Contraste perfecto sobre blanco. */
+    --c-on-surface: #1D1D1F; /* Gris muy oscuro, más suave que el negro puro. */
     --c-on-surface-secondary: #3C3C4399;
     --c-on-surface-tertiary: #3C3C4380;
     
