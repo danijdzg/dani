@@ -1054,32 +1054,6 @@ document.body.addEventListener('change', e => {
     const number = (numInCents || 0) / 100;
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(number);
 };
-/**
- * Gestiona la vibración táctil (Haptic Feedback) si el navegador lo soporta.
- * @param {string} type - El tipo de feedback: 'light', 'medium', 'success', 'warning', 'error'.
- */
-const hapticFeedback = (type = 'light') => {
-    // Medida de seguridad: solo vibra si el usuario ya ha interactuado con la app
-    // y si el navegador del móvil soporta la vibración.
-    if (!userHasInteracted || !('vibrate' in navigator)) {
-        return;
-    }
-    
-    try {
-        let pattern;
-        switch (type) {
-            case 'light':   pattern = 10; break; // Una vibración muy corta para clics simples
-            case 'medium':  pattern = 25; break; // Un poco más intensa para confirmaciones
-            case 'success': pattern = [15, 60, 15]; break; // Patrón corto de "éxito"
-            case 'warning': pattern = [30, 40, 30]; break; // Patrón de "atención"
-            case 'error':   pattern = [50, 50, 50]; break; // Patrón más largo para errores
-            default:        pattern = 10;
-        }
-        navigator.vibrate(pattern);
-    } catch (e) {
-        // La vibración puede fallar silenciosamente. No es un error crítico.
-    }
-};
 
 // --- Habilitador de Interacción ---
 // Los navegadores modernos, por seguridad, solo permiten la vibración DESPUÉS de que el usuario
