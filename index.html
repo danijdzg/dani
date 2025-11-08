@@ -102,7 +102,7 @@
             </button>
             
             <!-- Botón de Acción Central -->
-            <button data-action="open-main-add-modal" id="bottom-nav-add-btn">
+            <button data-action="show-main-add-sheet" id="bottom-nav-add-btn">
                 <span class="material-icons">add</span>
             </button>
             
@@ -321,6 +321,31 @@
 	<div id="irr-history-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="irr-history-title">
         <div class="modal"><div class="modal__grabber"></div><header class="modal__header"><h3 id="irr-history-title" class="modal__title">Evolución de la TIR</h3><button class="icon-btn" data-action="close-modal" data-modal-id="irr-history-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button></header><div id="irr-history-body" class="modal__body"><div class="chart-container" style="height: 100%;"><canvas id="irr-history-chart"></canvas></div></div></div>
 	</div> 
+	<!-- ▼▼▼ INICIO: MEJORA 1 - Bottom Sheet para Acciones Rápidas ▼▼▼ -->
+    <div id="main-add-sheet" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="main-add-sheet-title">
+        <div class="modal">
+            <div class="modal__grabber"></div>
+            <header class="modal__header" style="padding-top: var(--sp-2);">
+                <h3 id="main-add-sheet-title" class="modal__title">¿Qué quieres añadir?</h3>
+                <button class="icon-btn" data-action="close-modal" data-modal-id="main-add-sheet" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
+            </header>
+            <div class="modal__body" id="main-add-sheet-body">
+                <button class="add-sheet-button" data-action="open-movement-form" data-type="gasto">
+                    <span class="material-icons" style="color: var(--c-danger);">trending_down</span>
+                    <span>Añadir Gasto</span>
+                </button>
+                <button class="add-sheet-button" data-action="open-movement-form" data-type="ingreso">
+                    <span class="material-icons" style="color: var(--c-success);">trending_up</span>
+                    <span>Añadir Ingreso</span>
+                </button>
+                <button class="add-sheet-button" data-action="open-movement-form" data-type="traspaso">
+                    <span class="material-icons" style="color: var(--c-info);">swap_horiz</span>
+                    <span>Hacer un Traspaso</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- ▲▲▲ FIN: MEJORA 1 - Bottom Sheet para Acciones Rápidas ▲▲▲ -->
 
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>

@@ -1,3 +1,31 @@
+/* --- Mejora 1: Bottom Sheet de Acciones Rápidas --- */
+#main-add-sheet-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2); /* Espacio entre los botones */
+}
+.add-sheet-button {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3); /* Espacio entre el icono y el texto */
+    padding: var(--sp-3); /* Espaciado interno generoso para un toque fácil */
+    background-color: var(--c-surface-variant);
+    border: none;
+    border-radius: var(--border-radius-lg);
+    font-size: var(--fs-base);
+    font-weight: 600;
+    color: var(--c-on-surface);
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+.add-sheet-button:hover {
+    background-color: color-mix(in srgb, var(--c-primary) 10%, transparent);
+}
+.add-sheet-button:active {
+    transform: scale(0.98); /* Efecto de pulsación */
+}
 
 /* === INICIO: Estilos para el Informe de Cuenta (Cartilla) - VERSIÓN FINAL CORREGIDA === */
 .informe-extracto-container { border: 1px solid var(--c-outline); border-radius: var(--border-radius-lg); background-color: var(--c-surface); overflow: hidden; }

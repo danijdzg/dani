@@ -6296,7 +6296,7 @@ const setMovimientoFormType = (type) => {
 
 // ▼▼▼ PUEDES REEMPLAZAR LA FUNCIÓN COMPLETA SI TE ES MÁS FÁCIL ▼▼▼
 
-const startMovementForm = async (id = null, isRecurrent = false) => {
+const startMovementForm = async (id = null, isRecurrent = false, initialType = 'gasto') => {
     hapticFeedback('medium');
     const form = select('form-movimiento');
     form.reset();
@@ -7653,7 +7653,16 @@ if (ptrElement && mainScrollerPtr) {
                     }, 0);
                 }
             },
-            'open-main-add-modal': () => startMovementForm(),
+            'show-main-add-sheet': () => showModal('main-add-sheet'),
+			'open-movement-form': (e) => {
+    const type = e.target.closest('[data-type]').dataset.type;
+    hideModal('main-add-sheet');
+    // Usamos un pequeño retardo para que la animación de cierre del sheet
+    // no se solape con la de apertura del formulario, creando un efecto más fluido.
+    setTimeout(() => {
+        startMovementForm(null, false, type);
+    }, 250);
+},
             'export-filtered-csv': () => handleExportFilteredCsv(btn),
             'show-diario-filters': showDiarioFiltersModal,
             'clear-diario-filters': clearDiarioFilters,
