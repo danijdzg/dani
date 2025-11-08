@@ -6266,6 +6266,8 @@ const setMovimientoFormType = (type) => {
         };
 
 
+// ▼▼▼ PUEDES REEMPLAZAR LA FUNCIÓN COMPLETA SI TE ES MÁS FÁCIL ▼▼▼
+
 const startMovementForm = async (id = null, isRecurrent = false) => {
     hapticFeedback('medium');
     const form = select('form-movimiento');
@@ -6309,17 +6311,15 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
         select('movimiento-cantidad').value = `${(Math.abs(data.cantidad) / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, useGrouping: false })}`;
         
         const fechaInput = select('movimiento-fecha');
-const dateStringForInput = isRecurrent ? data.nextDate : data.fecha;
+        const dateStringForInput = isRecurrent ? data.nextDate : data.fecha;
 
-// --- ⭐ INICIO DE LA CORRECCIÓN ⭐ ---
-if (dateStringForInput) {
-    const fecha = parseDateStringAsUTC(dateStringForInput);
-    // Comprobamos que la fecha parseada es válida antes de usarla
-    if (fecha && !isNaN(fecha)) {
-        fechaInput.value = fecha.toISOString().slice(0,10);
-        updateDateDisplay(fechaInput);
-    }
-}
+        if (dateStringForInput) {
+            const fecha = parseDateStringAsUTC(dateStringForInput);
+            if (fecha && !isNaN(fecha)) {
+                fechaInput.value = fecha.toISOString().slice(0,10);
+                updateDateDisplay(fechaInput);
+            }
+        }
 
         select('movimiento-descripcion').value = data.descripcion || '';
 
@@ -6334,7 +6334,7 @@ if (dateStringForInput) {
             select('movimiento-cuenta').dispatchEvent(new Event('change'));
             select('movimiento-concepto').dispatchEvent(new Event('change'));
         }
-
+        // Lógica para recurrentes en edición
         const recurrenteCheckbox = select('movimiento-recurrente');
         const recurrentOptions = select('recurrent-options');
         if (mode === 'edit-recurrent') {
@@ -6355,6 +6355,7 @@ if (dateStringForInput) {
             recurrenteCheckbox.checked = false;
             recurrentOptions.classList.add('hidden');
         }
+
     } else {
         const fechaInput = select('movimiento-fecha');
         const fecha = new Date();
@@ -6369,10 +6370,14 @@ if (dateStringForInput) {
     showModal('movimiento-modal');
     initAmountInput();
     
-    if (!id) {
+    // --- ¡AQUÍ ESTÁ LA LÓGICA CORREGIDA! ---
+    // La calculadora solo se abre automáticamente si es un movimiento nuevo Y si es un móvil.
+    if (isMobileDevice() && !id) {
         setTimeout(() => showCalculator(select('movimiento-cantidad')), 150);
     }
 };
+
+// ▲▲▲ FIN DEL BLOQUE A REEMPLAZAR ▲▲▲
         
         
         const showGlobalSearchModal = () => {
