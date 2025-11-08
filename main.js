@@ -2409,16 +2409,11 @@ const handleToggleInvestmentTypeFilter = (type) => {
     renderPortfolioEvolutionChart('portfolio-evolution-container');
 };
 
-// ====================================================================================
-// === REEMPLAZA ESTA FUNCIÓN COMPLETA - VERSIÓN CON ORDEN ALFABÉTICO POR NOMBRE ===
-// ====================================================================================
+// ▼▼▼ REEMPLAZA TU FUNCIÓN renderPortfolioMainContent POR COMPLETO CON ESTE BLOQUE CORREGIDO ▼▼▼
 
 const renderPortfolioMainContent = async (targetContainerId) => {
     const container = select(targetContainerId);
     if (!container) return;
-
-    // ... (El código de esta función es largo y no necesita cambios hasta casi el final) ...
-    // ... (Mantenemos toda la lógica de obtención de datos, KPIs y renderizado del gráfico treemap) ...
 
     const investmentAccounts = getVisibleAccounts().filter((c) => c.esInversion);
     const CHART_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
@@ -2463,14 +2458,38 @@ const renderPortfolioMainContent = async (targetContainerId) => {
     const rentabilidadClass = rentabilidadTotalAbsoluta >= 0 ? 'text-positive' : 'text-negative';
 
     container.innerHTML = `
-        <div class="card" style="margin-bottom: var(--sp-4);"><div class="card__content" style="display: flex; justify-content: space-around; text-align: center; padding: var(--sp-3);"><div><h4 class="kpi-item__label">Capital Aportado</h4><strong class="kpi-item__value" style="font-size: var(--fs-lg);">${formatCurrency(portfolioTotalInvertido)}</strong></div><div><h4 class="kpi-item__label">Valor de Mercado</h4><strong class="kpi-item__value" style="font-size: var(--fs-lg);">${formatCurrency(portfolioTotalValorado)}</strong></div><div><h4 class="kpi-item__label">Ganancia / Pérdida</h4><strong class="kpi-item__value ${rentabilidadClass}" style="font-size: var(--fs-lg);">${formatCurrency(rentabilidadTotalAbsoluta)}</strong><div class="kpi-item__comparison ${rentabilidadClass}" style="font-weight: 600;">(${rentabilidadTotalPorcentual.toFixed(1)}%)</div></div></div></div>
-        <details class="accordion" open style="margin-bottom: var(--sp-4);"><summary><h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">pie_chart</span>Asignación y Filtros</h3><span class="material-icons accordion__icon">expand_more</span></summary><div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);"><div class="filter-pills" style="margin-bottom: var(--sp-2);">${pillsHTML}</div><div class="chart-container" style="height: 250px; margin-bottom: 0;"><canvas id="asset-allocation-chart"></canvas></div></div></details>
+        <div class="card" style="margin-bottom: var(--sp-4);">
+            <div class="card__content" style="display: flex; justify-content: space-around; text-align: center; padding: var(--sp-3);">
+                <div>
+                    <h4 class="kpi-item__label">Capital Aportado</h4>
+                    <strong class="kpi-item__value" style="font-size: var(--fs-lg);">${formatCurrency(portfolioTotalInvertido)}</strong>
+                </div>
+                <div>
+                    <h4 class="kpi-item__label">Valor de Mercado</h4>
+                    <strong class="kpi-item__value" style="font-size: var(--fs-lg);">${formatCurrency(portfolioTotalValorado)}</strong>
+                </div>
+                <div>
+                    <h4 class="kpi-item__label">Ganancia / Pérdida</h4>
+                    <strong class="kpi-item__value ${rentabilidadClass}" style="font-size: var(--fs-lg);">${formatCurrency(rentabilidadTotalAbsoluta)}</strong>
+                    <div class="kpi-item__comparison ${rentabilidadClass}" style="font-weight: 600;">(${rentabilidadTotalPorcentual.toFixed(1)}%)</div>
+                </div>
+            </div>
+        </div>
+        <details class="accordion" open style="margin-bottom: var(--sp-4);">
+            <summary><h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">pie_chart</span>Asignación y Filtros</h3><span class="material-icons accordion__icon">expand_more</span></summary>
+            <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
+                <div class="filter-pills" style="margin-bottom: var(--sp-2);">${pillsHTML}</div>
+                <div class="chart-container" style="height: 250px; margin-bottom: 0;"><canvas id="asset-allocation-chart"></canvas></div>
+            </div>
+        </details>
         <div id="investment-assets-list"></div>
-        <div class="card card--no-bg" style="padding:0; margin-top: var(--sp-4);"><button class="btn btn--secondary btn--full" data-action="manage-investment-accounts"><span class="material-icons" style="font-size: 16px;">checklist</span>Gestionar Activos</button></div>`;
+        <div class="card card--no-bg" style="padding:0; margin-top: var(--sp-4);">
+            <button class="btn btn--secondary btn--full" data-action="manage-investment-accounts"><span class="material-icons" style="font-size: 16px;">checklist</span>Gestionar Activos</button>
+        </div>`;
     
     setTimeout(() => {
         const chartCtx = select('asset-allocation-chart')?.getContext('2d');
-        if (chartCtx) { /* ... (código del gráfico treemap sin cambios) ... */
+        if (chartCtx) {
             if (assetAllocationChart) assetAllocationChart.destroy();
             const keyToSum = 'valorActual';
             const treeData = [];
@@ -2479,7 +2498,22 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                 if (valor > 0) treeData.push({ tipo: toSentenceCase(asset.tipo || 'S/T'), nombre: asset.nombre, valor: valor });
             });
             if (treeData.length > 0) {
-                assetAllocationChart = new Chart(chartCtx, { type: 'treemap', data: { datasets: [{ tree: treeData, key: 'valor', groups: ['tipo', 'nombre'], spacing: 0.5, borderWidth: 1.5, borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'), backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'), labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) } }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false } } });
+                assetAllocationChart = new Chart(chartCtx, {
+                    type: 'treemap',
+                    data: {
+                        datasets: [{
+                            tree: treeData,
+                            key: 'valor',
+                            groups: ['tipo', 'nombre'],
+                            spacing: 0.5,
+                            borderWidth: 1.5,
+                            borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'),
+                            backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'),
+                            labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) }
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false } } }
+                });
             } else {
                 select('asset-allocation-chart').closest('.chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con valor para mostrar.</p></div>`;
             }
@@ -2492,22 +2526,26 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                 .map(cuenta => {
                     const pnlClass = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
                     const ultimaValoracion = (db.inversiones_historial || []).filter(v => v.cuentaId === cuenta.id).sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
+                    
+                    // ESTA ES LA LÍNEA QUE TENÍA EL ERROR. YA ESTÁ CORREGIDA.
                     let ultimaValoracionHtml = ultimaValoracion ? `<span title="Fecha de la última valoración" style="color:var(--c-on-surface-secondary); font-size: var(--fs-xs);">Últ. Val: ${new Date(ultimaValoracion.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>` : `<span title="Este activo no tiene ninguna valoración manual registrada" style="color:var(--c-on-surface-secondary); font-size: var(--fs-xs); font-style: italic;">Sin valorar</span>`;
+                    
                     return `<div class="modal__list-item" data-action="view-account-details" data-id="${cuenta.id}" style="cursor: pointer; padding: var(--sp-3); display: block; border-bottom: 1px solid var(--c-outline);">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; margin-bottom: var(--sp-1);"><strong style="font-size: var(--fs-base);">${escapeHTML(cuenta.nombre)}</strong><strong style="font-size: var(--fs-base);">${formatCurrency(cuenta.valorActual)}</strong></div>
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: var(--sp-2); font-size: var(--fs-xs);"><span class="${pnlClass}" style="font-weight: 600;">P&L: ${formatCurrency(cuenta.pnlAbsoluto)} (${cuenta.pnlPorcentual.toFixed(1)}%)</span><span style="color:var(--c-info); font-weight:600;">TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}</span></div>
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><span style="color:var(--c-on-surface-secondary); font-size: var(--fs-xs);">Aportado: ${formatCurrency(cuenta.capitalInvertido)}</span><div style="display: flex; align-items: center; gap: 8px;">${ultimaValoracionHtml}<button class="btn btn--secondary" data-action="update-asset-value" data-id="${cuenta.id}" style="padding: 4px 10px; font-size: 0.75rem;"><span class="material-icons" style="font-size: 14px;">add_chart</span>Valoración</button></div></div>
                     </div>`;
                 }).join('');
+
             listContainer.innerHTML = listHtml ? `<div class="card"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
             
-            // ▼▼▼ ¡AQUÍ ESTÁ LA LÍNEA MÁGICA QUE FALTABA! ▼▼▼
-            // Le decimos a nuestro detector de gestos que "active" la pulsación larga
-            // en los elementos que acabamos de dibujar dentro de 'listContainer'.
+            // ESTA ES LA LÍNEA CLAVE QUE ARREGLA LA PULSACIÓN LARGA EN ESTA VISTA
             applyInvestmentItemInteractions(listContainer);
         }
     }, 50);
 };
+
+// ▲▲▲ FIN DEL BLOQUE A REEMPLAZAR ▲▲▲
 
         const renderVirtualListItem = (item) => {
 			if (item.type === 'month-header') {
