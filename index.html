@@ -146,125 +146,135 @@
             <div class="modal__body">
                 <!-- ▼▼▼ INICIO: NUEVO FORMULARIO DE ALTA DENSIDAD ▼▼▼ -->
                 <form id="form-movimiento" novalidate>
-                    <input type="hidden" id="movimiento-id" />
-                    <input type="hidden" id="movimiento-mode" value="new" />
+    <input type="hidden" id="movimiento-id" />
+    <input type="hidden" id="movimiento-mode" value="new" />
 
-                    <div class="filter-pills" style="justify-content: center; margin-bottom: var(--sp-3);">
-                        <button type="button" class="filter-pill filter-pill--active" data-action="set-movimiento-type" data-type="gasto">Gasto</button>
-                        <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="ingreso">Ingreso</button>
-                        <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="traspaso">Traspaso</button>
-                    </div>
+    <!-- Selector de tipo (Gasto/Ingreso/Traspaso) se mantiene igual -->
+    <div class="filter-pills" style="justify-content: center; margin-bottom: var(--sp-3);">
+        <button type="button" class="filter-pill filter-pill--active" data-action="set-movimiento-type" data-type="gasto">Gasto</button>
+        <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="ingreso">Ingreso</button>
+        <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="traspaso">Traspaso</button>
+    </div>
 
-                    <div class="dense-form-grid">
-                        <div class="form-field-compact" id="movimiento-cantidad-form-group" style="grid-area: amount;">
-                            <label for="movimiento-cantidad">Cantidad (€)</label>
-                            <div class="input-wrapper">
-                                <input type="text" id="movimiento-cantidad" required placeholder="0,00" />
-                                <button type="button" id="calculator-toggle-btn" class="icon-btn" title="Abrir Calculadora">
-                                    <span class="material-icons">calculate</span>
-                                </button>
-                            </div>
-                            <span class="form-error" id="movimiento-cantidad-error"></span>
-                        </div>
-                        
-                        <div class="form-field-compact" style="grid-area: description;">
-                            <label for="movimiento-descripcion">Descripción</label>
-                            <div class="input-wrapper">
-                                <input type="text" id="movimiento-descripcion" required placeholder="Compra semanal, café..." />
-                            </div>
-                            <span class="form-error" id="movimiento-descripcion-error"></span>
-                            <div id="description-suggestions"></div>
-                        </div>
-                        
-                        <div id="movimiento-fields">
-                            <div class="form-field-compact">
-                                <label for="movimiento-concepto">Concepto</label>
-                                <div class="input-wrapper input-wrapper--with-addon">
-                                    <select id="movimiento-concepto" required></select>
-                                </div>
-                                <span class="form-error" id="movimiento-concepto-error"></span>
-                            </div>
-                            <div class="form-field-compact">
-                                <label for="movimiento-cuenta">Cuenta</label>
-                                <div class="input-wrapper input-wrapper--with-addon">
-                                    <select id="movimiento-cuenta" required></select>
-                                </div>
-                                <span class="form-error" id="movimiento-cuenta-error"></span>
-                            </div>
-                        </div>
+    <!-- 
+      NUEVA ESTRUCTURA DE REJILLA: 
+      Esta es la clave del diseño compacto. Usamos CSS Grid para colocar los campos.
+      - "amount": ocupará la zona de la cantidad.
+      - "description": ocupará la zona de la descripción.
+      - "details": ocupará la zona inferior para los desplegables.
+    -->
+    <div class="dense-form-grid">
+        
+        <!-- Campo de Cantidad -->
+        <div class="form-field-compact" id="movimiento-cantidad-form-group" style="grid-area: amount;">
+            <label for="movimiento-cantidad">Cantidad (€)</label>
+            <div class="input-wrapper">
+                <input type="text" id="movimiento-cantidad" required placeholder="0,00" />
+                <button type="button" id="calculator-toggle-btn" class="icon-btn" title="Abrir Calculadora">
+                    <span class="material-icons">calculate</span>
+                </button>
+            </div>
+            <span class="form-error" id="movimiento-cantidad-error"></span>
+        </div>
+        
+        <!-- Campo de Descripción -->
+        <div class="form-field-compact" style="grid-area: description;">
+            <label for="movimiento-descripcion">Descripción</label>
+            <div class="input-wrapper">
+                <input type="text" id="movimiento-descripcion" required placeholder="Compra semanal, café..." />
+            </div>
+            <span class="form-error" id="movimiento-descripcion-error"></span>
+            <div id="description-suggestions"></div>
+        </div>
+        
+        <!-- Contenedor para campos de Ingreso/Gasto -->
+        <div id="movimiento-fields">
+            <div class="form-field-compact">
+                <label for="movimiento-concepto">Concepto</label>
+                <!-- OJO: Dejamos el <select> aquí. El JavaScript lo transformará visualmente. -->
+                <select id="movimiento-concepto" required></select>
+                <span class="form-error" id="movimiento-concepto-error"></span>
+            </div>
+            <div class="form-field-compact">
+                <label for="movimiento-cuenta">Cuenta</label>
+                <!-- Igual que con concepto, mantenemos el <select> original. -->
+                <select id="movimiento-cuenta" required></select>
+                <span class="form-error" id="movimiento-cuenta-error"></span>
+            </div>
+        </div>
 
-                        <div id="traspaso-fields" class="hidden">
-                            <div class="form-field-compact">
-                                <label for="movimiento-cuenta-origen">Desde Cuenta</label>
-                                <div class="input-wrapper">
-                                    <select id="movimiento-cuenta-origen"></select>
-                                </div>
-                                <span class="form-error" id="movimiento-cuenta-origen-error"></span>
-                            </div>
-                            <div class="form-field-compact">
-                                <label for="movimiento-cuenta-destino">Hacia Cuenta</label>
-                                <div class="input-wrapper">
-                                    <select id="movimiento-cuenta-destino"></select>
-                                </div>
-                                <span class="form-error" id="movimiento-cuenta-destino-error"></span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="recurrent-section">
-                        <div class="form-switch-group" style="padding: var(--sp-2) var(--sp-3);">
-                            <label for="movimiento-recurrente" class="recurrent-section__label">Programar como recurrente</label>
-                            <label class="form-switch"><input type="checkbox" id="movimiento-recurrente"><span class="slider"></span></label>
-                        </div>
-                        <div id="recurrent-options" class="hidden">
-                            <div class="recurrent-options__main">
-                                <select id="recurrent-frequency">
-                                    <option value="once">Única vez</option>
-                                    <option value="daily">Diaria</option>
-                                    <option value="weekly">Semanal</option>
-                                    <option value="monthly" selected>Mensual</option>
-                                    <option value="yearly">Anual</option>
-                                </select>
-                                <input type="date" id="recurrent-next-date" title="Próxima ejecución">
-                                <input type="date" id="recurrent-end-date" title="Finaliza el (opcional)">
-                            </div>
-                            <div id="weekly-day-selector" class="hidden">
-                                <div id="weekly-day-selector-buttons">
-                                    <button type="button" class="day-selector-btn" data-day="1">L</button>
-                                    <button type="button" class="day-selector-btn" data-day="2">M</button>
-                                    <button type="button" class="day-selector-btn" data-day="3">X</button>
-                                    <button type="button" class="day-selector-btn" data-day="4">J</button>
-                                    <button type="button" class="day-selector-btn" data-day="5">V</button>
-                                    <button type="button" class="day-selector-btn" data-day="6">S</button>
-                                    <button type="button" class="day-selector-btn" data-day="0">D</button>
-                                </div>
-                            </div>
-                            <span class="form-error" id="recurrent-frequency-error"></span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-field-compact" style="margin-top: var(--sp-3);">
-                        <div class="input-wrapper">
-                            <input type="date" id="movimiento-fecha" class="visually-hidden" required />
-                            <button type="button" id="movimiento-fecha-display" class="date-button-compact">
-                                <span class="material-icons">edit_calendar</span>
-                                <span id="movimiento-fecha-text"></span>
-                            </button>
-                        </div>
-                        <span class="form-error" id="movimiento-fecha-error"></span>
-                    </div>
+        <!-- Contenedor para campos de Traspaso (inicialmente oculto) -->
+        <div id="traspaso-fields" class="hidden">
+            <div class="form-field-compact">
+                <label for="movimiento-cuenta-origen">Desde Cuenta</label>
+                <select id="movimiento-cuenta-origen"></select>
+                <span class="form-error" id="movimiento-cuenta-origen-error"></span>
+            </div>
+            <div class="form-field-compact">
+                <label for="movimiento-cuenta-destino">Hacia Cuenta</label>
+                <select id="movimiento-cuenta-destino"></select>
+                <span class="form-error" id="movimiento-cuenta-destino-error"></span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sección Recurrente: Rediseñada para ser más compacta -->
+    <div class="recurrent-section">
+        <div class="form-switch-group" style="padding: var(--sp-2) var(--sp-3);">
+            <label for="movimiento-recurrente" class="recurrent-section__label">Programar como recurrente</label>
+            <label class="form-switch"><input type="checkbox" id="movimiento-recurrente"><span class="slider"></span></label>
+        </div>
+        <div id="recurrent-options" class="hidden">
+            <div class="recurrent-options__main">
+                <select id="recurrent-frequency">
+                    <option value="once">Única vez</option>
+                    <option value="daily">Diaria</option>
+                    <option value="weekly">Semanal</option>
+                    <option value="monthly" selected>Mensual</option>
+                    <option value="yearly">Anual</option>
+                </select>
+                <input type="date" id="recurrent-next-date" title="Próxima ejecución">
+                <input type="date" id="recurrent-end-date" title="Finaliza el (opcional)">
+            </div>
+            <div id="weekly-day-selector" class="hidden">
+                <div id="weekly-day-selector-buttons">
+                    <button type="button" class="day-selector-btn" data-day="1">L</button>
+                    <button type="button" class="day-selector-btn" data-day="2">M</button>
+                    <button type="button" class="day-selector-btn" data-day="3">X</button>
+                    <button type="button" class="day-selector-btn" data-day="4">J</button>
+                    <button type="button" class="day-selector-btn" data-day="5">V</button>
+                    <button type="button" class="day-selector-btn" data-day="6">S</button>
+                    <button type="button" class="day-selector-btn" data-day="0">D</button>
+                </div>
+            </div>
+            <span class="form-error" id="recurrent-frequency-error"></span>
+        </div>
+    </div>
+    
+    <!-- Campo de Fecha: Ahora es un botón más visual -->
+    <div class="form-field-compact" style="margin-top: var(--sp-3);">
+        <div class="input-wrapper">
+            <input type="date" id="movimiento-fecha" class="visually-hidden" required />
+            <button type="button" id="movimiento-fecha-display" class="date-button-compact">
+                <span class="material-icons">edit_calendar</span>
+                <span id="movimiento-fecha-text"></span>
+            </button>
+        </div>
+        <span class="form-error" id="movimiento-fecha-error"></span>
+    </div>
 
-                    <div class="modal__actions" style="display:flex; justify-content: space-between; align-items:center; margin-top: var(--sp-4);">
-                        <div class="left-actions" style="display:flex; gap: var(--sp-1);">
-                            <button type="button" id="delete-movimiento-btn" data-action="delete-movement-from-modal" class="icon-btn hidden" title="Borrar"><span class="material-icons">delete</span></button>
-                            <button type="button" id="duplicate-movimiento-btn" data-action="duplicate-movement" class="icon-btn hidden" title="Duplicar"><span class="material-icons">content_copy</span></button>
-                        </div>
-                        <div class="right-actions" style="display:flex; gap: var(--sp-2);">
-                            <button id="save-and-new-movimiento-btn" type="button" data-action="save-and-new-movement" class="btn btn--secondary">Guardar y Nuevo</button>
-                            <button id="save-movimiento-btn" type="submit" class="btn btn--primary">Guardar</button>
-                        </div>
-                    </div>
-                </form>
+    <!-- Acciones del Modal: Se mantienen igual -->
+    <div class="modal__actions" style="display:flex; justify-content: space-between; align-items:center; margin-top: var(--sp-4);">
+        <div class="left-actions" style="display:flex; gap: var(--sp-1);">
+            <button type="button" id="delete-movimiento-btn" data-action="delete-movement-from-modal" class="icon-btn hidden" title="Borrar"><span class="material-icons">delete</span></button>
+            <button type="button" id="duplicate-movimiento-btn" data-action="duplicate-movement" class="icon-btn hidden" title="Duplicar"><span class="material-icons">content_copy</span></button>
+        </div>
+        <div class="right-actions" style="display:flex; gap: var(--sp-2);">
+            <button id="save-and-new-movimiento-btn" type="button" data-action="save-and-new-movement" class="btn btn--secondary">Guardar y Nuevo</button>
+            <button id="save-movimiento-btn" type="submit" class="btn btn--primary">Guardar</button>
+        </div>
+    </div>
+</form>
                 <!-- ▲▲▲ FIN: NUEVO FORMULARIO DE ALTA DENSIDAD ▲▲▲ -->
             </div>
         </div>

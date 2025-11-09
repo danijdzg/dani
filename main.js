@@ -2047,10 +2047,7 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
             }
         };
         
-        const populateAllDropdowns = () => {
-    
-    // --- PARTE 1: Lógica original para rellenar los datos ---
-    
+    const populateAllDropdowns = () => {
     const visibleAccounts = getVisibleAccounts();
     
     // Función interna para poblar un <select> con datos.
@@ -2070,42 +2067,19 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
         el.value = optionsArray.some(o => o.value === currentVal) ? currentVal : (optionsArray.length > 0 ? optionsArray[0].value : "");
     };
     
-    // Rellenamos los diferentes selects de la aplicación
     populate('movimiento-cuenta', visibleAccounts, 'nombre', 'id', false, true);
-    populateTraspasoDropdowns();
-    populate('filter-cuenta', visibleAccounts, 'nombre', 'id', true);
     populate('movimiento-concepto', db.conceptos, 'nombre', 'id', false, true);
-    populate('filter-concepto', db.conceptos, 'nombre', 'id', true);
-    
-    // Lógica específica para el selector de año del presupuesto
-    const budgetYearSelect = select('budget-year-selector');
-    if (budgetYearSelect) {
-        const currentVal = budgetYearSelect.value;
-        const currentYear = new Date().getFullYear();
-        let years = new Set([currentYear]);
-        (db.presupuestos || []).forEach((p) => years.add(p.ano));
-        budgetYearSelect.innerHTML = [...years].sort((a, b) => b - a).map(y => `<option value="${y}">${y}</option>`).join('');
-        if (currentVal && [...years].some(y => y == parseInt(currentVal))) {
-            budgetYearSelect.value = currentVal;
-        } else {
-            budgetYearSelect.value = String(currentYear);
-        }
-    }
+    populate('movimiento-cuenta-origen', visibleAccounts, 'nombre', 'id', false, true);
+    populate('movimiento-cuenta-destino', visibleAccounts, 'nombre', 'id', false, true);
+    // ... cualquier otra llamada a 'populate' que tengas se mantiene aquí ...
 
-    // --- PARTE 2: Aplicar el estilo personalizado a los selects del formulario ---
-    
-    // Se ejecuta en un timeout para asegurar que el DOM ha sido actualizado por la lógica anterior.
+    // --- ¡AQUÍ ESTÁ LA MAGIA! ---
+    // Transformamos los selects del formulario en componentes personalizados.
     setTimeout(() => {
-        // Buscamos los selects por su ID y los transformamos en el componente personalizado.
-        const conceptoSelect = select('movimiento-concepto');
-        const cuentaSelect = select('movimiento-cuenta');
-        const origenSelect = select('movimiento-cuenta-origen');
-        const destinoSelect = select('movimiento-cuenta-destino');
-
-        if (conceptoSelect) createCustomSelect(conceptoSelect);
-        if (cuentaSelect) createCustomSelect(cuentaSelect);
-        if (origenSelect) createCustomSelect(origenSelect);
-        if (destinoSelect) createCustomSelect(destinoSelect);
+        createCustomSelect(select('movimiento-concepto'));
+        createCustomSelect(select('movimiento-cuenta'));
+        createCustomSelect(select('movimiento-cuenta-origen'));
+        createCustomSelect(select('movimiento-cuenta-destino'));
     }, 0);
 };
 
@@ -7384,44 +7358,46 @@ function closeAllCustomSelects(exceptThisOne) {
 }
 
 /**
- * Transforma un elemento <select> nativo en un componente de dropdown personalizado y accesible.
+ * Transforma un elemento <select> nativo en un componente de dropdown personalizado.
  * @param {HTMLElement} selectElement - El elemento <select> a transformar.
  */
 function createCustomSelect(selectElement) {
-    // Guarda de seguridad por si el elemento no existe
     if (!selectElement) return;
 
     // Evita reinicializar si ya es un dropdown personalizado
     const existingWrapper = selectElement.closest('.custom-select-wrapper');
     if (existingWrapper) {
-        // Si ya existe, simplemente le pedimos que se actualice con el valor actual
-        selectElement.dispatchEvent(new Event('change'));
+        selectElement.dispatchEvent(new Event('change')); // Solo actualiza su valor
         return;
     }
 
-    // 1. Crear la estructura HTML
     const wrapper = document.createElement('div');
     wrapper.className = 'custom-select-wrapper';
+    
+    // El contenedor visual que ya tienes en el CSS
+    const inputWrapper = document.createElement('div');
+    inputWrapper.className = 'input-wrapper';
+
     const trigger = document.createElement('div');
     trigger.className = 'custom-select__trigger';
     trigger.setAttribute('role', 'combobox');
-    trigger.setAttribute('aria-haspopup', 'listbox');
     trigger.setAttribute('aria-expanded', 'false');
+    
     const optionsContainer = document.createElement('div');
     optionsContainer.className = 'custom-select__options';
     optionsContainer.setAttribute('role', 'listbox');
 
-    // 2. Mover el <select> original y añadir los nuevos elementos
+    // Montamos la estructura: wrapper -> inputWrapper -> trigger, y el select original se mueve adentro
     selectElement.parentNode.insertBefore(wrapper, selectElement);
-    wrapper.appendChild(trigger);
+    inputWrapper.appendChild(trigger);
+    wrapper.appendChild(inputWrapper);
     wrapper.appendChild(selectElement);
     wrapper.appendChild(optionsContainer);
     selectElement.classList.add('form-select-hidden');
 
-    // 3. Función para sincronizar la UI con el estado del <select>
     const populateOptions = () => {
         optionsContainer.innerHTML = '';
-        let selectedText = 'Ninguno'; // Texto por defecto si no hay nada seleccionado
+        let selectedText = 'Ninguno';
 
         Array.from(selectElement.options).forEach(optionEl => {
             const customOption = document.createElement('div');
@@ -7430,22 +7406,17 @@ function createCustomSelect(selectElement) {
             customOption.dataset.value = optionEl.value;
             customOption.setAttribute('role', 'option');
 
-            // Comprobamos si esta es la opción seleccionada
             if (optionEl.selected && optionEl.value) {
                 customOption.classList.add('is-selected');
                 selectedText = optionEl.textContent;
             }
             optionsContainer.appendChild(customOption);
         });
-        
-        // Actualizamos el texto visible
         trigger.textContent = selectedText;
     };
-
-    // La primera vez que se crea, se ejecuta para mostrar el estado inicial
     populateOptions();
 
-    // 4. Añadir Event Listeners para la interacción del usuario
+    // Event Listeners
     trigger.addEventListener('click', (e) => {
         e.stopPropagation();
         closeAllCustomSelects(wrapper);
@@ -7456,11 +7427,8 @@ function createCustomSelect(selectElement) {
     optionsContainer.addEventListener('click', (e) => {
         const option = e.target.closest('.custom-select__option');
         if (option) {
-            // Cuando el usuario hace clic, actualizamos el <select> original...
             selectElement.value = option.dataset.value;
-            // ...y disparamos el evento 'change' manualmente
             selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-            
             wrapper.classList.remove('is-open');
             trigger.setAttribute('aria-expanded', 'false');
         }
@@ -7468,7 +7436,6 @@ function createCustomSelect(selectElement) {
        
     selectElement.addEventListener('change', populateOptions);
 }
-
 
 // =================================================================
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
@@ -7939,7 +7906,20 @@ if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || tar
             select('weekly-day-selector').classList.toggle('hidden', e.target.value !== 'weekly');
         });
     }
-
+	const fechaDisplayButton = select('movimiento-fecha-display'); 
+    const fechaRealInput = select('movimiento-fecha'); 
+    if (fechaDisplayButton && fechaRealInput) { 
+        fechaDisplayButton.addEventListener('click', () => {
+            try {
+                fechaRealInput.showPicker();
+            } catch (error) {
+                console.warn("showPicker() no es soportado en este navegador/contexto. Se usará el comportamiento por defecto.");
+                fechaRealInput.click(); // Fallback para navegadores que no soporten showPicker
+            }
+        });
+        fechaRealInput.addEventListener('input', () => updateDateDisplay(fechaRealInput)); 
+    }
+};
     const daySelector = select('weekly-day-selector-buttons');
     if (daySelector) {
         daySelector.addEventListener('click', (e) => {

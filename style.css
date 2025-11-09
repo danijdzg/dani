@@ -1761,109 +1761,23 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 
 /* --- INICIO: Estilos para el Dropdown Personalizado --- */
 
-/* 1. El Contenedor Principal */
-.custom-select-wrapper {
-    position: relative;
-    width: 100%;
-}
+/* 7. Dropdown Personalizado (La magia visual) */
+.custom-select-wrapper { position: relative; width: 100%; }
+.custom-select__trigger { position: relative; width: 100%; padding: 22px 12px 6px 12px; border-radius: var(--border-radius-md); background: transparent; color: var(--c-on-surface); font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: none; /* Quitamos el borde porque ya lo tiene el .input-wrapper */ }
+.custom-select-wrapper.is-open .input-wrapper { border-color: var(--c-primary); box-shadow: var(--c-border-glow); } /* El brillo se aplica al contenedor */
+.custom-select__trigger::after { content: ''; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--c-on-surface-secondary); transition: transform 0.2s ease-in-out; }
+.custom-select-wrapper.is-open .custom-select__trigger::after { transform: translateY(-50%) rotate(180deg); }
+.custom-select__options { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background-color: var(--c-surface); border: 1px solid var(--c-outline); border-radius: var(--border-radius-md); box-shadow: var(--shadow-md); z-index: 1070; max-height: 200px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; }
+.custom-select-wrapper.is-open .custom-select__options { opacity: 1; visibility: visible; transform: translateY(0); }
+.custom-select__option { padding: var(--sp-2) var(--sp-3); color: var(--c-on-surface-secondary); font-weight: 500; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+.custom-select__option:hover { background-color: var(--c-surface-variant); color: var(--c-on-surface); }
+.custom-select__option.is-selected { background-color: var(--c-primary); color: var(--c-white); font-weight: 600; }
+.custom-select-wrapper .form-select-hidden { position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
-/* 2. El Disparador (lo que el usuario ve y clica) */
-.custom-select__trigger {
-    position: relative;
-    width: 100%;
-    padding: 22px 12px 6px 12px;
-    border: 1px solid var(--c-outline);
-    border-radius: var(--border-radius-md);
-    background: var(--c-surface-variant);
-    color: var(--c-on-surface);
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* 8. Media Query para pantallas ultra pequeñas */
+@media (max-width: 380px) {
+    /* Aquí podrías añadir optimizaciones específicas para móviles muy pequeños si fuera necesario */
 }
-
-/* Estado de Foco/Activo */
-.custom-select-wrapper.is-open .custom-select__trigger {
-    border-color: var(--c-primary);
-    box-shadow: var(--c-border-glow);
-}
-
-/* Flecha del Desplegable */
-.custom-select__trigger::after {
-    content: '';
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 6px solid var(--c-on-surface-secondary);
-    transition: transform 0.2s ease-in-out;
-}
-.custom-select-wrapper.is-open .custom-select__trigger::after {
-    transform: translateY(-50%) rotate(180deg);
-}
-
-/* 3. El Panel de Opciones (la lista que se despliega) */
-.custom-select__options {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    background-color: var(--c-surface);
-    border: 1px solid var(--c-outline);
-    border-radius: var(--border-radius-md);
-    box-shadow: var(--shadow-md);
-    z-index: 1070; /* Por encima de otros elementos del modal */
-    max-height: 200px;
-    overflow-y: auto;
-    
-    /* Animación de apertura */
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-}
-.custom-select-wrapper.is-open .custom-select__options {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-/* 4. Las Opciones Individuales */
-.custom-select__option {
-    padding: var(--sp-2) var(--sp-3);
-    color: var(--c-on-surface-secondary);
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
-}
-.custom-select__option:hover {
-    background-color: var(--c-surface-variant);
-    color: var(--c-on-surface);
-}
-.custom-select__option.is-selected {
-    background-color: var(--c-primary);
-    color: var(--c-white);
-    font-weight: 600;
-}
-
-/* 5. Ocultamos el <select> original de forma accesible */
-.custom-select-wrapper .form-select-hidden {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    pointer-events: none;
-}
-
 /* --- FIN: Estilos para el Dropdown Personalizado --- */
 
 /* --- INICIO: Mejora UX para lista de recurrentes --- */
