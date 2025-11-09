@@ -203,7 +203,7 @@
         margin-top: 4px; 
     }
 	
-	/* === INICIO: Estilos para la nueva Guía de Ayuda === */
+/* === INICIO: Estilos para la nueva Guía de Ayuda === */
 #help-modal-body h3 { 
     margin-top: 1.5em; 
     margin-bottom: 0.8em; 
@@ -2065,3 +2065,60 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 }
 
 /* === FIN: ESTILOS PARA FORMULARIO DE ALTA DENSIDAD Y NAVEGACIÓN === */
+
+/* --- INICIO: Estilos para la nueva página de Ajustes --- */
+
+.settings-group__title {
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    color: var(--c-on-surface-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 var(--sp-4) var(--sp-2) var(--sp-4); /* Alineado con los márgenes de las tarjetas */
+    margin-top: var(--sp-4); /* Espacio por encima de cada grupo */
+}
+
+/* El contenedor de cada fila/opción */
+.settings-item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    padding: var(--sp-3) var(--sp-4);
+    border: none;
+    background: var(--c-surface); /* El color de fondo del item */
+    text-align: left;
+    cursor: pointer;
+    border-bottom: 1px solid var(--c-outline); /* Línea separadora */
+    transition: background-color 0.2s ease-in-out;
+}
+
+/* Quita la línea separadora del último elemento del grupo */
+.card .settings-item:last-child {
+    border-bottom: none;
+}
+
+/* Efecto al pasar el ratón por encima (en PC) */
+.settings-item:hover {
+    background-color: var(--c-surface-variant);
+}
+
+/* El texto de la opción (ej. "Gestionar Cuentas") */
+.settings-item .settings-item__label {
+    flex-grow: 1; /* Hace que ocupe todo el espacio disponible */
+    color: var(--c-on-surface);
+    font-weight: 600;
+}
+
+/* Estilo para los iconos (el de la izquierda y la flecha de la derecha) */
+.settings-item .material-icons {
+    color: var(--c-on-surface-secondary);
+}
+
+/* Colores especiales para acciones importantes */
+.settings-item .text-positive { color: var(--c-success); }
+.settings-item .text-warning { color: var(--c-warning); }
+.settings-item .text-danger { color: var(--c-danger); }
+.settings-item.text-danger .settings-item__label { color: var(--c-danger); } /* Que el texto también sea rojo */
+
+/* --- FIN: Estilos para la nueva página de Ajustes --- */

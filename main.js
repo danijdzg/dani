@@ -1574,6 +1574,7 @@ const navigateTo = async (pageId, isInitial = false) => {
     [PAGE_IDS.INICIO]: { title: 'Panel', render: renderInicioPage, actions: standardActions },
     [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
     [PAGE_IDS.ESTRATEGIA]: { title: 'Estrategia', render: renderEstrategiaPage, actions: standardActions },
+    // ▼▼▼ REEMPLAZA ESTA LÍNEA ▼▼▼
     [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
 };
 
@@ -3063,7 +3064,85 @@ const renderDiarioPage = async () => {
         isDiarioPageRendering = false;
     }
 };
-		
+	const renderAjustesPage = () => {
+    const container = select(PAGE_IDS.AJUSTES);
+    if (!container) return;
+
+    // Estructura HTML de la nueva página de Ajustes, agrupada por temas.
+    // Usamos el patrón de "tarjetas" y "listas de items" que es muy familiar en móviles.
+    container.innerHTML = `
+        <div style="padding-bottom: var(--sp-4);">
+
+            <!-- Grupo 1: Gestión de Datos -->
+            <h3 class="settings-group__title">Gestión de Datos</h3>
+            <div class="card">
+                <div class="card__content" style="padding: 0;">
+                    <button class="settings-item" data-action="manage-cuentas">
+                        <span class="material-icons">account_balance_wallet</span>
+                        <span class="settings-item__label">Gestionar Cuentas</span>
+                        <span class="material-icons">chevron_right</span>
+                    </button>
+                    <button class="settings-item" data-action="manage-conceptos">
+                        <span class="material-icons">label</span>
+                        <span class="settings-item__label">Gestionar Conceptos</span>
+                        <span class="material-icons">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grupo 2: Copias de Seguridad y Migración -->
+            <h3 class="settings-group__title">Copias de Seguridad y Migración</h3>
+            <div class="card">
+                <div class="card__content" style="padding: 0;">
+                    <button class="settings-item" data-action="export-data">
+                        <span class="material-icons text-positive">cloud_upload</span>
+                        <span class="settings-item__label">Exportar Copia (JSON)</span>
+                        <span class="material-icons">chevron_right</span>
+                    </button>
+                     <button class="settings-item" data-action="export-csv">
+                        <span class="material-icons text-positive">description</span>
+                        <span class="settings-item__label">Exportar a CSV (Excel)</span>
+                        <span class="material-icons">chevron_right</span>
+                    </button>
+                    <button class="settings-item" data-action="import-data">
+                        <span class="material-icons text-warning">cloud_download</span>
+                        <span class="settings-item__label">Importar Copia (JSON)</span>
+                        <span class="material-icons">chevron_right</span>
+                    </button>
+                    <button class="settings-item" data-action="import-csv">
+                         <span class="material-icons text-warning">grid_on</span>
+                        <span class="settings-item__label">Importar desde CSV</span>
+                        <span class="material-icons">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Grupo 3: Seguridad y Cuenta -->
+            <h3 class="settings-group__title">Seguridad y Cuenta</h3>
+            <div class="card">
+                <div class="card__content" style="padding: 0;">
+                    <div class="settings-item" style="cursor: default;">
+                        <span class="material-icons">alternate_email</span>
+                        <span id="config-user-email" class="settings-item__label">Cargando...</span>
+                    </div>
+                    <button class="settings-item" data-action="set-pin">
+                        <span class="material-icons">pin</span>
+                        <span class="settings-item__label">Configurar PIN de acceso</span>
+                        <span class="material-icons">chevron_right</span>
+                    </button>
+                    <button class="settings-item text-danger" data-action="logout">
+                        <span class="material-icons">logout</span>
+                        <span class="settings-item__label">Cerrar Sesión</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    `;
+    
+    // Esta función, que ya tienes, se encarga de mostrar tu email en la lista.
+    loadConfig();
+};	
 	const getYearProgress = () => {
     const now = new Date();
     const start = new Date(now.getFullYear(), 0, 0);
@@ -6627,7 +6706,10 @@ const showHelpModal = () => {
     if (titleEl) {
         titleEl.textContent = 'Guía de Usuario aiDANaI';
     }
+
     if (bodyEl) {
+        // Este bloque de HTML contiene toda la nueva guía.
+        // Está diseñado con títulos, párrafos y acordeones para ser fácil de leer en móvil.
         bodyEl.innerHTML = `
 <div style="text-align: center; margin-bottom: var(--sp-4);">
     <img src="aiDANaI.webp" alt="Logo Cuentas aiDANaI" class="login-view__logo" style="margin-bottom: var(--sp-2);">
@@ -6659,28 +6741,13 @@ const showHelpModal = () => {
 </details>
 
 <details class="accordion" style="margin-bottom: var(--sp-2);">
-    <summary><span class="material-icons" style="margin-right:8px">edit_calendar</span><strong>3. Planificar: ¿Qué va a pasar? (La Sala de Estrategia)</strong></summary>
+    <summary><span class="material-icons" style="margin-right:8px">insights</span><strong>3. Estrategia: ¿A dónde voy? (La Sala de Mapas)</strong></summary>
     <div class="accordion__content" style="padding-top: var(--sp-2);">
-        <p>Aquí te pones el sombrero de estratega. Es donde le dices a tu dinero qué hacer, en lugar de preguntarte a dónde se ha ido a final de mes. Domina tu futuro con dos herramientas clave:</p>
+        <p>Aquí te pones el sombrero de estratega. Es donde le dices a tu dinero qué hacer, en lugar de preguntarte a dónde se ha ido. Se divide en tres áreas clave:</p>
          <ul>
-            <li><strong>Movimientos Recurrentes:</strong> ¡Automatiza tu vida! Registra tu nómina, el alquiler, Netflix, el gimnasio... La app los tendrá listos para ti cada mes en la sección "Diario" (como "Pendientes") para que los confirmes con un solo clic. Se acabó teclear lo mismo una y otra vez.</li>
-            <li><strong>Presupuestos Anuales:</strong> ¡Tu plan de batalla! Define cuánto quieres gastar (o ingresar) por categoría al año. La app te mostrará proyecciones y te dirá si vas por buen camino para cumplir tus metas o si te estás pasando con los pedidos a domicilio.</li>
-        </ul>
-    </div>
-</details>
-
-<details class="accordion" style="margin-bottom: var(--sp-2);">
-    <summary><span class="material-icons" style="margin-right:8px">account_balance</span><strong>4. Patrimonio: ¿Qué tengo y cuánto vale? (La Caja Fuerte)</strong></summary>
-    <div class="accordion__content" style="padding-top: var(--sp-2);">
-        <p>Esta es la foto completa de tu salud financiera. Aquí ves la suma de todo lo que tienes (tus activos) y cómo evoluciona en el tiempo. Se divide en dos partes:</p>
-        <ul>
-            <li><strong>Visión General:</strong> Muestra el valor de todas tus cuentas (bancos, efectivo, préstamos...). Puedes filtrar por tipo para ver, por ejemplo, cuánto dinero líquido tienes disponible.</li>
-            <li><strong>Portafolio de Inversión:</strong> Si marcas una cuenta como "de inversión", aparecerá aquí para un análisis profesional con métricas que te darán una claridad total:
-                <ul>
-                    <li><strong>P&L (Ganancias y Pérdidas):</strong> Es el "marcador" del partido. Te dice, en euros y en porcentaje, si vas ganando o perdiendo basándose en la diferencia entre el valor de mercado que introduces y el capital que has aportado.</li>
-                    <li><strong>TIR (Tasa Interna de Retorno):</strong> ¡El indicador definitivo! Te dice la rentabilidad <strong>anualizada real</strong> de tu dinero, teniendo en cuenta CUÁNDO has invertido. Es la métrica que usan los profesionales para saber si una inversión de verdad merece la pena.</li>
-                </ul>
-            </li>
+            <li><strong>Planificación:</strong> ¡Automatiza tu vida! Registra tu nómina, alquiler, etc., como "Recurrentes" y define tus "Presupuestos Anuales" para saber si vas por buen camino.</li>
+            <li><strong>Activos:</strong> La foto completa de tu patrimonio. Mira cómo se distribuye tu dinero y analiza a fondo tu portafolio de inversión con métricas profesionales como el P&L (Ganancias y Pérdidas) y la TIR (Tasa Interna de Retorno).</li>
+            <li><strong>Informes:</strong> Aquí puedes generar un "Extracto de Cuenta" o cartilla, igual que el del banco, para ver el historial y saldo de cualquier cuenta.</li>
         </ul>
     </div>
 </details>
@@ -6705,9 +6772,9 @@ const showHelpModal = () => {
 </details>
 
 <details class="accordion" style="margin-bottom: var(--sp-2);">
-    <summary>🧠 <strong>Asistente aiDANaI y Autocompletado: El Copiloto Automático</strong></summary>
+    <summary>🧠 <strong>Autocompletado Inteligente: El Copiloto Automático</strong></summary>
     <div class="accordion__content" style="padding-top: var(--sp-2);">
-        <p>Tu app aprende de ti. Cuando añadas un movimiento, empieza a escribir la descripción y verás sugerencias basadas en tus hábitos. Además, el Asistente IA (<span class="material-icons" style="font-size:1em; vertical-align:bottom;">auto_awesome</span>) puede responder preguntas en lenguaje natural como "¿cuál fue mi mayor gasto el mes pasado?".</p>
+        <p>Tu app aprende de ti. Cuando añadas un movimiento, empieza a escribir la descripción ("café con...") y verás sugerencias basadas en tus gastos anteriores. Si seleccionas una, rellenará automáticamente el concepto y la cuenta por ti, ¡ahorrándote tiempo en cada registro!</p>
     </div>
 </details>
 
