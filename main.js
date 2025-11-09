@@ -3750,6 +3750,7 @@ const TransactionCardComponent = (m, dbData) => {
     </div>`;
 };
 
+// ▼▼▼ REEMPLAZO COMPLETO Y CORREGIDO para renderPortfolioEvolutionChart ▼▼▼
 
 async function renderPortfolioEvolutionChart(targetContainerId) {
     const container = select(targetContainerId);
@@ -3773,7 +3774,7 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         return;
     }
 
-    // 3. Procesamiento de la línea de tiempo (lógica sin cambios, ya es correcta).
+    // 3. Procesamiento de la línea de tiempo (sin cambios).
     const timeline = [];
     const history = (db.inversiones_historial || []).filter(h => filteredAccountIds.has(h.cuentaId));
     history.forEach(v => timeline.push({ date: v.fecha.slice(0, 10), type: 'valuation', value: v.valor, accountId: v.cuentaId }));
@@ -3797,17 +3798,36 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     }
     timeline.sort((a, b) => new Date(a.date) - new Date(b.date));
     
+    // ▼▼▼ CORRECCIÓN CRÍTICA: Bloque de procesamiento de datos RESTAURADO ▼▼▼
+    // Este es el motor que convierte la lista de eventos en datos diarios.
     const dailyData = new Map();
     let runningCapital = 0;
     const lastKnownValues = new Map();
-    timeline.forEach(event => { /* ... tu lógica de procesamiento de 'dailyData' se mantiene igual ... */ });
-    
+    timeline.forEach(event => {
+        if (event.type === 'cashflow') {
+            runningCapital += event.value;
+        } else if (event.type === 'valuation') {
+            lastKnownValues.set(event.accountId, event.value);
+        }
+        
+        let totalValue = 0;
+        for (const value of lastKnownValues.values()) {
+            totalValue += value;
+        }
+        
+        dailyData.set(event.date, {
+            capital: runningCapital,
+            value: totalValue
+        });
+    });
+    // ▲▲▲ FIN DEL BLOQUE RESTAURADO ▲▲▲
+
     const sortedDates = [...dailyData.keys()].sort();
     const chartLabels = sortedDates;
     const capitalData = sortedDates.map(date => dailyData.get(date).capital / 100);
     const totalValueData = sortedDates.map(date => dailyData.get(date).value / 100);
 
-    // 4. Configuración y renderizado del nuevo gráfico dinámico.
+    // 4. Configuración y renderizado del gráfico (versión mejorada).
     const chartCanvas = select('portfolio-evolution-chart');
     const chartCtx = chartCanvas ? chartCanvas.getContext('2d') : null;
     if (!chartCtx) return;
@@ -3817,13 +3837,12 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     
     chartCanvas.closest('.chart-container').classList.remove('skeleton');
 
-    // ▼▼▼ CAMBIO CLAVE 1: Definición de colores dinámicos ▼▼▼
     const colorSuccess = getComputedStyle(document.body).getPropertyValue('--c-success').trim();
     const colorDanger = getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
     const colorInfo = getComputedStyle(document.body).getPropertyValue('--c-info').trim();
     
-    const fillSuccess = colorSuccess.replace(')', ', 0.3)'); // Verde con 30% de opacidad
-    const fillDanger = colorDanger.replace(')', ', 0.3)');   // Rojo con 30% de opacidad
+    const fillSuccess = colorSuccess.replace(')', ', 0.3)');
+    const fillDanger = colorDanger.replace(')', ', 0.3)');
     
     new Chart(chartCtx, {
         type: 'line',
@@ -3834,15 +3853,14 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                     label: 'Valor Total',
 					data: totalValueData,
 					borderColor: (ctx) => {
-                        // El color de la línea también cambia: verde si ganas, rojo si pierdes.
+                        if (ctx.p0DataIndex === undefined || !totalValueData[ctx.p0DataIndex] || !capitalData[ctx.p0DataIndex]) return colorSuccess;
                         const index = ctx.p0DataIndex;
                         return totalValueData[index] >= capitalData[index] ? colorSuccess : colorDanger;
                     },
-                    // ▼▼▼ CAMBIO CLAVE 2: Relleno inteligente hasta la otra línea ▼▼▼
                     fill: {
-                        target: '1', // Rellenar hasta el dataset en el índice 1 (Capital Aportado)
-                        above: fillSuccess, // Color para cuando esta línea está por ENCIMA
-                        below: fillDanger   // Color para cuando está por DEBAJO
+                        target: '1',
+                        above: fillSuccess,
+                        below: fillDanger
                     },
 					tension: 0.4,
 					pointRadius: 0,
@@ -3851,7 +3869,7 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                 {
                     label: 'Capital Aportado',
                     data: capitalData,
-                    borderColor: colorInfo, // Mantenemos el color informativo para el capital
+                    borderColor: colorInfo,
                     fill: false,
                     pointRadius: 0,
                     borderWidth: 2,
@@ -3859,7 +3877,7 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                 }
             ]
         },
-        options: { // Las opciones del gráfico se mantienen, ya son excelentes.
+        options: {
             responsive: true, 
             maintainAspectRatio: false,
             scales: {
@@ -3892,6 +3910,7 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         }
     });
 }
+
 // =================================================================
 // === INICIO: NUEVO MOTOR DE RENDERIZADO DE INFORMES (v2.0) ===
 // =================================================================
