@@ -3064,12 +3064,12 @@ const renderDiarioPage = async () => {
         isDiarioPageRendering = false;
     }
 };
-	const renderAjustesPage = () => {
+
+const renderAjustesPage = () => {
     const container = select(PAGE_IDS.AJUSTES);
     if (!container) return;
 
     // Estructura HTML de la nueva página de Ajustes, agrupada por temas.
-    // Usamos el patrón de "tarjetas" y "listas de items" que es muy familiar en móviles.
     container.innerHTML = `
         <div style="padding-bottom: var(--sp-4);">
 
@@ -3142,7 +3142,8 @@ const renderDiarioPage = async () => {
     
     // Esta función, que ya tienes, se encarga de mostrar tu email en la lista.
     loadConfig();
-};	
+};
+
 	const getYearProgress = () => {
     const now = new Date();
     const start = new Date(now.getFullYear(), 0, 0);
@@ -9823,83 +9824,3 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
-
-const renderAjustesPage = () => {
-    const container = select(PAGE_IDS.AJUSTES);
-    if (!container) return;
-
-    // Estructura HTML de la nueva página de Ajustes
-    container.innerHTML = `
-        <div class="card card--no-bg accordion-wrapper" style="padding: 0 var(--sp-4);">
-
-            <!-- Grupo 1: Gestión de Datos -->
-            <h3 class="settings-group__title">Gestión de Datos</h3>
-            <div class="card" style="margin-bottom: var(--sp-4);">
-                <div class="card__content" style="padding: 0;">
-                    <button class="settings-item" data-action="manage-cuentas">
-                        <span class="material-icons">account_balance_wallet</span>
-                        <span class="settings-item__label">Gestionar Cuentas</span>
-                        <span class="material-icons">chevron_right</span>
-                    </button>
-                    <button class="settings-item" data-action="manage-conceptos">
-                        <span class="material-icons">label</span>
-                        <span class="settings-item__label">Gestionar Conceptos</span>
-                        <span class="material-icons">chevron_right</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Grupo 2: Copias de Seguridad y Migración -->
-            <h3 class="settings-group__title">Copias de Seguridad y Migración</h3>
-            <div class="card" style="margin-bottom: var(--sp-4);">
-                <div class="card__content" style="padding: 0;">
-                    <button class="settings-item" data-action="export-data">
-                        <span class="material-icons text-positive">cloud_upload</span>
-                        <span class="settings-item__label">Exportar Copia de Seguridad (JSON)</span>
-                        <span class="material-icons">chevron_right</span>
-                    </button>
-                     <button class="settings-item" data-action="export-csv">
-                        <span class="material-icons text-positive">description</span>
-                        <span class="settings-item__label">Exportar a CSV (Excel)</span>
-                        <span class="material-icons">chevron_right</span>
-                    </button>
-                    <button class="settings-item" data-action="import-data">
-                        <span class="material-icons text-warning">cloud_download</span>
-                        <span class="settings-item__label">Importar Copia de Seguridad (JSON)</span>
-                        <span class="material-icons">chevron_right</span>
-                    </button>
-                    <button class="settings-item" data-action="import-csv">
-                         <span class="material-icons text-warning">grid_on</span>
-                        <span class="settings-item__label">Importar desde CSV</span>
-                        <span class="material-icons">chevron_right</span>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Grupo 3: Seguridad y Cuenta -->
-            <h3 class="settings-group__title">Seguridad y Cuenta</h3>
-            <div class="card" style="margin-bottom: var(--sp-4);">
-                <div class="card__content" style="padding: 0;">
-                    <div class="settings-item">
-                        <span class="material-icons">alternate_email</span>
-                        <span id="config-user-email" class="settings-item__label">Cargando...</span>
-                    </div>
-                    <button class="settings-item" data-action="set-pin">
-                        <span class="material-icons">pin</span>
-                        <span class="settings-item__label">Configurar PIN de acceso rápido</span>
-                        <span class="material-icons">chevron_right</span>
-                    </button>
-                    <button class="settings-item" data-action="logout">
-                        <span class="material-icons text-danger">logout</span>
-                        <span class="settings-item__label text-danger">Cerrar Sesión</span>
-                    </button>
-                </div>
-            </div>
-
-        </div>
-    `;
-    
-    // Esta función es necesaria para que se muestre tu email
-    loadConfig();
-};
-
