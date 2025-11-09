@@ -3750,23 +3750,18 @@ const TransactionCardComponent = (m, dbData) => {
     </div>`;
 };
 
-// ▼▼▼ REEMPLAZO COMPLETO Y CORREGIDO para renderPortfolioEvolutionChart ▼▼▼
+// ▼▼▼ REEMPLAZO COMPLETO Y RECOMENDADO para renderPortfolioEvolutionChart (v3.0) ▼▼▼
 
 async function renderPortfolioEvolutionChart(targetContainerId) {
     const container = select(targetContainerId);
     if (!container) return;
 
-    // 1. Dibuja el esqueleto de carga inicial (sin cambios).
     container.innerHTML = `<div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"><canvas id="portfolio-evolution-chart"></canvas></div>`;
 
-    // 2. Obtiene todos los datos necesarios (sin cambios).
+    // --- El bloque de obtención y procesamiento de datos se mantiene, ya que es correcto ---
     await loadInversiones();
     const allMovements = await fetchAllMovementsForHistory();
-
-    const filteredInvestmentAccounts = getVisibleAccounts().filter(account => {
-        const accountType = toSentenceCase(account.tipo || 'S/T');
-        return !deselectedInvestmentTypesFilter.has(accountType) && account.esInversion;
-    });
+    const filteredInvestmentAccounts = getVisibleAccounts().filter(account => !deselectedInvestmentTypesFilter.has(toSentenceCase(account.tipo || 'S/T')) && account.esInversion);
     const filteredAccountIds = new Set(filteredInvestmentAccounts.map(c => c.id));
 
     if (filteredInvestmentAccounts.length === 0) {
@@ -3774,14 +3769,10 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         return;
     }
 
-    // 3. Procesamiento de la línea de tiempo (sin cambios).
     const timeline = [];
     const history = (db.inversiones_historial || []).filter(h => filteredAccountIds.has(h.cuentaId));
     history.forEach(v => timeline.push({ date: v.fecha.slice(0, 10), type: 'valuation', value: v.valor, accountId: v.cuentaId }));
-    const cashFlowMovements = allMovements.filter(m => {
-        return (m.tipo === 'movimiento' && filteredAccountIds.has(m.cuentaId)) ||
-               (m.tipo === 'traspaso' && (filteredAccountIds.has(m.cuentaOrigenId) || filteredAccountIds.has(m.cuentaDestinoId)));
-    });
+    const cashFlowMovements = allMovements.filter(m => (m.tipo === 'movimiento' && filteredAccountIds.has(m.cuentaId)) || (m.tipo === 'traspaso' && (filteredAccountIds.has(m.cuentaOrigenId) || filteredAccountIds.has(m.cuentaDestinoId))));
     cashFlowMovements.forEach(m => {
         let amount = 0;
         if (m.tipo === 'movimiento') amount = m.cantidad;
@@ -3798,36 +3789,23 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     }
     timeline.sort((a, b) => new Date(a.date) - new Date(b.date));
     
-    // ▼▼▼ CORRECCIÓN CRÍTICA: Bloque de procesamiento de datos RESTAURADO ▼▼▼
-    // Este es el motor que convierte la lista de eventos en datos diarios.
     const dailyData = new Map();
     let runningCapital = 0;
     const lastKnownValues = new Map();
     timeline.forEach(event => {
-        if (event.type === 'cashflow') {
-            runningCapital += event.value;
-        } else if (event.type === 'valuation') {
-            lastKnownValues.set(event.accountId, event.value);
-        }
-        
+        if (event.type === 'cashflow') { runningCapital += event.value; }
+        else if (event.type === 'valuation') { lastKnownValues.set(event.accountId, event.value); }
         let totalValue = 0;
-        for (const value of lastKnownValues.values()) {
-            totalValue += value;
-        }
-        
-        dailyData.set(event.date, {
-            capital: runningCapital,
-            value: totalValue
-        });
+        for (const value of lastKnownValues.values()) { totalValue += value; }
+        dailyData.set(event.date, { capital: runningCapital, value: totalValue });
     });
-    // ▲▲▲ FIN DEL BLOQUE RESTAURADO ▲▲▲
+    // --- Fin del bloque de procesamiento de datos ---
 
     const sortedDates = [...dailyData.keys()].sort();
     const chartLabels = sortedDates;
     const capitalData = sortedDates.map(date => dailyData.get(date).capital / 100);
     const totalValueData = sortedDates.map(date => dailyData.get(date).value / 100);
 
-    // 4. Configuración y renderizado del gráfico (versión mejorada).
     const chartCanvas = select('portfolio-evolution-chart');
     const chartCtx = chartCanvas ? chartCanvas.getContext('2d') : null;
     if (!chartCtx) return;
@@ -3837,13 +3815,11 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     
     chartCanvas.closest('.chart-container').classList.remove('skeleton');
 
+    // Definimos los colores base a partir de tus variables CSS
     const colorSuccess = getComputedStyle(document.body).getPropertyValue('--c-success').trim();
     const colorDanger = getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
-    const colorInfo = getComputedStyle(document.body).getPropertyValue('--c-info').trim();
-    
-    const fillSuccess = colorSuccess.replace(')', ', 0.3)');
-    const fillDanger = colorDanger.replace(')', ', 0.3)');
-    
+    const colorPrimary = getComputedStyle(document.body).getPropertyValue('--c-primary').trim(); // Azul de tu tema claro
+
     new Chart(chartCtx, {
         type: 'line',
         data: {
@@ -3852,16 +3828,19 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                 {
                     label: 'Valor Total',
 					data: totalValueData,
-					borderColor: (ctx) => {
-                        if (ctx.p0DataIndex === undefined || !totalValueData[ctx.p0DataIndex] || !capitalData[ctx.p0DataIndex]) return colorSuccess;
-                        const index = ctx.p0DataIndex;
-                        return totalValueData[index] >= capitalData[index] ? colorSuccess : colorDanger;
+                    // ▼▼▼ CAMBIO CLAVE 1: El color de la línea ahora es dinámico ▼▼▼
+                    segment: {
+                        borderColor: ctx => {
+                            const y1 = ctx.p0.parsed.y; // Valor en el punto inicial del segmento
+                            const x1 = ctx.p1.parsed.y; // Valor en el punto final del segmento
+                            const capitalY1 = capitalData[ctx.p0DataIndex];
+                            const capitalX1 = capitalData[ctx.p1DataIndex];
+
+                            // Si ambos puntos están por debajo, rojo. Si no, verde.
+                            return y1 < capitalY1 && x1 < capitalX1 ? colorDanger : colorSuccess;
+                        }
                     },
-                    fill: {
-                        target: '1',
-                        above: fillSuccess,
-                        below: fillDanger
-                    },
+                    fill: false, // <-- CAMBIO CLAVE 2: Eliminamos el área de relleno
 					tension: 0.4,
 					pointRadius: 0,
 					borderWidth: 2.5,
@@ -3869,15 +3848,15 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                 {
                     label: 'Capital Aportado',
                     data: capitalData,
-                    borderColor: colorInfo,
-                    fill: false,
+                    borderColor: colorPrimary, // <-- CAMBIO CLAVE 3: La línea de capital ahora es azul
+                    fill: false, // <-- Y tampoco tiene relleno
                     pointRadius: 0,
                     borderWidth: 2,
                     borderDash: [5, 5],
                 }
             ]
         },
-        options: {
+        options: { // Las opciones del gráfico (escalas, tooltip, etc.) se mantienen igual
             responsive: true, 
             maintainAspectRatio: false,
             scales: {
@@ -3887,30 +3866,20 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
             plugins: {
                 legend: { display: true, position: 'bottom', align: 'start', labels: { usePointStyle: true, boxWidth: 8, padding: 20 }},
                 datalabels: { display: false },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    callbacks: {
-                        label: (context) => {
-                            const label = context.dataset.label || '';
-                            const value = context.parsed.y;
-                            return `${label}: ${formatCurrency(value * 100)}`;
-                        },
-                        footer: (tooltipItems) => {
-                            const total = tooltipItems.find(i => i.dataset.label === 'Valor Total')?.parsed.y || 0;
-                            const capital = tooltipItems.find(i => i.dataset.label === 'Capital Aportado')?.parsed.y || 0;
-                            const pnl = total - capital;
-                            const pnlFormatted = formatCurrency(pnl * 100);
-                            return `P&L: ${pnlFormatted}`;
-                        }
+                tooltip: { mode: 'index', intersect: false, callbacks: {
+                    label: (context) => `${context.dataset.label || ''}: ${formatCurrency(context.parsed.y * 100)}`,
+                    footer: (tooltipItems) => {
+                        const total = tooltipItems.find(i => i.dataset.label === 'Valor Total')?.parsed.y || 0;
+                        const capital = tooltipItems.find(i => i.dataset.label === 'Capital Aportado')?.parsed.y || 0;
+                        const pnl = total - capital;
+                        return `P&L: ${formatCurrency(pnl * 100)}`;
                     }
-                }
+                }}
             },
             interaction: { mode: 'index', intersect: false }
         }
     });
 }
-
 // =================================================================
 // === INICIO: NUEVO MOTOR DE RENDERIZADO DE INFORMES (v2.0) ===
 // =================================================================
