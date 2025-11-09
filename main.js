@@ -3749,20 +3749,16 @@ const TransactionCardComponent = (m, dbData) => {
         </div>
     </div>`;
 };
-// ▼▼▼ REEMPLAZA TU FUNCIÓN renderPortfolioEvolutionChart CON ESTA VERSIÓN ESPECTACULAR ▼▼▼
 
-/**
- * Renderiza un gráfico de área espectacular que muestra la evolución del capital aportado y las ganancias/pérdidas.
- * @param {string} targetContainerId - El ID del contenedor donde se dibujará el gráfico.
- */
+
 async function renderPortfolioEvolutionChart(targetContainerId) {
     const container = select(targetContainerId);
     if (!container) return;
 
-    // 1. Dibuja el esqueleto de carga inicial.
+    // 1. Dibuja el esqueleto de carga inicial (sin cambios).
     container.innerHTML = `<div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"><canvas id="portfolio-evolution-chart"></canvas></div>`;
 
-    // 2. Obtiene todos los datos necesarios (esta lógica no cambia).
+    // 2. Obtiene todos los datos necesarios (sin cambios).
     await loadInversiones();
     const allMovements = await fetchAllMovementsForHistory();
 
@@ -3777,7 +3773,7 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         return;
     }
 
-    // 3. Procesamiento de la línea de tiempo (esta lógica tampoco cambia).
+    // 3. Procesamiento de la línea de tiempo (lógica sin cambios, ya es correcta).
     const timeline = [];
     const history = (db.inversiones_historial || []).filter(h => filteredAccountIds.has(h.cuentaId));
     history.forEach(v => timeline.push({ date: v.fecha.slice(0, 10), type: 'valuation', value: v.valor, accountId: v.cuentaId }));
@@ -3811,23 +3807,24 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     const capitalData = sortedDates.map(date => dailyData.get(date).capital / 100);
     const totalValueData = sortedDates.map(date => dailyData.get(date).value / 100);
 
-    // 4. Configuración y renderizado del nuevo gráfico espectacular.
+    // 4. Configuración y renderizado del nuevo gráfico dinámico.
     const chartCanvas = select('portfolio-evolution-chart');
     const chartCtx = chartCanvas ? chartCanvas.getContext('2d') : null;
     if (!chartCtx) return;
 
-    // Destrucción segura del gráfico anterior.
     const existingChart = Chart.getChart(chartCanvas);
     if (existingChart) existingChart.destroy();
     
     chartCanvas.closest('.chart-container').classList.remove('skeleton');
 
-    // ▼▼▼ MEJORA 1: Creamos el gradiente para el área del gráfico ▼▼▼
-    const primaryColor = getComputedStyle(document.body).getPropertyValue('--c-primary').trim();
-    const gradient = chartCtx.createLinearGradient(0, 0, 0, 220); // 220 es la altura del canvas
-    gradient.addColorStop(0, primaryColor.replace(')', ', 0.6)')); // 60% opacidad arriba
-    gradient.addColorStop(1, primaryColor.replace(')', ', 0.05)'));// 5% opacidad abajo
-
+    // ▼▼▼ CAMBIO CLAVE 1: Definición de colores dinámicos ▼▼▼
+    const colorSuccess = getComputedStyle(document.body).getPropertyValue('--c-success').trim();
+    const colorDanger = getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
+    const colorInfo = getComputedStyle(document.body).getPropertyValue('--c-info').trim();
+    
+    const fillSuccess = colorSuccess.replace(')', ', 0.3)'); // Verde con 30% de opacidad
+    const fillDanger = colorDanger.replace(')', ', 0.3)');   // Rojo con 30% de opacidad
+    
     new Chart(chartCtx, {
         type: 'line',
         data: {
@@ -3836,25 +3833,33 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                 {
                     label: 'Valor Total',
 					data: totalValueData,
-					borderColor: primaryColor,
-					backgroundColor: gradient,
-                    fill: true, // <-- Rellena el área bajo la línea
-					tension: 0.4, // <-- MEJORA 2: Suaviza la línea
-					pointRadius: 0, // <-- Oculta los puntos para un look más limpio
+					borderColor: (ctx) => {
+                        // El color de la línea también cambia: verde si ganas, rojo si pierdes.
+                        const index = ctx.p0DataIndex;
+                        return totalValueData[index] >= capitalData[index] ? colorSuccess : colorDanger;
+                    },
+                    // ▼▼▼ CAMBIO CLAVE 2: Relleno inteligente hasta la otra línea ▼▼▼
+                    fill: {
+                        target: '1', // Rellenar hasta el dataset en el índice 1 (Capital Aportado)
+                        above: fillSuccess, // Color para cuando esta línea está por ENCIMA
+                        below: fillDanger   // Color para cuando está por DEBAJO
+                    },
+					tension: 0.4,
+					pointRadius: 0,
 					borderWidth: 2.5,
 				},
                 {
                     label: 'Capital Aportado',
                     data: capitalData,
-                    borderColor: getComputedStyle(document.body).getPropertyValue('--c-info').trim(),
+                    borderColor: colorInfo, // Mantenemos el color informativo para el capital
                     fill: false,
                     pointRadius: 0,
                     borderWidth: 2,
-                    borderDash: [5, 5], // <-- MEJORA 3: Línea de referencia punteada
+                    borderDash: [5, 5],
                 }
             ]
         },
-        options: {
+        options: { // Las opciones del gráfico se mantienen, ya son excelentes.
             responsive: true, 
             maintainAspectRatio: false,
             scales: {
@@ -3862,50 +3867,31 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                 x: { type: 'time', time: { unit: 'month', tooltipFormat: 'dd MMM yyyy' }, grid: { display: false } }
             },
             plugins: {
-                // ▼▼▼ MEJORA 4: Leyenda moderna y discreta en la parte inferior ▼▼▼
-                legend: {
-                    display: true, // La mostramos
-                    position: 'bottom', // Abajo
-                    align: 'start', // A la izquierda
-                    labels: {
-                        usePointStyle: true, // Usa círculos en vez de rectángulos
-                        boxWidth: 8,
-                        padding: 20
-                    }
-                },
-                // ▲▲▲ FIN MEJORA 4 ▲▲▲
+                legend: { display: true, position: 'bottom', align: 'start', labels: { usePointStyle: true, boxWidth: 8, padding: 20 }},
                 datalabels: { display: false },
-                // ▼▼▼ MEJORA 5: El Tooltip Inteligente y Explicativo ▼▼▼
                 tooltip: {
-                    mode: 'index', // Muestra datos para todas las series en el mismo punto
-                    intersect: false, // Se activa al pasar cerca, no necesita ser exacto
+                    mode: 'index',
+                    intersect: false,
                     callbacks: {
                         label: (context) => {
                             const label = context.dataset.label || '';
                             const value = context.parsed.y;
                             return `${label}: ${formatCurrency(value * 100)}`;
                         },
-                        // Esta es la magia:
                         footer: (tooltipItems) => {
-                            // Buscamos los valores de las dos líneas en el punto donde está el cursor
                             const total = tooltipItems.find(i => i.dataset.label === 'Valor Total')?.parsed.y || 0;
                             const capital = tooltipItems.find(i => i.dataset.label === 'Capital Aportado')?.parsed.y || 0;
                             const pnl = total - capital;
                             const pnlFormatted = formatCurrency(pnl * 100);
-                            
-                            // Devolvemos el P&L calculado como pie del tooltip.
-                            // Podríamos añadir color, pero el texto ya es muy claro.
                             return `P&L: ${pnlFormatted}`;
                         }
                     }
                 }
-                // ▲▲▲ FIN MEJORA 5 ▲▲▲
             },
             interaction: { mode: 'index', intersect: false }
         }
     });
 }
- 
 // =================================================================
 // === INICIO: NUEVO MOTOR DE RENDERIZADO DE INFORMES (v2.0) ===
 // =================================================================
