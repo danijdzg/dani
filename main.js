@@ -2525,26 +2525,46 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         const listContainer = select('investment-assets-list');
         if (listContainer) {
             const listHtml = displayAssetsData
-                .sort((a, b) => a.nombre.localeCompare(b.nombre))
-                .map(cuenta => {
-                    const pnlClass = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
-                    const ultimaValoracion = (db.inversiones_historial || []).filter(v => v.cuentaId === cuenta.id).sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
-                    
-                    // ESTA ES LA LÍNEA QUE TENÍA EL ERROR. YA ESTÁ CORREGIDA.
-                    let ultimaValoracionHtml = ultimaValoracion ? `<span title="Fecha de la última valoración" style="color:var(--c-on-surface-secondary); font-size: var(--fs-xs);">Últ. Val: ${new Date(ultimaValoracion.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>` : `<span title="Este activo no tiene ninguna valoración manual registrada" style="color:var(--c-on-surface-secondary); font-size: var(--fs-xs); font-style: italic;">Sin valorar</span>`;
-                    
-                    return `<div class="modal__list-item" data-action="view-account-details" data-id="${cuenta.id}" style="cursor: pointer; padding: var(--sp-3); display: block; border-bottom: 1px solid var(--c-outline);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; margin-bottom: var(--sp-1);"><strong style="font-size: var(--fs-base);">${escapeHTML(cuenta.nombre)}</strong><strong style="font-size: var(--fs-base);">${formatCurrency(cuenta.valorActual)}</strong></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: var(--sp-2); font-size: var(--fs-xs);"><span class="${pnlClass}" style="font-weight: 600;">P&L: ${formatCurrency(cuenta.pnlAbsoluto)} (${cuenta.pnlPorcentual.toFixed(1)}%)</span><span 
-    style="color:var(--c-info); font-weight:600; cursor: pointer; border-radius: 4px; padding: 2px 4px; transition: background-color 0.2s;" 
-    data-action="show-irr-breakdown" 
-    data-id="${cuenta.id}" 
-    title="Pulsar para ver desglose de TIR">
-    TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
-</span></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><span style="color:var(--c-on-surface-secondary); font-size: var(--fs-xs);">Aportado: ${formatCurrency(cuenta.capitalInvertido)}</span><div style="display: flex; align-items: center; gap: 8px;">${ultimaValoracionHtml}<button class="btn btn--secondary" data-action="update-asset-value" data-id="${cuenta.id}" style="padding: 4px 10px; font-size: 0.75rem;"><span class="material-icons" style="font-size: 14px;">add_chart</span>Valoración</button></div></div>
-                    </div>`;
-                }).join('');
+    .sort((a, b) => b.valorActual - a.valorActual) // Ordenamos por valor de mercado
+    .map(cuenta => {
+        const pnlClassPill = cuenta.pnlAbsoluto >= 0 ? 'is-positive' : 'is-negative';
+        
+        // Calculamos el peso del activo en el portafolio filtrado
+        const allocationPercentage = portfolioTotalValorado > 0 ? (cuenta.valorActual / portfolioTotalValorado) * 100 : 0;
+        
+        // El nuevo HTML para cada activo, con las mejoras visuales y el nuevo botón de P&L
+        return `
+        <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}">
+            
+            <!-- Icono basado en el tipo de cuenta -->
+            <div class="asset-card__icon">
+                <span class="material-icons">${getIconForAccountType(cuenta.tipo)}</span>
+            </div>
+            
+            <!-- Nombre y Peso en el portafolio -->
+            <div class="asset-card__details">
+                <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
+                <div class="asset-card__allocation">${allocationPercentage.toFixed(1)}% del Portafolio</div>
+            </div>
+
+            <!-- Cifras a la derecha (Valor y Píldora de P&L) -->
+            <div class="asset-card__figures">
+                <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
+
+                <!-- ESTE ES EL NUEVO BOTÓN PARA EL DESGLOSE DE P&L -->
+                <button 
+                    class="asset-card__pnl-pill ${pnlClassPill}" 
+                    style="border:none; cursor:pointer;"
+                    data-action="show-pnl-breakdown" 
+                    data-id="${cuenta.id}" 
+                    title="Pulsar para ver desglose de P&L">
+                    ${cuenta.pnlPorcentual.toFixed(1)}%
+                </button>
+
+            </div>
+        </div>
+        `;
+    }).join('');
 
             listContainer.innerHTML = listHtml ? `<div class="card"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
             
@@ -2552,6 +2572,63 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             applyInvestmentItemInteractions(listContainer);
         }
     }, 50);
+};
+
+
+const getIconForAccountType = (type) => {
+    const t = (type || '').toUpperCase();
+    if (t.includes('FONDO') || t.includes('BROKER')) return 'candlestick_chart';
+    if (t.includes('INMOBILIARIO') || t.includes('PROPIEDAD')) return 'home';
+    if (t.includes('PENSIÓN')) return 'savings';
+    if (t.includes('CRIPTO')) return 'currency_bitcoin';
+    if (t.includes('RENTA FIJA') || t.includes('LETRAS')) return 'trending_flat';
+    return 'account_balance_wallet';
+};
+
+// ▼▼▼ PEGA ESTA NUEVA FUNCIÓN COMPLETA EN TU ARCHIVO main.js ▼▼▼
+
+/**
+ * Muestra un modal con el desglose de la fórmula de P&L para un activo:
+ * Valor de Mercado - Capital Aportado = Resultado.
+ * @param {string} accountId - El ID de la cuenta de inversión a analizar.
+ */
+const handleShowPnlBreakdown = async (accountId) => {
+    const cuenta = db.cuentas.find(c => c.id === accountId);
+    if (!cuenta) return;
+
+    hapticFeedback('light');
+    showGenericModal(`Desglose P&L: ${cuenta.nombre}`, `<div style="text-align:center; padding: var(--sp-5);"><span class="spinner"></span></div>`);
+
+    const performanceData = await calculatePortfolioPerformance(accountId, 'MAX');
+
+    const { valorActual, capitalInvertido, pnlAbsoluto } = performanceData;
+    
+    let modalHtml = `<p class="form-label" style="margin-bottom: var(--sp-3);">
+        Tu Ganancia o Pérdida (P&L) se calcula con la fórmula que definiste: <strong>Valor de Mercado - Capital Aportado</strong>. El "Capital Aportado" en tu caso es el Saldo Contable de la cuenta.
+        </p>
+        <div class="informe-extracto-container" style="font-family: monospace, sans-serif; font-size: 1.1em;">
+            
+            <div class="informe-linea-movimiento" style="justify-content: space-between;">
+                <span>Valor de Mercado</span>
+                <span class="text-ingreso">${formatCurrency(valorActual)}</span>
+            </div>
+
+            <div class="informe-linea-movimiento" style="justify-content: space-between;">
+                <span>Capital Aportado</span>
+                <span class="text-gasto">- ${formatCurrency(capitalInvertido)}</span>
+            </div>
+            
+        </div>
+        
+        <div class="informe-extracto-container" style="margin-top: var(--sp-3); border-top: 2px solid var(--c-primary);">
+            <div class="informe-linea-movimiento" style="justify-content: space-between; font-weight: 700;">
+                <span>Resultado (P&L)</span>
+                <span class="${pnlAbsoluto >= 0 ? 'text-ingreso' : 'text-gasto'}">${formatCurrency(pnlAbsoluto)}</span>
+            </div>
+        </div>
+        `;
+    
+    showGenericModal(`Desglose P&L: ${cuenta.nombre}`, modalHtml);
 };
 
 // ▲▲▲ FIN DEL BLOQUE A REEMPLAZAR ▲▲▲
@@ -7746,6 +7823,7 @@ if (ptrElement && mainScrollerPtr) {
                 }
             },
             'show-main-add-sheet': () => showModal('main-add-sheet'),
+			'show-pnl-breakdown': () => handleShowPnlBreakdown(actionTarget.dataset.id),
 			 'show-irr-breakdown': () => handleShowIrrBreakdown(actionTarget.dataset.id),
 			'open-movement-form': (e) => {
     const type = e.target.closest('[data-type]').dataset.type;

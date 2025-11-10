@@ -2122,3 +2122,69 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 .settings-item.text-danger .settings-item__label { color: var(--c-danger); } /* Que el texto también sea rojo */
 
 /* --- FIN: Estilos para la nueva página de Ajustes --- */
+
+/* === INICIO: Estilos para Fichas de Activo Mejoradas === */
+.portfolio-asset-card {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+    padding: var(--sp-3) var(--sp-4);
+    cursor: pointer;
+    border-bottom: 1px solid var(--c-outline);
+    transition: background-color 0.2s;
+}
+.portfolio-asset-card:hover {
+    background-color: var(--c-surface-variant);
+}
+.card .portfolio-asset-card:last-child {
+    border-bottom: none;
+}
+
+.asset-card__icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--c-surface-variant);
+    color: var(--c-primary);
+}
+.asset-card__details {
+    flex-grow: 1;
+    min-width: 0;
+}
+.asset-card__name {
+    font-weight: 700;
+    color: var(--c-on-surface);
+}
+.asset-card__allocation {
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--c-on-surface-secondary);
+}
+.asset-card__figures {
+    flex-shrink: 0;
+    text-align: right;
+}
+.asset-card__value {
+    font-weight: 700;
+    font-size: var(--fs-base);
+}
+.asset-card__pnl-pill {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 99px;
+    margin-top: 4px;
+    color: var(--c-white);
+}
+.asset-card__pnl-pill.is-positive {
+    background-color: var(--c-success);
+}
+.asset-card__pnl-pill.is-negative {
+    background-color: var(--c-danger);
+}
+/* === FIN: Estilos para Fichas de Activo Mejoradas === */
