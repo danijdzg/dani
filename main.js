@@ -638,7 +638,7 @@ async function saveDoc(collectionName, docId, data, btn = null) {
     }
 }
         
- // REEMPLAZA tu función loadCoreData por esta versión actualizada
+// CÓDIGO CORREGIDO PARA loadCoreData
 async function loadCoreData(uid) {
     unsubscribeListeners.forEach(unsub => unsub());
     unsubscribeListeners = [];
@@ -648,54 +648,42 @@ async function loadCoreData(uid) {
     const userRef = fbDb.collection('users').doc(uid);
     const collectionsToLoad = ['cuentas', 'conceptos'];
 
-    // Carga inicial para colecciones que no necesitan lógica compleja de actualización.
     collectionsToLoad.forEach(collectionName => {
         const unsubscribe = userRef.collection(collectionName).onSnapshot(snapshot => {
             db[collectionName] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             populateAllDropdowns();
-            if (select(PAGE_IDS.INICIO)?.classList.contains('view--active')) {
+            
+            // === ¡LA OTRA CORRECIÓN CLAVE ESTÁ AQUÍ! ===
+            if (select(PAGE_IDS.PANEL)?.classList.contains('view--active')) {
                 scheduleDashboardUpdate();
             }
+            // =========================================
+
         }, error => console.error(`Error escuchando ${collectionName}: `, error));
         unsubscribeListeners.push(unsubscribe);
     });
     
-    // ▼▼▼ INICIO DE LA LÓGICA CORREGIDA PARA RECURRENTES ▼▼▼
     const unsubRecurrentes = userRef.collection('recurrentes').onSnapshot(snapshot => {
-        // En la carga inicial, inicializamos el array.
         if (db.recurrentes.length === 0) {
             db.recurrentes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } else {
-            // Para actualizaciones posteriores, procesamos solo los cambios.
             snapshot.docChanges().forEach(change => {
                 const data = { id: change.doc.id, ...change.doc.data() };
                 const index = db.recurrentes.findIndex(item => item.id === change.doc.id);
-
-                if (change.type === 'added') {
-                    if (index === -1) db.recurrentes.push(data);
-                }
-                if (change.type === 'modified') {
-                    if (index > -1) db.recurrentes[index] = data;
-                }
-                if (change.type === 'removed') {
-                    if (index > -1) db.recurrentes.splice(index, 1);
-                }
+                if (change.type === 'added') { if (index === -1) db.recurrentes.push(data); }
+                if (change.type === 'modified') { if (index > -1) db.recurrentes[index] = data; }
+                if (change.type === 'removed') { if (index > -1) db.recurrentes.splice(index, 1); }
             });
         }
-        
-        // Reordenamos después de cualquier cambio.
         db.recurrentes.sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
-        
-        // Refrescamos la UI si es relevante.
         const activePage = document.querySelector('.view--active');
         if (activePage) {
             if (activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
-            if (activePage.id === PAGE_IDS.ESTRATEGIA) renderPlanificacionPage();
+            // CORRECCIÓN ADICIONAL: Apuntamos a la nueva página de Planificar
+            if (activePage.id === PAGE_IDS.PLANIFICAR) renderPlanificacionPage();
         }
-
     }, error => console.error(`Error escuchando recurrentes: `, error));
     unsubscribeListeners.push(unsubRecurrentes);
-    // ▲▲▲ FIN DE LA LÓGICA CORREGIDA ▲▲▲
 
     const unsubConfig = userRef.onSnapshot(doc => {
         db.config = doc.exists && doc.data().config ? doc.data().config : getInitialDb().config;
@@ -704,7 +692,6 @@ async function loadCoreData(uid) {
     }, error => console.error("Error escuchando la configuración del usuario: ", error));
     unsubscribeListeners.push(unsubConfig);
     
-    // (El resto de la función para la carga de movimientos recientes se mantiene igual)
     if (unsubscribeRecientesListener) unsubscribeRecientesListener();
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
@@ -714,9 +701,13 @@ async function loadCoreData(uid) {
         .onSnapshot(snapshot => {
             recentMovementsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             const activePage = document.querySelector('.view--active');
-            if (activePage && activePage.id === PAGE_IDS.INICIO) {
+            
+            // === ¡Y LA ÚLTIMA CORRECIÓN CLAVE ESTÁ AQUÍ! ===
+            if (activePage && activePage.id === PAGE_IDS.PANEL) {
                 scheduleDashboardUpdate();
             }
+            // ============================================
+
         }, error => console.error("Error escuchando movimientos recientes: ", error));
                         
     buildDescriptionIndex();
@@ -1391,25 +1382,29 @@ window.addEventListener('offline', () => {
     updateSyncStatusIcon();
 });
     const startMainApp = async () => {
-            const loginScreen = select('login-screen');
-            const pinLoginScreen = select('pin-login-screen');
-            const appRoot = select('app-root');
+    const loginScreen = select('login-screen');
+    const pinLoginScreen = select('pin-login-screen');
+    const appRoot = select('app-root');
 
-            if (loginScreen) loginScreen.classList.remove('login-view--visible');
-            if (pinLoginScreen) pinLoginScreen.classList.remove('login-view--visible');
-            if (appRoot) appRoot.classList.add('app-layout--visible');
-            
-            populateAllDropdowns();
-            loadConfig();
-            
-            measureListItemHeights();
-            
-            updateSyncStatusIcon();
-            buildIntelligentIndex();
-			navigateTo(PAGE_IDS.INICIO, true);
-            updateThemeIcon(localStorage.getItem('appTheme') || 'default');
-            isInitialLoadComplete = true;
-			};
+    if (loginScreen) loginScreen.classList.remove('login-view--visible');
+    if (pinLoginScreen) pinLoginScreen.classList.remove('login-view--visible');
+    if (appRoot) appRoot.classList.add('app-layout--visible');
+    
+    populateAllDropdowns();
+    loadConfig();
+    
+    measureListItemHeights();
+    
+    updateSyncStatusIcon();
+    buildIntelligentIndex();
+    
+    // === ¡LA CORRECCIÓN CLAVE ESTÁ AQUÍ! ===
+    navigateTo(PAGE_IDS.PANEL, true); 
+    // =====================================
+
+    updateThemeIcon(localStorage.getItem('appTheme') || 'default');
+    isInitialLoadComplete = true;
+};
 
         
     const showLoginScreen = () => {
@@ -3701,7 +3696,7 @@ async function calculateHistoricalIrrForGroup(accountIds) {
         };
 		
   const renderPanelPage = async () => {
-    const container = select(PAGE_IDS.INICIO);
+    const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
     // AHORA ESTA FUNCIÓN SOLO CREA EL CONTENEDOR PRINCIPAL PARA LOS WIDGETS
@@ -5200,7 +5195,7 @@ const updateNetWorthChart = async (saldos) => {
 const scheduleDashboardUpdate = () => {
     // El jefe de obra solo trabaja si la página "Inicio" está abierta.
     const activePage = document.querySelector('.view--active');
-    if (!activePage || activePage.id !== PAGE_IDS.INICIO) {
+    if (!activePage || activePage.id !== PAGE_IDS.PANEL) {
         return;
     }
       
@@ -5213,7 +5208,7 @@ const scheduleDashboardUpdate = () => {
 
 const updateDashboardData = async () => {
     const activePage = document.querySelector('.view--active');
-    if (!activePage || activePage.id !== PAGE_IDS.INICIO) {
+    if (!activePage || activePage.id !== PAGE_IDS.PANEL) {
         return;
     }
 
@@ -7693,7 +7688,7 @@ if (ptrElement && mainScrollerPtr) {
             history.pushState({ page: window.history.state?.page }, '', `#${window.history.state?.page || 'panel-page'}`);
             return;
         }
-        const pageToNavigate = event.state ? event.state.page : PAGE_IDS.INICIO;
+        const pageToNavigate = event.state ? event.state.page : PAGE_IDS.PANEL;
         if (pageToNavigate) {
             navigateTo(pageToNavigate, false);
         }
@@ -7855,7 +7850,7 @@ if (ptrElement && mainScrollerPtr) {
             // 4. LÓGICA INTELIGENTE: En lugar de una recarga completa, ejecutamos
             //    la acción de refresco más ligera posible para la página actual.
             switch (activePageEl.id) {
-                case PAGE_IDS.INICIO:
+                case PAGE_IDS.PANEL:
                     // El Panel necesita recalcular los KPIs, llamamos a su función de actualización.
                     // Sigue siendo mucho más rápido que un navigateTo().
                     scheduleDashboardUpdate();
