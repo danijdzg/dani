@@ -8287,68 +8287,95 @@ if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || tar
             }
         };
     
-// =================================================================
-// === INICIO: NUEVA FUNCIÓN PARA CONFIRMAR MOVIMIENTOS RECURRENTES ===
-// =================================================================
+// main.js
+
+// ▼▼▼ REEMPLAZA POR COMPLETO TU FUNCIÓN handleConfirmRecurrent ▼▼▼
 const handleConfirmRecurrent = async (id, btn) => {
     if (btn) setButtonLoading(btn, true);
-    const recurrenteIndex = db.recurrentes.findIndex(r => r.id === id);
-    if (recurrenteIndex === -1) { /* ... (código sin cambios) */ }
-    const recurrente = db.recurrentes[recurrenteIndex];
-    
+
+    const recurrente = db.recurrentes.find(r => r.id === id);
+    if (!recurrente) {
+        showToast("Error: no se encontró la operación programada.", "danger");
+        if (btn) setButtonLoading(btn, false);
+        return;
+    }
+
     try {
-        const newMovementId = generateId();
-        const newMovementData = {
-            id: newMovementId,
-            cantidad: recurrente.cantidad,
-            descripcion: recurrente.descripcion,
-            fecha: new Date().toISOString(), // Se crea con fecha de hoy
-            tipo: recurrente.tipo,
-            cuentaId: recurrente.cuentaId,
-            conceptoId: recurrente.conceptoId,
-            cuentaOrigenId: recurrente.cuentaOrigenId,
-            cuentaDestinoId: recurrente.cuentaDestinoId
-        };
-        db.movimientos.unshift(newMovementData);
-        
-        const nextDueDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency, recurrente.weekDays); // <-- ¡USA LOS DÍAS DE LA SEMANA!
-        
-        if (recurrente.frequency === 'once' || (recurrente.endDate && nextDueDate > parseDateStringAsUTC(recurrente.endDate))) {
-            db.recurrentes.splice(recurrenteIndex, 1);
-        } else {
-            db.recurrentes[recurrenteIndex].nextDate = nextDueDate.toISOString().slice(0, 10);
-        }
+        const today = new Date();
+        today.setUTCHours(12, 0, 0, 0);
+        let cursorDate = parseDateStringAsUTC(recurrente.nextDate);
+        if (!cursorDate) throw new Error("Fecha de recurrente inválida.");
 
-        const itemEl = document.getElementById(`pending-recurrente-${id}`);
-        if(itemEl){
-            itemEl.classList.add('item-deleting');
-            itemEl.addEventListener('animationend', () => {
-                 const activePage = document.querySelector('.view--active');
-                 if (activePage && activePage.id === PAGE_IDS.DIARIO) updateVirtualListUI();
-                 if (activePage && activePage.id === PAGE_IDS.ESTRATEGIA) renderEstrategiaPlanificacion();
-            }, { once: true });
-        }
-        
         const batch = fbDb.batch();
-        batch.set(fbDb.collection('users').doc(currentUser.uid).collection('movimientos').doc(newMovementId), newMovementData);
-        const recurrenteRef = fbDb.collection('users').doc(currentUser.uid).collection('recurrentes').doc(id);
+        const userRef = fbDb.collection('users').doc(currentUser.uid);
+        let movementsCreatedCount = 0;
+        let lastCreatedDate = null;
+        const safetyLimit = 100; // Evita bucles infinitos
+        let iterations = 0;
 
-        if (recurrente.frequency === 'once' || (recurrente.endDate && nextDueDate > parseDateStringAsUTC(recurrente.endDate))) {
-            batch.delete(recurrenteRef);
-        } else {
-            batch.update(recurrenteRef, { nextDate: nextDueDate.toISOString().slice(0, 10) });
+        // Bucle "Ponerse al Día": Crea todos los movimientos atrasados
+        while (cursorDate <= today && iterations < safetyLimit) {
+            const newMovementId = generateId();
+            const newMovementData = {
+                id: newMovementId,
+                cantidad: recurrente.cantidad,
+                descripcion: recurrente.descripcion,
+                fecha: cursorDate.toISOString(), // <-- La fecha del movimiento es la que tocaba
+                tipo: recurrente.tipo,
+                cuentaId: recurrente.cuentaId,
+                conceptoId: recurrente.conceptoId,
+                cuentaOrigenId: recurrente.cuentaOrigenId,
+                cuentaDestinoId: recurrente.cuentaDestinoId
+            };
+
+            // Añadir movimiento a la base de datos
+            batch.set(userRef.collection('movimientos').doc(newMovementId), newMovementData);
+            
+            // Ajustar el saldo de la cuenta
+            if (recurrente.tipo === 'traspaso') {
+                batch.update(userRef.collection('cuentas').doc(recurrente.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-recurrente.cantidad) });
+                batch.update(userRef.collection('cuentas').doc(recurrente.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
+            } else {
+                batch.update(userRef.collection('cuentas').doc(recurrente.cuentaId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
+            }
+
+            movementsCreatedCount++;
+            lastCreatedDate = cursorDate;
+            
+            // Avanzamos el cursor a la siguiente fecha programada
+            cursorDate = calculateNextDueDate(cursorDate.toISOString().slice(0, 10), recurrente.frequency, recurrente.weekDays);
+            iterations++;
         }
 
-        if (recurrente.tipo === 'traspaso') {
-            batch.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-recurrente.cantidad) });
-            batch.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
+        const recurrenteRef = userRef.collection('recurrentes').doc(id);
+        
+        // Comprobar si el recurrente ha finalizado
+        if (recurrente.frequency === 'once' || (recurrente.endDate && cursorDate > parseDateStringAsUTC(recurrente.endDate))) {
+            batch.delete(recurrenteRef); // Eliminar si ya ha terminado su ciclo
         } else {
-            batch.update(fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
+            // Actualizar a la próxima fecha futura
+            batch.update(recurrenteRef, { nextDate: cursorDate.toISOString().slice(0, 10) });
         }
+        
         await batch.commit();
 
         hapticFeedback('success');
-        showToast("Movimiento añadido desde recurrente.", "info");
+        if (movementsCreatedCount > 1) {
+            showToast(`Se crearon ${movementsCreatedCount} movimientos para ponerse al día.`, 'info');
+        } else {
+            showToast("Movimiento añadido desde recurrente.", "info");
+        }
+        
+        // Forzamos la recarga de datos para ver los cambios al instante
+        await loadCoreData(currentUser.uid);
+        // Pequeño retardo para dar tiempo a la UI a actualizarse antes de refrescar la vista.
+        setTimeout(() => {
+            const activePage = document.querySelector('.view--active');
+            if (activePage && (activePage.id === PAGE_IDS.DIARIO || activePage.id === PAGE_IDS.ESTRATEGIA)) {
+                if (activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
+                if (activePage.id === PAGE_IDS.ESTRATEGIA) renderEstrategiaPlanificacion();
+            }
+        }, 300);
 
     } catch (error) {
         console.error("Error al confirmar recurrente:", error);
@@ -8357,16 +8384,21 @@ const handleConfirmRecurrent = async (id, btn) => {
         if (btn) setButtonLoading(btn, false);
     }
 };
+// ▲▲▲ FIN DEL BLOQUE DE REEMPLAZO ▲▲▲
 
 const handleSkipRecurrent = async (id, btn) => {
     if (btn) setButtonLoading(btn, true);
 
     const recurrente = db.recurrentes.find(r => r.id === id);
-    if (!recurrente) { /* ... (código sin cambios) */ }
+    if (!recurrente) {
+        showToast("Error: recurrente no encontrado.", "danger");
+        if (btn) setButtonLoading(btn, false);
+        return;
+    }
     
     try {
         let successMessage = "";
-        
+
         const itemEl = document.getElementById(`pending-recurrente-${id}`);
         if (itemEl) {
             itemEl.classList.add('item-deleting');
@@ -8381,13 +8413,37 @@ const handleSkipRecurrent = async (id, btn) => {
             await deleteDoc('recurrentes', id);
             successMessage = "Operación programada eliminada.";
         } else {
-            const nextDueDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency, recurrente.weekDays); // <-- ¡USA LOS DÍAS DE LA SEMANA!
-            await saveDoc('recurrentes', id, { nextDate: nextDueDate.toISOString().slice(0, 10) });
-            successMessage = "Operación recurrente omitida esta vez.";
+            // Utilizamos la misma lógica de avance inteligente
+            let nextDate = parseDateStringAsUTC(recurrente.nextDate);
+            const today = new Date();
+            today.setUTCHours(12,0,0,0);
+            
+            while(nextDate <= today) {
+                nextDate = calculateNextDueDate(nextDate.toISOString().slice(0, 10), recurrente.frequency, recurrente.weekDays);
+            }
+
+            // Comprobamos si el recurrente ha expirado
+            if (recurrente.endDate && nextDate > parseDateStringAsUTC(recurrente.endDate)) {
+                await deleteDoc('recurrentes', id);
+                successMessage = "Operación recurrente finalizada y eliminada.";
+            } else {
+                await saveDoc('recurrentes', id, { nextDate: nextDate.toISOString().slice(0, 10) });
+                successMessage = "Operaciones atrasadas omitidas. Próxima ejecución programada.";
+            }
         }
         
         hapticFeedback('success');
         showToast(successMessage, "info");
+        
+        // Actualizamos los datos locales para reflejar el cambio al instante
+        await loadCoreData(currentUser.uid);
+        setTimeout(() => {
+            const activePage = document.querySelector('.view--active');
+             if (activePage && (activePage.id === PAGE_IDS.DIARIO || activePage.id === PAGE_IDS.ESTRATEGIA)) {
+                if (activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
+                if (activePage.id === PAGE_IDS.ESTRATEGIA) renderEstrategiaPlanificacion();
+            }
+        }, 300);
 
     } catch (error) {
         console.error("Error al omitir recurrente:", error);
