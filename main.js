@@ -2527,59 +2527,55 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             const listHtml = displayAssetsData
                 .sort((a, b) => b.valorActual - a.valorActual)
                 .map(cuenta => {
-                    const pnlClassPill = cuenta.pnlAbsoluto >= 0 ? 'is-positive' : 'is-negative';
-                    const pnlClassText = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
-                    const tirClassPill = cuenta.irr >= 0 ? 'is-positive' : 'is-negative';
-                    const allocationPercentage = portfolioTotalValorado > 0 ? (cuenta.valorActual / portfolioTotalValorado) * 100 : 0;
+    const pnlClassPill = cuenta.pnlAbsoluto >= 0 ? 'is-positive' : 'is-negative';
+    const pnlClassText = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
+    const tirClassPill = cuenta.irr >= 0 ? 'is-positive' : 'is-negative';
 
-                    return `
-<div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
-    
-    <!-- Parte Izquierda: Nombre del Activo y Datos de P&L -->
-    <div class="asset-card__details">
-        <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
+    return `
+    <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
         
-        <!-- MEJORA 1: Mostramos Aportado y P&L juntos -->
-        <div class="asset-card__allocation">
-            Aportado: ${formatCurrency(cuenta.capitalInvertido)}
+        <!-- Parte Izquierda: Nombre, Aportado y P&L absoluto -->
+        <div class="asset-card__details">
+            <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
+            <div class="asset-card__allocation">
+                Aportado: ${formatCurrency(cuenta.capitalInvertido)}
+            </div>
+            <div class="asset-card__pnl-absolute ${pnlClassText}" style="font-size: var(--fs-sm); font-weight: 600;">
+                ${cuenta.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(cuenta.pnlAbsoluto)}
+            </div>
         </div>
-        <div class="asset-card__pnl-absolute ${pnlClassText}" style="font-size: var(--fs-sm); font-weight: 600;">
-            ${cuenta.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(cuenta.pnlAbsoluto)}
-        </div>
-    </div>
 
-    <!-- Parte Derecha: Valor Actual, Píldoras y Botón de Valoración -->
-    <div class="asset-card__figures">
-        <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
-        
-        <div style="display: flex; gap: var(--sp-2); align-items: center;">
-            <button 
-                class="asset-card__pnl-pill ${pnlClassPill}" 
-                style="border:none; cursor:pointer;"
-                data-action="show-pnl-breakdown" 
-                data-id="${cuenta.id}" 
-                title="Pulsar para ver desglose de P&L">
-                P&L: ${cuenta.pnlPorcentual.toFixed(1)}%
+        <!-- Parte Derecha: Valor Actual, Píldoras de Rentabilidad y Botón -->
+        <div class="asset-card__figures">
+            <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
+            
+            <div style="display: flex; gap: var(--sp-2); align-items: center;">
+                <button 
+                    class="asset-card__pnl-pill ${pnlClassPill}" 
+                    style="border:none; cursor:pointer;"
+                    data-action="show-pnl-breakdown" 
+                    data-id="${cuenta.id}" 
+                    title="Pulsar para ver desglose de P&L">
+                    P&L: ${cuenta.pnlPorcentual.toFixed(1)}%
+                </button>
+                <button 
+                    class="asset-card__pnl-pill ${tirClassPill}" 
+                    style="border:none; cursor:pointer;"
+                    data-action="show-irr-breakdown" 
+                    data-id="${cuenta.id}" 
+                    title="Pulsar para ver desglose de TIR">
+                    TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
+                </button>
+            </div>
+            
+            <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}">
+                <span class="material-icons" style="font-size: 14px;">add_chart</span>
+                Valorar
             </button>
-            <button 
-                class="asset-card__pnl-pill ${tirClassPill}" 
-                style="border:none; cursor:pointer;"
-                data-action="show-irr-breakdown" 
-                data-id="${cuenta.id}" 
-                title="Pulsar para ver desglose de TIR">
-                TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
-            </button>
-        </div>
-        
-        <!-- MEJORA 3: Restauramos el botón de Valoración con el nuevo estilo -->
-        <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}">
-            <span class="material-icons" style="font-size: 14px;">add_chart</span>
-            Valorar
-        </button>
 
-    </div>
-</div>`;
-                }).join('');
+        </div>
+    </div>`;
+}).join('');
 
             // ▼▼▼ ¡ESTA ES LA LÍNEA QUE FALTABA Y QUE ARREGLA EL PROBLEMA! ▼▼▼
             listContainer.innerHTML = listHtml ? `<div class="card"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
@@ -9395,41 +9391,48 @@ const handleAddConcept = async (btn) => {
  };
 
 
-// ==============================================================
-// === INICIO: FUNCIÓN DE BORRADO OPTIMIZADA (v2.0) ===
-// ==============================================================
+// EN main.js - REEMPLAZA TU FUNCIÓN deleteMovementAndAdjustBalance POR COMPLETO
+
+// =================================================================
+// === INICIO: FUNCIÓN DE BORRADO OPTIMIZADA (v2.1 - CON REVERSIÓN) ===
+// =================================================================
 const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
     const collection = isRecurrent ? 'recurrentes' : 'movimientos';
     const ANIMATION_DURATION = 400; // Debe coincidir con la duración en el CSS
 
     const itemElement = document.querySelector(`.transaction-card[data-id="${id}"]`)?.closest('.swipe-container');
-	let itemToDelete;
+    
+    // 1. PREPARACIÓN PARA REVERSIÓN: Guardamos el estado original
+    let itemToDelete;
+    let originalIndex; // Guardamos la posición original para poder reinsertarlo
+    const dbSource = isRecurrent ? db.recurrentes : db.movimientos;
+    
+    originalIndex = dbSource.findIndex(item => item.id === id);
+    if (originalIndex === -1) {
+        showToast("Error: El elemento a borrar no se encontró localmente.", "danger");
+        return;
+    }
+    // Hacemos una copia profunda del objeto para no tener problemas de referencia
+    itemToDelete = JSON.parse(JSON.stringify(dbSource[originalIndex])); 
+
     try {
-        
-        if (isRecurrent) {
-            const index = db.recurrentes.findIndex(r => r.id === id);
-            if (index === -1) throw new Error("Recurrente no encontrado.");
-            [itemToDelete] = db.recurrentes.splice(index, 1);
-        } else {
-            const index = db.movimientos.findIndex(m => m.id === id);
-            if (index === -1) throw new Error("Movimiento no encontrado.");
-            [itemToDelete] = db.movimientos.splice(index, 1);
-            // Revertimos el saldo en la caché local ANTES de redibujar
-            applyOptimisticBalanceUpdate(null, itemToDelete); 
+        // 2. ACTUALIZACIÓN OPTIMISTA (La UI cambia al instante)
+        dbSource.splice(originalIndex, 1); // Lo borramos de la memoria local
+
+        if (!isRecurrent) {
+            applyOptimisticBalanceUpdate(null, itemToDelete); // Revertimos el saldo en la caché local
         }
     
-        // 2. EFECTO VISUAL (Si el elemento está en pantalla)
         if (itemElement) {
             itemElement.classList.add('item-deleting');
         }
 
-        // 3. ACTUALIZACIÓN DE LA UI (Después de la animación)
         setTimeout(() => {
-    updateLocalDataAndRefreshUI();
-    if (isRecurrent) renderEstrategiaPlanificacion();
-}, itemElement ? 400 : 0); // 400ms es la duración de la animación
+            updateLocalDataAndRefreshUI(); // Redibuja la lista sin el elemento
+            if (isRecurrent) renderEstrategiaPlanificacion();
+        }, itemElement ? ANIMATION_DURATION : 0);
 
-        // 4. PERSISTENCIA EN SEGUNDO PLANO
+        // 3. PERSISTENCIA EN SEGUNDO PLANO (El intento de guardado real)
         if (!isRecurrent) {
             const batch = fbDb.batch();
             const userRef = fbDb.collection('users').doc(currentUser.uid);
@@ -9452,17 +9455,22 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
         showToast("Elemento eliminado.", "info");
 
     } catch (error) {
-         // ¡PLAN B! Si Firebase falla, revertimos el cambio en la UI
-    console.error("Firebase falló. Revirtiendo cambio optimista:", error);
-    showToast("Error de sincronización. Reestableciendo estado.", "danger");
-    // Volvemos a añadir el item que borramos localmente
-    if (isRecurrent) db.recurrentes.push(itemToDelete);
-    else db.movimientos.push(itemToDelete);
-    // Recalculamos el saldo con el item restaurado
-    if (!isRecurrent) applyOptimisticBalanceUpdate(itemToDelete, null);
-    // Forzamos un re-renderizado completo para asegurar la consistencia
-    updateLocalDataAndRefreshUI(); 
-}
+        // 4. ¡PLAN B! SI FIREBASE FALLA, REVERTIMOS EL CAMBIO OPTIMISTA
+        console.error("Firebase falló. Revirtiendo cambio optimista:", error);
+        showToast("Error de red. El borrado no se completó.", "danger");
+
+        // Volvemos a añadir el item que borramos localmente, en su posición original
+        dbSource.splice(originalIndex, 0, itemToDelete);
+        
+        // Recalculamos el saldo con el item restaurado
+        if (!isRecurrent) {
+            applyOptimisticBalanceUpdate(itemToDelete, null);
+        }
+        
+        // Forzamos un re-renderizado completo para asegurar la consistencia
+        updateLocalDataAndRefreshUI();
+        if (isRecurrent) renderEstrategiaPlanificacion();
+    }
 };
 // ============================================================
 // === FIN: FUNCIÓN DE BORRADO OPTIMIZADA ===
