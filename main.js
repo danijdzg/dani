@@ -1547,7 +1547,6 @@ const navigateTo = async (pageId, isInitial = false) => {
     const actionsEl = select('top-bar-actions');
     const leftEl = select('top-bar-left-button');
     
-    // Acciones estándar de la barra superior, ¡ahora con el botón de menú!
     const standardActions = `
         <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
             <span class="material-icons">search</span>
@@ -1557,18 +1556,18 @@ const navigateTo = async (pageId, isInitial = false) => {
         </button>
     `;
     
-    // Lazy loading de datos si es necesario (Ahora apunta a la nueva página 'PLANIFICAR')
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
-    if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones(); // Apunta a 'PATRIMONIO'
+    if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
 
-    // El nuevo mapa de renderizado de páginas
+    // === ¡LA CORRECCIÓN ESTÁ EN ESTE BLOQUE! ===
     const pageRenderers = {
-        [PAGE_IDS.PANEL]: { title: 'Panel', render: renderInicioPage, actions: standardActions },
+        [PAGE_IDS.PANEL]: { title: 'Panel', render: renderPanelPage, actions: standardActions }, // Corregido aquí
         [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
         [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: standardActions },
         [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage, actions: standardActions },
         [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
     };
+    // ===========================================
 
     if (pageRenderers[pageId]) { 
         if (leftEl) {
@@ -1617,7 +1616,7 @@ const navigateTo = async (pageId, isInitial = false) => {
         mainScroller.scrollTop = pageScrollPositions[pageId] || 0;
     }
 
-    if (pageId === PAGE_IDS.PANEL) { // Renombrado de INICIO a PANEL
+    if (pageId === PAGE_IDS.PANEL) {
         scheduleDashboardUpdate();
     }
 };
