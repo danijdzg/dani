@@ -2412,7 +2412,7 @@ const handleToggleInvestmentTypeFilter = (type) => {
     renderPortfolioEvolutionChart('portfolio-evolution-container');
 };
 
-// ▼▼▼ REEMPLAZA TU FUNCIÓN renderPortfolioMainContent POR COMPLETO CON ESTE BLOQUE CORREGIDO ▼▼▼
+// ▼▼▼ REEMPLAZA TU FUNCIÓN renderPortfolioMainContent COMPLETA POR ESTA VERSIÓN ▼▼▼
 
 const renderPortfolioMainContent = async (targetContainerId) => {
     const container = select(targetContainerId);
@@ -2525,54 +2525,36 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         const listContainer = select('investment-assets-list');
         if (listContainer) {
             const listHtml = displayAssetsData
-    .sort((a, b) => b.valorActual - a.valorActual) // Ordenamos por valor de mercado
-    .map(cuenta => {
-        const pnlClassPill = cuenta.pnlAbsoluto >= 0 ? 'is-positive' : 'is-negative';
-const pnlClassText = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
+                .sort((a, b) => b.valorActual - a.valorActual)
+                .map(cuenta => {
+                    const pnlClassPill = cuenta.pnlAbsoluto >= 0 ? 'is-positive' : 'is-negative';
+                    const pnlClassText = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
+                    const tirClassPill = cuenta.irr >= 0 ? 'is-positive' : 'is-negative';
+                    const allocationPercentage = portfolioTotalValorado > 0 ? (cuenta.valorActual / portfolioTotalValorado) * 100 : 0;
 
-// Calculamos el peso del activo en el portafolio filtrado
-const allocationPercentage = portfolioTotalValorado > 0 ? (cuenta.valorActual / portfolioTotalValorado) * 100 : 0;
+                    return `
+                    <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
+                        <div class="asset-card__details">
+                            <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
+                            <div class="asset-card__pnl-absolute ${pnlClassText}" style="font-size: var(--fs-sm); font-weight: 600;">${formatCurrency(cuenta.pnlAbsoluto)}</div>
+                            <div class="asset-card__allocation">${allocationPercentage.toFixed(1)}% del Portafolio</div>
+                        </div>
+                        <div class="asset-card__figures">
+                            <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
+                            <button class="asset-card__pnl-pill ${pnlClassPill}" style="border:none; cursor:pointer;" data-action="show-pnl-breakdown" data-id="${cuenta.id}" title="Pulsar para ver desglose de P&L">
+                                P&L: ${cuenta.pnlPorcentual.toFixed(1)}%
+                            </button>
+                            <button class="asset-card__pnl-pill ${tirClassPill}" style="border:none; cursor:pointer;" data-action="show-irr-breakdown" data-id="${cuenta.id}" title="Pulsar para ver desglose de TIR">
+                                TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
+                            </button>
+                        </div>
+                    </div>`;
+                }).join('');
 
-return `
-<div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
-    
-    <!-- Detalles a la izquierda (Nombre, P&L Absoluto y Peso) -->
-    <div class="asset-card__details">
-        <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
-        <div class="asset-card__pnl-absolute ${pnlClassText}" style="font-size: var(--fs-sm); font-weight: 600;">${formatCurrency(cuenta.pnlAbsoluto)}</div>
-        <div class="asset-card__allocation">${allocationPercentage.toFixed(1)}% del Portafolio</div>
-    </div>
-
-    <!-- Cifras y botones a la derecha -->
-    <div class="asset-card__figures">
-        <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
-        
-        <!-- CAMBIO 2: Modificamos el texto del botón de P&L -->
-        <button 
-            class="asset-card__pnl-pill ${pnlClassPill}" 
-            style="border:none; cursor:pointer;"
-            data-action="show-pnl-breakdown" 
-            data-id="${cuenta.id}" 
-            title="Pulsar para ver desglose de P&L">
-            P&L: ${cuenta.pnlPorcentual.toFixed(1)}%
-        </button>
-
-        <!-- CAMBIO 3: Modificamos el botón de TIR para que sea una "píldora" con color dinámico -->
-        <button 
-            class="asset-card__pnl-pill ${tirClassPill}"
-            style="border:none; cursor:pointer;"
-            data-action="show-irr-breakdown" 
-            data-id="${cuenta.id}" 
-            title="Pulsar para ver desglose de TIR">
-            TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
-        </button>
-    </div>
-</div>`;
-        }).join('');
-
+            // ▼▼▼ ¡ESTA ES LA LÍNEA QUE FALTABA Y QUE ARREGLA EL PROBLEMA! ▼▼▼
             listContainer.innerHTML = listHtml ? `<div class="card"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
+            // ▲▲▲ FIN DE LA LÍNEA CRÍTICA ▲▲▲
             
-            // ESTA ES LA LÍNEA CLAVE QUE ARREGLA LA PULSACIÓN LARGA EN ESTA VISTA
             applyInvestmentItemInteractions(listContainer);
         }
     }, 50);
