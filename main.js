@@ -2533,22 +2533,52 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                     const allocationPercentage = portfolioTotalValorado > 0 ? (cuenta.valorActual / portfolioTotalValorado) * 100 : 0;
 
                     return `
-                    <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
-                        <div class="asset-card__details">
-                            <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
-                            <div class="asset-card__pnl-absolute ${pnlClassText}" style="font-size: var(--fs-sm); font-weight: 600;">${formatCurrency(cuenta.pnlAbsoluto)}</div>
-                            <div class="asset-card__allocation">${allocationPercentage.toFixed(1)}% del Portafolio</div>
-                        </div>
-                        <div class="asset-card__figures">
-                            <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
-                            <button class="asset-card__pnl-pill ${pnlClassPill}" style="border:none; cursor:pointer;" data-action="show-pnl-breakdown" data-id="${cuenta.id}" title="Pulsar para ver desglose de P&L">
-                                P&L: ${cuenta.pnlPorcentual.toFixed(1)}%
-                            </button>
-                            <button class="asset-card__pnl-pill ${tirClassPill}" style="border:none; cursor:pointer;" data-action="show-irr-breakdown" data-id="${cuenta.id}" title="Pulsar para ver desglose de TIR">
-                                TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
-                            </button>
-                        </div>
-                    </div>`;
+<div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
+    
+    <!-- Parte Izquierda: Nombre del Activo y Datos de P&L -->
+    <div class="asset-card__details">
+        <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
+        
+        <!-- MEJORA 1: Mostramos Aportado y P&L juntos -->
+        <div class="asset-card__allocation">
+            Aportado: ${formatCurrency(cuenta.capitalInvertido)}
+        </div>
+        <div class="asset-card__pnl-absolute ${pnlClassText}" style="font-size: var(--fs-sm); font-weight: 600;">
+            ${cuenta.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(cuenta.pnlAbsoluto)}
+        </div>
+    </div>
+
+    <!-- Parte Derecha: Valor Actual, Píldoras y Botón de Valoración -->
+    <div class="asset-card__figures">
+        <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
+        
+        <div style="display: flex; gap: var(--sp-2); align-items: center;">
+            <button 
+                class="asset-card__pnl-pill ${pnlClassPill}" 
+                style="border:none; cursor:pointer;"
+                data-action="show-pnl-breakdown" 
+                data-id="${cuenta.id}" 
+                title="Pulsar para ver desglose de P&L">
+                P&L: ${cuenta.pnlPorcentual.toFixed(1)}%
+            </button>
+            <button 
+                class="asset-card__pnl-pill ${tirClassPill}" 
+                style="border:none; cursor:pointer;"
+                data-action="show-irr-breakdown" 
+                data-id="${cuenta.id}" 
+                title="Pulsar para ver desglose de TIR">
+                TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
+            </button>
+        </div>
+        
+        <!-- MEJORA 3: Restauramos el botón de Valoración con el nuevo estilo -->
+        <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}">
+            <span class="material-icons" style="font-size: 14px;">add_chart</span>
+            Valorar
+        </button>
+
+    </div>
+</div>`;
                 }).join('');
 
             // ▼▼▼ ¡ESTA ES LA LÍNEA QUE FALTABA Y QUE ARREGLA EL PROBLEMA! ▼▼▼

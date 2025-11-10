@@ -2171,9 +2171,29 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     color: var(--c-white);
 }
 .asset-card__pnl-pill.is-positive {
-    background-color: var(--c-success);
+    background-color: #006434; /* Un verde oscuro y legible */
 }
 .asset-card__pnl-pill.is-negative {
-    background-color: var(--c-danger);
+    background-color: #991410; /* Un rojo oscuro y legible */
+}
+
+/* Estilo adicional para el nuevo botón de valoración */
+.asset-card__valoracion-btn {
+    background-color: var(--c-surface-variant);
+    color: var(--c-on-surface-secondary);
+    border: 1px solid var(--c-outline);
+    padding: 3px 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 99px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.asset-card__valoracion-btn:hover {
+    background-color: var(--c-surface);
+    color: var(--c-primary);
 }
 /* === FIN: Estilos para Fichas de Activo Mejoradas === */
