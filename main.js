@@ -2528,43 +2528,52 @@ const renderPortfolioMainContent = async (targetContainerId) => {
     .sort((a, b) => b.valorActual - a.valorActual) // Ordenamos por valor de mercado
     .map(cuenta => {
         const pnlClassPill = cuenta.pnlAbsoluto >= 0 ? 'is-positive' : 'is-negative';
+const pnlClassText = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
+
+// Calculamos el peso del activo en el portafolio filtrado
+const allocationPercentage = portfolioTotalValorado > 0 ? (cuenta.valorActual / portfolioTotalValorado) * 100 : 0;
+
+return `
+<div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
+    
+    <!-- Icono del Activo -->
+    <div class="asset-card__icon">
+        <span class="material-icons">${getIconForAccountType(cuenta.tipo)}</span>
+    </div>
+    
+    <!-- Nombre, P&L Absoluto y Peso -->
+    <div class="asset-card__details">
+        <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
+        <div class="asset-card__pnl-absolute ${pnlClassText}" style="font-size: var(--fs-sm); font-weight: 600;">${formatCurrency(cuenta.pnlAbsoluto)}</div>
+        <div class="asset-card__allocation">${allocationPercentage.toFixed(1)}% del Portafolio</div>
+    </div>
+
+    <!-- Valor, P&L % (botón) y TIR (botón) -->
+    <div class="asset-card__figures">
+        <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
         
-        // Calculamos el peso del activo en el portafolio filtrado
-        const allocationPercentage = portfolioTotalValorado > 0 ? (cuenta.valorActual / portfolioTotalValorado) * 100 : 0;
-        
-        // El nuevo HTML para cada activo, con las mejoras visuales y el nuevo botón de P&L
-        return `
-        <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}">
-            
-            <!-- Icono basado en el tipo de cuenta -->
-            <div class="asset-card__icon">
-                <span class="material-icons">${getIconForAccountType(cuenta.tipo)}</span>
-            </div>
-            
-            <!-- Nombre y Peso en el portafolio -->
-            <div class="asset-card__details">
-                <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
-                <div class="asset-card__allocation">${allocationPercentage.toFixed(1)}% del Portafolio</div>
-            </div>
+        <!-- ESTE ES EL BOTÓN PARA EL DESGLOSE DE P&L -->
+        <button 
+            class="asset-card__pnl-pill ${pnlClassPill}" 
+            style="border:none; cursor:pointer;"
+            data-action="show-pnl-breakdown" 
+            data-id="${cuenta.id}" 
+            title="Pulsar para ver desglose de P&L">
+            ${cuenta.pnlPorcentual.toFixed(1)}%
+        </button>
 
-            <!-- Cifras a la derecha (Valor y Píldora de P&L) -->
-            <div class="asset-card__figures">
-                <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
-
-                <!-- ESTE ES EL NUEVO BOTÓN PARA EL DESGLOSE DE P&L -->
-                <button 
-                    class="asset-card__pnl-pill ${pnlClassPill}" 
-                    style="border:none; cursor:pointer;"
-                    data-action="show-pnl-breakdown" 
-                    data-id="${cuenta.id}" 
-                    title="Pulsar para ver desglose de P&L">
-                    ${cuenta.pnlPorcentual.toFixed(1)}%
-                </button>
-
-            </div>
-        </div>
-        `;
-    }).join('');
+        <!-- ESTE ES EL BOTÓN PARA EL DESGLOSE DE TIR -->
+        <button 
+            class="btn btn--secondary"
+            style="padding: 2px 8px; font-size: 0.7rem; color: var(--c-info); border-color: var(--c-info); margin-top: 4px;"
+            data-action="show-irr-breakdown" 
+            data-id="${cuenta.id}" 
+            title="Pulsar para ver desglose de TIR">
+            TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
+        </button>
+    </div>
+</div>`;
+        }).join('');
 
             listContainer.innerHTML = listHtml ? `<div class="card"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
             
