@@ -2535,7 +2535,13 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                     
                     return `<div class="modal__list-item" data-action="view-account-details" data-id="${cuenta.id}" style="cursor: pointer; padding: var(--sp-3); display: block; border-bottom: 1px solid var(--c-outline);">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; margin-bottom: var(--sp-1);"><strong style="font-size: var(--fs-base);">${escapeHTML(cuenta.nombre)}</strong><strong style="font-size: var(--fs-base);">${formatCurrency(cuenta.valorActual)}</strong></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: var(--sp-2); font-size: var(--fs-xs);"><span class="${pnlClass}" style="font-weight: 600;">P&L: ${formatCurrency(cuenta.pnlAbsoluto)} (${cuenta.pnlPorcentual.toFixed(1)}%)</span><span style="color:var(--c-info); font-weight:600;">TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}</span></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: var(--sp-2); font-size: var(--fs-xs);"><span class="${pnlClass}" style="font-weight: 600;">P&L: ${formatCurrency(cuenta.pnlAbsoluto)} (${cuenta.pnlPorcentual.toFixed(1)}%)</span><span 
+    style="color:var(--c-info); font-weight:600; cursor: pointer; border-radius: 4px; padding: 2px 4px; transition: background-color 0.2s;" 
+    data-action="show-irr-breakdown" 
+    data-id="${cuenta.id}" 
+    title="Pulsar para ver desglose de TIR">
+    TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
+</span></div>
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><span style="color:var(--c-on-surface-secondary); font-size: var(--fs-xs);">Aportado: ${formatCurrency(cuenta.capitalInvertido)}</span><div style="display: flex; align-items: center; gap: 8px;">${ultimaValoracionHtml}<button class="btn btn--secondary" data-action="update-asset-value" data-id="${cuenta.id}" style="padding: 4px 10px; font-size: 0.75rem;"><span class="material-icons" style="font-size: 14px;">add_chart</span>Valoración</button></div></div>
                     </div>`;
                 }).join('');
@@ -6034,6 +6040,84 @@ const hideModal = (id) => {
     }
 };
         const showGenericModal=(title,html)=>{const titleEl = select('generic-modal-title'); if (titleEl) titleEl.textContent=title; const bodyEl = select('generic-modal-body'); if(bodyEl) bodyEl.innerHTML=html;showModal('generic-modal');};
+	const handleShowIrrBreakdown = async (accountId) => {
+    const cuenta = db.cuentas.find(c => c.id === accountId);
+    if (!cuenta) return;
+
+    // 1. Damos feedback al usuario y mostramos un modal de carga.
+    hapticFeedback('light');
+    showGenericModal(`Desglose TIR: ${cuenta.nombre}`, `<div style="text-align:center; padding: var(--sp-5);"><span class="spinner"></span></div>`);
+
+    // 2. Reutilizamos la lógica que ya existe para obtener los datos crudos.
+    await loadInversiones(); // Nos aseguramos de tener los datos de inversión
+    const allMovements = await fetchAllMovementsForHistory();
+    
+    // Filtramos solo los movimientos que afectan a ESTA cuenta
+    const accountMovements = allMovements.filter(m => 
+        (m.tipo === 'movimiento' && m.cuentaId === accountId) ||
+        (m.tipo === 'traspaso' && (m.cuentaDestinoId === accountId || m.cuentaOrigenId === accountId))
+    );
+    
+    // Buscamos la última valoración manual para esta cuenta
+    const valuations = (db.inversiones_historial || [])
+        .filter(v => v.cuentaId === accountId)
+        .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+    const valorActual = valuations.length > 0 ? valuations[0].valor : 0;
+    
+    // 3. Convertimos los movimientos en flujos de caja claros (positivo/negativo).
+    let cashflows = accountMovements.map(mov => {
+        let effectOnAccount = 0; // El impacto real en el saldo de esta cuenta
+        if (mov.tipo === 'movimiento') {
+            effectOnAccount = mov.cantidad;
+        } else if (mov.tipo === 'traspaso') {
+            if (mov.cuentaDestinoId === accountId) effectOnAccount = mov.cantidad;
+            else if (mov.cuentaOrigenId === accountId) effectOnAccount = -mov.cantidad;
+        }
+
+        if (effectOnAccount !== 0) {
+            // Un 'effectOnAccount' positivo es una aportación (flujo de caja negativo para la TIR)
+            // Un 'effectOnAccount' negativo es una retirada (flujo de caja positivo para la TIR)
+            return { 
+                date: new Date(mov.fecha), 
+                amount: -effectOnAccount, 
+                type: -effectOnAccount > 0 ? 'retirada' : 'aportacion' 
+            };
+        }
+        return null;
+    }).filter(cf => cf !== null); // Limpiamos los movimientos que no afectaron
+
+    // 4. Añadimos el valor actual como el "desembolso final" positivo del cálculo.
+    cashflows.push({ date: new Date(), amount: valorActual, type: 'valoracion' });
+
+    // 5. Ordenamos todo cronológicamente y construimos la tabla HTML.
+    cashflows.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    let modalHtml = `<p class="form-label" style="margin-bottom: var(--sp-3);">Esta es la lista de flujos de caja usados para calcular la Tasa Interna de Retorno (TIR).</p>
+        <div class="informe-extracto-container">
+            <div class="informe-linea-header">
+                <span class="fecha">Fecha</span>
+                <span class="descripcion">Tipo</span>
+                <span class="importe">Importe</span>
+            </div>`;
+    
+    cashflows.forEach(cf => {
+        const date = cf.date.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
+        const typeLabel = cf.type === 'aportacion' ? 'Aportación (-)' : (cf.type === 'retirada' ? 'Retirada (+)' : 'Valoración Final (+)');
+        const colorClass = cf.amount < 0 ? 'text-gasto' : 'text-ingreso'; // Reutilizamos clases de color que ya tienes
+
+        modalHtml += `
+            <div class="informe-linea-movimiento">
+                <span class="fecha">${date}</span>
+                <span class="descripcion">${typeLabel}</span>
+                <span class="importe ${colorClass}">${formatCurrency(cf.amount)}</span>
+            </div>`;
+    });
+    
+    modalHtml += `</div>`;
+    
+    // 6. Mostramos el resultado final en el modal.
+    showGenericModal(`Desglose TIR: ${cuenta.nombre}`, modalHtml);
+};	
 const showDrillDownModal = (title, movements) => {
     // Ordenamos los movimientos para que se muestren cronológicamente
     movements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
@@ -7662,6 +7746,7 @@ if (ptrElement && mainScrollerPtr) {
                 }
             },
             'show-main-add-sheet': () => showModal('main-add-sheet'),
+			 'show-irr-breakdown': () => handleShowIrrBreakdown(actionTarget.dataset.id),
 			'open-movement-form': (e) => {
     const type = e.target.closest('[data-type]').dataset.type;
     hideModal('main-add-sheet');
