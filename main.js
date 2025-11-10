@@ -64,9 +64,10 @@ const handleExportFilteredCsv = (btn) => {
         
         const firebaseConfig = { apiKey: "AIzaSyAp-t-2qmbvSX-QEBW9B1aAJHBESqnXy9M", authDomain: "cuentas-aidanai.firebaseapp.com", projectId: "cuentas-aidanai", storageBucket: "cuentas-aidanai.appspot.com", messagingSenderId: "58244686591", appId: "1:58244686591:web:85c87256c2287d350322ca" };
 const PAGE_IDS = {
-    INICIO: 'inicio-page',
+    PANEL: 'panel-page',
     DIARIO: 'diario-page',
-    ESTRATEGIA: 'estrategia-page', // <-- CORREGIDO Y AÑADIDO
+    PATRIMONIO: 'patrimonio-page',
+    PLANIFICAR: 'planificar-page',
     AJUSTES: 'ajustes-page',
 };
 
@@ -689,7 +690,7 @@ async function loadCoreData(uid) {
         const activePage = document.querySelector('.view--active');
         if (activePage) {
             if (activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
-            if (activePage.id === PAGE_IDS.ESTRATEGIA) renderEstrategiaPlanificacion();
+            if (activePage.id === PAGE_IDS.ESTRATEGIA) renderPlanificacionPage();
         }
 
     }, error => console.error(`Error escuchando recurrentes: `, error));
@@ -1524,6 +1525,10 @@ const navigateTo = async (pageId, isInitial = false) => {
     const newView = select(pageId);
     const mainScroller = selectOne('.app-layout__main');
 
+    // Cerrar el menú si está abierto
+    const menu = select('main-menu-popover');
+    if (menu) menu.classList.remove('popover-menu--visible');
+
     // Guardar la posición del scroll de la vista anterior
     if (oldView && mainScroller) {
         pageScrollPositions[oldView.id] = mainScroller.scrollTop;
@@ -1531,9 +1536,6 @@ const navigateTo = async (pageId, isInitial = false) => {
 
     if (!newView || (oldView && oldView.id === pageId)) return;
     
-    // --- LÓGICA DE CARGA DE VISTAS CORREGIDA ---
-    // Ya no se intenta hacer 'fetch' de archivos HTML. La función de renderizado se encargará de todo.
-
     destroyAllCharts();
 
     if (!isInitial) hapticFeedback('light');
@@ -1549,39 +1551,34 @@ const navigateTo = async (pageId, isInitial = false) => {
 
     const actionsEl = select('top-bar-actions');
     const leftEl = select('top-bar-left-button');
-    const fab = select('fab-add-movimiento'); // Asumiendo que pudieras tener un FAB
     
+    // Acciones estándar de la barra superior, ¡ahora con el botón de menú!
     const standardActions = `
         <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
             <span class="material-icons">search</span>
         </button>
-        <button data-action="help" class="icon-btn" title="Guía de Usuario" aria-label="Abrir Guía de Usuario">
-            <span class="material-icons">help_outline</span>
-        </button>
-        <button id="theme-toggle-btn" data-action="toggle-theme" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
-            <span class="material-icons">dark_mode</span>
-        </button>
-        <button data-action="exit" class="icon-btn" title="Salir de la aplicación" aria-label="Salir de la aplicación">
-            <span class="material-icons">exit_to_app</span>
+        <button data-action="show-main-menu" class="icon-btn" title="Menú Principal" aria-label="Abrir Menú Principal">
+            <span class="material-icons">more_vert</span>
         </button>
     `;
     
-    // Lazy loading de datos si es necesario
+    // Lazy loading de datos si es necesario (Ahora apunta a la nueva página 'PLANIFICAR')
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
-    if (pageId === PAGE_IDS.INVERSIONES && !dataLoaded.inversiones) await loadInversiones();
+    if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones(); // Apunta a 'PATRIMONIO'
 
- const pageRenderers = {
-    [PAGE_IDS.INICIO]: { title: 'Panel', render: renderInicioPage, actions: standardActions },
-    [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
-    [PAGE_IDS.ESTRATEGIA]: { title: 'Estrategia', render: renderEstrategiaPage, actions: standardActions },
-    // ▼▼▼ REEMPLAZA ESTA LÍNEA ▼▼▼
-    [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
-};
+    // El nuevo mapa de renderizado de páginas
+    const pageRenderers = {
+        [PAGE_IDS.PANEL]: { title: 'Panel', render: renderInicioPage, actions: standardActions },
+        [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
+        [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: standardActions },
+        [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage, actions: standardActions },
+        [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
+    };
 
     if (pageRenderers[pageId]) { 
         if (leftEl) {
             let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar a Contabilidad ${isOffBalanceMode ? 'A' : 'B'}"> ${isOffBalanceMode ? 'B' : 'A'}</button><span id="page-title-display">${pageRenderers[pageId].title}</span>`;
-            if (pageId === PAGE_IDS.INICIO) leftSideHTML += `<button data-action="configure-dashboard" class="icon-btn" title="Personalizar qué se ve en el Panel" style="margin-left: 8px;"><span class="material-icons">dashboard_customize</span></button>`;
+            if (pageId === PAGE_IDS.PANEL) leftSideHTML += `<button data-action="configure-dashboard" class="icon-btn" title="Personalizar qué se ve en el Panel" style="margin-left: 8px;"><span class="material-icons">dashboard_customize</span></button>`;
             if (pageId === PAGE_IDS.DIARIO) {
                 leftSideHTML += `
                     <button data-action="show-diario-filters" class="icon-btn" title="Filtrar y Buscar" style="margin-left: 8px;">
@@ -1597,13 +1594,10 @@ const navigateTo = async (pageId, isInitial = false) => {
 
         if (actionsEl) actionsEl.innerHTML = pageRenderers[pageId].actions;
         
-        // --- LLAMADA DIRECTA A LA FUNCIÓN DE RENDERIZADO ---
-        // Este es el cambio clave. Ahora llamamos a la función JS que genera el HTML.
         await pageRenderers[pageId].render();
     }
     
     selectAll('.bottom-nav__item').forEach(b => b.classList.toggle('bottom-nav__item--active', b.dataset.page === newView.id));
-    if (fab) fab.classList.toggle('fab--visible', true);
     updateThemeIcon();
     
     newView.classList.add('view--active'); 
@@ -1624,14 +1618,11 @@ const navigateTo = async (pageId, isInitial = false) => {
         oldView.classList.remove('view--active');
     }
 
-    // Restaurar posición de scroll de la nueva vista
     if (mainScroller) {
         mainScroller.scrollTop = pageScrollPositions[pageId] || 0;
     }
 
-    if (pageId === PAGE_IDS.INICIO) {
-        // En lugar de llamar directamente a la actualización (que puede ser pesada),
-        // usamos el sistema inteligente que ya tienes para que no se solape.
+    if (pageId === PAGE_IDS.PANEL) { // Renombrado de INICIO a PANEL
         scheduleDashboardUpdate();
     }
 };
@@ -2406,7 +2397,7 @@ const handleToggleInvestmentTypeFilter = (type) => {
         deselectedInvestmentTypesFilter.add(type);
     }
 
-    // ANTES: renderEstrategiaActivos(); (o la función inexistente que corregimos antes)
+    // ANTES: renderPatrimonioPage(); (o la función inexistente que corregimos antes)
     // AHORA (Correcto): Llamamos a las dos funciones que dependen de este filtro.
     renderPortfolioMainContent('portfolio-main-content');
     renderPortfolioEvolutionChart('portfolio-evolution-container');
@@ -3709,7 +3700,7 @@ async function calculateHistoricalIrrForGroup(accountIds) {
             if (userEmailEl && currentUser) userEmailEl.textContent = currentUser.email;  			
         };
 		
-  const renderInicioPage = async () => {
+  const renderPanelPage = async () => {
     const container = select(PAGE_IDS.INICIO);
     if (!container) return;
 
@@ -3753,10 +3744,10 @@ async function calculateHistoricalIrrForGroup(accountIds) {
     // 4. Llamar a la función de renderizado específica para esa pestaña
     switch (tabName) {
         case 'planificacion':
-            renderEstrategiaPlanificacion();
+            renderPlanificacionPage();
             break;
         case 'activos':
-            renderEstrategiaActivos();
+            renderPatrimonioPage();
             break;
         case 'informes':
             renderEstrategiaInformes();
@@ -4805,8 +4796,8 @@ const renderPlanificacionPage = () => {
     renderPendingRecurrents();
     renderRecurrentsListOnPage();
 };
-const renderEstrategiaPlanificacion = () => {
-    const container = select('estrategia-planificacion-content');
+const renderPlanificacionPage = () => {
+    const container = select(PAGE_IDS.PLANIFICAR);
     if (!container) return;
 
     // ESTE ES EL CONTENIDO COMPLETO DE TU ANTIGUA VISTA DE PLANIFICACIÓN
@@ -4871,8 +4862,8 @@ const renderEstrategiaPlanificacion = () => {
     renderRecurrentsListOnPage();
 };
 
-const renderEstrategiaActivos = () => {
-    const container = select('estrategia-activos-content');
+const renderPatrimonioPage = () => {
+    const container = select(PAGE_IDS.PATRIMONIO);
     if (!container) return;
 
     // ESTE ES EL CONTENIDO COMPLETO DE TU ANTIGUA VISTA DE PATRIMONIO
@@ -5557,7 +5548,7 @@ const updateDashboardData = async () => {
     conceptListContainer.innerHTML = listHtml;
 }
 		
-		if (select('patrimonio-completo-container')) { await renderEstrategiaActivos(); }
+		if (select('patrimonio-completo-container')) { await renderPatrimonioPage(); }
         if (select('patrimonio-inversiones-container')) { await renderInversionesPage('patrimonio-inversiones-container'); }
         if (select('informe-personalizado-widget')) { await renderInformeWidgetContent(); }
 		
@@ -7980,7 +7971,7 @@ if (ptrElement && mainScrollerPtr) {
 
                 case PAGE_IDS.PLANIFICAR:
                     // La vista de Planificar también necesita recalcular sus proyecciones.
-                    await renderEstrategiaPlanificacion();
+                    await renderPlanificacionPage();
                     break;
                 
                 // La página de Ajustes no depende de la contabilidad, así que no hacemos nada.
@@ -8385,7 +8376,7 @@ const handleConfirmRecurrent = async (id, btn) => {
             const activePage = document.querySelector('.view--active');
             if (activePage && (activePage.id === PAGE_IDS.DIARIO || activePage.id === PAGE_IDS.ESTRATEGIA)) {
                 if (activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
-                if (activePage.id === PAGE_IDS.ESTRATEGIA) renderEstrategiaPlanificacion();
+                if (activePage.id === PAGE_IDS.ESTRATEGIA) renderPlanificacionPage();
             }
         }, 300);
 
@@ -8417,7 +8408,7 @@ const handleSkipRecurrent = async (id, btn) => {
             itemEl.addEventListener('animationend', () => {
                 const activePage = document.querySelector('.view--active');
                 if (activePage && activePage.id === PAGE_IDS.DIARIO) updateVirtualListUI();
-                if (activePage && activePage.id === PAGE_IDS.ESTRATEGIA) renderEstrategiaPlanificacion();
+                if (activePage && activePage.id === PAGE_IDS.ESTRATEGIA) renderPlanificacionPage();
             }, { once: true });
         }
 
@@ -8453,7 +8444,7 @@ const handleSkipRecurrent = async (id, btn) => {
             const activePage = document.querySelector('.view--active');
              if (activePage && (activePage.id === PAGE_IDS.DIARIO || activePage.id === PAGE_IDS.ESTRATEGIA)) {
                 if (activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
-                if (activePage.id === PAGE_IDS.ESTRATEGIA) renderEstrategiaPlanificacion();
+                if (activePage.id === PAGE_IDS.ESTRATEGIA) renderPlanificacionPage();
             }
         }, 300);
 
@@ -9445,7 +9436,7 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
 
         setTimeout(() => {
             updateLocalDataAndRefreshUI(); // Redibuja la lista sin el elemento
-            if (isRecurrent) renderEstrategiaPlanificacion();
+            if (isRecurrent) renderPlanificacionPage();
         }, itemElement ? ANIMATION_DURATION : 0);
 
         // 3. PERSISTENCIA EN SEGUNDO PLANO (El intento de guardado real)
@@ -9485,7 +9476,7 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
         
         // Forzamos un re-renderizado completo para asegurar la consistencia
         updateLocalDataAndRefreshUI();
-        if (isRecurrent) renderEstrategiaPlanificacion();
+        if (isRecurrent) renderPlanificacionPage();
     }
 };
 // ============================================================

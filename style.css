@@ -1223,11 +1223,11 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     color: var(--c-primary);
 }
 /* === FIN: Estilos para Pull-to-Refresh === */
- /* === INICIO: Estilos para el Menú Desplegable === */
+/* === INICIO: Estilos para el Menú Desplegable === */
 .popover-menu {
     position: fixed;
-    top: 48px; /* Justo debajo de la barra superior */
-    right: 8px;
+    top: 52px; /* Justo debajo de la barra superior */
+    right: 12px;
     z-index: 1100; /* Muy alto para que esté por encima de todo */
     background-color: var(--c-surface-variant);
     border-radius: var(--border-radius-md);
@@ -1239,6 +1239,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     /* Magia para ocultar/mostrar */
     opacity: 0;
     transform: translateY(-10px) scale(0.95);
+    transform-origin: top right;
     transition: opacity 0.2s ease-out, transform 0.2s ease-out;
     pointer-events: none; /* No se puede hacer clic cuando está oculto */
 }
@@ -1270,7 +1271,14 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     background-color: var(--c-surface);
 }
 
+.popover-menu__item .material-icons {
+    color: var(--c-on-surface-secondary);
+}
+
 .popover-menu__item--danger {
+    color: var(--c-danger);
+}
+.popover-menu__item--danger .material-icons {
     color: var(--c-danger);
 }
 

@@ -90,9 +90,9 @@
     </div>
     
     <div id="app-root" class="app-layout">
-        <!-- ▼▼▼ INICIO: BARRA DE NAVEGACIÓN INFERIOR MEJORADA ▼▼▼ -->
+        <!-- ▼▼▼ INICIO: NUEVA BARRA DE NAVEGACIÓN PRINCIPAL ▼▼▼ -->
         <nav class="bottom-nav">
-            <button data-action="navigate" data-page="inicio-page" class="bottom-nav__item">
+            <button data-action="navigate" data-page="panel-page" class="bottom-nav__item">
                 <span class="material-icons">dashboard</span>
                 <span class="bottom-nav__label">Panel</span>
             </button>
@@ -101,21 +101,21 @@
                 <span class="bottom-nav__label">Diario</span>
             </button>
             
-            <!-- Botón de Acción Central -->
+            <!-- El botón central se mantiene igual -->
             <button data-action="show-main-add-sheet" id="bottom-nav-add-btn">
                 <span class="material-icons">add</span>
             </button>
             
-            <button data-action="navigate" data-page="estrategia-page" class="bottom-nav__item">
-                <span class="material-icons">insights</span>
-                <span class="bottom-nav__label">Estrategia</span>
+            <button data-action="navigate" data-page="patrimonio-page" class="bottom-nav__item">
+                <span class="material-icons">account_balance</span>
+                <span class="bottom-nav__label">Patrimonio</span>
             </button>
-            <button data-action="navigate" data-page="ajustes-page" class="bottom-nav__item">
-                <span class="material-icons">settings</span>
-                <span class="bottom-nav__label">Ajustes</span>
+            <button data-action="navigate" data-page="planificar-page" class="bottom-nav__item">
+                <span class="material-icons">edit_calendar</span>
+                <span class="bottom-nav__label">Planificar</span>
             </button>
         </nav>
-        <!-- ▲▲▲ FIN: BARRA DE NAVEGACIÓN INFERIOR MEJORADA ▲▲▲ -->
+        <!-- ▲▲▲ FIN: NUEVA BARRA DE NAVEGACIÓN PRINCIPAL ▲▲▲ -->
 
         <header id="app-top-bar" class="top-bar">
             <div class="top-bar__left-group">
@@ -127,9 +127,10 @@
         </header>
 
         <main class="app-layout__main">
-            <section id="inicio-page" class="view"></section>
+            <section id="panel-page" class="view"></section>
             <section id="diario-page" class="view" style="padding: 0; gap: 0;"></section>
-            <section id="estrategia-page" class="view"></section>
+            <section id="patrimonio-page" class="view"></section>
+            <section id="planificar-page" class="view"></section>
             <section id="ajustes-page" class="view"></section>
         </main>
     </div>
@@ -355,7 +356,24 @@
             </div>
         </div>
     </div>
-    <!-- ▲▲▲ FIN: MEJORA 1 - Bottom Sheet para Acciones Rápidas ▲▲▲ -->
+	<!-- ▲▲▲ FIN: MEJORA 1 - Bottom Sheet para Acciones Rápidas ▲▲▲ -->
+	<!-- ▼▼▼ INICIO: NUEVO MENÚ DESPLEGABLE PRINCIPAL ▼▼▼ -->
+    <div id="main-menu-popover" class="popover-menu">
+        <button class="popover-menu__item" data-action="navigate" data-page="ajustes-page">
+            <span class="material-icons">settings</span>
+            <span>Ajustes</span>
+        </button>
+        <button class="popover-menu__item" data-action="help">
+            <span class="material-icons">help_outline</span>
+            <span>Guía de Usuario</span>
+        </button>
+        <div class="popover-menu__divider"></div>
+        <button class="popover-menu__item popover-menu__item--danger" data-action="logout">
+            <span class="material-icons">logout</span>
+            <span>Cerrar Sesión</span>
+        </button>
+    </div>
+    <!-- ▲▲▲ FIN: NUEVO MENÚ DESPLEGABLE PRINCIPAL ▲▲▲ -->
 
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
