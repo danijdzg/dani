@@ -2527,59 +2527,75 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             const listHtml = displayAssetsData
                 .sort((a, b) => b.valorActual - a.valorActual)
                 .map(cuenta => {
-    const pnlClassPill = cuenta.pnlAbsoluto >= 0 ? 'is-positive' : 'is-negative';
-    const pnlClassText = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
-    const tirClassPill = cuenta.irr >= 0 ? 'is-positive' : 'is-negative';
+                    const pnlClassPill = cuenta.pnlAbsoluto >= 0 ? 'is-positive' : 'is-negative';
+                    const pnlClassText = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
+                    const tirClassPill = cuenta.irr >= 0 ? 'is-positive' : 'is-negative';
 
-    return `
-    <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
-        
-        <!-- Parte Izquierda: Nombre, Aportado y P&L absoluto -->
-        <div class="asset-card__details">
-            <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
-            <div class="asset-card__allocation">
-                Aportado: ${formatCurrency(cuenta.capitalInvertido)}
-            </div>
-            <div class="asset-card__pnl-absolute ${pnlClassText}" style="font-size: var(--fs-sm); font-weight: 600;">
-                ${cuenta.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(cuenta.pnlAbsoluto)}
-            </div>
-        </div>
+                    // ▼▼▼ ¡NUEVA LÓGICA AQUÍ! ▼▼▼
+                    // 1. Buscamos la última valoración para esta cuenta específica.
+                    const ultimaValoracion = (db.inversiones_historial || [])
+                        .filter(v => v.cuentaId === cuenta.id)
+                        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
 
-        <!-- Parte Derecha: Valor Actual, Píldoras de Rentabilidad y Botón -->
-        <div class="asset-card__figures">
-            <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
-            
-            <div style="display: flex; gap: var(--sp-2); align-items: center;">
-                <button 
-                    class="asset-card__pnl-pill ${pnlClassPill}" 
-                    style="border:none; cursor:pointer;"
-                    data-action="show-pnl-breakdown" 
-                    data-id="${cuenta.id}" 
-                    title="Pulsar para ver desglose de P&L">
-                    P&L: ${cuenta.pnlPorcentual.toFixed(1)}%
-                </button>
-                <button 
-                    class="asset-card__pnl-pill ${tirClassPill}" 
-                    style="border:none; cursor:pointer;"
-                    data-action="show-irr-breakdown" 
-                    data-id="${cuenta.id}" 
-                    title="Pulsar para ver desglose de TIR">
-                    TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
-                </button>
-            </div>
-            
-            <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}">
-                <span class="material-icons" style="font-size: 14px;">add_chart</span>
-                Valorar
-            </button>
+                    // 2. Preparamos el texto a mostrar.
+                    let fechaUltimaValoracionHTML = '<small class="asset-card__last-valuation-date">Sin valorar</small>';
+                    if (ultimaValoracion) {
+                        const fecha = new Date(ultimaValoracion.fecha + 'T12:00:00Z');
+                        const fechaFormateada = fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                        fechaUltimaValoracionHTML = `<small class="asset-card__last-valuation-date">Val. ${fechaFormateada}</small>`;
+                    }
+                    // ▲▲▲ FIN DE LA NUEVA LÓGICA ▲▲▲
 
-        </div>
-    </div>`;
-}).join('');
+                    return `
+                    <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
+                        
+                        <div class="asset-card__details">
+                            <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
+                            <div class="asset-card__allocation">
+                                Aportado: ${formatCurrency(cuenta.capitalInvertido)}
+                            </div>
+                            <div class="asset-card__pnl-absolute ${pnlClassText}" style="font-size: var(--fs-sm); font-weight: 600;">
+                                ${cuenta.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(cuenta.pnlAbsoluto)}
+                            </div>
+                        </div>
 
-            // ▼▼▼ ¡ESTA ES LA LÍNEA QUE FALTABA Y QUE ARREGLA EL PROBLEMA! ▼▼▼
+                        <div class="asset-card__figures">
+                            <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
+                            
+                            <div style="display: flex; gap: var(--sp-2); align-items: center; justify-content: flex-end;">
+                                <button 
+                                    class="asset-card__pnl-pill ${pnlClassPill}" 
+                                    style="border:none; cursor:pointer;"
+                                    data-action="show-pnl-breakdown" 
+                                    data-id="${cuenta.id}" 
+                                    title="Pulsar para ver desglose de P&L">
+                                    P&L: ${cuenta.pnlPorcentual.toFixed(1)}%
+                                </button>
+                                <button 
+                                    class="asset-card__pnl-pill ${tirClassPill}" 
+                                    style="border:none; cursor:pointer;"
+                                    data-action="show-irr-breakdown" 
+                                    data-id="${cuenta.id}" 
+                                    title="Pulsar para ver desglose de TIR">
+                                    TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
+                                </button>
+                            </div>
+                            
+                            <!-- ▼▼▼ HTML MODIFICADO AQUÍ ▼▼▼ -->
+                            <div class="asset-card__valuation-area">
+                                ${fechaUltimaValoracionHTML}
+                                <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}">
+                                    <span class="material-icons" style="font-size: 14px;">add_chart</span>
+                                    Valorar
+                                </button>
+                            </div>
+                            <!-- ▲▲▲ FIN DEL HTML MODIFICADO ▲▲▲ -->
+
+                        </div>
+                    </div>`;
+                }).join('');
+
             listContainer.innerHTML = listHtml ? `<div class="card"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
-            // ▲▲▲ FIN DE LA LÍNEA CRÍTICA ▲▲▲
             
             applyInvestmentItemInteractions(listContainer);
         }

@@ -2204,3 +2204,22 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     color: var(--c-primary);
 }
 /* === FIN: Estilos para Fichas de Activo Mejoradas === */
+
+/* Nuevo contenedor para alinear fecha y botón de valorar */
+.asset-card__valuation-area {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Alinea los elementos a la derecha */
+    gap: var(--sp-2); /* Espacio entre la fecha y el botón */
+    margin-top: 6px; /* Un poco de espacio respecto a las píldoras de arriba */
+}
+
+/* Estilo para el texto de la fecha */
+.asset-card__last-valuation-date {
+    font-size: 0.7rem; /* Texto pequeño y discreto */
+    font-weight: 600;
+    color: var(--c-on-surface-secondary); /* Color secundario para no robar protagonismo */
+    white-space: nowrap; /* Evita que el texto se parta en dos líneas */
+}
+
+/* === FIN: Mejora para Fecha de Valoración === */
