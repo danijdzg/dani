@@ -2536,36 +2536,31 @@ const allocationPercentage = portfolioTotalValorado > 0 ? (cuenta.valorActual / 
 return `
 <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
     
-    <!-- Icono del Activo -->
-    <div class="asset-card__icon">
-        <span class="material-icons">${getIconForAccountType(cuenta.tipo)}</span>
-    </div>
-    
-    <!-- Nombre, P&L Absoluto y Peso -->
+    <!-- Detalles a la izquierda (Nombre, P&L Absoluto y Peso) -->
     <div class="asset-card__details">
         <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
         <div class="asset-card__pnl-absolute ${pnlClassText}" style="font-size: var(--fs-sm); font-weight: 600;">${formatCurrency(cuenta.pnlAbsoluto)}</div>
         <div class="asset-card__allocation">${allocationPercentage.toFixed(1)}% del Portafolio</div>
     </div>
 
-    <!-- Valor, P&L % (botón) y TIR (botón) -->
+    <!-- Cifras y botones a la derecha -->
     <div class="asset-card__figures">
         <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
         
-        <!-- ESTE ES EL BOTÓN PARA EL DESGLOSE DE P&L -->
+        <!-- CAMBIO 2: Modificamos el texto del botón de P&L -->
         <button 
             class="asset-card__pnl-pill ${pnlClassPill}" 
             style="border:none; cursor:pointer;"
             data-action="show-pnl-breakdown" 
             data-id="${cuenta.id}" 
             title="Pulsar para ver desglose de P&L">
-            ${cuenta.pnlPorcentual.toFixed(1)}%
+            P&L: ${cuenta.pnlPorcentual.toFixed(1)}%
         </button>
 
-        <!-- ESTE ES EL BOTÓN PARA EL DESGLOSE DE TIR -->
+        <!-- CAMBIO 3: Modificamos el botón de TIR para que sea una "píldora" con color dinámico -->
         <button 
-            class="btn btn--secondary"
-            style="padding: 2px 8px; font-size: 0.7rem; color: var(--c-info); border-color: var(--c-info); margin-top: 4px;"
+            class="asset-card__pnl-pill ${tirClassPill}"
+            style="border:none; cursor:pointer;"
             data-action="show-irr-breakdown" 
             data-id="${cuenta.id}" 
             title="Pulsar para ver desglose de TIR">
@@ -2583,18 +2578,6 @@ return `
     }, 50);
 };
 
-
-const getIconForAccountType = (type) => {
-    const t = (type || '').toUpperCase();
-    if (t.includes('FONDO') || t.includes('BROKER')) return 'candlestick_chart';
-    if (t.includes('INMOBILIARIO') || t.includes('PROPIEDAD')) return 'home';
-    if (t.includes('PENSIÓN')) return 'savings';
-    if (t.includes('CRIPTO')) return 'currency_bitcoin';
-    if (t.includes('RENTA FIJA') || t.includes('LETRAS')) return 'trending_flat';
-    return 'account_balance_wallet';
-};
-
-// ▼▼▼ PEGA ESTA NUEVA FUNCIÓN COMPLETA EN TU ARCHIVO main.js ▼▼▼
 
 /**
  * Muestra un modal con el desglose de la fórmula de P&L para un activo:

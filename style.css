@@ -2127,8 +2127,8 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 .portfolio-asset-card {
     display: flex;
     align-items: center;
-    gap: var(--sp-4);
-    padding: var(--sp-3) var(--sp-4);
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-2);
     cursor: pointer;
     border-bottom: 1px solid var(--c-outline);
     transition: background-color 0.2s;
@@ -2140,17 +2140,6 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     border-bottom: none;
 }
 
-.asset-card__icon {
-    flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--c-surface-variant);
-    color: var(--c-primary);
-}
 .asset-card__details {
     flex-grow: 1;
     min-width: 0;
