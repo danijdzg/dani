@@ -4698,10 +4698,11 @@ const pending = getPendingRecurrents();
 
 const renderPlanificacionPage = () => {
     const container = select(PAGE_IDS.PLANIFICAR);
-    if (!container) return;
+    if(!container) return;
 
-    // ESTE ES EL CONTENIDO COMPLETO DE TU ANTIGUA VISTA DE PLANIFICACIÓN
+    // HTML que define la estructura de la página con los 3 acordeones.
     container.innerHTML = `
+        <!-- 1. ACORDEÓN DE MOVIMIENTOS RECURRENTES -->
         <div class="card card--no-bg accordion-wrapper">
             <details class="accordion">
                 <summary>
@@ -4716,6 +4717,7 @@ const renderPlanificacionPage = () => {
             </details>
         </div>
 
+        <!-- 2. ACORDEÓN DE PRESUPUESTOS ANUALES -->
         <div class="card card--no-bg accordion-wrapper">
             <details class="accordion">
                 <summary>
@@ -4753,9 +4755,34 @@ const renderPlanificacionPage = () => {
                 </div>
             </details>
         </div>
-    `;
 
-    // Estas llamadas son necesarias para poblar el HTML anterior con datos
+        <!-- 3. ¡NUEVO ACORDEÓN RESTAURADO! EXTRACTO DE CUENTA / CARTILLA -->
+        <div class="card card--no-bg accordion-wrapper">
+            <details id="acordeon-extracto_cuenta" class="accordion informe-acordeon">
+                <summary>
+                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                        <span class="material-icons">wysiwyg</span>
+                        <span>Extracto de Cuenta (Cartilla)</span>
+                    </h3>
+                    <span class="material-icons accordion__icon">expand_more</span>
+                </summary>
+                <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
+                    <div id="informe-content-extracto_cuenta">
+                         <form id="informe-cuenta-form" novalidate>
+                            <div class="form-group">
+                                <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta para ver su historial completo:</label>
+                                <select id="informe-cuenta-select" class="form-select" required></select>
+                            </div>
+                            <button type="submit" class="btn btn--primary btn--full">Generar Extracto</button>
+                        </form>
+                        <div id="informe-resultado-container" style="margin-top: var(--sp-4);"></div>
+                    </div>
+                </div>
+            </details>
+        </div>
+    `;
+    
+    // Llamamos a las funciones que rellenarán este HTML con datos.
     populateAllDropdowns();
     renderBudgetTracking();
     renderPendingRecurrents();
