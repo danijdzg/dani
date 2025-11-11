@@ -2202,7 +2202,7 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
 };
         
 
-// ▼▼▼ REEMPLAZA TU FUNCIÓN 'renderBudgetTracking' COMPLETA CON ESTE BLOQUE ▼▼▼
+/// ▼▼▼ REEMPLAZA TU FUNCIÓN 'renderBudgetTracking' COMPLETA CON ESTE CÓDIGO DEFINITIVO ▼▼▼
 
 const renderBudgetTracking = async () => {
     const dashboardContainer = select('annual-budget-dashboard');
@@ -2230,24 +2230,18 @@ const renderBudgetTracking = async () => {
 
     const { percentage: yearProgress, daysPassed, daysRemaining, totalDaysInYear } = getYearProgress();
     
-    // --- INICIO DE LA CORRECCIÓN CLAVE ---
-    // Hemos eliminado el filtro por 'visibleAccountIds'. Ahora, la consulta y el filtro
-    // recogen TODOS los movimientos de tipo 'movimiento' del año, sin importar
-    // si pertenecen a la contabilidad A o B. ¡Esta es la solución!
-    
-    const startDate = new Date(year, 0, 1);
-    const endDate = new Date(year, 11, 31, 23, 59, 59, 999);
-    
-    const snapshot = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos')
-        .where('fecha', '>=', startDate.toISOString())
-        .where('fecha', '<=', endDate.toISOString())
-        .get();
+    // --- INICIO DE LA SOLUCIÓN DEFINITIVA ---
+    // 1. En lugar de hacer una consulta compleja a Firebase, traemos TODOS los movimientos
+    //    usando una función que ya sabemos que es fiable y no depende de índices.
+    const allMovements = await fetchAllMovementsForHistory();
 
-    const movements = snapshot.docs
-        .map(doc => doc.data())
-        .filter(mov => mov.tipo === 'movimiento'); // Solo nos interesan ingresos y gastos, no traspasos.
-        
-    // --- FIN DE LA CORRECCIÓN CLAVE ---
+    // 2. Ahora, filtramos esos movimientos en JavaScript. Es más rápido y 100% seguro.
+    //    Nos aseguramos de que el movimiento sea del tipo correcto Y del año seleccionado.
+    const movements = allMovements.filter(mov => {
+        const movYear = new Date(mov.fecha).getFullYear();
+        return mov.tipo === 'movimiento' && movYear === year;
+    });
+    // --- FIN DE LA SOLUCIÓN DEFINITIVA ---
 
     const monthlyIncomeData = {};
     const monthlyExpenseData = {};
