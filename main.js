@@ -9295,8 +9295,6 @@ const handleAddConcept = async (btn) => {
  };
 
 
-// EN main.js - REEMPLAZA TU FUNCIÓN deleteMovementAndAdjustBalance POR COMPLETO
-
 // =================================================================
 // === INICIO: FUNCIÓN DE BORRADO OPTIMIZADA (v2.1 - CON REVERSIÓN) ===
 // =================================================================
