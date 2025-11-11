@@ -4428,6 +4428,44 @@ const renderDashboardSuperCentroOperaciones = () => {
     </div>`;
 };
 
+// =========================================================================
+// === INICIO: FUNCIÓN FALTANTE PARA EL WIDGET DE INFORME PERSONALIZADO ===
+// =========================================================================
+
+/**
+ * Renderiza el esqueleto del widget de "Informe Personalizado".
+ * Esta es la función que faltaba y que causaba el error.
+ */
+const renderDashboardInformeWidget = () => {
+    // Intenta leer el título guardado, si no, usa uno por defecto.
+    const reportConfig = db.config?.savedReports?.main;
+    const reportTitle = reportConfig?.title || 'Mi Informe Personalizado';
+
+    // Devuelve la estructura HTML base del widget.
+    return `
+    <div class="card" id="informe-personalizado-widget">
+        <div class="card__title" style="justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: var(--sp-2);">
+                <span class="material-icons">summarize</span>
+                <span id="informe-widget-title">${escapeHTML(reportTitle)}</span>
+            </div>
+            <button class="btn btn--secondary" data-action="show-informe-builder" style="padding: 4px 10px; font-size: 0.75rem;">
+                <span class="material-icons" style="font-size: 14px;">settings</span>
+                Configurar
+            </button>
+        </div>
+        <div class="card__content" id="informe-widget-content">
+            <!-- Este contenedor será rellenado después con el gráfico por la función renderInformeWidgetContent() -->
+            <div class="chart-container skeleton" style="height: 240px;"></div>
+        </div>
+    </div>
+    `;
+};
+
+// =========================================================================
+// === FIN: FUNCIÓN AÑADIDA                                              ===
+// =========================================================================
+
 const renderDashboardExpandedKpiSummary = () => {
     return `
     <div class="card" id="kpi-ampliado-widget">
