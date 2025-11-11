@@ -4679,13 +4679,15 @@ const pending = getPendingRecurrents();
 };
 
 
+// ▼▼▼ REEMPLAZA TU FUNCIÓN 'renderPlanificacionPage' COMPLETA CON ESTE BLOQUE DEFINITIVO ▼▼▼
+
 const renderPlanificacionPage = () => {
     const container = select(PAGE_IDS.PLANIFICAR);
-    if(!container) return;
+    if (!container) return;
 
-    // HTML que define la estructura de la página con los 3 acordeones.
+    // 1. DIBUJAMOS LA ESTRUCTURA HTML BASE DE LA PÁGINA.
+    //    El selector de año está aquí, pero todavía está vacío.
     container.innerHTML = `
-        <!-- 1. ACORDEÓN DE MOVIMIENTOS RECURRENTES -->
         <div class="card card--no-bg accordion-wrapper">
             <details class="accordion">
                 <summary>
@@ -4699,10 +4701,8 @@ const renderPlanificacionPage = () => {
                 </div>
             </details>
         </div>
-
-        <!-- 2. ACORDEÓN DE PRESUPUESTOS ANUALES -->
         <div class="card card--no-bg accordion-wrapper">
-            <details class="accordion">
+            <details class="accordion" open>
                 <summary>
                     <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">request_quote</span>Presupuestos Anuales</h3>
                     <span class="material-icons accordion__icon">expand_more</span>
@@ -4738,8 +4738,6 @@ const renderPlanificacionPage = () => {
                 </div>
             </details>
         </div>
-
-        <!-- 3. ¡NUEVO ACORDEÓN RESTAURADO! EXTRACTO DE CUENTA / CARTILLA -->
         <div class="card card--no-bg accordion-wrapper">
             <details id="acordeon-extracto_cuenta" class="accordion informe-acordeon">
                 <summary>
@@ -4765,7 +4763,30 @@ const renderPlanificacionPage = () => {
         </div>
     `;
     
-    // Llamamos a las funciones que rellenarán este HTML con datos.
+    // 2. AHORA, CON EL HTML YA EN LA PÁGINA, RELLENAMOS EL SELECTOR DE AÑO.
+    const yearSelect = container.querySelector('#budget-year-selector');
+    if (yearSelect) {
+        const currentYear = new Date().getFullYear();
+        // Creamos una lista única de años, incluyendo el actual y todos los que tengan presupuestos.
+        const years = new Set([currentYear]);
+        (db.presupuestos || []).forEach(p => years.add(p.ano));
+        
+        // Rellenamos el selector con los años, ordenados del más nuevo al más antiguo.
+        yearSelect.innerHTML = [...years]
+            .sort((a, b) => b - a)
+            .map(y => `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`)
+            .join('');
+
+        // 3. ¡LA INSTRUCCIÓN CLAVE QUE FALTABA!
+        // Le decimos a la app que, cuando el usuario cambie de año, vuelva a dibujar todo.
+        yearSelect.addEventListener('change', () => {
+            hapticFeedback('light');
+            renderBudgetTracking(); // Esto redibuja el gráfico y los KPIs con el nuevo año.
+        });
+    }
+
+    // 4. FINALMENTE, LLAMAMOS A LAS FUNCIONES DE RENDERIZADO.
+    // Ahora 'renderBudgetTracking' encontrará un año válido y funcionará.
     populateAllDropdowns();
     renderBudgetTracking();
     renderPendingRecurrents();
