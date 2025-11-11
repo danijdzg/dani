@@ -1664,41 +1664,38 @@ const navigateTo = async (pageId, isInitial = false) => {
     console.log(`Índice inteligente MEJORADO con ${intelligentIndex.size} entradas.`);
 };
 
-/**
- * Obtiene todos los movimientos recurrentes cuya próxima fecha de ejecución
- * es hoy o ha pasado, y que no han finalizado.
- * Esta es la única fuente de verdad para saber qué está pendiente.
- * @returns {Array<object>} Un array de objetos de movimientos recurrentes pendientes, ordenados por fecha.
- */
+// ▼▼▼ REEMPLAZA TU FUNCIÓN 'getPendingRecurrents' CON ESTE BLOQUE COMPLETO ▼▼▼
 const getPendingRecurrents = () => {
     const now = new Date();
-    // Creamos "hoy" en UTC a las 00:00 para una comparación precisa
+    // Creamos "hoy" en UTC a las 00:00 para una comparación precisa y justa.
     const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     
     return (db.recurrentes || [])
         .filter(r => {
-            // Usamos la función UTC para evitar la trampa de la zona horaria
             const nextDate = parseDateStringAsUTC(r.nextDate);
+            if (!nextDate) return false;
+
+            // ¡LA CORRECCIÓN CLAVE! Normalizamos la fecha del recurrente a las 00:00 UTC
+            // para compararla directamente con "today".
+            const normalizedNextDate = new Date(Date.UTC(nextDate.getUTCFullYear(), nextDate.getUTCMonth(), nextDate.getUTCDate()));
             
-            // Si no hay fecha o la fecha es futura, no está pendiente.
-            if (!nextDate || nextDate > today) {
+            // Si la fecha programada es hoy o anterior, está pendiente.
+            if (normalizedNextDate > today) {
                 return false;
             }
             
-            // Si tiene una fecha de fin y ya ha pasado, tampoco está pendiente.
             if (r.endDate) {
                 const endDate = parseDateStringAsUTC(r.endDate);
                 if (endDate && today > endDate) {
-                    return false; // El recurrente ya ha expirado.
+                    return false;
                 }
             }
             
-            // Si pasa todos los filtros, está pendiente.
             return true;
         })
-        // Ordenamos para que los más antiguos aparezcan primero.
         .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
 };
+// ▲▲▲ FIN DEL BLOQUE DE REEMPLAZO 1 ▲▲▲
 
 		
 // =================================================================
@@ -2205,6 +2202,8 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
 };
         
 
+// ▼▼▼ REEMPLAZA TU FUNCIÓN 'renderBudgetTracking' COMPLETA CON ESTE BLOQUE ▼▼▼
+
 const renderBudgetTracking = async () => {
     const dashboardContainer = select('annual-budget-dashboard');
     const placeholder = select('budget-init-placeholder');
@@ -2232,34 +2231,24 @@ const renderBudgetTracking = async () => {
     const { percentage: yearProgress, daysPassed, daysRemaining, totalDaysInYear } = getYearProgress();
     
     // --- INICIO DE LA CORRECCIÓN CLAVE ---
+    // Hemos eliminado el filtro por 'visibleAccountIds'. Ahora, la consulta y el filtro
+    // recogen TODOS los movimientos de tipo 'movimiento' del año, sin importar
+    // si pertenecen a la contabilidad A o B. ¡Esta es la solución!
     
-    // 1. Definimos las fechas del año completo.
     const startDate = new Date(year, 0, 1);
     const endDate = new Date(year, 11, 31, 23, 59, 59, 999);
     
-    // 2. Creamos una consulta a Firestore MUCHO MÁS SIMPLE, solo por rango de fecha.
-    //    Esta consulta SIEMPRE funcionará sin necesidad de índices complejos.
     const snapshot = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos')
         .where('fecha', '>=', startDate.toISOString())
         .where('fecha', '<=', endDate.toISOString())
         .get();
 
-    // 3. Obtenemos los IDs de las cuentas visibles para la contabilidad actual (A o B).
-    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
-    
-    // 4. Filtramos los resultados EN JAVASCRIPT. Es más robusto y eficiente para esta cantidad de datos.
     const movements = snapshot.docs
         .map(doc => doc.data())
-        .filter(mov => 
-            mov.tipo === 'movimiento' &&       // Solo nos interesan ingresos y gastos, no traspasos.
-            visibleAccountIds.has(mov.cuentaId) // Solo movimientos de la contabilidad activa.
-        );
+        .filter(mov => mov.tipo === 'movimiento'); // Solo nos interesan ingresos y gastos, no traspasos.
         
     // --- FIN DE LA CORRECCIÓN CLAVE ---
 
-    // El resto de la función se mantiene EXACTAMENTE IGUAL, ya que la lógica de cálculo
-    // que tenías a partir de aquí ya era correcta.
-    
     const monthlyIncomeData = {};
     const monthlyExpenseData = {};
     movements.forEach(mov => {
@@ -4978,7 +4967,11 @@ const renderRecurrentsListOnPage = () => {
         .filter(r => {
             const nextDate = parseDateStringAsUTC(r.nextDate);
             if (!nextDate) return false; 
+            
+            // ¡LA CORRECCIÓN CLAVE! Hacemos la misma normalización para ser consistentes.
             const normalizedNextDate = new Date(Date.UTC(nextDate.getUTCFullYear(), nextDate.getUTCMonth(), nextDate.getUTCDate()));
+            
+            // Mostramos solo los que son estrictamente futuros (de mañana en adelante).
             return normalizedNextDate > today;
         })
         .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
@@ -5015,7 +5008,6 @@ const renderRecurrentsListOnPage = () => {
 	    </div>`;
     }).join('');
 };
-
 // Define los colores para cada componente del patrimonio
 const NET_WORTH_COMPONENT_COLORS = {
     'Líquido': 'rgba(0, 122, 255, 0.7)',      // Azul (var(--c-primary))
@@ -8205,9 +8197,7 @@ if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || tar
             }
         };
     
-// main.js
-
-// ▼▼▼ REEMPLAZA POR COMPLETO TU FUNCIÓN handleConfirmRecurrent ▼▼▼
+// ▼▼▼ REEMPLAZA TU FUNCIÓN 'handleConfirmRecurrent' CON ESTE BLOQUE COMPLETO ▼▼▼
 const handleConfirmRecurrent = async (id, btn) => {
     if (btn) setButtonLoading(btn, true);
 
@@ -8219,26 +8209,26 @@ const handleConfirmRecurrent = async (id, btn) => {
     }
 
     try {
-        const today = new Date();
-        today.setUTCHours(12, 0, 0, 0);
+        const now = new Date();
+        // ¡LÓGICA ROBUSTA! Definimos "hoy" de la misma manera consistente.
+        const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
         let cursorDate = parseDateStringAsUTC(recurrente.nextDate);
         if (!cursorDate) throw new Error("Fecha de recurrente inválida.");
 
         const batch = fbDb.batch();
         const userRef = fbDb.collection('users').doc(currentUser.uid);
         let movementsCreatedCount = 0;
-        let lastCreatedDate = null;
-        const safetyLimit = 100; // Evita bucles infinitos
+        const safetyLimit = 100;
         let iterations = 0;
 
-        // Bucle "Ponerse al Día": Crea todos los movimientos atrasados
+        // Bucle "Ponerse al Día": Crea todos los movimientos hasta el día de hoy inclusive.
         while (cursorDate <= today && iterations < safetyLimit) {
             const newMovementId = generateId();
             const newMovementData = {
                 id: newMovementId,
                 cantidad: recurrente.cantidad,
                 descripcion: recurrente.descripcion,
-                fecha: cursorDate.toISOString(), // <-- La fecha del movimiento es la que tocaba
+                fecha: cursorDate.toISOString(),
                 tipo: recurrente.tipo,
                 cuentaId: recurrente.cuentaId,
                 conceptoId: recurrente.conceptoId,
@@ -8246,10 +8236,8 @@ const handleConfirmRecurrent = async (id, btn) => {
                 cuentaDestinoId: recurrente.cuentaDestinoId
             };
 
-            // Añadir movimiento a la base de datos
             batch.set(userRef.collection('movimientos').doc(newMovementId), newMovementData);
             
-            // Ajustar el saldo de la cuenta
             if (recurrente.tipo === 'traspaso') {
                 batch.update(userRef.collection('cuentas').doc(recurrente.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-recurrente.cantidad) });
                 batch.update(userRef.collection('cuentas').doc(recurrente.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
@@ -8258,20 +8246,15 @@ const handleConfirmRecurrent = async (id, btn) => {
             }
 
             movementsCreatedCount++;
-            lastCreatedDate = cursorDate;
-            
-            // Avanzamos el cursor a la siguiente fecha programada
             cursorDate = calculateNextDueDate(cursorDate.toISOString().slice(0, 10), recurrente.frequency, recurrente.weekDays);
             iterations++;
         }
 
         const recurrenteRef = userRef.collection('recurrentes').doc(id);
         
-        // Comprobar si el recurrente ha finalizado
         if (recurrente.frequency === 'once' || (recurrente.endDate && cursorDate > parseDateStringAsUTC(recurrente.endDate))) {
-            batch.delete(recurrenteRef); // Eliminar si ya ha terminado su ciclo
+            batch.delete(recurrenteRef);
         } else {
-            // Actualizar a la próxima fecha futura
             batch.update(recurrenteRef, { nextDate: cursorDate.toISOString().slice(0, 10) });
         }
         
@@ -8284,14 +8267,13 @@ const handleConfirmRecurrent = async (id, btn) => {
             showToast("Movimiento añadido desde recurrente.", "info");
         }
         
-        // Forzamos la recarga de datos para ver los cambios al instante
         await loadCoreData(currentUser.uid);
-        // Pequeño retardo para dar tiempo a la UI a actualizarse antes de refrescar la vista.
+        
         setTimeout(() => {
             const activePage = document.querySelector('.view--active');
-            if (activePage && (activePage.id === PAGE_IDS.DIARIO || activePage.id === PAGE_IDS.ESTRATEGIA)) {
+            if (activePage) {
                 if (activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
-                if (activePage.id === PAGE_IDS.ESTRATEGIA) renderPlanificacionPage();
+                if (activePage.id === PAGE_IDS.PLANIFICAR) renderPlanificacionPage();
             }
         }, 300);
 
@@ -8302,8 +8284,7 @@ const handleConfirmRecurrent = async (id, btn) => {
         if (btn) setButtonLoading(btn, false);
     }
 };
-// ▲▲▲ FIN DEL BLOQUE DE REEMPLAZO ▲▲▲
-
+// ▲▲▲ FIN DEL BLOQUE DE REEMPLAZO 3 ▲▲▲
 const handleSkipRecurrent = async (id, btn) => {
     if (btn) setButtonLoading(btn, true);
 
