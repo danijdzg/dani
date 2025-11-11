@@ -4658,13 +4658,13 @@ const renderInicioResumenView = () => {
 };
 
 
-// ▼▼▼ REEMPLAZA TU FUNCIÓN 'renderPlanificacionPage' COMPLETA CON ESTE BLOQUE DEFINITIVO ▼▼▼
+// ▼▼▼ REEMPLAZA TU FUNCIÓN 'renderPlanificacionPage' CON ESTA VERSIÓN YA LIMPIA ▼▼▼
 
 const renderPlanificacionPage = () => {
     const container = select(PAGE_IDS.PLANIFICAR);
     if (!container) return;
 
-    // 1. DIBUJAMOS LA ESTRUCTURA HTML BASE, AÑADIENDO EL NUEVO ACORDEÓN PARA EL INFORME
+    // Estructura HTML final, SIN el acordeón del "Extracto de Cuenta"
     container.innerHTML = `
         <div class="card card--no-bg accordion-wrapper">
             <details class="accordion">
@@ -4716,41 +4716,9 @@ const renderPlanificacionPage = () => {
                 </div>
             </details>
         </div>
-        
-        <!-- ▼▼▼ INICIO DE LA NUEVA SECCIÓN: INFORME PERSONALIZADO ▼▼▼ -->
-        <div class="card card--no-bg accordion-wrapper">
-            <details class="accordion">
-                <summary>
-                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">insights</span>Mi Informe Personalizado</h3>
-                    <span class="material-icons accordion__icon">expand_more</span>
-                </summary>
-                <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
-                    <div id="informe-planificar-widget">
-                         <!-- Aquí se dibujará el informe (el esqueleto y el contenido) -->
-                         <div class="card" id="informe-personalizado-widget" style="background-color: transparent; box-shadow: none; border: 1px solid var(--c-outline); padding-bottom: var(--sp-2);">
-                            <div class="card__title" style="justify-content: space-between; padding: var(--sp-3) var(--sp-3) 0 var(--sp-3);">
-                                <div style="display: flex; align-items: center; gap: var(--sp-2);">
-                                    <span id="informe-widget-title">${escapeHTML(db.config?.savedReports?.main?.title || "Mi Informe")}</span>
-                                </div>
-                                <button data-action="show-informe-builder" class="btn btn--secondary">
-                                    <span class="material-icons" style="font-size: 16px;">edit</span>
-                                    <span>Configurar</span>
-                                </button>
-                            </div>
-                            <div class="card__content" id="informe-widget-content" style="padding-left: var(--sp-3); padding-right: var(--sp-3);">
-                                <div class="empty-state skeleton" style="background:transparent; border:none; padding: var(--sp-4) 0;">
-                                    <p>Cargando informe...</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </details>
-        </div>
-        <!-- ▲▲▲ FIN DE LA NUEVA SECCIÓN ▲▲▲ -->
     `;
     
-    // 2. RELLENAMOS EL SELECTOR DE AÑO (esta lógica no cambia)
+    // El resto de la lógica de la función se mantiene igual
     const yearSelect = container.querySelector('#budget-year-selector');
     if (yearSelect) {
         const currentYear = new Date().getFullYear();
@@ -4767,20 +4735,20 @@ const renderPlanificacionPage = () => {
             renderBudgetTracking();
         });
     }
-
-    // 3. LLAMAMOS A LAS FUNCIONES DE RENDERIZADO, INCLUYENDO LA NUEVA DEL INFORME
+    
     populateAllDropdowns();
     renderBudgetTracking();
     renderPendingRecurrents();
     renderRecurrentsListOnPage();
-    renderInformeWidgetContent(); // ¡Añadimos la llamada para dibujar el informe!
 };
+
+// ▼▼▼ REEMPLAZA POR COMPLETO TU FUNCIÓN 'renderPatrimonioPage' CON ESTA VERSIÓN ▼▼▼
 
 const renderPatrimonioPage = () => {
     const container = select(PAGE_IDS.PATRIMONIO);
     if (!container) return;
 
-    // ESTE ES EL CONTENIDO COMPLETO DE TU ANTIGUA VISTA DE PATRIMONIO
+    // Se mantiene la estructura con los dos acordeones existentes
     container.innerHTML = `
         <details class="accordion" style="margin-bottom: var(--sp-4);">
             <summary>
@@ -4812,24 +4780,10 @@ const renderPatrimonioPage = () => {
                 </div>
             </div>
         </details>
-    `;
-
-    // Usamos un pequeño retardo para asegurar que el DOM está listo antes de dibujar gráficos
-    setTimeout(async () => {
-        await renderPatrimonioOverviewWidget('patrimonio-overview-container'); 
-        await renderPortfolioEvolutionChart('portfolio-evolution-container');
-        await renderPortfolioMainContent('portfolio-main-content');
-    }, 50);
-};
-
-const renderEstrategiaInformes = () => {
-    const container = select('estrategia-informes-content');
-    if (!container) return;
-    
-    // Este código mueve el "Extracto de Cuenta" a su nueva pestaña
-    container.innerHTML = `
+        
+        <!-- ▼▼▼ INICIO: NUEVA SECCIÓN AÑADIDA - EXTRACTO DE CUENTA ▼▼▼ -->
         <div class="card card--no-bg accordion-wrapper">
-            <details class="accordion informe-acordeon" open>
+            <details id="acordeon-extracto_cuenta" class="accordion informe-acordeon">
                 <summary>
                     <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
                         <span class="material-icons">wysiwyg</span>
@@ -4841,7 +4795,7 @@ const renderEstrategiaInformes = () => {
                     <div id="informe-content-extracto_cuenta">
                          <form id="informe-cuenta-form" novalidate>
                             <div class="form-group">
-                                <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta para ver su historial:</label>
+                                <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta para ver su historial completo:</label>
                                 <select id="informe-cuenta-select" class="form-select" required></select>
                             </div>
                             <button type="submit" class="btn btn--primary btn--full">Generar Extracto</button>
@@ -4851,17 +4805,26 @@ const renderEstrategiaInformes = () => {
                 </div>
             </details>
         </div>
+        <!-- ▲▲▲ FIN: SECCIÓN AÑADIDA ▲▲▲ -->
     `;
 
-    // Rellenamos el selector de cuentas
-    const populate = (id, data, nameKey, valKey='id') => {
-        const el = select(id); if (!el) return;
-        let opts = '<option value="">Seleccionar cuenta...</option>';
-        [...data].sort((a,b) => (a[nameKey]||"").localeCompare(b[nameKey]||"")).forEach(i => opts += `<option value="${i[valKey]}">${i[nameKey]}</option>`);
-        el.innerHTML = opts;
-    };
-    populate('informe-cuenta-select', getVisibleAccounts(), 'nombre', 'id');
-}
+    // Usamos un pequeño retardo para asegurar que el DOM está listo antes de dibujar gráficos y rellenar desplegables
+    setTimeout(async () => {
+        await renderPatrimonioOverviewWidget('patrimonio-overview-container'); 
+        await renderPortfolioEvolutionChart('portfolio-evolution-container');
+        await renderPortfolioMainContent('portfolio-main-content');
+        
+        // ¡LA CLAVE! Rellenamos el nuevo selector de cuentas del extracto
+        const populate = (id, data, nameKey, valKey='id') => {
+            const el = select(id); if (!el) return;
+            let opts = '<option value="">Seleccionar cuenta...</option>';
+            [...data].sort((a,b) => (a[nameKey]||"").localeCompare(b[nameKey]||"")).forEach(i => opts += `<option value="${i[valKey]}">${i[nameKey]}</option>`);
+            el.innerHTML = opts;
+        };
+        populate('informe-cuenta-select', getVisibleAccounts(), 'nombre', 'id');
+        
+    }, 50);
+};
  
 
 const renderEstrategiaPage = () => {
