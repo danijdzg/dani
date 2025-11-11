@@ -4664,7 +4664,7 @@ const renderPlanificacionPage = () => {
     const container = select(PAGE_IDS.PLANIFICAR);
     if (!container) return;
 
-    // Estructura HTML final, SIN el acordeón del "Extracto de Cuenta"
+    // Estructura HTML final, ahora con el nuevo acordeón para el informe personalizado
     container.innerHTML = `
         <div class="card card--no-bg accordion-wrapper">
             <details class="accordion">
@@ -4716,6 +4716,24 @@ const renderPlanificacionPage = () => {
                 </div>
             </details>
         </div>
+        
+        <!-- ========================================================== -->
+        <!-- === INICIO: BLOQUE AÑADIDO PARA EL INFORME PERSONALIZADO === -->
+        <!-- ========================================================== -->
+        <div class="card card--no-bg accordion-wrapper">
+            <details class="accordion">
+                <summary>
+                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">auto_graph</span>Informe Personalizado</h3>
+                    <span class="material-icons accordion__icon">expand_more</span>
+                </summary>
+                <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
+                    ${renderDashboardInformeWidget()}
+                </div>
+            </details>
+        </div>
+        <!-- ========================================================== -->
+        <!-- === FIN: BLOQUE AÑADIDO                                  === -->
+        <!-- ========================================================== -->
     `;
     
     // El resto de la lógica de la función se mantiene igual
@@ -4740,8 +4758,10 @@ const renderPlanificacionPage = () => {
     renderBudgetTracking();
     renderPendingRecurrents();
     renderRecurrentsListOnPage();
-};
 
+    // --> LLAMADA AÑADIDA: Rellenamos el widget del informe personalizado que acabamos de añadir
+    renderInformeWidgetContent();
+};
 // ▼▼▼ REEMPLAZA POR COMPLETO TU FUNCIÓN 'renderPatrimonioPage' CON ESTA VERSIÓN ▼▼▼
 
 const renderPatrimonioPage = () => {

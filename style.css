@@ -28,56 +28,112 @@
     transform: scale(0.98); /* Efecto de pulsación */
 }
 
-/* --- INICIO: Corrección para Informe de Cuenta en Móviles Pequeños --- */
+/* --- 1. Estilos por defecto (para pantallas anchas: formato tabla) --- */
 
-/* 1. Ocultamos la cabecera original, ya no tiene sentido en la vista de tarjeta. */
-.informe-linea-header {
-    display: none;
-}
-
-/* 2. Transformamos cada fila de movimiento en una "mini-tarjeta" apilada. */
-.informe-linea-movimiento {
-    grid-template-columns: 1fr auto; /* Columna izquierda flexible, derecha ajustada al contenido. */
-    grid-template-rows: auto auto;    /* Dos filas para apilar la información. */
-    padding: var(--sp-3);            /* Más espaciado para que respire como una tarjeta. */
-    gap: 4px var(--sp-4);            /* Pequeño espacio vertical, más grande horizontal. */
-    align-items: center;
-    border-bottom: 1px solid var(--c-outline); /* Separamos visualmente cada "tarjeta". */
-}
 .informe-extracto-container {
-    border: none; /* Quitamos el borde general para un look más limpio. */
+    border: 1px solid var(--c-outline);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden; /* Importante para que los bordes redondeados se apliquen */
 }
 
-/* 3. Reposicionamos cada elemento en la nueva rejilla de 2x2. */
-.informe-linea-movimiento .fecha {
-    grid-column: 1;
-    grid-row: 1;
-    font-size: var(--fs-xs); /* Hacemos la fecha un poco más pequeña. */
+/* Usamos CSS Grid para alinear todo perfectamente en columnas */
+.informe-linea-header,
+.informe-linea-movimiento {
+    display: grid;
+    /* Columnas: Fecha (fija), Descripción (flexible), Importe (fijo), Saldo (fijo) */
+    grid-template-columns: 80px 1fr 110px 110px; 
+    gap: var(--sp-4);
+    align-items: center;
+    padding: var(--sp-3);
+    border-bottom: 1px solid var(--c-outline);
+}
+
+.informe-extracto-container > div:last-child {
+    border-bottom: none; /* Quitamos el borde del último elemento */
+}
+
+/* Estilos de la cabecera */
+.informe-linea-header {
+    font-weight: 700;
     color: var(--c-on-surface-secondary);
-    font-weight: 600;
+    background-color: var(--c-surface-variant);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+}
+.informe-linea-header .importe,
+.informe-linea-header .saldo {
+    text-align: right;
+}
+
+/* Estilos para las filas de movimiento */
+.informe-linea-movimiento .fecha {
+    font-size: var(--fs-sm);
+    color: var(--c-on-surface-secondary);
 }
 
 .informe-linea-movimiento .descripcion {
-    grid-column: 1;
-    grid-row: 2;
-    /* El estilo del concepto (negrita, etc.) ya es bueno, lo dejamos. */
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.informe-linea-movimiento .importe {
-    grid-column: 2;
-    grid-row: 1;
-    font-size: 1.1em; /* Hacemos el importe un poco más grande para destacarlo. */
-}
-
+.informe-linea-movimiento .importe,
 .informe-linea-movimiento .saldo {
-    grid-column: 2;
-    grid-row: 2;
-    font-size: var(--fs-xs);
-    color: var(--c-on-surface-secondary);
+    font-weight: 700;
+    text-align: right;
+    font-family: monospace, sans-serif; /* Monoespaciado para alinear números */
 }
 
+/* --- 2. Anulación para pantallas pequeñas (móviles: formato tarjeta) --- */
+/* Esta es la magia: estas reglas solo se activan en pantallas de 380px o menos */
 
-/* --- FIN: Corrección para Informe de Cuenta --- */
+@media (max-width: 380px) {
+
+    .informe-linea-header {
+        display: none; /* Ocultamos la cabecera, ya no es necesaria */
+    }
+
+    .informe-extracto-container {
+        border: none; /* Quitamos el borde general para un look más limpio */
+    }
+
+    /* Transformamos cada fila en una "tarjeta" con 2 filas y 2 columnas */
+    .informe-linea-movimiento {
+        grid-template-columns: 1fr auto; /* Columna izquierda flexible, derecha ajustada */
+        grid-template-rows: auto auto;    /* Dos filas para apilar la información */
+        padding: var(--sp-3);            /* Más espaciado para que respire */
+        gap: 4px var(--sp-4);            /* Espacio entre elementos */
+    }
+
+    /* Reposicionamos cada elemento en la nueva rejilla de 2x2 */
+    .informe-linea-movimiento .fecha {
+        grid-column: 1;
+        grid-row: 1;
+        font-size: var(--fs-xs);
+    }
+
+    .informe-linea-movimiento .descripcion {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .informe-linea-movimiento .importe {
+        grid-column: 2;
+        grid-row: 1;
+        font-size: 1.1em; /* Destacamos el importe */
+    }
+
+    .informe-linea-movimiento .saldo {
+        grid-column: 2;
+        grid-row: 2;
+        font-size: var(--fs-xs);
+        color: var(--c-on-surface-secondary);
+    }
+}
+/* =============================================================== */
+/* === FIN: SOLUCIÓN DEFINITIVA PARA EXTRACTO DE CUENTA (CSS)    === */
+/* =============================================================== */
 
 	/* Estilo para el input cuando es TRASPASO */
 #movimiento-cantidad-form-group.is-traspaso #movimiento-cantidad {
