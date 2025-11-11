@@ -81,7 +81,6 @@ const PAGE_IDS = {
 // PEGA ESTE BLOQUE ÚNICO Y CORRECTO EN SU LUGAR
 	const AVAILABLE_WIDGETS = {
         'super-centro-operaciones': { title: 'Centro de Operaciones', description: 'Visión completa con filtros, KPIs y análisis de conceptos.', icon: 'query_stats' },
-        'action-center': { title: 'Centro de Acciones', description: 'Alertas y tareas pendientes.', icon: 'notifications_active' },
         'net-worth-trend': { title: 'Evolución del Patrimonio', description: 'Gráfico histórico de la variación de tu patrimonio neto.', icon: 'show_chart' },
         'emergency-fund': { title: 'Colchón de Emergencia', description: 'Mide tu red de seguridad financiera.', icon: 'shield' },
         'fi-progress': { title: 'Independencia Financiera', description: 'Sigue tu progreso hacia la libertad financiera.', icon: 'flag' },
@@ -4188,20 +4187,6 @@ async function renderInformeDetallado(informeId) {
     }
 }
 
-   
-const renderDashboardActionCenter = () => {
-    return `
-    <div class="card" id="action-center-widget">
-        <h3 class="card__title">
-            <span class="material-icons text-warning">notifications_active</span>
-            <span>Centro de Acciones</span>
-        </h3>
-        <div class="card__content" id="action-center-content" style="padding-top: 0; padding-bottom: var(--sp-2);">
-            <div class="skeleton" style="height: 70px; border-radius: var(--border-radius-md);"></div>
-        </div>
-    </div>`;
-};
-// --- ▼▼▼ PEGA ESTAS DOS NUEVAS FUNCIONES COMPLETAS ▼▼▼ ---
 
 /**
  * Renderiza el esqueleto del widget "Colchón de Emergencia".
@@ -5235,7 +5220,7 @@ const scheduleDashboardUpdate = () => {
     dashboardUpdateDebounceTimer = setTimeout(updateDashboardData, 50);
 };
 
-// ▼▼▼ REEMPLAZA TODA TU FUNCIÓN updateDashboardData CON ESTA VERSIÓN FINALÍSIMA Y VERIFICADA ▼▼▼
+// ▼▼▼ REEMPLAZA TODA TU FUNCIÓN updateDashboardData CON ESTA VERSIÓN SIMPLIFICADA ▼▼▼
 
 const updateDashboardData = async () => {
     const activePage = document.querySelector('.view--active');
@@ -5319,8 +5304,6 @@ const updateDashboardData = async () => {
             select('kpi-saldo-neto-comparison').innerHTML = getComparisonHTML(saldoNetoActual, saldoNetoAnterior, label);
         }
 
-        // --- INICIO DE LA CORRECCIÓN CLAVE ---
-        // Ahora el cartero busca directamente los buzones, sin importar en qué edificio estén.
         if (select('kpi-tasa-ahorro-value')) {
             selectAll('#super-centro-operaciones-widget .skeleton').forEach(el => el.classList.remove('skeleton'));
             const kpiTasaAhorroValueEl = select('kpi-tasa-ahorro-value');
@@ -5333,7 +5316,7 @@ const updateDashboardData = async () => {
             kpiPnlEl.className = `kpi-item__value ${pnlInversionActual >= 0 ? 'text-positive' : 'text-negative'}`;
             if (investmentAccountIds.size > 0) animateCountUp(kpiPnlEl, pnlInversionActual); else kpiPnlEl.textContent = 'N/A';
             const progressEl = select('kpi-presupuesto-progress'), progressTextEl = select('kpi-presupuesto-text');
-			if (progressEl && progressTextEl) { // <--- LÍNEA AÑADIDA
+			if (progressEl && progressTextEl) {
             progressTextEl.classList.remove('skeleton');
             if (totalBudgetedExpense > 0) {
                 const percentage = (actualExpenseForBudget / totalBudgetedExpense) * 100;
@@ -5350,54 +5333,7 @@ const updateDashboardData = async () => {
             }
 			}
         } 
-        // --- FIN DE LA CORRECCIÓN CLAVE ---
         
-        const actionCenterContainer = select('action-center-content');
-        if (actionCenterContainer) {
-            let actionItems = [];
-            const now = new Date();
-            const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-            const allRecurrents = db.recurrentes || [];
-
-            // 1. OBTENER OPERACIONES PENDIENTES (las que ya han vencido)
-            const pendingRecurrents = allRecurrents.filter(r => r.nextDate && new Date(r.nextDate) <= today);
-            pendingRecurrents.forEach(r => actionItems.push({ 
-                urgency: 3, 
-                type: 'pending', 
-                data: r, 
-                subtitle: `Vencido desde el ${new Date(r.nextDate).toLocaleDateString('es-ES')}` 
-            }));
-            
-            // 2. OBTENER LAS PRÓXIMAS 10 OPERACIONES FUTURAS
-            const upcomingRecurrents = allRecurrents
-                .filter(r => r.nextDate && new Date(r.nextDate) > today) // Filtro: fechas futuras
-                .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate)) // Ordenar: más próximo primero
-                .slice(0, 10); // Limitar: solo los 10 primeros
-
-            upcomingRecurrents.forEach(r => actionItems.push({
-                urgency: 2, 
-                type: 'upcoming', 
-                data: r,
-                subtitle: `Próximo: ${new Date(r.nextDate).toLocaleDateString('es-ES')}`
-            }));
-
-            // 3. ORDENAR LA LISTA FINAL (los pendientes siempre primero)
-            actionItems.sort((a, b) => b.urgency - a.urgency || new Date(a.data.nextDate) - new Date(b.data.nextDate));
-
-            // 4. RENDERIZAR EL RESULTADO (el código HTML no cambia, solo los datos que recibe)
-            if (actionItems.length === 0) { 
-                actionCenterContainer.innerHTML = `<div class="empty-state" style="padding: var(--sp-2) 0; background: transparent; border: none;"><span class="material-icons text-positive">task_alt</span><p style="color: var(--c-on-surface-secondary);">¡Todo en orden! No hay acciones pendientes ni próximas.</p></div>`; 
-            } else { 
-                actionCenterContainer.innerHTML = actionItems.map(item => { 
-                    const r = item.data; 
-                    const amountClass = r.cantidad >= 0 ? 'text-positive' : 'text-negative'; 
-                    // Esta lógica es clave: los botones solo aparecen para los items de tipo 'pending'
-                    const actionButtons = item.type === 'pending' ? `<div style="display: flex; gap: var(--sp-2);"><button class="btn btn--secondary" data-action="skip-recurrent" data-id="${r.id}" style="padding: 4px 8px; font-size: 0.7rem;">Omitir</button><button class="btn btn--primary" data-action="confirm-recurrent" data-id="${r.id}" style="padding: 4px 8px; font-size: 0.7rem;">Añadir</button></div>` : ''; 
-                    
-                    return `<div class="modal__list-item" style="padding: var(--sp-2) 0;"><div><strong style="font-size: var(--fs-sm);">${escapeHTML(r.descripcion)}</strong><small style="display: block; color: var(--c-on-surface-secondary);">${item.subtitle}</small></div><div style="text-align: right;"><strong class="${amountClass}" style="font-size: var(--fs-base);">${formatCurrency(r.cantidad)}</strong>${actionButtons}</div></div>`; 
-                }).join(''); 
-            }
-        }
         const efWidget = select('emergency-fund-widget');
         if (efWidget) {
             efWidget.querySelector('.card__content').classList.remove('skeleton'); const monthsValueEl = select('kpi-ef-months-value'); const progressEl = select('kpi-ef-progress'); const textEl = select('kpi-ef-text'); if (monthsValueEl && progressEl && textEl) { monthsValueEl.textContent = isFinite(efData.mesesCobertura) ? efData.mesesCobertura.toFixed(1) : '∞'; progressEl.value = Math.min(efData.mesesCobertura, 6); let textClass = 'text-danger'; if (efData.mesesCobertura >= 6) textClass = 'text-positive'; else if (efData.mesesCobertura >= 3) textClass = 'text-warning'; monthsValueEl.className = `kpi-item__value ${textClass}`; textEl.innerHTML = `Tu dinero líquido cubre <strong>${isFinite(efData.mesesCobertura) ? efData.mesesCobertura.toFixed(1) : 'todos tus'}</strong> meses de gastos.`; }
@@ -5409,85 +5345,76 @@ const updateDashboardData = async () => {
         const conceptListContainer = select('concepto-totals-list');
         const chartCanvas = select('conceptos-chart');
         if (conceptListContainer && chartCanvas) {
-    const chartCtx = chartCanvas.getContext('2d');
-    const chartContainer = chartCanvas.closest('.chart-container');
-    if(chartContainer) chartContainer.classList.remove('skeleton');
-    if (conceptosChart) conceptosChart.destroy();
-    
-    // Misma lógica que ya tienes para calcular los totales por concepto
-    const cTots = current.reduce((a, m) => {
-        if (m.tipo === 'movimiento' && m.conceptoId) {
-            const con = db.conceptos.find((c) => c.id === m.conceptoId);
-            if(con){
-                if (!a[m.conceptoId]) a[m.conceptoId] = { total: 0, movements: [], icon: con.icon || 'label' };
-                a[m.conceptoId].total += m.cantidad;
-                a[m.conceptoId].movements.push(m);
+            const chartCtx = chartCanvas.getContext('2d');
+            const chartContainer = chartCanvas.closest('.chart-container');
+            if(chartContainer) chartContainer.classList.remove('skeleton');
+            if (conceptosChart) conceptosChart.destroy();
+            
+            const cTots = current.reduce((a, m) => {
+                if (m.tipo === 'movimiento' && m.conceptoId) {
+                    const con = db.conceptos.find((c) => c.id === m.conceptoId);
+                    if(con){
+                        if (!a[m.conceptoId]) a[m.conceptoId] = { total: 0, movements: [], icon: con.icon || 'label' };
+                        a[m.conceptoId].total += m.cantidad;
+                        a[m.conceptoId].movements.push(m);
+                    }
+                }
+                return a;
+            }, {});
+
+            const sortedTotals = Object.entries(cTots).sort(([, a], [, b]) => a.total - b.total);
+            
+            const colorSuccess = getComputedStyle(document.body).getPropertyValue('--c-chart-positive').trim();
+            const colorDanger = getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
+            conceptosChart = new Chart(chartCtx, { type: 'bar', data: { labels: sortedTotals.map(([id]) => toSentenceCase(db.conceptos.find(c => c.id === id)?.nombre || '?')), datasets: [{ data: sortedTotals.map(([, data]) => data.total / 100), backgroundColor: sortedTotals.map(([, data]) => data.total >= 0 ? colorSuccess : colorDanger), borderRadius: 6, }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false }, tooltip: { callbacks: { label: (context) => `Total: ${formatCurrency(context.parsed.y * 100)}` } } }, scales: { y: { ticks: { callback: (value) => `${value.toLocaleString('es-ES')}` } } }, onClick: (event, elements) => { if (elements.length === 0) return; const index = elements[0].index; const [conceptoId, data] = sortedTotals[index]; const concepto = db.conceptos.find(c => c.id === conceptoId); const conceptoNombre = concepto ? toSentenceCase(concepto.nombre) : 'Desconocido'; hapticFeedback('light'); showDrillDownModal(`Movimientos de: ${conceptoNombre}`, data.movements); }, onHover: (event, chartElement) => { event.native.target.style.cursor = chartElement.length ? 'pointer' : 'default'; } } });
+
+            const gastos = sortedTotals.filter(([, data]) => data.total < 0).sort(([, a], [, b]) => a.total - b.total);
+            const ingresos = sortedTotals.filter(([, data]) => data.total > 0).sort(([, a], [, b]) => b.total - a.total);
+
+            let listHtml = '';
+
+            const renderGroup = (title, items, totalPeriodValue) => {
+                if (items.length === 0) return '';
+                const groupTotal = items.reduce((sum, [, data]) => sum + data.total, 0);
+
+                const renderRow = ([id, data]) => {
+                    const concepto = db.conceptos.find(c => c.id === id);
+                    const nombreConcepto = (concepto && concepto.nombre) || 'Desconocido';
+                    const amountClass = data.total >= 0 ? 'text-positive' : 'text-negative';
+                    const percentage = totalPeriodValue > 0 ? (Math.abs(data.total) / totalPeriodValue) * 100 : 0;
+                    const progressClass = data.total < 0 ? 'budget-item__progress--danger' : '';
+
+                    return `<div class="modal__list-item" style="cursor: pointer; padding: var(--sp-2) var(--sp-1);" data-action="show-concept-drilldown" data-concept-id="${id}" data-concept-name="${escapeHTML(nombreConcepto)}"><div style="flex-grow: 1;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;"><span>${escapeHTML(nombreConcepto)}</span><strong class="${amountClass}">${formatCurrency(data.total)}</strong></div><div class="budget-item__progress"><progress max="100" value="${percentage}" class="budget-item__progress ${progressClass}" style="width: 100%; height: 5px;"></progress></div></div></div>`;
+                };
+
+                return `
+                    <details class="accordion" style="background-color: transparent; border: 1px solid var(--c-outline); border-radius: var(--border-radius-md); margin-bottom: var(--sp-2);">
+                        <summary>
+                            <span style="font-weight: 700;">${title}</span>
+                            <strong>${formatCurrency(groupTotal)}</strong>
+                        </summary>
+                        <div class="accordion__content" style="padding: 0 var(--sp-2) var(--sp-1) var(--sp-2);">
+                            ${items.map(renderRow).join('')}
+                        </div>
+                    </details>
+                `;
+            };
+
+            if (sortedTotals.length === 0) {
+                listHtml = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Sin datos para los filtros.</p></div>`;
+            } else {
+                listHtml += renderGroup('Gastos', gastos, Math.abs(currentTotals.gastos));
+                listHtml += renderGroup('Ingresos', ingresos, currentTotals.ingresos);
             }
+            
+            conceptListContainer.innerHTML = listHtml;
         }
-        return a;
-    }, {});
-
-    const sortedTotals = Object.entries(cTots).sort(([, a], [, b]) => a.total - b.total);
-
-    // Dibuja el gráfico (sin cambios en esta parte)
-    const colorSuccess = getComputedStyle(document.body).getPropertyValue('--c-chart-positive').trim();
-    const colorDanger = getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
-    conceptosChart = new Chart(chartCtx, { type: 'bar', data: { labels: sortedTotals.map(([id]) => toSentenceCase(db.conceptos.find(c => c.id === id)?.nombre || '?')), datasets: [{ data: sortedTotals.map(([, data]) => data.total / 100), backgroundColor: sortedTotals.map(([, data]) => data.total >= 0 ? colorSuccess : colorDanger), borderRadius: 6, }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false }, tooltip: { callbacks: { label: (context) => `Total: ${formatCurrency(context.parsed.y * 100)}` } } }, scales: { y: { ticks: { callback: (value) => `${value.toLocaleString('es-ES')}` } } }, onClick: (event, elements) => { if (elements.length === 0) return; const index = elements[0].index; const [conceptoId, data] = sortedTotals[index]; const concepto = db.conceptos.find(c => c.id === conceptoId); const conceptoNombre = concepto ? toSentenceCase(concepto.nombre) : 'Desconocido'; hapticFeedback('light'); showDrillDownModal(`Movimientos de: ${conceptoNombre}`, data.movements); }, onHover: (event, chartElement) => { event.native.target.style.cursor = chartElement.length ? 'pointer' : 'default'; } } });
-
-    // --- ⭐ NUEVA LÓGICA PARA RENDERIZAR LA LISTA AGRUPADA ---
-    
-    // 1. Separamos los conceptos en gastos e ingresos
-    const gastos = sortedTotals.filter(([, data]) => data.total < 0).sort(([, a], [, b]) => a.total - b.total);
-    const ingresos = sortedTotals.filter(([, data]) => data.total > 0).sort(([, a], [, b]) => b.total - a.total);
-
-    let listHtml = '';
-
-    const renderGroup = (title, items, totalPeriodValue) => {
-        if (items.length === 0) return '';
-        const groupTotal = items.reduce((sum, [, data]) => sum + data.total, 0);
-
-        // La función para renderizar cada fila (la hemos extraído para no repetir código)
-        const renderRow = ([id, data]) => {
-            const concepto = db.conceptos.find(c => c.id === id);
-            const nombreConcepto = (concepto && concepto.nombre) || 'Desconocido';
-            const amountClass = data.total >= 0 ? 'text-positive' : 'text-negative';
-            const percentage = totalPeriodValue > 0 ? (Math.abs(data.total) / totalPeriodValue) * 100 : 0;
-            const progressClass = data.total < 0 ? 'budget-item__progress--danger' : '';
-
-            return `<div class="modal__list-item" style="cursor: pointer; padding: var(--sp-2) var(--sp-1);" data-action="show-concept-drilldown" data-concept-id="${id}" data-concept-name="${escapeHTML(nombreConcepto)}"><div style="flex-grow: 1;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;"><span>${escapeHTML(nombreConcepto)}</span><strong class="${amountClass}">${formatCurrency(data.total)}</strong></div><div class="budget-item__progress"><progress max="100" value="${percentage}" class="budget-item__progress ${progressClass}" style="width: 100%; height: 5px;"></progress></div></div></div>`;
-        };
-
-        return `
-            <details class="accordion" style="background-color: transparent; border: 1px solid var(--c-outline); border-radius: var(--border-radius-md); margin-bottom: var(--sp-2);">
-                <summary>
-                    <span style="font-weight: 700;">${title}</span>
-                    <strong>${formatCurrency(groupTotal)}</strong>
-                </summary>
-                <div class="accordion__content" style="padding: 0 var(--sp-2) var(--sp-1) var(--sp-2);">
-                    ${items.map(renderRow).join('')}
-                </div>
-            </details>
-        `;
-    };
-
-    if (sortedTotals.length === 0) {
-        listHtml = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Sin datos para los filtros.</p></div>`;
-    } else {
-        listHtml += renderGroup('Gastos', gastos, Math.abs(currentTotals.gastos));
-        listHtml += renderGroup('Ingresos', ingresos, currentTotals.ingresos);
-    }
-    
-    conceptListContainer.innerHTML = listHtml;
-}
 		
 		if (select('patrimonio-completo-container')) { await renderPatrimonioPage(); }
         if (select('patrimonio-inversiones-container')) { await renderInversionesPage('patrimonio-inversiones-container'); }
-        if (select('informe-personalizado-widget')) { await renderInformeWidgetContent(); }
 		
     } finally {
-        // --- INICIO DE LA CORRECCIÓN ---
         const widgetContainers = document.querySelectorAll('[data-widget-type]');
-        // --- FIN DE LA CORRECCIÓN ---
         
         widgetContainers.forEach(container => {
             if (container) {
