@@ -1514,13 +1514,13 @@ window.addEventListener('offline', () => {
     }
 };
 
-// EN main.js - REEMPLAZA TU FUNCIÓN navigateTo POR ESTA VERSIÓN
+// CÓDIGO NUEVO Y CORREGIDO para la función navigateTo
 const navigateTo = async (pageId, isInitial = false) => {
     const oldView = document.querySelector('.view--active');
     const newView = select(pageId);
     const mainScroller = selectOne('.app-layout__main');
 
-    // Cerrar el menú si está abierto
+    // Cerrar el menú si está abierto (nueva lógica de seguridad)
     const menu = select('main-menu-popover');
     if (menu) menu.classList.remove('popover-menu--visible');
 
@@ -1547,6 +1547,8 @@ const navigateTo = async (pageId, isInitial = false) => {
     const actionsEl = select('top-bar-actions');
     const leftEl = select('top-bar-left-button');
     
+    // --> ¡CAMBIO CLAVE AQUÍ! <--
+    // Reemplazamos el botón de 'ajustes' por el nuevo botón de menú.
     const standardActions = `
         <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
             <span class="material-icons">search</span>
@@ -1559,15 +1561,13 @@ const navigateTo = async (pageId, isInitial = false) => {
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
     if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
 
-    // === ¡LA CORRECCIÓN ESTÁ EN ESTE BLOQUE! ===
     const pageRenderers = {
-        [PAGE_IDS.PANEL]: { title: 'Panel', render: renderPanelPage, actions: standardActions }, // Corregido aquí
+        [PAGE_IDS.PANEL]: { title: 'Panel', render: renderPanelPage, actions: standardActions },
         [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
         [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: standardActions },
         [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage, actions: standardActions },
         [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
     };
-    // ===========================================
 
     if (pageRenderers[pageId]) { 
         if (leftEl) {
@@ -7747,21 +7747,28 @@ if (ptrElement && mainScrollerPtr) {
         const actions = {
 			'swipe-show-irr-history': () => handleShowIrrHistory(type),
 			'show-main-menu': () => {
-                const menu = document.getElementById('main-menu-popover');
-                if (!menu) return;
-                menu.classList.toggle('popover-menu--visible');
-                if (menu.classList.contains('popover-menu--visible')) {
-                    setTimeout(() => {
-                        const closeOnClickOutside = (event) => {
-                            if (!menu.contains(event.target) && !event.target.closest('[data-action="show-main-menu"]')) {
-                                menu.classList.remove('popover-menu--visible');
-                                document.removeEventListener('click', closeOnClickOutside);
-                            }
-                        };
-                        document.addEventListener('click', closeOnClickOutside);
-                    }, 0);
+    const menu = document.getElementById('main-menu-popover');
+    if (!menu) return;
+
+    // Muestra u oculta el menú
+    menu.classList.toggle('popover-menu--visible');
+    
+    // Si el menú se ha hecho visible, creamos un "espía"
+    if (menu.classList.contains('popover-menu--visible')) {
+        // Este pequeño truco espera un instante antes de crear el espía
+        setTimeout(() => {
+            const closeOnClickOutside = (event) => {
+                // Si el clic fue FUERA del menú y no en el botón que lo abre...
+                if (!menu.contains(event.target) && !event.target.closest('[data-action="show-main-menu"]')) {
+                    menu.classList.remove('popover-menu--visible'); // ...lo cerramos.
+                    document.removeEventListener('click', closeOnClickOutside); // Y el espía se autodestruye.
                 }
-            },
+            };
+            // Le decimos al documento que empiece a espiar los clics
+            document.addEventListener('click', closeOnClickOutside);
+        }, 0);
+    }
+},
             'show-main-add-sheet': () => showModal('main-add-sheet'),
 			'show-pnl-breakdown': () => handleShowPnlBreakdown(actionTarget.dataset.id),
 			 'show-irr-breakdown': () => handleShowIrrBreakdown(actionTarget.dataset.id),
@@ -7987,11 +7994,11 @@ if (ptrElement && mainScrollerPtr) {
 // Unificamos la detección de cualquier cambio en los filtros del dashboard
 if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
     
-    // --> ¡LA LÍNEA MÁS IMPORTANTE! ESTA ES LA GUARDIA DE CONTEXTO <--
-    // Comprueba si la página de inicio ('inicio-page') está activa. Si no, no hace nada.
-    const inicioPage = select('inicio-page');
-    if (!inicioPage || !inicioPage.classList.contains('view--active')) {
-        return; // Aborta la ejecución si no estamos en el dashboard.
+    // --> ¡LA CORRECCIÓN CLAVE ESTÁ AQUÍ! <--
+    // Cambiamos 'inicio-page' por 'panel-page' para que coincida con tu HTML.
+    const panelPage = select('panel-page');
+    if (!panelPage || !panelPage.classList.contains('view--active')) {
+        return; // La guardia ahora funciona correctamente y solo actualiza si estás en el Panel.
     }
 
     // Si es el selector de periodo, gestiona la visibilidad y actualiza si no es 'custom'
@@ -8018,7 +8025,6 @@ if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || tar
         }
     }
 }
-
 // --- FIN DEL NUEVO BLOQUE PROFESIONAL Y SEGURO ---
 
          if (target.id === 'movimiento-recurrente') {

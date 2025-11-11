@@ -1275,7 +1275,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     width: 220px;
     padding: var(--sp-2);
     
-    /* Magia para ocultar/mostrar */
+    /* Magia para ocultar/mostrar con una animación suave */
     opacity: 0;
     transform: translateY(-10px) scale(0.95);
     transform-origin: top right;

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -357,8 +358,9 @@
         </div>
     </div>
 	<!-- ▲▲▲ FIN: MEJORA 1 - Bottom Sheet para Acciones Rápidas ▲▲▲ -->
-	<!-- ▼▼▼ INICIO: NUEVO MENÚ DESPLEGABLE PRINCIPAL ▼▼▼ -->
+	<!-- ▼▼▼ INICIO: NUEVO MENÚ DESPLEGABLE PRINCIPAL (Pega esto antes de los scripts) ▼▼▼ -->
     <div id="main-menu-popover" class="popover-menu">
+        <!-- Cada botón es un item del menú -->
         <button class="popover-menu__item" data-action="navigate" data-page="ajustes-page">
             <span class="material-icons">settings</span>
             <span>Ajustes</span>
@@ -367,7 +369,9 @@
             <span class="material-icons">help_outline</span>
             <span>Guía de Usuario</span>
         </button>
+        <!-- Un separador visual -->
         <div class="popover-menu__divider"></div>
+        <!-- Una acción importante, como cerrar sesión, se puede destacar en rojo -->
         <button class="popover-menu__item popover-menu__item--danger" data-action="logout">
             <span class="material-icons">logout</span>
             <span>Cerrar Sesión</span>
