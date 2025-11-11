@@ -4702,7 +4702,7 @@ const renderPlanificacionPage = () => {
             </details>
         </div>
         <div class="card card--no-bg accordion-wrapper">
-            <details class="accordion" open>
+            <details class="accordion">
                 <summary>
                     <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">request_quote</span>Presupuestos Anuales</h3>
                     <span class="material-icons accordion__icon">expand_more</span>
