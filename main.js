@@ -4618,10 +4618,7 @@ const renderInicioResumenView = () => {
     const container = select('pending-recurrents-container');
     if (!container || !db.recurrentes) return;
 
-/*
-// ▲▲▲ ...CON ESTA ÚNICA LÍNEA: ▲▲▲
-*/
-const pending = getPendingRecurrents();
+    const pending = getPendingRecurrents();
 
     if (pending.length === 0) {
         container.innerHTML = '';
@@ -4641,24 +4638,30 @@ const pending = getPendingRecurrents();
                 <div class="transaction-card__details">
                     <div class="transaction-card__row-1">${escapeHTML(r.descripcion)}</div>
                     <div class="transaction-card__row-2" style="font-weight: 600; color: var(--c-warning);">${dateText}</div>
+                    <!-- Contenedor de acciones corregido para un mejor wrapping en móviles -->
+                    <div class="acciones-recurrentes-corregidas">
+                        <button class="btn btn--secondary" data-action="edit-recurrente-from-pending" data-id="${r.id}" title="Editar antes de añadir" style="padding: 4px 8px; font-size: 0.7rem;">
+                            <span class="material-icons" style="font-size: 14px;">edit</span>
+                            <span>Editar</span>
+                        </button>
+                        <button class="btn btn--secondary" data-action="skip-recurrent" data-id="${r.id}" title="Omitir esta vez" style="padding: 4px 8px; font-size: 0.7rem;">
+                            <span class="material-icons" style="font-size: 14px;">skip_next</span>
+                            <span>No añadir</span>
+                        </button>
+                        <button class="btn btn--primary" data-action="confirm-recurrent" data-id="${r.id}" title="Crear el movimiento ahora" style="padding: 4px 8px; font-size: 0.7rem;">
+                            <span class="material-icons" style="font-size: 14px;">check</span>
+                            <span>Añadir Ahora</span>
+                        </button>
+                    </div>
                 </div>
-                <div class="transaction-card__figures" style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                <div class="transaction-card__figures">
                     <strong class="transaction-card__amount ${amountClass}">${formatCurrency(r.cantidad)}</strong>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                <div class="transaction-card__recurrent-actions">
-    <button class="btn btn--secondary" data-action="skip-recurrent" data-id="${r.id}" title="Omitir esta vez" style="padding: 4px 8px; font-size: 0.7rem;">
-<span class="material-icons" style="font-size: 14px;">skip_next</span>No añadir
-</button>
-<button class="btn btn--primary" data-action="confirm-recurrent" data-id="${r.id}" title="Crear el movimiento ahora" style="padding: 4px 8px; font-size: 0.7rem;">
-<span class="material-icons" style="font-size: 14px;">check</span>Añadir Ahora
-</button>
-</div>
-</div>
-</div>
-`;
-}).join('');
+                </div>
+            </div>
+        </div>`;
+    }).join('');
 
-            container.innerHTML = `
+    container.innerHTML = `
         <div class="card card--no-bg accordion-wrapper" style="margin-top: var(--sp-4);">
             <details class="accordion" open>
                 <summary>
@@ -4669,13 +4672,12 @@ const pending = getPendingRecurrents();
                     <span class="material-icons accordion__icon">expand_more</span>
                 </summary>
                 <div class="accordion__content" style="padding: 0 var(--sp-2) var(--sp-2) var(--sp-2);">
-                <div class="contenedor-recurrentes-vertical">
-            ${itemsHTML}
-        </div>
-    </div>
+                    <div id="contenedor-recurrentes-vertical">
+                        ${itemsHTML}
+                    </div>
+                </div>
             </details>
-        </div>
-    `;
+        </div>`;
 };
 
 
@@ -8212,158 +8214,142 @@ if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || tar
             }
         };
     
-// ▼▼▼ REEMPLAZA TU FUNCIÓN 'handleConfirmRecurrent' CON ESTE BLOQUE COMPLETO ▼▼▼
+
 const handleConfirmRecurrent = async (id, btn) => {
     if (btn) setButtonLoading(btn, true);
 
-    const recurrente = db.recurrentes.find(r => r.id === id);
-    if (!recurrente) {
+    const recurrenteIndex = db.recurrentes.findIndex(r => r.id === id);
+    if (recurrenteIndex === -1) {
         showToast("Error: no se encontró la operación programada.", "danger");
         if (btn) setButtonLoading(btn, false);
         return;
     }
+    const recurrente = db.recurrentes[recurrenteIndex];
 
     try {
-        const now = new Date();
-        // ¡LÓGICA ROBUSTA! Definimos "hoy" de la misma manera consistente.
-        const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-        let cursorDate = parseDateStringAsUTC(recurrente.nextDate);
-        if (!cursorDate) throw new Error("Fecha de recurrente inválida.");
+        // --- INICIO DE LA ACTUALIZACIÓN OPTIMISTA ---
+        // 1. Aplicamos la animación de borrado al elemento en la UI.
+        const itemEl = document.getElementById(`pending-recurrente-${id}`);
+        if (itemEl) itemEl.classList.add('item-deleting');
 
+        // 2. Simulamos el guardado en la memoria local para una respuesta instantánea.
         const batch = fbDb.batch();
         const userRef = fbDb.collection('users').doc(currentUser.uid);
-        let movementsCreatedCount = 0;
-        const safetyLimit = 100;
-        let iterations = 0;
 
-        // Bucle "Ponerse al Día": Crea todos los movimientos hasta el día de hoy inclusive.
-        while (cursorDate <= today && iterations < safetyLimit) {
-            const newMovementId = generateId();
-            const newMovementData = {
-                id: newMovementId,
-                cantidad: recurrente.cantidad,
-                descripcion: recurrente.descripcion,
-                fecha: cursorDate.toISOString(),
-                tipo: recurrente.tipo,
-                cuentaId: recurrente.cuentaId,
-                conceptoId: recurrente.conceptoId,
-                cuentaOrigenId: recurrente.cuentaOrigenId,
-                cuentaDestinoId: recurrente.cuentaDestinoId
-            };
+        let newNextDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency, recurrente.weekDays);
 
-            batch.set(userRef.collection('movimientos').doc(newMovementId), newMovementData);
-            
-            if (recurrente.tipo === 'traspaso') {
-                batch.update(userRef.collection('cuentas').doc(recurrente.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-recurrente.cantidad) });
-                batch.update(userRef.collection('cuentas').doc(recurrente.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
-            } else {
-                batch.update(userRef.collection('cuentas').doc(recurrente.cuentaId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
-            }
-
-            movementsCreatedCount++;
-            cursorDate = calculateNextDueDate(cursorDate.toISOString().slice(0, 10), recurrente.frequency, recurrente.weekDays);
-            iterations++;
-        }
-
-        const recurrenteRef = userRef.collection('recurrentes').doc(id);
-        
-        if (recurrente.frequency === 'once' || (recurrente.endDate && cursorDate > parseDateStringAsUTC(recurrente.endDate))) {
-            batch.delete(recurrenteRef);
+        // 3. Persistimos los cambios en la base de datos en segundo plano.
+        if (recurrente.frequency === 'once' || (recurrente.endDate && newNextDate > parseDateStringAsUTC(recurrente.endDate))) {
+            batch.delete(userRef.collection('recurrentes').doc(id));
+            db.recurrentes.splice(recurrenteIndex, 1); // Lo borramos de la memoria local
         } else {
-            batch.update(recurrenteRef, { nextDate: cursorDate.toISOString().slice(0, 10) });
+            batch.update(userRef.collection('recurrentes').doc(id), { nextDate: newNextDate.toISOString().slice(0, 10) });
+            db.recurrentes[recurrenteIndex].nextDate = newNextDate.toISOString().slice(0, 10); // Actualizamos la memoria local
         }
         
+        // El resto de la lógica para crear el movimiento
+        const newMovementId = generateId();
+        const newMovementData = {
+            id: newMovementId,
+            cantidad: recurrente.cantidad,
+            descripcion: recurrente.descripcion,
+            fecha: new Date(recurrente.nextDate + 'T12:00:00Z').toISOString(),
+            tipo: recurrente.tipo,
+            cuentaId: recurrente.cuentaId,
+            conceptoId: recurrente.conceptoId,
+            cuentaOrigenId: recurrente.cuentaOrigenId,
+            cuentaDestinoId: recurrente.cuentaDestinoId
+        };
+        batch.set(userRef.collection('movimientos').doc(newMovementId), newMovementData);
+        if (recurrente.tipo === 'traspaso') {
+            batch.update(userRef.collection('cuentas').doc(recurrente.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-recurrente.cantidad) });
+            batch.update(userRef.collection('cuentas').doc(recurrente.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
+        } else {
+            batch.update(userRef.collection('cuentas').doc(recurrente.cuentaId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
+        }
+
+        // --- FIN DE LA ACTUALIZACIÓN OPTIMISTA ---
+
+        // Lanzamos el guardado en la nube
         await batch.commit();
-
+        
         hapticFeedback('success');
-        if (movementsCreatedCount > 1) {
-            showToast(`Se crearon ${movementsCreatedCount} movimientos para ponerse al día.`, 'info');
-        } else {
-            showToast("Movimiento añadido desde recurrente.", "info");
-        }
+        showToast("Movimiento añadido desde recurrente.", "info");
+
+        // Refrescamos la UI local AHORA que sabemos que la operación ha tenido éxito.
+        await loadCoreData(currentUser.uid); // Recargamos para obtener los nuevos saldos y listas actualizadas
         
-        await loadCoreData(currentUser.uid);
-        
+    } catch (error) {
+        console.error("Error al confirmar recurrente:", error);
+        showToast("No se pudo añadir el movimiento. Revisa tu conexión.", "danger");
+        // Aquí iría la lógica para revertir el cambio optimista si fuese necesario.
+    } finally {
+        if (btn) setButtonLoading(btn, false);
+        // Retrasamos el refresco visual para dar tiempo a la animación de borrado.
         setTimeout(() => {
             const activePage = document.querySelector('.view--active');
-            if (activePage) {
+            if (activePage && (activePage.id === PAGE_IDS.DIARIO || activePage.id === PAGE_IDS.PLANIFICAR)) {
                 if (activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
                 if (activePage.id === PAGE_IDS.PLANIFICAR) renderPlanificacionPage();
             }
-        }, 300);
-
-    } catch (error) {
-        console.error("Error al confirmar recurrente:", error);
-        showToast("No se pudo añadir el movimiento.", "danger");
-    } finally {
-        if (btn) setButtonLoading(btn, false);
+        }, 400); // 400ms es la duración de la animación 'item-deleting'
     }
 };
-// ▲▲▲ FIN DEL BLOQUE DE REEMPLAZO 3 ▲▲▲
 const handleSkipRecurrent = async (id, btn) => {
     if (btn) setButtonLoading(btn, true);
 
-    const recurrente = db.recurrentes.find(r => r.id === id);
-    if (!recurrente) {
+    const recurrenteIndex = db.recurrentes.findIndex(r => r.id === id);
+    if (recurrenteIndex === -1) {
         showToast("Error: recurrente no encontrado.", "danger");
         if (btn) setButtonLoading(btn, false);
         return;
     }
+    const recurrente = db.recurrentes[recurrenteIndex];
     
     try {
+        // --- ACTUALIZACIÓN OPTIMISTA ---
+        // 1. Inicia la animación de borrado en el elemento
+        const itemEl = document.getElementById(`pending-recurrente-${id}`);
+        if (itemEl) itemEl.classList.add('item-deleting');
+        
         let successMessage = "";
 
-        const itemEl = document.getElementById(`pending-recurrente-${id}`);
-        if (itemEl) {
-            itemEl.classList.add('item-deleting');
-            itemEl.addEventListener('animationend', () => {
-                const activePage = document.querySelector('.view--active');
-                if (activePage && activePage.id === PAGE_IDS.DIARIO) updateVirtualListUI();
-                if (activePage && activePage.id === PAGE_IDS.ESTRATEGIA) renderPlanificacionPage();
-            }, { once: true });
-        }
-
+        // 2. Preparamos el cambio para la base de datos en segundo plano
         if (recurrente.frequency === 'once') {
             await deleteDoc('recurrentes', id);
+            db.recurrentes.splice(recurrenteIndex, 1); // Lo borramos de la memoria local
             successMessage = "Operación programada eliminada.";
         } else {
-            // Utilizamos la misma lógica de avance inteligente
-            let nextDate = parseDateStringAsUTC(recurrente.nextDate);
-            const today = new Date();
-            today.setUTCHours(12,0,0,0);
-            
-            while(nextDate <= today) {
-                nextDate = calculateNextDueDate(nextDate.toISOString().slice(0, 10), recurrente.frequency, recurrente.weekDays);
-            }
-
-            // Comprobamos si el recurrente ha expirado
+            const nextDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency, recurrente.weekDays);
             if (recurrente.endDate && nextDate > parseDateStringAsUTC(recurrente.endDate)) {
                 await deleteDoc('recurrentes', id);
+                db.recurrentes.splice(recurrenteIndex, 1); // Lo borramos de la memoria local
                 successMessage = "Operación recurrente finalizada y eliminada.";
             } else {
-                await saveDoc('recurrentes', id, { nextDate: nextDate.toISOString().slice(0, 10) });
-                successMessage = "Operaciones atrasadas omitidas. Próxima ejecución programada.";
+                const newNextDateStr = nextDate.toISOString().slice(0, 10);
+                await saveDoc('recurrentes', id, { nextDate: newNextDateStr });
+                db.recurrentes[recurrenteIndex].nextDate = newNextDateStr; // Actualizamos la memoria local
+                successMessage = "Operación omitida. Próxima ejecución reprogramada.";
             }
         }
         
         hapticFeedback('success');
         showToast(successMessage, "info");
-        
-        // Actualizamos los datos locales para reflejar el cambio al instante
-        await loadCoreData(currentUser.uid);
-        setTimeout(() => {
-            const activePage = document.querySelector('.view--active');
-             if (activePage && (activePage.id === PAGE_IDS.DIARIO || activePage.id === PAGE_IDS.ESTRATEGIA)) {
-                if (activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
-                if (activePage.id === PAGE_IDS.ESTRATEGIA) renderPlanificacionPage();
-            }
-        }, 300);
 
     } catch (error) {
         console.error("Error al omitir recurrente:", error);
         showToast("No se pudo omitir la operación.", "danger");
+        // Lógica de reversión si fuese necesario
     } finally {
         if (btn) setButtonLoading(btn, false);
+        // Refrescamos la UI después de que la animación termine
+        setTimeout(() => {
+            const activePage = document.querySelector('.view--active');
+             if (activePage && (activePage.id === PAGE_IDS.DIARIO || activePage.id === PAGE_IDS.PLANIFICAR)) { // Corregido: Estrategia -> Planificar
+                if (activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
+                if (activePage.id === PAGE_IDS.PLANIFICAR) renderPlanificacionPage();
+            }
+        }, 400);
     }
 };
 
