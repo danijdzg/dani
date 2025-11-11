@@ -6774,18 +6774,15 @@ const showHelpModal = () => {
     const bodyEl = select('help-modal-body');
 
     if (titleEl) {
-        // Mantenemos el título, ¡es perfecto!
         titleEl.innerHTML = '<span class="material-icons" style="color: var(--c-primary);">support_agent</span> Guía del Copiloto Financiero';
     }
 
     if (bodyEl) {
-        // Aquí es donde ocurre la magia. Reemplazamos el contenido HTML
-        // por nuestra nueva guía, más amena, visual y profesional.
         bodyEl.innerHTML = `
             <div style="text-align: center; margin-bottom: 2rem;">
                 <img src="aiDANaI.webp" alt="Logo de aiDANaI" style="width: 120px; height: auto; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
-                <h2 style="font-size: 1.8rem; margin-top: 1rem; color: var(--c-primary);">Guía del Copiloto Financiero</h2>
-                <p style="font-style: italic; color: var(--c-on-surface-secondary);">Donde la claridad se convierte en poder.</p>
+                <h2 style="font-size: 1.8rem; margin-top: 1rem; color: var(--c-primary);">¡Hola! Soy aiDANaI</h2>
+                <p style="font-style: italic; color: var(--c-on-surface-secondary);">Tu copiloto financiero. Mi misión es darte la claridad que necesitas para que tus ideas se hagan realidad. ¡Vamos a despegar!</p>
             </div>
 
             <h3><span class="material-icons">explore</span>El Gran Tour: Un Paseo por Tu Imperio</h3>
@@ -6808,6 +6805,7 @@ const showHelpModal = () => {
                         <li>➡️ <strong>Hacia la DERECHA para DUPLICARLO.</strong></li>
                         <li>⬅️ <strong>Hacia la IZQUIERDA para BORRARLO.</strong></li>
                     </ul>
+                    <p>Y si haces una <strong>pulsación larga</strong>, aparecerá un menú de acciones rápidas. ¡Pruébalo!</p>
                 </div>
             </details>
 
