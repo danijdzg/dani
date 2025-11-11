@@ -4351,7 +4351,7 @@ const renderDashboardSuperCentroOperaciones = () => {
     return `
     <div class="card card--no-bg" id="super-centro-operaciones-widget">
         <div class="accordion-wrapper">
-            <details class="accordion" open>
+            <details class="accordion">
                 <summary>
                     <h3 class="card__title" style="margin: 0; padding: 0; color: var(--c-on-surface);">
                         <span class="material-icons">query_stats</span>
