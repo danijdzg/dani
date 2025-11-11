@@ -257,6 +257,7 @@
     margin-top: 1.2em;
     margin-bottom: 0.5em;
 }
+/* Le damos un estilo más prominente a los títulos de las secciones principales */
 #help-modal-body .accordion > summary {
     font-size: 1.1em;
     font-weight: 600;
@@ -276,6 +277,7 @@
 #help-modal-body li {
     margin-bottom: 8px;
 }
+/* Estilo para mostrar fragmentos de código o formatos, como el del CSV */
 #help-modal-body code {
     display: block;
     background-color: var(--c-surface-variant);
