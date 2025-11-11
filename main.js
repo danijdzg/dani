@@ -4351,7 +4351,7 @@ const renderDashboardSuperCentroOperaciones = () => {
     return `
     <div class="card card--no-bg" id="super-centro-operaciones-widget">
         <div class="accordion-wrapper">
-            <details class="accordion">
+            <details class="accordion" open>
                 <summary>
                     <h3 class="card__title" style="margin: 0; padding: 0; color: var(--c-on-surface);">
                         <span class="material-icons">query_stats</span>
@@ -6795,7 +6795,7 @@ const showHelpModal = () => {
             <h3><span class="material-icons">explore</span>El Gran Tour: Un Paseo por Tu Imperio</h3>
             <p>Cada pestaña de la aplicación es un departamento de tu imperio, diseñado para responder a una pregunta clave sobre tu dinero. ¡Empecemos el recorrido!</p>
 
-            <details class="accordion" style="margin-bottom: 1rem;" open>
+            <details class="accordion" style="margin-bottom: 1rem;">
                 <summary style="font-size: 1.2rem;"><span class="material-icons" style="margin-right:8px; color: var(--c-primary);">dashboard</span><strong>1. Panel: ¿Cómo voy ahora?</strong></summary>
                 <div class="accordion__content" style="padding-top: 1rem;">
                     <p>Esta es tu <strong>Torre de Control</strong>. De un solo vistazo, tienes el pulso de tu situación financiera. Puedes personalizarla con "Widgets" (tus asesores personales) desde el botón <span class="material-icons" style="font-size:1em; vertical-align:bottom;">dashboard_customize</span> en la barra superior.</p>
