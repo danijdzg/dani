@@ -85,24 +85,16 @@ const PAGE_IDS = {
         'net-worth-trend': { title: 'Evolución del Patrimonio', description: 'Gráfico histórico de la variación de tu patrimonio neto.', icon: 'show_chart' },
         'emergency-fund': { title: 'Colchón de Emergencia', description: 'Mide tu red de seguridad financiera.', icon: 'shield' },
         'fi-progress': { title: 'Independencia Financiera', description: 'Sigue tu progreso hacia la libertad financiera.', icon: 'flag' },
-        'informe-personalizado': { title: 'Mi Informe Personalizado', description: 'Un gráfico a tu medida con los datos que más te importan.', icon: 'insights' }
-    };
+        };
 const DEFAULT_DASHBOARD_WIDGETS = [
     'super-centro-operaciones', // <-- El widget principal y más completo
     'net-worth-trend',          // Evolución del Patrimonio
     
 ];
-// ▼▼▼ REEMPLAZAR POR COMPLETO CON LA VERSIÓN FINAL Y MATEMÁTICAMENTE CORRECTA ▼▼▼
-// AÑADE ESTA NUEVA FUNCIÓN A main.js
+
+// ▼▼▼ REEMPLAZAR TU FUNCIÓN updateAnalisisWidgets CON ESTA VERSIÓN SIMPLIFICADA ▼▼▼
 const updateAnalisisWidgets = async () => {
     try {
-        // Renderiza el informe personalizado
-        const informeContainer = document.querySelector('[data-widget-type="informe-personalizado"]');
-        if (informeContainer) {
-            informeContainer.innerHTML = renderDashboardInformeWidget();
-            await renderInformeWidgetContent();
-        }
-        
         // Renderiza y calcula Colchón de Emergencia e Independencia Financiera
         const saldos = await getSaldos();
         const patrimonioNeto = Object.values(saldos).reduce((sum, s) => sum + s, 0);
@@ -4687,8 +4679,7 @@ const renderPlanificacionPage = () => {
     const container = select(PAGE_IDS.PLANIFICAR);
     if (!container) return;
 
-    // 1. DIBUJAMOS LA ESTRUCTURA HTML BASE DE LA PÁGINA.
-    //    El selector de año está aquí, pero todavía está vacío.
+    // 1. DIBUJAMOS LA ESTRUCTURA HTML BASE, AÑADIENDO EL NUEVO ACORDEÓN PARA EL INFORME
     container.innerHTML = `
         <div class="card card--no-bg accordion-wrapper">
             <details class="accordion">
@@ -4740,59 +4731,64 @@ const renderPlanificacionPage = () => {
                 </div>
             </details>
         </div>
+        
+        <!-- ▼▼▼ INICIO DE LA NUEVA SECCIÓN: INFORME PERSONALIZADO ▼▼▼ -->
         <div class="card card--no-bg accordion-wrapper">
-            <details id="acordeon-extracto_cuenta" class="accordion informe-acordeon">
+            <details class="accordion">
                 <summary>
-                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
-                        <span class="material-icons">wysiwyg</span>
-                        <span>Extracto de Cuenta (Cartilla)</span>
-                    </h3>
+                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">insights</span>Mi Informe Personalizado</h3>
                     <span class="material-icons accordion__icon">expand_more</span>
                 </summary>
                 <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
-                    <div id="informe-content-extracto_cuenta">
-                         <form id="informe-cuenta-form" novalidate>
-                            <div class="form-group">
-                                <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta para ver su historial completo:</label>
-                                <select id="informe-cuenta-select" class="form-select" required></select>
+                    <div id="informe-planificar-widget">
+                         <!-- Aquí se dibujará el informe (el esqueleto y el contenido) -->
+                         <div class="card" id="informe-personalizado-widget" style="background-color: transparent; box-shadow: none; border: 1px solid var(--c-outline); padding-bottom: var(--sp-2);">
+                            <div class="card__title" style="justify-content: space-between; padding: var(--sp-3) var(--sp-3) 0 var(--sp-3);">
+                                <div style="display: flex; align-items: center; gap: var(--sp-2);">
+                                    <span id="informe-widget-title">${escapeHTML(db.config?.savedReports?.main?.title || "Mi Informe")}</span>
+                                </div>
+                                <button data-action="show-informe-builder" class="btn btn--secondary">
+                                    <span class="material-icons" style="font-size: 16px;">edit</span>
+                                    <span>Configurar</span>
+                                </button>
                             </div>
-                            <button type="submit" class="btn btn--primary btn--full">Generar Extracto</button>
-                        </form>
-                        <div id="informe-resultado-container" style="margin-top: var(--sp-4);"></div>
+                            <div class="card__content" id="informe-widget-content" style="padding-left: var(--sp-3); padding-right: var(--sp-3);">
+                                <div class="empty-state skeleton" style="background:transparent; border:none; padding: var(--sp-4) 0;">
+                                    <p>Cargando informe...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </details>
         </div>
+        <!-- ▲▲▲ FIN DE LA NUEVA SECCIÓN ▲▲▲ -->
     `;
     
-    // 2. AHORA, CON EL HTML YA EN LA PÁGINA, RELLENAMOS EL SELECTOR DE AÑO.
+    // 2. RELLENAMOS EL SELECTOR DE AÑO (esta lógica no cambia)
     const yearSelect = container.querySelector('#budget-year-selector');
     if (yearSelect) {
         const currentYear = new Date().getFullYear();
-        // Creamos una lista única de años, incluyendo el actual y todos los que tengan presupuestos.
         const years = new Set([currentYear]);
         (db.presupuestos || []).forEach(p => years.add(p.ano));
         
-        // Rellenamos el selector con los años, ordenados del más nuevo al más antiguo.
         yearSelect.innerHTML = [...years]
             .sort((a, b) => b - a)
             .map(y => `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`)
             .join('');
 
-        // 3. ¡LA INSTRUCCIÓN CLAVE QUE FALTABA!
-        // Le decimos a la app que, cuando el usuario cambie de año, vuelva a dibujar todo.
         yearSelect.addEventListener('change', () => {
             hapticFeedback('light');
-            renderBudgetTracking(); // Esto redibuja el gráfico y los KPIs con el nuevo año.
+            renderBudgetTracking();
         });
     }
 
-    // 4. FINALMENTE, LLAMAMOS A LAS FUNCIONES DE RENDERIZADO.
-    // Ahora 'renderBudgetTracking' encontrará un año válido y funcionará.
+    // 3. LLAMAMOS A LAS FUNCIONES DE RENDERIZADO, INCLUYENDO LA NUEVA DEL INFORME
     populateAllDropdowns();
     renderBudgetTracking();
     renderPendingRecurrents();
     renderRecurrentsListOnPage();
+    renderInformeWidgetContent(); // ¡Añadimos la llamada para dibujar el informe!
 };
 
 const renderPatrimonioPage = () => {
@@ -5516,29 +5512,6 @@ const updateDashboardData = async () => {
 let informeChart = null; // Variable global para el gráfico del informe
 let informeBuilderDebounceTimer = null;
 
-// Renderiza el HTML estático del widget en el panel de Inicio
-const renderDashboardInformeWidget = () => {
-    const reportConfig = db.config?.savedReports?.main;
-    const title = reportConfig?.title || "Mi Informe Personalizado";
-    return `
-    <div class="card" id="informe-personalizado-widget">
-        <div class="card__title" style="justify-content: space-between; padding-bottom: 0;">
-            <div style="display: flex; align-items: center; gap: var(--sp-2);">
-                <span class="material-icons">insights</span>
-                <span id="informe-widget-title">${escapeHTML(title)}</span>
-            </div>
-            <button data-action="show-informe-builder" class="btn btn--secondary">
-                <span class="material-icons" style="font-size: 16px;">edit</span>
-                <span>Configurar</span>
-            </button>
-        </div>
-        <div class="card__content" id="informe-widget-content">
-            <div class="empty-state skeleton" style="background:transparent; border:none; padding: var(--sp-4) 0;">
-                <p>Cargando informe...</p>
-            </div>
-        </div>
-    </div>`;
-};
 
 // Rellena el widget con el gráfico y datos según la configuración guardada
 const renderInformeWidgetContent = async () => {
