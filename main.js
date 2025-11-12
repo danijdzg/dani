@@ -1383,46 +1383,7 @@ const initWidgetObserver = () => {
             if (isLoading) { if (!originalButtonTexts.has(btn)) originalButtonTexts.set(btn, btn.innerHTML); btn.setAttribute('disabled', 'true'); btn.classList.add('btn--loading'); btn.innerHTML = `<span class="spinner"></span> <span>${text}</span>`;
             } else { btn.removeAttribute('disabled'); btn.classList.remove('btn--loading'); if (originalButtonTexts.has(btn)) { btn.innerHTML = originalButtonTexts.get(btn); originalButtonTexts.delete(btn); } }
         };
-// --- PEGA ESTA NUEVA FUNCIÓN COMPLETA EN TU JAVASCRIPT ---
 
-/**
- * Dispara una animación de una "burbuja" que viaja desde un elemento
- * hasta la parte superior de la lista de movimientos.
- * @param {HTMLElement} fromElement - El elemento desde donde empieza la animación (ej. el botón Guardar).
- * @param {string} color - 'green' para ingresos, 'red' para gastos.
- */
-const triggerSaveAnimation = (fromElement, color) => {
-    if (!fromElement) return;
-
-    // 1. Encuentra la posición del botón de "Guardar" y la lista de destino.
-    const startRect = fromElement.getBoundingClientRect();
-    const listElement = select('movimientos-list-container') || select('diario-page');
-    const endRect = listElement.getBoundingClientRect();
-
-    // 2. Crea la burbuja dinámicamente.
-    const bubble = document.createElement('div');
-    bubble.className = 'save-animation-bubble';
-    bubble.style.backgroundColor = color === 'green' ? 'var(--c-success)' : 'var(--c-danger)';
-    
-    // 3. Posiciona la burbuja justo encima del botón "Guardar".
-    bubble.style.left = `${startRect.left + startRect.width / 2 - 10}px`;
-    bubble.style.top = `${startRect.top + startRect.height / 2 - 10}px`;
-    
-    // 4. La añade al cuerpo de la página.
-    document.body.appendChild(bubble);
-
-    // 5. Un pequeño truco para asegurar que la animación se inicie correctamente.
-    requestAnimationFrame(() => {
-        bubble.style.opacity = '1';
-        bubble.style.transform = `translate(
-            ${endRect.left + endRect.width / 2 - (startRect.left + startRect.width / 2)}px, 
-            ${endRect.top - (startRect.top + startRect.height / 2)}px
-        ) scale(0)`;
-    });
-
-    // 6. Cuando la animación termine, la burbuja se autodestruye para limpiar.
-    bubble.addEventListener('transitionend', () => bubble.remove(), { once: true });
-};
         const displayError = (id, msg) => { const err = select(`${id}-error`); if (err) { err.textContent = msg; err.setAttribute('role', 'alert'); } const inp = select(id); if (inp) inp.classList.add('form-input--invalid'); };
         const clearError = (id) => { const err = select(`${id}-error`); if (err) { err.textContent = ''; err.removeAttribute('role'); } const inp = select(id); if (inp) inp.classList.remove('form-input--invalid'); };
         const clearAllErrors = (formId) => { const f = select(formId); if (!f) return; f.querySelectorAll('.form-error').forEach((e) => e.textContent = ''); f.querySelectorAll('.form-input--invalid').forEach(e => e.classList.remove('form-input--invalid')); };
