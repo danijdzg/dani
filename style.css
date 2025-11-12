@@ -1317,7 +1317,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     border-width: 3px;
     color: var(--c-primary);
 }
-/* === FIN: Estilos para Pull-to-Refresh === */
+/* EN style.css - PEGA ESTE BLOQUE AL FINAL */
 /* === INICIO: Estilos para el Menú Desplegable === */
 .popover-menu {
     position: fixed;
@@ -1383,7 +1383,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     margin: var(--sp-2) 0;
 }
 /* === FIN: Estilos para el Menú Desplegable === */
-/* Pega este bloque al final de tu <style> */
+
 @media (max-width: 380px) {
     /* --- Optimizaciones Generales para Pantallas Pequeñas --- */
     

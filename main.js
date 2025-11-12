@@ -1466,7 +1466,6 @@ window.addEventListener('offline', () => {
     }
 };
 
-// CÓDIGO NUEVO Y CORREGIDO para la función navigateTo
 const navigateTo = async (pageId, isInitial = false) => {
     const oldView = document.querySelector('.view--active');
     const newView = select(pageId);
@@ -1500,10 +1499,13 @@ const navigateTo = async (pageId, isInitial = false) => {
     const leftEl = select('top-bar-left-button');
     
     // --> ¡CAMBIO CLAVE AQUÍ! <--
-    // Reemplazamos el botón de 'ajustes' por el nuevo botón de menú.
+    // Reemplazamos los botones antiguos por el nuevo botón de menú.
     const standardActions = `
         <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
             <span class="material-icons">search</span>
+        </button>
+        <button data-action="toggle-theme" id="theme-toggle-btn" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar tema visual">
+             <span class="material-icons"></span>
         </button>
         <button data-action="show-main-menu" class="icon-btn" title="Menú Principal" aria-label="Abrir Menú Principal">
             <span class="material-icons">more_vert</span>
@@ -1572,51 +1574,7 @@ const navigateTo = async (pageId, isInitial = false) => {
         scheduleDashboardUpdate();
     }
 };
-        
-    const setupTheme = () => { 
-    const gridColor = 'rgba(255, 255, 255, 0.1)';
-    const textColor = '#FFFFFF';
-    Chart.defaults.color = textColor; 
-    Chart.defaults.borderColor = gridColor;
-    Chart.register(ChartDataLabels);
-};
-        
-    const buildIntelligentIndex = (movementsSource = db.movimientos) => {
-    intelligentIndex.clear(); 
-    if (!movementsSource || movementsSource.length === 0) return;
 
-    const visibleAccounts = getVisibleAccounts().map(c => c.id);
-    const tempIndex = new Map();
-
-    const movementsToIndex = [...movementsSource]
-        .filter(mov => mov.tipo === 'movimiento' && visibleAccounts.includes(mov.cuentaId)) // Filtramos solo por el ledger activo
-        .sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordenamos por fecha
-
-    for (const mov of movementsToIndex) {
-        const desc = mov.descripcion.trim().toLowerCase();
-        if (desc.length > 3) {
-            const key = desc;
-            if (!tempIndex.has(key)) {
-                tempIndex.set(key, {
-                    conceptoId: mov.conceptoId,
-                    cuentaId: mov.cuentaId,
-                    count: 0, // Reiniciamos el contador
-                    lastUsed: 0
-                });
-            }
-            const entry = tempIndex.get(key);
-            entry.conceptoId = mov.conceptoId; 
-            entry.cuentaId = mov.cuentaId;
-            entry.count++; 
-            entry.lastUsed = new Date(mov.fecha).getTime();
-        }
-    }
-    
-    intelligentIndex = tempIndex;
-    console.log(`Índice inteligente MEJORADO con ${intelligentIndex.size} entradas.`);
-};
-
-// ▼▼▼ REEMPLAZA TU FUNCIÓN 'getPendingRecurrents' CON ESTE BLOQUE COMPLETO ▼▼▼
 const getPendingRecurrents = () => {
     const now = new Date();
     // Creamos "hoy" en UTC a las 00:00 para una comparación precisa y justa.
@@ -1647,7 +1605,6 @@ const getPendingRecurrents = () => {
         })
         .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
 };
-// ▲▲▲ FIN DEL BLOQUE DE REEMPLAZO 1 ▲▲▲
 
 		
 // =================================================================
@@ -2152,9 +2109,89 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
         });
     }, 0);
 };
-        
 
-/// ▼▼▼ REEMPLAZA TU FUNCIÓN 'renderBudgetTracking' COMPLETA CON ESTE CÓDIGO DEFINITIVO ▼▼▼
+const getYearProgress = () => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const diff = now - start;
+    const oneDay = 1000 * 60 * 60 * 24;
+    const dayOfYear = Math.floor(diff / oneDay);
+    const year = now.getFullYear();
+    const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    const totalDaysInYear = isLeap ? 366 : 365;
+
+    return {
+        percentage: (dayOfYear / totalDaysInYear) * 100,
+        daysPassed: dayOfYear,
+        daysRemaining: totalDaysInYear - dayOfYear,
+        totalDaysInYear: totalDaysInYear
+    };
+};
+
+const renderGaugeChart = (canvasId, percentageConsumed, yearProgressPercentage) => {
+    const canvas = select(canvasId);
+    const ctx = canvas ? canvas.getContext('2d') : null;
+    if (!ctx) return;
+
+    if (Chart.getChart(canvasId)) {
+        Chart.getChart(canvasId).destroy();
+    }
+
+    const isAheadOfPace = percentageConsumed > yearProgressPercentage;
+    
+    const spentColor = isAheadOfPace ? 'var(--c-danger)' : 'var(--c-primary)';
+    const remainingColor = 'var(--c-surface-variant)';
+
+    const data = {
+        datasets: [{
+            data: [
+                Math.min(percentageConsumed, 100),
+                Math.max(0, 100 - Math.min(percentageConsumed, 100))
+            ],
+            backgroundColor: [spentColor, remainingColor],
+            borderColor: 'var(--c-surface)',
+            borderWidth: 2,
+        }]
+    };
+    
+    const paceLinePlugin = {
+        id: 'paceLine',
+        afterDraw: chart => {
+            const { ctx, chartArea } = chart;
+            const angle = Math.PI + (Math.PI * yearProgressPercentage / 100);
+            const cx = (chartArea.left + chartArea.right) / 2;
+            const cy = (chartArea.top + chartArea.bottom) / 2 + 15;
+            const radius = chart.outerRadius;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + radius * Math.sin(angle), cy + radius * Math.cos(angle));
+            ctx.strokeStyle = 'var(--c-success)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.restore();
+        }
+    };
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            rotation: -90,
+            circumference: 180,
+            cutout: '70%',
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false },
+                datalabels: { display: false }
+            }
+        },
+        plugins: [paceLinePlugin]
+    });
+};        
 
 const renderBudgetTracking = async () => {
     const dashboardContainer = select('annual-budget-dashboard');
@@ -6020,7 +6057,7 @@ const showDrillDownModal = (title, movements) => {
         if (modalBody) {
             const itemsToAnimate = modalBody.querySelectorAll('.list-item-animate');
             itemsToAnimate.forEach((item, index) => {
-                // Aplicamos la clase que dispara la animación con un pequeño retraso
+                // Aplicamos la clase que dispara la animación con un pequeño retardo
                 // para cada elemento, creando el efecto cascada.
                 setTimeout(() => {
                     item.classList.add('item-enter-active');
@@ -7643,28 +7680,22 @@ if (ptrElement && mainScrollerPtr) {
         const actions = {
 			'swipe-show-irr-history': () => handleShowIrrHistory(type),
 			'show-main-menu': () => {
-    const menu = document.getElementById('main-menu-popover');
-    if (!menu) return;
-
-    // Muestra u oculta el menú
-    menu.classList.toggle('popover-menu--visible');
-    
-    // Si el menú se ha hecho visible, creamos un "espía"
-    if (menu.classList.contains('popover-menu--visible')) {
-        // Este pequeño truco espera un instante antes de crear el espía
-        setTimeout(() => {
-            const closeOnClickOutside = (event) => {
-                // Si el clic fue FUERA del menú y no en el botón que lo abre...
-                if (!menu.contains(event.target) && !event.target.closest('[data-action="show-main-menu"]')) {
-                    menu.classList.remove('popover-menu--visible'); // ...lo cerramos.
-                    document.removeEventListener('click', closeOnClickOutside); // Y el espía se autodestruye.
-                }
-            };
-            // Le decimos al documento que empiece a espiar los clics
-            document.addEventListener('click', closeOnClickOutside);
-        }, 0);
-    }
-},
+        const menu = document.getElementById('main-menu-popover');
+        if (!menu) return;
+        hapticFeedback('light');
+        menu.classList.toggle('popover-menu--visible');
+        if (menu.classList.contains('popover-menu--visible')) {
+            setTimeout(() => {
+                const closeOnClickOutside = (event) => {
+                    if (!menu.contains(event.target) && !event.target.closest('[data-action="show-main-menu"]')) {
+                        menu.classList.remove('popover-menu--visible');
+                        document.removeEventListener('click', closeOnClickOutside);
+                    }
+                };
+                document.addEventListener('click', closeOnClickOutside);
+            }, 0);
+        }
+    },
             'show-main-add-sheet': () => showModal('main-add-sheet'),
 			'show-pnl-breakdown': () => handleShowPnlBreakdown(actionTarget.dataset.id),
 			 'show-irr-breakdown': () => handleShowIrrBreakdown(actionTarget.dataset.id),
@@ -8389,18 +8420,18 @@ const renderDiarioCalendar = async () => {
 
 
 const applyOptimisticBalanceUpdate = (newData, oldData = null) => {
-    // --- ⭐ INICIO DE LA CORRECCIÓN 2: NULL SAFETY ⭐ ---
+    // --- ⭐ INICIO DE LA CORRECCIÓN: SEGURIDAD ANTE NULOS ⭐ ---
     
     // Revertir el impacto del movimiento antiguo si estamos editando
     if (oldData) {
         if (oldData.tipo === 'traspaso') {
             const origen = db.cuentas.find(c => c.id === oldData.cuentaOrigenId);
-            if (origen) origen.saldo += oldData.cantidad;
+            if (origen) origen.saldo += oldData.cantidad; // Solo opera si la cuenta 'origen' existe
             const destino = db.cuentas.find(c => c.id === oldData.cuentaDestinoId);
-            if (destino) destino.saldo -= oldData.cantidad;
+            if (destino) destino.saldo -= oldData.cantidad; // Solo opera si la cuenta 'destino' existe
         } else {
             const cuenta = db.cuentas.find(c => c.id === oldData.cuentaId);
-            if (cuenta) cuenta.saldo -= oldData.cantidad;
+            if (cuenta) cuenta.saldo -= oldData.cantidad; // Solo opera si la cuenta existe
         }
     }
 
@@ -8408,15 +8439,15 @@ const applyOptimisticBalanceUpdate = (newData, oldData = null) => {
     if (newData) {
         if (newData.tipo === 'traspaso') {
             const origen = db.cuentas.find(c => c.id === newData.cuentaOrigenId);
-            if (origen) origen.saldo -= newData.cantidad;
+            if (origen) origen.saldo -= newData.cantidad; // Solo opera si la cuenta 'origen' existe
             const destino = db.cuentas.find(c => c.id === newData.cuentaDestinoId);
-            if (destino) destino.saldo += newData.cantidad;
+            if (destino) destino.saldo += newData.cantidad; // Solo opera si la cuenta 'destino' existe
         } else {
             const cuenta = db.cuentas.find(c => c.id === newData.cuentaId);
-            if (cuenta) cuenta.saldo += newData.cantidad;
+            if (cuenta) cuenta.saldo += newData.cantidad; // Solo opera si la cuenta existe
         }
     }
-    // --- ⭐ FIN DE LA CORRECCIÓN 2 ⭐ ---
+    // --- ⭐ FIN DE LA CORRECCIÓN ⭐ ---
 };
 const handleSaveMovement = async (form, btn) => {
     clearAllErrors(form.id);
