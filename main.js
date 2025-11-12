@@ -3200,22 +3200,6 @@ const renderAjustesPage = () => {
     loadConfig();
 };
 
-	const getYearProgress = () => {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 0);
-    const diff = now - start;
-    const oneDay = 1000 * 60 * 60 * 24;
-    const dayOfYear = Math.floor(diff / oneDay);
-    const year = now.getFullYear();
-    const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-    const totalDaysInYear = isLeap ? 366 : 365;
-
-    return {
-        percentage: (dayOfYear / totalDaysInYear) * 100,
-        daysPassed: dayOfYear,
-        daysRemaining: totalDaysInYear - dayOfYear,
-    };
-};
 
 const renderGaugeChart = (canvasId, percentageConsumed, yearProgressPercentage) => {
     const canvas = select(canvasId);
