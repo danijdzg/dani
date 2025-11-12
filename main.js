@@ -923,6 +923,56 @@ const calculatePreviousDueDate = (currentDueDate, frequency, weekDays = []) => {
         </div>`;
 };
 
+// EN main.js - AÑADE ESTA NUEVA FUNCIÓN COMPLETA
+
+/**
+ * Configura la navegación secuencial con la tecla "Enter" dentro del formulario de movimientos.
+ */
+const setupFormNavigation = () => {
+    // 1. Obtenemos referencias a todos los elementos del formulario en nuestro flujo
+    const cantidadInput = select('movimiento-cantidad');
+    const descripcionInput = select('movimiento-descripcion');
+    // Para los selectores personalizados, necesitamos apuntar al 'trigger' que creamos
+    const conceptoTrigger = select('movimiento-concepto')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
+    const cuentaTrigger = select('movimiento-cuenta')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
+    const origenTrigger = select('movimiento-cuenta-origen')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
+    const destinoTrigger = select('movimiento-cuenta-destino')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
+    const fechaButton = select('movimiento-fecha-display');
+    const saveButton = select('save-movimiento-btn');
+
+    // Función para evitar que el listener se ejecute si el elemento está oculto
+    const addEnterListener = (element, nextAction) => {
+        if (!element) return;
+        element.addEventListener('keydown', (e) => {
+            // Solo actuamos si se pulsa "Enter" y el campo es visible
+            if (e.key === 'Enter' && element.offsetParent !== null) {
+                e.preventDefault(); // Evita que el formulario se envíe
+                nextAction();     // Ejecuta la acción de pasar al siguiente campo
+            }
+        });
+    };
+
+    // 2. Creamos la cadena de eventos
+    // Desde Cantidad -> salta a Descripción
+    addEnterListener(cantidadInput, () => descripcionInput.focus());
+
+    // Desde Descripción -> abre el selector de Concepto O el de Cuenta de Origen (si es traspaso)
+    addEnterListener(descripcionInput, () => {
+        const isTraspaso = !select('traspaso-fields').classList.contains('hidden');
+        if (isTraspaso) {
+            origenTrigger?.click();
+        } else {
+            conceptoTrigger?.click();
+        }
+    });
+
+    // NOTA: No añadimos listener a los selectores, ya que una vez que eliges, se cierran solos.
+    // El flujo continuaría de forma manual al siguiente campo.
+
+    // Desde el botón de Fecha -> intenta guardar el formulario
+    addEnterListener(fechaButton, () => saveButton.click());
+};
+
 	/**
  * Obtiene las fechas de inicio y fin basadas en un selector de periodo de informe.
  * @param {string} reportId - El ID del informe.
@@ -6291,6 +6341,7 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
             }
         }, 150);
     }
+	setupFormNavigation();
 };
         
         

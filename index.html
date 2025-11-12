@@ -162,7 +162,7 @@
                     <div class="form-field-compact" id="movimiento-cantidad-form-group" style="grid-area: amount;">
                         <label for="movimiento-cantidad">Cantidad (€)</label>
                         <div class="input-wrapper">
-                            <input type="text" id="movimiento-cantidad" required placeholder="0,00" />
+                             <input type="text" id="movimiento-cantidad" required placeholder="0,00" inputmode="decimal" enterkeyhint="next" />
                             <button type="button" id="calculator-toggle-btn" class="icon-btn" title="Abrir Calculadora">
                                 <span class="material-icons">calculate</span>
                             </button>
@@ -173,7 +173,7 @@
                     <div class="form-field-compact" style="grid-area: description;">
                         <label for="movimiento-descripcion">Descripción</label>
                         <div class="input-wrapper">
-                            <input type="text" id="movimiento-descripcion" required placeholder="Compra semanal, café..." autocomplete="off" />
+                            <input type="text" id="movimiento-descripcion" required placeholder="Compra semanal, café..." autocomplete="off" enterkeyhint="next" />
                         </div>
                         <span class="form-error" id="movimiento-descripcion-error"></span>
                         <div id="description-suggestions"></div>
