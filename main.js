@@ -1038,229 +1038,6 @@ document.body.addEventListener('change', e => {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(number);
 };
 
-// ▼▼▼ INICIO: BLOQUE DE CÓDIGO CON LAS NUEVAS FUNCIONES DE MEJORA ▼▼▼
-
-/**
- * Dispara una animación de una "burbuja" que viaja desde un elemento
- * hasta la parte superior de la lista de movimientos.
- * @param {HTMLElement} fromElement - El elemento desde donde empieza la animación (ej. el botón Guardar).
- * @param {string} color - 'green' para ingresos, 'red' para gastos.
- */
-const triggerSaveAnimation = (fromElement, color) => {
-    if (!fromElement) return;
-
-    // 1. Encuentra la posición del botón y el destino.
-    const startRect = fromElement.getBoundingClientRect();
-    const listElement = select('movimientos-list-container') || select('diario-page');
-    const endRect = listElement.getBoundingClientRect();
-
-    // 2. Crea la burbuja dinámicamente.
-    const bubble = document.createElement('div');
-    bubble.className = 'save-animation-bubble';
-    bubble.style.backgroundColor = color === 'green' ? 'var(--c-success)' : 'var(--c-danger)';
-    
-    // 3. Posiciona la burbuja sobre el botón.
-    bubble.style.left = `${startRect.left + startRect.width / 2 - 10}px`;
-    bubble.style.top = `${startRect.top + startRect.height / 2 - 10}px`;
-    
-    // 4. La añade a la página.
-    document.body.appendChild(bubble);
-
-    // 5. Un truco para asegurar que la animación se inicie correctamente.
-    requestAnimationFrame(() => {
-        bubble.style.opacity = '1';
-        // 6. ¡El vuelo! Calcula la trayectoria hacia la lista.
-        bubble.style.transform = `translate(
-            ${endRect.left + endRect.width / 2 - (startRect.left + startRect.width / 2)}px, 
-            ${endRect.top - (startRect.top + startRect.height / 2)}px
-        ) scale(0)`;
-    });
-
-    // 7. Cuando la animación termine, la burbuja se autodestruye.
-    bubble.addEventListener('transitionend', () => bubble.remove(), { once: true });
-};
-
-// Función para gestionar la lógica de los selectores personalizados
-function closeAllCustomSelects(exceptThisOne) {
-    document.querySelectorAll('.custom-select-wrapper.is-open').forEach(wrapper => {
-        if (wrapper !== exceptThisOne) {
-            wrapper.classList.remove('is-open');
-            const trigger = wrapper.querySelector('.custom-select__trigger');
-            if (trigger) trigger.setAttribute('aria-expanded', 'false');
-        }
-    });
-}
-
-function createCustomSelect(selectElement) {
-    if (!selectElement) return;
-
-    const existingWrapper = selectElement.closest('.custom-select-wrapper');
-    if (existingWrapper) {
-        selectElement.dispatchEvent(new Event('change')); 
-        return;
-    }
-
-    const wrapper = document.createElement('div');
-    wrapper.className = 'custom-select-wrapper';
-    
-    // En lugar de crear un .input-wrapper, reutilizamos el que ya está en el HTML
-    const inputWrapper = selectElement.parentNode;
-    const formFieldCompact = inputWrapper.parentNode;
-    
-    formFieldCompact.replaceChild(wrapper, inputWrapper);
-
-    const trigger = document.createElement('div');
-    trigger.className = 'custom-select__trigger';
-    trigger.setAttribute('role', 'combobox');
-    trigger.setAttribute('aria-expanded', 'false');
-    
-    const optionsContainer = document.createElement('div');
-    optionsContainer.className = 'custom-select__options';
-    optionsContainer.setAttribute('role', 'listbox');
-
-    inputWrapper.appendChild(trigger);
-    wrapper.appendChild(inputWrapper);
-    wrapper.appendChild(selectElement);
-    wrapper.appendChild(optionsContainer);
-    selectElement.classList.add('form-select-hidden');
-
-    const populateOptions = () => {
-        optionsContainer.innerHTML = '';
-        let selectedText = 'Ninguno';
-
-        Array.from(selectElement.options).forEach(optionEl => {
-            const customOption = document.createElement('div');
-            customOption.className = 'custom-select__option';
-            customOption.textContent = optionEl.textContent;
-            customOption.dataset.value = optionEl.value;
-            customOption.setAttribute('role', 'option');
-
-            if (optionEl.selected && optionEl.value) {
-                customOption.classList.add('is-selected');
-                selectedText = optionEl.textContent;
-            }
-            optionsContainer.appendChild(customOption);
-        });
-        trigger.textContent = selectedText;
-    };
-    populateOptions();
-
-    trigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        closeAllCustomSelects(wrapper);
-        wrapper.classList.toggle('is-open');
-        trigger.setAttribute('aria-expanded', wrapper.classList.contains('is-open'));
-    });
-
-    optionsContainer.addEventListener('click', (e) => {
-        const option = e.target.closest('.custom-select__option');
-        if (option) {
-            selectElement.value = option.dataset.value;
-            selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-            wrapper.classList.remove('is-open');
-            trigger.setAttribute('aria-expanded', 'false');
-        }
-    });
-       
-    selectElement.addEventListener('change', populateOptions);
-}
-
-// --- Lógica para mostrar/ocultar la calculadora y manejar el teclado
-const showCalculator = (targetInput) => {
-    const calculatorOverlay = select('calculator-overlay');
-    if (!calculatorOverlay) return;
-    
-    calculatorOverlay.classList.add('modal-overlay--active');
-    calculatorState.isVisible = true;
-    calculatorState.targetInput = targetInput;
-    calculatorState.displayValue = '0';
-    calculatorState.waitingForNewValue = true;
-    updateCalculatorDisplay();
-
-    // En escritorio, activamos el espía del teclado
-    if (!isMobileDevice()) {
-        if (calculatorKeyboardHandler) {
-            document.removeEventListener('keydown', calculatorKeyboardHandler);
-        }
-        calculatorKeyboardHandler = (e) => {
-            if ("0123456789,.+-*\/".includes(e.key) || ['Enter', 'Backspace', 'Escape', 'Delete'].includes(e.key)) {
-                e.preventDefault();
-            }
-            if (e.key >= '0' && e.key <= '9') handleCalculatorInput(e.key);
-            else if (e.key === ',' || e.key === '.') handleCalculatorInput('comma');
-            else if (e.key === 'Enter') handleCalculatorInput('done');
-            else if (e.key === 'Backspace') handleCalculatorInput('backspace');
-            else if (e.key === 'Delete' || e.key.toLowerCase() === 'c') handleCalculatorInput('clear');
-            else if (e.key === 'Escape') hideCalculator();
-            else if (e.key === '+') handleCalculatorInput('add');
-            else if (e.key === '-') handleCalculatorInput('subtract');
-            else if (e.key === '*' || e.key.toLowerCase() === 'x') handleCalculatorInput('multiply');
-            else if (e.key === '/') handleCalculatorInput('divide');
-        };
-        document.addEventListener('keydown', calculatorKeyboardHandler);
-    }
-};
-
-const hideCalculator = () => {
-    const calculatorOverlay = select('calculator-overlay');
-    if (calculatorOverlay) {
-        calculatorOverlay.classList.remove('modal-overlay--active');
-    }
-    calculatorState.isVisible = false;
-    
-    // Quitamos el espía del teclado si estaba activo
-    if (calculatorKeyboardHandler) {
-        document.removeEventListener('keydown', calculatorKeyboardHandler);
-        calculatorKeyboardHandler = null;
-    }
-};
-
-// --- Lógica para las sugerencias predictivas ---
-const applyDescriptionSuggestion = (target) => {
-    const { description, conceptoId, cuentaId } = target.dataset;
-
-    select('movimiento-descripcion').value = toSentenceCase(description);
-    
-    // Para los nuevos selectores, actualizamos el valor y disparamos el evento para refrescar la UI
-    const conceptoSelect = select('movimiento-concepto');
-    conceptoSelect.value = conceptoId;
-    conceptoSelect.dispatchEvent(new Event('change'));
-    
-    const cuentaSelect = select('movimiento-cuenta');
-    cuentaSelect.value = cuentaId;
-    cuentaSelect.dispatchEvent(new Event('change'));
-    
-    select('description-suggestions').style.display = 'none';
-
-    hapticFeedback('light');
-    select('movimiento-cantidad').focus();
-};
-
-const initAmountInput = () => {
-    const amountInput = select('movimiento-cantidad');
-    const calculatorToggle = select('calculator-toggle-btn');
-    if (!amountInput || !calculatorToggle) return;
-    
-    // Usamos una sintaxis segura que funciona en todos los navegadores
-    const old_element = amountInput;
-    const new_element = old_element.cloneNode(true);
-    old_element.parentNode.replaceChild(new_element, old_element);
-    
-    if (isMobileDevice()) {
-        new_element.setAttribute('inputmode', 'none');
-        calculatorToggle.style.display = 'none'; 
-        new_element.addEventListener('click', (e) => {
-            e.preventDefault();
-            showCalculator(new_element);
-        });
-    } else {
-        new_element.setAttribute('inputmode', 'decimal');
-        calculatorToggle.style.display = 'inline-flex';
-        calculatorToggle.onclick = () => showCalculator(new_element);
-    }
-};
-
-// ▲▲▲ FIN: BLOQUE DE CÓDIGO CON LAS NUEVAS FUNCIONES DE MEJORA ▲▲▲
 // --- Habilitador de Interacción ---
 // Los navegadores modernos, por seguridad, solo permiten la vibración DESPUÉS de que el usuario
 // haya tocado la pantalla al menos una vez. Esta pequeña pieza de código se encarga de eso.
@@ -5987,35 +5764,6 @@ const getDragAfterElement = (container, y) => {
 };
 
 		let suggestionDebounceTimer = null;
-const applyDescriptionSuggestion = (target) => {
-    // Extraemos la información directamente del elemento clicado
-    const { description, conceptoId, cuentaId } = target.dataset;
-
-    // Rellenamos los campos del formulario
-    select('movimiento-descripcion').value = toSentenceCase(description);
-    select('movimiento-concepto').value = conceptoId;
-    select('movimiento-cuenta').value = cuentaId;
-
-    // [IMPORTANTE] Disparamos el evento 'change' para que los dropdowns personalizados actualicen su texto visible
-    select('movimiento-concepto').dispatchEvent(new Event('change'));
-    select('movimiento-cuenta').dispatchEvent(new Event('change'));
-    
-    // Ocultamos la caja de sugerencias
-    select('description-suggestions').style.display = 'none';
-
-    // Damos feedback visual y movemos el cursor al siguiente paso
-    hapticFeedback('light');
-    [select('movimiento-concepto'), select('movimiento-cuenta')].forEach(el => {
-        const parent = el.closest('.form-group-addon');
-        if(parent) {
-            parent.classList.add('field-highlighted');
-            setTimeout(() => parent.classList.remove('field-highlighted'), 1500);
-        }
-    });
-
-    // ¡La magia final! Movemos el foco al campo de la cantidad.
-    select('movimiento-cantidad').focus();
-};
 
 // =================================================================
 // === INICIO: CÓDIGO UNIFICADO PARA MODALES ARRASTRABLES ===
@@ -6286,95 +6034,6 @@ const showDrillDownModal = (title, movements) => {
 };
         const showConfirmationModal=(msg, onConfirm, title="Confirmar Acción")=>{ hapticFeedback('medium'); const id='confirmation-modal';const existingModal = document.getElementById(id); if(existingModal) existingModal.remove(); const overlay=document.createElement('div');overlay.id=id;overlay.className='modal-overlay modal-overlay--active'; overlay.innerHTML=`<div class="modal" role="alertdialog" style="border-radius:var(--border-radius-lg)"><div class="modal__header"><h3 class="modal__title">${title}</h3></div><div class="modal__body"><p>${msg}</p><div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-4);"><button class="btn btn--secondary btn--full" data-action="close-modal" data-modal-id="confirmation-modal">Cancelar</button><button class="btn btn--danger btn--full" data-action="confirm-action">Sí, continuar</button></div></div></div>`; document.body.appendChild(overlay); (overlay.querySelector('[data-action="confirm-action"]')).onclick=()=>{hapticFeedback('medium');onConfirm();overlay.remove();}; (overlay.querySelector('[data-action="close-modal"]')).onclick=()=>overlay.remove(); };
 
-
-// Esta nueva función prepara el campo de cantidad cuando se abre el formulario.
-const initAmountInput = () => {
-    const amountInput = select('movimiento-cantidad');
-    const calculatorToggle = select('calculator-toggle-btn');
-    if (!amountInput || !calculatorToggle) return;
-    
-    // Limpiamos listeners anteriores para evitar duplicados
-    amountInput.onclick = null;
-    calculatorToggle.onclick = null;
-    
-    if (isMobileDevice()) {
-        amountInput.setAttribute('inputmode', 'none');
-        calculatorToggle.style.display = 'none';
-        
-        amountInput.onclick = (e) => {
-            e.preventDefault();
-            showCalculator(amountInput);
-        };
-
-    } else {
-        amountInput.setAttribute('inputmode', 'decimal');
-        calculatorToggle.style.display = 'inline-flex';
-        calculatorToggle.onclick = () => showCalculator(amountInput);
-    }
-};
-
-
-// ▼▼▼ REEMPLAZA LAS FUNCIONES showCalculator Y hideCalculator CON ESTE BLOQUE ▼▼▼
-
-const showCalculator = (targetInput) => {
-    const calculatorOverlay = select('calculator-overlay');
-    if (!calculatorOverlay) return;
-    
-    calculatorOverlay.classList.add('modal-overlay--active');
-    calculatorState.isVisible = true;
-    calculatorState.targetInput = targetInput;
-    calculatorState.displayValue = '0';
-    calculatorState.waitingForNewValue = true;
-    updateCalculatorDisplay();
-
-    // --- ¡AQUÍ ESTÁ LA CORRECCIÓN MÁGICA PARA EL TECLADO! ---
-    // Si NO es un dispositivo móvil, activamos el "espía" del teclado.
-    if (!isMobileDevice()) {
-        // Si ya había un "espía" activo, lo eliminamos para evitar duplicados.
-        if (calculatorKeyboardHandler) {
-            document.removeEventListener('keydown', calculatorKeyboardHandler);
-        }
-        
-        // Creamos la nueva función que manejará las pulsaciones del teclado.
-        calculatorKeyboardHandler = (e) => {
-            // Prevenimos la acción por defecto del navegador (como escribir en otros campos).
-            if ("0123456789,.+-*\/".includes(e.key) || ['Enter', 'Backspace', 'Escape', 'Delete'].includes(e.key)) {
-                e.preventDefault();
-            }
-            
-            // Mapeamos cada tecla a la acción correcta de la calculadora.
-            if (e.key >= '0' && e.key <= '9') handleCalculatorInput(e.key);
-            else if (e.key === ',' || e.key === '.') handleCalculatorInput('comma');
-            else if (e.key === 'Enter') handleCalculatorInput('done');
-            else if (e.key === 'Backspace') handleCalculatorInput('backspace');
-            else if (e.key === 'Delete' || e.key === 'c' || e.key === 'C') handleCalculatorInput('clear');
-            else if (e.key === 'Escape') hideCalculator();
-            else if (e.key === '+') handleCalculatorInput('add');
-            else if (e.key === '-') handleCalculatorInput('subtract');
-            else if (e.key === '*' || e.key.toLowerCase() === 'x') handleCalculatorInput('multiply');
-            else if (e.key === '/') handleCalculatorInput('divide');
-        };
-
-        // Añadimos el "espía" al documento.
-        document.addEventListener('keydown', calculatorKeyboardHandler);
-    }
-};
-
-const hideCalculator = () => {
-    const calculatorOverlay = select('calculator-overlay');
-    if (calculatorOverlay) {
-        calculatorOverlay.classList.remove('modal-overlay--active');
-    }
-    calculatorState.isVisible = false;
-    
-    // --- ¡Y AQUÍ QUITAMOS EL "ESPÍA" DEL TECLADO! ---
-    // Si el "espía" del teclado estaba activo, lo eliminamos para que no interfiera.
-    if (calculatorKeyboardHandler) {
-        document.removeEventListener('keydown', calculatorKeyboardHandler);
-        calculatorKeyboardHandler = null; // Limpiamos la variable.
-    }
-};
-// ▲▲▲ FIN DEL BLOQUE A REEMPLAZAR ▲▲▲
 		
 // =================================================================
 // === INICIO: FUNCIÓN showToast (CORRECCIÓN CRÍTICA) ===
@@ -7582,7 +7241,43 @@ const handleGenerateInformeCuenta = async (form, btn) => {
         setButtonLoading(btn, false);
     }
 };
- /**
+
+// ▼▼▼ BLOQUE DEFINITIVO DE FUNCIONES DE MEJORA ▼▼▼
+
+/**
+ * Dispara una animación de una "burbuja" que viaja desde un elemento
+ * hasta la parte superior de la lista de movimientos.
+ * @param {HTMLElement} fromElement - El elemento desde donde empieza la animación (ej. el botón Guardar).
+ * @param {string} color - 'green' para ingresos, 'red' para gastos.
+ */
+const triggerSaveAnimation = (fromElement, color) => {
+    if (!fromElement) return;
+
+    const startRect = fromElement.getBoundingClientRect();
+    const listElement = select('movimientos-list-container') || select('diario-page');
+    const endRect = listElement.getBoundingClientRect();
+
+    const bubble = document.createElement('div');
+    bubble.className = 'save-animation-bubble';
+    bubble.style.backgroundColor = color === 'green' ? 'var(--c-success)' : 'var(--c-danger)';
+    
+    bubble.style.left = `${startRect.left + startRect.width / 2 - 10}px`;
+    bubble.style.top = `${startRect.top + startRect.height / 2 - 10}px`;
+    
+    document.body.appendChild(bubble);
+
+    requestAnimationFrame(() => {
+        bubble.style.opacity = '1';
+        bubble.style.transform = `translate(
+            ${endRect.left + endRect.width / 2 - (startRect.left + startRect.width / 2)}px, 
+            ${endRect.top - (startRect.top + startRect.height / 2)}px
+        ) scale(0)`;
+    });
+
+    bubble.addEventListener('transitionend', () => bubble.remove(), { once: true });
+};
+
+/**
  * Cierra todos los dropdowns personalizados abiertos, excepto el que se le pasa como argumento.
  * @param {HTMLElement|null} exceptThisOne - El wrapper del select que no debe cerrarse.
  */
@@ -7605,19 +7300,22 @@ function closeAllCustomSelects(exceptThisOne) {
 function createCustomSelect(selectElement) {
     if (!selectElement) return;
 
-    // Evita reinicializar si ya es un dropdown personalizado
     const existingWrapper = selectElement.closest('.custom-select-wrapper');
     if (existingWrapper) {
-        selectElement.dispatchEvent(new Event('change')); // Solo actualiza su valor
+        selectElement.dispatchEvent(new Event('change'));
         return;
     }
-
+    
     const wrapper = document.createElement('div');
     wrapper.className = 'custom-select-wrapper';
     
-    // El contenedor visual que ya tienes en el CSS
-    const inputWrapper = document.createElement('div');
-    inputWrapper.className = 'input-wrapper';
+    const inputWrapper = selectElement.closest('.input-wrapper');
+    if (!inputWrapper) {
+        console.error("No se encontró '.input-wrapper' para el select:", selectElement);
+        return;
+    }
+    
+    const formFieldCompact = inputWrapper.parentNode;
 
     const trigger = document.createElement('div');
     trigger.className = 'custom-select__trigger';
@@ -7628,12 +7326,12 @@ function createCustomSelect(selectElement) {
     optionsContainer.className = 'custom-select__options';
     optionsContainer.setAttribute('role', 'listbox');
 
-    // Montamos la estructura: wrapper -> inputWrapper -> trigger, y el select original se mueve adentro
-    selectElement.parentNode.insertBefore(wrapper, selectElement);
-    inputWrapper.appendChild(trigger);
+    formFieldCompact.replaceChild(wrapper, inputWrapper);
+    
     wrapper.appendChild(inputWrapper);
-    wrapper.appendChild(selectElement);
-    wrapper.appendChild(optionsContainer);
+    inputWrapper.appendChild(trigger);
+    wrapper.appendChild(selectElement); // El select ahora vive dentro del wrapper, pero fuera del input-wrapper
+    wrapper.appendChild(optionsContainer); // El contenedor de opciones también
     selectElement.classList.add('form-select-hidden');
 
     const populateOptions = () => {
@@ -7655,9 +7353,9 @@ function createCustomSelect(selectElement) {
         });
         trigger.textContent = selectedText;
     };
+    
     populateOptions();
 
-    // Event Listeners
     trigger.addEventListener('click', (e) => {
         e.stopPropagation();
         closeAllCustomSelects(wrapper);
@@ -7678,9 +7376,109 @@ function createCustomSelect(selectElement) {
     selectElement.addEventListener('change', populateOptions);
 }
 
-// =================================================================
-// === FIN DEL BLOQUE DEFINITIVO                                 ===
-// =================================================================
+
+/**
+ * Lógica para mostrar/ocultar la calculadora y manejar el teclado
+ */
+const showCalculator = (targetInput) => {
+    const calculatorOverlay = select('calculator-overlay');
+    if (!calculatorOverlay) return;
+    
+    calculatorOverlay.classList.add('modal-overlay--active');
+    calculatorState.isVisible = true;
+    calculatorState.targetInput = targetInput;
+    calculatorState.displayValue = '0';
+    calculatorState.waitingForNewValue = true;
+    updateCalculatorDisplay();
+
+    if (!isMobileDevice()) {
+        if (calculatorKeyboardHandler) {
+            document.removeEventListener('keydown', calculatorKeyboardHandler);
+        }
+        calculatorKeyboardHandler = (e) => {
+            if ("0123456789,.+-*\/".includes(e.key) || ['Enter', 'Backspace', 'Escape', 'Delete'].includes(e.key)) {
+                e.preventDefault();
+            }
+            if (e.key >= '0' && e.key <= '9') handleCalculatorInput(e.key);
+            else if (e.key === ',' || e.key === '.') handleCalculatorInput('comma');
+            else if (e.key === 'Enter') handleCalculatorInput('done');
+            else if (e.key === 'Backspace') handleCalculatorInput('backspace');
+            else if (e.key === 'Delete' || e.key.toLowerCase() === 'c') handleCalculatorInput('clear');
+            else if (e.key === 'Escape') hideCalculator();
+            else if (e.key === '+') handleCalculatorInput('add');
+            else if (e.key === '-') handleCalculatorInput('subtract');
+            else if (e.key === '*' || e.key.toLowerCase() === 'x') handleCalculatorInput('multiply');
+            else if (e.key === '/') handleCalculatorInput('divide');
+        };
+        document.addEventListener('keydown', calculatorKeyboardHandler);
+    }
+};
+
+const hideCalculator = () => {
+    const calculatorOverlay = select('calculator-overlay');
+    if (calculatorOverlay) {
+        calculatorOverlay.classList.remove('modal-overlay--active');
+    }
+    calculatorState.isVisible = false;
+    
+    if (calculatorKeyboardHandler) {
+        document.removeEventListener('keydown', calculatorKeyboardHandler);
+        calculatorKeyboardHandler = null;
+    }
+};
+
+/**
+ * Lógica para las sugerencias predictivas.
+ */
+const applyDescriptionSuggestion = (target) => {
+    const { description, conceptoId, cuentaId } = target.dataset;
+
+    select('movimiento-descripcion').value = toSentenceCase(description);
+    
+    const conceptoSelect = select('movimiento-concepto');
+    if (conceptoSelect) {
+        conceptoSelect.value = conceptoId;
+        conceptoSelect.dispatchEvent(new Event('change'));
+    }
+    
+    const cuentaSelect = select('movimiento-cuenta');
+    if (cuentaSelect) {
+        cuentaSelect.value = cuentaId;
+        cuentaSelect.dispatchEvent(new Event('change'));
+    }
+    
+    select('description-suggestions').style.display = 'none';
+
+    hapticFeedback('light');
+    select('movimiento-cantidad').focus();
+};
+
+const initAmountInput = () => {
+    const amountInput = select('movimiento-cantidad');
+    const calculatorToggle = select('calculator-toggle-btn');
+    if (!amountInput || !calculatorToggle) return;
+    
+    amountInput.onclick = null;
+    calculatorToggle.onclick = null;
+    
+    if (isMobileDevice()) {
+        amountInput.setAttribute('inputmode', 'none');
+        calculatorToggle.style.display = 'none';
+        
+        amountInput.onclick = (e) => {
+            e.preventDefault();
+            showCalculator(amountInput);
+        };
+    } else {
+        amountInput.setAttribute('inputmode', 'decimal');
+        calculatorToggle.style.display = 'inline-flex';
+        calculatorToggle.onclick = () => showCalculator(amountInput);
+    }
+};
+
+
+// ▲▲▲ FIN: BLOQUE DEFINITIVO DE FUNCIONES DE MEJORA ▲▲▲
+
  const attachEventListeners = () => {
 const enableHaptics = () => {
         userHasInteracted = true;
