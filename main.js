@@ -1465,7 +1465,13 @@ window.addEventListener('offline', () => {
         }
     }
 };
-
+const setupTheme = () => { 
+    const gridColor = 'rgba(255, 255, 255, 0.1)';
+    const textColor = '#FFFFFF';
+    Chart.defaults.color = textColor; 
+    Chart.defaults.borderColor = gridColor;
+    Chart.register(ChartDataLabels);
+};
 const navigateTo = async (pageId, isInitial = false) => {
     const oldView = document.querySelector('.view--active');
     const newView = select(pageId);
