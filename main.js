@@ -1465,6 +1465,7 @@ window.addEventListener('offline', () => {
         }
     }
 };
+
 const setupTheme = () => { 
     const gridColor = 'rgba(255, 255, 255, 0.1)';
     const textColor = '#FFFFFF';
@@ -1472,6 +1473,42 @@ const setupTheme = () => {
     Chart.defaults.borderColor = gridColor;
     Chart.register(ChartDataLabels);
 };
+
+const buildIntelligentIndex = (movementsSource = db.movimientos) => {
+    intelligentIndex.clear(); 
+    if (!movementsSource || movementsSource.length === 0) return;
+
+    const visibleAccounts = getVisibleAccounts().map(c => c.id);
+    const tempIndex = new Map();
+
+    const movementsToIndex = [...movementsSource]
+        .filter(mov => mov.tipo === 'movimiento' && visibleAccounts.includes(mov.cuentaId)) // Filtramos solo por el ledger activo
+        .sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordenamos por fecha
+
+    for (const mov of movementsToIndex) {
+        const desc = mov.descripcion.trim().toLowerCase();
+        if (desc.length > 3) {
+            const key = desc;
+            if (!tempIndex.has(key)) {
+                tempIndex.set(key, {
+                    conceptoId: mov.conceptoId,
+                    cuentaId: mov.cuentaId,
+                    count: 0, // Reiniciamos el contador
+                    lastUsed: 0
+                });
+            }
+            const entry = tempIndex.get(key);
+            entry.conceptoId = mov.conceptoId; 
+            entry.cuentaId = mov.cuentaId;
+            entry.count++; 
+            entry.lastUsed = new Date(mov.fecha).getTime();
+        }
+    }
+    
+    intelligentIndex = tempIndex;
+    console.log(`Índice inteligente MEJORADO con ${intelligentIndex.size} entradas.`);
+};
+
 const navigateTo = async (pageId, isInitial = false) => {
     const oldView = document.querySelector('.view--active');
     const newView = select(pageId);
