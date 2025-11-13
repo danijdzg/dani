@@ -28,109 +28,150 @@
     transform: scale(0.98); /* Efecto de pulsación */
 }
 
-/* --- 1. Estilos por defecto (para pantallas anchas: formato tabla) --- */
+/* ▼▼▼ PEGA ESTE BLOQUE COMPLETO AL FINAL DE TU ARCHIVO style.css ▼▼▼ */
 
+/* =============================================================== */
+/* === INICIO: SOLUCIÓN DEFINITIVA PARA EXTRACTO DE CUENTA (CSS) === */
+/* =============================================================== */
+
+/* --- 1. Contenedor y Cabecera --- */
 .informe-extracto-container {
     border: 1px solid var(--c-outline);
     border-radius: var(--border-radius-lg);
-    overflow: hidden; /* Importante para que los bordes redondeados se apliquen */
+    overflow: hidden;
 }
 
-/* Usamos CSS Grid para alinear todo perfectamente en columnas */
-.informe-linea-header,
-.informe-linea-movimiento {
-    display: grid;
-    /* Columnas: Fecha (fija), Descripción (flexible), Importe (fijo), Saldo (fijo) */
-    grid-template-columns: 80px 1fr 110px 110px; 
-    gap: var(--sp-4);
-    align-items: center;
-    padding: var(--sp-3);
-    border-bottom: 1px solid var(--c-outline);
-}
-
-.informe-extracto-container > div:last-child {
-    border-bottom: none; /* Quitamos el borde del último elemento */
-}
-
-/* Estilos de la cabecera */
 .informe-linea-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--sp-2) var(--sp-3);
     font-weight: 700;
     color: var(--c-on-surface-secondary);
     background-color: var(--c-surface-variant);
     font-size: var(--fs-xs);
     text-transform: uppercase;
 }
+.informe-linea-header .descripcion { flex: 1; }
 .informe-linea-header .importe,
-.informe-linea-header .saldo {
-    text-align: right;
-}
+.informe-linea-header .saldo { text-align: right; width: 110px; }
+.informe-linea-header .fecha { width: 60px; }
 
-/* Estilos para las filas de movimiento */
-.informe-linea-movimiento .fecha {
+/* --- 2. Fila de Movimiento (Base para pantallas anchas) --- */
+.informe-linea-movimiento {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    border-bottom: 1px solid var(--c-outline);
+}
+.informe-extracto-container > div:last-child { border-bottom: none; }
+
+.informe-linea-movimiento__fecha {
+    width: 60px;
     font-size: var(--fs-sm);
+    font-weight: 600;
     color: var(--c-on-surface-secondary);
+    text-align: center;
 }
 
-.informe-linea-movimiento .descripcion {
+.informe-linea-movimiento__details {
+    flex: 1;
+    min-width: 0;
+}
+.informe-linea-movimiento__descripcion {
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.informe-linea-movimiento__concepto {
+    font-size: var(--fs-xs);
+    color: var(--c-on-surface-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
-.informe-linea-movimiento .importe,
-.informe-linea-movimiento .saldo {
+.informe-linea-movimiento__figures {
+    display: flex;
+    gap: var(--sp-4);
+}
+.informe-linea-movimiento__importe,
+.informe-linea-movimiento__saldo {
+    width: 110px;
     font-weight: 700;
     text-align: right;
-    font-family: monospace, sans-serif; /* Monoespaciado para alinear números */
+    font-family: monospace, sans-serif;
 }
 
-/* --- 2. Anulación para pantallas pequeñas (móviles: formato tarjeta) --- */
-/* Esta es la magia: estas reglas solo se activan en pantallas de 380px o menos */
+/* --- 3. Filas Especiales (Saldo Inicial y Resumen Mensual) --- */
+.informe-linea-saldo-inicial, .informe-linea-resumen {
+    display: flex;
+    align-items: center;
+    padding: var(--sp-3);
+    font-weight: 700;
+    font-style: italic;
+    color: var(--c-on-surface-secondary);
+    background-color: var(--c-surface-variant);
+    border-bottom: 1px solid var(--c-outline);
+}
+.informe-linea-saldo-inicial .descripcion { flex: 1; }
+.informe-linea-saldo-inicial .saldo { width: 110px; text-align: right; font-family: monospace; }
+.informe-linea-resumen { background-color: transparent; border-top: 1px solid var(--c-outline); border-bottom: 1px solid var(--c-outline); margin-top: -1px; }
+.informe-linea-resumen .descripcion { flex: 1; text-align: right; padding-right: var(--sp-4); font-size: 0.8em;}
+.informe-linea-resumen .importe { width: 110px; text-align: right; font-family: monospace; }
 
-@media (max-width: 380px) {
-
-    .informe-linea-header {
-        display: none; /* Ocultamos la cabecera, ya no es necesaria */
-    }
-
-    .informe-extracto-container {
-        border: none; /* Quitamos el borde general para un look más limpio */
-    }
-
-    /* Transformamos cada fila en una "tarjeta" con 2 filas y 2 columnas */
+/* --- 4. La Magia para Móviles Pequeños --- */
+@media (max-width: 420px) {
+    .informe-linea-header { display: none; }
+    .informe-extracto-container { border: none; }
+    
     .informe-linea-movimiento {
-        grid-template-columns: 1fr auto; /* Columna izquierda flexible, derecha ajustada */
-        grid-template-rows: auto auto;    /* Dos filas para apilar la información */
-        padding: var(--sp-3);            /* Más espaciado para que respire */
-        gap: 4px var(--sp-4);            /* Espacio entre elementos */
+        flex-wrap: wrap; /* Permite que los elementos se apilen */
+        padding: var(--sp-3) var(--sp-2);
     }
-
-    /* Reposicionamos cada elemento en la nueva rejilla de 2x2 */
-    .informe-linea-movimiento .fecha {
-        grid-column: 1;
-        grid-row: 1;
-        font-size: var(--fs-xs);
+    .informe-linea-movimiento__fecha { display: none; /* Ocultamos la fecha aquí, la unimos a los detalles */ }
+    
+    .informe-linea-movimiento__details {
+        flex-basis: 100%; /* Ocupa toda la primera línea */
+        order: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
     }
-
-    .informe-linea-movimiento .descripcion {
-        grid-column: 1;
-        grid-row: 2;
-    }
-
-    .informe-linea-movimiento .importe {
-        grid-column: 2;
-        grid-row: 1;
-        font-size: 1.1em; /* Destacamos el importe */
-    }
-
-    .informe-linea-movimiento .saldo {
-        grid-column: 2;
-        grid-row: 2;
-        font-size: var(--fs-xs);
+    .informe-linea-movimiento__descripcion::before {
+        content: attr(data-date); /* Mostramos la fecha antes de la descripción */
+        font-weight: 600;
         color: var(--c-on-surface-secondary);
+        margin-right: var(--sp-2);
     }
+    
+    .informe-linea-movimiento__figures {
+        flex-basis: 100%; /* Ocupa toda la segunda línea */
+        order: 2;
+        justify-content: space-between;
+        margin-top: 4px;
+        padding-left: 24px; /* Indentación para alinear con la descripción */
+    }
+    
+    /* En el nuevo diseño, el concepto es más útil que el saldo acumulado */
+    .informe-linea-movimiento__saldo { display: none; }
+    .informe-linea-movimiento__concepto { display: block; } /* Lo hacemos visible */
+    
+    .informe-linea-movimiento__importe, .informe-linea-movimiento__concepto {
+        width: auto;
+        text-align: left;
+    }
+    .informe-linea-movimiento__importe { text-align: right; font-size: 1.1em; }
+    
+    /* Adaptamos las filas de resumen */
+    .informe-linea-saldo-inicial { padding-left: var(--sp-2); padding-right: var(--sp-2); }
+    .informe-linea-resumen { flex-wrap: wrap; padding-left: var(--sp-2); padding-right: var(--sp-2); font-size: 0.75rem; }
+    .informe-linea-resumen .descripcion { flex-basis: 100%; text-align: left; padding: 0; }
+    .informe-linea-resumen .importe { flex-grow: 1; text-align: right; }
 }
+
 /* =============================================================== */
 /* === FIN: SOLUCIÓN DEFINITIVA PARA EXTRACTO DE CUENTA (CSS)    === */
 /* =============================================================== */
