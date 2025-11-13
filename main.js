@@ -3397,31 +3397,41 @@ const renderAjustesPage = () => {
             </div>
 
             <!-- Grupo 2: Copias de Seguridad y Migración -->
-            <h3 class="settings-group__title">Copias de Seguridad y Migración</h3>
-            <div class="card">
-                <div class="card__content" style="padding: 0;">
-                    <button class="settings-item" data-action="export-data">
-                        <span class="material-icons text-positive">cloud_upload</span>
-                        <span class="settings-item__label">Exportar Copia (JSON)</span>
-                        <span class="material-icons">chevron_right</span>
-                    </button>
-                     <button class="settings-item" data-action="export-csv">
-                        <span class="material-icons text-positive">description</span>
-                        <span class="settings-item__label">Exportar a CSV (Excel)</span>
-                        <span class="material-icons">chevron_right</span>
-                    </button>
-                    <button class="settings-item" data-action="import-data">
-                        <span class="material-icons text-warning">cloud_download</span>
-                        <span class="settings-item__label">Importar Copia (JSON)</span>
-                        <span class="material-icons">chevron_right</span>
-                    </button>
-                    <button class="settings-item" data-action="import-csv">
-                         <span class="material-icons text-warning">grid_on</span>
-                        <span class="settings-item__label">Importar desde CSV</span>
-                        <span class="material-icons">chevron_right</span>
-                    </button>
-                </div>
+        <h3 class="settings-group__title">Copias de Seguridad y Migración</h3>
+        <div class="card">
+            <div class="card__content" style="padding: 0;">
+                <button class="settings-item" data-action="export-data">
+                    <span class="material-icons text-positive">cloud_upload</span>
+                    <span class="settings-item__label">Exportar Copia (JSON)</span>
+                    <span class="material-icons">chevron_right</span>
+                </button>
+                 <button class="settings-item" data-action="export-csv">
+                    <span class="material-icons text-positive">description</span>
+                    <span class="settings-item__label">Exportar a CSV (Excel)</span>
+                    <span class="material-icons">chevron_right</span>
+                </button>
+                <button class="settings-item" data-action="import-data">
+                    <span class="material-icons text-warning">cloud_download</span>
+                    <span class="settings-item__label">Importar Copia (JSON)</span>
+                    <span class="material-icons">chevron_right</span>
+                </button>
+                <button class="settings-item" data-action="import-csv">
+                     <span class="material-icons text-warning">grid_on</span>
+                    <span class="settings-item__label">Importar desde CSV</span>
+                    <span class="material-icons">chevron_right</span>
+                </button>
+
+                <!-- ===== INICIO DE LA MODIFICACIÓN ===== -->
+                <!-- Este es el nuevo botón que hemos añadido -->
+                <button class="settings-item text-danger" data-action="recalculate-balances">
+                    <span class="material-icons">rule_folder</span>
+                    <span class="settings-item__label">Auditar y Corregir Saldos</span>
+                    <span class="material-icons">chevron_right</span>
+                </button>
+                <!-- ===== FIN DE LA MODIFICACIÓN ===== -->
+                
             </div>
+        </div>
             
             <!-- Grupo 3: Seguridad y Cuenta -->
             <h3 class="settings-group__title">Seguridad y Cuenta</h3>
