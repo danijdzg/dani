@@ -1,6 +1,13 @@
+// ▼▼▼ REEMPLAZA TUS FUNCIONES handleGenerateInformeCuenta y renderInformeCuentaRow CON ESTE BLOQUE ÚNICO Y CORREGIDO ▼▼▼
 
+/**
+ * Renderiza una única fila del extracto de cuenta con un diseño adaptable y claro.
+ * @param {object} mov - El objeto de movimiento, que ya incluye 'runningBalance'.
+ * @param {string} cuentaId - El ID de la cuenta para la que se genera el extracto.
+ * @param {Array} allCuentas - La lista completa de cuentas para buscar nombres en traspasos.
+ * @returns {string} El HTML de la fila del movimiento.
+ */
 const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
-    // La fecha ahora incluye día, mes y año para no dar lugar a dudas.
     const fechaCompleta = new Date(mov.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
     let importe = 0;
     let colorClass = '';
@@ -29,7 +36,6 @@ const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
         conceptoOculto = concepto ? toSentenceCase(concepto.nombre) : 'Sin Concepto';
     }
 
-    // El HTML ahora tiene una estructura más semántica para el nuevo CSS.
     return `
         <div class="informe-linea-movimiento">
             <div class="informe-linea-movimiento__main">
@@ -48,7 +54,7 @@ const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
 };
 
 /**
- * Genera y muestra el extracto completo de una cuenta, ordenado cronológicamente y con saldos precisos.
+ * Genera y muestra el extracto completo de una cuenta, ordenado del más reciente al más antiguo.
  * @param {HTMLElement} form - El elemento del formulario que disparó la acción.
  * @param {HTMLElement} btn - El botón que se pulsó para generar el informe.
  */
@@ -73,7 +79,6 @@ const handleGenerateInformeCuenta = async (form, btn) => {
     resultadoContainer.innerHTML = `<div class="card"><div class="card__content" style="text-align:center;"><span class="spinner"></span></div></div>`;
 
     try {
-        // Función interna, la única fuente de verdad sobre el impacto de un movimiento.
         const calculateAccountImpact = (mov, accId) => {
              if (mov.tipo === 'traspaso') {
                 if (mov.cuentaOrigenId === accId) return -mov.cantidad;
@@ -97,15 +102,26 @@ const handleGenerateInformeCuenta = async (form, btn) => {
              return;
         }
 
-        // 1. ORDEN CRONOLÓGICO ASCENDENTE (del más antiguo al más nuevo)
+        // 1. ORDEN CRONOLÓGICO ASCENDENTE (del más antiguo al más nuevo) PARA CÁLCULO
         movimientosDeLaCuenta.sort((a, b) => new Date(a.fecha).getTime() - new Date(a.fecha).getTime() || a.id.localeCompare(b.id));
 
-        // 2. CÁLCULO INFALIBLE DEL SALDO INICIAL
+        // 2. CÁLCULO DEL SALDO INICIAL
         const impactoTotalHistorico = movimientosDeLaCuenta.reduce((sum, mov) => sum + calculateAccountImpact(mov, cuentaId), 0);
         let saldoAcumulado = (cuenta.saldo || 0) - impactoTotalHistorico;
         const saldoInicial = saldoAcumulado;
 
-        // 3. CONSTRUCCIÓN DEL HTML
+        // 3. BUCLE DE CÁLCULO PROGRESIVO (sin renderizar todavía)
+        // Se recorre desde el más antiguo al más nuevo para que los saldos sean correctos
+        for (const mov of movimientosDeLaCuenta) {
+            const impact = calculateAccountImpact(mov, cuentaId);
+            saldoAcumulado += impact;
+            mov.runningBalance = saldoAcumulado;
+        }
+
+        // 4. ⭐ ¡LA MAGIA OCURRE AQUÍ! INVERTIMOS LA LISTA PARA LA VISUALIZACIÓN ⭐
+        movimientosDeLaCuenta.reverse(); // Ahora el más nuevo está al principio
+
+        // 5. CONSTRUCCIÓN DEL HTML (AHORA CON LA LISTA INVERTIDA)
         let resultadoHtml = `
             <h3 class="card__title">Extracto de ${escapeHTML(cuenta.nombre)}</h3>
             <div class="informe-extracto-container">
@@ -113,20 +129,20 @@ const handleGenerateInformeCuenta = async (form, btn) => {
                     <span class="descripcion">Descripción</span>
                     <span class="importe">Importe</span>
                     <span class="saldo">Saldo</span>
-                </div>
-                <div class="informe-linea-saldo-inicial">
-                    <span class="descripcion">Saldo Inicial a ${new Date(movimientosDeLaCuenta[0].fecha).toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit', year:'2-digit'})}</span>
-                    <span class="saldo">${formatCurrency(saldoInicial)}</span>
                 </div>`;
         
-        // 4. BUCLE PROGRESIVO PARA CALCULAR SALDOS Y RENDERIZAR
+        // Renderizamos las filas de los movimientos (ya en orden de nuevo a antiguo)
         for (const mov of movimientosDeLaCuenta) {
-            const impact = calculateAccountImpact(mov, cuentaId);
-            saldoAcumulado += impact; // Se actualiza el saldo ANTES de asignarlo
-            mov.runningBalance = saldoAcumulado;
-            
             resultadoHtml += renderInformeCuentaRow(mov, cuentaId, db.cuentas);
         }
+
+        // El saldo inicial ahora se añade al final, que es su lugar cronológico
+        const fechaPrimerMovimiento = new Date(movimientosDeLaCuenta[movimientosDeLaCuenta.length-1].fecha);
+        resultadoHtml += `
+            <div class="informe-linea-saldo-inicial">
+                <span class="descripcion">Saldo Inicial a ${fechaPrimerMovimiento.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit', year:'2-digit'})}</span>
+                <span class="saldo">${formatCurrency(saldoInicial)}</span>
+            </div>`;
 
         resultadoHtml += `</div>`;
         resultadoContainer.innerHTML = resultadoHtml;
@@ -139,7 +155,6 @@ const handleGenerateInformeCuenta = async (form, btn) => {
         setButtonLoading(btn, false);
     }
 };
-
 // ▲▲▲ FIN DEL BLOQUE A REEMPLAZAR ▲▲▲
 
 import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
