@@ -9,56 +9,157 @@ const handleExportFilteredCsv = (btn) => {
     }
 
     setButtonLoading(btn, true, 'Exportando...');
+// ▼▼▼ REEMPLAZA TUS FUNCIONES handleGenerateInformeCuenta y renderInformeCuentaRow CON ESTE BLOQUE ÚNICO Y CORREGIDO ▼▼▼
+
+/**
+ * Renderiza una única fila del extracto de cuenta con un diseño adaptable y claro.
+ * @param {object} mov - El objeto de movimiento, que ya incluye 'runningBalance'.
+ * @param {string} cuentaId - El ID de la cuenta para la que se genera el extracto.
+ * @param {Array} allCuentas - La lista completa de cuentas para buscar nombres en traspasos.
+ * @returns {string} El HTML de la fila del movimiento.
+ */
+const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
+    // La fecha ahora incluye día, mes y año para no dar lugar a dudas.
+    const fechaCompleta = new Date(mov.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    let importe = 0;
+    let colorClass = '';
+    let descripcionFinal = '';
+    let conceptoOculto = '';
+
+    if (mov.tipo === 'traspaso') {
+        const origen = allCuentas.find(c => c.id === mov.cuentaOrigenId);
+        const destino = allCuentas.find(c => c.id === mov.cuentaDestinoId);
+        
+        if (mov.cuentaOrigenId === cuentaId) {
+            importe = -mov.cantidad;
+            colorClass = 'text-gasto';
+            descripcionFinal = `Envío a ${destino ? escapeHTML(destino.nombre) : '?'}`;
+        } else {
+            importe = mov.cantidad;
+            colorClass = 'text-ingreso';
+            descripcionFinal = `Recibido de ${origen ? escapeHTML(origen.nombre) : '?'}`;
+        }
+        conceptoOculto = `Traspaso: ${escapeHTML(mov.descripcion)}`;
+    } else {
+        importe = mov.cantidad;
+        colorClass = importe >= 0 ? 'text-ingreso' : 'text-gasto';
+        descripcionFinal = mov.descripcion ? escapeHTML(mov.descripcion) : 'Movimiento sin descripción';
+        const concepto = db.conceptos.find(c => c.id === mov.conceptoId);
+        conceptoOculto = concepto ? toSentenceCase(concepto.nombre) : 'Sin Concepto';
+    }
+
+    // El HTML ahora tiene una estructura más semántica para el nuevo CSS.
+    return `
+        <div class="informe-linea-movimiento">
+            <div class="informe-linea-movimiento__main">
+                <span class="informe-linea-movimiento__fecha">${fechaCompleta}</span>
+                <div class="informe-linea-movimiento__details">
+                    <span class="informe-linea-movimiento__descripcion">${descripcionFinal}</span>
+                    <span class="informe-linea-movimiento__concepto">${conceptoOculto}</span>
+                </div>
+            </div>
+            <div class="informe-linea-movimiento__figures">
+                <span class="informe-linea-movimiento__importe ${colorClass}">${formatCurrency(importe)}</span>
+                <span class="informe-linea-movimiento__saldo">${formatCurrency(mov.runningBalance)}</span>
+            </div>
+        </div>
+    `;
+};
+
+/**
+ * Genera y muestra el extracto completo de una cuenta, ordenado cronológicamente y con saldos precisos.
+ * @param {HTMLElement} form - El elemento del formulario que disparó la acción.
+ * @param {HTMLElement} btn - El botón que se pulsó para generar el informe.
+ */
+const handleGenerateInformeCuenta = async (form, btn) => {
+    setButtonLoading(btn, true, 'Generando...');
+    const cuentaId = select('informe-cuenta-select').value;
+    const resultadoContainer = select('informe-resultado-container');
+
+    if (!cuentaId || !resultadoContainer) {
+        showToast("Por favor, selecciona una cuenta.", "warning");
+        setButtonLoading(btn, false);
+        return;
+    }
+
+    const cuenta = db.cuentas.find(c => c.id === cuentaId);
+    if (!cuenta) {
+         showToast("Cuenta no encontrada.", "danger");
+         setButtonLoading(btn, false);
+         return;
+    }
+
+    resultadoContainer.innerHTML = `<div class="card"><div class="card__content" style="text-align:center;"><span class="spinner"></span></div></div>`;
 
     try {
-        const cuentasMap = new Map(db.cuentas.map(c => [c.id, c.nombre]));
-        const conceptosMap = new Map(db.conceptos.map(c => [c.id, c.nombre]));
-
-        const csvHeader = ['FECHA', 'CUENTA', 'CONCEPTO', 'IMPORTE', 'DESCRIPCIÓN'];
-        let csvRows = [csvHeader.join(';')];
+        // Función interna, la única fuente de verdad sobre el impacto de un movimiento.
+        const calculateAccountImpact = (mov, accId) => {
+             if (mov.tipo === 'traspaso') {
+                if (mov.cuentaOrigenId === accId) return -mov.cantidad;
+                if (mov.cuentaDestinoId === accId) return mov.cantidad;
+             } else if (mov.cuentaId === accId) {
+                return mov.cantidad;
+             }
+             return 0;
+        };
         
-        // Ordenamos los movimientos por fecha para la exportación
-        movementsToExport.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+        const todosLosMovimientos = await fetchAllMovementsForHistory();
+        const movimientosDeLaCuenta = todosLosMovimientos.filter(m =>
+            (m.cuentaId === cuentaId) || (m.cuentaOrigenId === cuentaId) || (m.cuentaDestinoId === cuentaId)
+        );
 
-        for (const mov of movementsToExport) {
-            const fecha = formatDateForCsv(mov.fecha);
-            const descripcion = `"${mov.descripcion.replace(/"/g, '""')}"`;
-            const importeStr = (mov.cantidad / 100).toLocaleString('es-ES', { useGrouping: false, minimumFractionDigits: 2 });
-            let cuentaNombre = '';
-            let conceptoNombre = '';
-
-            if (mov.tipo === 'traspaso') {
-                const origen = cuentasMap.get(mov.cuentaOrigenId) || '?';
-                const destino = cuentasMap.get(mov.cuentaDestinoId) || '?';
-                cuentaNombre = `"${origen} -> ${destino}"`;
-                conceptoNombre = '"TRASPASO"';
-            } else {
-                cuentaNombre = `"${cuentasMap.get(mov.cuentaId) || 'S/C'}"`;
-                conceptoNombre = `"${conceptosMap.get(mov.conceptoId) || 'S/C'}"`;
-            }
-
-            csvRows.push([fecha, cuentaNombre, conceptoNombre, importeStr, descripcion].join(';'));
+        if (movimientosDeLaCuenta.length === 0) {
+             resultadoContainer.innerHTML = `
+                <h3 class="card__title">Extracto de ${escapeHTML(cuenta.nombre)}</h3>
+                <div class="empty-state"><p>Esta cuenta no tiene movimientos.</p></div>`;
+             setButtonLoading(btn, false);
+             return;
         }
 
-        const csvString = csvRows.join('\r\n');
-        const blob = new Blob([`\uFEFF${csvString}`], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `diario_filtrado_${new Date().toISOString().slice(0,10)}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast("Exportación CSV completada.", "info");
+        // 1. ORDEN CRONOLÓGICO ASCENDENTE (del más antiguo al más nuevo)
+        movimientosDeLaCuenta.sort((a, b) => new Date(a.fecha).getTime() - new Date(a.fecha).getTime() || a.id.localeCompare(b.id));
+
+        // 2. CÁLCULO INFALIBLE DEL SALDO INICIAL
+        const impactoTotalHistorico = movimientosDeLaCuenta.reduce((sum, mov) => sum + calculateAccountImpact(mov, cuentaId), 0);
+        let saldoAcumulado = (cuenta.saldo || 0) - impactoTotalHistorico;
+        const saldoInicial = saldoAcumulado;
+
+        // 3. CONSTRUCCIÓN DEL HTML
+        let resultadoHtml = `
+            <h3 class="card__title">Extracto de ${escapeHTML(cuenta.nombre)}</h3>
+            <div class="informe-extracto-container">
+                <div class="informe-linea-header">
+                    <span class="descripcion">Descripción</span>
+                    <span class="importe">Importe</span>
+                    <span class="saldo">Saldo</span>
+                </div>
+                <div class="informe-linea-saldo-inicial">
+                    <span class="descripcion">Saldo Inicial a ${new Date(movimientosDeLaCuenta[0].fecha).toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit', year:'2-digit'})}</span>
+                    <span class="saldo">${formatCurrency(saldoInicial)}</span>
+                </div>`;
+        
+        // 4. BUCLE PROGRESIVO PARA CALCULAR SALDOS Y RENDERIZAR
+        for (const mov of movimientosDeLaCuenta) {
+            const impact = calculateAccountImpact(mov, cuentaId);
+            saldoAcumulado += impact; // Se actualiza el saldo ANTES de asignarlo
+            mov.runningBalance = saldoAcumulado;
+            
+            resultadoHtml += renderInformeCuentaRow(mov, cuentaId, db.cuentas);
+        }
+
+        resultadoHtml += `</div>`;
+        resultadoContainer.innerHTML = resultadoHtml;
 
     } catch (error) {
-        console.error("Error al exportar CSV filtrado:", error);
-        showToast("Error durante la exportación.", "danger");
+        console.error("Error generando informe de cuenta:", error);
+        resultadoContainer.innerHTML = `<div class="card card--no-bg text-danger" style="padding: var(--sp-4); text-align: center;">Error al generar el informe.</div>`;
+        showToast("No se pudo generar el extracto.", "danger");
     } finally {
         setButtonLoading(btn, false);
     }
 };
+
+// ▲▲▲ FIN DEL BLOQUE A REEMPLAZAR ▲▲▲
 
 	import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm'
         
