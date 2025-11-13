@@ -2665,7 +2665,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     del mismo color alrededor de las letras, haciéndolas destacar.
 */
 .kpi-resaltado-azul {
-    color: #007AFF !important; /* !important asegura que este estilo anule cualquier otro. */
+    color: #00BFFF !important; /* !important asegura que este estilo anule cualquier otro. */
     text-shadow: 0 0 8px rgba(0, 122, 255, 0.7);
 }
 
