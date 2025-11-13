@@ -4329,7 +4329,7 @@ const renderDashboardKpiSummary = () => {
             </div>
         </div>`;
 };
-// ▼▼▼ REEMPLAZA TU FUNCIÓN renderDashboardSuperCentroOperaciones CON ESTA VERSIÓN REORDENADA ▼▼▼
+// ▼▼▼ REEMPLAZA TU FUNCIÓN renderDashboardSuperCentroOperaciones CON ESTA VERSIÓN COMPLETA ▼▼▼
 
 const renderDashboardSuperCentroOperaciones = () => {
     const skeletonRows = Array(3).fill('<div class="skeleton" style="height: 48px; margin-bottom: var(--sp-2); border-radius: 8px;"></div>').join('');
@@ -4351,13 +4351,16 @@ const renderDashboardSuperCentroOperaciones = () => {
                     <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
                         <div class="kpi-item">
                             <h4 class="kpi-item__label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                <span>Patrimonio Neto Total</span>
+                                <!-- ✅ MEJORA 1: Clase añadida al texto "Patrimonio Neto Total" -->
+                                <span class="kpi-resaltado-azul">Patrimonio Neto Total</span>
                                 <button class="icon-btn" data-action="show-help-topic" data-topic="patrimonio-neto" style="width: 20px; height: 20px;">
                                     <span class="material-icons" style="font-size: 16px;">help_outline</span>
                                 </button>
                             </h4>
-                            <strong id="kpi-patrimonio-neto-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
-                            <div class="kpi-item__comparison">Vista global actual</div>
+                            <!-- ✅ MEJORA 2: Clase añadida al importe del patrimonio -->
+                            <strong id="kpi-patrimonio-neto-value" class="kpi-item__value skeleton kpi-resaltado-azul" data-current-value="0">0,00 €</strong>
+                            <!-- ✅ MEJORA 3: Clase añadida al texto "Vista global actual" -->
+                            <div class="kpi-item__comparison kpi-resaltado-azul">Vista global actual</div>
                         </div>
                         <div class="kpi-item">
                             <h4 class="kpi-item__label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
