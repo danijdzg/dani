@@ -1497,49 +1497,55 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     color: var(--c-on-surface-secondary);
 }
 
-
 /* --- FIN: Corrección para Informe de Cuenta --- */
-/* === INICIO: Estilos para Resumen Mensual en Extracto === */
+
+/* === INICIO: Estilos para la nueva Fila de Resumen del Extracto === */
+
 .informe-linea-resumen {
-    display: flex;
+    display: flex; /* Usamos flexbox para alinear los elementos */
     align-items: center;
     gap: var(--sp-2);
-    padding: var(--sp-3) var(--sp-3); /* Más espacio vertical */
-    font-size: 0.85rem; /* Ligeramente más grande */
+    padding: var(--sp-3);
+    font-size: 0.85rem;
     line-height: 1.3;
     background-color: var(--c-surface-variant);
-    border-top: 1px solid var(--c-outline); /* Separador superior */
+    border-top: 1px solid var(--c-outline);
     font-weight: 700; /* Texto en negrita */
-    margin-top: -1px; /* Solapar borde con el último ítem */
+    margin-top: -1px; /* Pequeño truco para que los bordes se solapen y se vean más finos */
 }
 
+/* El espacio de la fecha lo mantenemos pero lo dejamos vacío */
 .informe-linea-resumen .fecha {
-    width: 45px;
-    visibility: hidden; /* Mantiene el espacio pero oculta el contenido */
+    width: 60px; /* Ancho similar al de las filas de movimiento */
+    visibility: hidden; /* Mantiene el espacio, pero oculta el contenido */
 }
 
+/* La descripción ocupará todo el espacio central */
 .informe-linea-resumen .descripcion {
-    flex-grow: 1;
+    flex-grow: 1; /* Esto empuja el resto de elementos a la derecha */
     flex-shrink: 1;
     min-width: 0;
-    text-align: right; /* Alinear texto del resumen a la derecha */
-    font-style: italic;
+    text-align: right; /* Alineamos el texto del resumen a la derecha */
+    font-style: italic; /* La cursiva que le da el toque de cartilla */
     color: var(--c-on-surface-secondary);
-    padding-right: var(--sp-4); /* Añadir espacio antes de los números */
+    padding-right: var(--sp-4); /* Damos un poco de espacio antes de los números */
 }
- /* Hacer que el resumen use monoespaciado para alinear */
+
+/* El importe y el saldo ocuparán un espacio fijo a la derecha */
 .informe-linea-resumen .importe,
 .informe-linea-resumen .saldo {
-    width: 90px;
+    width: 110px;
     text-align: right;
-    font-family: monospace, sans-serif;
+    font-family: monospace, sans-serif; /* Monoespaciado para que los números se alineen bien */
     font-size: 0.9em;
 }
 
+/* El espacio del saldo acumulado también lo ocultamos */
 .informe-linea-resumen .saldo {
-     visibility: hidden; /* Mantiene el espacio pero oculta el contenido */
+    visibility: hidden;
 }
-/* === FIN: Estilos para Resumen Mensual en Extracto === */
+
+/* === FIN: Estilos para la Fila de Resumen del Extracto === */
 
 /* === INICIO: Estilos para Nuevo Botón de Navegación Central === */
 .bottom-nav {
