@@ -1,23 +1,4 @@
 
-const handleExportFilteredCsv = (btn) => {
-    // La lista de movimientos a exportar es la que ya tenemos filtrada en db.movimientos
-    const movementsToExport = db.movimientos;
-
-    if (movementsToExport.length === 0) {
-        showToast("No hay datos para exportar.", "warning");
-        return;
-    }
-
-    setButtonLoading(btn, true, 'Exportando...');
-// ▼▼▼ REEMPLAZA TUS FUNCIONES handleGenerateInformeCuenta y renderInformeCuentaRow CON ESTE BLOQUE ÚNICO Y CORREGIDO ▼▼▼
-
-/**
- * Renderiza una única fila del extracto de cuenta con un diseño adaptable y claro.
- * @param {object} mov - El objeto de movimiento, que ya incluye 'runningBalance'.
- * @param {string} cuentaId - El ID de la cuenta para la que se genera el extracto.
- * @param {Array} allCuentas - La lista completa de cuentas para buscar nombres en traspasos.
- * @returns {string} El HTML de la fila del movimiento.
- */
 const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
     // La fecha ahora incluye día, mes y año para no dar lugar a dudas.
     const fechaCompleta = new Date(mov.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
@@ -161,9 +142,70 @@ const handleGenerateInformeCuenta = async (form, btn) => {
 
 // ▲▲▲ FIN DEL BLOQUE A REEMPLAZAR ▲▲▲
 
-	import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm'
+import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
+
+const handleExportFilteredCsv = (btn) => {
+    // La lista de movimientos a exportar es la que ya tenemos filtrada en db.movimientos
+    const movementsToExport = db.movimientos;
+
+    if (movementsToExport.length === 0) {
+        showToast("No hay datos para exportar.", "warning");
+        return;
+    }
+
+    setButtonLoading(btn, true, 'Exportando...');
+
+    try {
+        const cuentasMap = new Map(db.cuentas.map(c => [c.id, c.nombre]));
+        const conceptosMap = new Map(db.conceptos.map(c => [c.id, c.nombre]));
+
+        const csvHeader = ['FECHA', 'CUENTA', 'CONCEPTO', 'IMPORTE', 'DESCRIPCIÓN'];
+        let csvRows = [csvHeader.join(';')];
         
-        const firebaseConfig = { apiKey: "AIzaSyAp-t-2qmbvSX-QEBW9B1aAJHBESqnXy9M", authDomain: "cuentas-aidanai.firebaseapp.com", projectId: "cuentas-aidanai", storageBucket: "cuentas-aidanai.appspot.com", messagingSenderId: "58244686591", appId: "1:58244686591:web:85c87256c2287d350322ca" };
+        // Ordenamos los movimientos por fecha para la exportación
+        movementsToExport.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+        for (const mov of movementsToExport) {
+            const fecha = formatDateForCsv(mov.fecha);
+            const descripcion = `"${mov.descripcion.replace(/"/g, '""')}"`;
+            const importeStr = (mov.cantidad / 100).toLocaleString('es-ES', { useGrouping: false, minimumFractionDigits: 2 });
+            let cuentaNombre = '';
+            let conceptoNombre = '';
+
+            if (mov.tipo === 'traspaso') {
+                const origen = cuentasMap.get(mov.cuentaOrigenId) || '?';
+                const destino = cuentasMap.get(mov.cuentaDestinoId) || '?';
+                cuentaNombre = `"${origen} -> ${destino}"`;
+                conceptoNombre = '"TRASPASO"';
+            } else {
+                cuentaNombre = `"${cuentasMap.get(mov.cuentaId) || 'S/C'}"`;
+                conceptoNombre = `"${conceptosMap.get(mov.conceptoId) || 'S/C'}"`;
+            }
+
+            csvRows.push([fecha, cuentaNombre, conceptoNombre, importeStr, descripcion].join(';'));
+        }
+
+        const csvString = csvRows.join('\r\n');
+        const blob = new Blob([`\uFEFF${csvString}`], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `diario_filtrado_${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast("Exportación CSV completada.", "info");
+
+    } catch (error) {
+        console.error("Error al exportar CSV filtrado:", error);
+        showToast("Error durante la exportación.", "danger");
+    } finally {
+        setButtonLoading(btn, false);
+    }
+};
+
+const firebaseConfig = { apiKey: "AIzaSyAp-t-2qmbvSX-QEBW9B1aAJHBESqnXy9M", authDomain: "cuentas-aidanai.firebaseapp.com", projectId: "cuentas-aidanai", storageBucket: "cuentas-aidanai.appspot.com", messagingSenderId: "58244686591", appId: "1:58244686591:web:85c87256c2287d350322ca" };
 const PAGE_IDS = {
     PANEL: 'panel-page',
     DIARIO: 'diario-page',
@@ -172,8 +214,7 @@ const PAGE_IDS = {
     AJUSTES: 'ajustes-page',
 };
 
-
-	const THEMES = {
+const THEMES = {
     'default': { name: 'Abismo Digital', icon: 'dark_mode' },
     'sunset-groove': { name: 'Brisa Alpina', icon: 'light_mode' }
 };
