@@ -2655,3 +2655,18 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 }
 
 /* === FIN: ESTILOS PARA FORMULARIO DE ALTA DENSIDAD Y NAVEGACIÓN === */
+
+/* === INICIO: Estilo personalizado para KPI de Patrimonio Neto === */
+
+/*
+  Esta clase es la que define el color azul brillante y el resplandor.
+  - 'color': Establece el color del texto. He elegido un azul vibrante y moderno.
+  - 'text-shadow': Este es el truco para el efecto "brillante". Crea un suave resplandor
+    del mismo color alrededor de las letras, haciéndolas destacar.
+*/
+.kpi-resaltado-azul {
+    color: #007AFF !important; /* !important asegura que este estilo anule cualquier otro. */
+    text-shadow: 0 0 8px rgba(0, 122, 255, 0.7);
+}
+
+/* === FIN: Estilo personalizado para KPI de Patrimonio Neto === */
