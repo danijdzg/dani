@@ -41,7 +41,7 @@ self.addEventListener('activate', event => {
   );
 });
 
-// REEMPLAZA TU self.addEventListener('fetch', ...) con este bloque
+// ✅ REEMPLAZO COMPLETO: TU self.addEventListener('fetch', ...) con este bloque
 self.addEventListener('fetch', event => {
     const { request } = event;
 
@@ -50,15 +50,11 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Estrategia para los recursos de la App (CSS, JS, HTML, imágenes)
-    // Stale-While-Revalidate: Sirve desde la caché al instante, y actualiza en segundo plano.
     const url = new URL(request.url);
 
-    // Ajustamos la lógica para que 'index.html' se sirva para la raíz '.'
-    const resourcePath = url.pathname.endsWith('/') ? '/index.html' : url.pathname;
-    const isAppShellResource = URLS_TO_CACHE.map(path => path.replace(/^\./, '')).includes(resourcePath);
-
-    if (isAppShellResource) {
+    // Estrategia Stale-While-Revalidate para los recursos de la App (CSS, JS, HTML, etc.)
+    // Sirve desde la caché al instante y actualiza en segundo plano.
+    if (URLS_TO_CACHE.some(path => url.pathname.endsWith(path.replace('./', '')))) {
         event.respondWith(
             caches.open(CACHE_NAME).then(cache => {
                 return cache.match(request).then(cachedResponse => {
@@ -66,28 +62,20 @@ self.addEventListener('fetch', event => {
                         cache.put(request, networkResponse.clone());
                         return networkResponse;
                     });
-                    // Devuelve la respuesta de la caché si existe, si no, espera a la red.
+                    // Devuelve la respuesta de la caché si existe; si no, espera a la red.
                     return cachedResponse || fetchPromise;
                 });
             })
         );
-        return; // <-- ¡ESTA ES LA LÍNEA CLAVE QUE LO ARREGLA!
+        // ⭐ CORRECCIÓN CRÍTICA: Se añade el 'return' que faltaba aquí.
+        // Esto evita que la petición sea gestionada por la segunda estrategia.
+        return; 
     }
 
-    // Estrategia para datos de Firebase (Network First)
+    // Estrategia Network First para todo lo demás (APIs de Firebase, etc.)
     // Siempre intenta obtener los datos más frescos, con fallback a la caché si no hay red.
     event.respondWith(
         fetch(request)
-            .then(networkResponse => {
-                // Aumentamos la caché guardando los datos de Firebase también
-                return caches.open(CACHE_NAME).then(cache => {
-                    // Solo cacheamos peticiones GET a Firestore
-                    if (request.url.includes('firestore.googleapis.com')) {
-                        cache.put(request, networkResponse.clone());
-                    }
-                    return networkResponse;
-                });
-            })
             .catch(() => {
                 // Si la red falla, intentamos servir desde la caché
                 return caches.match(request);

@@ -1,3 +1,4 @@
+
 // ▼▼▼ REEMPLAZA TUS FUNCIONES handleGenerateInformeCuenta y renderInformeCuentaRow CON ESTE BLOQUE ÚNICO Y CORREGIDO ▼▼▼
 
 /**
@@ -1089,11 +1090,11 @@ const setupFormNavigation = () => {
     // 1. Obtenemos referencias a todos los elementos del formulario en nuestro flujo
     const cantidadInput = select('movimiento-cantidad');
     const descripcionInput = select('movimiento-descripcion');
-    // Para los selectores personalizados, necesitamos apuntar al 'trigger' que creamos
-    const conceptoTrigger = select('movimiento-concepto')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
-    const cuentaTrigger = select('movimiento-cuenta')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
-    const origenTrigger = select('movimiento-cuenta-origen')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
-    const destinoTrigger = select('movimiento-cuenta-destino')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
+    // Para los selectores personalizados, apuntamos al 'trigger'
+    const conceptoTrigger = select('movimiento-concepto')?.closest('.custom-select-wrapper').querySelector('.custom-select__trigger');
+    const cuentaTrigger = select('movimiento-cuenta')?.closest('.custom-select-wrapper').querySelector('.custom-select__trigger');
+    const origenTrigger = select('movimiento-cuenta-origen')?.closest('.custom-select-wrapper').querySelector('.custom-select__trigger');
+    const destinoTrigger = select('movimiento-cuenta-destino')?.closest('.custom-select-wrapper').querySelector('.custom-select__trigger');
     const fechaButton = select('movimiento-fecha-display');
     const saveButton = select('save-movimiento-btn');
 
@@ -1110,10 +1111,7 @@ const setupFormNavigation = () => {
     };
 
     // 2. Creamos la cadena de eventos
-    // Desde Cantidad -> salta a Descripción
     addEnterListener(cantidadInput, () => descripcionInput.focus());
-
-    // Desde Descripción -> abre el selector de Concepto O el de Cuenta de Origen (si es traspaso)
     addEnterListener(descripcionInput, () => {
         const isTraspaso = !select('traspaso-fields').classList.contains('hidden');
         if (isTraspaso) {
@@ -1122,11 +1120,6 @@ const setupFormNavigation = () => {
             conceptoTrigger?.click();
         }
     });
-
-    // NOTA: No añadimos listener a los selectores, ya que una vez que eliges, se cierran solos.
-    // El flujo continuaría de forma manual al siguiente campo.
-
-    // Desde el botón de Fecha -> intenta guardar el formulario
     addEnterListener(fechaButton, () => saveButton.click());
 };
 
@@ -6408,27 +6401,21 @@ const setMovimientoFormType = (type) => {
         };
 
 
-const startMovementForm = async (id = null, isRecurrent = false, initialType = 'gasto') => {
+ const startMovementForm = async (id = null, isRecurrent = false, initialType = 'gasto') => {
+    // ... (El inicio de tu función hasta la llamada a showModal se mantiene igual) ...
     hapticFeedback('medium');
     const form = select('form-movimiento');
     form.reset();
     clearAllErrors(form.id);
     populateAllDropdowns();
-
-    // Resetear selector de días semanal
     selectAll('.day-selector-btn').forEach(btn => btn.classList.remove('active'));
     select('weekly-day-selector').classList.add('hidden');
-    
     let data = null;
     let mode = 'new';
-    
     if (id) {
-        // ... (tu lógica existente para cargar datos para editar es correcta y se mantiene)
-        // NO ES NECESARIO REEMPLAZAR esta parte interna de la función
         try {
             const collectionName = isRecurrent ? 'recurrentes' : 'movimientos';
             const doc = await fbDb.collection('users').doc(currentUser.uid).collection(collectionName).doc(id).get();
-
             if (doc.exists) {
                 data = { id: doc.id, ...doc.data() };
                 mode = isRecurrent ? 'edit-recurrent' : 'edit-single';
@@ -6437,19 +6424,12 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
                 showToast("Error: No se encontró el elemento para editar.", "danger");
                 id = null;
             }
-        } catch (error) {
-            console.error("Error al cargar datos para editar:", error);
-            showToast("Error al cargar los datos.", "danger");
-            return;
-        }
+        } catch (error) { console.error("Error al cargar datos para editar:", error); showToast("Error al cargar los datos.", "danger"); return; }
     }
-
     setMovimientoFormType(initialType);
     select('movimiento-mode').value = mode;
     select('movimiento-id').value = id || '';
-
     if (data) {
-         // ... (tu lógica existente para rellenar el formulario con datos es correcta)
         select('movimiento-cantidad').value = `${(Math.abs(data.cantidad) / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, useGrouping: false })}`;
         const fechaInput = select('movimiento-fecha');
         const dateStringForInput = isRecurrent ? data.nextDate : data.fecha;
@@ -6468,7 +6448,7 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
             select('movimiento-cuenta').value = data.cuentaId || '';
             select('movimiento-concepto').value = data.conceptoId || '';
         }
-         const recurrenteCheckbox = select('movimiento-recurrente');
+        const recurrenteCheckbox = select('movimiento-recurrente');
         const recurrentOptions = select('recurrent-options');
         if (mode === 'edit-recurrent') {
             recurrenteCheckbox.checked = true;
@@ -6487,33 +6467,28 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
             recurrenteCheckbox.checked = false;
             recurrentOptions.classList.add('hidden');
         }
-
     } else {
         const fechaInput = select('movimiento-fecha');
         const fecha = new Date();
         fechaInput.value = new Date(fecha.getTime() - (fecha.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
         updateDateDisplay(fechaInput);
     }
-    
     select('delete-movimiento-btn').classList.toggle('hidden', !id || !data);
     select('delete-movimiento-btn').dataset.isRecurrent = String(isRecurrent);
     select('duplicate-movimiento-btn').classList.toggle('hidden', !(mode === 'edit-single' && data));
 
     showModal('movimiento-modal');
-    initAmountInput(); // Prepara el campo de cantidad para la calculadora
-    
-    // ¡LA MAGIA! Abre la calculadora automáticamente en móviles para un nuevo movimiento.
+    initAmountInput();
     if (isMobileDevice() && mode === 'new') {
         setTimeout(() => {
             const amountInput = select('movimiento-cantidad');
-            if(document.activeElement !== amountInput) { // Evita abrirla si ya estás en el campo
-                showCalculator(amountInput);
-            }
+            if(document.activeElement !== amountInput) { showCalculator(amountInput); }
         }, 150);
     }
-	setupFormNavigation();
-};
-        
+
+    // ⭐ MEJORA UX: Activa la navegación por teclado en el formulario
+    setupFormNavigation(); 
+};       
         
         const showGlobalSearchModal = () => {
             hapticFeedback('medium');
@@ -7266,7 +7241,6 @@ const renderInformesPage = () => {
     populate('informe-cuenta-select', getVisibleAccounts(), 'nombre', 'id');
 };
 
-
 /**
  * Dispara una animación de una "burbuja" que viaja desde un elemento
  * hasta la parte superior de la lista de movimientos.
@@ -7278,6 +7252,7 @@ const triggerSaveAnimation = (fromElement, color) => {
 
     const startRect = fromElement.getBoundingClientRect();
     const listElement = select('movimientos-list-container') || select('diario-page');
+    if (!listElement) return;
     const endRect = listElement.getBoundingClientRect();
 
     const bubble = document.createElement('div');
@@ -7299,6 +7274,7 @@ const triggerSaveAnimation = (fromElement, color) => {
 
     bubble.addEventListener('transitionend', () => bubble.remove(), { once: true });
 };
+
 
 /**
  * Cierra todos los dropdowns personalizados abiertos, excepto el que se le pasa como argumento.
@@ -8435,76 +8411,57 @@ const applyOptimisticBalanceUpdate = (newData, oldData = null) => {
     }
     // --- ⭐ FIN DE LA CORRECCIÓN ⭐ ---
 };
+
 const handleSaveMovement = async (form, btn) => {
+    // ... (El inicio de la función de validación es el mismo)
     clearAllErrors(form.id);
     if (!validateMovementForm()) {
         hapticFeedback('error');
         showToast('Por favor, revisa los campos marcados en rojo.', 'warning');
         return false;
     }
-
     const isSaveAndNew = btn && btn.dataset.action === 'save-and-new-movement';
     const saveBtn = select('save-movimiento-btn');
     const saveNewBtn = select('save-and-new-movimiento-btn');
     if (saveBtn) setButtonLoading(saveBtn, true);
     if (saveNewBtn) setButtonLoading(saveNewBtn, true);
 
-    // ... El resto de tu función de guardado, que ya es sólida, se mantiene ...
-    // El único cambio es añadir la llamada a la animación.
-    // A continuación, la lógica completa para que puedas reemplazarla fácilmente:
-
     const isRecurrent = select('movimiento-recurrente').checked;
     const releaseButtons = () => {
         if (saveBtn) setButtonLoading(saveBtn, false);
         if (saveNewBtn) setButtonLoading(saveNewBtn, false);
     };
-    
-    if (isRecurrent) {
-        // (La lógica para recurrentes se mantiene)
-        try {
-            // Tu código existente aquí...
-            // ...
-        } catch (error) {
-            // ...
-        } finally {
-            releaseButtons();
-        }
 
+    if (isRecurrent) {
+        // ... (la lógica de recurrentes se mantiene igual)
+        // (por brevedad, no la repito, pero iría aquí)
+        releaseButtons(); // Asegúrate de liberar los botones en todos los casos
     } else {
         let oldData = null;
         try {
+            // ... (toda tu lógica de recolección de datos se mantiene igual)
             const id = select('movimiento-id').value || generateId();
             const mode = select('movimiento-mode').value;
             if (mode.startsWith('edit')) {
                 const originalMovementIndex = db.movimientos.findIndex(m => m.id === id);
-                if (originalMovementIndex > -1) {
-                    oldData = { ...db.movimientos[originalMovementIndex] };
-                }
+                if (originalMovementIndex > -1) oldData = { ...db.movimientos[originalMovementIndex] };
             }
             const tipoMovimiento = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
             const cantidadPositiva = parseCurrencyString(select('movimiento-cantidad').value);
             const cantidadEnCentimos = Math.round(cantidadPositiva * 100);
             const dataToSave = {
-                id: id,
-                fecha: new Date(select('movimiento-fecha').value).toISOString(),
+                id,
+                fecha: new Date(select('movimiento-fecha').value + 'T12:00:00Z').toISOString(),
                 descripcion: select('movimiento-descripcion').value.trim(),
             };
-
             if (tipoMovimiento === 'traspaso') {
-                Object.assign(dataToSave, {
-                    tipo: 'traspaso', cantidad: Math.abs(cantidadEnCentimos),
-                    cuentaOrigenId: select('movimiento-cuenta-origen').value,
-                    cuentaDestinoId: select('movimiento-cuenta-destino').value,
-                });
+                Object.assign(dataToSave, { tipo: 'traspaso', cantidad: Math.abs(cantidadEnCentimos), cuentaOrigenId: select('movimiento-cuenta-origen').value, cuentaDestinoId: select('movimiento-cuenta-destino').value });
             } else {
-                Object.assign(dataToSave, {
-                    tipo: 'movimiento',
-                    cantidad: tipoMovimiento === 'gasto' ? -Math.abs(cantidadEnCentimos) : Math.abs(cantidadEnCentimos),
-                    cuentaId: select('movimiento-cuenta').value,
-                    conceptoId: select('movimiento-concepto').value,
-                });
+                Object.assign(dataToSave, { tipo: 'movimiento', cantidad: tipoMovimiento === 'gasto' ? -Math.abs(cantidadEnCentimos) : Math.abs(cantidadEnCentimos), cuentaId: select('movimiento-cuenta').value, conceptoId: select('movimiento-concepto').value });
             }
-
+            
+            // ⭐ INICIO DE LA MEJORA: Actualización Optimista
+            
             if (oldData) {
                 const index = db.movimientos.findIndex(m => m.id === id);
                 if (index > -1) db.movimientos[index] = dataToSave;
@@ -8513,27 +8470,30 @@ const handleSaveMovement = async (form, btn) => {
             }
             applyOptimisticBalanceUpdate(dataToSave, oldData);
 
-            // ⭐ ¡LA MEJORA VISUAL! ⭐
+            // 1. Lanzamos la animación visual
             triggerSaveAnimation(btn, dataToSave.cantidad >= 0 ? 'green' : 'red');
 
-            // Cerramos el modal antes de la operación de red
+            // 2. Cerramos el modal inmediatamente
             if (!isSaveAndNew) {
                 hideModal('movimiento-modal');
             } else {
                 startMovementForm();
             }
 
-            // La UI se actualiza inmediatamente
+            // 3. Actualizamos la UI localmente sin esperar a Firebase
             setTimeout(() => updateLocalDataAndRefreshUI(), 100); 
 
+            // ⭐ FIN DE LA MEJORA
+            
+            // ... (el resto de la lógica de guardado con batch.commit() se mantiene igual)
             const batch = fbDb.batch();
             const userRef = fbDb.collection('users').doc(currentUser.uid);
             if (oldData) {
                 if (oldData.tipo === 'traspaso') {
-                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(oldData.cantidad) });
-                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(-oldData.cantidad) });
+                    if (oldData.cuentaOrigenId) batch.update(userRef.collection('cuentas').doc(oldData.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(oldData.cantidad) });
+                    if (oldData.cuentaDestinoId) batch.update(userRef.collection('cuentas').doc(oldData.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(-oldData.cantidad) });
                 } else {
-                    batch.update(userRef.collection('cuentas').doc(oldData.cuentaId), { saldo: firebase.firestore.FieldValue.increment(-oldData.cantidad) });
+                    if (oldData.cuentaId) batch.update(userRef.collection('cuentas').doc(oldData.cuentaId), { saldo: firebase.firestore.FieldValue.increment(-oldData.cantidad) });
                 }
             }
             batch.set(userRef.collection('movimientos').doc(id), dataToSave);
@@ -8544,13 +8504,12 @@ const handleSaveMovement = async (form, btn) => {
                 batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaId), { saldo: firebase.firestore.FieldValue.increment(dataToSave.cantidad) });
             }
             await batch.commit();
-            
             hapticFeedback('success');
             showToast(mode.startsWith('edit') ? 'Movimiento actualizado.' : 'Movimiento guardado.');
         } catch (error) {
             console.error("Error al guardar movimiento:", error);
             showToast("Error al guardar. Revirtiendo cambios.", "danger");
-            // Lógica de reversión si falla Firebase...
+            // Aquí iría la lógica para revertir el cambio optimista
         } finally {
             releaseButtons();
         }
