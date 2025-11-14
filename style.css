@@ -1,5 +1,4 @@
 
-
 /* --- Mejora 1: Bottom Sheet de Acciones Rápidas --- */
 #main-add-sheet-body {
     display: flex;
@@ -2695,3 +2694,46 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 }
 
 /* === FIN: Estilo personalizado para KPI de Patrimonio Neto === */
+
+/* === INICIO: Estilos para la Tarjeta de Sumario del Portafolio === */
+
+.portfolio-summary-card {
+    background-color: var(--c-surface-variant);
+    border: 1px solid var(--c-outline);
+    border-radius: var(--border-radius-lg);
+    padding: var(--sp-4);
+    margin-top: var(--sp-4);
+}
+
+.portfolio-summary-card__title {
+    font-size: var(--fs-base);
+    font-weight: 700;
+    color: var(--c-on-surface-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--sp-4);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+}
+
+.portfolio-summary-card__grid {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    gap: var(--sp-3);
+}
+
+.summary-kpi__label {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--c-on-surface-secondary);
+    margin-bottom: var(--sp-1);
+}
+
+.summary-kpi__value {
+    font-size: var(--fs-xl);
+    font-weight: 800;
+    line-height: 1.2;
+}
+/* === FIN: Estilos para la Tarjeta de Sumario del Portafolio === */
