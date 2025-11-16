@@ -7270,26 +7270,6 @@ const triggerSaveAnimation = (fromElement, color) => {
     bubble.addEventListener('transitionend', () => bubble.remove(), { once: true });
 };
 
-/**
- * Configura la navegación secuencial con "Enter" dentro del formulario de movimientos.
- */
-const setupFormNavigation = () => {
-    const cantidadInput = document.getElementById('movimiento-cantidad');
-    const descripcionInput = document.getElementById('movimiento-descripcion');
-    // Para los selectores, apuntamos al 'trigger' que crearemos
-    const conceptoTrigger = document.querySelector('#movimiento-concepto + .custom-select__trigger');
-    const cuentaTrigger = document.querySelector('#movimiento-cuenta + .custom-select__trigger');
-    const saveButton = document.getElementById('save-movimiento-btn');
-
-    const addEnterListener = (element, nextAction) => {
-        if (!element) return;
-        element.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && element.offsetParent !== null) {
-                e.preventDefault();
-                nextAction();
-            }
-        });
-    };
 
     addEnterListener(cantidadInput, () => descripcionInput.focus());
     addEnterListener(descripcionInput, () => {
