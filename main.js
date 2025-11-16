@@ -7903,8 +7903,7 @@ if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || tar
                 hapticFeedback('light');
             }
         });
-    }
-};
+    };
 // =================================================================
 // === FIN: BLOQUE DE CÓDIGO CORREGIDO PARA REEMPLAZAR           ===
 // =================================================================
