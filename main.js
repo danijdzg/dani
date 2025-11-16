@@ -1115,12 +1115,34 @@ const setupFormNavigation = () => {
     addEnterListener(descripcionInput, () => {
         const isTraspaso = !select('traspaso-fields').classList.contains('hidden');
         if (isTraspaso) {
-            origenTrigger?.click();
+            origenTrigger?.focus(); // Usamos focus() para permitir la navegación por teclado
         } else {
-            conceptoTrigger?.click();
+            conceptoTrigger?.focus();
         }
     });
-    addEnterListener(fechaButton, () => saveButton.click());
+
+    // Para los custom selects, 'Enter' abrirá el dropdown. Necesitamos un listener en las opciones.
+    const addSelectEnterListener = (selectWrapper, nextElement) => {
+        if (!selectWrapper) return;
+        selectWrapper.addEventListener('change', () => {
+            // Cuando una opción es elegida, saltamos al siguiente
+            setTimeout(() => nextElement?.focus(), 50);
+        });
+        selectWrapper.querySelector('.custom-select__trigger').addEventListener('keydown', (e) => {
+            if(e.key === 'Enter') {
+                const isOpen = selectWrapper.classList.contains('is-open');
+                if(!isOpen) setTimeout(() => nextElement?.focus(), 50);
+            }
+        });
+    };
+
+    addSelectEnterListener(conceptoTrigger?.closest('.custom-select-wrapper'), cuentaTrigger);
+    addSelectEnterListener(cuentaTrigger?.closest('.custom-select-wrapper'), fechaButton);
+    addSelectEnterListener(origenTrigger?.closest('.custom-select-wrapper'), destinoTrigger);
+    addSelectEnterListener(destinoTrigger?.closest('.custom-select-wrapper'), fechaButton);
+
+    addEnterListener(fechaButton, () => saveButton.focus());
+    // El último 'Enter' en el botón de guardar enviará el formulario
 };
 
 	/**
@@ -2202,14 +2224,15 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
         el.value = optionsArray.some(o => o.value === currentVal) ? currentVal : (optionsArray.length > 0 ? optionsArray[0].value : "");
     };
     
+    // Poblamos los selects originales como siempre
     populate('movimiento-cuenta', visibleAccounts, 'nombre', 'id', false, true);
     populate('movimiento-concepto', db.conceptos, 'nombre', 'id', false, true);
     populate('movimiento-cuenta-origen', visibleAccounts, 'nombre', 'id', false, true);
     populate('movimiento-cuenta-destino', visibleAccounts, 'nombre', 'id', false, true);
-    // ... cualquier otra llamada a 'populate' que tengas se mantiene aquí ...
 
     // --- ¡AQUÍ ESTÁ LA MAGIA! ---
     // Transformamos los selects del formulario en componentes personalizados.
+    // Usamos setTimeout para asegurar que el DOM se ha actualizado antes de manipularlo.
     setTimeout(() => {
         createCustomSelect(select('movimiento-concepto'));
         createCustomSelect(select('movimiento-cuenta'));
@@ -6400,18 +6423,21 @@ const setMovimientoFormType = (type) => {
             }
         };
 
-
- const startMovementForm = async (id = null, isRecurrent = false, initialType = 'gasto') => {
-    // ... (El inicio de tu función hasta la llamada a showModal se mantiene igual) ...
+// ▼▼▼ REEMPLAZA TU FUNCIÓN startMovementForm CON ESTA ▼▼▼
+const startMovementForm = async (id = null, isRecurrent = false, initialType = 'gasto') => {
     hapticFeedback('medium');
     const form = select('form-movimiento');
     form.reset();
     clearAllErrors(form.id);
-    populateAllDropdowns();
+    
+    // Importante: Poblamos y creamos los custom selects ANTES de intentar asignarles valores.
+    populateAllDropdowns(); 
+
     selectAll('.day-selector-btn').forEach(btn => btn.classList.remove('active'));
     select('weekly-day-selector').classList.add('hidden');
     let data = null;
     let mode = 'new';
+
     if (id) {
         try {
             const collectionName = isRecurrent ? 'recurrentes' : 'movimientos';
@@ -6429,66 +6455,86 @@ const setMovimientoFormType = (type) => {
     setMovimientoFormType(initialType);
     select('movimiento-mode').value = mode;
     select('movimiento-id').value = id || '';
-    if (data) {
-        select('movimiento-cantidad').value = `${(Math.abs(data.cantidad) / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, useGrouping: false })}`;
-        const fechaInput = select('movimiento-fecha');
-        const dateStringForInput = isRecurrent ? data.nextDate : data.fecha;
-        if (dateStringForInput) {
-            const fecha = parseDateStringAsUTC(dateStringForInput);
-            if (fecha && !isNaN(fecha)) {
-                fechaInput.value = fecha.toISOString().slice(0,10);
-                updateDateDisplay(fechaInput);
+
+    // Usamos setTimeout para asegurarnos de que los custom selects se han creado
+    // antes de intentar asignarles un valor.
+    setTimeout(() => {
+        if (data) {
+            select('movimiento-cantidad').value = `${(Math.abs(data.cantidad) / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, useGrouping: false })}`;
+            const fechaInput = select('movimiento-fecha');
+            const dateStringForInput = isRecurrent ? data.nextDate : data.fecha;
+            if (dateStringForInput) {
+                const fecha = parseDateStringAsUTC(dateStringForInput);
+                if (fecha && !isNaN(fecha)) {
+                    fechaInput.value = fecha.toISOString().slice(0,10);
+                    updateDateDisplay(fechaInput);
+                }
             }
-        }
-        select('movimiento-descripcion').value = data.descripcion || '';
-        if (data.tipo === 'traspaso') {
-            select('movimiento-cuenta-origen').value = data.cuentaOrigenId || '';
-            select('movimiento-cuenta-destino').value = data.cuentaDestinoId || '';
-        } else {
-            select('movimiento-cuenta').value = data.cuentaId || '';
-            select('movimiento-concepto').value = data.conceptoId || '';
-        }
-        const recurrenteCheckbox = select('movimiento-recurrente');
-        const recurrentOptions = select('recurrent-options');
-        if (mode === 'edit-recurrent') {
-            recurrenteCheckbox.checked = true;
-            select('recurrent-frequency').value = data.frequency;
-            select('recurrent-next-date').value = data.nextDate;
-            select('recurrent-end-date').value = data.endDate || '';
-            recurrentOptions.classList.remove('hidden');
-            if (data.frequency === 'weekly' && data.weekDays) {
-                select('weekly-day-selector').classList.remove('hidden');
-                data.weekDays.forEach(day => {
-                    const btn = document.querySelector(`.day-selector-btn[data-day="${day}"]`);
-                    if(btn) btn.classList.add('active');
-                });
+            select('movimiento-descripcion').value = data.descripcion || '';
+            if (data.tipo === 'traspaso') {
+                select('movimiento-cuenta-origen').value = data.cuentaOrigenId || '';
+                select('movimiento-cuenta-destino').value = data.cuentaDestinoId || '';
+            } else {
+                select('movimiento-cuenta').value = data.cuentaId || '';
+                select('movimiento-concepto').value = data.conceptoId || '';
+            }
+            const recurrenteCheckbox = select('movimiento-recurrente');
+            const recurrentOptions = select('recurrent-options');
+            if (mode === 'edit-recurrent') {
+                recurrenteCheckbox.checked = true;
+                select('recurrent-frequency').value = data.frequency;
+                select('recurrent-next-date').value = data.nextDate;
+                select('recurrent-end-date').value = data.endDate || '';
+                recurrentOptions.classList.remove('hidden');
+                if (data.frequency === 'weekly' && data.weekDays) {
+                    select('weekly-day-selector').classList.remove('hidden');
+                    data.weekDays.forEach(day => {
+                        const btn = document.querySelector(`.day-selector-btn[data-day="${day}"]`);
+                        if(btn) btn.classList.add('active');
+                    });
+                }
+            } else {
+                recurrenteCheckbox.checked = false;
+                recurrentOptions.classList.add('hidden');
             }
         } else {
-            recurrenteCheckbox.checked = false;
-            recurrentOptions.classList.add('hidden');
+            const fechaInput = select('movimiento-fecha');
+            const fecha = new Date();
+            fechaInput.value = new Date(fecha.getTime() - (fecha.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
+            updateDateDisplay(fechaInput);
         }
-    } else {
-        const fechaInput = select('movimiento-fecha');
-        const fecha = new Date();
-        fechaInput.value = new Date(fecha.getTime() - (fecha.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
-        updateDateDisplay(fechaInput);
-    }
-    select('delete-movimiento-btn').classList.toggle('hidden', !id || !data);
-    select('delete-movimiento-btn').dataset.isRecurrent = String(isRecurrent);
-    select('duplicate-movimiento-btn').classList.toggle('hidden', !(mode === 'edit-single' && data));
+
+        // Forzamos la actualización de los custom selects para que muestren el valor correcto
+        document.querySelectorAll('#movimiento-modal select').forEach(s => s.dispatchEvent(new Event('change')));
+
+        select('delete-movimiento-btn').classList.toggle('hidden', !id || !data);
+        select('delete-movimiento-btn').dataset.isRecurrent = String(isRecurrent);
+        select('duplicate-movimiento-btn').classList.toggle('hidden', !(mode === 'edit-single' && data));
+        
+    }, 10); // Un pequeño retardo es suficiente
 
     showModal('movimiento-modal');
     initAmountInput();
+    
+    // ⭐ MEJORA UX: Activa la navegación por teclado en el formulario
+    setupFormNavigation(); 
+
     if (isMobileDevice() && mode === 'new') {
         setTimeout(() => {
             const amountInput = select('movimiento-cantidad');
-            if(document.activeElement !== amountInput) { showCalculator(amountInput); }
-        }, 150);
+            if(document.activeElement !== amountInput) { 
+                // En móvil, abrimos la calculadora en lugar del teclado del sistema
+                showCalculator(amountInput); 
+            }
+        }, 350); // Damos tiempo a que el modal termine de animarse
+    } else if (mode === 'new') {
+        setTimeout(() => {
+            select('movimiento-cantidad').focus();
+        }, 350);
     }
-
-    // ⭐ MEJORA UX: Activa la navegación por teclado en el formulario
-    setupFormNavigation(); 
-};       
+};
+// ▲▲▲ FIN DEL REEMPLAZO ▲▲▲
+ 
         
         const showGlobalSearchModal = () => {
             hapticFeedback('medium');
@@ -7361,7 +7407,13 @@ function createCustomSelect(selectElement) {
         wrapper.classList.toggle('is-open');
         trigger.setAttribute('aria-expanded', wrapper.classList.contains('is-open'));
     });
-
+	// Navegación por teclado
+    trigger.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            trigger.click();
+        }
+    });
     optionsContainer.addEventListener('click', (e) => {
         const option = e.target.closest('.custom-select__option');
         if (option) {
@@ -9693,7 +9745,6 @@ const handleDescriptionInput = () => {
             return;
         }
 
-        // 1. Busca las mejores sugerencias basadas en tus hábitos
         const suggestions = [];
         for (const [desc, data] of intelligentIndex.entries()) {
             if (desc.includes(query)) {
@@ -9710,9 +9761,8 @@ const handleDescriptionInput = () => {
             return scoreB - scoreA;
         });
 
-        // [CAMBIO UX] Esta función ya NO RELLENA los campos automáticamente.
-        // Solo prepara la lista de sugerencias para que el usuario elija.
-
+        // Esta función ahora solo muestra la lista de sugerencias.
+        // La acción de rellenar se hará al hacer clic en un item.
         if (suggestions.length > 0) {
             suggestionsBox.innerHTML = suggestions.slice(0, DESCRIPTION_SUGGESTION_LIMIT).map(s => {
                 const concepto = db.conceptos.find(c => c.id === s.conceptoId)?.nombre || 'S/C';
@@ -9732,10 +9782,8 @@ const handleDescriptionInput = () => {
         } else {
             suggestionsBox.style.display = 'none';
         }
-    }, 250);
+    }, 250); // Un pequeño retardo para no sobrecargar al teclear
 };
-
-// EN main.js - AÑADE ESTO AL FINAL DEL FICHERO
 
 // --- REGISTRO DEL SERVICE WORKER ---
 // Comprobamos si el navegador soporta Service Workers
