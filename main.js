@@ -7485,135 +7485,59 @@ const initAmountInput = () => {
 };
 
 
-// ▲▲▲ FIN: BLOQUE DEFINITIVO DE FUNCIONES DE MEJORA ▲▲▲
-
- const attachEventListeners = () => {
-const enableHaptics = () => {
+const attachEventListeners = () => {
+    const enableHaptics = () => {
         userHasInteracted = true;
         document.body.removeEventListener('touchstart', enableHaptics, { once: true });
         document.body.removeEventListener('click', enableHaptics, { once: true });
     };
     document.body.addEventListener('touchstart', enableHaptics, { once: true, passive: true });
     document.body.addEventListener('click', enableHaptics, { once: true });
-    // ▲▲▲ FIN DEL BLOQUE A AÑADIR ▲▲▲
-	
-	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
-const mainScrollerPtr = selectOne('.app-layout__main');
-const ptrIndicator = document.createElement('div');
-ptrIndicator.id = 'pull-to-refresh-indicator';
-ptrIndicator.innerHTML = '<div class="spinner"></div>';
-if (ptrElement) ptrElement.prepend(ptrIndicator);
 
-let ptrState = {
-    startY: 0,
-    isPulling: false,
-    distance: 0,
-    threshold: 80 // Distancia necesaria para activar
-};
+    const ptrElement = document.getElementById('diario-page');
+    const mainScrollerPtr = document.querySelector('.app-layout__main');
+    if (ptrElement && mainScrollerPtr) {
+        const ptrIndicator = document.createElement('div');
+        ptrIndicator.id = 'pull-to-refresh-indicator';
+        ptrIndicator.innerHTML = '<div class="spinner"></div>';
+        ptrElement.prepend(ptrIndicator);
 
-if (ptrElement && mainScrollerPtr) {
-    ptrElement.addEventListener('touchstart', (e) => {
-        if (mainScrollerPtr.scrollTop === 0) { // Solo si estamos arriba del todo
-            ptrState.startY = e.touches[0].clientY;
-            ptrState.isPulling = true;
-        }
-    }, { passive: true });
+        let ptrState = { startY: 0, isPulling: false, distance: 0, threshold: 80 };
 
-    ptrElement.addEventListener('touchmove', (e) => {
-        if (!ptrState.isPulling) return;
-        
-        const currentY = e.touches[0].clientY;
-        ptrState.distance = currentY - ptrState.startY;
+        ptrElement.addEventListener('touchstart', (e) => {
+            if (mainScrollerPtr.scrollTop === 0) {
+                ptrState.startY = e.touches[0].clientY;
+                ptrState.isPulling = true;
+            }
+        }, { passive: true });
 
-        if (ptrState.distance > 0) {
-            e.preventDefault(); // Evita el scroll del navegador
-            ptrIndicator.classList.add('visible');
-            const rotation = Math.min(ptrState.distance * 2.5, 360);
-            ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
-            ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
-        }
-    }, { passive: false });
+        ptrElement.addEventListener('touchmove', (e) => {
+            if (!ptrState.isPulling) return;
+            const currentY = e.touches[0].clientY;
+            ptrState.distance = currentY - ptrState.startY;
+            if (ptrState.distance > 0) {
+                ptrIndicator.classList.add('visible');
+                const rotation = Math.min(ptrState.distance * 2.5, 360);
+                ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
+                ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
+            }
+        }, { passive: false });
 
-    ptrElement.addEventListener('touchend', async () => {
-        if (ptrState.isPulling && ptrState.distance > ptrState.threshold) {
-            hapticFeedback('medium');
-            ptrIndicator.querySelector('.spinner').style.transform = '';
-            ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
-            
-            // Acción de refresco: Recargamos los movimientos del diario
-            await renderDiarioPage();
-
-            // Ocultar indicador después de refrescar
-            setTimeout(() => {
-                ptrIndicator.classList.remove('visible');
-                ptrIndicator.querySelector('.spinner').style.animation = '';
-            }, 500);
-        } else {
-            ptrIndicator.classList.remove('visible');
-        }
-
-        ptrState.isPulling = false;
-        ptrState.distance = 0;
-    });
-}
-
-	
-    const cantidadInput = document.getElementById("movimiento-cantidad");
-    if (cantidadInput) {
-        const cantidadError = document.getElementById("movimiento-cantidad-error");
-        cantidadInput.addEventListener("input", () => {
-            let valor = cantidadInput.value.trim();
-            valor = valor.replace(",", ".");
-            const regex = /^\d+(.\d{0,2})?$/;
-            if (valor === "" || !regex.test(valor)) {
-                cantidadError.textContent = "Introduce un número positivo (ej: 2,50 o 15.00)";
-                cantidadInput.classList.add("form-input--error");
+        ptrElement.addEventListener('touchend', async () => {
+            if (ptrState.isPulling && ptrState.distance > ptrState.threshold) {
+                hapticFeedback('medium');
+                ptrIndicator.querySelector('.spinner').style.transform = '';
+                ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
+                await renderDiarioPage(); // Refresca la página del diario
+                setTimeout(() => {
+                    ptrIndicator.classList.remove('visible');
+                    ptrIndicator.querySelector('.spinner').style.animation = '';
+                }, 500);
             } else {
-                cantidadError.textContent = "";
-                cantidadInput.classList.remove("form--error");
+                ptrIndicator.classList.remove('visible');
             }
-        });
-        const descripcionInput = document.getElementById("movimiento-descripcion");
-        const cuentaSelect = document.getElementById("movimiento-cuenta");
-        const saveBtn = document.getElementById("save-movimiento-btn");
-        document.addEventListener("show-modal", (e) => {
-            if (e.detail.modalId === "movimiento-modal") {
-                setTimeout(() => cantidadInput.focus(), 100);
-            }
-        });
-        cantidadInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                descripcionInput.focus();
-            }
-        });
-        descripcionInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                cuentaSelect.focus();
-            }
-        });
-        cuentaSelect.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                saveBtn.click();
-            }
-        });
-    }
-
-    const amountInputForFormatting = select('movimiento-cantidad');
-    if (amountInputForFormatting) {
-        amountInputForFormatting.addEventListener('focus', (e) => {
-            const input = e.target;
-            if (input.value === '') return;
-            const rawValue = input.value.replace(/\./g, '');
-            input.value = rawValue;
-        });
-        amountInputForFormatting.addEventListener('blur', (e) => {
-            const input = e.target;
-            if (input.value === '') return;
-            const numericValue = parseCurrencyString(input.value);
-            input.value = formatAsCurrencyInput(numericValue);
+            ptrState.isPulling = false;
+            ptrState.distance = 0;
         });
     }
 
@@ -7636,49 +7560,43 @@ if (ptrElement && mainScrollerPtr) {
         if (!target.closest('.custom-select-wrapper')) {
             closeAllCustomSelects(null);
         }
-
-        if (target.matches('.input-amount-calculator')) {
-            e.preventDefault();
-            showCalculator(target);
-            return;
+        
+        const suggestionItem = target.closest('[data-action="apply-description-suggestion"]');
+        if (suggestionItem) {
+            applyDescriptionSuggestion(suggestionItem);
+            return; // Detenemos la ejecución para no procesar otras acciones
         }
+        
         const actionTarget = target.closest('[data-action]');
         if (!actionTarget) return;
 
-        const { action, id, page, type, modalId, reportId } = actionTarget.dataset;
+        const { action, id, page, type, modalId } = actionTarget.dataset;
         const btn = actionTarget.closest('button');
         
         const actions = {
-			'swipe-show-irr-history': () => handleShowIrrHistory(type),
-			'show-main-menu': () => {
-        const menu = document.getElementById('main-menu-popover');
-        if (!menu) return;
-        hapticFeedback('light');
-        menu.classList.toggle('popover-menu--visible');
-        if (menu.classList.contains('popover-menu--visible')) {
-            setTimeout(() => {
-                const closeOnClickOutside = (event) => {
-                    if (!menu.contains(event.target) && !event.target.closest('[data-action="show-main-menu"]')) {
-                        menu.classList.remove('popover-menu--visible');
-                        document.removeEventListener('click', closeOnClickOutside);
-                    }
-                };
-                document.addEventListener('click', closeOnClickOutside);
-            }, 0);
-        }
-    },
+            'show-main-menu': () => {
+                const menu = document.getElementById('main-menu-popover');
+                if (!menu) return;
+                hapticFeedback('light');
+                menu.classList.toggle('popover-menu--visible');
+                if (menu.classList.contains('popover-menu--visible')) {
+                    setTimeout(() => {
+                        const closeOnClickOutside = (event) => {
+                            if (!menu.contains(event.target) && !event.target.closest('[data-action="show-main-menu"]')) {
+                                menu.classList.remove('popover-menu--visible');
+                                document.removeEventListener('click', closeOnClickOutside);
+                            }
+                        };
+                        document.addEventListener('click', closeOnClickOutside);
+                    }, 0);
+                }
+            },
             'show-main-add-sheet': () => showModal('main-add-sheet'),
-			'show-pnl-breakdown': () => handleShowPnlBreakdown(actionTarget.dataset.id),
-			 'show-irr-breakdown': () => handleShowIrrBreakdown(actionTarget.dataset.id),
-			'open-movement-form': (e) => {
-    const type = e.target.closest('[data-type]').dataset.type;
-    hideModal('main-add-sheet');
-    // Usamos un pequeño retardo para que la animación de cierre del sheet
-    // no se solape con la de apertura del formulario, creando un efecto más fluido.
-    setTimeout(() => {
-        startMovementForm(null, false, type);
-    }, 250);
-},
+            'open-movement-form': () => {
+                const movType = actionTarget.dataset.type;
+                hideModal('main-add-sheet');
+                setTimeout(() => startMovementForm(null, false, movType), 250);
+            },
             'export-filtered-csv': () => handleExportFilteredCsv(btn),
             'show-diario-filters': showDiarioFiltersModal,
             'clear-diario-filters': clearDiarioFilters,
@@ -7987,7 +7905,7 @@ if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || tar
             }
         });
     }
-
+};
 // =================================================================
 // === FIN: BLOQUE DE CÓDIGO CORREGIDO PARA REEMPLAZAR           ===
 // =================================================================
