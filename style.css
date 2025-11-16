@@ -1702,12 +1702,12 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 #movimiento-modal .form-group {
     margin-bottom: var(--sp-2);
 }
-/* EN style.css - PEGA ESTOS BLOQUES AL FINAL DEL ARCHIVO */
-
 /* === INICIO: ESTILOS PARA FORMULARIO DE ALTA DENSIDAD === */
+
+/* 1. La nueva rejilla principal del formulario */
 .dense-form-grid {
     display: grid;
-    grid-template-columns: 40% 1fr;
+    grid-template-columns: 40% 1fr; /* Columna de cantidad más pequeña */
     grid-template-areas:
         "amount      description"
         "details     details";
@@ -1715,6 +1715,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     align-items: start;
 }
 
+/* El contenedor de "details" (Concepto/Cuenta o Traspaso) será otra rejilla interna */
 #movimiento-fields, #traspaso-fields {
     grid-area: details;
     display: grid;
@@ -1722,21 +1723,24 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     gap: var(--sp-3) var(--sp-2);
 }
 
+/* 2. El nuevo componente de campo de formulario compacto */
 .form-field-compact {
     position: relative;
-    font-size: var(--fs-sm);
+    font-size: var(--fs-sm); /* Reducción sutil de la fuente base */
 }
 
+/* La etiqueta ahora es más pequeña y se posiciona dentro */
 .form-field-compact > label {
     position: absolute;
-    top: 5px;
+    top: 5px; /* Ligeramente desplazada hacia abajo */
     left: 12px;
-    font-size: 0.65rem;
+    font-size: 0.65rem; /* Mucho más pequeña */
     font-weight: 600;
     color: var(--c-on-surface-secondary);
-    pointer-events: none;
+    pointer-events: none; /* No interfiere con el clic en el input */
 }
 
+/* El contenedor del input (para poder añadir botones, etc.) */
 .form-field-compact .input-wrapper {
     display: flex;
     align-items: center;
@@ -1750,10 +1754,11 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     box-shadow: var(--c-border-glow);
 }
 
+/* Ajustes para todos los inputs/selects dentro del nuevo componente */
 .form-field-compact input,
 .form-field-compact select {
     width: 100%;
-    padding: 22px 12px 6px 12px;
+    padding: 22px 12px 6px 12px; /* Más padding arriba para dejar sitio a la etiqueta */
     border: none;
     background: transparent;
     color: var(--c-on-surface);
@@ -1764,14 +1769,31 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 .form-field-compact select:focus {
     outline: none;
 }
+.form-field-compact .form-error {
+    margin-top: 4px;
+    padding-left: 4px;
+}
 
+/* Ajustes específicos para el campo de cantidad */
 #movimiento-cantidad-form-group input {
     font-size: 1.25rem;
     font-weight: 700;
     text-align: right;
     padding-right: 4px;
 }
+#movimiento-cantidad-form-group .icon-btn {
+    margin-right: 4px;
+}
 
+/* Ajustes para selects con botón de acción */
+.input-wrapper--with-addon select {
+    padding-right: 0;
+}
+.input-wrapper--with-addon .icon-btn {
+    flex-shrink: 0;
+}
+
+/* 3. Sección Recurrente compacta */
 .recurrent-section {
     background-color: var(--c-surface-variant);
     border: 1px solid var(--c-outline);
@@ -1779,7 +1801,73 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     margin-top: var(--sp-3);
     padding: 0 var(--sp-3);
 }
+.recurrent-section__label {
+    font-weight: 600;
+    font-size: var(--fs-sm);
+    color: var(--c-on-surface);
+}
+#recurrent-options {
+    display: flex;
+    flex-direction: column; /* Apila las opciones principales y el selector de días */
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    border-top: 1px solid var(--c-outline);
+    margin-top: var(--sp-2);
+}
+.recurrent-options__main {
+    display: flex;
+    gap: var(--sp-2);
+}
 
+.recurrent-options__main > * {
+    background-color: var(--c-surface);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    padding: 6px 8px;
+    border: 1px solid var(--c-outline);
+}
+
+#weekly-day-selector-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.day-selector-btn {
+    flex: 1;
+    height: 36px;
+    border: 1px solid var(--c-outline);
+    background-color: var(--c-surface);
+    color: var(--c-on-surface-secondary);
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.day-selector-btn:hover {
+    border-color: var(--c-primary);
+}
+
+.day-selector-btn.active {
+    background-color: var(--c-primary);
+    border-color: var(--c-primary);
+    color: var(--c-white);
+    transform: scale(1.05);
+}
+#recurrent-options select,
+#recurrent-options input {
+    background-color: var(--c-surface);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    padding: 6px 8px;
+    /* ▼▼▼ LÍNEAS AÑADIDAS PARA LA CORRECCIÓN ▼▼▼ */
+    color: var(--c-on-surface); /* Asegura que el texto use el color del tema */
+    border: 1px solid var(--c-outline); /* Añade un borde consistente */
+    /* ▲▲▲ FIN DE LAS LÍNEAS AÑADIDAS ▲▲▲ */
+}
+
+/* 4. Botón de fecha compacto */
 .date-button-compact {
     width: 100%;
     justify-content: center;
@@ -1790,111 +1878,37 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     background-color: var(--c-surface-variant);
     color: var(--c-on-surface);
     border: none;
-    border-radius: var(--border-radius-md);
-    cursor: pointer;
 }
+.date-button-compact .material-icons {
+    color: var(--c-on-surface-secondary);
+}
+
+/* 5. Eliminamos márgenes innecesarios para máxima densidad */
+#movimiento-modal .modal__body,
+#movimiento-modal .modal__header {
+    padding-left: var(--sp-3);
+    padding-right: var(--sp-3);
+}
+
 /* === FIN: ESTILOS PARA FORMULARIO DE ALTA DENSIDAD === */
 
+/* EN style.css, AÑADE ESTE BLOQUE COMPLETO */
 
-/* === INICIO: ESTILOS PARA ANIMACIÓN DE GUARDADO === */
-.save-animation-bubble {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    position: fixed;
-    z-index: 99999;
-    opacity: 0;
-    pointer-events: none;
-    transition: transform 0.7s cubic-bezier(0.5, -0.5, 0.5, 1.5), opacity 0.7s;
-}
-/* === FIN: ESTILOS PARA ANIMACIÓN DE GUARDADO === */
+/* --- INICIO: Estilos para el Dropdown Personalizado --- */
 
+/* 7. Dropdown Personalizado (La magia visual) */
+.custom-select-wrapper { position: relative; width: 100%; }
+.custom-select__trigger { position: relative; width: 100%; padding: 22px 12px 6px 12px; border-radius: var(--border-radius-md); background: transparent; color: var(--c-on-surface); font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: none; /* Quitamos el borde porque ya lo tiene el .input-wrapper */ }
+.custom-select-wrapper.is-open .input-wrapper { border-color: var(--c-primary); box-shadow: var(--c-border-glow); } /* El brillo se aplica al contenedor */
+.custom-select__trigger::after { content: ''; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--c-on-surface-secondary); transition: transform 0.2s ease-in-out; }
+.custom-select-wrapper.is-open .custom-select__trigger::after { transform: translateY(-50%) rotate(180deg); }
+.custom-select__options { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background-color: var(--c-surface); border: 1px solid var(--c-outline); border-radius: var(--border-radius-md); box-shadow: var(--shadow-md); z-index: 1070; max-height: 200px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; }
+.custom-select-wrapper.is-open .custom-select__options { opacity: 1; visibility: visible; transform: translateY(0); }
+.custom-select__option { padding: var(--sp-2) var(--sp-3); color: var(--c-on-surface-secondary); font-weight: 500; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+.custom-select__option:hover { background-color: var(--c-surface-variant); color: var(--c-on-surface); }
+.custom-select__option.is-selected { background-color: var(--c-primary); color: var(--c-white); font-weight: 600; }
+.custom-select-wrapper .form-select-hidden { position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
-/* === INICIO: Estilos para Dropdown Personalizado === */
-.custom-select-wrapper { 
-    position: relative; 
-    width: 100%; 
-}
-.custom-select-wrapper .input-wrapper {
-    position: relative;
-}
-.custom-select__trigger {
-    position: relative;
-    width: 100%;
-    padding: 22px 32px 6px 12px;
-    background: transparent;
-    color: var(--c-on-surface);
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    border: none; 
-}
-.custom-select__trigger::after { 
-    content: ''; 
-    position: absolute; 
-    right: 12px; 
-    top: 50%; 
-    margin-top: 4px;
-    transform: translateY(-50%); 
-    width: 0; 
-    height: 0; 
-    border-left: 5px solid transparent; 
-    border-right: 5px solid transparent; 
-    border-top: 6px solid var(--c-on-surface-secondary); 
-    transition: transform 0.2s ease-in-out; 
-}
-.custom-select-wrapper.is-open .custom-select__trigger::after { 
-    transform: translateY(-50%) rotate(180deg); 
-}
-.custom-select__options { 
-    position: absolute; 
-    top: calc(100% + 4px); 
-    left: 0; 
-    right: 0; 
-    background-color: var(--c-surface); 
-    border: 1px solid var(--c-outline); 
-    border-radius: var(--border-radius-md); 
-    box-shadow: var(--shadow-md); 
-    z-index: 1070; 
-    max-height: 200px; 
-    overflow-y: auto; 
-    opacity: 0; 
-    visibility: hidden; 
-    transform: translateY(-10px); 
-    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; 
-}
-.custom-select-wrapper.is-open .custom-select__options { 
-    opacity: 1; 
-    visibility: visible; 
-    transform: translateY(0); 
-}
-.custom-select__option { 
-    padding: var(--sp-2) var(--sp-3); 
-    color: var(--c-on-surface-secondary); 
-    font-weight: 500; 
-    cursor: pointer; 
-    transition: background-color 0.2s, color 0.2s; 
-}
-.custom-select__option:hover { 
-    background-color: var(--c-surface-variant); 
-    color: var(--c-on-surface); 
-}
-.custom-select__option.is-selected { 
-    background-color: var(--c-primary); 
-    color: var(--c-white); 
-    font-weight: 600; 
-}
-.custom-select-wrapper .form-select-hidden {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-    width: 1px;
-    height: 1px;
-}
-/* === FIN: Estilos para Dropdown Personalizado === */
 /* 8. Media Query para pantallas ultra pequeñas */
 @media (max-width: 380px) {
     /* Aquí podrías añadir optimizaciones específicas para móviles muy pequeños si fuera necesario */

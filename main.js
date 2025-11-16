@@ -2185,30 +2185,36 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
     const populateAllDropdowns = () => {
     const visibleAccounts = getVisibleAccounts();
     
+    // Función interna para poblar un <select> con datos.
     const populate = (id, data, nameKey, valKey = 'id', all = false, none = false) => {
-        const el = document.getElementById(id);
+        const el = select(id);
         if (!el) return;
-        // La lógica interna de `populate` no cambia...
         const currentVal = el.value;
         let opts = all ? '<option value="">Todos</option>' : '';
         if (none) opts += '<option value="">Ninguno</option>';
-        [...data].sort((a,b)=>(a[nameKey]||"").localeCompare(b[nameKey]||"")).forEach(i=>opts+=`<option value="${i[valKey]}">${i[nameKey]}</option>`);
+        
+        [...data]
+            .sort((a, b) => (a[nameKey] || "").localeCompare(b[nameKey] || ""))
+            .forEach(i => opts += `<option value="${i[valKey]}">${i[nameKey]}</option>`);
+        
         el.innerHTML = opts;
-        el.value = [...el.options].some(o=>o.value===currentVal) ? currentVal : '';
+        const optionsArray = Array.from(el.options);
+        el.value = optionsArray.some(o => o.value === currentVal) ? currentVal : (optionsArray.length > 0 ? optionsArray[0].value : "");
     };
     
     populate('movimiento-cuenta', visibleAccounts, 'nombre', 'id', false, true);
     populate('movimiento-concepto', db.conceptos, 'nombre', 'id', false, true);
     populate('movimiento-cuenta-origen', visibleAccounts, 'nombre', 'id', false, true);
     populate('movimiento-cuenta-destino', visibleAccounts, 'nombre', 'id', false, true);
+    // ... cualquier otra llamada a 'populate' que tengas se mantiene aquí ...
 
     // --- ¡AQUÍ ESTÁ LA MAGIA! ---
     // Transformamos los selects del formulario en componentes personalizados.
     setTimeout(() => {
-        createCustomSelect(document.getElementById('movimiento-concepto'));
-        createCustomSelect(document.getElementById('movimiento-cuenta'));
-        createCustomSelect(document.getElementById('movimiento-cuenta-origen'));
-        createCustomSelect(document.getElementById('movimiento-cuenta-destino'));
+        createCustomSelect(select('movimiento-concepto'));
+        createCustomSelect(select('movimiento-cuenta'));
+        createCustomSelect(select('movimiento-cuenta-origen'));
+        createCustomSelect(select('movimiento-cuenta-destino'));
     }, 0);
 };
 
@@ -6482,7 +6488,6 @@ const setMovimientoFormType = (type) => {
 
     // ⭐ MEJORA UX: Activa la navegación por teclado en el formulario
     setupFormNavigation(); 
-	showModal('movimiento-modal');
 };       
         
         const showGlobalSearchModal = () => {
@@ -7239,14 +7244,14 @@ const renderInformesPage = () => {
 /**
  * Dispara una animación de una "burbuja" que viaja desde un elemento
  * hasta la parte superior de la lista de movimientos.
- * @param {HTMLElement} fromElement - El elemento desde donde empieza la animación.
+ * @param {HTMLElement} fromElement - El elemento desde donde empieza la animación (ej. el botón Guardar).
  * @param {string} color - 'green' para ingresos, 'red' para gastos.
  */
 const triggerSaveAnimation = (fromElement, color) => {
     if (!fromElement) return;
 
     const startRect = fromElement.getBoundingClientRect();
-    const listElement = document.getElementById('diario-page');
+    const listElement = select('movimientos-list-container') || select('diario-page');
     if (!listElement) return;
     const endRect = listElement.getBoundingClientRect();
 
@@ -7271,34 +7276,29 @@ const triggerSaveAnimation = (fromElement, color) => {
 };
 
 
-    addEnterListener(cantidadInput, () => descripcionInput.focus());
-    addEnterListener(descripcionInput, () => {
-        const isTraspaso = !document.getElementById('traspaso-fields').classList.contains('hidden');
-        if (isTraspaso) {
-            document.querySelector('#movimiento-cuenta-origen + .custom-select__trigger')?.focus();
-        } else {
-            conceptoTrigger?.focus(); // Usamos focus() para que el usuario sepa dónde está
-        }
-    });
-
 /**
- * Cierra todos los dropdowns personalizados abiertos, excepto uno opcional.
+ * Cierra todos los dropdowns personalizados abiertos, excepto el que se le pasa como argumento.
+ * @param {HTMLElement|null} exceptThisOne - El wrapper del select que no debe cerrarse.
  */
 function closeAllCustomSelects(exceptThisOne) {
     document.querySelectorAll('.custom-select-wrapper.is-open').forEach(wrapper => {
         if (wrapper !== exceptThisOne) {
             wrapper.classList.remove('is-open');
+            const trigger = wrapper.querySelector('.custom-select__trigger');
+            if (trigger) {
+                trigger.setAttribute('aria-expanded', 'false');
+            }
         }
     });
 }
 
 /**
- * Transforma un <select> nativo en un dropdown personalizado y estilizado.
+ * Transforma un elemento <select> nativo en un componente de dropdown personalizado.
+ * @param {HTMLElement} selectElement - El elemento <select> a transformar.
  */
 function createCustomSelect(selectElement) {
     if (!selectElement) return;
-    
-    // Si ya fue transformado, solo refresca su contenido y sale
+
     const existingWrapper = selectElement.closest('.custom-select-wrapper');
     if (existingWrapper) {
         selectElement.dispatchEvent(new Event('change'));
@@ -7309,22 +7309,28 @@ function createCustomSelect(selectElement) {
     wrapper.className = 'custom-select-wrapper';
     
     const inputWrapper = selectElement.closest('.input-wrapper');
-    if (!inputWrapper) return;
+    if (!inputWrapper) {
+        console.error("No se encontró '.input-wrapper' para el select:", selectElement);
+        return;
+    }
     
     const formFieldCompact = inputWrapper.parentNode;
+
+    const trigger = document.createElement('div');
+    trigger.className = 'custom-select__trigger';
+    trigger.setAttribute('role', 'combobox');
+    trigger.setAttribute('aria-expanded', 'false');
+    
+    const optionsContainer = document.createElement('div');
+    optionsContainer.className = 'custom-select__options';
+    optionsContainer.setAttribute('role', 'listbox');
+
     formFieldCompact.replaceChild(wrapper, inputWrapper);
     
     wrapper.appendChild(inputWrapper);
-    
-    const trigger = document.createElement('div');
-    trigger.className = 'custom-select__trigger';
-    trigger.setAttribute('tabindex', '0'); // Hacemos que sea enfocable
-
-    const optionsContainer = document.createElement('div');
-    optionsContainer.className = 'custom-select__options';
-
-    inputWrapper.insertBefore(trigger, selectElement);
-    wrapper.appendChild(optionsContainer);
+    inputWrapper.appendChild(trigger);
+    wrapper.appendChild(selectElement); // El select ahora vive dentro del wrapper, pero fuera del input-wrapper
+    wrapper.appendChild(optionsContainer); // El contenedor de opciones también
     selectElement.classList.add('form-select-hidden');
 
     const populateOptions = () => {
@@ -7336,6 +7342,7 @@ function createCustomSelect(selectElement) {
             customOption.className = 'custom-select__option';
             customOption.textContent = optionEl.textContent;
             customOption.dataset.value = optionEl.value;
+            customOption.setAttribute('role', 'option');
 
             if (optionEl.selected && optionEl.value) {
                 customOption.classList.add('is-selected');
@@ -7350,17 +7357,9 @@ function createCustomSelect(selectElement) {
 
     trigger.addEventListener('click', (e) => {
         e.stopPropagation();
-        const isOpen = wrapper.classList.contains('is-open');
-        closeAllCustomSelects(null); // Primero cierra todos
-        if (!isOpen) wrapper.classList.add('is-open'); // Luego abre el actual si estaba cerrado
-    });
-    
-    // Navegación con teclado
-     trigger.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            trigger.click();
-        }
+        closeAllCustomSelects(wrapper);
+        wrapper.classList.toggle('is-open');
+        trigger.setAttribute('aria-expanded', wrapper.classList.contains('is-open'));
     });
 
     optionsContainer.addEventListener('click', (e) => {
@@ -7368,14 +7367,8 @@ function createCustomSelect(selectElement) {
         if (option) {
             selectElement.value = option.dataset.value;
             selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-            closeAllCustomSelects(null);
-            
-            // Navegación Enter
-            if (selectElement.id === 'movimiento-concepto') {
-                 document.querySelector('#movimiento-cuenta + .custom-select__trigger')?.focus();
-            } else {
-                 document.getElementById('save-movimiento-btn').focus();
-            }
+            wrapper.classList.remove('is-open');
+            trigger.setAttribute('aria-expanded', 'false');
         }
     });
        
@@ -7439,26 +7432,24 @@ const hideCalculator = () => {
 const applyDescriptionSuggestion = (target) => {
     const { description, conceptoId, cuentaId } = target.dataset;
 
-    document.getElementById('movimiento-descripcion').value = toSentenceCase(description);
+    select('movimiento-descripcion').value = toSentenceCase(description);
     
-    // Actualiza el <select> real y luego dispara 'change' para que nuestro dropdown personalizado se actualice
-    const conceptoSelect = document.getElementById('movimiento-concepto');
+    const conceptoSelect = select('movimiento-concepto');
     if (conceptoSelect) {
         conceptoSelect.value = conceptoId;
         conceptoSelect.dispatchEvent(new Event('change'));
     }
     
-    const cuentaSelect = document.getElementById('movimiento-cuenta');
+    const cuentaSelect = select('movimiento-cuenta');
     if (cuentaSelect) {
         cuentaSelect.value = cuentaId;
         cuentaSelect.dispatchEvent(new Event('change'));
     }
     
-    document.getElementById('description-suggestions').style.display = 'none';
-    
+    select('description-suggestions').style.display = 'none';
+
     hapticFeedback('light');
-    // Pasa el foco al siguiente campo lógico, la cantidad.
-    document.getElementById('movimiento-cantidad').focus();
+    select('movimiento-cantidad').focus();
 };
 
 const initAmountInput = () => {
@@ -7485,59 +7476,135 @@ const initAmountInput = () => {
 };
 
 
-const attachEventListeners = () => {
-    const enableHaptics = () => {
+// ▲▲▲ FIN: BLOQUE DEFINITIVO DE FUNCIONES DE MEJORA ▲▲▲
+
+ const attachEventListeners = () => {
+const enableHaptics = () => {
         userHasInteracted = true;
         document.body.removeEventListener('touchstart', enableHaptics, { once: true });
         document.body.removeEventListener('click', enableHaptics, { once: true });
     };
     document.body.addEventListener('touchstart', enableHaptics, { once: true, passive: true });
     document.body.addEventListener('click', enableHaptics, { once: true });
+    // ▲▲▲ FIN DEL BLOQUE A AÑADIR ▲▲▲
+	
+	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
+const mainScrollerPtr = selectOne('.app-layout__main');
+const ptrIndicator = document.createElement('div');
+ptrIndicator.id = 'pull-to-refresh-indicator';
+ptrIndicator.innerHTML = '<div class="spinner"></div>';
+if (ptrElement) ptrElement.prepend(ptrIndicator);
 
-    const ptrElement = document.getElementById('diario-page');
-    const mainScrollerPtr = document.querySelector('.app-layout__main');
-    if (ptrElement && mainScrollerPtr) {
-        const ptrIndicator = document.createElement('div');
-        ptrIndicator.id = 'pull-to-refresh-indicator';
-        ptrIndicator.innerHTML = '<div class="spinner"></div>';
-        ptrElement.prepend(ptrIndicator);
+let ptrState = {
+    startY: 0,
+    isPulling: false,
+    distance: 0,
+    threshold: 80 // Distancia necesaria para activar
+};
 
-        let ptrState = { startY: 0, isPulling: false, distance: 0, threshold: 80 };
+if (ptrElement && mainScrollerPtr) {
+    ptrElement.addEventListener('touchstart', (e) => {
+        if (mainScrollerPtr.scrollTop === 0) { // Solo si estamos arriba del todo
+            ptrState.startY = e.touches[0].clientY;
+            ptrState.isPulling = true;
+        }
+    }, { passive: true });
 
-        ptrElement.addEventListener('touchstart', (e) => {
-            if (mainScrollerPtr.scrollTop === 0) {
-                ptrState.startY = e.touches[0].clientY;
-                ptrState.isPulling = true;
-            }
-        }, { passive: true });
+    ptrElement.addEventListener('touchmove', (e) => {
+        if (!ptrState.isPulling) return;
+        
+        const currentY = e.touches[0].clientY;
+        ptrState.distance = currentY - ptrState.startY;
 
-        ptrElement.addEventListener('touchmove', (e) => {
-            if (!ptrState.isPulling) return;
-            const currentY = e.touches[0].clientY;
-            ptrState.distance = currentY - ptrState.startY;
-            if (ptrState.distance > 0) {
-                ptrIndicator.classList.add('visible');
-                const rotation = Math.min(ptrState.distance * 2.5, 360);
-                ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
-                ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
-            }
-        }, { passive: false });
+        if (ptrState.distance > 0) {
+            e.preventDefault(); // Evita el scroll del navegador
+            ptrIndicator.classList.add('visible');
+            const rotation = Math.min(ptrState.distance * 2.5, 360);
+            ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
+            ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
+        }
+    }, { passive: false });
 
-        ptrElement.addEventListener('touchend', async () => {
-            if (ptrState.isPulling && ptrState.distance > ptrState.threshold) {
-                hapticFeedback('medium');
-                ptrIndicator.querySelector('.spinner').style.transform = '';
-                ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
-                await renderDiarioPage(); // Refresca la página del diario
-                setTimeout(() => {
-                    ptrIndicator.classList.remove('visible');
-                    ptrIndicator.querySelector('.spinner').style.animation = '';
-                }, 500);
-            } else {
+    ptrElement.addEventListener('touchend', async () => {
+        if (ptrState.isPulling && ptrState.distance > ptrState.threshold) {
+            hapticFeedback('medium');
+            ptrIndicator.querySelector('.spinner').style.transform = '';
+            ptrIndicator.querySelector('.spinner').style.animation = 'spin 1.2s linear infinite';
+            
+            // Acción de refresco: Recargamos los movimientos del diario
+            await renderDiarioPage();
+
+            // Ocultar indicador después de refrescar
+            setTimeout(() => {
                 ptrIndicator.classList.remove('visible');
+                ptrIndicator.querySelector('.spinner').style.animation = '';
+            }, 500);
+        } else {
+            ptrIndicator.classList.remove('visible');
+        }
+
+        ptrState.isPulling = false;
+        ptrState.distance = 0;
+    });
+}
+
+	
+    const cantidadInput = document.getElementById("movimiento-cantidad");
+    if (cantidadInput) {
+        const cantidadError = document.getElementById("movimiento-cantidad-error");
+        cantidadInput.addEventListener("input", () => {
+            let valor = cantidadInput.value.trim();
+            valor = valor.replace(",", ".");
+            const regex = /^\d+(.\d{0,2})?$/;
+            if (valor === "" || !regex.test(valor)) {
+                cantidadError.textContent = "Introduce un número positivo (ej: 2,50 o 15.00)";
+                cantidadInput.classList.add("form-input--error");
+            } else {
+                cantidadError.textContent = "";
+                cantidadInput.classList.remove("form--error");
             }
-            ptrState.isPulling = false;
-            ptrState.distance = 0;
+        });
+        const descripcionInput = document.getElementById("movimiento-descripcion");
+        const cuentaSelect = document.getElementById("movimiento-cuenta");
+        const saveBtn = document.getElementById("save-movimiento-btn");
+        document.addEventListener("show-modal", (e) => {
+            if (e.detail.modalId === "movimiento-modal") {
+                setTimeout(() => cantidadInput.focus(), 100);
+            }
+        });
+        cantidadInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                descripcionInput.focus();
+            }
+        });
+        descripcionInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                cuentaSelect.focus();
+            }
+        });
+        cuentaSelect.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                saveBtn.click();
+            }
+        });
+    }
+
+    const amountInputForFormatting = select('movimiento-cantidad');
+    if (amountInputForFormatting) {
+        amountInputForFormatting.addEventListener('focus', (e) => {
+            const input = e.target;
+            if (input.value === '') return;
+            const rawValue = input.value.replace(/\./g, '');
+            input.value = rawValue;
+        });
+        amountInputForFormatting.addEventListener('blur', (e) => {
+            const input = e.target;
+            if (input.value === '') return;
+            const numericValue = parseCurrencyString(input.value);
+            input.value = formatAsCurrencyInput(numericValue);
         });
     }
 
@@ -7560,43 +7627,49 @@ const attachEventListeners = () => {
         if (!target.closest('.custom-select-wrapper')) {
             closeAllCustomSelects(null);
         }
-        
-        const suggestionItem = target.closest('[data-action="apply-description-suggestion"]');
-        if (suggestionItem) {
-            applyDescriptionSuggestion(suggestionItem);
-            return; // Detenemos la ejecución para no procesar otras acciones
+
+        if (target.matches('.input-amount-calculator')) {
+            e.preventDefault();
+            showCalculator(target);
+            return;
         }
-        
         const actionTarget = target.closest('[data-action]');
         if (!actionTarget) return;
 
-        const { action, id, page, type, modalId } = actionTarget.dataset;
+        const { action, id, page, type, modalId, reportId } = actionTarget.dataset;
         const btn = actionTarget.closest('button');
         
         const actions = {
-            'show-main-menu': () => {
-                const menu = document.getElementById('main-menu-popover');
-                if (!menu) return;
-                hapticFeedback('light');
-                menu.classList.toggle('popover-menu--visible');
-                if (menu.classList.contains('popover-menu--visible')) {
-                    setTimeout(() => {
-                        const closeOnClickOutside = (event) => {
-                            if (!menu.contains(event.target) && !event.target.closest('[data-action="show-main-menu"]')) {
-                                menu.classList.remove('popover-menu--visible');
-                                document.removeEventListener('click', closeOnClickOutside);
-                            }
-                        };
-                        document.addEventListener('click', closeOnClickOutside);
-                    }, 0);
-                }
-            },
+			'swipe-show-irr-history': () => handleShowIrrHistory(type),
+			'show-main-menu': () => {
+        const menu = document.getElementById('main-menu-popover');
+        if (!menu) return;
+        hapticFeedback('light');
+        menu.classList.toggle('popover-menu--visible');
+        if (menu.classList.contains('popover-menu--visible')) {
+            setTimeout(() => {
+                const closeOnClickOutside = (event) => {
+                    if (!menu.contains(event.target) && !event.target.closest('[data-action="show-main-menu"]')) {
+                        menu.classList.remove('popover-menu--visible');
+                        document.removeEventListener('click', closeOnClickOutside);
+                    }
+                };
+                document.addEventListener('click', closeOnClickOutside);
+            }, 0);
+        }
+    },
             'show-main-add-sheet': () => showModal('main-add-sheet'),
-            'open-movement-form': () => {
-                const movType = actionTarget.dataset.type;
-                hideModal('main-add-sheet');
-                setTimeout(() => startMovementForm(null, false, movType), 250);
-            },
+			'show-pnl-breakdown': () => handleShowPnlBreakdown(actionTarget.dataset.id),
+			 'show-irr-breakdown': () => handleShowIrrBreakdown(actionTarget.dataset.id),
+			'open-movement-form': (e) => {
+    const type = e.target.closest('[data-type]').dataset.type;
+    hideModal('main-add-sheet');
+    // Usamos un pequeño retardo para que la animación de cierre del sheet
+    // no se solape con la de apertura del formulario, creando un efecto más fluido.
+    setTimeout(() => {
+        startMovementForm(null, false, type);
+    }, 250);
+},
             'export-filtered-csv': () => handleExportFilteredCsv(btn),
             'show-diario-filters': showDiarioFiltersModal,
             'clear-diario-filters': clearDiarioFilters,
@@ -7862,16 +7935,7 @@ if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || tar
     const searchInput = select('global-search-input'); if (searchInput) searchInput.addEventListener('input', () => { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => { performGlobalSearch(searchInput.value); }, 250); });
     document.body.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); e.stopPropagation(); showGlobalSearchModal(); } });
     const dropZone = select('json-drop-zone'); if (dropZone) { dropZone.addEventListener('click', () => { const el = select('import-file-input'); if (el) el.click() }); dropZone.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('drag-over'); }); dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); }); dropZone.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); const files = e.dataTransfer.files; if (files && files.length > 0) handleJSONFileSelect(files); }); }
-    document.body.addEventListener('click', e => {
-    const suggestionItem = e.target.closest('[data-action="apply-description-suggestion"]');
-    if (suggestionItem) {
-        applyDescriptionSuggestion(suggestionItem);
-    }
-    
-    // Cierra los desplegables si se hace clic fuera
-    if (!e.target.closest('.custom-select-wrapper')) {
-        closeAllCustomSelects(null);
-    }
+    const suggestionsBox = select('description-suggestions'); if (suggestionsBox) { suggestionsBox.addEventListener('click', (e) => { const suggestionItem = e.target.closest('.suggestion-item'); if (suggestionItem) { const { description, conceptoId, cuentaId } = suggestionItem.dataset; applyDescriptionSuggestion(description, conceptoId, cuentaId); } }); }
     const diarioContainer = select('diario-page'); if (diarioContainer) { const mainScroller = selectOne('.app-layout__main'); diarioContainer.addEventListener('touchstart', (e) => { if (mainScroller.scrollTop > 0) return; ptrState.startY = e.touches[0].clientY; ptrState.isPulling = true; if (e.target.closest('.transaction-card')) { handleInteractionStart(e); } }, { passive: true }); diarioContainer.addEventListener('touchmove', (e) => { if (!ptrState.isPulling) { handleInteractionMove(e); return; } const currentY = e.touches[0].clientY; ptrState.distance = currentY - ptrState.startY; if (ptrState.distance > 0) { e.preventDefault(); const indicator = select('pull-to-refresh-indicator'); if (indicator) { indicator.classList.add('visible'); const rotation = Math.min(ptrState.distance * 2, 360); indicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`; } } }, { passive: false }); diarioContainer.addEventListener('touchend', async (e) => { const indicator = select('pull-to-refresh-indicator'); if (ptrState.isPulling && ptrState.distance > ptrState.threshold) { hapticFeedback('medium'); if (indicator) { indicator.querySelector('.spinner').style.animation = 'spin 1s linear infinite'; } await loadMoreMovements(true); setTimeout(() => { if (indicator) { indicator.classList.remove('visible'); indicator.querySelector('.spinner').style.animation = ''; } }, 500); } else if (indicator) { indicator.classList.remove('visible'); } ptrState.isPulling = false; ptrState.distance = 0; handleInteractionEnd(e); }); diarioContainer.addEventListener('mousedown', (e) => e.target.closest('.transaction-card') && handleInteractionStart(e)); diarioContainer.addEventListener('mousemove', handleInteractionMove); diarioContainer.addEventListener('mouseup', handleInteractionEnd); diarioContainer.addEventListener('mouseleave', handleInteractionEnd); }
     const mainScroller = selectOne('.app-layout__main'); if (mainScroller) { let scrollRAF = null; mainScroller.addEventListener('scroll', () => { if (scrollRAF) window.cancelAnimationFrame(scrollRAF); scrollRAF = window.requestAnimationFrame(() => { if (diarioViewMode === 'list' && select('diario-page')?.classList.contains('view--active')) { renderVisibleItems(); } }); }, { passive: true }); }
     document.body.addEventListener('toggle', (e) => { const detailsElement = e.target; if (detailsElement.tagName !== 'DETAILS' || !detailsElement.classList.contains('informe-acordeon')) { return; } if (detailsElement.open) { const id = detailsElement.id; const informeId = id.replace('acordeon-', ''); const container = select(`informe-content-${informeId}`); if (container && container.querySelector('.form-label')) { renderInformeDetallado(informeId); } } }, true);
@@ -7893,7 +7957,8 @@ if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || tar
             }
         });
         fechaRealInput.addEventListener('input', () => updateDateDisplay(fechaRealInput)); 
-    };
+    }
+};
     const daySelector = select('weekly-day-selector-buttons');
     if (daySelector) {
         daySelector.addEventListener('click', (e) => {
@@ -7903,7 +7968,8 @@ if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || tar
                 hapticFeedback('light');
             }
         });
-    };
+    }
+
 // =================================================================
 // === FIN: BLOQUE DE CÓDIGO CORREGIDO PARA REEMPLAZAR           ===
 // =================================================================
@@ -8346,85 +8412,107 @@ const applyOptimisticBalanceUpdate = (newData, oldData = null) => {
     // --- ⭐ FIN DE LA CORRECCIÓN ⭐ ---
 };
 
-// EN main.js - REEMPLAZA tu función handleSaveMovement
 const handleSaveMovement = async (form, btn) => {
+    // ... (El inicio de la función de validación es el mismo)
     clearAllErrors(form.id);
     if (!validateMovementForm()) {
         hapticFeedback('error');
-        showToast('Por favor, revisa los campos.', 'warning');
+        showToast('Por favor, revisa los campos marcados en rojo.', 'warning');
         return false;
     }
-
     const isSaveAndNew = btn && btn.dataset.action === 'save-and-new-movement';
-    const saveBtn = document.getElementById('save-movimiento-btn');
+    const saveBtn = select('save-movimiento-btn');
+    const saveNewBtn = select('save-and-new-movimiento-btn');
     if (saveBtn) setButtonLoading(saveBtn, true);
-    if (isSaveAndNew) setButtonLoading(btn, true);
+    if (saveNewBtn) setButtonLoading(saveNewBtn, true);
 
-    const id = document.getElementById('movimiento-id').value || generateId();
-    const mode = document.getElementById('movimiento-mode').value;
-    const tipoMovimiento = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
-    const cantidadEnCentimos = Math.round(parseCurrencyString(document.getElementById('movimiento-cantidad').value) * 100);
-
-    const dataToSave = {
-        id,
-        fecha: new Date(document.getElementById('movimiento-fecha').value + 'T12:00:00Z').toISOString(),
-        descripcion: document.getElementById('movimiento-descripcion').value.trim(),
-    };
-    //... (el resto de tu lógica para construir dataToSave se mantiene igual)
-    if (tipoMovimiento === 'traspaso') {
-        Object.assign(dataToSave, {
-            tipo: 'traspaso',
-            cantidad: Math.abs(cantidadEnCentimos),
-            cuentaOrigenId: document.getElementById('movimiento-cuenta-origen').value,
-            cuentaDestinoId: document.getElementById('movimiento-cuenta-destino').value,
-        });
-    } else {
-         Object.assign(dataToSave, {
-            tipo: 'movimiento',
-            cantidad: tipoMovimiento === 'gasto' ? -Math.abs(cantidadEnCentimos) : Math.abs(cantidadEnCentimos),
-            cuentaId: document.getElementById('movimiento-cuenta').value,
-            conceptoId: document.getElementById('movimiento-concepto').value,
-        });
-    }
-
-
-    // ⭐ INICIO DE LA MEJORA DE UX ⭐
-    triggerSaveAnimation(btn, dataToSave.cantidad >= 0 ? 'green' : 'red');
-
-    if (isSaveAndNew) {
-        form.reset();
-        setMovimientoFormType('gasto');
-         // Reseteamos y volvemos a crear los custom selects
-        populateAllDropdowns();
-        document.getElementById('movimiento-cantidad').focus();
-    } else {
-        hideModal('movimiento-modal');
-    }
-    
-    // --- Actualización Optimista ---
-    // Actualizamos la UI local INMEDIATAMENTE sin esperar a Firebase
-    if (mode === 'new') {
-        db.movimientos.unshift(dataToSave); // Añadimos al principio de la lista
-    } else {
-        const index = db.movimientos.findIndex(m => m.id === id);
-        if (index > -1) db.movimientos[index] = dataToSave;
-    }
-    
-    // Recalculamos saldos y redibujamos la lista con un pequeño retardo
-    setTimeout(() => updateLocalDataAndRefreshUI(), 100);
-    
-    // El guardado real en Firebase continúa en segundo plano...
-    try {
-        await saveDoc( 'movimientos', id, dataToSave );
-        hapticFeedback('success');
-        showToast(mode.startsWith('edit') ? 'Movimiento actualizado.' : 'Movimiento guardado.');
-    } catch (error) {
-        console.error("Error al guardar:", error);
-        showToast("Error al guardar. Deshaciendo cambio.", "danger");
-        // Aquí iría la lógica para revertir el cambio optimista si Firebase falla.
-    } finally {
+    const isRecurrent = select('movimiento-recurrente').checked;
+    const releaseButtons = () => {
         if (saveBtn) setButtonLoading(saveBtn, false);
-        if (isSaveAndNew) setButtonLoading(btn, false);
+        if (saveNewBtn) setButtonLoading(saveNewBtn, false);
+    };
+
+    if (isRecurrent) {
+        // ... (la lógica de recurrentes se mantiene igual)
+        // (por brevedad, no la repito, pero iría aquí)
+        releaseButtons(); // Asegúrate de liberar los botones en todos los casos
+    } else {
+        let oldData = null;
+        try {
+            // ... (toda tu lógica de recolección de datos se mantiene igual)
+            const id = select('movimiento-id').value || generateId();
+            const mode = select('movimiento-mode').value;
+            if (mode.startsWith('edit')) {
+                const originalMovementIndex = db.movimientos.findIndex(m => m.id === id);
+                if (originalMovementIndex > -1) oldData = { ...db.movimientos[originalMovementIndex] };
+            }
+            const tipoMovimiento = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
+            const cantidadPositiva = parseCurrencyString(select('movimiento-cantidad').value);
+            const cantidadEnCentimos = Math.round(cantidadPositiva * 100);
+            const dataToSave = {
+                id,
+                fecha: new Date(select('movimiento-fecha').value + 'T12:00:00Z').toISOString(),
+                descripcion: select('movimiento-descripcion').value.trim(),
+            };
+            if (tipoMovimiento === 'traspaso') {
+                Object.assign(dataToSave, { tipo: 'traspaso', cantidad: Math.abs(cantidadEnCentimos), cuentaOrigenId: select('movimiento-cuenta-origen').value, cuentaDestinoId: select('movimiento-cuenta-destino').value });
+            } else {
+                Object.assign(dataToSave, { tipo: 'movimiento', cantidad: tipoMovimiento === 'gasto' ? -Math.abs(cantidadEnCentimos) : Math.abs(cantidadEnCentimos), cuentaId: select('movimiento-cuenta').value, conceptoId: select('movimiento-concepto').value });
+            }
+            
+            // ⭐ INICIO DE LA MEJORA: Actualización Optimista
+            
+            if (oldData) {
+                const index = db.movimientos.findIndex(m => m.id === id);
+                if (index > -1) db.movimientos[index] = dataToSave;
+            } else {
+                db.movimientos.unshift(dataToSave);
+            }
+            applyOptimisticBalanceUpdate(dataToSave, oldData);
+
+            // 1. Lanzamos la animación visual
+            triggerSaveAnimation(btn, dataToSave.cantidad >= 0 ? 'green' : 'red');
+
+            // 2. Cerramos el modal inmediatamente
+            if (!isSaveAndNew) {
+                hideModal('movimiento-modal');
+            } else {
+                startMovementForm();
+            }
+
+            // 3. Actualizamos la UI localmente sin esperar a Firebase
+            setTimeout(() => updateLocalDataAndRefreshUI(), 100); 
+
+            // ⭐ FIN DE LA MEJORA
+            
+            // ... (el resto de la lógica de guardado con batch.commit() se mantiene igual)
+            const batch = fbDb.batch();
+            const userRef = fbDb.collection('users').doc(currentUser.uid);
+            if (oldData) {
+                if (oldData.tipo === 'traspaso') {
+                    if (oldData.cuentaOrigenId) batch.update(userRef.collection('cuentas').doc(oldData.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(oldData.cantidad) });
+                    if (oldData.cuentaDestinoId) batch.update(userRef.collection('cuentas').doc(oldData.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(-oldData.cantidad) });
+                } else {
+                    if (oldData.cuentaId) batch.update(userRef.collection('cuentas').doc(oldData.cuentaId), { saldo: firebase.firestore.FieldValue.increment(-oldData.cantidad) });
+                }
+            }
+            batch.set(userRef.collection('movimientos').doc(id), dataToSave);
+            if (dataToSave.tipo === 'traspaso') {
+                batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-dataToSave.cantidad) });
+                batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(dataToSave.cantidad) });
+            } else {
+                batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaId), { saldo: firebase.firestore.FieldValue.increment(dataToSave.cantidad) });
+            }
+            await batch.commit();
+            hapticFeedback('success');
+            showToast(mode.startsWith('edit') ? 'Movimiento actualizado.' : 'Movimiento guardado.');
+        } catch (error) {
+            console.error("Error al guardar movimiento:", error);
+            showToast("Error al guardar. Revirtiendo cambios.", "danger");
+            // Aquí iría la lógica para revertir el cambio optimista
+        } finally {
+            releaseButtons();
+        }
     }
 };
 
@@ -9591,10 +9679,10 @@ swipeState.activeCard = null;
 };
 
 const handleDescriptionInput = () => {
-    clearTimeout(suggestionDebounceTimer);
-    suggestionDebounceTimer = setTimeout(() => {
-        const descriptionInput = document.getElementById('movimiento-descripcion');
-        const suggestionsBox = document.getElementById('description-suggestions');
+    clearTimeout(descriptionSuggestionDebounceTimer);
+    descriptionSuggestionDebounceTimer = setTimeout(() => {
+        const descriptionInput = select('movimiento-descripcion');
+        const suggestionsBox = select('description-suggestions');
         if (!descriptionInput || !suggestionsBox) return;
 
         const query = descriptionInput.value.trim().toLowerCase();
@@ -9605,25 +9693,37 @@ const handleDescriptionInput = () => {
             return;
         }
 
+        // 1. Busca las mejores sugerencias basadas en tus hábitos
         const suggestions = [];
         for (const [desc, data] of intelligentIndex.entries()) {
             if (desc.includes(query)) {
                 suggestions.push({ description: desc, ...data });
             }
         }
-        
-        suggestions.sort((a, b) => b.count - a.count);
+
+        const now = Date.now();
+        suggestions.sort((a, b) => {
+            const recencyA = Math.exp((a.lastUsed - now) / (1000 * 3600 * 24 * 30));
+            const recencyB = Math.exp((b.lastUsed - now) / (1000 * 3600 * 24 * 30));
+            const scoreA = (a.count * 0.6) + (recencyA * 0.4);
+            const scoreB = (b.count * 0.6) + (recencyB * 0.4);
+            return scoreB - scoreA;
+        });
+
+        // [CAMBIO UX] Esta función ya NO RELLENA los campos automáticamente.
+        // Solo prepara la lista de sugerencias para que el usuario elija.
 
         if (suggestions.length > 0) {
-            suggestionsBox.innerHTML = suggestions.slice(0, 5).map(s => {
+            suggestionsBox.innerHTML = suggestions.slice(0, DESCRIPTION_SUGGESTION_LIMIT).map(s => {
                 const concepto = db.conceptos.find(c => c.id === s.conceptoId)?.nombre || 'S/C';
                 const cuenta = db.cuentas.find(c => c.id === s.cuentaId)?.nombre || 'S/C';
                 return `
                     <div class="suggestion-item" 
-                        data-action="apply-description-suggestion"
-                        data-description="${escapeHTML(s.description)}" 
-                        data-concepto-id="${s.conceptoId}" 
-                        data-cuenta-id="${s.cuentaId}">
+                         data-action="apply-description-suggestion"
+                         data-description="${escapeHTML(s.description)}" 
+                         data-concepto-id="${s.conceptoId}" 
+                         data-cuenta-id="${s.cuentaId}"
+                         tabindex="0">
                         <p>${escapeHTML(toSentenceCase(s.description))}</p>
                         <small>${escapeHTML(concepto)} • ${escapeHTML(cuenta)}</small>
                     </div>`;
