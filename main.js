@@ -7893,8 +7893,7 @@ if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || tar
             }
         });
         fechaRealInput.addEventListener('input', () => updateDateDisplay(fechaRealInput)); 
-    }
-};
+    };
     const daySelector = select('weekly-day-selector-buttons');
     if (daySelector) {
         daySelector.addEventListener('click', (e) => {
