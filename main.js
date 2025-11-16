@@ -7280,7 +7280,6 @@ const triggerSaveAnimation = (fromElement, color) => {
             conceptoTrigger?.focus(); // Usamos focus() para que el usuario sepa dónde está
         }
     });
-};
 
 /**
  * Cierra todos los dropdowns personalizados abiertos, excepto uno opcional.
