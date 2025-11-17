@@ -7707,7 +7707,74 @@ const handleSaveMovement = async (form, btn) => {
     const isRecurrent = select('movimiento-recurrente').checked;
 
     if (isRecurrent) {
-    // --- LÓGICA CORREGIDA Y ROBUSTA PARA MOVIMIENTOS RECURRENTES ---
+        const id = select('movimiento-id').value;
+        const newId = id || generateId();
+        const tipoMovimiento = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
+        const cantidadPositiva = parseCurrencyString(select('movimiento-cantidad').value);
+        const cantidadEnCentimos = Math.round(cantidadPositiva * 100);
+        
+        const frequency = select('recurrent-frequency').value;
+        let nextDate = select('recurrent-next-date').value;
+        const endDate = select('recurrent-end-date').value || '';
+        const weekDays = (frequency === 'weekly') ? Array.from(selectAll('.day-selector-btn.active')).map(btn => btn.dataset.day) : [];
+        const today = new Date();
+        const todayStr = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
+
+        const dataToSave = {
+            id: newId,
+            descripcion: select('movimiento-descripcion').value.trim(),
+            cantidad: tipoMovimiento === 'gasto' ? -Math.abs(cantidadEnCentimos) : Math.abs(cantidadEnCentimos),
+            tipo: tipoMovimiento,
+            cuentaId: tipoMovimiento === 'movimiento' ? select('movimiento-cuenta').value : null,
+            conceptoId: tipoMovimiento === 'movimiento' ? select('movimiento-concepto').value : null,
+            cuentaOrigenId: tipoMovimiento === 'traspaso' ? select('movimiento-cuenta-origen').value : null,
+            cuentaDestinoId: tipoMovimiento === 'traspaso' ? select('movimiento-cuenta-destino').value : null,
+            frequency,
+            endDate,
+            weekDays
+        };
+        
+        let shouldCreateToday = false;
+        if (nextDate === todayStr) {
+            shouldCreateToday = true;
+            const newNextDate = calculateNextDueDate(nextDate, frequency, weekDays);
+            dataToSave.nextDate = newNextDate.toISOString().slice(0, 10);
+        } else {
+            const newNextDate = nextDate ? new Date(nextDate + 'T12:00:00Z') : new Date();
+            dataToSave.nextDate = newNextDate.toISOString().slice(0, 10);
+        }
+
+        releaseButtons();
+        await saveDoc('recurrentes', newId, dataToSave, btn);
+
+        if (shouldCreateToday) {
+            const newMovementId = generateId();
+            dataToSave.id = newMovementId;
+            dataToSave.fecha = new Date(todayStr + 'T12:00:00Z').toISOString();
+            
+            const batch = fbDb.batch();
+            const userRef = fbDb.collection('users').doc(currentUser.uid);
+            batch.set(userRef.collection('movimientos').doc(newMovementId), dataToSave);
+            
+            if (dataToSave.tipo === 'traspaso') {
+                batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-dataToSave.cantidad) });
+                batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(dataToSave.cantidad) });
+            } else {
+                batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaId), { saldo: firebase.firestore.FieldValue.increment(dataToSave.cantidad) });
+            }
+            await batch.commit();
+            showToast("¡Operación recurrente guardada y primer movimiento añadido!", "info");
+        } else {
+            showToast("Operación recurrente guardada.", "info");
+        }
+
+        if (isSaveAndNew) {
+            startMovementForm();
+        } else {
+            hideModal('movimiento-modal');
+        }
+        
+    } else {EGIDA Y ROBUSTA PARA MOVIMIENTOS RECURRENTES ---
     try {
         const id = select('movimiento-id').value || generateId();
         const tipoRecurrente = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
