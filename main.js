@@ -7356,6 +7356,24 @@ function createCustomSelect(selectElement) {
                 }
             },
             'open-main-add-modal': () => startMovementForm(),
+			'set-date-quick': () => {
+            const val = actionTarget.dataset.value;
+            const fechaInput = select('movimiento-fecha');
+            const today = new Date();
+            
+            if (val === 'yesterday') {
+                today.setDate(today.getDate() - 1);
+            }
+            
+            // Ajuste de zona horaria
+            fechaInput.value = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
+            updateDateDisplay(fechaInput);
+            
+            // Feedback visual
+            hapticFeedback('light');
+            selectAll('[data-action="set-date-quick"]').forEach(b => b.classList.remove('filter-pill--active'));
+            actionTarget.classList.add('filter-pill--active');
+        },
             'export-filtered-csv': () => handleExportFilteredCsv(btn),
             'show-diario-filters': showDiarioFiltersModal,
             'clear-diario-filters': clearDiarioFilters,
