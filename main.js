@@ -1128,16 +1128,30 @@ const triggerSaveAnimation = (fromElement, color) => {
     if (!fromElement) return;
     const startRect = fromElement.getBoundingClientRect();
     const listElement = select('movimientos-list-container') || select('diario-page');
-    const endRect = listElement.getBoundingClientRect();
+    // Si no encuentra la lista (ej. en otra página), usa el centro de la pantalla
+    const endRect = listElement ? listElement.getBoundingClientRect() : { left: window.innerWidth/2, top: window.innerHeight/2, width: 0 };
+    
     const bubble = document.createElement('div');
     bubble.className = 'save-animation-bubble';
     bubble.style.backgroundColor = color === 'green' ? 'var(--c-success)' : 'var(--c-danger)';
-    bubble.style.left = `${startRect.left + startRect.width / 2 - 10}px`;
-    bubble.style.top = `${startRect.top + startRect.height / 2 - 10}px`;
+    bubble.style.color = color === 'green' ? 'var(--c-success)' : 'var(--c-danger)'; // Para el box-shadow
+    
+    // Centramos la burbuja en el botón
+    bubble.style.left = `${startRect.left + startRect.width / 2 - 17.5}px`; // 17.5 es la mitad de 35px width
+    bubble.style.top = `${startRect.top + startRect.height / 2 - 17.5}px`;
+    
     document.body.appendChild(bubble);
     void bubble.offsetWidth; // Force reflow
-    bubble.style.animation = `fly-to-list 0.7s cubic-bezier(0.5, 0, 1, 0.5) forwards`;
-    bubble.style.transform = `translate(${endRect.left + endRect.width / 2 - (startRect.left + startRect.width / 2)}px, ${endRect.top - (startRect.top + startRect.height / 2)}px) scale(0)`;
+
+    // === CAMBIO AQUÍ: 1.2s para que sea más lento y visible ===
+    bubble.style.animation = `fly-to-list 1.2s cubic-bezier(0.5, 0, 1, 0.5) forwards`;
+    
+    // Calculamos la trayectoria
+    const moveX = (endRect.left + endRect.width / 2) - (startRect.left + startRect.width / 2);
+    const moveY = endRect.top - (startRect.top + startRect.height / 2);
+    
+    bubble.style.transform = `translate(${moveX}px, ${moveY}px) scale(0)`;
+    
     bubble.addEventListener('animationend', () => bubble.remove(), { once: true });
 };
         const displayError = (id, msg) => { const err = select(`${id}-error`); if (err) { err.textContent = msg; err.setAttribute('role', 'alert'); } const inp = select(id); if (inp) inp.classList.add('form-input--invalid'); };
@@ -8863,7 +8877,9 @@ const handleAddConcept = async (btn) => {
 // ==============================================================
 const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
     const collection = isRecurrent ? 'recurrentes' : 'movimientos';
-    const ANIMATION_DURATION = 400; // Debe coincidir con la duración en el CSS (0.4s)
+    
+    // === CAMBIO AQUÍ: 1000ms (1 segundo) para coincidir con el CSS ===
+    const ANIMATION_DURATION = 1000; 
 
     // Buscamos el elemento visual en el DOM ANTES de hacer cualquier cambio.
     const itemElement = document.querySelector(`.transaction-card[data-id="${id}"]`)?.closest('.swipe-container');
@@ -8887,10 +8903,11 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
         }
 
         // 3. SINCRONIZACIÓN Y REDIBUJADO
+        // Esperamos a que termine la animación (1s) antes de redibujar la lista
         setTimeout(() => {
             updateLocalDataAndRefreshUI(); // Redibuja la lista virtual con los datos ya actualizados.
-            if (isRecurrent) renderPlanificacionPage(); // Refresca la vista de planificación si se borra un recurrente.
-        }, itemElement ? ANIMATION_DURATION : 0); // Si no hay elemento visual, el redibujado es inmediato.
+            if (isRecurrent) renderPlanificacionPage(); // Refresca la vista de planificación.
+        }, itemElement ? ANIMATION_DURATION : 0); 
 
         // 4. PERSISTENCIA EN BASE DE DATOS (en segundo plano)
         const batch = fbDb.batch();
@@ -8917,8 +8934,8 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
 
     } catch (error) {
         console.error("Error al eliminar:", error);
-        showToast("Error al eliminar. Recargando para mantener la consistencia...", "danger");
-        setTimeout(() => location.reload(), 1500); // Recarga como último recurso.
+        showToast("Error al eliminar. Recargando...", "danger");
+        setTimeout(() => location.reload(), 1500); 
     }
 };
 // ============================================================

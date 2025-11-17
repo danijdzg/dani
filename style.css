@@ -144,10 +144,11 @@
 
 .save-animation-bubble {
     /* Apariencia de la burbuja */
-    width: 20px;
-    height: 20px;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
-    
+    /* CAMBIO: Añadimos un resplandor neón para que destaque sobre el fondo */
+    box-shadow: 0 0 20px currentColor;
     /* Posicionamiento y capa */
     position: fixed; /* Fijo en la pantalla para que viaje sobre todo */
     z-index: 99999; /* La capa más alta de todas */
@@ -531,7 +532,7 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 }
 
 .item-deleting {
-    animation: fade-out-and-collapse 0.4s ease-out forwards;
+    animation: fade-out-and-collapse 1s ease-out forwards;
     overflow: hidden;
 }
 @keyframes item-enter {
