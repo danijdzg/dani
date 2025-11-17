@@ -2007,15 +2007,14 @@ textarea {
     text-shadow: 0 0 10px rgba(0, 194, 255, 0.4);
 }
 
-
 /* ================================================================= */
-/* === CORRECCIÓN VISUAL RECURRENTE: ADAPTATIVA (OSCURO/CLARO) === */
+/* === CORRECCIÓN FINAL DEFINITIVA: RECURRENTES (TEXTOS Y FONDOS) === */
 /* ================================================================= */
 
-/* 1. ESTILOS BASE (Funcionan con las variables del tema activo) */
-/* Esto asegura que si cambias de tema, el fondo y el texto cambien automáticamente */
+/* 1. ESTILOS COMUNES (Geometría y Bordes) */
 #recurrent-frequency,
-#recurrent-options input[type="date"] {
+#recurrent-options input[type="date"],
+#recurrent-options select {
     width: 100%;
     padding: 12px 16px;
     margin-bottom: 8px;
@@ -2024,15 +2023,11 @@ textarea {
     font-weight: 600;
     appearance: none;
     -webkit-appearance: none;
-    
-    /* USAMOS VARIABLES: Se adaptan solas (Negro en modo oscuro, Blanco en modo claro) */
-    background-color: var(--c-surface) !important; 
-    color: var(--c-on-surface) !important; 
     border: 1px solid var(--c-outline);
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: all 0.2s;
 }
 
-/* Focus para ambos */
+/* Focus y Hover Comunes */
 #recurrent-frequency:focus,
 #recurrent-options input[type="date"]:focus {
     border-color: var(--c-primary);
@@ -2040,57 +2035,67 @@ textarea {
     outline: none;
 }
 
-/* 2. ESPECÍFICO PARA MODO OSCURO (El defecto o cuando no hay tema claro) */
-/* Forzamos iconos blancos y calendario oscuro */
-body:not([data-theme="sunset-groove"]) #recurrent-frequency,
-body:not([data-theme="sunset-groove"]) #recurrent-options input[type="date"] {
-    color-scheme: dark; /* Calendario nativo oscuro */
+
+/* --- MODO OSCURO (Por defecto y Predeterminado) --- */
+/* Aquí forzamos TEXTO BLANCO y FONDO OSCURO */
+
+#recurrent-frequency,
+#recurrent-options input[type="date"],
+#recurrent-options select {
+    background-color: #1A2634 !important; /* Fondo Azul Oscuro Sólido */
+    color: #ffffff !important;            /* TEXTO BLANCO PURO */
+    color-scheme: dark;                   /* Calendario nativo oscuro */
 }
 
-/* Flecha blanca para el Select en modo oscuro */
-body:not([data-theme="sunset-groove"]) #recurrent-frequency {
+/* Flecha blanca para el selector en modo oscuro */
+#recurrent-frequency {
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3csvg%3e");
     background-repeat: no-repeat;
     background-position: right 1rem center;
     background-size: 16px 12px;
 }
 
-/* Icono de calendario blanco en modo oscuro */
-body:not([data-theme="sunset-groove"]) #recurrent-options input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1); /* Invierte el icono negro a blanco */
+/* Icono calendario blanco en modo oscuro */
+#recurrent-options input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
     cursor: pointer;
     opacity: 0.8;
 }
 
+/* Etiquetas blancas en modo oscuro */
+#recurrent-options label,
+.recurrent-section__label {
+    color: #ffffff !important;
+}
 
-/* 3. ESPECÍFICO PARA MODO CLARO (Sunset Groove) */
-/* Aquí es donde arreglamos el problema que reportaste */
+
+/* --- MODO CLARO (Sunset Groove) --- */
+/* Aquí forzamos TEXTO NEGRO y FONDO BLANCO cuando el tema está activo */
+
 body[data-theme="sunset-groove"] #recurrent-frequency,
-body[data-theme="sunset-groove"] #recurrent-options input[type="date"] {
-    background-color: #ffffff !important; /* Fondo blanco puro para contraste máximo */
-    color: #000000 !important;            /* TEXTO NEGRO */
-    border-color: rgba(0,0,0, 0.2);       /* Borde sutil oscuro */
-    color-scheme: light;                  /* Calendario nativo claro (letras negras) */
+body[data-theme="sunset-groove"] #recurrent-options input[type="date"],
+body[data-theme="sunset-groove"] #recurrent-options select {
+    background-color: #ffffff !important; /* FONDO BLANCO PURO */
+    color: #000000 !important;            /* TEXTO NEGRO PURO */
+    border-color: #cccccc;
+    color-scheme: light;                  /* Calendario nativo claro */
 }
 
-/* Flecha NEGRA para el Select en modo claro */
+/* Flecha NEGRA para el selector en modo claro */
 body[data-theme="sunset-groove"] #recurrent-frequency {
-    /* El código %23000000 es negro en hexadecimal para el SVG */
+    /* El código %23000000 es negro */
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3csvg%3e");
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    background-size: 16px 12px;
 }
 
-/* Icono de calendario NEGRO en modo claro */
+/* Icono calendario NEGRO (sin invertir) en modo claro */
 body[data-theme="sunset-groove"] #recurrent-options input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: none; /* Quitamos la inversión, se ve negro original */
+    filter: none;
     cursor: pointer;
     opacity: 0.6;
 }
 
-/* Etiquetas (Labels) adaptables */
-#recurrent-options label {
-    color: var(--c-on-surface) !important; /* Se vuelve negro o blanco según el tema */
-    font-weight: 600;
+/* Etiquetas NEGRAS en modo claro */
+body[data-theme="sunset-groove"] #recurrent-options label,
+body[data-theme="sunset-groove"] .recurrent-section__label {
+    color: #000000 !important;
 }
