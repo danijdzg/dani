@@ -2319,10 +2319,12 @@ const renderBudgetTracking = async () => {
         deselectedInvestmentTypesFilter.add(type);
     }
 
-    // LA SOLUCIÓN:
-    // Ya no buscamos el contenedor, simplemente llamamos a la función de
-    // renderizado con el ID correcto para la pestaña de Inversiones.
-    renderInversionesView();
+    // === INICIO DE LA CORRECCIÓN ===
+    // En lugar de redibujar TODA la pestaña (lo que cierra los acordeones),
+    // llamamos solo a la función que redibuja el CONTENIDO del portafolio
+    // (el gráfico treemap y la lista de activos).
+    renderPortfolioMainContent('portfolio-main-content');
+    // === FIN DE LA CORRECCIÓN ===
 };
 
 // ====================================================================================
