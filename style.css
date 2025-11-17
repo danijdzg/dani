@@ -2095,3 +2095,43 @@ input:disabled, input[readonly] {
     color: #ffffff;            /* Texto blanco puro */
     padding: 10px;
 }
+
+#recurrent-options input[type="date"] {
+    /* 1. Texto blanco y fondo oscuro sólido */
+    color: #ffffff !important;
+    background-color: #1A2634 !important; 
+    
+    /* 2. Estilo consistente con el selector de frecuencia */
+    border: 1px solid var(--c-outline);
+    border-radius: var(--border-radius-md);
+    padding: 12px 16px;
+    width: 100%;
+    margin-top: 8px;
+    font-family: var(--font-family);
+    font-size: var(--fs-base);
+    
+    /* 3. MAGIA: Fuerza al calendario nativo (el popup) a usar modo oscuro */
+    color-scheme: dark;
+}
+
+/* Estado al tocar/enfocar */
+#recurrent-options input[type="date"]:focus {
+    border-color: var(--c-primary);
+    box-shadow: 0 0 0 2px var(--c-primary);
+    outline: none;
+}
+
+/* 4. Arreglo para el icono del calendario (la flechita/calendario a la derecha) */
+/* filter: invert(1) convierte el icono negro por defecto en blanco */
+#recurrent-options input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1); 
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+/* 5. Asegurar que las etiquetas (labels) dentro de esta sección sean blancas */
+.recurrent-section label,
+#recurrent-options label {
+    color: var(--c-on-surface) !important;
+    font-weight: 600;
+}
