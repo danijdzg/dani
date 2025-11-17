@@ -7542,10 +7542,13 @@ function createCustomSelect(selectElement) {
     if (investmentChartMode === mode) return; // No hacer nada si ya está en ese modo
     hapticFeedback('light');
     investmentChartMode = mode; // Actualizamos el estado global
-    
-    // LA SOLUCIÓN:
-    // Aplicamos la misma lógica aquí. Forzamos el redibujado en el contenedor correcto.
-    renderInversionesView();
+
+    // === INICIO DE LA CORRECCIÓN ===
+    // En lugar de redibujar TODA la pestaña (lo que cierra los acordeones),
+    // llamamos solo a la función que redibuja el CONTENIDO del portafolio
+    // (el gráfico treemap y la lista de activos).
+    renderPortfolioMainContent('portfolio-main-content');
+    // === FIN DE LA CORRECCIÓN ===
 };
             
         const showImportJSONWizard = () => {
