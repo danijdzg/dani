@@ -7714,17 +7714,13 @@ if (ptrElement && mainScrollerPtr) {
             }, 0);
         }
     },
-            'show-main-add-sheet': () => showModal('main-add-sheet'),
+            
 			'show-pnl-breakdown': () => handleShowPnlBreakdown(actionTarget.dataset.id),
-			 'show-irr-breakdown': () => handleShowIrrBreakdown(actionTarget.dataset.id),
+			'show-irr-breakdown': () => handleShowIrrBreakdown(actionTarget.dataset.id),
 			'open-movement-form': (e) => {
+    // El tipo (ej: "gasto") lo saca directamente del botón que se ha pulsado
     const type = e.target.closest('[data-type]').dataset.type;
-    hideModal('main-add-sheet');
-    // Usamos un pequeño retardo para que la animación de cierre del sheet
-    // no se solape con la de apertura del formulario, creando un efecto más fluido.
-    setTimeout(() => {
-        startMovementForm(null, false, type);
-    }, 250);
+    startMovementForm(null, false, type);
 },
             'export-filtered-csv': () => handleExportFilteredCsv(btn),
             'show-diario-filters': showDiarioFiltersModal,
