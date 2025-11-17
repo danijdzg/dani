@@ -2054,3 +2054,44 @@ input:disabled, input[readonly] {
     opacity: 1; /* Evita que el navegador lo haga transparente */
     -webkit-text-fill-color: var(--c-on-surface-secondary);
 }
+
+#recurrent-frequency {
+    appearance: none; /* Elimina el estilo nativo del sistema */
+    -webkit-appearance: none;
+    
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 8px; /* Separación con la fecha */
+    
+    /* Colores de alto contraste */
+    background-color: #1A2634 !important; /* Un azul oscuro sólido, no transparente */
+    color: var(--c-white) !important;
+    border: 1px solid var(--c-primary); /* Borde del color principal para destacar */
+    border-radius: var(--border-radius-md);
+    
+    font-size: var(--fs-base);
+    font-weight: 600;
+    cursor: pointer;
+    
+    /* Icono de flecha personalizado para asegurar que se vea en blanco */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3csvg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 16px 12px;
+}
+
+/* Efecto al pasar el ratón o tocar */
+#recurrent-frequency:focus,
+#recurrent-frequency:hover {
+    background-color: #253345 !important; /* Un poco más claro al interactuar */
+    box-shadow: 0 0 0 2px var(--c-primary); /* Resplandor de foco */
+    outline: none;
+}
+
+/* 2. Estilo de las OPCIONES (El menú que se despliega) */
+/* Esto es crucial para que no salga blanco sobre blanco en algunos móviles/Windows */
+#recurrent-frequency option {
+    background-color: #121820; /* Fondo muy oscuro */
+    color: #ffffff;            /* Texto blanco puro */
+    padding: 10px;
+}
