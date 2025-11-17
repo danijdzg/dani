@@ -9658,7 +9658,6 @@ showConfirmationModal(
 
 };
 
-document.addEventListener('DOMContentLoaded', initApp);
 
 const fetchMovementsInChunks = async (baseQuery, field, ids) => {
     if (ids.length === 0) {
@@ -10014,4 +10013,5 @@ if ('serviceWorker' in navigator) {
       .catch(error => {
         console.log('Fallo en el registro del Service Worker:', error);
       });
-  }); 
+  });
+document.addEventListener('DOMContentLoaded', initApp);  
