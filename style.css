@@ -1,130 +1,81 @@
 
-
-
-/* ▼▼▼ PEGA ESTE BLOQUE COMPLETO EN LUGAR DEL ANTERIOR PARA EL EXTRACTO DE CUENTA ▼▼▼ */
-
-/* =============================================================== */
-/* === INICIO: SOLUCIÓN DEFINITIVA PARA EXTRACTO DE CUENTA (CSS) v2.0 === */
-/* =============================================================== */
+/* === INICIO: Estilos para el Informe de Cuenta (Cartilla) - VERSIÓN FINAL CORREGIDA === */
 
 .informe-extracto-container {
     border: 1px solid var(--c-outline);
     border-radius: var(--border-radius-lg);
-    overflow: hidden;
+    background-color: var(--c-surface);
+    overflow: hidden; 
 }
 
-/* --- Cabecera y Filas Especiales (Saldo Inicial, Resumen) --- */
+/* Estilo común para la cabecera y las filas de movimiento */
 .informe-linea-header,
-.informe-linea-saldo-inicial,
-.informe-linea-resumen {
+.informe-linea-movimiento {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: var(--sp-2);
     padding: var(--sp-2) var(--sp-3);
-    font-size: var(--fs-xs);
+    font-size: 0.8rem;
+    line-height: 1.3;
 }
 
 .informe-linea-header {
     font-weight: 700;
     color: var(--c-on-surface-secondary);
     background-color: var(--c-surface-variant);
-    text-transform: uppercase;
-}
-.informe-linea-saldo-inicial, .informe-linea-resumen {
-    font-weight: 600;
-    color: var(--c-on-surface-secondary);
-    background-color: var(--c-surface-variant);
-    border-top: 1px solid var(--c-outline);
-}
-.informe-linea-resumen {
-    background-color: transparent;
-    font-style: italic;
+    border-bottom: 1px solid var(--c-outline);
 }
 
-/* --- Filas de Movimiento (Diseño base) --- */
 .informe-linea-movimiento {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--sp-3);
-    border-top: 1px solid var(--c-outline);
+    border-bottom: 1px solid var(--c-outline);
+}
+.informe-linea-movimiento:last-child {
+    border-bottom: none;
 }
 
-.informe-linea-movimiento__main {
-    flex: 1;
+/* Definición del comportamiento de cada campo */
+
+.informe-linea-header > *,
+.informe-linea-movimiento > * {
+    flex-shrink: 0;
+}
+
+/* CAMPO 1: Fecha */
+.informe-linea-movimiento .fecha,
+.informe-linea-header .fecha {
+    width: 45px;
+}
+
+/* CAMPO 2: Descripción (el campo flexible) */
+.informe-linea-movimiento .descripcion,
+.informe-linea-header .descripcion {
+    flex-grow: 1;
+    flex-shrink: 1;
     min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--sp-3);
-}
-
-.informe-linea-movimiento__fecha {
     font-weight: 600;
-    font-size: var(--fs-sm);
-    color: var(--c-on-surface-secondary);
-    width: 65px;
-}
-.informe-linea-movimiento__details { min-width: 0; }
-.informe-linea-movimiento__descripcion { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.informe-linea-movimiento__concepto { font-size: var(--fs-xs); color: var(--c-on-surface-tertiary); display: none; /* Oculto en vista ancha */ }
-
-.informe-linea-movimiento__figures,
-.informe-linea-header,
-.informe-linea-saldo-inicial,
-.informe-linea-resumen {
-    font-family: monospace, sans-serif; /* Monoespaciado para alinear números */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.informe-linea-movimiento__figures { text-align: right; }
-.informe-linea-movimiento__importe { font-weight: 700; font-size: 1.05em; }
-.informe-linea-movimiento__saldo { font-size: var(--fs-xs); color: var(--c-on-surface-secondary); }
-
-/* --- La Magia: Adaptación para Móviles (< 480px) --- */
-@media (max-width: 480px) {
-    .informe-linea-header,
-    .informe-linea-saldo-inicial .saldo,
-    .informe-linea-resumen .importe {
-        display: none; /* Ocultamos elementos no esenciales */
-    }
-    .informe-extracto-container { border: none; }
-    
-    .informe-linea-movimiento, .informe-linea-saldo-inicial, .informe-linea-resumen {
-        padding-left: var(--sp-2);
-        padding-right: var(--sp-2);
-    }
-
-    .informe-linea-movimiento {
-        flex-direction: column; /* Apilamos todo verticalmente */
-        align-items: stretch;
-        gap: 2px;
-    }
-
-    .informe-linea-movimiento__main,
-    .informe-linea-movimiento__figures {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-    }
-    
-    .informe-linea-movimiento__fecha { width: auto; } /* El ancho ya no es fijo */
-    .informe-linea-movimiento__details { text-align: right; } /* Concepto a la derecha */
-    .informe-linea-movimiento__descripcion { display: none; /* Ocultamos la descripción larga, usamos la corta */ }
-    .informe-linea-movimiento__concepto { display: block; /* Hacemos visible el concepto */ }
-    
-    .informe-linea-movimiento__saldo {
-        font-weight: 600;
-    }
-    .informe-linea-movimiento__importe {
-       font-size: 1.15em;
-    }
-
-    .informe-linea-resumen .descripcion {
-        flex: 1; text-align: center; font-size: 0.9em;
-    }
+/* CAMPO 3 y 4: Importe y Saldo AHORA COMPARTEN EXACTAMENTE EL MISMO ESTILO */
+.informe-linea-movimiento .importe,
+.informe-linea-movimiento .saldo,
+.informe-linea-header .importe,
+.informe-linea-header .saldo {
+    width: 90px; /* Ancho fijo para alinear bien las cifras */
+    text-align: right;
+    font-family: monospace, sans-serif;
+    font-weight: 600;
+    font-size: 0.9em; /* Mismo tamaño de fuente para ambos */
 }
-/* =============================================================== */
-/* === FIN: SOLUCIÓN DEFINITIVA PARA EXTRACTO DE CUENTA (CSS) v2.0 === */
-/* =============================================================== */
+
+
+/* Se mantiene la regla de color solo para el importe para diferenciarlo */
+.text-ingreso { color: var(--c-success); }
+.text-gasto { color: var(--c-danger); }
+
+/* === FIN: Estilos para el Informe de Cuenta (Cartilla) - VERSIÓN FINAL CORREGIDA === */
 
 	/* Estilo para el input cuando es TRASPASO */
 #movimiento-cantidad-form-group.is-traspaso #movimiento-cantidad {
@@ -204,8 +155,6 @@
     /* Estado inicial (invisible) */
     opacity: 0;
     pointer-events: none; /* No se puede hacer clic en ella */
-	/* La transición que hará que se mueva suavemente */
-    transition: transform 0.7s cubic-bezier(0.5, -0.5, 0.5, 1.5), opacity 0.7s;
 }
 
 /* La animación que la hará volar y desaparecer */
@@ -272,7 +221,37 @@
     border: 2px solid red;
     background: #ffecec;
   }
-
+	/* === INICIO: Estilos para el Asistente aiDANaI === */
+.aidanai-modal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--sp-2);
+}
+.aidanai-modal-content img {
+    width: 80px;
+    height: 80px;
+    border-radius: 24px;
+    margin-bottom: var(--sp-3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.aidanai-modal-content h4 {
+    color: var(--c-primary);
+    font-weight: 700;
+    margin-bottom: var(--sp-2);
+    font-size: var(--fs-lg);
+}
+.aidanai-modal-content p {
+    color: var(--c-on-surface-secondary);
+    line-height: 1.6;
+    font-size: var(--fs-sm);
+}
+.aidanai-modal-content p strong {
+    color: var(--c-on-surface);
+    font-weight: 600;
+}
+/* === FIN: Estilos para el Asistente aiDANaI === */
 	
 	#pending-recurrents-container .accordion__content {
     display: flex;
@@ -287,7 +266,7 @@
         margin-top: 4px; 
     }
 	
-/* === INICIO: Estilos para la nueva Guía de Ayuda === */
+	/* === INICIO: Estilos para la nueva Guía de Ayuda === */
 #help-modal-body h3 { 
     margin-top: 1.5em; 
     margin-bottom: 0.8em; 
@@ -304,7 +283,6 @@
     margin-top: 1.2em;
     margin-bottom: 0.5em;
 }
-/* Le damos un estilo más prominente a los títulos de las secciones principales */
 #help-modal-body .accordion > summary {
     font-size: 1.1em;
     font-weight: 600;
@@ -324,7 +302,6 @@
 #help-modal-body li {
     margin-bottom: 8px;
 }
-/* Estilo para mostrar fragmentos de código o formatos, como el del CSV */
 #help-modal-body code {
     display: block;
     background-color: var(--c-surface-variant);
@@ -372,32 +349,40 @@
 .drag-handle:active { cursor: grabbing; }
 
 :root {
-    /* TEMA 1: "ABISMO DIGITAL" (Oscuro Profesional) */
-    /* PALETA: Inspirada en fintech de lujo, con un fondo azul noche profundo. */
-    --c-primary: #00B34D;       /* Verde Esmeralda, reservado para acciones clave. */
-    --c-primary-hover: #00CC55;
-    --c-danger: #FF3B30;
-    --c-success: #39FF14;
-    --c-warning: #FFD60A;
-    --c-info: #BF5AF2;
+    /* PALETA "CIBER-NEÓN": Cian eléctrico sobre negro puro. */
+    --c-primary: #00B34D;       /* Verde Esmeralda Profundo */
+	--c-primary-hover: #00CC55; /* Versión más brillante para hover */
+    --c-danger: #FF3B30;        /* Rojo Neón */
+    --c-success: #39FF14;       /* Verde Lima Neón */
+    --c-warning: #FFD60A;       /* Amarillo Neón */
+    --c-info: #BF5AF2;          /* Púrpura Neón */
+
+    /* FONDO: Negro puro para AMOLED. */
+    --c-background: #000000;
     
-    /* FONDOS Y SUPERFICIES: Elegancia y profundidad. */
-    --c-background: #0A121A;    /* AZUL NOCHE PROFUNDO - Casi negro, pero más rico. */
-    --c-surface: rgba(28, 42, 58, 0.6); /* Glassmorphism sutil sobre el fondo. */
-    --c-surface-variant: rgba(42, 58, 78, 0.5);
+    /* SUPERFICIES: "Cristal Holográfico" oscuro. */
+    --c-surface: rgba(10, 25, 40, 0.70); /* Tinte azulado oscuro translúcido */
+    --c-surface-variant: rgba(20, 35, 50, 0.70);
+
+    /* BORDES Y RESPLANDOR: El corazón del efecto neón. */
+    --c-outline: rgba(0, 255, 255, 0.35);
+    --c-border-glow: 0 0 12px rgba(0, 255, 255, 0.4); /* Resplandor para inputs */
+
+    /* TEXTOS: Optimizados para brillar. */
+    --c-on-surface: #F0F8FF; /* Blanco Alice Blue (muy claro, casi blanco) */
+    --c-on-surface-secondary: rgba(240, 248, 255, 0.75); /* WCAG CORRECCIÓN: Aumentada opacidad de 0.65 a 0.75 por seguridad */
+    --c-on-surface-tertiary: rgba(240, 248, 255, 0.60); /* WCAG CORRECCIÓN: Aumentada opacidad de 0.45 a 0.60 para pasar el test de contraste */
+    --c-on-surface-disabled: #444444;
     
-    /* BORDES Y LÍNEAS: Definición sin distracción. */
-    --c-outline: rgba(255, 255, 255, 0.1); /* Blanco de baja opacidad. */
-    --c-border-glow: 0 0 12px rgba(0, 179, 77, 0.4); /* Resplandor ahora en verde primario. */
+    --c-white: #FFFFFF;
+    --c-black: #000000;
     
-    /* TEXTOS: Optimizados para legibilidad. */
-    --c-on-surface: #F0F8FF;
-    --c-on-surface-secondary: rgba(240, 248, 255, 0.85); /* Contraste mejorado. */
-    --c-on-surface-tertiary: rgba(240, 248, 255, 0.70); /* Contraste mejorado. */
-    
-    /* SOMBRAS: Resplandor suave. */
-    --shadow-sm: 0 0 8px rgba(0, 0, 0, 0.25);
-    --shadow-md: 0 0 20px rgba(0, 0, 0, 0.45);
+    --c-chart-positive: var(--c-success);
+    --c-chart-negative: var(--c-danger);
+
+    /* SOMBRAS: Resplandor de neón pronunciado ("Bloom Effect"). */
+    --shadow-sm: 0 0 8px rgba(0, 255, 255, 0.25);
+    --shadow-md: 0 0 20px rgba(0, 255, 255, 0.45);
     --glow-red: 0 0 20px rgba(255, 59, 48, 0.55);
 
     /* VARIABLES BASE (No se tocan) */
@@ -409,32 +394,52 @@
     --border-radius-md: 10px; --border-radius-lg: 16px;
 }
 
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.1;
+    background-image:
+        linear-gradient(rgba(0, 179, 77, 0.25) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 179, 77, 0.25) 1px, transparent 1px);
+    background-size: 35px 35px;
+    animation: pan-grid 60s linear infinite;
+}
+
+@keyframes pan-grid {
+    0% { background-position: 0 0; }
+    100% { background-position: 350px 350px; }
+}
+
 body[data-theme="sunset-groove"] {
-    /* TEMA 2: "BRISA ALPINA" (Claro y Profesional) */
-    /* PALETA: Inspirada en la claridad y limpieza del diseño de apps nativas modernas. */
-    --c-primary: #007AFF;       /* Azul más vibrante y moderno. */
-    --c-primary-hover: #0056b3;
-    --c-danger: #D92A2A;
-    --c-success: #28a745;
-    --c-warning: #FF9500;
-    --c-info: #5856D6;
+    /* PALETA "PRISMÁTICA": Colores saturados y de alto contraste. */
+    --c-primary: #0060C0;       /* WCAG CORRECCIÓN: Azul oscurecido para mejorar contraste (antes #007AFF) */
+    --c-primary-hover: #007AFF;
+    --c-danger: #FF3B30;        /* Rojo Vibrante */
+    --c-success: #34C759;       /* Verde Vibrante */
+    --c-warning: #FF9500;       /* Naranja Vibrante */
+    --c-info: #5856D6;          /* Índigo Vibrante */
+
+    /* FONDO: Gradiente abstracto y colorido. */
+    --c-background: #E5E5EA; /* Un gris muy claro como base */
     
-    /* FONDOS Y SUPERFICIES: Limpieza y aire. */
-    --c-background: #F7F7F7;    /* FONDO CASI BLANCO - Para una sensación más nítida. */
-    --c-surface: rgba(255, 255, 255, 0.8); /* Glassmorphism muy sutil. */
-    --c-surface-variant: rgba(255, 255, 255, 0.7);
-    --c-outline: rgba(60, 60, 67, 0.12);  /* Borde más claro, casi imperceptible. */
-    
-    /* TEXTOS: Contraste perfecto sobre blanco. */
-    --c-on-surface: #1D1D1F; /* Gris muy oscuro, más suave que el negro puro. */
+    /* SUPERFICIES: El efecto de cristal es la estrella. */
+    --c-surface: rgba(252, 252, 252, 0.75); /* WCAG CORRECCIÓN: Aumentada opacidad para mejorar legibilidad */
+    --c-surface-variant: rgba(255, 255, 255, 0.5);
+    --c-outline: rgba(60, 60, 67, 0.2); /* WCAG CORRECCIÓN: Borde más oscuro para mejor definición */
+
+    /* TEXTOS: Oscuros para un contraste perfecto sobre el fondo claro y borroso. */
+    --c-on-surface: #1C1C1E; /* Negro suave */
     --c-on-surface-secondary: #3C3C4399;
-    --c-on-surface-tertiary: #3C3C4380;
+    --c-on-surface-tertiary: #3C3C4380; /* WCAG CORRECCIÓN: Aumentada opacidad de 66 a 80 para mejorar contraste */
     
-    /* SOMBRAS: Suaves y difusas para un efecto de flotación. */
+    /* SOMBRAS: Suaves y difusas para realzar el efecto de flotación. */
     --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
-
 
 /* ================================================================= */
 /* === ESTILOS GLOBALES DEL ENCABEZADO (INVARIABLE A LOS TEMAS)   === */
@@ -459,12 +464,11 @@ body[data-ledger-mode="B"] .top-bar {
 }
 
 /* 4. Asegura que el texto y botones dentro del encabezado SIEMPRE sean blancos y legibles */
-/* Refactorización Profesional en style.css */
-body[data-theme] .top-bar,
-body[data-theme] .top-bar .btn,
-body[data-theme] .top-bar .icon-btn,
-body[data-theme] .top-bar #page-title-display {
-    color: var(--c-white); /* Sin !important, pero ahora es más específico que las reglas del tema */
+.top-bar, 
+.top-bar .btn, 
+.top-bar .icon-btn, 
+#page-title-display {
+    color: var(--c-white) !important; /* !important es clave para anular los temas */
 }
 
 /* ================================================================= */
@@ -505,36 +509,15 @@ body[data-ledger-mode="B"] .bottom-nav__item--active {
 /* ================================================================= */
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { height: -webkit-fill-available; scroll-behavior: smooth; }
-body {
-    font-family: var(--font-family);
-    background-color: var(--c-background);
-    color: var(--c-on-surface);
-    line-height: 1.4;
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow: hidden; /* Mantiene el body fijo */
-    font-weight: 500;
-
-    /* ▼▼▼ AÑADIR ESTAS 2 LÍNEAS CLAVE ▼▼▼ */
-    overscroll-behavior-y: none;      /* Evita que el navegador rebote la página entera */
-    -webkit-overflow-scrolling: touch; /* Activa la inercia "suave" en iOS */
-}
-/* ▼▼▼ AÑADIR ESTE BLOQUE NUEVO JUSTO DEBAJO ▼▼▼ */
-/* Esto permite que el scroll funcione bien DENTRO de las listas, pero que se detenga suavemente al llegar al final sin mover toda la app */
-.app-layout__main,
-.modal__body,
-.custom-select__options,
-#movimientos-list-container {
-    overscroll-behavior-y: contain;
-}
+body { font-family: var(--font-family); background-color: var(--c-background); color: var(--c-on-surface); line-height: 1.4; min-height: 100vh; min-height: -webkit-fill-available; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow: hidden; font-weight: 500; }
 *:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; border-radius: var(--sp-2); }
 @keyframes fade-out-and-collapse {
     from {
         opacity: 1;
         transform: scaleY(1);
-        max-height: 76px; /* Altura máxima de un item de traspaso */
+        max-height: 76px; /* Altura máxima de un item */
+        padding-top: var(--sp-2);
+        padding-bottom: var(--sp-2);
     }
     to {
         opacity: 0;
@@ -548,10 +531,8 @@ body {
 }
 
 .item-deleting {
-    animation: fade-out-and-collapse 1s ease-out forwards;
+    animation: fade-out-and-collapse 0.4s ease-out forwards;
     overflow: hidden;
-    /* Aseguramos que el borde también desaparezca */
-    border-bottom: none !important; 
 }
 @keyframes item-enter {
     from {
@@ -571,7 +552,7 @@ body {
 
 /* Esta es la clase que dispara la animación */
 .list-item-animate.item-enter-active {
-    animation: item-enter 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: item-enter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 @keyframes pop-in { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes slide-in-from-right {
@@ -954,6 +935,8 @@ body {
 .filter-pill--active { background-color: var(--c-primary); color: var(--c-white); font-weight: 700; border-color: var(--c-primary); }
 .toast-container { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); pointer-events: none;}
 .toast { background-color: var(--c-surface); color: var(--c-white); padding: var(--sp-2) var(--sp-4); border-radius: var(--border-radius-md); box-shadow: 0 0 20px rgba(0,0,0,0.5); pointer-events: all; border: 1px solid var(--c-outline); }
+@keyframes fade-out-and-collapse { from { opacity: 1; transform: scaleY(1); max-height: 76px; padding-top: var(--sp-2); padding-bottom: var(--sp-2); } to { opacity: 0; transform: scaleY(0.8); max-height: 0; padding-top: 0; padding-bottom: 0; margin: 0; border: 0; } }
+.item-deleting { animation: fade-out-and-collapse 0.4s ease-out forwards; overflow: hidden; }
 #description-suggestions {
     display: none; /* Empezará oculto */
     position: absolute;
@@ -1050,40 +1033,24 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 @keyframes spin { to { transform:rotate(360deg); } }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
-/* --- INICIO: Iconos de Encabezado con Estilo (VERSIÓN CORREGIDA Y MEJORADA) --- */
-
-.top-bar .top-bar__actions .icon-btn {
-    width: 40px;
-    height: 40px;
-    transition: transform 0.2s ease-out, background-color 0.2s ease-out;
+/* --- Iconos de Encabezado con Estilo --- */
+.top-bar .top-bar__actions .icon-btn { width: 40px; height: 40px; position: relative; overflow: hidden; transition: transform 0.25s ease-out; }
+.top-bar .top-bar__actions .icon-btn .material-icons { font-size: 24px; font-weight: 600; -webkit-background-clip: text; background-clip: text; color: transparent; transition: all 0.25s ease-out; }
+.top-bar .top-bar__actions .icon-btn[data-action="global-search"] .material-icons { background-image: linear-gradient(45deg, var(--c-primary), var(--c-info)); text-shadow: 0 0 8px color-mix(in srgb, var(--c-primary) 50%, transparent); }
+.top-bar .top-bar__actions .icon-btn[data-action="show-main-menu"] .material-icons {
+    background-image: linear-gradient(45deg, var(--c-on-surface), var(--c-on-surface-secondary));
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
 }
-
-.top-bar .top-bar__actions .icon-btn .material-icons {
-    font-size: 24px;
-    transition: color 0.2s, transform 0.2s;
-    /* Color por defecto para los iconos menos importantes */
-    color: var(--c-on-surface-secondary); 
+.top-bar .top-bar__actions .icon-btn[data-action="show-aidanai-help"] .material-icons {
+    background-image: linear-gradient(45deg, #2DD4BF, var(--c-primary));
+    text-shadow: 0 0 8px color-mix(in srgb, var(--c-info) 50%, transparent);
 }
-
-/* 1. Icono de Búsqueda (Acción Principal) */
-.top-bar .top-bar__actions .icon-btn[data-action="global-search"] .material-icons {
-    color: var(--c-primary); /* Usa el color principal del tema */
-    font-weight: 600;
-}
-
-/* 3. El resto de iconos (Tema, Menú) usan el color por defecto */
-
-/* Efecto Hover para TODOS los iconos */
-.top-bar .top-bar__actions .icon-btn:hover .material-icons {
-    color: var(--c-white);
-    transform: scale(1.1);
-}
-
-.top-bar .top-bar__actions .icon-btn:active { 
-    transform: scale(0.9);
-}
-
-/* --- FIN: Bloque de Estilos Corregido --- */
+.top-bar .top-bar__actions .icon-btn[data-action="toggle-theme"] .material-icons { background-image: linear-gradient(45deg, var(--c-info), #F43F5E); text-shadow: 0 0 8px color-mix(in srgb, var(--c-info) 50%, transparent); }
+.top-bar .top-bar__actions .icon-btn[data-action="help"] .material-icons { background-image: linear-gradient(45deg, var(--c-success), #2DD4BF); text-shadow: 0 0 8px color-mix(in srgb, var(--c-success) 50%, transparent); }
+.top-bar .top-bar__actions .icon-btn[data-action="exit"] .material-icons { background-image: linear-gradient(45deg, var(--c-danger), var(--c-warning)); text-shadow: 0 0 8px color-mix(in srgb, var(--c-danger) 50%, transparent); }
+.top-bar .top-bar__actions .icon-btn:hover { transform: scale(1.15); background-color: color-mix(in srgb, var(--c-surface-variant) 80%, transparent); }
+.top-bar .top-bar__actions .icon-btn:hover .material-icons { transform: scale(1.1); }
+.top-bar .top-bar__actions .icon-btn:active { transform: scale(0.95); transition-duration: 0.1s; }
 
 /* --- Componentes Específicos (Inversiones, Presupuestos, etc.) --- */
 .investment-asset-card { background-color: var(--c-surface); border: 1px solid var(--c-outline); border-radius: var(--border-radius-lg); padding: var(--sp-3); margin-bottom: var(--sp-2); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
@@ -1155,15 +1122,6 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     .top-bar .top-bar__actions .icon-btn .material-icons {
         font-size: 22px;
     }
-	.informe-linea-movimiento {
-    display: grid; /* <--- ¡AÑADE ESTA LÍNEA! */
-    grid-template-columns: 1fr auto;
-    grid-template-rows: auto auto;
-    padding: var(--sp-3);
-    gap: 4px var(--sp-4);
-    align-items: center;
-    border-bottom: 1px solid var(--c-outline);
-	}
 }
 
 /* Para tablets y pantallas medianas */
@@ -1331,12 +1289,12 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     border-width: 3px;
     color: var(--c-primary);
 }
-/* EN style.css - PEGA ESTE BLOQUE AL FINAL */
-/* === INICIO: Estilos para el Menú Desplegable === */
+/* === FIN: Estilos para Pull-to-Refresh === */
+ /* === INICIO: Estilos para el Menú Desplegable === */
 .popover-menu {
     position: fixed;
-    top: 52px; /* Justo debajo de la barra superior */
-    right: 12px;
+    top: 48px; /* Justo debajo de la barra superior */
+    right: 8px;
     z-index: 1100; /* Muy alto para que esté por encima de todo */
     background-color: var(--c-surface-variant);
     border-radius: var(--border-radius-md);
@@ -1345,10 +1303,9 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     width: 220px;
     padding: var(--sp-2);
     
-    /* Magia para ocultar/mostrar con una animación suave */
+    /* Magia para ocultar/mostrar */
     opacity: 0;
     transform: translateY(-10px) scale(0.95);
-    transform-origin: top right;
     transition: opacity 0.2s ease-out, transform 0.2s ease-out;
     pointer-events: none; /* No se puede hacer clic cuando está oculto */
 }
@@ -1380,14 +1337,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     background-color: var(--c-surface);
 }
 
-.popover-menu__item .material-icons {
-    color: var(--c-on-surface-secondary);
-}
-
 .popover-menu__item--danger {
-    color: var(--c-danger);
-}
-.popover-menu__item--danger .material-icons {
     color: var(--c-danger);
 }
 
@@ -1397,7 +1347,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     margin: var(--sp-2) 0;
 }
 /* === FIN: Estilos para el Menú Desplegable === */
-
+/* Pega este bloque al final de tu <style> */
 @media (max-width: 380px) {
     /* --- Optimizaciones Generales para Pantallas Pequeñas --- */
     
@@ -1511,55 +1461,49 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     color: var(--c-on-surface-secondary);
 }
 
+
 /* --- FIN: Corrección para Informe de Cuenta --- */
-
-/* === INICIO: Estilos para la nueva Fila de Resumen del Extracto === */
-
+/* === INICIO: Estilos para Resumen Mensual en Extracto === */
 .informe-linea-resumen {
-    display: flex; /* Usamos flexbox para alinear los elementos */
+    display: flex;
     align-items: center;
     gap: var(--sp-2);
-    padding: var(--sp-3);
-    font-size: 0.85rem;
+    padding: var(--sp-3) var(--sp-3); /* Más espacio vertical */
+    font-size: 0.85rem; /* Ligeramente más grande */
     line-height: 1.3;
     background-color: var(--c-surface-variant);
-    border-top: 1px solid var(--c-outline);
+    border-top: 1px solid var(--c-outline); /* Separador superior */
     font-weight: 700; /* Texto en negrita */
-    margin-top: -1px; /* Pequeño truco para que los bordes se solapen y se vean más finos */
+    margin-top: -1px; /* Solapar borde con el último ítem */
 }
 
-/* El espacio de la fecha lo mantenemos pero lo dejamos vacío */
 .informe-linea-resumen .fecha {
-    width: 60px; /* Ancho similar al de las filas de movimiento */
-    visibility: hidden; /* Mantiene el espacio, pero oculta el contenido */
+    width: 45px;
+    visibility: hidden; /* Mantiene el espacio pero oculta el contenido */
 }
 
-/* La descripción ocupará todo el espacio central */
 .informe-linea-resumen .descripcion {
-    flex-grow: 1; /* Esto empuja el resto de elementos a la derecha */
+    flex-grow: 1;
     flex-shrink: 1;
     min-width: 0;
-    text-align: right; /* Alineamos el texto del resumen a la derecha */
-    font-style: italic; /* La cursiva que le da el toque de cartilla */
+    text-align: right; /* Alinear texto del resumen a la derecha */
+    font-style: italic;
     color: var(--c-on-surface-secondary);
-    padding-right: var(--sp-4); /* Damos un poco de espacio antes de los números */
+    padding-right: var(--sp-4); /* Añadir espacio antes de los números */
 }
-
-/* El importe y el saldo ocuparán un espacio fijo a la derecha */
+ /* Hacer que el resumen use monoespaciado para alinear */
 .informe-linea-resumen .importe,
 .informe-linea-resumen .saldo {
-    width: 110px;
+    width: 90px;
     text-align: right;
-    font-family: monospace, sans-serif; /* Monoespaciado para que los números se alineen bien */
+    font-family: monospace, sans-serif;
     font-size: 0.9em;
 }
 
-/* El espacio del saldo acumulado también lo ocultamos */
 .informe-linea-resumen .saldo {
-    visibility: hidden;
+     visibility: hidden; /* Mantiene el espacio pero oculta el contenido */
 }
-
-/* === FIN: Estilos para la Fila de Resumen del Extracto === */
+/* === FIN: Estilos para Resumen Mensual en Extracto === */
 
 /* === INICIO: Estilos para Nuevo Botón de Navegación Central === */
 .bottom-nav {
@@ -1644,52 +1588,45 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     color: var(--c-on-surface-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    padding: 0 var(--sp-4) var(--sp-2) var(--sp-4); /* Alineado con los márgenes de las tarjetas */
-    margin-top: var(--sp-4); /* Espacio por encima de cada grupo */
+    padding: 0 var(--sp-2) var(--sp-2) var(--sp-2);
+    margin-top: var(--sp-4);
 }
 
-/* El contenedor de cada fila/opción */
 .settings-item {
     display: flex;
     align-items: center;
-    gap: var(--sp-3);
+    gap: var(--sp-4);
     width: 100%;
     padding: var(--sp-3) var(--sp-4);
     border: none;
-    background: var(--c-surface); /* El color de fondo del item */
+    background: none;
     text-align: left;
     cursor: pointer;
-    border-bottom: 1px solid var(--c-outline); /* Línea separadora */
+    border-bottom: 1px solid var(--c-outline);
     transition: background-color 0.2s ease-in-out;
 }
 
-/* Quita la línea separadora del último elemento del grupo */
 .card .settings-item:last-child {
     border-bottom: none;
 }
 
-/* Efecto al pasar el ratón por encima (en PC) */
 .settings-item:hover {
     background-color: var(--c-surface-variant);
 }
 
-/* El texto de la opción (ej. "Gestionar Cuentas") */
 .settings-item .settings-item__label {
-    flex-grow: 1; /* Hace que ocupe todo el espacio disponible */
+    flex-grow: 1;
     color: var(--c-on-surface);
     font-weight: 600;
 }
 
-/* Estilo para los iconos (el de la izquierda y la flecha de la derecha) */
 .settings-item .material-icons {
     color: var(--c-on-surface-secondary);
 }
 
-/* Colores especiales para acciones importantes */
 .settings-item .text-positive { color: var(--c-success); }
 .settings-item .text-warning { color: var(--c-warning); }
 .settings-item .text-danger { color: var(--c-danger); }
-.settings-item.text-danger .settings-item__label { color: var(--c-danger); } /* Que el texto también sea rojo */
 
 /* --- FIN: Estilos para la nueva página de Ajustes --- */
 
@@ -1803,52 +1740,10 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 }
 #recurrent-options {
     display: flex;
-    flex-direction: column; /* Apila las opciones principales y el selector de días */
-    gap: var(--sp-3);
-    padding: var(--sp-3);
+    gap: var(--sp-2);
+    padding: var(--sp-2) 0 var(--sp-3) 0;
     border-top: 1px solid var(--c-outline);
     margin-top: var(--sp-2);
-}
-.recurrent-options__main {
-    display: flex;
-    gap: var(--sp-2);
-}
-
-.recurrent-options__main > * {
-    background-color: var(--c-surface);
-    border-radius: 6px;
-    font-size: 0.8rem;
-    padding: 6px 8px;
-    border: 1px solid var(--c-outline);
-}
-
-#weekly-day-selector-buttons {
-    display: flex;
-    justify-content: space-between;
-    gap: 4px;
-}
-
-.day-selector-btn {
-    flex: 1;
-    height: 36px;
-    border: 1px solid var(--c-outline);
-    background-color: var(--c-surface);
-    color: var(--c-on-surface-secondary);
-    border-radius: 8px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-}
-
-.day-selector-btn:hover {
-    border-color: var(--c-primary);
-}
-
-.day-selector-btn.active {
-    background-color: var(--c-primary);
-    border-color: var(--c-primary);
-    color: var(--c-white);
-    transform: scale(1.05);
 }
 #recurrent-options select,
 #recurrent-options input {
@@ -1856,10 +1751,6 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     border-radius: 6px;
     font-size: 0.8rem;
     padding: 6px 8px;
-    /* ▼▼▼ LÍNEAS AÑADIDAS PARA LA CORRECCIÓN ▼▼▼ */
-    color: var(--c-on-surface); /* Asegura que el texto use el color del tema */
-    border: 1px solid var(--c-outline); /* Añade un borde consistente */
-    /* ▲▲▲ FIN DE LAS LÍNEAS AÑADIDAS ▲▲▲ */
 }
 
 /* 4. Botón de fecha compacto */
@@ -1891,23 +1782,109 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 
 /* --- INICIO: Estilos para el Dropdown Personalizado --- */
 
-/* 7. Dropdown Personalizado (La magia visual) */
-.custom-select-wrapper { position: relative; width: 100%; }
-.custom-select__trigger { position: relative; width: 100%; padding: 22px 12px 6px 12px; border-radius: var(--border-radius-md); background: transparent; color: var(--c-on-surface); font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: none; /* Quitamos el borde porque ya lo tiene el .input-wrapper */ }
-.custom-select-wrapper.is-open .input-wrapper { border-color: var(--c-primary); box-shadow: var(--c-border-glow); } /* El brillo se aplica al contenedor */
-.custom-select__trigger::after { content: ''; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--c-on-surface-secondary); transition: transform 0.2s ease-in-out; }
-.custom-select-wrapper.is-open .custom-select__trigger::after { transform: translateY(-50%) rotate(180deg); }
-.custom-select__options { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background-color: var(--c-surface); border: 1px solid var(--c-outline); border-radius: var(--border-radius-md); box-shadow: var(--shadow-md); z-index: 1070; max-height: 200px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; }
-.custom-select-wrapper.is-open .custom-select__options { opacity: 1; visibility: visible; transform: translateY(0); }
-.custom-select__option { padding: var(--sp-2) var(--sp-3); color: var(--c-on-surface-secondary); font-weight: 500; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
-.custom-select__option:hover { background-color: var(--c-surface-variant); color: var(--c-on-surface); }
-.custom-select__option.is-selected { background-color: var(--c-primary); color: var(--c-white); font-weight: 600; }
-.custom-select-wrapper .form-select-hidden { position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-
-/* 8. Media Query para pantallas ultra pequeñas */
-@media (max-width: 380px) {
-    /* Aquí podrías añadir optimizaciones específicas para móviles muy pequeños si fuera necesario */
+/* 1. El Contenedor Principal */
+.custom-select-wrapper {
+    position: relative;
+    width: 100%;
 }
+
+/* 2. El Disparador (lo que el usuario ve y clica) */
+.custom-select__trigger {
+    position: relative;
+    width: 100%;
+    padding: 22px 12px 6px 12px;
+    border: 1px solid var(--c-outline);
+    border-radius: var(--border-radius-md);
+    background: var(--c-surface-variant);
+    color: var(--c-on-surface);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Estado de Foco/Activo */
+.custom-select-wrapper.is-open .custom-select__trigger {
+    border-color: var(--c-primary);
+    box-shadow: var(--c-border-glow);
+}
+
+/* Flecha del Desplegable */
+.custom-select__trigger::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid var(--c-on-surface-secondary);
+    transition: transform 0.2s ease-in-out;
+}
+.custom-select-wrapper.is-open .custom-select__trigger::after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+/* 3. El Panel de Opciones (la lista que se despliega) */
+.custom-select__options {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-outline);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-md);
+    z-index: 1070; /* Por encima de otros elementos del modal */
+    max-height: 200px;
+    overflow-y: auto;
+    
+    /* Animación de apertura */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+}
+.custom-select-wrapper.is-open .custom-select__options {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* 4. Las Opciones Individuales */
+.custom-select__option {
+    padding: var(--sp-2) var(--sp-3);
+    color: var(--c-on-surface-secondary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+.custom-select__option:hover {
+    background-color: var(--c-surface-variant);
+    color: var(--c-on-surface);
+}
+.custom-select__option.is-selected {
+    background-color: var(--c-primary);
+    color: var(--c-white);
+    font-weight: 600;
+}
+
+/* 5. Ocultamos el <select> original de forma accesible */
+.custom-select-wrapper .form-select-hidden {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* --- FIN: Estilos para el Dropdown Personalizado --- */
 
 /* --- INICIO: Mejora UX para lista de recurrentes --- */
@@ -1920,797 +1897,3 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     background-color: var(--c-surface-variant);
 }
 /* --- FIN: Mejora UX --- */
-
-
-.movimiento-date-header.is-today {
-    background-color: var(--c-primary);
-    color: var(--c-white);
-    box-shadow: 0 0 12px var(--c-primary);
-}
-
-
-/* === INICIO: Estilos para Navegación por Pestañas (Tabs) === */
-.tabs {
-    display: flex;
-    gap: var(--sp-2);
-    border-bottom: 2px solid var(--c-outline);
-    margin-bottom: var(--sp-4);
-    padding: 0 var(--sp-2); /* Alineado con los márgenes del view */
-}
-
-.tab-item {
-    flex: 1;
-    padding: var(--sp-2) var(--sp-1);
-    background: none;
-    border: none;
-    border-bottom: 3px solid transparent;
-    color: var(--c-on-surface-secondary);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-
-.tab-item:hover {
-    color: var(--c-on-surface);
-    background-color: var(--c-surface-variant);
-}
-
-.tab-item--active {
-    color: var(--c-primary);
-    border-bottom-color: var(--c-primary);
-}
-
-.tab-content {
-    display: none;
-    flex-direction: column;
-    gap: var(--sp-4);
-}
-
-.tab-content--active {
-    display: flex;
-}
-/* === FIN: Estilos para Navegación por Pestañas === */
-
-/* === INICIO: ESTILOS PARA FORMULARIO DE ALTA DENSIDAD Y NAVEGACIÓN === */
-
-/* 1. Nuevo Botón de Navegación Central */
-.bottom-nav {
-    align-items: flex-end; 
-}
-#bottom-nav-add-btn {
-    width: 56px;
-    height: 56px;
-    background-color: var(--c-primary);
-    color: var(--c-white);
-    border: none;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 12px;
-    box-shadow: var(--shadow-md);
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-}
-#bottom-nav-add-btn:hover {
-    transform: scale(1.1) rotate(15deg);
-    background-color: var(--c-primary-hover);
-}
-#bottom-nav-add-btn:active {
-    transform: scale(0.95);
-}
-#bottom-nav-add-btn .material-icons {
-    font-size: 28px;
-    font-weight: 700;
-}
-
-/* 2. Rejilla principal del formulario denso */
-.dense-form-grid {
-    display: grid;
-    grid-template-columns: 40% 1fr;
-    grid-template-areas:
-        "amount      description"
-        "details     details";
-    gap: var(--sp-3) var(--sp-2);
-    align-items: start;
-}
-#movimiento-fields, #traspaso-fields {
-    grid-area: details;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--sp-3) var(--sp-2);
-}
-
-/* 3. Componente de campo de formulario compacto */
-.form-field-compact {
-    position: relative;
-    font-size: var(--fs-sm);
-}
-.form-field-compact > label {
-    position: absolute;
-    top: 5px;
-    left: 12px;
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: var(--c-on-surface-secondary);
-    pointer-events: none;
-}
-.form-field-compact .input-wrapper {
-    display: flex;
-    align-items: center;
-    border-radius: var(--border-radius-md);
-    background: var(--c-surface-variant);
-    border: 1px solid var(--c-outline);
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.form-field-compact .input-wrapper:focus-within {
-    border-color: var(--c-primary);
-    box-shadow: var(--c-border-glow);
-}
-.form-field-compact input,
-.form-field-compact select {
-    width: 100%;
-    padding: 22px 12px 6px 12px;
-    border: none;
-    background: transparent;
-    color: var(--c-on-surface);
-    font-size: 0.95rem;
-    font-weight: 500;
-}
-.form-field-compact input:focus,
-.form-field-compact select:focus {
-    outline: none;
-}
-.form-field-compact .form-error {
-    margin-top: 4px;
-    padding-left: 4px;
-}
-#movimiento-cantidad-form-group input {
-    font-size: 1.25rem;
-    font-weight: 700;
-    text-align: right;
-    padding-right: 4px;
-}
-#movimiento-cantidad-form-group .icon-btn {
-    margin-right: 4px;
-}
-.input-wrapper--with-addon .icon-btn {
-    flex-shrink: 0;
-}
-
-/* 4. Sección Recurrente compacta */
-.recurrent-section {
-    background-color: var(--c-surface-variant);
-    border: 1px solid var(--c-outline);
-    border-radius: var(--border-radius-md);
-    margin-top: var(--sp-3);
-    padding: 0 var(--sp-3);
-}
-.recurrent-section__label {
-    font-weight: 600;
-    font-size: var(--fs-sm);
-    color: var(--c-on-surface);
-}
-#recurrent-options {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-3);
-    padding: var(--sp-3);
-    border-top: 1px solid var(--c-outline);
-    margin-top: var(--sp-2);
-}
-.recurrent-options__main {
-    display: flex;
-    gap: var(--sp-2);
-}
-#recurrent-options select,
-#recurrent-options input {
-    background-color: var(--c-surface);
-    border-radius: 6px;
-    font-size: 0.8rem;
-    padding: 6px 8px;
-    color: var(--c-on-surface);
-    border: 1px solid var(--c-outline);
-}
-#weekly-day-selector-buttons {
-    display: flex;
-    justify-content: space-between;
-    gap: 4px;
-}
-.day-selector-btn {
-    flex: 1;
-    height: 36px;
-    border: 1px solid var(--c-outline);
-    background-color: var(--c-surface);
-    color: var(--c-on-surface-secondary);
-    border-radius: 8px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-}
-.day-selector-btn:hover {
-    border-color: var(--c-primary);
-}
-.day-selector-btn.active {
-    background-color: var(--c-primary);
-    border-color: var(--c-primary);
-    color: var(--c-white);
-    transform: scale(1.05);
-}
-
-/* 5. Botón de fecha compacto */
-.date-button-compact {
-    width: 100%;
-    justify-content: center;
-    gap: var(--sp-2);
-    font-weight: 600;
-    padding: var(--sp-2);
-    font-size: var(--fs-sm);
-    background-color: var(--c-surface-variant);
-    color: var(--c-on-surface);
-    border: none;
-}
-.date-button-compact .material-icons {
-    color: var(--c-on-surface-secondary);
-}
-
-/* 6. Eliminamos márgenes para máxima densidad */
-#movimiento-modal .modal__body,
-#movimiento-modal .modal__header {
-    padding-left: var(--sp-3);
-    padding-right: var(--sp-3);
-}
-
-/* 7. Dropdown Personalizado */
-.custom-select-wrapper { position: relative; width: 100%; }
-.custom-select__trigger { position: relative; width: 100%; padding: 22px 12px 6px 12px; border: 1px solid var(--c-outline); border-radius: var(--border-radius-md); background: var(--c-surface-variant); color: var(--c-on-surface); font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.custom-select-wrapper.is-open .custom-select__trigger { border-color: var(--c-primary); box-shadow: var(--c-border-glow); }
-.custom-select__trigger::after { content: ''; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--c-on-surface-secondary); transition: transform 0.2s ease-in-out; }
-.custom-select-wrapper.is-open .custom-select__trigger::after { transform: translateY(-50%) rotate(180deg); }
-.custom-select__options { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background-color: var(--c-surface); border: 1px solid var(--c-outline); border-radius: var(--border-radius-md); box-shadow: var(--shadow-md); z-index: 1070; max-height: 200px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; }
-.custom-select-wrapper.is-open .custom-select__options { opacity: 1; visibility: visible; transform: translateY(0); }
-.custom-select__option { padding: var(--sp-2) var(--sp-3); color: var(--c-on-surface-secondary); font-weight: 500; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
-.custom-select__option:hover { background-color: var(--c-surface-variant); color: var(--c-on-surface); }
-.custom-select__option.is-selected { background-color: var(--c-primary); color: var(--c-white); font-weight: 600; }
-.custom-select-wrapper .form-select-hidden { position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-
-/* 8. Media Query para pantallas ultra pequeñas */
-@media (max-width: 380px) {
-    .view { padding: 0 var(--sp-2); }
-    .card__content { padding: var(--sp-2); }
-    .card__title { padding: var(--sp-3) var(--sp-2) 0 var(--sp-2); }
-    #inversiones-page .card__content { flex-direction: column; gap: var(--sp-3); align-items: center; }
-    .kpi-grid, .form-grid { grid-template-columns: 1fr !important; gap: var(--sp-2); }
-    #custom-date-filters.form-grid { grid-template-columns: 1fr !important; }
-    .top-bar__left-button { flex-shrink: 1; min-width: 0; flex-grow: 1; }
-    #page-title-display { display: none; }
-    .top-bar__left-group { gap: var(--sp-1); }
-    .top-bar__actions { gap: 0; }
-    .top-bar .top-bar__actions .icon-btn { width: 38px; height: 38px; }
-    .top-bar .top-bar__actions .icon-btn .material-icons { font-size: 22px; }
-}
-
-/* === FIN: ESTILOS PARA FORMULARIO DE ALTA DENSIDAD Y NAVEGACIÓN === */
-
-/* --- INICIO: Estilos para la nueva página de Ajustes --- */
-
-.settings-group__title {
-    font-size: var(--fs-sm);
-    font-weight: 700;
-    color: var(--c-on-surface-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 0 var(--sp-4) var(--sp-2) var(--sp-4); /* Alineado con los márgenes de las tarjetas */
-    margin-top: var(--sp-4); /* Espacio por encima de cada grupo */
-}
-
-/* El contenedor de cada fila/opción */
-.settings-item {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-3);
-    width: 100%;
-    padding: var(--sp-3) var(--sp-4);
-    border: none;
-    background: var(--c-surface); /* El color de fondo del item */
-    text-align: left;
-    cursor: pointer;
-    border-bottom: 1px solid var(--c-outline); /* Línea separadora */
-    transition: background-color 0.2s ease-in-out;
-}
-
-/* Quita la línea separadora del último elemento del grupo */
-.card .settings-item:last-child {
-    border-bottom: none;
-}
-
-/* Efecto al pasar el ratón por encima (en PC) */
-.settings-item:hover {
-    background-color: var(--c-surface-variant);
-}
-
-/* El texto de la opción (ej. "Gestionar Cuentas") */
-.settings-item .settings-item__label {
-    flex-grow: 1; /* Hace que ocupe todo el espacio disponible */
-    color: var(--c-on-surface);
-    font-weight: 600;
-}
-
-/* Estilo para los iconos (el de la izquierda y la flecha de la derecha) */
-.settings-item .material-icons {
-    color: var(--c-on-surface-secondary);
-}
-
-/* Colores especiales para acciones importantes */
-.settings-item .text-positive { color: var(--c-success); }
-.settings-item .text-warning { color: var(--c-warning); }
-.settings-item .text-danger { color: var(--c-danger); }
-.settings-item.text-danger .settings-item__label { color: var(--c-danger); } /* Que el texto también sea rojo */
-
-/* --- FIN: Estilos para la nueva página de Ajustes --- */
-
-/* === INICIO: Estilos para Fichas de Activo Mejoradas === */
-.portfolio-asset-card {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-3);
-    padding: var(--sp-3) var(--sp-2);
-    cursor: pointer;
-    border-bottom: 1px solid var(--c-outline);
-    transition: background-color 0.2s;
-}
-.portfolio-asset-card:hover {
-    background-color: var(--c-surface-variant);
-}
-.card .portfolio-asset-card:last-child {
-    border-bottom: none;
-}
-
-.asset-card__details {
-    flex-grow: 1;
-    min-width: 0;
-}
-.asset-card__name {
-    font-weight: 700;
-    color: var(--c-on-surface);
-}
-.asset-card__allocation {
-    font-size: var(--fs-xs);
-    font-weight: 600;
-    color: var(--c-on-surface-secondary);
-}
-.asset-card__figures {
-    flex-shrink: 0;
-    text-align: right;
-}
-.asset-card__value {
-    font-weight: 700;
-    font-size: var(--fs-base);
-}
-.asset-card__pnl-pill {
-    display: inline-block;
-    padding: 3px 8px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    border-radius: 99px;
-    margin-top: 4px;
-    color: var(--c-white);
-}
-.asset-card__pnl-pill.is-positive {
-    background-color: #006434; /* Un verde oscuro y legible */
-}
-.asset-card__pnl-pill.is-negative {
-    background-color: #991410; /* Un rojo oscuro y legible */
-}
-
-/* Estilo adicional para el nuevo botón de valoración */
-.asset-card__valoracion-btn {
-    background-color: var(--c-surface-variant);
-    color: var(--c-on-surface-secondary);
-    border: 1px solid var(--c-outline);
-    padding: 3px 8px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    border-radius: 99px;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-.asset-card__valoracion-btn:hover {
-    background-color: var(--c-surface);
-    color: var(--c-primary);
-}
-/* === FIN: Estilos para Fichas de Activo Mejoradas === */
-
-/* Nuevo contenedor para alinear fecha y botón de valorar */
-.asset-card__valuation-area {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end; /* Alinea los elementos a la derecha */
-    gap: var(--sp-2); /* Espacio entre la fecha y el botón */
-    margin-top: 6px; /* Un poco de espacio respecto a las píldoras de arriba */
-}
-
-/* Estilo para el texto de la fecha */
-.asset-card__last-valuation-date {
-    font-size: 0.7rem; /* Texto pequeño y discreto */
-    font-weight: 600;
-    color: var(--c-on-surface-secondary); /* Color secundario para no robar protagonismo */
-    white-space: nowrap; /* Evita que el texto se parta en dos líneas */
-}
-
-/* === FIN: Mejora para Fecha de Valoración === */
-
-/* === INICIO: ESTILOS PARA FORMULARIO DE ALTA DENSIDAD Y NAVEGACIÓN === */
-
-/* 1. Nuevo Botón de Navegación Central */
-.bottom-nav {
-    align-items: flex-end; 
-}
-#bottom-nav-add-btn {
-    width: 56px;
-    height: 56px;
-    background-color: var(--c-primary);
-    color: var(--c-white);
-    border: none;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 12px;
-    box-shadow: var(--shadow-md);
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-}
-#bottom-nav-add-btn:hover {
-    transform: scale(1.1) rotate(15deg);
-    background-color: var(--c-primary-hover);
-}
-#bottom-nav-add-btn:active {
-    transform: scale(0.95);
-}
-#bottom-nav-add-btn .material-icons {
-    font-size: 28px;
-    font-weight: 700;
-}
-
-/* 2. Rejilla principal del formulario denso */
-.dense-form-grid {
-    display: grid;
-    grid-template-columns: 40% 1fr;
-    grid-template-areas:
-        "amount      description"
-        "details     details";
-    gap: var(--sp-3) var(--sp-2);
-    align-items: start;
-}
-#movimiento-fields, #traspaso-fields {
-    grid-area: details;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--sp-3) var(--sp-2);
-}
-
-/* 3. Componente de campo de formulario compacto */
-.form-field-compact {
-    position: relative;
-    font-size: var(--fs-sm);
-}
-.form-field-compact > label {
-    position: absolute;
-    top: 5px;
-    left: 12px;
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: var(--c-on-surface-secondary);
-    pointer-events: none;
-}
-.form-field-compact .input-wrapper {
-    display: flex;
-    align-items: center;
-    border-radius: var(--border-radius-md);
-    background: var(--c-surface-variant);
-    border: 1px solid var(--c-outline);
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.form-field-compact .input-wrapper:focus-within {
-    border-color: var(--c-primary);
-    box-shadow: var(--c-border-glow);
-}
-.form-field-compact input,
-.form-field-compact select {
-    width: 100%;
-    padding: 22px 12px 6px 12px;
-    border: none;
-    background: transparent;
-    color: var(--c-on-surface);
-    font-size: 0.95rem;
-    font-weight: 500;
-}
-.form-field-compact input:focus,
-.form-field-compact select:focus {
-    outline: none;
-}
-.form-field-compact .form-error {
-    margin-top: 4px;
-    padding-left: 4px;
-}
-#movimiento-cantidad-form-group input {
-    font-size: 1.25rem;
-    font-weight: 700;
-    text-align: right;
-    padding-right: 4px;
-}
-#movimiento-cantidad-form-group .icon-btn {
-    margin-right: 4px;
-}
-.input-wrapper--with-addon .icon-btn {
-    flex-shrink: 0;
-}
-
-/* 4. Sección Recurrente compacta */
-.recurrent-section {
-    background-color: var(--c-surface-variant);
-    border: 1px solid var(--c-outline);
-    border-radius: var(--border-radius-md);
-    margin-top: var(--sp-3);
-    padding: 0 var(--sp-3);
-}
-.recurrent-section__label {
-    font-weight: 600;
-    font-size: var(--fs-sm);
-    color: var(--c-on-surface);
-}
-#recurrent-options {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-3);
-    padding: var(--sp-3);
-    border-top: 1px solid var(--c-outline);
-    margin-top: var(--sp-2);
-}
-.recurrent-options__main {
-    display: flex;
-    gap: var(--sp-2);
-}
-#recurrent-options select,
-#recurrent-options input {
-    background-color: var(--c-surface);
-    border-radius: 6px;
-    font-size: 0.8rem;
-    padding: 6px 8px;
-    color: var(--c-on-surface);
-    border: 1px solid var(--c-outline);
-}
-#weekly-day-selector-buttons {
-    display: flex;
-    justify-content: space-between;
-    gap: 4px;
-}
-.day-selector-btn {
-    flex: 1;
-    height: 36px;
-    border: 1px solid var(--c-outline);
-    background-color: var(--c-surface);
-    color: var(--c-on-surface-secondary);
-    border-radius: 8px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-}
-.day-selector-btn:hover {
-    border-color: var(--c-primary);
-}
-.day-selector-btn.active {
-    background-color: var(--c-primary);
-    border-color: var(--c-primary);
-    color: var(--c-white);
-    transform: scale(1.05);
-}
-
-/* 5. Botón de fecha compacto */
-.date-button-compact {
-    width: 100%;
-    justify-content: center;
-    gap: var(--sp-2);
-    font-weight: 600;
-    padding: var(--sp-2);
-    font-size: var(--fs-sm);
-    background-color: var(--c-surface-variant);
-    color: var(--c-on-surface);
-    border: none;
-    border-radius: var(--border-radius-md); /* Se añade borde redondeado */
-    cursor: pointer; /* Indicador visual */
-}
-.date-button-compact:hover {
-    background-color: var(--c-surface);
-}
-.date-button-compact .material-icons {
-    color: var(--c-on-surface-secondary);
-}
-
-/* 6. Eliminamos márgenes para máxima densidad */
-#movimiento-modal .modal__body,
-#movimiento-modal .modal__header {
-    padding-left: var(--sp-3);
-    padding-right: var(--sp-3);
-}
-
-/* 7. Dropdown Personalizado (La magia visual) */
-.custom-select-wrapper { 
-    position: relative; 
-    width: 100%; 
-}
-.custom-select-wrapper .input-wrapper {
-    /* El contenedor ya tiene los estilos correctos, solo añadimos el trigger */
-    position: relative;
-}
-.custom-select__trigger {
-    position: relative;
-    width: 100%;
-    padding: 22px 32px 6px 12px; /* Espacio para la flecha */
-    background: transparent;
-    color: var(--c-on-surface);
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    border: none; 
-}
-.custom-select-wrapper.is-open .input-wrapper { 
-    border-color: var(--c-primary);
-    box-shadow: var(--c-border-glow); 
-}
-.custom-select__trigger::after { 
-    content: ''; 
-    position: absolute; 
-    right: 12px; 
-    top: 50%; 
-    margin-top: 4px; /* Ajuste para centrarlo verticalmente en el área del texto */
-    transform: translateY(-50%); 
-    width: 0; 
-    height: 0; 
-    border-left: 5px solid transparent; 
-    border-right: 5px solid transparent; 
-    border-top: 6px solid var(--c-on-surface-secondary); 
-    transition: transform 0.2s ease-in-out; 
-}
-.custom-select-wrapper.is-open .custom-select__trigger::after { 
-    transform: translateY(-50%) rotate(180deg); 
-}
-.custom-select__options { 
-    position: absolute; 
-    top: calc(100% + 4px); 
-    left: 0; 
-    right: 0; 
-    background-color: var(--c-surface); 
-    border: 1px solid var(--c-outline); 
-    border-radius: var(--border-radius-md); 
-    box-shadow: var(--shadow-md); 
-    z-index: 1070; 
-    max-height: 200px; 
-    overflow-y: auto; 
-    opacity: 0; 
-    visibility: hidden; 
-    transform: translateY(-10px); 
-    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; 
-}
-.custom-select-wrapper.is-open .custom-select__options { 
-    opacity: 1; 
-    visibility: visible; 
-    transform: translateY(0); 
-}
-.custom-select__option { 
-    padding: var(--sp-2) var(--sp-3); 
-    color: var(--c-on-surface-secondary); 
-    font-weight: 500; 
-    cursor: pointer; 
-    transition: background-color 0.2s, color 0.2s; 
-}
-.custom-select__option:hover { 
-    background-color: var(--c-surface-variant); 
-    color: var(--c-on-surface); 
-}
-.custom-select__option.is-selected { 
-    background-color: var(--c-primary); 
-    color: var(--c-white); 
-    font-weight: 600; 
-}
-.custom-select-wrapper .form-select-hidden {
-    /* Mantenemos el select original oculto pero funcional */
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-    width: 1px;
-    height: 1px;
-}
-
-/* --- Animación de Guardado (burbuja) --- */
-.save-animation-bubble {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    position: fixed;
-    z-index: 99999;
-    opacity: 0;
-    pointer-events: none;
-    transition: transform 0.7s cubic-bezier(0.5, -0.5, 0.5, 1.5), opacity 0.7s;
-}
-
-/* --- Sugerencias predictivas --- */
-#description-suggestions {
-    display: none; 
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background-color: var(--c-surface);
-    border-radius: var(--border-radius-md);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-    z-index: 1060;
-    max-height: 150px;
-    overflow-y: auto;
-    border: 1px solid var(--c-outline);
-}
-.suggestion-item { 
-    padding: var(--sp-2) var(--sp-3); 
-    cursor: pointer; 
-    font-size: var(--fs-sm); 
-}
-.suggestion-item:hover { 
-    background-color: var(--c-surface-variant); 
-}
-.suggestion-item p { margin: 0; font-weight: 600; }
-.suggestion-item small { 
-    color: var(--c-on-surface-secondary); 
-    font-size: var(--fs-xs); 
-}
-
-/* === FIN: ESTILOS PARA FORMULARIO DE ALTA DENSIDAD Y NAVEGACIÓN === */
-
-/* === INICIO: Estilo personalizado para KPI de Patrimonio Neto === */
-
-/*
-  Esta clase es la que define el color azul brillante y el resplandor.
-  - 'color': Establece el color del texto. He elegido un azul vibrante y moderno.
-  - 'text-shadow': Este es el truco para el efecto "brillante". Crea un suave resplandor
-    del mismo color alrededor de las letras, haciéndolas destacar.
-*/
-.kpi-resaltado-azul {
-    color: #00BFFF !important; /* !important asegura que este estilo anule cualquier otro. */
-    text-shadow: 0 0 8px rgba(0, 122, 255, 0.7);
-}
-
-/* === FIN: Estilo personalizado para KPI de Patrimonio Neto === */
-
-/* Optimización de rendimiento para listas largas */
-.transaction-card, 
-.modal__list-item {
-    content-visibility: auto; 
-    contain-intrinsic-size: 64px; /* Altura aproximada del elemento para evitar saltos en la barra de scroll */
-}
-
-/* Mejora para evitar parpadeos en textos que cambian rápido (como los contadores animados) */
-.kpi-item__value {
-    font-variant-numeric: tabular-nums; /* Alinea los números para que no "bailen" al cambiar */
-}
-
-/* Añadir al bloque de botones y elementos clicables */
-button, 
-.btn, 
-.icon-btn, 
-.transaction-card, 
-.kpi-item[data-action],
-.calendar-day {
-    touch-action: manipulation; /* Hace la respuesta al toque más rápida */
-    -webkit-user-select: none;  /* Evita que se seleccione texto al pulsar repetidamente */
-    user-select: none;
-}
