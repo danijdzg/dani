@@ -10015,6 +10015,5 @@ if ('serviceWorker' in navigator) {
         console.log('Fallo en el registro del Service Worker:', error);
       });
   }); 
-
-}
 document.addEventListener('DOMContentLoaded', initApp);
+}
