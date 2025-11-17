@@ -505,7 +505,30 @@ body[data-ledger-mode="B"] .bottom-nav__item--active {
 /* ================================================================= */
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { height: -webkit-fill-available; scroll-behavior: smooth; }
-body { font-family: var(--font-family); background-color: var(--c-background); color: var(--c-on-surface); line-height: 1.4; min-height: 100vh; min-height: -webkit-fill-available; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow: hidden; font-weight: 500; }
+body {
+    font-family: var(--font-family);
+    background-color: var(--c-background);
+    color: var(--c-on-surface);
+    line-height: 1.4;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden; /* Mantiene el body fijo */
+    font-weight: 500;
+
+    /* ▼▼▼ AÑADIR ESTAS 2 LÍNEAS CLAVE ▼▼▼ */
+    overscroll-behavior-y: none;      /* Evita que el navegador rebote la página entera */
+    -webkit-overflow-scrolling: touch; /* Activa la inercia "suave" en iOS */
+}
+/* ▼▼▼ AÑADIR ESTE BLOQUE NUEVO JUSTO DEBAJO ▼▼▼ */
+/* Esto permite que el scroll funcione bien DENTRO de las listas, pero que se detenga suavemente al llegar al final sin mover toda la app */
+.app-layout__main,
+.modal__body,
+.custom-select__options,
+#movimientos-list-container {
+    overscroll-behavior-y: contain;
+}
 *:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; border-radius: var(--sp-2); }
 @keyframes fade-out-and-collapse {
     from {
@@ -2667,3 +2690,15 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 }
 
 /* === FIN: Estilo personalizado para KPI de Patrimonio Neto === */
+
+/* Optimización de rendimiento para listas largas */
+.transaction-card, 
+.modal__list-item {
+    content-visibility: auto; 
+    contain-intrinsic-size: 64px; /* Altura aproximada del elemento para evitar saltos en la barra de scroll */
+}
+
+/* Mejora para evitar parpadeos en textos que cambian rápido (como los contadores animados) */
+.kpi-item__value {
+    font-variant-numeric: tabular-nums; /* Alinea los números para que no "bailen" al cambiar */
+}

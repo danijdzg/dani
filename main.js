@@ -1398,25 +1398,40 @@ const initWidgetObserver = () => {
         const escapeHTML = str => (str || '').replace(/[&<>"']/g, match => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[match]);
         
         const parseCurrencyString = (str) => {
-            if (typeof str !== 'string' || !str.trim()) return NaN;
-            
-            let cleanStr = str.replace(/[€$£\s]/g, '');
+    if (typeof str !== 'string' || !str.trim()) return NaN;
+    
+    // 1. Limpieza agresiva: quitamos todo excepto números, puntos, comas y el signo menos
+    let cleanStr = str.replace(/[^\d.,-]/g, '');
 
-            const hasComma = cleanStr.includes(',');
-            const hasPeriod = cleanStr.includes('.');
+    // 2. Gestión del signo negativo (solo al principio)
+    const isNegative = cleanStr.startsWith('-');
+    cleanStr = cleanStr.replace(/-/g, '');
 
-            if (hasComma && hasPeriod) {
-                if (cleanStr.lastIndexOf(',') > cleanStr.lastIndexOf('.')) {
-                    cleanStr = cleanStr.replace(/\./g, '').replace(',', '.');
-                } else {
-                    cleanStr = cleanStr.replace(/,/g, '');
-                }
-            } else if (hasComma) {
-                cleanStr = cleanStr.replace(',', '.');
-            }
-            
-            return parseFloat(cleanStr);
-        };
+    // 3. Detección inteligente de separadores
+    const lastCommaIndex = cleanStr.lastIndexOf(',');
+    const lastDotIndex = cleanStr.lastIndexOf('.');
+
+    if (lastCommaIndex > -1 && lastDotIndex > -1) {
+        // Si hay ambos, el que esté más a la derecha es el decimal
+        if (lastCommaIndex > lastDotIndex) {
+            // Formato 1.000,50 (Europeo) -> Quitamos puntos, cambiamos coma a punto
+            cleanStr = cleanStr.replace(/\./g, '').replace(',', '.');
+        } else {
+            // Formato 1,000.50 (Americano) -> Quitamos comas
+            cleanStr = cleanStr.replace(/,/g, '');
+        }
+    } else if (lastCommaIndex > -1) {
+        // Solo hay comas. Asumimos que es decimal (10,50)
+        cleanStr = cleanStr.replace(',', '.');
+    } 
+    // Si solo hay puntos, JS los interpreta bien, excepto si hay más de uno (1.000.000)
+    else if ((cleanStr.match(/\./g) || []).length > 1) {
+        cleanStr = cleanStr.replace(/\./g, '');
+    }
+
+    const result = parseFloat(cleanStr);
+    return isNegative ? -result : result;
+};
 		const formatAsCurrencyInput = (num) => {
     if (isNaN(num)) return '';
     // Usamos Intl.NumberFormat que es la forma moderna y correcta de hacerlo.
@@ -3988,9 +4003,11 @@ const TransactionCardComponent = (m, dbData) => {
 
 async function renderPortfolioEvolutionChart(targetContainerId) {
     const container = select(targetContainerId);
-    if (!container) return;
+if (!container) return;
 
-    container.innerHTML = `<div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"><canvas id="portfolio-evolution-chart"></canvas></div>`;
+// Muestra el skeleton SOLO si el contenedor está vacío (primera carga)
+if (!container.querySelector('canvas')) {
+     container.innerHTML = `<div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"><canvas id="portfolio-evolution-chart"></canvas></div>`;
 
     // --- El bloque de obtención y procesamiento de datos se mantiene, ya que es correcto ---
     await loadInversiones();
@@ -4048,7 +4065,17 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     if (existingChart) existingChart.destroy();
     
     chartCanvas.closest('.chart-container').classList.remove('skeleton');
+	// Configuración de datos (datasets)
+const newChartData = {
+    labels: chartLabels,
+    datasets: [ /* ... tus datasets ... */ ]
+};
 
+if (existingChart) {
+    // MEJORA: Actualización suave en lugar de redibujado brusco
+    existingChart.data = newChartData;
+    existingChart.options.scales.x.time.unit = chartLabels.length > 20 ? 'month' : 'day'; // Ajuste dinámico
+    existingChart.update();
     // Definimos los colores base a partir de tus variables CSS
     const colorSuccess = getComputedStyle(document.body).getPropertyValue('--c-success').trim();
     const colorDanger = getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
