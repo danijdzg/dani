@@ -9936,15 +9936,15 @@ const showContextMenuForMovement = (movementId) => {
 };
 // Asegúrate de que tu función resetActiveSwipe también oculte las acciones
 const resetActiveSwipe = () => {
-if (swipeState.activeCard) {
-swipeState.activeCard.style.transition = 'transform 0.3s ease-out';
-swipeState.activeCard.style.transform = 'translateX(0px)';
-// También nos aseguramos de ocultar las acciones aquí
-const parent = swipeState.activeCard.parentElement;
-parent.querySelector('.swipe-actions-container.left')?.classList.remove('swipe-actions-container--visible');
-parent.querySelector('.swipe-actions-container.right')?.classList.remove('swipe-actions-container--visible');
-}
-swipeState.activeCard = null;
+    if (swipeState.activeCard) {
+        swipeState.activeCard.style.transition = 'transform 0.3s ease-out';
+        swipeState.activeCard.style.transform = 'translateX(0px)';
+        // También nos aseguramos de ocultar las acciones aquí
+        const parent = swipeState.activeCard.parentElement;
+        parent.querySelector('.swipe-actions-container.left')?.classList.remove('swipe-actions-container--visible');
+        parent.querySelector('.swipe-actions-container.right')?.classList.remove('swipe-actions-container--visible');
+    }
+    swipeState.activeCard = null;
 };
 
 const handleDescriptionInput = () => {
@@ -10015,3 +10015,5 @@ if ('serviceWorker' in navigator) {
         console.log('Fallo en el registro del Service Worker:', error);
       });
   }); 
+
+}
