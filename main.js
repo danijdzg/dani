@@ -10017,3 +10017,4 @@ if ('serviceWorker' in navigator) {
   }); 
 
 }
+document.addEventListener('DOMContentLoaded', initApp);
