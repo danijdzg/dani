@@ -4410,7 +4410,7 @@ const renderPlanificacionPage = () => {
                         </h3>
                         <span class="material-icons accordion__icon">expand_more</span>
                     </summary>
-                    <div class="accordion__content" id="patrimonio-completo-container" style="padding: var(--sp-3) 0 0 0;">
+                    <div class="accordion__content" id="patrimonio-general-container" style="padding: var(--sp-3) 0 0 0;">
                         <div class="skeleton" style="height: 250px; border-radius: var(--border-radius-lg);"></div>
                     </div>
                 </details>
@@ -4449,13 +4449,123 @@ const renderPlanificacionPage = () => {
 
     // Llamamos a las TRES funciones que rellenarán los esqueletos
     setTimeout(async () => {
-        // La función renderPatrimonioPage rellenará el primer acordeón
-        await renderPatrimonioPage(); 
-        // Las otras two rellenarán el segundo acordeón
+        // ▼▼▼ LLAMADA A LA NUEVA FUNCIÓN ▼▼▼
+        await renderPatrimonioGeneralContent(); 
         await renderPortfolioEvolutionChart('portfolio-evolution-container');
         await renderPortfolioMainContent('portfolio-main-content');
     }, 50);
 };
+// =================================================================
+// === INICIO: AÑADE ESTA NUEVA FUNCIÓN COMPLETA A main.js       ===
+// =================================================================
+/**
+ * Renderiza el contenido del Patrimonio General DENTRO de la pestaña "Inversiones".
+ * Es una copia de renderPatrimonioPage, pero apunta a un ID de contenedor diferente.
+ */
+const renderPatrimonioGeneralContent = async () => {
+    // ▼▼▼ ID DEL CONTENEDOR CAMBIADO ▼▼▼
+    const container = select('patrimonio-general-container');
+    if (!container) return;
+
+    const visibleAccounts = getVisibleAccounts();
+    const saldos = await getSaldos();
+    const BASE_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
+
+    const allAccountTypes = [...new Set(visibleAccounts.map((c) => toSentenceCase(c.tipo || 'S/T')))].sort();
+    const filteredAccountTypes = new Set(allAccountTypes.filter(t => !deselectedAccountTypesFilter.has(t)));
+
+    const colorMap = {};
+    allAccountTypes.forEach((tipo, index) => {
+        colorMap[tipo] = BASE_COLORS[index % BASE_COLORS.length];
+    });
+
+    const pillsHTML = allAccountTypes.map(t => {
+        const isActive = !deselectedAccountTypesFilter.has(t);
+        const color = colorMap[t];
+        let style = '';
+        if (isActive && color) {
+            style = `style="background-color: ${color}; border-color: ${color}; color: #FFFFFF; box-shadow: 0 0 8px ${color}70;"`;
+        }
+        return `<button class="filter-pill ${isActive ? 'filter-pill--active' : ''}" data-action="toggle-account-type-filter" data-type="${t}" ${style}>${t}</button>`;
+    }).join('') || `<p style="font-size:var(--fs-xs); color:var(--c-on-surface-secondary)">No hay cuentas en esta vista.</p>`;
+    
+    const filteredAccounts = visibleAccounts.filter(c => {
+        const tipo = toSentenceCase(c.tipo || 'S/T');
+        return filteredAccountTypes.has(tipo);
+    });
+
+    const filteredAssets = filteredAccounts.filter(c => (saldos[c.id] || 0) >= 0);
+    const filteredLiabilities = filteredAccounts.filter(c => (saldos[c.id] || 0) < 0);
+
+    const totalAssets = filteredAssets.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
+    const totalLiabilities = filteredLiabilities.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
+    const totalNeto = totalAssets + totalLiabilities;
+    
+    const treeData = [];
+    filteredAssets.forEach(c => {
+        const saldo = saldos[c.id] || 0;
+        if (saldo > 0) { // Solo positivos para el gráfico de área
+            treeData.push({ tipo: toSentenceCase(c.tipo || 'S/T'), nombre: c.nombre, saldo: saldo / 100 });
+        }
+    });
+
+    container.innerHTML = `
+        <div class="card__content" style="padding-top:0;">
+
+            <div class="kpi-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: var(--sp-4);">
+                <div class="kpi-item" style="padding: var(--sp-2);">
+                    <h4 class="kpi-item__label">Total Activos</h4>
+                    <strong class="kpi-item__value text-positive">${formatCurrency(totalAssets)}</strong>
+                </div>
+                <div class="kpi-item" style="padding: var(--sp-2);">
+                    <h4 class="kpi-item__label">Total Pasivos</h4>
+                    <strong class="kpi-item__value text-negative">${formatCurrency(totalLiabilities)}</strong>
+                </div>
+                <div class="kpi-item" style="padding: var(--sp-2); background-color: var(--c-surface-variant); border-radius: var(--border-radius-md);">
+                    <h4 class="kpi-item__label">Patrimonio Neto</h4>
+                    <strong class="kpi-item__value ${totalNeto >= 0 ? '' : 'text-negative'}">${formatCurrency(totalNeto)}</strong>
+                </div>
+            </div>
+
+            <div class="patrimonio-header-grid__filters" style="margin-bottom: var(--sp-4);">
+                <h4 class="kpi-item__label">Filtros por tipo de activo</h4>
+                <div id="filter-account-types-pills" class="filter-pills" style="margin-bottom: 0;">${pillsHTML}</div>
+            </div>
+
+            <h4 class="kpi-item__label" style="text-align: center; font-size: 0.8rem; margin-bottom: var(--sp-2);">Asignación de Activos (Treemap)</h4>
+            <div id="liquid-assets-chart-container" class="chart-container" style="height: 250px; margin-bottom: var(--sp-4);"><canvas id="liquid-assets-chart"></canvas></div>
+            
+            <h4 class="kpi-item__label" style="text-align: center; font-size: 0.8rem; margin-bottom: var(--sp-2);">Lista Detallada de Cuentas</h4>
+            <div id="patrimonio-cuentas-lista"></div>
+        </div>`;
+
+    setTimeout(() => {
+        const chartCtx = select('liquid-assets-chart')?.getContext('2d');
+        if (chartCtx) {
+            if (liquidAssetsChart) liquidAssetsChart.destroy();
+            if (treeData.length > 0) {
+                liquidAssetsChart = new Chart(chartCtx, { type: 'treemap', data: { datasets: [{ tree: treeData, key: 'saldo', groups: ['tipo', 'nombre'], spacing: 0.5, borderWidth: 1.5, borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'), backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'), labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) } }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false }}} });
+            } else {
+                select('liquid-assets-chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con saldo positivo para mostrar.</p></div>`;
+            }
+        }
+        const listaContainer = select('patrimonio-cuentas-lista');
+        if (listaContainer) {
+            const accountsByType = filteredAccounts.reduce((acc, c) => { const tipo = toSentenceCase(c.tipo || 'S/T'); if (!acc[tipo]) acc[tipo] = []; acc[tipo].push(c); return acc; }, {});
+            listaContainer.innerHTML = Object.keys(accountsByType).sort().map(tipo => {
+                const accountsInType = accountsByType[tipo];
+                const typeBalance = accountsInType.reduce((sum, acc) => sum + (saldos[acc.id] || 0), 0);
+                const porcentajeGlobal = totalNeto !== 0 ? (typeBalance / totalNeto) * 100 : 0;
+                const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => `<div class="modal__list-item" data-action="view-account-details" data-id="${c.id}" style="cursor: pointer; padding: var(--sp-2) 0;"><div><span style="display: block;">${c.nombre}</span><small style="color: var(--c-on-surface-secondary);">${(typeBalance !== 0 ? ((saldos[c.id] || 0) / typeBalance * 100) : 0).toFixed(1)}% de ${tipo}</small></div><div style="display: flex; align-items: center; gap: var(--sp-2);">${formatCurrency(saldos[c.id] || 0)}<span class="material-icons" style="font-size: 18px;">chevron_right</span></div></div>`).join('');
+                if (!accountsHtml) return '';
+                return `<details class="accordion" style="margin-bottom: var(--sp-2);"><summary><span class="account-group__name">${tipo}</span><div style="display:flex; align-items:center; gap:var(--sp-2);"><small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small><span class="account-group__balance">${formatCurrency(typeBalance)}</span><span class="material-icons accordion__icon">expand_more</span></div></summary><div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div></details>`;
+            }).join('');
+        }
+    }, 50);
+};
+// =================================================================
+// === FIN: NUEVA FUNCIÓN                                        ===
+// =================================================================
   // =================================================================
 // === INICIO: NUEVO MOTOR DE RENDERIZADO DE INFORMES Y PDF      ===
 // =================================================================
