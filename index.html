@@ -106,35 +106,30 @@
     
     <div id="app-root" class="app-layout">
 <nav class="bottom-nav">
-    <!-- 1. Panel (Presente) -->
-    <button data-action="navigate" data-page="inicio-page" class="bottom-nav__item">
-        <span class="material-icons">dashboard</span>
-        <span class="bottom-nav__label">Panel</span>
-    </button>
-    
-    <!-- 2. Diario (Pasado Reciente) -->
-    <button data-action="navigate" data-page="diario-page" class="bottom-nav__item">
-        <span class="material-icons">receipt_long</span>
-        <span class="bottom-nav__label">Diario</span>
-    </button>
-    
-    <!-- 3. Añadir (Acción Principal, Invariable) -->
-    <button data-action="open-main-add-modal" id="bottom-nav-add-btn">
-        <span class="material-icons">add</span>
-    </button>
-    
-    <!-- 4. Planificar (Futuro Estratégico) -->
-    <button data-action="navigate" data-page="planificar-page" class="bottom-nav__item">
-        <span class="material-icons">edit_calendar</span>
-        <span class="bottom-nav__label">Planificar</span>
-    </button>
-    
-    <!-- 5. Inversiones (Futuro a Largo Plazo) -->
-    <button data-action="navigate" data-page="inversiones-page" class="bottom-nav__item">
-        <span class="material-icons">rocket_launch</span>
-        <span class="bottom-nav__label">Inversiones</span>
-    </button>
-</nav>
+            <button data-action="navigate" data-page="panel-page" class="bottom-nav__item">
+                <span class="material-icons">dashboard</span>
+                <span class="bottom-nav__label">Panel</span>
+            </button>
+            
+            <button data-action="navigate" data-page="patrimonio-page" class="bottom-nav__item">
+                <span class="material-icons">account_balance</span>
+                <span class="bottom-nav__label">Patrimonio</span>
+            </button>
+            
+            <button data-action="open-movement-form" data-type="gasto" id="bottom-nav-add-btn">
+                <span class="material-icons">add</span>
+            </button>
+            
+            <button data-action="navigate" data-page="diario-page" class="bottom-nav__item">
+                <span class="material-icons">receipt_long</span>
+                <span class="bottom-nav__label">Diario</span>
+            </button>
+            
+            <button data-action="navigate" data-page="planificar-page" class="bottom-nav__item">
+                <span class="material-icons">edit_calendar</span>
+                <span class="bottom-nav__label">Planificar</span>
+            </button>
+        </nav>
 
         <header id="app-top-bar" class="top-bar">
             <div class="top-bar__left-group">
