@@ -314,6 +314,7 @@ const clearDiarioFilters = async () => {
 		let unsubscribeRecientesListener = null
         const originalButtonTexts = new Map();
         let conceptosChart = null, liquidAssetsChart = null, detailInvestmentChart = null, informesChart = null, assetAllocationChart = null, budgetTrendChart = null, netWorthChart = null;
+		let patrimonioGeneralChart = null;
         let lastScrollTop = null;
         let pageScrollPositions = {};
         let jsonWizardState = {
@@ -1419,7 +1420,8 @@ window.addEventListener('offline', () => {
         const destroyAllCharts = () => {
     const charts = [
         conceptosChart, liquidAssetsChart, detailInvestmentChart, informesChart,
-        assetAllocationChart, budgetTrendChart, netWorthChart, informeActivoChart, informeChart
+        assetAllocationChart, budgetTrendChart, netWorthChart, informeActivoChart, informeChart,
+        patrimonioGeneralChart // <-- AÑADIDO
     ];
 
     for (let i = 0; i < charts.length; i++) {
@@ -1436,6 +1438,7 @@ window.addEventListener('offline', () => {
                 case 6: netWorthChart = null; break;
                 case 7: informeActivoChart = null; break;
                 case 8: informeChart = null; break;
+                case 9: patrimonioGeneralChart = null; break; // <-- AÑADIDO
             }
         }
     }
@@ -4463,9 +4466,11 @@ const renderPlanificacionPage = () => {
  * Es una copia de renderPatrimonioPage, pero apunta a un ID de contenedor diferente.
  */
 const renderPatrimonioGeneralContent = async () => {
-    // ▼▼▼ ID DEL CONTENEDOR CAMBIADO ▼▼▼
     const container = select('patrimonio-general-container');
-    if (!container) return;
+    if (!container) {
+        console.log("Error: Contenedor 'patrimonio-general-container' no encontrado.");
+        return;
+    }
 
     const visibleAccounts = getVisibleAccounts();
     const saldos = await getSaldos();
@@ -4504,14 +4509,14 @@ const renderPatrimonioGeneralContent = async () => {
     const treeData = [];
     filteredAssets.forEach(c => {
         const saldo = saldos[c.id] || 0;
-        if (saldo > 0) { // Solo positivos para el gráfico de área
+        if (saldo > 0) {
             treeData.push({ tipo: toSentenceCase(c.tipo || 'S/T'), nombre: c.nombre, saldo: saldo / 100 });
         }
     });
 
+    // ▼▼▼ HTML CORREGIDO CON NUEVOS IDs ▼▼▼
     container.innerHTML = `
         <div class="card__content" style="padding-top:0;">
-
             <div class="kpi-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: var(--sp-4);">
                 <div class="kpi-item" style="padding: var(--sp-2);">
                     <h4 class="kpi-item__label">Total Activos</h4>
@@ -4526,30 +4531,38 @@ const renderPatrimonioGeneralContent = async () => {
                     <strong class="kpi-item__value ${totalNeto >= 0 ? '' : 'text-negative'}">${formatCurrency(totalNeto)}</strong>
                 </div>
             </div>
-
             <div class="patrimonio-header-grid__filters" style="margin-bottom: var(--sp-4);">
                 <h4 class="kpi-item__label">Filtros por tipo de activo</h4>
                 <div id="filter-account-types-pills" class="filter-pills" style="margin-bottom: 0;">${pillsHTML}</div>
             </div>
-
             <h4 class="kpi-item__label" style="text-align: center; font-size: 0.8rem; margin-bottom: var(--sp-2);">Asignación de Activos (Treemap)</h4>
-            <div id="liquid-assets-chart-container" class="chart-container" style="height: 250px; margin-bottom: var(--sp-4);"><canvas id="liquid-assets-chart"></canvas></div>
+            
+            <div id="patrimonio-general-chart-container" class="chart-container" style="height: 250px; margin-bottom: var(--sp-4);">
+                <canvas id="patrimonio-general-chart"></canvas>
+            </div>
             
             <h4 class="kpi-item__label" style="text-align: center; font-size: 0.8rem; margin-bottom: var(--sp-2);">Lista Detallada de Cuentas</h4>
-            <div id="patrimonio-cuentas-lista"></div>
+            
+            <div id="patrimonio-general-lista"></div>
         </div>`;
 
+    // ▼▼▼ LÓGICA DEL setTimeot CORREGIDA ▼▼▼
     setTimeout(() => {
-        const chartCtx = select('liquid-assets-chart')?.getContext('2d');
+        // Usa el NUEVO ID del gráfico
+        const chartCtx = select('patrimonio-general-chart')?.getContext('2d');
         if (chartCtx) {
-            if (liquidAssetsChart) liquidAssetsChart.destroy();
+            // Usa la NUEVA variable global
+            if (patrimonioGeneralChart) patrimonioGeneralChart.destroy();
             if (treeData.length > 0) {
-                liquidAssetsChart = new Chart(chartCtx, { type: 'treemap', data: { datasets: [{ tree: treeData, key: 'saldo', groups: ['tipo', 'nombre'], spacing: 0.5, borderWidth: 1.5, borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'), backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'), labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) } }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false }}} });
+                // Asigna a la NUEVA variable global
+                patrimonioGeneralChart = new Chart(chartCtx, { type: 'treemap', data: { datasets: [{ tree: treeData, key: 'saldo', groups: ['tipo', 'nombre'], spacing: 0.5, borderWidth: 1.5, borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'), backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'), labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) } }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false }}} });
             } else {
-                select('liquid-assets-chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con saldo positivo para mostrar.</p></div>`;
+                select('patrimonio-general-chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con saldo positivo para mostrar.</p></div>`;
             }
         }
-        const listaContainer = select('patrimonio-cuentas-lista');
+        
+        // Usa el NUEVO ID de la lista
+        const listaContainer = select('patrimonio-general-lista');
         if (listaContainer) {
             const accountsByType = filteredAccounts.reduce((acc, c) => { const tipo = toSentenceCase(c.tipo || 'S/T'); if (!acc[tipo]) acc[tipo] = []; acc[tipo].push(c); return acc; }, {});
             listaContainer.innerHTML = Object.keys(accountsByType).sort().map(tipo => {
