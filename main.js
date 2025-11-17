@@ -5475,8 +5475,20 @@ const updateDashboardData = async () => {
         const tasaAhorroActual = currentTotals.ingresos > 0 ? (saldoNetoActual / currentTotals.ingresos) * 100 : (saldoNetoActual < 0 ? -100 : 0);
         const tasaAhorroAnterior = previousTotals.ingresos > 0 ? (previousTotals.saldoNeto / previousTotals.ingresos) * 100 : 0;
         const patrimonioNeto = Object.values(saldos).reduce((sum, s) => sum + s, 0);
-        const portfolioPerformance = await calculatePortfolioPerformance();
-        const pnlInversionActual = portfolioPerformance.pnlAbsoluto;
+        const investmentCashflowPeriodo = current.reduce((sum, m) => {
+    if (m.tipo === 'movimiento' && investmentAccountIds.has(m.cuentaId)) {
+        return sum + m.cantidad;
+    }
+    const origenIsInvestment = investmentAccountIds.has(m.cuentaOrigenId);
+    const destinoIsInvestment = investmentAccountIds.has(m.cuentaDestinoId);
+    if (m.tipo === 'traspaso' && origenIsInvestment && !destinoIsInvestment) {
+        return sum - m.cantidad; // Sale de inversión
+    }
+    if (m.tipo === 'traspaso' && !destinoIsInvestment && origenIsInvestment) {
+        return sum + m.cantidad; // Entra a inversión
+    }
+    return sum;
+}, 0);
         const now = new Date();
         const expenseBudgets = (db.presupuestos || []).filter(b => b.ano === now.getFullYear() && b.cantidad < 0);
         let totalBudgetedExpense = 0;
@@ -5529,8 +5541,17 @@ const updateDashboardData = async () => {
             select('kpi-tasa-ahorro-comparison').innerHTML = getComparisonHTML(tasaAhorroActual, tasaAhorroAnterior, label.replace('vs', ''));
             animateCountUp(select('kpi-patrimonio-neto-value'), patrimonioNeto);
             const kpiPnlEl = select('kpi-pnl-inversion-value');
-            kpiPnlEl.className = `kpi-item__value ${pnlInversionActual >= 0 ? 'text-positive' : 'text-negative'}`;
-            if (investmentAccountIds.size > 0) animateCountUp(kpiPnlEl, pnlInversionActual); else kpiPnlEl.textContent = 'N/A';
+const kpiPnlLabel = kpiPnlEl ? kpiPnlEl.closest('.kpi-item').querySelector('.kpi-item__label span') : null;
+
+if (kpiPnlLabel) {
+    kpiPnlLabel.textContent = 'Flujo de Caja Inversión';
+}
+if (kpiPnlEl) {
+    kpiPnlEl.className = `kpi-item__value ${investmentCashflowPeriodo === 0 ? '' : (investmentCashflowPeriodo > 0 ? 'text-positive' : 'text-negative')}`;
+    animateCountUp(kpiPnlEl, investmentCashflowPeriodo);
+    const comparisonEl = select('kpi-pnl-inversion-comparison');
+    if (comparisonEl) comparisonEl.textContent = "Aportaciones / Retiradas";
+}
             const progressEl = select('kpi-presupuesto-progress'), progressTextEl = select('kpi-presupuesto-text');
 			if (progressEl && progressTextEl) {
             progressTextEl.classList.remove('skeleton');
@@ -6734,11 +6755,9 @@ const handleSaveValoracion = async (form, btn) => {
         const existingIndex = (db.inversiones_historial || []).findIndex(v => v.cuentaId === cuentaId && v.fecha === fechaISO);
 
         if (existingIndex > -1) {
-            // Si existe, la actualizamos directamente en la memoria.
             db.inversiones_historial[existingIndex].valor = valorEnCentimos;
+            db.inversiones_historial[existingIndex].fecha = fechaISO; // Asegúrate de que usa el string
         } else {
-            // Si no existe, la añadimos a la memoria.
-            if (!db.inversiones_historial) db.inversiones_historial = [];
             db.inversiones_historial.push({ id: docId, cuentaId, valor: valorEnCentimos, fecha: fechaISO });
         }
 
@@ -8521,7 +8540,7 @@ const handleSaveMovement = async (form, btn) => {
                 db.movimientos.unshift(dataToSave);
             }
             applyOptimisticBalanceUpdate(dataToSave, oldData);
-
+			newMovementIdToHighlight = dataToSave.id;
             // 1. Lanzamos la animación visual
             triggerSaveAnimation(btn, dataToSave.cantidad >= 0 ? 'green' : 'red');
 
@@ -8557,7 +8576,8 @@ const handleSaveMovement = async (form, btn) => {
             }
             await batch.commit();
             hapticFeedback('success');
-            showToast(mode.startsWith('edit') ? 'Movimiento actualizado.' : 'Movimiento guardado.');
+			showToast(mode.startsWith('edit') ? 'Movimiento actualizado.' : 'Movimiento guardado.');
+			setTimeout(() => { newMovementIdToHighlight = null; }, 1000);
         } catch (error) {
             console.error("Error al guardar movimiento:", error);
             showToast("Error al guardar. Revirtiendo cambios.", "danger");
