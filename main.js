@@ -7363,29 +7363,24 @@ function createCustomSelect(selectElement) {
             },
             'toggle-investment-type-filter': () => handleToggleInvestmentTypeFilter(type),
             'toggle-account-type-filter': () => {
-                hapticFeedback('light');
-                if (deselectedAccountTypesFilter.has(type)) {
-                    deselectedAccountTypesFilter.delete(type);
-                } else {
-                    deselectedAccountTypesFilter.add(type);
-                }
-                
-                // --- INICIO DE LA CORRECCIÓN ---
-                // Comprobamos qué página está activa para saber qué función de renderizado llamar
-                const activePageEl = document.querySelector('.view--active');
-                const activePageId = activePageEl ? activePageEl.id : null;
+            hapticFeedback('light');
+            if (deselectedAccountTypesFilter.has(type)) {
+                deselectedAccountTypesFilter.delete(type);
+            } else {
+                deselectedAccountTypesFilter.add(type);
+            }
 
-                if (activePageId === PAGE_IDS.INVERSIONES) {
-                    // Si estamos en la pestaña "Patrimonio" (ID: inversiones-page), 
-                    // refrescamos la pestaña completa llamando a renderInversionesView()
-                    renderInversionesView();
-                } else if (activePageId === PAGE_IDS.INICIO) {
-                    // Si estamos en el "Panel" (ID: inicio-page), 
-                    // refrescamos solo el widget del panel
-                    renderPatrimonioPage();
-                }
-                // --- FIN DE LA CORRECCIÓN ---
-            },
+            const activePageEl = document.querySelector('.view--active');
+            const activePageId = activePageEl ? activePageEl.id : null;
+
+            if (activePageId === PAGE_IDS.INVERSIONES) {
+                // --- CORREGIDO ---
+                // Ahora solo llamamos a la función que refresca el CONTENIDO.
+                renderPatrimonioGeneralContent(); 
+            } else if (activePageId === PAGE_IDS.INICIO) {
+                renderPatrimonioPage();
+            }
+        },
             'show-help-topic': () => {
                 const topic = actionTarget.dataset.topic;
                 if(topic) {
