@@ -3049,50 +3049,34 @@ const updateVirtualListUI = () => {
 
    // 2. Agrupación de movimientos por mes y día
     const groupedByMonth = {};
+    // 1. Obtenemos las cuentas visibles UNA VEZ para pasárselo a la función de ayuda.
     const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
 
     (db.movimientos || []).forEach(mov => {
-        let isVisibleInLedger = false;
-        let amountForTotals = 0;
+        
+        // 2. ¡NO MÁS FILTROS! El bucle ahora procesa todos los 'mov' de 'db.movimientos'.
+        
+        // 3. Usamos tu función de ayuda 'calculateMovementAmount' para obtener el impacto real.
+        // Esta función ya sabe cómo manejar traspasos entre contabilidades (A/B).
+        const amountForTotals = calculateMovementAmount(mov, visibleAccountIds);
 
-        // ✅ INICIO DE LA LÓGICA CORREGIDA PARA VISIBILIDAD Y TOTALES ✅
-        if (mov.tipo === 'traspaso') {
-            const origenVisible = visibleAccountIds.has(mov.cuentaOrigenId);
-            const destinoVisible = visibleAccountIds.has(mov.cuentaDestinoId);
-            
-            // Un traspaso es VISIBLE si al menos una de sus cuentas está en la contabilidad actual.
-            isVisibleInLedger = origenVisible || destinoVisible;
+        // 4. El resto de la lógica de agrupación se mantiene, pero ahora es más simple
+        //    y se aplica a todos los movimientos (porque ya están pre-filtrados).
+        const date = new Date(mov.fecha);
+        const monthKey = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+        const dateKey = mov.fecha.slice(0, 10);
+        
+        if (!groupedByMonth[monthKey]) { groupedByMonth[monthKey] = { days: {}, monthNet: 0, monthIncome: 0, monthExpense: 0 }; }
+        if (!groupedByMonth[monthKey].days[dateKey]) { groupedByMonth[monthKey].days[dateKey] = { movements: [], total: 0 }; }
+        
+        // Añadimos el movimiento a la lista de ESE DÍA.
+        groupedByMonth[monthKey].days[dateKey].movements.push(mov);
 
-            // Su IMPACTO en los totales solo se cuenta si es un traspaso entre contabilidades.
-            if (origenVisible && !destinoVisible) amountForTotals = -mov.cantidad;
-            else if (!origenVisible && destinoVisible) amountForTotals = mov.cantidad;
-
-        } else { // Es un movimiento normal (ingreso/gasto)
-            isVisibleInLedger = visibleAccountIds.has(mov.cuentaId);
-            if (isVisibleInLedger) {
-                amountForTotals = mov.cantidad;
-            }
-        }
-
-        // Si el movimiento es visible, lo procesamos para mostrarlo.
-        if (isVisibleInLedger) {
-            const date = new Date(mov.fecha);
-            const monthKey = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
-            const dateKey = mov.fecha.slice(0, 10);
-            
-            if (!groupedByMonth[monthKey]) { groupedByMonth[monthKey] = { days: {}, monthNet: 0, monthIncome: 0, monthExpense: 0 }; }
-            if (!groupedByMonth[monthKey].days[dateKey]) { groupedByMonth[monthKey].days[dateKey] = { movements: [], total: 0 }; }
-            
-            // Añadimos el movimiento a la lista de ESE DÍA.
-            groupedByMonth[monthKey].days[dateKey].movements.push(mov);
-
-            // Actualizamos los totales SÓLO con el impacto real en la contabilidad.
-            groupedByMonth[monthKey].days[dateKey].total += amountForTotals;
-            groupedByMonth[monthKey].monthNet += amountForTotals;
-            if (amountForTotals > 0) groupedByMonth[monthKey].monthIncome += amountForTotals;
-            else groupedByMonth[monthKey].monthExpense += amountForTotals;
-        }
-        // ✅ FIN DE LA LÓGICA CORREGIDA ✅
+        // Actualizamos los totales usando el valor correcto de la función de ayuda.
+        groupedByMonth[monthKey].days[dateKey].total += amountForTotals;
+        groupedByMonth[monthKey].monthNet += amountForTotals;
+        if (amountForTotals > 0) groupedByMonth[monthKey].monthIncome += amountForTotals;
+        else groupedByMonth[monthKey].monthExpense += amountForTotals;
     });
 
     // 3. Construcción de la lista para la interfaz (esta parte ya era correcta)
@@ -5484,7 +5468,8 @@ const updateDashboardData = async () => {
     if (m.tipo === 'traspaso' && origenIsInvestment && !destinoIsInvestment) {
         return sum - m.cantidad; // Sale de inversión
     }
-    if (m.tipo === 'traspaso' && !destinoIsInvestment && origenIsInvestment) {
+    // CORRECCIÓN: Comprueba el caso de ENTRADA a inversión
+    if (m.tipo === 'traspaso' && !origenIsInvestment && destinoIsInvestment) {
         return sum + m.cantidad; // Entra a inversión
     }
     return sum;
@@ -9420,9 +9405,8 @@ showConfirmationModal(
             const todayISO = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString();
 
             for (const cuenta of investmentAccounts) {
-                // Calculamos el capital invertido para esta cuenta específica
-                const cashflows = (db.inversion_cashflows || []).filter(cf => cf.cuentaId === cuenta.id);
-                const capitalInvertido = cashflows.reduce((sum, cf) => sum + cf.cantidad, 0);
+                // CORRECCIÓN: Usamos la premisa de usuario definida: Capital Aportado = Saldo Contable
+                const capitalInvertido = cuenta.saldo || 0;
 
                 // Creamos la nueva valoración que iguala el valor al capital
                 const newId = generateId();
