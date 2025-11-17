@@ -520,11 +520,19 @@ const getOperatorSymbol = (key) => ({
 // Gestiona qué botón de operador se ve activo
 const updateActiveOperatorButton = () => {
     selectAll('.calculator-btn.btn-operator').forEach(btn => btn.classList.remove('btn-operator--active'));
+    
     if (calculatorState.operator) {
         const activeBtn = document.querySelector(`.calculator-btn[data-key="${calculatorState.operator}"]`);
         if (activeBtn) activeBtn.classList.add('btn-operator--active');
+        
+        // Feedback extra:
+        const display = select('calculator-display');
+        if(display) display.style.color = 'var(--c-primary)'; // Cambia color del texto temporalmente
+    } else {
+        const display = select('calculator-display');
+        if(display) display.style.color = ''; // Restaura color
     }
-};      
+};
 
 const handleCalculatorInput = (key) => {
     hapticFeedback('light');
@@ -1398,10 +1406,11 @@ const initWidgetObserver = () => {
         const escapeHTML = str => (str || '').replace(/[&<>"']/g, match => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[match]);
         
         const parseCurrencyString = (str) => {
-    if (typeof str !== 'string' || !str.trim()) return NaN;
+    if (typeof str === 'number') return str; // Si ya es número, devuélvelo
+    if (!str) return 0;
     
-    // 1. Limpieza agresiva: quitamos todo excepto números, puntos, comas y el signo menos
-    let cleanStr = str.replace(/[^\d.,-]/g, '');
+    // Convertir a string y limpiar espacios normales y NO ROMPIBLES (char code 160)
+    let cleanStr = str.toString().replace(/\s/g, '').replace(/\u00A0/g, '');
 
     // 2. Gestión del signo negativo (solo al principio)
     const isNegative = cleanStr.startsWith('-');
@@ -3265,6 +3274,7 @@ const loadMoreMovements = async (isInitial = false) => {
     // Si ya existía un vigilante, lo reiniciamos
     if (movementsObserver) {
         movementsObserver.disconnect();
+		movementsObserver = null;
     }
 
     const trigger = select('infinite-scroll-trigger');

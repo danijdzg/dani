@@ -2702,3 +2702,15 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 .kpi-item__value {
     font-variant-numeric: tabular-nums; /* Alinea los números para que no "bailen" al cambiar */
 }
+
+/* Añadir al bloque de botones y elementos clicables */
+button, 
+.btn, 
+.icon-btn, 
+.transaction-card, 
+.kpi-item[data-action],
+.calendar-day {
+    touch-action: manipulation; /* Hace la respuesta al toque más rápida */
+    -webkit-user-select: none;  /* Evita que se seleccione texto al pulsar repetidamente */
+    user-select: none;
+}
