@@ -3165,9 +3165,9 @@ const renderBudgetTrendChart = (monthlyIncomeData, monthlyExpenseData, averageBu
 };
 
 
-// =============================================================
-// === INICIO: FUNCIÓN RESTAURADA PARA EL WIDGET DE PATRIMONIO ===
-// =============================================================
+// =================================================================
+// === INICIO: REEMPLAZO COMPLETO DE renderPatrimonioPage (v2)   ===
+// =================================================================
 const renderPatrimonioPage = async () => {
     const container = select('patrimonio-completo-container');
     if (!container) return;
@@ -3194,37 +3194,66 @@ const renderPatrimonioPage = async () => {
         return `<button class="filter-pill ${isActive ? 'filter-pill--active' : ''}" data-action="toggle-account-type-filter" data-type="${t}" ${style}>${t}</button>`;
     }).join('') || `<p style="font-size:var(--fs-xs); color:var(--c-on-surface-secondary)">No hay cuentas en esta vista.</p>`;
     
+    // --- ▼▼▼ LÓGICA DE CÁLCULO MEJORADA ▼▼▼ ---
+    // 1. Filtramos las cuentas por los botones (pills) seleccionados
     const filteredAccounts = visibleAccounts.filter(c => {
         const tipo = toSentenceCase(c.tipo || 'S/T');
         return filteredAccountTypes.has(tipo);
     });
 
-    const totalFiltrado = filteredAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
+    // 2. Separamos en Activos (positivo) y Pasivos (negativo)
+    const filteredAssets = filteredAccounts.filter(c => (saldos[c.id] || 0) >= 0);
+    const filteredLiabilities = filteredAccounts.filter(c => (saldos[c.id] || 0) < 0);
+
+    // 3. Calculamos los totales
+    const totalAssets = filteredAssets.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
+    const totalLiabilities = filteredLiabilities.reduce((sum, c) => sum + (saldos[c.id] || 0), 0); // Este valor será negativo
+    const totalNeto = totalAssets + totalLiabilities; // El neto total
+    // --- ▲▲▲ FIN DE LA LÓGICA DE CÁLCULO ▲▲▲ ---
     
+    // 4. Preparamos el gráfico Treemap SÓLO con los activos
     const treeData = [];
-    filteredAccounts.forEach(c => {
+    filteredAssets.forEach(c => {
         const saldo = saldos[c.id] || 0;
-        if (saldo > 0) {
+        if (saldo > 0) { // Solo positivos para el gráfico de área
             treeData.push({ tipo: toSentenceCase(c.tipo || 'S/T'), nombre: c.nombre, saldo: saldo / 100 });
         }
     });
 
+    // 5. Generamos el NUEVO HTML con los 3 KPIs
     container.innerHTML = `
         <h3 class="card__title"><span class="material-icons">account_balance</span>Patrimonio</h3>
         <div class="card__content" style="padding-top:0;">
-            <div class="patrimonio-header-grid__kpi" style="margin-bottom: var(--sp-4);">
-                <h4 class="kpi-item__label">Patrimonio Neto (Seleccionado)</h4>
-                <strong id="patrimonio-total-balance" class="kpi-item__value" style="font-size: 2rem; line-height: 1.1;">${formatCurrency(totalFiltrado)}</strong>
+
+            <div class="kpi-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: var(--sp-4);">
+                <div class="kpi-item" style="padding: var(--sp-2);">
+                    <h4 class="kpi-item__label">Total Activos</h4>
+                    <strong class="kpi-item__value text-positive">${formatCurrency(totalAssets)}</strong>
+                </div>
+                <div class="kpi-item" style="padding: var(--sp-2);">
+                    <h4 class="kpi-item__label">Total Pasivos</h4>
+                    <strong class="kpi-item__value text-negative">${formatCurrency(totalLiabilities)}</strong>
+                </div>
+                <div class="kpi-item" style="padding: var(--sp-2); background-color: var(--c-surface-variant); border-radius: var(--border-radius-md);">
+                    <h4 class="kpi-item__label">Patrimonio Neto</h4>
+                    <strong class="kpi-item__value ${totalNeto >= 0 ? '' : 'text-negative'}">${formatCurrency(totalNeto)}</strong>
+                </div>
             </div>
             <div class="patrimonio-header-grid__filters" style="margin-bottom: var(--sp-4);">
                 <h4 class="kpi-item__label">Filtros por tipo de activo</h4>
                 <div id="filter-account-types-pills" class="filter-pills" style="margin-bottom: 0;">${pillsHTML}</div>
             </div>
+
+            <h4 class="kpi-item__label" style="text-align: center; font-size: 0.8rem; margin-bottom: var(--sp-2);">Asignación de Activos (Treemap)</h4>
             <div id="liquid-assets-chart-container" class="chart-container" style="height: 250px; margin-bottom: var(--sp-4);"><canvas id="liquid-assets-chart"></canvas></div>
+            
+            <h4 class="kpi-item__label" style="text-align: center; font-size: 0.8rem; margin-bottom: var(--sp-2);">Lista Detallada de Cuentas</h4>
             <div id="patrimonio-cuentas-lista"></div>
         </div>`;
 
     setTimeout(() => {
+        // El resto de la función (renderizado del gráfico y la lista) es idéntica
+        // ya que la preparación de datos ya es correcta.
         const chartCtx = select('liquid-assets-chart')?.getContext('2d');
         if (chartCtx) {
             if (liquidAssetsChart) liquidAssetsChart.destroy();
@@ -3236,19 +3265,22 @@ const renderPatrimonioPage = async () => {
         }
         const listaContainer = select('patrimonio-cuentas-lista');
         if (listaContainer) {
+            // Esta lógica ya era correcta, porque usa 'filteredAccounts' (que incluye todo)
             const accountsByType = filteredAccounts.reduce((acc, c) => { const tipo = toSentenceCase(c.tipo || 'S/T'); if (!acc[tipo]) acc[tipo] = []; acc[tipo].push(c); return acc; }, {});
             listaContainer.innerHTML = Object.keys(accountsByType).sort().map(tipo => {
                 const accountsInType = accountsByType[tipo];
                 const typeBalance = accountsInType.reduce((sum, acc) => sum + (saldos[acc.id] || 0), 0);
-                const porcentajeGlobal = totalFiltrado > 0 ? (typeBalance / totalFiltrado) * 100 : 0;
-                const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => `<div class="modal__list-item" data-action="view-account-details" data-id="${c.id}" style="cursor: pointer; padding: var(--sp-2) 0;"><div><span style="display: block;">${c.nombre}</span><small style="color: var(--c-on-surface-secondary);">${((saldos[c.id] || 0) / typeBalance * 100).toFixed(1)}% de ${tipo}</small></div><div style="display: flex; align-items: center; gap: var(--sp-2);">${formatCurrency(saldos[c.id] || 0)}<span class="material-icons" style="font-size: 18px;">chevron_right</span></div></div>`).join('');
+                const porcentajeGlobal = totalNeto !== 0 ? (typeBalance / totalNeto) * 100 : 0;
+                const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => `<div class="modal__list-item" data-action="view-account-details" data-id="${c.id}" style="cursor: pointer; padding: var(--sp-2) 0;"><div><span style="display: block;">${c.nombre}</span><small style="color: var(--c-on-surface-secondary);">${(typeBalance !== 0 ? ((saldos[c.id] || 0) / typeBalance * 100) : 0).toFixed(1)}% de ${tipo}</small></div><div style="display: flex; align-items: center; gap: var(--sp-2);">${formatCurrency(saldos[c.id] || 0)}<span class="material-icons" style="font-size: 18px;">chevron_right</span></div></div>`).join('');
                 if (!accountsHtml) return '';
                 return `<details class="accordion" style="margin-bottom: var(--sp-2);"><summary><span class="account-group__name">${tipo}</span><div style="display:flex; align-items:center; gap:var(--sp-2);"><small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small><span class="account-group__balance">${formatCurrency(typeBalance)}</span><span class="material-icons accordion__icon">expand_more</span></div></summary><div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div></details>`;
             }).join('');
         }
     }, 50);
 };
-                
+// =================================================================
+// === FIN: REEMPLAZO COMPLETO DE renderPatrimonioPage (v2)      ===
+// =================================================================
         
         const loadConfig = () => { 
             const userEmailEl = select('config-user-email'); 
