@@ -2393,7 +2393,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             </div>
         </div>
 
-        <details class="accordion" open style="margin-bottom: var(--sp-4);">
+        <details class="accordion" style="margin-bottom: var(--sp-4);">
             <summary><h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">pie_chart</span>Asignación y Filtros</h3><span class="material-icons accordion__icon">expand_more</span></summary>
             <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
                 <div class="filter-pills" style="margin-bottom: var(--sp-2);">${pillsHTML}</div>
@@ -4366,33 +4366,60 @@ const renderPlanificacionPage = () => {
     const container = select(PAGE_IDS.INVERSIONES);
     if (!container) return;
 
-    // Ahora esta función se encarga de TODO: crea el esqueleto y llama a las funciones que lo rellenan.
+    // AHORA ESTA FUNCIÓN CONSTRUYE AMBAS SECCIONES (GENERAL Y PORTAFOLIO)
     container.innerHTML = `
         <div id="inversiones-content-container">
-            <!-- Nuevo Acordeón para el Gráfico de Evolución -->
-            <details class="accordion" open style="margin-bottom: var(--sp-4);">
-                <summary>
-                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
-                        <span class="material-icons">show_chart</span>
-                        Evolución del Portafolio
-                    </h3>
-                    <span class="material-icons accordion__icon">expand_more</span>
-                </summary>
-                <div class="accordion__content" id="portfolio-evolution-container" style="padding: var(--sp-3) var(--sp-4);">
-                    <!-- Esqueleto de carga para el gráfico de evolución -->
-                    <div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"></div>
-                </div>
-            </details>
 
-            <!-- El resto de tu HTML de la página de Inversiones se generará después -->
-            <div id="portfolio-main-content">
-                <!-- Esqueleto de carga para el resto de la página -->
-                <div class="skeleton" style="height: 300px; border-radius: var(--border-radius-lg);"></div>
+            <div class="card card--no-bg accordion-wrapper" style="padding: 0 var(--sp-4); margin-bottom: var(--sp-4);">
+                <details class="accordion"> <summary>
+                        <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                            <span class="material-icons">account_balance</span>
+                            Patrimonio General (Líquido, Deudas, etc.)
+                        </h3>
+                        <span class="material-icons accordion__icon">expand_more</span>
+                    </summary>
+                    <div class="accordion__content" id="patrimonio-completo-container" style="padding: var(--sp-3) 0 0 0;">
+                        <div class="skeleton" style="height: 250px; border-radius: var(--border-radius-lg);"></div>
+                    </div>
+                </details>
             </div>
-        </div>
+            <div class="card card--no-bg accordion-wrapper" style="padding: 0 var(--sp-4);">
+                <details class="accordion"> <summary>
+                        <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                            <span class="material-icons">rocket_launch</span>
+                            Portafolio de Inversión
+                        </h3>
+                        <span class="material-icons accordion__icon">expand_more</span>
+                    </summary>
+                    <div class="accordion__content" style="padding-top: var(--sp-3);">
+                    
+                        <details class="accordion" style="margin-bottom: var(--sp-4);"> <summary>
+                                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface); font-size: var(--fs-base); font-weight: 600;">
+                                    <span class="material-icons">show_chart</span>
+                                    Evolución del Portafolio
+                                </h3>
+                                <span class="material-icons accordion__icon">expand_more</span>
+                            </summary>
+                            <div class="accordion__content" id="portfolio-evolution-container" style="padding: var(--sp-3) var(--sp-4);">
+                                <div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"></div>
+                            </div>
+                        </details>
+
+                        <div id="portfolio-main-content">
+                            <div class="skeleton" style="height: 300px; border-radius: var(--border-radius-lg);"></div>
+                        </div>
+
+                    </div>
+                </details>
+            </div>
+            </div>
     `;
-	    // Llamamos a las dos funciones que rellenarán cada parte.
+
+    // Llamamos a las TRES funciones que rellenarán los esqueletos
     setTimeout(async () => {
+        // La función renderPatrimonioPage rellenará el primer acordeón
+        await renderPatrimonioPage(); 
+        // Las otras two rellenarán el segundo acordeón
         await renderPortfolioEvolutionChart('portfolio-evolution-container');
         await renderPortfolioMainContent('portfolio-main-content');
     }, 50);
