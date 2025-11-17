@@ -1897,3 +1897,81 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     background-color: var(--c-surface-variant);
 }
 /* --- FIN: Mejora UX --- */
+
+/* === OPTIMIZACIÓN MÓVIL EXTREMA (iOS FEEL) === */
+
+/* 1. Eliminar Scrollbars pero permitir scroll */
+.app-layout__main, 
+.modal__body, 
+.custom-select__options,
+#recurrentes-list-container {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+}
+.app-layout__main::-webkit-scrollbar, 
+.modal__body::-webkit-scrollbar,
+.custom-select__options::-webkit-scrollbar,
+#recurrentes-list-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+/* 2. Evitar selección de texto accidental (Crucial para sensación de App) */
+body {
+    -webkit-user-select: none; /* Safari */
+    user-select: none;
+}
+/* Permitir selección solo donde es necesario escribir */
+input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* 3. Mejorar el tap highlight */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* 4. Acordeones con animación suave (Truco moderno CSS) */
+/* Reemplaza o añade esto para que los detalles se abran suavemente */
+details > summary {
+    list-style: none;
+    transition: background-color 0.2s ease;
+}
+details > summary:active {
+    background-color: var(--c-surface-variant);
+}
+details[open] summary ~ * {
+    animation: sweep .3s ease-in-out;
+}
+
+@keyframes sweep {
+    0%    {opacity: 0; transform: translateY(-10px)}
+    100%  {opacity: 1; transform: translateY(0)}
+}
+
+/* 5. Ajuste de Inputs en iOS para evitar zoom y estilos por defecto */
+input[type="text"], 
+input[type="number"], 
+input[type="email"], 
+input[type="password"], 
+input[type="date"], 
+select, 
+textarea {
+    font-size: 16px !important; /* Evita que iOS haga zoom al enfocar */
+    border-radius: var(--border-radius-md); /* Mantiene tus bordes */
+    -webkit-appearance: none; /* Quita estilos nativos feos (sombras internas) */
+    appearance: none;
+}
+
+/* 6. Scroll elástico nativo */
+.app-layout__main {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 7. Hacer las tarjetas más "tocables" */
+.transaction-card, 
+.modal__list-item,
+.settings-item {
+    padding-top: 12px;
+    padding-bottom: 12px;
+}

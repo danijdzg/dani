@@ -2337,6 +2337,10 @@ const renderPortfolioMainContent = async (targetContainerId) => {
     const container = select(targetContainerId);
     if (!container) return;
 
+    // 1. MEMORIA VISUAL: Comprobamos si el acordeón de filtros ya estaba abierto por el usuario
+    const existingAccordion = container.querySelector('#portfolio-filters-accordion');
+    const wasOpen = existingAccordion ? existingAccordion.hasAttribute('open') : false;
+
     const investmentAccounts = getVisibleAccounts().filter((c) => c.esInversion);
     const CHART_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
 
@@ -2367,7 +2371,8 @@ const renderPortfolioMainContent = async (targetContainerId) => {
     const pillsHTML = allInvestmentTypes.map(t => {
         const isActive = !deselectedInvestmentTypesFilter.has(t);
         const color = colorMap[t];
-        let style = isActive ? `style="background-color: ${color}; border-color: ${color}; color: #FFFFFF;"` : '';
+        // Mejoramos el estilo visual de los filtros activos para que parezcan botones nativos iOS
+        let style = isActive ? `style="background-color: ${color}; border-color: ${color}; color: #FFFFFF; box-shadow: 0 2px 8px ${color}66;"` : '';
         return `<button class="filter-pill ${isActive ? 'filter-pill--active' : ''}" data-action="toggle-investment-type-filter" data-type="${t}" ${style}>${t}</button>`;
     }).join('');
 
@@ -2378,6 +2383,9 @@ const renderPortfolioMainContent = async (targetContainerId) => {
     const rentabilidadTotalAbsoluta = portfolioTotalValorado - portfolioTotalInvertido;
     const rentabilidadTotalPorcentual = portfolioTotalInvertido !== 0 ? (rentabilidadTotalAbsoluta / portfolioTotalInvertido) * 100 : 0;
     const rentabilidadClass = rentabilidadTotalAbsoluta >= 0 ? 'text-positive' : 'text-negative';
+
+    // 2. ESTADO PERSISTENTE: Aplicamos el atributo 'open' si estaba abierto antes
+    const openAttribute = wasOpen ? 'open' : '';
 
     container.innerHTML = `
         <div class="card" style="margin-bottom: var(--sp-4);">
@@ -2398,7 +2406,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             </div>
         </div>
 
-        <details class="accordion" style="margin-bottom: var(--sp-4);">
+        <details id="portfolio-filters-accordion" class="accordion" style="margin-bottom: var(--sp-4);" ${openAttribute}>
             <summary><h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">pie_chart</span>Asignación y Filtros</h3><span class="material-icons accordion__icon">expand_more</span></summary>
             <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
                 <div class="filter-pills" style="margin-bottom: var(--sp-2);">${pillsHTML}</div>
@@ -4411,7 +4419,7 @@ const renderPlanificacionPage = () => {
                 <details class="accordion"> <summary>
                         <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
                             <span class="material-icons">account_balance</span>
-                            Patrimonio General (Líquido, Deudas, etc.)
+                            Patrimonio Total
                         </h3>
                         <span class="material-icons accordion__icon">expand_more</span>
                     </summary>
@@ -4469,10 +4477,19 @@ const renderPlanificacionPage = () => {
  */
 const renderPatrimonioGeneralContent = async () => {
     const container = select('patrimonio-general-container');
-    if (!container) {
-        console.log("Error: Contenedor 'patrimonio-general-container' no encontrado.");
-        return;
-    }
+    if (!container) return;
+
+    // --- MEJORA: Recordar estado de acordeones internos si los hubiera ---
+    // En este caso específico, la función renderiza DENTRO del acordeón principal,
+    // así que no necesitamos guardar el estado del padre, PERO sí renderiza
+    // sub-acordeones para los grupos (ej: "Banco", "Efectivo").
+    // Vamos a intentar mantener esos abiertos si el usuario los tenía abiertos.
+    
+    const openGroups = new Set();
+    container.querySelectorAll('details[open]').forEach(d => {
+        const summaryText = d.querySelector('summary .account-group__name')?.textContent;
+        if(summaryText) openGroups.add(summaryText);
+    });
 
     const visibleAccounts = getVisibleAccounts();
     const saldos = await getSaldos();
@@ -4573,6 +4590,7 @@ const renderPatrimonioGeneralContent = async () => {
                 const porcentajeGlobal = totalNeto !== 0 ? (typeBalance / totalNeto) * 100 : 0;
                 const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => `<div class="modal__list-item" data-action="view-account-details" data-id="${c.id}" style="cursor: pointer; padding: var(--sp-2) 0;"><div><span style="display: block;">${c.nombre}</span><small style="color: var(--c-on-surface-secondary);">${(typeBalance !== 0 ? ((saldos[c.id] || 0) / typeBalance * 100) : 0).toFixed(1)}% de ${tipo}</small></div><div style="display: flex; align-items: center; gap: var(--sp-2);">${formatCurrency(saldos[c.id] || 0)}<span class="material-icons" style="font-size: 18px;">chevron_right</span></div></div>`).join('');
                 if (!accountsHtml) return '';
+				const isOpen = openGroups.has(tipo) ? 'open' : '';
                 return `<details class="accordion" style="margin-bottom: var(--sp-2);"><summary><span class="account-group__name">${tipo}</span><div style="display:flex; align-items:center; gap:var(--sp-2);"><small style="color: var(--c-on-surface-tertiary); margin-right: var(--sp-2);">${porcentajeGlobal.toFixed(1)}%</small><span class="account-group__balance">${formatCurrency(typeBalance)}</span><span class="material-icons accordion__icon">expand_more</span></div></summary><div class="accordion__content" style="padding: 0 var(--sp-3);">${accountsHtml}</div></details>`;
             }).join('');
         }
