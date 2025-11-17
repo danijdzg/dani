@@ -2007,131 +2007,90 @@ textarea {
     text-shadow: 0 0 10px rgba(0, 194, 255, 0.4);
 }
 
-/* 2. CORRECCIÓN DE VISIBILIDAD EN OPCIONES RECURRENTES */
-/* El problema era que los inputs heredaban transparencia y el texto no forzaba el blanco */
 
-#recurrent-options {
-    background-color: var(--c-surface-variant); /* Fondo más sólido para la caja */
-    border: 1px solid var(--c-outline);
-    padding: var(--sp-3);
-    border-radius: var(--border-radius-md);
-}
+/* ================================================================= */
+/* === CORRECCIÓN VISUAL RECURRENTE: ADAPTATIVA (OSCURO/CLARO) === */
+/* ================================================================= */
 
-#recurrent-options label,
-#recurrent-options span {
-    color: var(--c-on-surface); /* Forzamos texto blanco/claro */
-}
-
-/* Estilo específico para los inputs de fecha y selects dentro de recurrente */
-#recurrent-options input[type="date"],
-#recurrent-options select {
-    background-color: var(--c-surface) !important; /* Fondo oscuro pero visible */
-    color: var(--c-white) !important;             /* Texto blanco puro */
-    border: 1px solid var(--c-outline);
-    border-radius: var(--border-radius-md);
-    padding: 8px 12px;
-    font-size: var(--fs-sm);
-    font-weight: 500;
-    margin-top: 4px;
-    width: 100%;
-    
-    /* PROPIEDAD CLAVE PARA EL CALENDARIO NATIVO: */
-    /* Esto fuerza al navegador (especialmente en móvil) a mostrar el selector de fecha en modo oscuro */
-    color-scheme: dark; 
-}
-
-#recurrent-options input[type="date"]:focus,
-#recurrent-options select:focus {
-    border-color: var(--c-primary);
-    box-shadow: var(--c-border-glow);
-    outline: none;
-}
-
-/* 3. CORRECCIÓN GENERAL DE CONTRASTE PARA INPUTS DESHABILITADOS O DE LECTURA */
-/* A veces los navegadores oscurecen demasiado estos campos */
-input:disabled, input[readonly] {
-    color: var(--c-on-surface-secondary);
-    opacity: 1; /* Evita que el navegador lo haga transparente */
-    -webkit-text-fill-color: var(--c-on-surface-secondary);
-}
-
-#recurrent-frequency {
-    appearance: none; /* Elimina el estilo nativo del sistema */
-    -webkit-appearance: none;
-    
+/* 1. ESTILOS BASE (Funcionan con las variables del tema activo) */
+/* Esto asegura que si cambias de tema, el fondo y el texto cambien automáticamente */
+#recurrent-frequency,
+#recurrent-options input[type="date"] {
     width: 100%;
     padding: 12px 16px;
-    margin-bottom: 8px; /* Separación con la fecha */
-    
-    /* Colores de alto contraste */
-    background-color: #1A2634 !important; /* Un azul oscuro sólido, no transparente */
-    color: var(--c-white) !important;
-    border: 1px solid var(--c-primary); /* Borde del color principal para destacar */
+    margin-bottom: 8px;
     border-radius: var(--border-radius-md);
-    
     font-size: var(--fs-base);
     font-weight: 600;
-    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
     
-    /* Icono de flecha personalizado para asegurar que se vea en blanco */
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3csvg%3e");
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    background-size: 16px 12px;
-}
-
-/* Efecto al pasar el ratón o tocar */
-#recurrent-frequency:focus,
-#recurrent-frequency:hover {
-    background-color: #253345 !important; /* Un poco más claro al interactuar */
-    box-shadow: 0 0 0 2px var(--c-primary); /* Resplandor de foco */
-    outline: none;
-}
-
-/* 2. Estilo de las OPCIONES (El menú que se despliega) */
-/* Esto es crucial para que no salga blanco sobre blanco en algunos móviles/Windows */
-#recurrent-frequency option {
-    background-color: #121820; /* Fondo muy oscuro */
-    color: #ffffff;            /* Texto blanco puro */
-    padding: 10px;
-}
-
-#recurrent-options input[type="date"] {
-    /* 1. Texto blanco y fondo oscuro sólido */
-    color: #ffffff !important;
-    background-color: #1A2634 !important; 
-    
-    /* 2. Estilo consistente con el selector de frecuencia */
+    /* USAMOS VARIABLES: Se adaptan solas (Negro en modo oscuro, Blanco en modo claro) */
+    background-color: var(--c-surface) !important; 
+    color: var(--c-on-surface) !important; 
     border: 1px solid var(--c-outline);
-    border-radius: var(--border-radius-md);
-    padding: 12px 16px;
-    width: 100%;
-    margin-top: 8px;
-    font-family: var(--font-family);
-    font-size: var(--fs-base);
-    
-    /* 3. MAGIA: Fuerza al calendario nativo (el popup) a usar modo oscuro */
-    color-scheme: dark;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-/* Estado al tocar/enfocar */
+/* Focus para ambos */
+#recurrent-frequency:focus,
 #recurrent-options input[type="date"]:focus {
     border-color: var(--c-primary);
     box-shadow: 0 0 0 2px var(--c-primary);
     outline: none;
 }
 
-/* 4. Arreglo para el icono del calendario (la flechita/calendario a la derecha) */
-/* filter: invert(1) convierte el icono negro por defecto en blanco */
-#recurrent-options input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1); 
+/* 2. ESPECÍFICO PARA MODO OSCURO (El defecto o cuando no hay tema claro) */
+/* Forzamos iconos blancos y calendario oscuro */
+body:not([data-theme="sunset-groove"]) #recurrent-frequency,
+body:not([data-theme="sunset-groove"]) #recurrent-options input[type="date"] {
+    color-scheme: dark; /* Calendario nativo oscuro */
+}
+
+/* Flecha blanca para el Select en modo oscuro */
+body:not([data-theme="sunset-groove"]) #recurrent-frequency {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3csvg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 16px 12px;
+}
+
+/* Icono de calendario blanco en modo oscuro */
+body:not([data-theme="sunset-groove"]) #recurrent-options input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1); /* Invierte el icono negro a blanco */
     cursor: pointer;
     opacity: 0.8;
 }
 
-/* 5. Asegurar que las etiquetas (labels) dentro de esta sección sean blancas */
-.recurrent-section label,
+
+/* 3. ESPECÍFICO PARA MODO CLARO (Sunset Groove) */
+/* Aquí es donde arreglamos el problema que reportaste */
+body[data-theme="sunset-groove"] #recurrent-frequency,
+body[data-theme="sunset-groove"] #recurrent-options input[type="date"] {
+    background-color: #ffffff !important; /* Fondo blanco puro para contraste máximo */
+    color: #000000 !important;            /* TEXTO NEGRO */
+    border-color: rgba(0,0,0, 0.2);       /* Borde sutil oscuro */
+    color-scheme: light;                  /* Calendario nativo claro (letras negras) */
+}
+
+/* Flecha NEGRA para el Select en modo claro */
+body[data-theme="sunset-groove"] #recurrent-frequency {
+    /* El código %23000000 es negro en hexadecimal para el SVG */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3csvg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 16px 12px;
+}
+
+/* Icono de calendario NEGRO en modo claro */
+body[data-theme="sunset-groove"] #recurrent-options input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: none; /* Quitamos la inversión, se ve negro original */
+    cursor: pointer;
+    opacity: 0.6;
+}
+
+/* Etiquetas (Labels) adaptables */
 #recurrent-options label {
-    color: var(--c-on-surface) !important;
+    color: var(--c-on-surface) !important; /* Se vuelve negro o blanco según el tema */
     font-weight: 600;
 }
