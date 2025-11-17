@@ -7227,24 +7227,7 @@ function createCustomSelect(selectElement) {
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
 // =================================================================
  const attachEventListeners = () => {
-	if (action === 'set-date-quick') {
-    const val = actionTarget.dataset.value;
-    const fechaInput = select('movimiento-fecha');
-    const today = new Date();
-    
-    if (val === 'yesterday') {
-        today.setDate(today.getDate() - 1);
-    }
-    
-    // Ajuste de zona horaria para que no falle el input date
-    fechaInput.value = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
-    updateDateDisplay(fechaInput);
-    
-    // Feedback visual y activar la píldora seleccionada
-    hapticFeedback('light');
-    selectAll('[data-action="set-date-quick"]').forEach(b => b.classList.remove('filter-pill--active'));
-    actionTarget.classList.add('filter-pill--active');
-} 
+	
     const cantidadInput = document.getElementById("movimiento-cantidad");
     if (cantidadInput) {
         const cantidadError = document.getElementById("movimiento-cantidad-error");
