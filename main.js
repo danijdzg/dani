@@ -10014,6 +10014,4 @@ if ('serviceWorker' in navigator) {
       .catch(error => {
         console.log('Fallo en el registro del Service Worker:', error);
       });
-  });
- } 
-};
+  }); 
