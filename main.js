@@ -798,21 +798,20 @@ async function loadCoreData(uid) {
         };
 
         const calculateNextDueDate = (currentDueDate, frequency) => {
-            const d = new Date(currentDueDate);
-            d.setHours(12, 0, 0, 0); 
-        
-            switch (frequency) {
-                case 'daily': return addDays(d, 1);
-                case 'weekly': return addWeeks(d, 1);
-                case 'monthly': return addMonths(d, 1);
-                case 'yearly': return addYears(d, 1);
-                default: return d;
-            }
-        };
+    // Parseamos como UTC para evitar problemas de horario de verano/invierno
+    const d = new Date(currentDueDate); // Asumimos formato YYYY-MM-DD
+    
+    // Usamos las funciones de date-fns que manejan los meses cortos correctamente
+    switch (frequency) {
+        case 'daily': return addDays(d, 1);
+        case 'weekly': return addWeeks(d, 1);
+        case 'monthly': return addMonths(d, 1);
+        case 'yearly': return addYears(d, 1);
+        default: return d; // 'once' no avanza
+    }
+};
         const calculatePreviousDueDate = (currentDueDate, frequency) => {
     const d = new Date(currentDueDate);
-    d.setHours(12, 0, 0, 0); 
-
     switch (frequency) {
         case 'daily': return subDays(d, 1);
         case 'weekly': return subWeeks(d, 1);
@@ -6063,7 +6062,19 @@ const startMovementForm = async (id = null, isRecurrent = false) => {
     initAmountInput();
     
     if (!id) {
-        setTimeout(() => showCalculator(select('movimiento-cantidad')), 150);
+        // Si es nuevo movimiento
+        setTimeout(() => {
+            // 1. Marcamos "Hoy" por defecto visualmente
+            const todayBtn = document.querySelector('[data-action="set-date-quick"][data-value="today"]');
+            if(todayBtn) todayBtn.classList.add('filter-pill--active');
+
+            // 2. En móvil, abrimos TU calculadora directamente. Es más rápido que el teclado nativo.
+            if (isMobileDevice()) {
+                showCalculator(select('movimiento-cantidad'));
+            } else {
+                select('movimiento-cantidad').focus();
+            }
+        }, 150);
     }
 };
         
@@ -7216,6 +7227,24 @@ function createCustomSelect(selectElement) {
 // === FIN DEL BLOQUE DEFINITIVO                                 ===
 // =================================================================
  const attachEventListeners = () => {
+	if (action === 'set-date-quick') {
+    const val = actionTarget.dataset.value;
+    const fechaInput = select('movimiento-fecha');
+    const today = new Date();
+    
+    if (val === 'yesterday') {
+        today.setDate(today.getDate() - 1);
+    }
+    
+    // Ajuste de zona horaria para que no falle el input date
+    fechaInput.value = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
+    updateDateDisplay(fechaInput);
+    
+    // Feedback visual y activar la píldora seleccionada
+    hapticFeedback('light');
+    selectAll('[data-action="set-date-quick"]').forEach(b => b.classList.remove('filter-pill--active'));
+    actionTarget.classList.add('filter-pill--active');
+} 
     const cantidadInput = document.getElementById("movimiento-cantidad");
     if (cantidadInput) {
         const cantidadError = document.getElementById("movimiento-cantidad-error");
@@ -7719,6 +7748,7 @@ function createCustomSelect(selectElement) {
 const handleConfirmRecurrent = async (id, btn) => {
     if (btn) setButtonLoading(btn, true);
 
+    // 1. Localizamos el elemento en memoria
     const recurrenteIndex = db.recurrentes.findIndex(r => r.id === id);
     if (recurrenteIndex === -1) {
         showToast("Error: no se encontró la operación recurrente.", "danger");
@@ -7727,15 +7757,29 @@ const handleConfirmRecurrent = async (id, btn) => {
     }
     const recurrente = db.recurrentes[recurrenteIndex];
 
+    // 2. Efecto Visual (Animación de salida)
+    // Buscamos la tarjeta en el DOM para animarla
+    const itemElement = document.getElementById(`pending-recurrente-${id}`);
+    if (itemElement) {
+        itemElement.classList.add('recurrente-item-confirming');
+    }
+
     try {
         const newMovementId = generateId();
         
-        // Lógica optimista (actualización local inmediata)
+        // 3. Lógica de Fecha Precisa
+        // Usamos la fecha PROGRAMADA para el movimiento, asegurando las 12:00 UTC
+        // para evitar desfases horarios. Si pagas tarde, constará la fecha original.
+        const movementDate = recurrente.nextDate 
+            ? new Date(recurrente.nextDate + 'T12:00:00Z').toISOString() 
+            : new Date().toISOString();
+
+        // 4. Preparar datos del nuevo movimiento
         const newMovementData = {
             id: newMovementId,
             cantidad: recurrente.cantidad,
             descripcion: recurrente.descripcion,
-            fecha: new Date().toISOString(), // Se añade con la fecha de hoy
+            fecha: movementDate, 
             tipo: recurrente.tipo,
             cuentaId: recurrente.cuentaId,
             conceptoId: recurrente.conceptoId,
@@ -7743,63 +7787,72 @@ const handleConfirmRecurrent = async (id, btn) => {
             cuentaDestinoId: recurrente.cuentaDestinoId
         };
         
+        // 5. Actualización Optimista (Memoria Local)
+        // Añadimos el movimiento al inicio de la lista
         db.movimientos.unshift(newMovementData);
-
-        // === ¡AQUÍ ESTÁ LA MAGIA! ===
+        
+        // Gestionamos la recurrencia localmente
         if (recurrente.frequency === 'once') {
-            // Si es de única vez, lo eliminamos de la lista local de recurrentes.
+            // Si es de única vez, lo eliminamos de la lista
             db.recurrentes.splice(recurrenteIndex, 1);
         } else {
-            // Si es periódico, calculamos la siguiente fecha.
-            const nextDueDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency);
-            db.recurrentes[recurrenteIndex].nextDate = nextDueDate.toISOString().slice(0, 10);
-        }
-        
-        // Refrescamos la UI al instante
-        const activePage = document.querySelector('.view--active');
-        if (activePage && activePage.id === PAGE_IDS.DIARIO) {
-            updateLocalDataAndRefreshUI();
-        } else if (activePage && activePage.id === PAGE_IDS.PLANIFICACION) {
-            renderPlanificacionPage();
+            // Si es periódico, calculamos la siguiente fecha
+            const nextDueDateObj = calculateNextDueDate(recurrente.nextDate, recurrente.frequency);
+            // Guardamos como string YYYY-MM-DD
+            db.recurrentes[recurrenteIndex].nextDate = nextDueDateObj.toISOString().slice(0, 10);
         }
 
-        // Sincronización en segundo plano con Firebase
+        // 6. Preparar Operaciones en Base de Datos (Firebase)
         const batch = fbDb.batch();
-        const newMovementRef = fbDb.collection('users').doc(currentUser.uid).collection('movimientos').doc(newMovementId);
-        batch.set(newMovementRef, newMovementData);
-        
-        const recurrenteRef = fbDb.collection('users').doc(currentUser.uid).collection('recurrentes').doc(id);
+        const userRef = fbDb.collection('users').doc(currentUser.uid);
 
-        // === ¡LA MISMA LÓGICA EN FIREBASE! ===
+        // A. Crear el movimiento
+        batch.set(userRef.collection('movimientos').doc(newMovementId), newMovementData);
+        
+        // B. Actualizar saldos
+        if (recurrente.tipo === 'traspaso') {
+            batch.update(userRef.collection('cuentas').doc(recurrente.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-recurrente.cantidad) });
+            batch.update(userRef.collection('cuentas').doc(recurrente.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
+        } else {
+            batch.update(userRef.collection('cuentas').doc(recurrente.cuentaId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
+        }
+
+        // C. Actualizar o Borrar el Recurrente
+        const recurrenteRef = userRef.collection('recurrentes').doc(id);
         if (recurrente.frequency === 'once') {
-            // Si es de única vez, lo borramos de la base de datos.
             batch.delete(recurrenteRef);
         } else {
-            // Si es periódico, actualizamos su próxima fecha.
-            const nextDueDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency);
-            batch.update(recurrenteRef, { nextDate: nextDueDate.toISOString().slice(0, 10) });
+            // Recalculamos para asegurar consistencia en el servidor
+            const nextDueDateObj = calculateNextDueDate(recurrente.nextDate, recurrente.frequency);
+            batch.update(recurrenteRef, { nextDate: nextDueDateObj.toISOString().slice(0, 10) });
         }
 
-        // Ajuste de saldos (esto no cambia)
-        if (recurrente.tipo === 'traspaso') {
-            const origenRef = fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaOrigenId);
-            const destinoRef = fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaDestinoId);
-            batch.update(origenRef, { saldo: firebase.firestore.FieldValue.increment(-recurrente.cantidad) });
-            batch.update(destinoRef, { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
-        } else {
-            const cuentaRef = fbDb.collection('users').doc(currentUser.uid).collection('cuentas').doc(recurrente.cuentaId);
-            batch.update(cuentaRef, { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
-        }
-
+        // 7. Ejecutar en segundo plano
         await batch.commit();
 
         hapticFeedback('success');
-        showToast("Movimiento añadido desde recurrente.", "info");
+        showToast("Movimiento añadido.", "info");
+
+        // 8. Refrescar la UI después de la animación (300ms)
+        setTimeout(() => {
+            const activePage = document.querySelector('.view--active');
+            if (activePage) {
+                if (activePage.id === PAGE_IDS.DIARIO) {
+                    // Refresco optimizado para el diario (recalcula saldos y lista virtual)
+                    updateLocalDataAndRefreshUI(); 
+                } else if (activePage.id === PAGE_IDS.PLANIFICAR) {
+                    renderPlanificacionPage();
+                } else if (activePage.id === PAGE_IDS.INICIO) {
+                    scheduleDashboardUpdate();
+                }
+            }
+        }, 300); // Coincide con la duración de la animación CSS
 
     } catch (error) {
         console.error("Error al confirmar el movimiento recurrente:", error);
-        showToast("No se pudo añadir el movimiento recurrente.", "danger");
-        // En caso de error, podríamos necesitar recargar los datos para asegurar la consistencia.
+        showToast("Hubo un error al procesar la operación.", "danger");
+        // En caso de error crítico, recargamos para asegurar integridad
+        setTimeout(() => location.reload(), 1500);
     } finally {
         if (btn) setButtonLoading(btn, false);
     }

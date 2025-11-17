@@ -272,16 +272,22 @@
     </div>
     
     <!-- 4. CAMPO DE FECHA: También compactado. -->
-    <div class="form-field-compact" style="margin-top: var(--sp-3);">
-        <div class="input-wrapper">
-            <input type="date" id="movimiento-fecha" class="visually-hidden" required />
-            <button type="button" id="movimiento-fecha-display" class="date-button-compact">
-                <span class="material-icons">edit_calendar</span>
-                <span id="movimiento-fecha-text"></span>
-            </button>
-        </div>
-        <span class="form-error" id="movimiento-fecha-error"></span>
+    <div class="filter-pills" style="margin-bottom: var(--sp-2); justify-content: flex-start; margin-top: var(--sp-3);">
+    <button type="button" class="filter-pill" data-action="set-date-quick" data-value="today">Hoy</button>
+    <button type="button" class="filter-pill" data-action="set-date-quick" data-value="yesterday">Ayer</button>
+</div>
+
+<div class="form-field-compact"> 
+    <div class="input-wrapper">
+        <input type="date" id="movimiento-fecha" class="visually-hidden" required />
+        
+        <button type="button" id="movimiento-fecha-display" class="date-button-compact">
+            <span class="material-icons">calendar_month</span>
+            <span id="movimiento-fecha-text">Seleccionar otra fecha...</span>
+        </button>
     </div>
+    <span class="form-error" id="movimiento-fecha-error"></span>
+</div>
 
     <!-- 5. BOTONES DE ACCIÓN: CON LOS CAMBIOS APLICADOS -->
     <div class="modal__actions" style="display:flex; justify-content: space-between; align-items:center; margin-top: var(--sp-4);">
