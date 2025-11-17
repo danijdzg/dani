@@ -525,7 +525,7 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 }
 
 .item-deleting {
-    animation: fade-out-and-collapse 0.7s ease-out forwards;
+    animation: fade-out-and-collapse 1s ease-out forwards;
     overflow: hidden;
     /* Aseguramos que el borde también desaparezca */
     border-bottom: none !important; 
@@ -548,7 +548,7 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 
 /* Esta es la clase que dispara la animación */
 .list-item-animate.item-enter-active {
-    animation: item-enter 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: item-enter 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 @keyframes pop-in { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes slide-in-from-right {

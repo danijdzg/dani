@@ -9255,7 +9255,7 @@ const handleAddConcept = async (btn) => {
 // =================================================================
 const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
     const collection = isRecurrent ? 'recurrentes' : 'movimientos';
-    const ANIMATION_DURATION = 700; // Debe coincidir con la duración en el CSS
+    const ANIMATION_DURATION = 1000; // Debe coincidir con la duración en el CSS
 
     const itemElement = document.querySelector(`.transaction-card[data-id="${id}"]`)?.closest('.swipe-container');
     
