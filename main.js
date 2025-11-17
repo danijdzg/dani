@@ -7847,7 +7847,7 @@ const handleSaveMovement = async (form, btn) => {
         setButtonLoading(btn, false);
         return false;
     }
-    } else {
+    
         // --- LÓGICA PARA MOVIMIENTOS NORMALES (sin cambios) ---
         const mode = select('movimiento-mode').value;
         const movementId = select('movimiento-id').value;
