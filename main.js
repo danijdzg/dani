@@ -8485,9 +8485,91 @@ const handleSaveMovement = async (form, btn) => {
     };
 
     if (isRecurrent) {
-        // ... (la lógica de recurrentes se mantiene igual)
-        // (por brevedad, no la repito, pero iría aquí)
-        releaseButtons(); // Asegúrate de liberar los botones en todos los casos
+        // --- 1. Recopilar TODOS los datos (comunes y recurrentes) ---
+        const id = select('movimiento-id').value;
+        const newId = id || generateId();
+        const tipoMovimiento = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
+        const cantidadPositiva = parseCurrencyString(select('movimiento-cantidad').value);
+        const cantidadEnCentimos = Math.round(cantidadPositiva * 100);
+        
+        const frequency = select('recurrent-frequency').value;
+        let nextDate = select('recurrent-next-date').value;
+        const endDate = select('recurrent-end-date').value || '';
+        const weekDays = (frequency === 'weekly') ? Array.from(selectAll('.day-selector-btn.active')).map(btn => btn.dataset.day) : [];
+        const today = new Date();
+        const todayStr = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
+        
+        // --- 2. Crear el objeto base para la REGLA RECURRENTE ---
+        const recurrentRuleData = {
+            id: newId,
+            descripcion: select('movimiento-descripcion').value.trim(),
+            cantidad: tipoMovimiento === 'gasto' ? -Math.abs(cantidadEnCentimos) : Math.abs(cantidadEnCentimos),
+            tipo: tipoMovimiento,
+            cuentaId: tipoMovimiento === 'movimiento' ? select('movimiento-cuenta').value : null,
+            conceptoId: tipoMovimiento === 'movimiento' ? select('movimiento-concepto').value : null,
+            cuentaOrigenId: tipoMovimiento === 'traspaso' ? select('movimiento-cuenta-origen').value : null,
+            cuentaDestinoId: tipoMovimiento === 'traspaso' ? select('movimiento-cuenta-destino').value : null,
+            frequency,
+            endDate,
+            weekDays
+        };
+
+        const batch = fbDb.batch();
+        const userRef = fbDb.collection('users').doc(currentUser.uid);
+        let shouldCreateToday = false;
+
+        // --- 3. Decidir si se debe crear un movimiento HOY ---
+        if (nextDate === todayStr) {
+            shouldCreateToday = true;
+            // La regla se guarda con la SIGUIENTE fecha
+            const newNextDate = calculateNextDueDate(nextDate, frequency, weekDays);
+            recurrentRuleData.nextDate = newNextDate.toISOString().slice(0, 10);
+        } else {
+            // La regla se guarda con la fecha de inicio elegida
+            const newNextDate = nextDate ? new Date(nextDate + 'T12:00:00Z') : new Date();
+            recurrentRuleData.nextDate = newNextDate.toISOString().slice(0, 10);
+        }
+
+        // --- 4. Guardar la REGLA RECURRENTE (limpia) ---
+        await saveDoc('recurrentes', newId, recurrentRuleData, btn);
+        releaseButtons(); // Liberamos los botones ahora
+
+        // --- 5. Si es para hoy, crear el MOVIMIENTO (limpio) ---
+        if (shouldCreateToday) {
+            // Creamos un objeto NUEVO solo para el movimiento
+            const newMovementData = {
+                id: generateId(),
+                fecha: new Date(todayStr + 'T12:00:00Z').toISOString(), // Fecha de HOY
+                descripcion: recurrentRuleData.descripcion,
+                cantidad: recurrentRuleData.cantidad,
+                tipo: recurrentRuleData.tipo,
+                cuentaId: recurrentRuleData.cuentaId,
+                conceptoId: recurrentRuleData.conceptoId,
+                cuentaOrigenId: recurrentRuleData.cuentaOrigenId,
+                cuentaDestinoId: recurrentRuleData.cuentaDestinoId
+            };
+            
+            // Añadimos el movimiento y actualizamos saldos al batch
+            batch.set(userRef.collection('movimientos').doc(newMovementData.id), newMovementData);
+            
+            if (newMovementData.tipo === 'traspaso') {
+                batch.update(userRef.collection('cuentas').doc(newMovementData.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-newMovementData.cantidad) });
+                batch.update(userRef.collection('cuentas').doc(newMovementData.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(newMovementData.cantidad) });
+            } else {
+                batch.update(userRef.collection('cuentas').doc(newMovementData.cuentaId), { saldo: firebase.firestore.FieldValue.increment(newMovementData.cantidad) });
+            }
+            await batch.commit(); // Ejecutamos el batch
+            showToast("¡Operación recurrente guardada y primer movimiento añadido!", "info");
+        } else {
+            showToast("Operación recurrente guardada.", "info");
+        }
+
+        // --- 6. Decidir si cerrar el modal o preparar uno nuevo ---
+        if (isSaveAndNew) {
+            startMovementForm();
+        } else {
+            hideModal('movimiento-modal');
+        }
     } else {
         let oldData = null;
         try {
