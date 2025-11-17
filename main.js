@@ -7774,7 +7774,8 @@ const handleSaveMovement = async (form, btn) => {
             hideModal('movimiento-modal');
         }
         
-    } else {EGIDA Y ROBUSTA PARA MOVIMIENTOS RECURRENTES ---
+    } else {
+		
     try {
         const id = select('movimiento-id').value || generateId();
         const tipoRecurrente = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
