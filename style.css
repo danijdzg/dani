@@ -1984,3 +1984,73 @@ textarea {
     padding: 0;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+:root {
+    /* Nuevo color Azul Celeste Eléctrico para máxima visibilidad */
+    --c-sky-blue: #00C2FF; 
+    /* Resplandor específico para este azul */
+    --glow-sky: 0 0 15px rgba(0, 194, 255, 0.65); 
+}
+
+/* 1. PATRIMONIO NETO: Estilo "Vistoso" */
+/* Apuntamos directamente al ID para asegurar que se aplique sobre cualquier otra regla */
+#kpi-patrimonio-neto-value {
+    color: var(--c-sky-blue) !important;
+    text-shadow: var(--glow-sky);
+    font-weight: 900; /* Un poco más grueso para que destaque más */
+    letter-spacing: 0.5px;
+}
+
+/* También aplicamos este color al icono del widget de Patrimonio si existe */
+[data-widget-type="net-worth-trend"] .card__title .material-icons {
+    color: var(--c-sky-blue);
+    text-shadow: 0 0 10px rgba(0, 194, 255, 0.4);
+}
+
+/* 2. CORRECCIÓN DE VISIBILIDAD EN OPCIONES RECURRENTES */
+/* El problema era que los inputs heredaban transparencia y el texto no forzaba el blanco */
+
+#recurrent-options {
+    background-color: var(--c-surface-variant); /* Fondo más sólido para la caja */
+    border: 1px solid var(--c-outline);
+    padding: var(--sp-3);
+    border-radius: var(--border-radius-md);
+}
+
+#recurrent-options label,
+#recurrent-options span {
+    color: var(--c-on-surface); /* Forzamos texto blanco/claro */
+}
+
+/* Estilo específico para los inputs de fecha y selects dentro de recurrente */
+#recurrent-options input[type="date"],
+#recurrent-options select {
+    background-color: var(--c-surface) !important; /* Fondo oscuro pero visible */
+    color: var(--c-white) !important;             /* Texto blanco puro */
+    border: 1px solid var(--c-outline);
+    border-radius: var(--border-radius-md);
+    padding: 8px 12px;
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    margin-top: 4px;
+    width: 100%;
+    
+    /* PROPIEDAD CLAVE PARA EL CALENDARIO NATIVO: */
+    /* Esto fuerza al navegador (especialmente en móvil) a mostrar el selector de fecha en modo oscuro */
+    color-scheme: dark; 
+}
+
+#recurrent-options input[type="date"]:focus,
+#recurrent-options select:focus {
+    border-color: var(--c-primary);
+    box-shadow: var(--c-border-glow);
+    outline: none;
+}
+
+/* 3. CORRECCIÓN GENERAL DE CONTRASTE PARA INPUTS DESHABILITADOS O DE LECTURA */
+/* A veces los navegadores oscurecen demasiado estos campos */
+input:disabled, input[readonly] {
+    color: var(--c-on-surface-secondary);
+    opacity: 1; /* Evita que el navegador lo haga transparente */
+    -webkit-text-fill-color: var(--c-on-surface-secondary);
+}
