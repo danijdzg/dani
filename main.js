@@ -1811,30 +1811,43 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
         totalValorActual += valorActual;
         totalCapitalInvertido_para_PNL += capitalInvertido_para_PNL;
         
-        // --- PARTE 2: LÓGICA PARA TIR (BASADA EN CADA MOVIMIENTO INDIVIDUAL) ---
+         // --- PARTE 2: LÓGICA PARA TIR (BASADA EN CADA MOVIMIENTO INDIVIDUAL) ---
         
         const accountMovements = allMovements.filter(m => 
             (m.tipo === 'movimiento' && m.cuentaId === cuenta.id) ||
             (m.tipo === 'traspaso' && (m.cuentaDestinoId === cuenta.id || m.cuentaOrigenId === cuenta.id))
         );
 
+        // 3. PREMISA DEL USUARIO: Convertimos CADA movimiento en un flujo de caja para la TIR.
         const irrCashflows = accountMovements
             .map(mov => {
                 let effectOnAccount = 0;
+
+                // Determinamos el efecto real del movimiento sobre el saldo de ESTA cuenta.
                 if (mov.tipo === 'movimiento') {
                     effectOnAccount = mov.cantidad;
                 } else if (mov.tipo === 'traspaso') {
-                    if (mov.cuentaDestinoId === cuenta.id) effectOnAccount = mov.cantidad;
-                    else if (mov.cuentaOrigenId === cuenta.id) effectOnAccount = -mov.cantidad;
+                    if (mov.cuentaDestinoId === cuenta.id) {
+                        effectOnAccount = mov.cantidad; // Entra dinero a la cuenta
+                    } else if (mov.cuentaOrigenId === cuenta.id) {
+                        effectOnAccount = -mov.cantidad; // Sale dinero de la cuenta
+                    }
                 }
                 
+                // Si el movimiento afectó a la cuenta, lo convertimos en un flujo de caja.
                 if (effectOnAccount !== 0) {
+                    // PREMISA DEL USUARIO:
+                    // - Si es una entrada (effectOnAccount > 0), es una "aportación" -> Flujo de caja NEGATIVO.
+                    // - Si es una salida (effectOnAccount < 0), es una "retirada" -> Flujo de caja POSITIVO.
+                    // Esto es matemáticamente equivalente a invertir el signo del efecto.
                     return { amount: -effectOnAccount, date: new Date(mov.fecha) };
                 }
-                return null;
+                
+                return null; // Si no afectó, no es un flujo de caja.
             })
-            .filter(cf => cf !== null);
+            .filter(cf => cf !== null); // Limpiamos los nulos
 
+        // 4. El valor actual se añade como el último flujo de caja positivo (retirada final ficticia).
         if (valorActual !== 0) {
             irrCashflows.push({ amount: valorActual, date: new Date() });
         }
@@ -1842,19 +1855,20 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
     }
 
     // --- PARTE 3: CÁLCULOS FINALES ---
+
+    // El P&L se calcula con tu lógica: Valoración - Saldo Contable.
     const pnlAbsoluto = totalValorActual - totalCapitalInvertido_para_PNL;
     const pnlPorcentual = totalCapitalInvertido_para_PNL !== 0 ? (pnlAbsoluto / totalCapitalInvertido_para_PNL) * 100 : 0;
+    
+    // La TIR se calcula con la lógica de flujos de caja que definiste.
     const irr = calculateIRR(allIrrCashflows);
 
-    // CORRECCIÓN: Este es el único y correcto objeto de retorno de la función,
-    // ahora incluyendo la propiedad `ultimaValoracionFecha` que querías añadir.
     return { 
         valorActual: totalValorActual, 
         capitalInvertido: totalCapitalInvertido_para_PNL,
         pnlAbsoluto, 
         pnlPorcentual, 
-        irr,
-        ultimaValoracionFecha: ultimaValoracionFecha_Global 
+        irr 
     };
 };
         // --- PARTE 2: LÓGICA PARA TIR (BASADA EN CADA MOVIMIENTO INDIVIDUAL) ---
