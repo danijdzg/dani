@@ -1785,7 +1785,8 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
     const investmentAccounts = cuentaId ? allInvestmentAccounts.filter(c => c.id === cuentaId) : allInvestmentAccounts;
     
     if (investmentAccounts.length === 0) {
-        return { valorActual: 0, capitalInvertido: 0, pnlAbsoluto: 0, pnlPorcentual: 0, irr: 0 };
+        // Objeto devuelto cuando no hay cuentas de inversión, incluyendo la nueva propiedad
+        return { valorActual: 0, capitalInvertido: 0, pnlAbsoluto: 0, pnlPorcentual: 0, irr: 0, ultimaValoracionFecha: null };
     }
 
     const allMovements = await fetchAllMovementsForHistory();
@@ -1793,41 +1794,77 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
     let totalValorActual = 0;
     let totalCapitalInvertido_para_PNL = 0;
     let allIrrCashflows = [];
-	let ultimaValoracionFecha_Global = null;
+    // DECLARACIÓN: La movemos al principio de la función para que exista en el ámbito correcto.
+    let ultimaValoracionFecha_Global = null; 
+    
     for (const cuenta of investmentAccounts) {
         // --- PARTE 1: LÓGICA PARA P&L (BASADO EN SALDO CONTABLE) ---
 
-        // 1. Obtenemos el valor de mercado actual desde la valoración manual.
+        // 1. Obtenemos el valor de mercado actual
         const valoraciones = (db.inversiones_historial || [])
             .filter(v => v.cuentaId === cuenta.id)
             .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
         const valorActual = valoraciones.length > 0 ? valoraciones[0].valor : 0;
-        // --- INICIO DE LA MODIFICACIÓN ---
+        
+        // 2. LÓGICA AÑADIDA: Dentro del bucle, ahora también buscamos la fecha más reciente.
         const ultimaValoracionFecha_Activo = valoraciones.length > 0 ? valoraciones[0].fecha : null;
-
         if (ultimaValoracionFecha_Activo) {
             if (!ultimaValoracionFecha_Global || new Date(ultimaValoracionFecha_Activo) > new Date(ultimaValoracionFecha_Global)) {
                 ultimaValoracionFecha_Global = ultimaValoracionFecha_Activo;
             }
         }
-        // --- FIN DE LA MODIFICACIÓN ---
-        // 2. PREMISA DEL USUARIO: El "Capital Aportado" es exactamente el saldo contable.
+
+        // 3. El "Capital Aportado" es el saldo contable
         const capitalInvertido_para_PNL = cuenta.saldo || 0;
         
         totalValorActual += valorActual;
         totalCapitalInvertido_para_PNL += capitalInvertido_para_PNL;
-		// --- INICIO DE LA MODIFICACIÓN ---
-    // ... (cálculos finales de pnlAbsoluto, pnlPorcentual, irr) ...
+        
+        // --- PARTE 2: LÓGICA PARA TIR (BASADA EN CADA MOVIMIENTO INDIVIDUAL) ---
+        
+        const accountMovements = allMovements.filter(m => 
+            (m.tipo === 'movimiento' && m.cuentaId === cuenta.id) ||
+            (m.tipo === 'traspaso' && (m.cuentaDestinoId === cuenta.id || m.cuentaOrigenId === cuenta.id))
+        );
 
+        const irrCashflows = accountMovements
+            .map(mov => {
+                let effectOnAccount = 0;
+                if (mov.tipo === 'movimiento') {
+                    effectOnAccount = mov.cantidad;
+                } else if (mov.tipo === 'traspaso') {
+                    if (mov.cuentaDestinoId === cuenta.id) effectOnAccount = mov.cantidad;
+                    else if (mov.cuentaOrigenId === cuenta.id) effectOnAccount = -mov.cantidad;
+                }
+                
+                if (effectOnAccount !== 0) {
+                    return { amount: -effectOnAccount, date: new Date(mov.fecha) };
+                }
+                return null;
+            })
+            .filter(cf => cf !== null);
+
+        if (valorActual !== 0) {
+            irrCashflows.push({ amount: valorActual, date: new Date() });
+        }
+        allIrrCashflows.push(...irrCashflows);
+    }
+
+    // --- PARTE 3: CÁLCULOS FINALES ---
+    const pnlAbsoluto = totalValorActual - totalCapitalInvertido_para_PNL;
+    const pnlPorcentual = totalCapitalInvertido_para_PNL !== 0 ? (pnlAbsoluto / totalCapitalInvertido_para_PNL) * 100 : 0;
+    const irr = calculateIRR(allIrrCashflows);
+
+    // CORRECCIÓN: Este es el único y correcto objeto de retorno de la función,
+    // ahora incluyendo la propiedad `ultimaValoracionFecha` que querías añadir.
     return { 
         valorActual: totalValorActual, 
         capitalInvertido: totalCapitalInvertido_para_PNL,
         pnlAbsoluto, 
         pnlPorcentual, 
         irr,
-        ultimaValoracionFecha: ultimaValoracionFecha_Global // <-- AÑADE ESTA LÍNEA
+        ultimaValoracionFecha: ultimaValoracionFecha_Global 
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 };
         // --- PARTE 2: LÓGICA PARA TIR (BASADA EN CADA MOVIMIENTO INDIVIDUAL) ---
         
