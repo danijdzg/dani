@@ -7,150 +7,152 @@
  * @param {Array} allCuentas - La lista completa de cuentas para buscar nombres en traspasos.
  * @returns {string} El HTML de la fila del movimiento.
  */
-const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
-    const fechaCompleta = new Date(mov.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
-    let importe = 0;
-    let colorClass = '';
-    let descripcionFinal = '';
-    let conceptoOculto = '';
+// ▼▼▼ REEMPLAZA TUS FUNCIONES handleGenerateInformeCuenta y renderInformeCuentaRow CON ESTE BLOQUE ▼▼▼
 
+/**
+ * Renderiza una fila estilo cartilla bancaria.
+ */
+const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
+    const fecha = new Date(mov.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    let cargo = '';
+    let abono = '';
+    let conceptoTexto = '';
+    
+    // Lógica de importes y descripciones
     if (mov.tipo === 'traspaso') {
-        const origen = allCuentas.find(c => c.id === mov.cuentaOrigenId);
-        const destino = allCuentas.find(c => c.id === mov.cuentaDestinoId);
+        const esOrigen = mov.cuentaOrigenId === cuentaId;
+        const otraCuenta = esOrigen 
+            ? allCuentas.find(c => c.id === mov.cuentaDestinoId) 
+            : allCuentas.find(c => c.id === mov.cuentaOrigenId);
+            
+        const nombreOtra = otraCuenta ? escapeHTML(otraCuenta.nombre) : '?';
         
-        if (mov.cuentaOrigenId === cuentaId) {
-            importe = -mov.cantidad;
-            colorClass = 'text-gasto';
-            descripcionFinal = `Envío a ${destino ? escapeHTML(destino.nombre) : '?'}`;
+        if (esOrigen) {
+            cargo = formatCurrency(mov.cantidad);
+            conceptoTexto = `TRANSFERENCIA A ${nombreOtra}`;
         } else {
-            importe = mov.cantidad;
-            colorClass = 'text-ingreso';
-            descripcionFinal = `Recibido de ${origen ? escapeHTML(origen.nombre) : '?'}`;
+            abono = formatCurrency(mov.cantidad);
+            conceptoTexto = `TRANSFERENCIA DE ${nombreOtra}`;
         }
-        conceptoOculto = `Traspaso: ${escapeHTML(mov.descripcion)}`;
+        // Añadimos la nota personal si existe
+        if (mov.descripcion && mov.descripcion !== 'Traspaso') {
+            conceptoTexto += ` (${escapeHTML(mov.descripcion)})`;
+        }
     } else {
-        importe = mov.cantidad;
-        colorClass = importe >= 0 ? 'text-ingreso' : 'text-gasto';
-        descripcionFinal = mov.descripcion ? escapeHTML(mov.descripcion) : 'Movimiento sin descripción';
+        // Movimiento normal
         const concepto = db.conceptos.find(c => c.id === mov.conceptoId);
-        conceptoOculto = concepto ? toSentenceCase(concepto.nombre) : 'Sin Concepto';
+        const nombreConcepto = concepto ? concepto.nombre.toUpperCase() : 'VARIO';
+        
+        conceptoTexto = `${nombreConcepto}`;
+        if (mov.descripcion) conceptoTexto += ` - ${escapeHTML(mov.descripcion)}`;
+
+        if (mov.cantidad < 0) {
+            cargo = formatCurrency(Math.abs(mov.cantidad));
+        } else {
+            abono = formatCurrency(mov.cantidad);
+        }
     }
 
     return `
-        <div class="informe-linea-movimiento">
-            <div class="informe-linea-movimiento__main">
-                <span class="informe-linea-movimiento__fecha">${fechaCompleta}</span>
-                <div class="informe-linea-movimiento__details">
-                    <span class="informe-linea-movimiento__descripcion">${descripcionFinal}</span>
-                    <span class="informe-linea-movimiento__concepto">${conceptoOculto}</span>
-                </div>
-            </div>
-            <div class="informe-linea-movimiento__figures">
-                <span class="informe-linea-movimiento__importe ${colorClass}">${formatCurrency(importe)}</span>
-                <span class="informe-linea-movimiento__saldo">${formatCurrency(mov.runningBalance)}</span>
-            </div>
+        <div class="cartilla-row">
+            <div class="cartilla-cell cartilla-date">${fecha}</div>
+            <div class="cartilla-cell cartilla-concept">${conceptoTexto}</div>
+            <div class="cartilla-cell cartilla-amount text-debit">${cargo}</div>
+            <div class="cartilla-cell cartilla-amount text-credit">${abono}</div>
+            <div class="cartilla-cell cartilla-balance">${formatCurrency(mov.runningBalance)}</div>
         </div>
     `;
 };
 
-/**
- * Genera y muestra el extracto completo de una cuenta, ordenado del más reciente al más antiguo.
- * @param {HTMLElement} form - El elemento del formulario que disparó la acción.
- * @param {HTMLElement} btn - El botón que se pulsó para generar el informe.
- */
 const handleGenerateInformeCuenta = async (form, btn) => {
-    setButtonLoading(btn, true, 'Generando...');
+    setButtonLoading(btn, true, 'Imprimiendo...');
     const cuentaId = select('informe-cuenta-select').value;
     const resultadoContainer = select('informe-resultado-container');
 
-    if (!cuentaId || !resultadoContainer) {
-        showToast("Por favor, selecciona una cuenta.", "warning");
+    if (!cuentaId) {
+        showToast("Selecciona una cuenta.", "warning");
         setButtonLoading(btn, false);
         return;
     }
 
     const cuenta = db.cuentas.find(c => c.id === cuentaId);
-    if (!cuenta) {
-         showToast("Cuenta no encontrada.", "danger");
-         setButtonLoading(btn, false);
-         return;
-    }
-
-    resultadoContainer.innerHTML = `<div class="card"><div class="card__content" style="text-align:center;"><span class="spinner"></span></div></div>`;
+    resultadoContainer.innerHTML = `<div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>`;
 
     try {
-        const calculateAccountImpact = (mov, accId) => {
-             if (mov.tipo === 'traspaso') {
-                if (mov.cuentaOrigenId === accId) return -mov.cantidad;
-                if (mov.cuentaDestinoId === accId) return mov.cantidad;
-             } else if (mov.cuentaId === accId) {
-                return mov.cantidad;
-             }
-             return 0;
-        };
-        
+        // 1. Obtener movimientos
         const todosLosMovimientos = await fetchAllMovementsForHistory();
-        const movimientosDeLaCuenta = todosLosMovimientos.filter(m =>
+        let movimientosDeLaCuenta = todosLosMovimientos.filter(m =>
             (m.cuentaId === cuentaId) || (m.cuentaOrigenId === cuentaId) || (m.cuentaDestinoId === cuentaId)
         );
 
         if (movimientosDeLaCuenta.length === 0) {
-             resultadoContainer.innerHTML = `
-                <h3 class="card__title">Extracto de ${escapeHTML(cuenta.nombre)}</h3>
-                <div class="empty-state"><p>Esta cuenta no tiene movimientos.</p></div>`;
+             resultadoContainer.innerHTML = `<div class="empty-state"><p>Sin movimientos registrados en la libreta.</p></div>`;
              setButtonLoading(btn, false);
              return;
         }
 
-        // 1. ORDEN CRONOLÓGICO ASCENDENTE (del más antiguo al más nuevo) PARA CÁLCULO
-        movimientosDeLaCuenta.sort((a, b) => new Date(a.fecha).getTime() - new Date(a.fecha).getTime() || a.id.localeCompare(b.id));
+        // 2. Ordenar cronológicamente (del más antiguo al más nuevo) - TÍPICO DE CARTILLA
+        movimientosDeLaCuenta.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-        // 2. CÁLCULO DEL SALDO INICIAL
-        const impactoTotalHistorico = movimientosDeLaCuenta.reduce((sum, mov) => sum + calculateAccountImpact(mov, cuentaId), 0);
-        let saldoAcumulado = (cuenta.saldo || 0) - impactoTotalHistorico;
-        const saldoInicial = saldoAcumulado;
-
-        // 3. BUCLE DE CÁLCULO PROGRESIVO (sin renderizar todavía)
-        // Se recorre desde el más antiguo al más nuevo para que los saldos sean correctos
+        // 3. Calcular Saldos Línea a Línea
+        let saldoAcumulado = 0; // Asumimos que el historial es completo. Si hay paginación, esto debería ajustarse.
+        
         for (const mov of movimientosDeLaCuenta) {
-            const impact = calculateAccountImpact(mov, cuentaId);
-            saldoAcumulado += impact;
+            let impacto = 0;
+            if (mov.tipo === 'traspaso') {
+                if (mov.cuentaOrigenId === cuentaId) impacto = -mov.cantidad;
+                if (mov.cuentaDestinoId === cuentaId) impacto = mov.cantidad;
+            } else {
+                impacto = mov.cantidad;
+            }
+            saldoAcumulado += impacto;
             mov.runningBalance = saldoAcumulado;
         }
 
-        // 4. ⭐ ¡LA MAGIA OCURRE AQUÍ! INVERTIMOS LA LISTA PARA LA VISUALIZACIÓN ⭐
-        movimientosDeLaCuenta.reverse(); // Ahora el más nuevo está al principio
-
-        // 5. CONSTRUCCIÓN DEL HTML (AHORA CON LA LISTA INVERTIDA)
-        let resultadoHtml = `
-            <h3 class="card__title">Extracto de ${escapeHTML(cuenta.nombre)}</h3>
-            <div class="informe-extracto-container">
-                <div class="informe-linea-header">
-                    <span class="descripcion">Descripción</span>
-                    <span class="importe">Importe</span>
-                    <span class="saldo">Saldo</span>
-                </div>`;
+        // 4. Construir HTML Estilo Cartilla
+        let html = `
+            <div class="cartilla-container">
+                <div class="cartilla-header-info">
+                    <h4>LIBRETA DE AHORROS</h4>
+                    <p><strong>Titular:</strong> ${escapeHTML(cuenta.nombre)}</p>
+                    <p><strong>IBAN/ID:</strong> ...${cuenta.id.slice(-6).toUpperCase()}</p>
+                    <p class="cartilla-print-date">Impreso el: ${new Date().toLocaleDateString()}</p>
+                </div>
+                
+                <div class="cartilla-table">
+                    <div class="cartilla-row cartilla-head">
+                        <div class="cartilla-cell">FECHA</div>
+                        <div class="cartilla-cell">CONCEPTO</div>
+                        <div class="cartilla-cell text-right">CARGOS</div>
+                        <div class="cartilla-cell text-right">ABONOS</div>
+                        <div class="cartilla-cell text-right">SALDO</div>
+                    </div>`;
         
-        // Renderizamos las filas de los movimientos (ya en orden de nuevo a antiguo)
-        for (const mov of movimientosDeLaCuenta) {
-            resultadoHtml += renderInformeCuentaRow(mov, cuentaId, db.cuentas);
-        }
-
-        // El saldo inicial ahora se añade al final, que es su lugar cronológico
-        const fechaPrimerMovimiento = new Date(movimientosDeLaCuenta[movimientosDeLaCuenta.length-1].fecha);
-        resultadoHtml += `
-            <div class="informe-linea-saldo-inicial">
-                <span class="descripcion">Saldo Inicial a ${fechaPrimerMovimiento.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit', year:'2-digit'})}</span>
-                <span class="saldo">${formatCurrency(saldoInicial)}</span>
+        // Fila de Saldo Inicial (virtual, siempre 0 si es historial completo)
+        html += `
+            <div class="cartilla-row cartilla-initial">
+                <div class="cartilla-cell">--/--/--</div>
+                <div class="cartilla-cell">SALDO ANTERIOR</div>
+                <div class="cartilla-cell"></div>
+                <div class="cartilla-cell"></div>
+                <div class="cartilla-cell cartilla-balance">${formatCurrency(0)}</div>
             </div>`;
 
-        resultadoHtml += `</div>`;
-        resultadoContainer.innerHTML = resultadoHtml;
+        for (const mov of movimientosDeLaCuenta) {
+            html += renderInformeCuentaRow(mov, cuentaId, db.cuentas);
+        }
+        
+        html += `</div>
+            <div class="cartilla-footer">
+                ** FIN DEL EXTRACTO **
+            </div>
+        </div>`;
+
+        resultadoContainer.innerHTML = html;
 
     } catch (error) {
-        console.error("Error generando informe de cuenta:", error);
-        resultadoContainer.innerHTML = `<div class="card card--no-bg text-danger" style="padding: var(--sp-4); text-align: center;">Error al generar el informe.</div>`;
-        showToast("No se pudo generar el extracto.", "danger");
+        console.error(error);
+        showToast("Error generando la cartilla.", "danger");
     } finally {
         setButtonLoading(btn, false);
     }

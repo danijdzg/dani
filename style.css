@@ -2737,3 +2737,133 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     line-height: 1.2;
 }
 /* === FIN: Estilos para la Tarjeta de Sumario del Portafolio === */
+
+/* === ESTILOS CARTILLA BANCARIA (Retro & Clean) === */
+.cartilla-container {
+    background-color: #fff; /* Fondo papel blanco */
+    color: #000; /* Tinta negra */
+    font-family: 'Courier New', Courier, monospace; /* Fuente monoespaciada tipo máquina de escribir */
+    border: 1px solid #ccc;
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: 0.85rem;
+}
+
+/* En modo oscuro, invertimos para que sea legible pero manteniendo el estilo */
+body[data-theme="default"] .cartilla-container {
+    background-color: #e0e0e0; /* Gris claro papel */
+    color: #1a1a1a;
+}
+
+.cartilla-header-info {
+    border-bottom: 2px dashed #444;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+}
+
+.cartilla-header-info h4 {
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #000;
+}
+
+.cartilla-table {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.cartilla-row {
+    display: grid;
+    grid-template-columns: 70px 1fr 85px 85px 90px; /* Columnas fijas para alineación numérica */
+    gap: 10px;
+    padding: 6px 4px;
+    border-bottom: 1px dotted #bbb;
+    align-items: baseline;
+}
+
+.cartilla-row:last-child {
+    border-bottom: 2px solid #000;
+}
+
+.cartilla-head {
+    font-weight: 800;
+    border-bottom: 2px solid #000;
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+}
+
+.cartilla-initial {
+    background-color: rgba(0,0,0,0.03);
+    font-style: italic;
+}
+
+.cartilla-cell {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cartilla-concept {
+    white-space: normal; /* Permitir salto de línea en concepto si es necesario */
+    line-height: 1.1;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+.cartilla-amount, .cartilla-balance {
+    text-align: right;
+    font-weight: 600;
+}
+
+.text-debit { color: #a00; } /* Rojo oscuro para cargos */
+.text-credit { color: #000; } /* Negro para abonos */
+
+.cartilla-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-style: italic;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+}
+
+/* Adaptación Móvil para la Cartilla */
+@media (max-width: 600px) {
+    .cartilla-container { padding: 10px; font-size: 0.75rem; }
+    
+    /* En móvil colapsamos cargos/abonos en una sola columna de "importe" para ganar espacio */
+    .cartilla-row {
+        grid-template-columns: 60px 1fr 75px; /* Fecha | Concepto | Importe */
+        grid-template-areas: 
+            "date concept amount"
+            "empty balance balance"; /* El saldo va debajo */
+        gap: 2px 8px;
+        padding: 8px 2px;
+    }
+
+    .cartilla-head { display: none; } /* Ocultar cabecera en móvil */
+
+    .cartilla-date { grid-area: date; font-weight: 700; }
+    .cartilla-concept { grid-area: concept; max-height: 2.4em; overflow: hidden; }
+    
+    .cartilla-amount { 
+        grid-area: amount; 
+        font-size: 0.9rem;
+    }
+    
+    /* En móvil mostramos saldo debajo */
+    .cartilla-balance { 
+        grid-area: balance; 
+        text-align: right;
+        font-size: 0.7rem;
+        color: #555;
+    }
+    .cartilla-balance::before { content: "Saldo: "; }
+    
+    /* Ocultar celdas vacías en la lógica de móvil */
+    .cartilla-cell:empty { display: none; }
+}
