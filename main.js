@@ -1793,7 +1793,7 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
     let totalValorActual = 0;
     let totalCapitalInvertido_para_PNL = 0;
     let allIrrCashflows = [];
-
+	let ultimaValoracionFecha_Global = null;
     for (const cuenta of investmentAccounts) {
         // --- PARTE 1: LÓGICA PARA P&L (BASADO EN SALDO CONTABLE) ---
 
@@ -1802,13 +1802,33 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
             .filter(v => v.cuentaId === cuenta.id)
             .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
         const valorActual = valoraciones.length > 0 ? valoraciones[0].valor : 0;
-        
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const ultimaValoracionFecha_Activo = valoraciones.length > 0 ? valoraciones[0].fecha : null;
+
+        if (ultimaValoracionFecha_Activo) {
+            if (!ultimaValoracionFecha_Global || new Date(ultimaValoracionFecha_Activo) > new Date(ultimaValoracionFecha_Global)) {
+                ultimaValoracionFecha_Global = ultimaValoracionFecha_Activo;
+            }
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
         // 2. PREMISA DEL USUARIO: El "Capital Aportado" es exactamente el saldo contable.
         const capitalInvertido_para_PNL = cuenta.saldo || 0;
         
         totalValorActual += valorActual;
         totalCapitalInvertido_para_PNL += capitalInvertido_para_PNL;
+		// --- INICIO DE LA MODIFICACIÓN ---
+    // ... (cálculos finales de pnlAbsoluto, pnlPorcentual, irr) ...
 
+    return { 
+        valorActual: totalValorActual, 
+        capitalInvertido: totalCapitalInvertido_para_PNL,
+        pnlAbsoluto, 
+        pnlPorcentual, 
+        irr,
+        ultimaValoracionFecha: ultimaValoracionFecha_Global // <-- AÑADE ESTA LÍNEA
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
+};
         // --- PARTE 2: LÓGICA PARA TIR (BASADA EN CADA MOVIMIENTO INDIVIDUAL) ---
         
         const accountMovements = allMovements.filter(m => 
@@ -2501,6 +2521,20 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         if (listContainer) {
             const listHtml = displayAssetsData.sort((a,b) => b.valorActual - a.valorActual).map(cuenta => {
                     const pnlClass = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
+
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    let fechaValoracionHTML = '';
+                    if (cuenta.ultimaValoracionFecha) {
+                        const fechaVal = new Date(cuenta.ultimaValoracionFecha);
+                        // Usamos timeZone: 'UTC' para asegurar que muestre la fecha guardada (ej: 17/11) y no la del día anterior (16/11)
+                        const fechaFormateada = fechaVal.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+                        fechaValoracionHTML = `<span style="color:var(--c-on-surface-tertiary); font-size: var(--fs-xs); margin-right: var(--sp-2);">Val: ${fechaFormateada}</span>`;
+                    } else {
+                        // Opcional: mostrar algo si NUNCA se ha valorado
+                        fechaValoracionHTML = `<span style="color:var(--c-danger); font-size: var(--fs-xs); margin-right: var(--sp-2);">Sin Valorar</span>`;
+                    }
+                    // --- FIN DE LA MODIFICACIÓN ---
+
                     return `<div class="modal__list-item" data-action="view-account-details" data-id="${cuenta.id}" style="cursor: pointer; padding: var(--sp-3); display: block; border-bottom: 1px solid var(--c-outline);">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; margin-bottom: var(--sp-1);">
                             <strong style="font-size: var(--fs-base);">${escapeHTML(cuenta.nombre)}</strong><strong style="font-size: var(--fs-base);">${formatCurrency(cuenta.valorActual)}</strong>
@@ -2509,11 +2543,16 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                             <span class="${pnlClass}" style="font-weight: 600;">P&L: ${formatCurrency(cuenta.pnlAbsoluto)} (${cuenta.pnlPorcentual.toFixed(1)}%)</span>
                             <span style="color:var(--c-info); font-weight:600;">TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}</span>
                         </div>
+                        
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                             <span style="color:var(--c-on-surface-secondary); font-size: var(--fs-xs);">Aportado: ${formatCurrency(cuenta.capitalInvertido)}</span>
-                            <button class="btn btn--secondary" data-action="update-asset-value" data-id="${cuenta.id}" style="padding: 4px 10px; font-size: 0.75rem;"><span class="material-icons" style="font-size: 14px;">add_chart</span>Valoración</button>
+                            
+                            <div style="display: flex; align-items: center;">
+                                ${fechaValoracionHTML}
+                                <button class="btn btn--secondary" data-action="update-asset-value" data-id="${cuenta.id}" style="padding: 4px 10px; font-size: 0.75rem;"><span class="material-icons" style="font-size: 14px;">add_chart</span>Valoración</button>
+                            </div>
                         </div>
-                    </div>`;
+                        </div>`;
                 }).join('');
             listContainer.innerHTML = listHtml ? `<div class="card"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
         }
