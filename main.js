@@ -7547,9 +7547,17 @@ const initAmountInput = () => {
         calculatorToggle.onclick = () => showCalculator(amountInput);
     }
 };
+// --- PARCHES DE COMPATIBILIDAD ---
+// Añade esto al final de main.js o en el bloque de funciones globales
+const renderInversionesView = async () => {
+    await navigateTo(PAGE_IDS.PATRIMONIO);
+};
 
+const renderInversionesPage = async (containerId) => {
+    // Si se llama con un ID específico, ignoramos y renderizamos la página completa de patrimonio
+    await renderPatrimonioPage();
+};
 
-// ▲▲▲ FIN: BLOQUE DEFINITIVO DE FUNCIONES DE MEJORA ▲▲▲
 
  const attachEventListeners = () => {
 const enableHaptics = () => {
@@ -7559,7 +7567,7 @@ const enableHaptics = () => {
     };
     document.body.addEventListener('touchstart', enableHaptics, { once: true, passive: true });
     document.body.addEventListener('click', enableHaptics, { once: true });
-    // ▲▲▲ FIN DEL BLOQUE A AÑADIR ▲▲▲
+
 	
 	const ptrElement = select('diario-page'); // El elemento donde se puede hacer el gesto
 const mainScrollerPtr = selectOne('.app-layout__main');
