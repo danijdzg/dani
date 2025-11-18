@@ -1,8 +1,6 @@
 // service-worker.js
 
-// ¡¡IMPORTANTE!! Cambia esto cada vez que hagas cambios en main.js o css
-const CACHE_NAME = 'DaniCtas-v4'; 
-
+const CACHE_NAME = 'DaniCtas';
 const URLS_TO_CACHE = [
   '.',
   'index.html',
@@ -14,19 +12,20 @@ const URLS_TO_CACHE = [
   'icons/android-chrome-512x512.png'
 ];
 
-// Instalación
+// Evento 'install': Se dispara cuando el Service Worker se instala por primera vez.
 self.addEventListener('install', event => {
+  // skipWaiting() fuerza al nuevo Service Worker a activarse inmediatamente.
   self.skipWaiting(); 
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Cache abierta. Guardando ficheros...');
+        console.log('Cache abierta. Guardando ficheros de la app...');
         return cache.addAll(URLS_TO_CACHE);
       })
   );
 });
 
-// Activación y limpieza de caché vieja
+// Evento 'activate': Se dispara cuando el Service Worker se activa.
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -38,32 +37,27 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => self.clients.claim()) // Toma el control de las páginas abiertas.
   );
 });
 
-// Estrategia de Fetch (Interceptar peticiones)
+// REEMPLAZA TU self.addEventListener('fetch', ...) con este bloque
 self.addEventListener('fetch', event => {
     const { request } = event;
 
-    // Solo interceptamos peticiones GET
+    // No interceptar peticiones que no sean GET
     if (request.method !== 'GET') {
         return;
     }
 
+    // Estrategia para los recursos de la App (CSS, JS, HTML, imágenes)
+    // Stale-While-Revalidate: Sirve desde la caché al instante, y actualiza en segundo plano.
     const url = new URL(request.url);
 
-    // 1. Estrategia para archivos de la App (Stale-While-Revalidate)
-    // Normalizamos la URL para saber si es un archivo de la app
-    let requestPath = url.pathname.substring(1);
-    if (requestPath === '' || url.pathname.endsWith('/')) {
-        requestPath = 'index.html';
-    }
-    
-    const normalizedCacheUrls = URLS_TO_CACHE.map(path => path === '.' ? 'index.html' : path);
-    const isAppShellResource = normalizedCacheUrls.includes(requestPath);
+    // Ajustamos la lógica para que 'index.html' se sirva para la raíz '.'
+    const resourcePath = url.pathname.endsWith('/') ? '/index.html' : url.pathname;
+    const isAppShellResource = URLS_TO_CACHE.map(path => path.replace(/^\./, '')).includes(resourcePath);
 
-    // AQUÍ ESTABA EL ERROR: Faltaba este 'if'
     if (isAppShellResource) {
         event.respondWith(
             caches.open(CACHE_NAME).then(cache => {
@@ -72,26 +66,31 @@ self.addEventListener('fetch', event => {
                         cache.put(request, networkResponse.clone());
                         return networkResponse;
                     });
+                    // Devuelve la respuesta de la caché si existe, si no, espera a la red.
                     return cachedResponse || fetchPromise;
                 });
             })
         );
-        return; // Este return finaliza la función para que no siga ejecutando lo de abajo
+        return; // <-- ¡ESTA ES LA LÍNEA CLAVE QUE LO ARREGLA!
     }
 
-    // 2. Estrategia para Firebase/API (Network First)
-    if (request.url.includes('firestore.googleapis.com')) {
-        event.respondWith(
-            fetch(request)
-                .then(networkResponse => {
-                    return caches.open(CACHE_NAME).then(cache => {
+    // Estrategia para datos de Firebase (Network First)
+    // Siempre intenta obtener los datos más frescos, con fallback a la caché si no hay red.
+    event.respondWith(
+        fetch(request)
+            .then(networkResponse => {
+                // Aumentamos la caché guardando los datos de Firebase también
+                return caches.open(CACHE_NAME).then(cache => {
+                    // Solo cacheamos peticiones GET a Firestore
+                    if (request.url.includes('firestore.googleapis.com')) {
                         cache.put(request, networkResponse.clone());
-                        return networkResponse;
-                    });
-                })
-                .catch(() => {
-                    return caches.match(request);
-                })
-        );
-    }
+                    }
+                    return networkResponse;
+                });
+            })
+            .catch(() => {
+                // Si la red falla, intentamos servir desde la caché
+                return caches.match(request);
+            })
+    );
 });
