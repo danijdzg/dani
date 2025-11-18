@@ -651,66 +651,57 @@ async function loadCoreData(uid) {
 
     const collectionsToLoadInitially = ['cuentas', 'conceptos', 'recurrentes'];
 
-    collectionsToLoadInitially.forEach(collectionName => {
-        const unsubscribe = userRef.collection(collectionName).onSnapshot(snapshot => {
-            db[collectionName] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            if (collectionName === 'recurrentes') {
-    dataLoaded.recurrentes = true;
-    const activePage = document.querySelector('.view--active');
-    if (collectionName === 'conceptos' || collectionName === 'cuentas') {
-                    if (activePage && activePage.id === PAGE_IDS.PLANIFICAR) {
-                        renderPlanificacionPage();
-                    }
-        }
-            
-            populateAllDropdowns();
-            
-            if (select(PAGE_IDS.INICIO)?.classList.contains('view--active')) scheduleDashboardUpdate();
-            
-        }, error => console.error(`Error escuchando ${collectionName}: `, error));
-        unsubscribeListeners.push(unsubscribe);
-    });
+    // ==============================================================================
+// === INICIO: Bloque de Código de Carga de Datos Esenciales en Tiempo Real ===
+// ==============================================================================
 
-    const unsubConfig = userRef.onSnapshot(doc => {
-        db.config = doc.exists && doc.data().config ? doc.data().config : getInitialDb().config;
-        localStorage.setItem('skipIntro', (db.config && db.config.skipIntro) || 'false');
-        loadConfig();
-    }, error => console.error("Error escuchando la configuración del usuario: ", error));
-    unsubscribeListeners.push(unsubConfig);
+collectionsToLoadInitially.forEach(collectionName => {
+    // Para cada nombre de colección ('cuentas', 'conceptos', 'recurrentes'), creamos un "oyente" o "suscripción".
+    const unsubscribe = userRef.collection(collectionName).onSnapshot(snapshot => {
+        // --- ESTO SE EJECUTA CADA VEZ QUE HAY UN CAMBIO EN LA BASE DE DATOS ---
 
-    // =====================================================================
-    // === INICIO: LÓGICA DE CARGA INTELIGENTE PARA EL DASHBOARD (EL MANANTIAL) ===
-    // =====================================================================
-    // Desconectamos cualquier listener anterior para evitar duplicados al iniciar sesión de nuevo.
-    if (unsubscribeRecientesListener) unsubscribeRecientesListener();
-
-    // Creamos una consulta para los últimos 3 meses de movimientos. Esto es suficiente
-    // para los cálculos de "vs mes anterior" y "vs año anterior" del dashboard.
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-    
-    // Este listener mantendrá nuestra caché `recentMovementsCache` siempre actualizada en tiempo real.
-    unsubscribeRecientesListener = userRef.collection('movimientos')
-        .where('fecha', '>=', threeMonthsAgo.toISOString())
-        .onSnapshot(snapshot => {
-            console.log("Listener de recientes: Datos actualizados en la caché.");
-            // Actualizamos la caché con los datos más frescos.
-            recentMovementsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            // Si el usuario está en la página de Inicio, la actualizamos inmediatamente.
+        // 1. Actualiza nuestra base de datos local en memoria (el objeto 'db').
+        // Esta es la "única fuente de verdad" para la app mientras se ejecuta.
+        db[collectionName] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // 2. Si se cargaron los recurrentes, lo marcamos como completado para la carga "perezosa" (lazy loading).
+        if (collectionName === 'recurrentes') {
+            dataLoaded.recurrentes = true;
+            // Si justo estamos en la página de Planificar, la actualizamos para que muestre los datos.
             const activePage = document.querySelector('.view--active');
-            if (activePage && activePage.id === PAGE_IDS.INICIO) {
-                scheduleDashboardUpdate();
+            if (activePage && activePage.id === PAGE_IDS.PLANIFICAR) {
+                renderPlanificacionPage();
             }
-        }, error => console.error("Error escuchando movimientos recientes: ", error));
-    // ===================================================================
-    // === FIN: LÓGICA DE CARGA INTELIGENTE ==============================
-    // ===================================================================
-                        
-    buildDescriptionIndex();
-    startMainApp();
-};
+        }
+         // CORRECCIÓN LÓGICA: Esto asegura que si se edita un concepto/cuenta,
+         // el modal de presupuestos se actualice si está abierto.
+         if (collectionName === 'conceptos' || collectionName === 'cuentas') {
+            const activePage = document.querySelector('.view--active');
+            if (activePage && activePage.id === PAGE_IDS.PLANIFICAR) {
+                renderPlanificacionPage(); // Volver a renderizar la página completa de planificación.
+            }
+        }
+        
+        // 3. Rellena todos los menús desplegables (<select>) de la aplicación.
+        // Si añades una cuenta nueva, aparecerá instantáneamente en el formulario de movimientos.
+        populateAllDropdowns();
+        
+        // 4. Si estamos en la página de Inicio (el Dashboard), programamos una actualización.
+        // Esto hace que los gráficos y KPIs se refresquen solos.
+        if (select(PAGE_IDS.INICIO)?.classList.contains('view--active')) {
+            scheduleDashboardUpdate();
+        }
+        
+    }, error => console.error(`Error escuchando ${collectionName}: `, error)); // Manejo de errores básico.
+
+    // 5. Guardamos la función "unsubscribe" para más tarde.
+    // Esto es crucial para "apagar" el oyente cuando el usuario cierre sesión y evitar fugas de memoria.
+    unsubscribeListeners.push(unsubscribe);
+});
+
+// ==============================================================================
+// === FIN: Bloque de Código de Carga de Datos Esenciales =======================
+// ==============================================================================
 
         
         async function loadPresupuestos() {
