@@ -9496,15 +9496,16 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// --- INICIO: BLOQUE CORREGIDO PARA EL FINAL DE main.js ---
+
 const renderAjustesPage = () => {
     const container = select(PAGE_IDS.AJUSTES);
-    if (!container) return;
+    if (!container) return; // Este return es válido porque está dentro de la función
 
     // Estructura HTML de la nueva página de Ajustes
     container.innerHTML = `
         <div class="card card--no-bg accordion-wrapper" style="padding: 0 var(--sp-4);">
 
-            <!-- Grupo 1: Gestión de Datos -->
             <h3 class="settings-group__title">Gestión de Datos</h3>
             <div class="card" style="margin-bottom: var(--sp-4);">
                 <div class="card__content" style="padding: 0;">
@@ -9521,7 +9522,6 @@ const renderAjustesPage = () => {
                 </div>
             </div>
 
-            <!-- Grupo 2: Copias de Seguridad y Migración -->
             <h3 class="settings-group__title">Copias de Seguridad y Migración</h3>
             <div class="card" style="margin-bottom: var(--sp-4);">
                 <div class="card__content" style="padding: 0;">
@@ -9548,7 +9548,6 @@ const renderAjustesPage = () => {
                 </div>
             </div>
             
-            <!-- Grupo 3: Seguridad y Cuenta -->
             <h3 class="settings-group__title">Seguridad y Cuenta</h3>
             <div class="card" style="margin-bottom: var(--sp-4);">
                 <div class="card__content" style="padding: 0;">
@@ -9574,3 +9573,19 @@ const renderAjustesPage = () => {
     // Esta función es necesaria para que se muestre tu email
     loadConfig();
 };
+
+// --- REGISTRO DEL SERVICE WORKER ---
+// Comprobamos si el navegador soporta Service Workers
+if ('serviceWorker' in navigator) {
+  // Usamos el evento 'load' para no retrasar la carga inicial de la app
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(registration => {
+        console.log('Service Worker registrado con éxito:', registration);
+      })
+      .catch(error => {
+        console.log('Fallo en el registro del Service Worker:', error);
+      });
+  });
+}
+
