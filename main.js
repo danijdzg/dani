@@ -796,12 +796,25 @@ async function loadCoreData(uid) {
                 }
             });
         };
+// ================================================================
+// === CORRECCIÓN CRÍTICA 1: CÁLCULO DE FECHAS SIN ERROR DE ZONA ===
+// ================================================================
 
-        const calculateNextDueDate = (currentDueDate, frequency) => {
-    // Parseamos como UTC para evitar problemas de horario de verano/invierno
-    const d = new Date(currentDueDate); // Asumimos formato YYYY-MM-DD
-    
-    // Usamos las funciones de date-fns que manejan los meses cortos correctamente
+// Función auxiliar para formatear fecha de forma segura (YYYY-MM-DD)
+// Evita que toISOString() reste un día por la diferencia horaria.
+const formatDateToISO = (dateObj) => {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const calculateNextDueDate = (currentDueDateString, frequency) => {
+    // 1. Interpretamos la fecha string como local, pero le ponemos hora 12:00
+    // para estar lejos de los bordes del cambio de día.
+    const parts = currentDueDateString.split('-');
+    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
+
     switch (frequency) {
         case 'daily': return addDays(d, 1);
         case 'weekly': return addWeeks(d, 1);
@@ -810,8 +823,11 @@ async function loadCoreData(uid) {
         default: return d; // 'once' no avanza
     }
 };
-        const calculatePreviousDueDate = (currentDueDate, frequency) => {
-    const d = new Date(currentDueDate);
+
+const calculatePreviousDueDate = (currentDueDateString, frequency) => {
+    const parts = currentDueDateString.split('-');
+    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
+
     switch (frequency) {
         case 'daily': return subDays(d, 1);
         case 'weekly': return subWeeks(d, 1);
@@ -7757,23 +7773,24 @@ function createCustomSelect(selectElement) {
             }
         };
     
-// =================================================================
-// === INICIO: NUEVA FUNCIÓN PARA CONFIRMAR MOVIMIENTOS RECURRENTES ===
-// =================================================================
+// ================================================================
+// === CORRECCIÓN CRÍTICA 2: CONFIRMACIÓN DE RECURRENTES ROBUSTA ===
+// ================================================================
 const handleConfirmRecurrent = async (id, btn) => {
     if (btn) setButtonLoading(btn, true);
 
-    // 1. Localizamos el elemento en memoria
+    // 1. Localizamos el elemento en memoria de forma segura
     const recurrenteIndex = db.recurrentes.findIndex(r => r.id === id);
     if (recurrenteIndex === -1) {
-        showToast("Error: no se encontró la operación recurrente.", "danger");
+        showToast("Error: La operación ya no existe o ya fue procesada.", "warning");
         if (btn) setButtonLoading(btn, false);
+        // Refrescamos la vista por si acaso la UI estaba desactualizada
+        renderPlanificacionPage(); 
         return;
     }
     const recurrente = db.recurrentes[recurrenteIndex];
 
-    // 2. Efecto Visual (Animación de salida)
-    // Buscamos la tarjeta en el DOM para animarla
+    // 2. Animación visual
     const itemElement = document.getElementById(`pending-recurrente-${id}`);
     if (itemElement) {
         itemElement.classList.add('recurrente-item-confirming');
@@ -7782,92 +7799,88 @@ const handleConfirmRecurrent = async (id, btn) => {
     try {
         const newMovementId = generateId();
         
-        // 3. Lógica de Fecha Precisa
-        // Usamos la fecha PROGRAMADA para el movimiento, asegurando las 12:00 UTC
-        // para evitar desfases horarios. Si pagas tarde, constará la fecha original.
-        const movementDate = recurrente.nextDate 
-            ? new Date(recurrente.nextDate + 'T12:00:00Z').toISOString() 
-            : new Date().toISOString();
+        // 3. Lógica de Fecha: Usamos la fecha PROGRAMADA, no "hoy".
+        // Esto es importante: si confirmas algo que venció ayer, debe constar con fecha de ayer.
+        // Añadimos T12:00:00Z para asegurar consistencia.
+        const movementDateISO = new Date(recurrente.nextDate + 'T12:00:00Z').toISOString();
 
         // 4. Preparar datos del nuevo movimiento
         const newMovementData = {
             id: newMovementId,
             cantidad: recurrente.cantidad,
             descripcion: recurrente.descripcion,
-            fecha: movementDate, 
+            fecha: movementDateISO, 
             tipo: recurrente.tipo,
-            cuentaId: recurrente.cuentaId,
-            conceptoId: recurrente.conceptoId,
-            cuentaOrigenId: recurrente.cuentaOrigenId,
-            cuentaDestinoId: recurrente.cuentaDestinoId
+            cuentaId: recurrente.cuentaId || null,
+            conceptoId: recurrente.conceptoId || null,
+            cuentaOrigenId: recurrente.cuentaOrigenId || null,
+            cuentaDestinoId: recurrente.cuentaDestinoId || null
         };
         
         // 5. Actualización Optimista (Memoria Local)
-        // Añadimos el movimiento al inicio de la lista
         db.movimientos.unshift(newMovementData);
         
-        // Gestionamos la recurrencia localmente
+        // Gestión de la recurrencia
+        let newNextDateString = null;
+        
         if (recurrente.frequency === 'once') {
-            // Si es de única vez, lo eliminamos de la lista
             db.recurrentes.splice(recurrenteIndex, 1);
         } else {
-            // Si es periódico, calculamos la siguiente fecha
+            // Calculamos la nueva fecha usando la función CORREGIDA y el formateador SEGURO
             const nextDueDateObj = calculateNextDueDate(recurrente.nextDate, recurrente.frequency);
-            // Guardamos como string YYYY-MM-DD
-            db.recurrentes[recurrenteIndex].nextDate = nextDueDateObj.toISOString().slice(0, 10);
+            newNextDateString = formatDateToISO(nextDueDateObj);
+            
+            // Actualizamos en memoria
+            db.recurrentes[recurrenteIndex].nextDate = newNextDateString;
         }
 
-        // 6. Preparar Operaciones en Base de Datos (Firebase)
+        // 6. Persistencia en Firebase (Batch)
         const batch = fbDb.batch();
         const userRef = fbDb.collection('users').doc(currentUser.uid);
 
-        // A. Crear el movimiento
+        // A. Crear movimiento
         batch.set(userRef.collection('movimientos').doc(newMovementId), newMovementData);
         
         // B. Actualizar saldos
         if (recurrente.tipo === 'traspaso') {
-            batch.update(userRef.collection('cuentas').doc(recurrente.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-recurrente.cantidad) });
-            batch.update(userRef.collection('cuentas').doc(recurrente.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
-        } else {
+            if(recurrente.cuentaOrigenId) batch.update(userRef.collection('cuentas').doc(recurrente.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-recurrente.cantidad) });
+            if(recurrente.cuentaDestinoId) batch.update(userRef.collection('cuentas').doc(recurrente.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
+        } else if (recurrente.cuentaId) {
             batch.update(userRef.collection('cuentas').doc(recurrente.cuentaId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
         }
 
-        // C. Actualizar o Borrar el Recurrente
+        // C. Actualizar Recurrente
         const recurrenteRef = userRef.collection('recurrentes').doc(id);
         if (recurrente.frequency === 'once') {
             batch.delete(recurrenteRef);
         } else {
-            // Recalculamos para asegurar consistencia en el servidor
-            const nextDueDateObj = calculateNextDueDate(recurrente.nextDate, recurrente.frequency);
-            batch.update(recurrenteRef, { nextDate: nextDueDateObj.toISOString().slice(0, 10) });
+            batch.update(recurrenteRef, { nextDate: newNextDateString });
         }
 
-        // 7. Ejecutar en segundo plano
         await batch.commit();
 
         hapticFeedback('success');
-        showToast("Movimiento añadido.", "info");
+        showToast("Movimiento añadido correctamente.", "info");
 
-        // 8. Refrescar la UI después de la animación (300ms)
+        // 7. Refresco Inteligente de UI
         setTimeout(() => {
             const activePage = document.querySelector('.view--active');
             if (activePage) {
-                if (activePage.id === PAGE_IDS.DIARIO) {
-                    // Refresco optimizado para el diario (recalcula saldos y lista virtual)
-                    updateLocalDataAndRefreshUI(); 
-                } else if (activePage.id === PAGE_IDS.PLANIFICAR) {
+                if (activePage.id === PAGE_IDS.PLANIFICAR) {
                     renderPlanificacionPage();
                 } else if (activePage.id === PAGE_IDS.INICIO) {
                     scheduleDashboardUpdate();
+                } else if (activePage.id === PAGE_IDS.DIARIO) {
+                     // Si estamos en el diario, actualizamos saldos y lista
+                    updateLocalDataAndRefreshUI();
                 }
             }
-        }, 300); // Coincide con la duración de la animación CSS
+        }, 300); 
 
     } catch (error) {
-        console.error("Error al confirmar el movimiento recurrente:", error);
-        showToast("Hubo un error al procesar la operación.", "danger");
-        // En caso de error crítico, recargamos para asegurar integridad
-        setTimeout(() => location.reload(), 1500);
+        console.error("Error crítico confirmando recurrente:", error);
+        showToast("Error de conexión. Recargando...", "danger");
+        setTimeout(() => location.reload(), 2000);
     } finally {
         if (btn) setButtonLoading(btn, false);
     }
@@ -7876,47 +7889,48 @@ const handleConfirmRecurrent = async (id, btn) => {
 const handleSkipRecurrent = async (id, btn) => {
     if (btn) setButtonLoading(btn, true);
 
-    const recurrente = db.recurrentes.find(r => r.id === id);
-    if (!recurrente) {
-        showToast("Error: no se encontró la operación recurrente.", "danger");
+    const recurrenteIndex = db.recurrentes.findIndex(r => r.id === id);
+    if (recurrenteIndex === -1) {
+        showToast("Error: Operación no encontrada.", "warning");
         if (btn) setButtonLoading(btn, false);
+        renderPlanificacionPage();
         return;
     }
+    const recurrente = db.recurrentes[recurrenteIndex];
+
+    // Animación visual
+    const itemElement = document.getElementById(`pending-recurrente-${id}`);
+    if (itemElement) itemElement.classList.add('recurrente-item-confirming');
 
     try {
-        // === ¡LA MISMA MAGIA OTRA VEZ! ===
         if (recurrente.frequency === 'once') {
-            // Si es de única vez y lo omitimos, simplemente lo borramos.
+            // Si es una vez y omitimos, se borra
+            db.recurrentes.splice(recurrenteIndex, 1);
             await deleteDoc('recurrentes', id);
-            showToast("Operación programada eliminada.", "info");
         } else {
-            // Si es periódico, calculamos la siguiente fecha para omitir la actual.
-            const nextDueDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency);
-            await saveDoc('recurrentes', id, { nextDate: nextDueDate.toISOString().slice(0, 10) });
-            showToast("Operación recurrente omitida esta vez.", "info");
+            // Calculamos nueva fecha con la función corregida y el formateador seguro
+            const nextDueDateObj = calculateNextDueDate(recurrente.nextDate, recurrente.frequency);
+            const newNextDateString = formatDateToISO(nextDueDateObj);
+            
+            // Actualizar memoria local
+            db.recurrentes[recurrenteIndex].nextDate = newNextDateString;
+            
+            // Guardar en servidor
+            await saveDoc('recurrentes', id, { nextDate: newNextDateString });
         }
 
         hapticFeedback('success');
+        showToast("Operación omitida por esta vez.", "info");
 
-        // La animación de borrado y refresco de UI funciona para ambos casos.
-        const itemEl = select(`pending-recurrente-${id}`);
-        if (itemEl) {
-            itemEl.classList.add('item-deleting');
-            itemEl.addEventListener('animationend', () => {
-                const activePage = document.querySelector('.view--active');
-                if (activePage && activePage.id === PAGE_IDS.DIARIO) {
-                    updateVirtualListUI();
-                } else if (activePage && activePage.id === PAGE_IDS.PLANIFICACION) {
-                    renderPlanificacionPage();
-                } else {
-                    scheduleDashboardUpdate();
-                }
-            }, { once: true });
-        }
+        setTimeout(() => {
+             const activePage = document.querySelector('.view--active');
+             if(activePage && activePage.id === PAGE_IDS.PLANIFICAR) renderPlanificacionPage();
+             else if(activePage && activePage.id === PAGE_IDS.INICIO) scheduleDashboardUpdate();
+        }, 300);
 
     } catch (error) {
-        console.error("Error al omitir el movimiento recurrente:", error);
-        showToast("No se pudo omitir la operación.", "danger");
+        console.error("Error omitiendo recurrente:", error);
+        showToast("Error al omitir.", "danger");
     } finally {
         if (btn) setButtonLoading(btn, false);
     }
@@ -8122,18 +8136,19 @@ const handleSaveMovement = async (form, btn) => {
             
             // Lógica para crear el PRIMER movimiento HOY si la fecha coincide
             const today = new Date();
-            const todayStr = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
+            const todayStr = formatDateToISO(today); // Usamos nuestra nueva función segura
+            
             let shouldCreateToday = false;
 
-            // Si la fecha programada es hoy, creamos el movimiento y avanzamos la fecha del recurrente
+            // Comparamos strings limpios YYYY-MM-DD
             if (nextDate === todayStr) {
                 shouldCreateToday = true;
-                const newNextDate = calculateNextDueDate(nextDate, frequency);
-                dataToSave.nextDate = newNextDate.toISOString().slice(0, 10);
+                // Calculamos la SIGUIENTE fecha para el recurrente
+                const nextDueDateObj = calculateNextDueDate(nextDate, frequency);
+                dataToSave.nextDate = formatDateToISO(nextDueDateObj); // Formato seguro
             } else {
-                // Si no es hoy, nos aseguramos de que la fecha esté bien formateada
-                const newNextDate = nextDate ? new Date(nextDate + 'T12:00:00Z') : new Date();
-                dataToSave.nextDate = newNextDate.toISOString().slice(0, 10);
+                // Si no es hoy, guardamos la fecha tal cual seleccionó el usuario
+                dataToSave.nextDate = nextDate; 
             }
 
             // 1. Guardamos la definición del Recurrente en Firestore
