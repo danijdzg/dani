@@ -6013,7 +6013,7 @@ const setMovimientoFormType = (type) => {
 
     // Ocultar/mostrar campos
     select('movimiento-fields').classList.toggle('hidden', isTraspaso);
-    select('traspaso-fields').classList.toggle('hidden', !isTraspaso);
+    select('traspaso-fields').classList.toggle('hidden', !isTraspaso); // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
 
     // 2. Reseteamos colores
     if (titleEl) {
