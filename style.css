@@ -1547,7 +1547,6 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 
 
 /* === INICIO: Corrección de Contraste y Estilo para Opciones de Ajustes === */
-/*
 
 .accordion__content > button.modal__list-item {
     background-color: transparent;

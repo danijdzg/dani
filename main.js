@@ -658,15 +658,11 @@ async function loadCoreData(uid) {
             if (collectionName === 'recurrentes') {
     dataLoaded.recurrentes = true;
     const activePage = document.querySelector('.view--active');
-    if (activePage && (activePage.id === PAGE_IDS.DIARIO)) {
-        // En lugar de recargar todo, solo actualizamos la UI de la lista virtual.
-        // Esto es instantáneo y no vuelve a pedir datos a la BBDD.
-        updateVirtualListUI(); 
-    }
-    if (activePage && (activePage.id === PAGE_IDS.PLANIFICACION)) {
-        renderPlanificacionPage();
-    }
-}
+    if (collectionName === 'conceptos' || collectionName === 'cuentas') {
+                    if (activePage && activePage.id === PAGE_IDS.PLANIFICAR) {
+                        renderPlanificacionPage();
+                    }
+        }
             
             populateAllDropdowns();
             
@@ -5595,7 +5591,18 @@ function handleModalDragStart(e) {
     if (!modal) return;
 
     const modalBody = modal.querySelector('.modal__body');
-    if (modalBody && modalBody.scrollTop > 0) return;
+    
+    // --- INICIO DE LA CORRECCIÓN ---
+    // Comprobamos si el clic fue DENTRO del cuerpo del modal
+    const isDragOnBody = modalBody && modalBody.contains(e.target);
+
+    // Si el cuerpo está escroleado Y el usuario está intentando arrastrar
+    // desde el cuerpo, entonces NO iniciamos el drag (para permitir el scroll).
+    if (modalBody && modalBody.scrollTop > 0 && isDragOnBody) {
+        return; 
+    }
+    // Si el clic es en el header, el grabber, o el body (sin scroll), SÍ permitimos el drag.
+    // --- FIN DE LA CORRECCIÓN ---
 
     modalDragState.isDragging = true;
     modalDragState.targetModal = modal;
@@ -8224,8 +8231,9 @@ const handleSaveMovement = async (form, btn) => {
                 showToast(mode === 'new' ? 'Movimiento guardado.' : 'Movimiento actualizado.');
             } else {
                 // Preparar para el siguiente si pulsó "Guardar y Nuevo"
+                const lastType = selectedType === 'traspaso' ? 'gasto' : selectedType; // <-- (No recordar traspaso, volver a gasto)
                 form.reset();
-                setMovimientoFormType('gasto');
+                setMovimientoFormType(lastType); // <-- USA EL ÚLTIMO TIPO
                 const today = new Date();
                 const fechaInput = select('movimiento-fecha');
                 fechaInput.value = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
