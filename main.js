@@ -1902,7 +1902,7 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
 
     // --- PARTE 3: CÁLCULOS FINALES ---
 
-    // El P&L se calcula con tu lógica: Valoración - Saldo Contable.
+   // El P&L se calcula con tu lógica: Valoración - Saldo Contable.
     const pnlAbsoluto = totalValorActual - totalCapitalInvertido_para_PNL;
     const pnlPorcentual = totalCapitalInvertido_para_PNL !== 0 ? (pnlAbsoluto / totalCapitalInvertido_para_PNL) * 100 : 0;
     
