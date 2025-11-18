@@ -1910,13 +1910,14 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
     const irr = calculateIRR(allIrrCashflows);
 
     return { 
-        valorActual: totalValorActual, 
-        capitalInvertido: totalCapitalInvertido_para_PNL,
-        pnlAbsoluto, 
-        pnlPorcentual, 
-        irr 
+            valorActual: totalValorActual, 
+            capitalInvertido: totalCapitalInvertido_para_PNL,
+            pnlAbsoluto, 
+            pnlPorcentual, 
+            irr,
+            ultimaValoracionFecha: ultimaValoracionFecha_Global 
+        };
     };
-};
 
     const recalculateAndApplyRunningBalances = (movements, allAccountsDb) => {
     // 1. Agrupamos los movimientos por cada cuenta afectada.
