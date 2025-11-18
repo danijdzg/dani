@@ -313,7 +313,7 @@ const clearDiarioFilters = async () => {
 		let newMovementIdToHighlight = null;
 		let unsubscribeRecientesListener = null
         const originalButtonTexts = new Map();
-        let conceptosChart = null, liquidAssetsChart = null, detailInvestmentChart = null, informesChart = null, assetAllocationChart = null, budgetTrendChart = null, netWorthChart = null, informeActivoChart = null, informeChart = null;
+        let conceptosChart = null, liquidAssetsChart = null, detailInvestmentChart = null, informesChart = null, assetAllocationChart = null, budgetTrendChart = null, netWorthChart = null;
 		let patrimonioGeneralChart = null;
         let lastScrollTop = null;
         let pageScrollPositions = {};
