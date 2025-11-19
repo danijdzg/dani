@@ -7585,21 +7585,6 @@ function createCustomSelect(selectElement) {
         trigger.setAttribute('aria-expanded', isOpen);
     };
 
-   
-    // Selección de opción
-    optionsContainer.addEventListener('click', (e) => {
-        e.stopPropagation(); // Evita que el evento suba y cierre el menú inmediatamente
-        const option = e.target.closest('.custom-select__option');
-        if (option) {
-            selectElement.value = option.dataset.value;
-            selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-            toggleSelect(false); // Cerramos al elegir
-            // Opcional: Devolver el foco al trigger para seguir navegando con teclado
-            trigger.focus(); 
-        }
-    });
-       
-    selectElement.addEventListener('change', populateOptions);
 
 const showCalculator = (targetInput) => {
     const calculatorOverlay = select('calculator-overlay');
