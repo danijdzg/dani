@@ -113,7 +113,7 @@ const handleGenerateInformeCuenta = async (form, btn) => {
         let html = `
             <div class="cartilla-container">
                 <div class="cartilla-header-info">
-                    <h4>LIBRETA DE AHORROS</h4>
+                    <h4>EXTRACTO DE CUENTA</h4>
                     <p><strong>Titular:</strong> ${escapeHTML(cuenta.nombre)}</p>
                     <p><strong>IBAN/ID:</strong> ...${cuenta.id.slice(-6).toUpperCase()}</p>
                     <p class="cartilla-print-date">Impreso el: ${new Date().toLocaleDateString()}</p>
@@ -7437,62 +7437,108 @@ function closeAllCustomSelects(exceptThisOne) {
     });
 }
 
-/**
- * Transforma un elemento <select> nativo en un componente de dropdown personalizado.
- * @param {HTMLElement} selectElement - El elemento <select> a transformar.
- */
-/**
- * Transforma un elemento <select> nativo en un componente de dropdown personalizado.
- * MEJORA: Se abre automáticamente al recibir el foco.
- */
 function createCustomSelect(selectElement) {
     if (!selectElement) return;
 
+    let wrapper, trigger, optionsContainer;
     const existingWrapper = selectElement.closest('.custom-select-wrapper');
+
     if (existingWrapper) {
-        // Si ya existe, actualizamos su texto por si el valor nativo cambió externamente
-        const trigger = existingWrapper.querySelector('.custom-select__trigger');
-        const selectedOption = selectElement.options[selectElement.selectedIndex];
-        if (trigger && selectedOption) trigger.textContent = selectedOption.textContent;
-        return;
+        // Si ya existe, recuperamos las referencias para actualizar la lista
+        wrapper = existingWrapper;
+        trigger = wrapper.querySelector('.custom-select__trigger');
+        optionsContainer = wrapper.querySelector('.custom-select__options');
+    } else {
+        // Si no existe, creamos la estructura DOM inicial
+        wrapper = document.createElement('div');
+        wrapper.className = 'custom-select-wrapper';
+        
+        const inputWrapper = selectElement.closest('.input-wrapper');
+        if (!inputWrapper) {
+            console.error("No se encontró '.input-wrapper' para el select:", selectElement);
+            return;
+        }
+        
+        const formFieldCompact = inputWrapper.parentNode;
+
+        trigger = document.createElement('div');
+        trigger.className = 'custom-select__trigger';
+        trigger.setAttribute('role', 'combobox');
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.tabIndex = 0; // Permite recibir foco (tab/enter)
+        
+        optionsContainer = document.createElement('div');
+        optionsContainer.className = 'custom-select__options';
+        optionsContainer.setAttribute('role', 'listbox');
+
+        // Reemplazo en el DOM
+        formFieldCompact.replaceChild(wrapper, inputWrapper);
+        wrapper.appendChild(inputWrapper);
+        inputWrapper.appendChild(trigger);
+        wrapper.appendChild(selectElement); 
+        wrapper.appendChild(optionsContainer); 
+        selectElement.classList.add('form-select-hidden');
+
+        // --- Event Listeners (Solo se añaden una vez, al crear) ---
+
+        // 1. Lógica de apertura/cierre
+        const toggleSelect = (forceState = null) => {
+            const isOpen = forceState !== null ? forceState : !wrapper.classList.contains('is-open');
+            
+            if (isOpen) {
+                closeAllCustomSelects(wrapper); // Cierra otros
+                wrapper.classList.add('is-open');
+                // Ajuste de scroll si hay opción seleccionada
+                const selected = optionsContainer.querySelector('.is-selected');
+                if (selected) {
+                    requestAnimationFrame(() => {
+                        optionsContainer.scrollTop = selected.offsetTop - optionsContainer.offsetHeight / 2;
+                    });
+                }
+            } else {
+                wrapper.classList.remove('is-open');
+            }
+            trigger.setAttribute('aria-expanded', isOpen);
+        };
+
+        // 2. Clic en el disparador
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleSelect();
+        });
+
+        // 3. Auto-apertura al recibir foco (Navegación fluida)
+        trigger.addEventListener('focus', (e) => {
+            // Pequeño delay para evitar conflicto con clics
+            setTimeout(() => {
+                 if (document.activeElement === trigger) toggleSelect(true);
+            }, 50);
+        });
+
+        // 4. Navegación con teclado (Enter/Espacio para abrir)
+        trigger.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleSelect(true);
+            }
+        });
+
+        // 5. Listener para cambios en el select nativo (sincronización inversa)
+        selectElement.addEventListener('change', () => {
+             // Regeneramos opciones por si el cambio vino de fuera
+             populateOptions();
+        });
     }
-    
-    const wrapper = document.createElement('div');
-    wrapper.className = 'custom-select-wrapper';
-    
-    const inputWrapper = selectElement.closest('.input-wrapper');
-    if (!inputWrapper) {
-        console.error("No se encontró '.input-wrapper' para el select:", selectElement);
-        return;
-    }
-    
-    const formFieldCompact = inputWrapper.parentNode;
 
-    const trigger = document.createElement('div');
-    trigger.className = 'custom-select__trigger';
-    trigger.setAttribute('role', 'combobox');
-    trigger.setAttribute('aria-expanded', 'false');
-    // ✅ CAMBIO 1: Hacemos que el div sea "enfocable" como un input normal
-    trigger.tabIndex = 0; 
-    
-    const optionsContainer = document.createElement('div');
-    optionsContainer.className = 'custom-select__options';
-    optionsContainer.setAttribute('role', 'listbox');
-
-    formFieldCompact.replaceChild(wrapper, inputWrapper);
-    
-    wrapper.appendChild(inputWrapper);
-    inputWrapper.appendChild(trigger);
-    wrapper.appendChild(selectElement); 
-    wrapper.appendChild(optionsContainer); 
-    selectElement.classList.add('form-select-hidden');
-
+    // --- FUNCIÓN DE POBLADO DE OPCIONES (Se ejecuta SIEMPRE) ---
+    // Esta función asegura que la lista visual coincida con el select oculto
     const populateOptions = () => {
-        optionsContainer.innerHTML = '';
-        let selectedText = 'Ninguno'; // Texto por defecto
+        optionsContainer.innerHTML = ''; // Limpiamos opciones viejas
+        let selectedText = 'Ninguno'; 
 
+        // Recorremos las opciones del select nativo
         Array.from(selectElement.options).forEach(optionEl => {
-            // Ignoramos opciones vacías o placeholders si queremos limpiar la lista
+            // Opcional: Omitir placeholders vacíos si se desea
             if (optionEl.value === "" && optionEl.textContent.includes("Seleccionar")) return;
 
             const customOption = document.createElement('div');
@@ -7501,16 +7547,34 @@ function createCustomSelect(selectElement) {
             customOption.dataset.value = optionEl.value;
             customOption.setAttribute('role', 'option');
 
-            if (optionEl.selected && optionEl.value) {
+            if (optionEl.selected) {
                 customOption.classList.add('is-selected');
                 selectedText = optionEl.textContent;
             }
+
+            // Evento de clic en la opción
+            customOption.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // 1. Actualizar select nativo
+                selectElement.value = optionEl.value;
+                // 2. Disparar evento change manual
+                selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+                // 3. Cerrar visualmente
+                wrapper.classList.remove('is-open');
+                trigger.setAttribute('aria-expanded', 'false');
+                trigger.focus(); // Devolver foco al trigger
+            });
+
             optionsContainer.appendChild(customOption);
         });
+
+        // Actualizar texto del disparador
         trigger.textContent = selectedText;
     };
-    
+
+    // Ejecutamos el poblado inmediatamente
     populateOptions();
+}
 
     // Lógica de apertura/cierre
     const toggleSelect = (forceState = null) => {
