@@ -1327,6 +1327,7 @@ const initWidgetObserver = () => {
     // Si ya teníamos un asistente, lo despedimos para contratar uno nuevo y limpio.
     if (widgetObserver) {
         widgetObserver.disconnect();
+		widgetObserver = null;
     }
 
     const options = {
@@ -1651,28 +1652,38 @@ window.addEventListener('offline', () => {
             }
         };
         const destroyAllCharts = () => {
-    const charts = [
-        conceptosChart, liquidAssetsChart, detailInvestmentChart, informesChart,
-        assetAllocationChart, budgetTrendChart, netWorthChart, informeActivoChart, informeChart
+    // Lista completa de TODAS las instancias de Chart.js en tu app
+    const chartInstances = [
+        conceptosChart, liquidAssetsChart, detailInvestmentChart, 
+        informesChart, assetAllocationChart, budgetTrendChart, 
+        netWorthChart, informeActivoChart, informeChart
     ];
 
-    for (let i = 0; i < charts.length; i++) {
-        if (charts[i]) {
-            charts[i].destroy();
-            // Sobrescribimos la variable global para asegurarnos de que se limpia.
-            switch (i) {
-                case 0: conceptosChart = null; break;
-                case 1: liquidAssetsChart = null; break;
-                case 2: detailInvestmentChart = null; break;
-                case 3: informesChart = null; break;
-                case 4: assetAllocationChart = null; break;
-                case 5: budgetTrendChart = null; break;
-                case 6: netWorthChart = null; break;
-                case 7: informeActivoChart = null; break;
-                case 8: informeChart = null; break;
-            }
+    // 1. Destruir instancias conocidas
+    chartInstances.forEach(chart => {
+        if (chart) {
+            try {
+                chart.destroy();
+            } catch (e) { console.warn("Error destruyendo gráfico:", e); }
         }
-    }
+    });
+
+    // 2. Resetear variables a null para evitar referencias muertas
+    conceptosChart = null;
+    liquidAssetsChart = null;
+    detailInvestmentChart = null;
+    informesChart = null;
+    assetAllocationChart = null;
+    budgetTrendChart = null;
+    netWorthChart = null;
+    informeActivoChart = null;
+    informeChart = null;
+
+    // 3. (AFINADO EXTRA) Buscar cualquier canvas que Chart.js crea que controla y limpiarlo
+    // Esto arregla casos donde la variable se perdió pero el Chart sigue vivo en el DOM.
+    Chart.helpers.each(Chart.instances, (instance) => {
+        if (instance) instance.destroy();
+    });
 };
 
 const setupTheme = () => { 
@@ -2000,11 +2011,30 @@ const getFilteredMovements = async (forComparison = false) => {
             const firstDate = sortedCashflows[0].date;
             const npv = (rate) => { let total = 0; for (const flow of sortedCashflows) { const years = (flow.date.getTime() - firstDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000); total += flow.amount / Math.pow(1 + rate, years); } return total; };
             const derivative = (rate) => { let total = 0; for (const flow of sortedCashflows) { const years = (flow.date.getTime() - firstDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000); if (years > 0) { total -= years * flow.amount / Math.pow(1 + rate, years + 1); } } return total; };
-            let guess = 0.1; const maxIterations = 100; const tolerance = 1e-7;
-            for (let i = 0; i < maxIterations; i++) {
-                const npvValue = npv(guess); const derivativeValue = derivative(guess); if (Math.abs(derivativeValue) < tolerance) break; const newGuess = guess - npvValue / derivativeValue; if (Math.abs(newGuess - guess) <= tolerance) { return newGuess; } guess = newGuess; }
-            return 0;
-        };
+            let guess = 0.1; 
+    const maxIterations = 50; // Reducir a 50 es suficiente y más seguro
+    const tolerance = 1e-6; // Relajamos un poco la tolerancia (1e-7 es excesivo para UI)
+
+    for (let i = 0; i < maxIterations; i++) {
+        const npvValue = npv(guess);
+        const derivativeValue = derivative(guess);
+        
+        // Protección contra división por cero en la derivada
+        if (Math.abs(derivativeValue) < 1e-9) break; 
+
+        const newGuess = guess - npvValue / derivativeValue;
+        
+        if (Math.abs(newGuess - guess) <= tolerance) {
+            return newGuess;
+        }
+        
+        // Protección contra resultados absurdos (TIR > 1000% o < -100%)
+        if (Math.abs(newGuess) > 10) break; 
+        
+        guess = newGuess;
+    }
+    return 0; // Si no converge, devuelve 0 en lugar de colgarse
+};
 		
 // =========================================================================================
 // === VERSIÓN FINAL: P&L basado en Saldo Contable y TIR basada en CADA movimiento        ===
@@ -3265,9 +3295,11 @@ const loadMoreMovements = async (isInitial = false) => {
     try {
         let newMovementsChunk = [];
         let fetchedFilteredCount = 0;
-
+		let safetyCounter = 0; // <--- NUEVO: Contador de seguridad
+		const MAX_BATCH_ATTEMPTS = 5; // <--- NUEVO: Máximo 5 llamadas a la base de datos por vez
         while (fetchedFilteredCount < 50 && !allMovementsLoaded) {
             const rawMovsFromDB = await fetchMovementsPage(lastVisibleMovementDoc);
+			safetyCounter++; // Incrementamos contador
             if (rawMovsFromDB.length === 0) break;
             const filteredBatch = filterMovementsByLedger(rawMovsFromDB);
             newMovementsChunk.push(...filteredBatch);
@@ -7537,6 +7569,7 @@ const initAmountInput = () => {
     
     if (isMobileDevice()) {
         amountInput.setAttribute('inputmode', 'none');
+		amountInput.setAttribute('readonly', 'true'); // Evita el cursor parpadeando
         calculatorToggle.style.display = 'none';
         
         amountInput.onclick = (e) => {
@@ -8886,16 +8919,25 @@ const handleAddConcept = async (btn) => {
  };
 
  const csv_parseCurrency = (currencyString) => {
-     if (typeof currencyString !== 'string' || !currencyString) return 0;
-     const number = parseFloat(
-         currencyString
-         .replace('€', '')
-         .trim()
-         .replace(/\./g, '')
-         .replace(',', '.')
-     );
-     return isNaN(number) ? 0 : Math.round(number * 100);
- };
+    if (typeof currencyString !== 'string' || !currencyString) return 0;
+    
+    let cleanStr = currencyString.replace(/[€$£\s]/g, ''); // Quitar símbolos
+    
+    // Detección heurística: Si la última ocurrencia es un punto, es formato US
+    const lastDotIndex = cleanStr.lastIndexOf('.');
+    const lastCommaIndex = cleanStr.lastIndexOf(',');
+
+    if (lastDotIndex > lastCommaIndex) {
+        // Formato US: 1,200.50 -> Quitar comas
+        cleanStr = cleanStr.replace(/,/g, ''); 
+    } else {
+        // Formato ES: 1.200,50 -> Quitar puntos y cambiar coma por punto
+        cleanStr = cleanStr.replace(/\./g, '').replace(',', '.');
+    }
+
+    const number = parseFloat(cleanStr);
+    return isNaN(number) ? 0 : Math.round(number * 100);
+};
 
  const csv_inferType = (name) => {
      const upperName = name.toUpperCase();

@@ -1193,6 +1193,14 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     .bottom-nav { position: fixed; flex-direction: column; width: 240px; height: 100vh; left: 0; top: 0; transform: none; border-top: none; border-right: 1px solid var(--c-outline); padding: var(--sp-5) var(--sp-3); justify-content: flex-start; gap: var(--sp-2); box-shadow: none; background-color: var(--c-background); }
     .bottom-nav__item { flex: 0 0 auto; flex-direction: row; justify-content: flex-start; width: 100%; height: auto; padding: var(--sp-2) var(--sp-3); border-radius: var(--border-radius-md); }
     .bottom-nav__item:hover { background-color: var(--c-surface-variant); }
+	overscroll-behavior-y: none; /* Evita el rebote de toda la página */
+}
+
+/* Añadir a las reglas de '.app-layout__main' */
+.app-layout__main {
+    /* ... tus reglas existentes ... */
+    overscroll-behavior-y: contain; /* Mantiene el scroll dentro de la app */
+}
     body[data-ledger-mode="A"] .bottom-nav__item--active { background-color: var(--c-primary); color: var(--c-white); }
     body[data-ledger-mode="B"] .bottom-nav__item--active { background-color: var(--c-danger); color: var(--c-white) !important; }
     body[data-ledger-mode="A"] .bottom-nav__item--active:hover { background-color: var(--c-primary-hover); }
