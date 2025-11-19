@@ -1088,47 +1088,52 @@ const calculatePreviousDueDate = (currentDueDate, frequency, weekDays = []) => {
  * Configura la navegación secuencial con la tecla "Enter" dentro del formulario de movimientos.
  */
 const setupFormNavigation = () => {
-    // 1. Obtenemos referencias a todos los elementos del formulario en nuestro flujo
+    // 1. Referencias
     const cantidadInput = select('movimiento-cantidad');
     const descripcionInput = select('movimiento-descripcion');
-    // Para los selectores personalizados, necesitamos apuntar al 'trigger' que creamos
+    
+    // Referencias a los triggers de los selectores
     const conceptoTrigger = select('movimiento-concepto')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
     const cuentaTrigger = select('movimiento-cuenta')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
     const origenTrigger = select('movimiento-cuenta-origen')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
-    const destinoTrigger = select('movimiento-cuenta-destino')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
     const fechaButton = select('movimiento-fecha-display');
     const saveButton = select('save-movimiento-btn');
 
-    // Función para evitar que el listener se ejecute si el elemento está oculto
     const addEnterListener = (element, nextAction) => {
         if (!element) return;
         element.addEventListener('keydown', (e) => {
-            // Solo actuamos si se pulsa "Enter" y el campo es visible
-            if (e.key === 'Enter' && element.offsetParent !== null) {
-                e.preventDefault(); // Evita que el formulario se envíe
-                nextAction();     // Ejecuta la acción de pasar al siguiente campo
+            if (e.key === 'Enter') {
+                e.preventDefault(); 
+                nextAction();
             }
         });
     };
 
-    // 2. Creamos la cadena de eventos
-    // Desde Cantidad -> salta a Descripción
+    // 2. Cadena de eventos
     addEnterListener(cantidadInput, () => descripcionInput.focus());
 
-    // Desde Descripción -> abre el selector de Concepto O el de Cuenta de Origen (si es traspaso)
+    // ✅ AL PULSAR ENTER EN DESCRIPCIÓN -> Hacemos .focus() al siguiente
+    // Como modificamos createCustomSelect, el .focus() abrirá la lista automáticamente.
     addEnterListener(descripcionInput, () => {
         const isTraspaso = !select('traspaso-fields').classList.contains('hidden');
         if (isTraspaso) {
-            origenTrigger?.click();
+            origenTrigger?.focus();
         } else {
-            conceptoTrigger?.click();
+            conceptoTrigger?.focus();
         }
     });
+    
+    // Si eliges un concepto y pulsas Enter (esto requiere que el div tenga foco), pasar a Cuenta
+    if (conceptoTrigger) {
+        conceptoTrigger.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === 'Tab') {
+                // Si la lista está cerrada, pasar al siguiente. Si está abierta, seleccionar (eso lo maneja el navegador o lógica adicional)
+                // Simplificamos: Al pulsar Enter sobre el trigger cerrado o tras elegir, ir a cuenta.
+                 setTimeout(() => cuentaTrigger?.focus(), 100);
+            }
+        });
+    }
 
-    // NOTA: No añadimos listener a los selectores, ya que una vez que eliges, se cierran solos.
-    // El flujo continuaría de forma manual al siguiente campo.
-
-    // Desde el botón de Fecha -> intenta guardar el formulario
     addEnterListener(fechaButton, () => saveButton.click());
 };
 
@@ -6490,12 +6495,13 @@ const setMovimientoFormType = (type) => {
             }
         };
 
-
 const startMovementForm = async (id = null, isRecurrent = false, initialType = 'gasto') => {
     hapticFeedback('medium');
     const form = select('form-movimiento');
     form.reset();
     clearAllErrors(form.id);
+    
+    // 1. Rellenamos los desplegables primero para asegurarnos de que las opciones existen
     populateAllDropdowns();
 
     // Resetear selector de días semanal
@@ -6506,8 +6512,6 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
     let mode = 'new';
     
     if (id) {
-        // ... (tu lógica existente para cargar datos para editar es correcta y se mantiene)
-        // NO ES NECESARIO REEMPLAZAR esta parte interna de la función
         try {
             const collectionName = isRecurrent ? 'recurrentes' : 'movimientos';
             const doc = await fbDb.collection('users').doc(currentUser.uid).collection(collectionName).doc(id).get();
@@ -6532,33 +6536,64 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
     select('movimiento-id').value = id || '';
 
     if (data) {
-         // ... (tu lógica existente para rellenar el formulario con datos es correcta)
+        // Rellenar Cantidad
         select('movimiento-cantidad').value = `${(Math.abs(data.cantidad) / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, useGrouping: false })}`;
+        
+        // Rellenar Fecha
         const fechaInput = select('movimiento-fecha');
+        // Usamos data.nextDate para recurrentes, data.fecha para normales
         const dateStringForInput = isRecurrent ? data.nextDate : data.fecha;
+        
         if (dateStringForInput) {
-            const fecha = parseDateStringAsUTC(dateStringForInput);
-            if (fecha && !isNaN(fecha)) {
-                fechaInput.value = fecha.toISOString().slice(0,10);
-                updateDateDisplay(fechaInput);
+            // Intentamos crear la fecha. Si es ISO string, slice funciona bien.
+            // Si viene del objeto Date de JS, lo convertimos.
+            let fechaISO = '';
+            if (dateStringForInput.includes('T')) {
+                fechaISO = dateStringForInput.split('T')[0];
+            } else {
+                fechaISO = dateStringForInput; // Asumimos YYYY-MM-DD
+            }
+            
+            if (fechaISO) {
+                fechaInput.value = fechaISO;
+                updateDateDisplay(fechaInput); // ✅ Actualizamos el botón visual de la fecha
             }
         }
+
+        // Rellenar Descripción
         select('movimiento-descripcion').value = data.descripcion || '';
+
+        // ✅ CORRECCIÓN CRÍTICA: Rellenar Selects y DISPARAR EL EVENTO
+        // Función auxiliar para asignar y notificar cambio
+        const setSelectValue = (selectId, value) => {
+            const el = select(selectId);
+            if (el) {
+                el.value = value || '';
+                // ¡ESTA ES LA CLAVE! Avisamos al componente visual que el valor cambió
+                el.dispatchEvent(new Event('change')); 
+            }
+        };
+
         if (data.tipo === 'traspaso') {
-            select('movimiento-cuenta-origen').value = data.cuentaOrigenId || '';
-            select('movimiento-cuenta-destino').value = data.cuentaDestinoId || '';
+            setSelectValue('movimiento-cuenta-origen', data.cuentaOrigenId);
+            setSelectValue('movimiento-cuenta-destino', data.cuentaDestinoId);
         } else {
-            select('movimiento-cuenta').value = data.cuentaId || '';
-            select('movimiento-concepto').value = data.conceptoId || '';
+            setSelectValue('movimiento-cuenta', data.cuentaId);
+            setSelectValue('movimiento-concepto', data.conceptoId);
         }
-         const recurrenteCheckbox = select('movimiento-recurrente');
+
+        // Lógica de Recurrentes
+        const recurrenteCheckbox = select('movimiento-recurrente');
         const recurrentOptions = select('recurrent-options');
+        
         if (mode === 'edit-recurrent') {
             recurrenteCheckbox.checked = true;
-            select('recurrent-frequency').value = data.frequency;
+            setSelectValue('recurrent-frequency', data.frequency); // Usamos el helper aquí también
+            
             select('recurrent-next-date').value = data.nextDate;
             select('recurrent-end-date').value = data.endDate || '';
             recurrentOptions.classList.remove('hidden');
+            
             if (data.frequency === 'weekly' && data.weekDays) {
                 select('weekly-day-selector').classList.remove('hidden');
                 data.weekDays.forEach(day => {
@@ -6572,29 +6607,32 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
         }
 
     } else {
+        // Modo Nuevo: Fecha de hoy por defecto
         const fechaInput = select('movimiento-fecha');
-        const fecha = new Date();
-        fechaInput.value = new Date(fecha.getTime() - (fecha.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
+        const now = new Date();
+        // Ajuste de zona horaria simple para YYYY-MM-DD local
+        const localIsoDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
+        fechaInput.value = localIsoDate;
         updateDateDisplay(fechaInput);
     }
     
+    // Gestión de botones Borrar/Duplicar
     select('delete-movimiento-btn').classList.toggle('hidden', !id || !data);
     select('delete-movimiento-btn').dataset.isRecurrent = String(isRecurrent);
     select('duplicate-movimiento-btn').classList.toggle('hidden', !(mode === 'edit-single' && data));
 
     showModal('movimiento-modal');
-    initAmountInput(); // Prepara el campo de cantidad para la calculadora
+    initAmountInput(); 
     
-    // ¡LA MAGIA! Abre la calculadora automáticamente en móviles para un nuevo movimiento.
     if (isMobileDevice() && mode === 'new') {
         setTimeout(() => {
             const amountInput = select('movimiento-cantidad');
-            if(document.activeElement !== amountInput) { // Evita abrirla si ya estás en el campo
+            if(document.activeElement !== amountInput) { 
                 showCalculator(amountInput);
             }
         }, 150);
     }
-	setupFormNavigation();
+    setupFormNavigation();
 };
         
         
@@ -7403,12 +7441,19 @@ function closeAllCustomSelects(exceptThisOne) {
  * Transforma un elemento <select> nativo en un componente de dropdown personalizado.
  * @param {HTMLElement} selectElement - El elemento <select> a transformar.
  */
+/**
+ * Transforma un elemento <select> nativo en un componente de dropdown personalizado.
+ * MEJORA: Se abre automáticamente al recibir el foco.
+ */
 function createCustomSelect(selectElement) {
     if (!selectElement) return;
 
     const existingWrapper = selectElement.closest('.custom-select-wrapper');
     if (existingWrapper) {
-        selectElement.dispatchEvent(new Event('change'));
+        // Si ya existe, actualizamos su texto por si el valor nativo cambió externamente
+        const trigger = existingWrapper.querySelector('.custom-select__trigger');
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        if (trigger && selectedOption) trigger.textContent = selectedOption.textContent;
         return;
     }
     
@@ -7427,6 +7472,8 @@ function createCustomSelect(selectElement) {
     trigger.className = 'custom-select__trigger';
     trigger.setAttribute('role', 'combobox');
     trigger.setAttribute('aria-expanded', 'false');
+    // ✅ CAMBIO 1: Hacemos que el div sea "enfocable" como un input normal
+    trigger.tabIndex = 0; 
     
     const optionsContainer = document.createElement('div');
     optionsContainer.className = 'custom-select__options';
@@ -7436,15 +7483,18 @@ function createCustomSelect(selectElement) {
     
     wrapper.appendChild(inputWrapper);
     inputWrapper.appendChild(trigger);
-    wrapper.appendChild(selectElement); // El select ahora vive dentro del wrapper, pero fuera del input-wrapper
-    wrapper.appendChild(optionsContainer); // El contenedor de opciones también
+    wrapper.appendChild(selectElement); 
+    wrapper.appendChild(optionsContainer); 
     selectElement.classList.add('form-select-hidden');
 
     const populateOptions = () => {
         optionsContainer.innerHTML = '';
-        let selectedText = 'Ninguno';
+        let selectedText = 'Ninguno'; // Texto por defecto
 
         Array.from(selectElement.options).forEach(optionEl => {
+            // Ignoramos opciones vacías o placeholders si queremos limpiar la lista
+            if (optionEl.value === "" && optionEl.textContent.includes("Seleccionar")) return;
+
             const customOption = document.createElement('div');
             customOption.className = 'custom-select__option';
             customOption.textContent = optionEl.textContent;
@@ -7462,20 +7512,43 @@ function createCustomSelect(selectElement) {
     
     populateOptions();
 
+    // Lógica de apertura/cierre
+    const toggleSelect = (forceState = null) => {
+        const isOpen = forceState !== null ? forceState : !wrapper.classList.contains('is-open');
+        
+        if (isOpen) {
+            closeAllCustomSelects(wrapper); // Cierra otros abiertos
+            wrapper.classList.add('is-open');
+        } else {
+            wrapper.classList.remove('is-open');
+        }
+        trigger.setAttribute('aria-expanded', isOpen);
+    };
+
+    // ✅ CAMBIO 2: Al hacer clic, alternamos (si ya estaba enfocado, esto lo gestiona)
     trigger.addEventListener('click', (e) => {
         e.stopPropagation();
-        closeAllCustomSelects(wrapper);
-        wrapper.classList.toggle('is-open');
-        trigger.setAttribute('aria-expanded', wrapper.classList.contains('is-open'));
+        toggleSelect();
     });
 
+    // ✅ CAMBIO 3: ¡LA MAGIA! Al recibir foco (Tab o Enter desde otro campo), se abre solo
+    trigger.addEventListener('focus', (e) => {
+        // Pequeño delay para evitar conflictos si el foco viene de un clic del ratón
+        setTimeout(() => {
+             toggleSelect(true); // Forzamos apertura
+        }, 50);
+    });
+
+    // Selección de opción
     optionsContainer.addEventListener('click', (e) => {
+        e.stopPropagation(); // Evita que el evento suba y cierre el menú inmediatamente
         const option = e.target.closest('.custom-select__option');
         if (option) {
             selectElement.value = option.dataset.value;
             selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-            wrapper.classList.remove('is-open');
-            trigger.setAttribute('aria-expanded', 'false');
+            toggleSelect(false); // Cerramos al elegir
+            // Opcional: Devolver el foco al trigger para seguir navegando con teclado
+            trigger.focus(); 
         }
     });
        
