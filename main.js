@@ -7585,20 +7585,7 @@ function createCustomSelect(selectElement) {
         trigger.setAttribute('aria-expanded', isOpen);
     };
 
-    // ✅ CAMBIO 2: Al hacer clic, alternamos (si ya estaba enfocado, esto lo gestiona)
-    trigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleSelect();
-    });
-
-    // ✅ CAMBIO 3: ¡LA MAGIA! Al recibir foco (Tab o Enter desde otro campo), se abre solo
-    trigger.addEventListener('focus', (e) => {
-        // Pequeño delay para evitar conflictos si el foco viene de un clic del ratón
-        setTimeout(() => {
-             toggleSelect(true); // Forzamos apertura
-        }, 50);
-    });
-
+   
     // Selección de opción
     optionsContainer.addEventListener('click', (e) => {
         e.stopPropagation(); // Evita que el evento suba y cierre el menú inmediatamente
