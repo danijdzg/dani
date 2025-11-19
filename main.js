@@ -7617,12 +7617,7 @@ function createCustomSelect(selectElement) {
     });
        
     selectElement.addEventListener('change', populateOptions);
-}
 
-
-/**
- * Lógica para mostrar/ocultar la calculadora y manejar el teclado
- */
 const showCalculator = (targetInput) => {
     const calculatorOverlay = select('calculator-overlay');
     if (!calculatorOverlay) return;
