@@ -8189,7 +8189,7 @@ if (fechaDisplayButton && fechaRealInput) {
                 hapticFeedback('light');
             }
         });
-    }
+   
 
 // =================================================================
 // === FIN: BLOQUE DE CÓDIGO CORREGIDO PARA REEMPLAZAR           ===
