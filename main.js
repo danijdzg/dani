@@ -8759,6 +8759,17 @@ const handleSaveMovement = async (form, btn) => {
             const activePage = document.querySelector('.view--active');
             if (activePage && activePage.id === PAGE_IDS.PLANIFICAR) {
                 renderPlanificacionPage();
+			// --- 🛠️ SOLUCIÓN DEL BUG DE LA PESTAÑA CERRADA 🛠️ ---
+                // Esperamos un instante a que se pinte la pantalla y forzamos la apertura del acordeón
+                setTimeout(() => {
+                    const recurrentList = document.getElementById('recurrentes-list-container');
+                    if (recurrentList) {
+                        const detailsTag = recurrentList.closest('details');
+                        if (detailsTag) {
+                            detailsTag.open = true; // <--- ¡ESTO MANTIENE LA PESTAÑA ABIERTA!
+                        }
+                    }
+                }, 50);
             }
 
         } else {
