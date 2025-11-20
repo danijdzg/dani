@@ -754,7 +754,7 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 
 /* --- Navegación Inferior (Bottom Nav) --- */
 .bottom-nav { 
-	align-items: flex-end; 
+    align-items: center; /* Centrado vertical de elementos */
     position: fixed; 
     bottom: 0; 
     left: 50%; 
@@ -764,10 +764,14 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
     background-color: var(--c-surface); 
     border-top: 1px solid var(--c-outline); 
     display: flex; 
-    padding-bottom: env(safe-area-inset-bottom); 
+    
+    /* AÑADE ZONA SEGURA ABAJO: Impide que la barra de gestos del iPhone tape botones */
+    padding-bottom: env(safe-area-inset-bottom);
+    /* Altura dinámica: 60px base + lo que mida la zona segura */
+    height: calc(60px + env(safe-area-inset-bottom));
+    
     z-index: 200; 
-    box-shadow: 0 -2px 15px rgba(0,0,0,0.2); 
-    height: 48px; 
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.2); /* Sombra más pronunciada para separar del contenido */
 }
 .bottom-nav__item { 
     flex: 1; 
@@ -2237,7 +2241,29 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     .card__content { padding: var(--sp-2); }
     .card__title { padding: var(--sp-3) var(--sp-2) 0 var(--sp-2); }
     #inversiones-page .card__content { flex-direction: column; gap: var(--sp-3); align-items: center; }
-    .kpi-grid, .form-grid { grid-template-columns: 1fr !important; gap: var(--sp-2); }
+    @media (max-width: 380px) {
+    .kpi-grid, .form-grid {
+        /* Forzamos una sola columna para que los cuadros sean anchos */
+        grid-template-columns: 1fr !important; 
+        gap: var(--sp-3);
+    }
+    
+    .kpi-item {
+        /* Menos relleno interno para ganar espacio */
+        padding: var(--sp-3) var(--sp-2); 
+    }
+    
+    .kpi-item__label {
+        font-size: 0.7rem; /* Texto un poco más pequeño */
+        white-space: nowrap; /* Intentar que no rompa línea si cabe */
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .view {
+        padding: 0 var(--sp-2); /* Reducir margen lateral para ganar ancho útil */
+    }
+}
     #custom-date-filters.form-grid { grid-template-columns: 1fr !important; }
     .top-bar__left-button { flex-shrink: 1; min-width: 0; flex-grow: 1; }
     #page-title-display { display: none; }
@@ -2403,9 +2429,27 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 /* === INICIO: ESTILOS PARA FORMULARIO DE ALTA DENSIDAD Y NAVEGACIÓN === */
 
 /* 1. Nuevo Botón de Navegación Central */
-.bottom-nav {
-    align-items: flex-end; 
+.bottom-nav { 
+    align-items: center; /* Centrado vertical de elementos */
+    position: fixed; 
+    bottom: 0; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    width: 100%; 
+    max-width: 500px; 
+    background-color: var(--c-surface); 
+    border-top: 1px solid var(--c-outline); 
+    display: flex; 
+    
+    /* AÑADE ZONA SEGURA ABAJO: Impide que la barra de gestos del iPhone tape botones */
+    padding-bottom: env(safe-area-inset-bottom);
+    /* Altura dinámica: 60px base + lo que mida la zona segura */
+    height: calc(60px + env(safe-area-inset-bottom));
+    
+    z-index: 200; 
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.2); /* Sombra más pronunciada para separar del contenido */
 }
+
 #bottom-nav-add-btn {
     width: 56px;
     height: 56px;
@@ -2417,11 +2461,11 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     align-items: center;
     justify-content: center;
     
-    /* Ajuste de posición */
-    margin-bottom: calc(18px + env(safe-area-inset-bottom));
-    box-shadow: var(--shadow-md);
-    z-index: 201;
+    /* ELEVACIÓN DEL BOTÓN: Lo subimos para que flote mitad dentro mitad fuera */
+    margin-bottom: calc(20px + env(safe-area-inset-bottom));
     
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4); /* Sombra fuerte para destacar */
+    z-index: 205; /* Por encima de la barra nav */
     cursor: pointer;
     transition: all 0.2s ease-in-out;
 }
@@ -2920,10 +2964,53 @@ body[data-theme="default"] .cartilla-container {
     /* Ocultar celdas vacías en la lógica de móvil */
     .cartilla-cell:empty { display: none; }
 }
-
+/* --- CORRECCIÓN 1: Estructura Base Adaptable --- */
 html, body {
     height: 100%;
     width: 100%;
-    overflow: hidden; /* Evita el scroll doble */
-    position: fixed; /* Fija el cuerpo para evitar el rebote elástico de la página entera */
+    overflow: hidden; /* Bloquea scroll elástico en el cuerpo */
+    position: fixed;  /* Fija el cuerpo para estabilidad en iOS */
+}
+
+.app-layout {
+    display: none;
+    max-width: 500px;
+    margin: 0 auto;
+    /* USO DE dvh: Se adapta dinámicamente a las barras del navegador */
+    height: 100dvh; 
+    width: 100%;
+    background-color: var(--c-background);
+    flex-direction: column;
+    position: relative;
+    opacity: 0;
+    transition: opacity 0.5s ease-out;
+}
+
+.app-layout__main {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    
+    /* ESPACIADO SUPERIOR: Altura de la barra top + safe area */
+    padding-top: calc(60px + env(safe-area-inset-top));
+    
+    /* ESPACIADO INFERIOR AUMENTADO: Para que lo último de la lista no se corte 
+       Detrás de la barra de navegación (80px base + área segura) */
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+    
+    /* Mantiene el scroll suave dentro del contenedor */
+    overscroll-behavior-y: contain;
+    
+    /* Evitamos que los márgenes colapsen */
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+}
+
+/* Ajuste de ancho para pantallas muy pequeñas */
+.view {
+    width: 100%;
+    max-width: 100%;
+    /* Padding lateral seguro para que el texto no toque los bordes */
+    padding: 0 var(--sp-3); 
 }
