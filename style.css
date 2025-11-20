@@ -697,31 +697,9 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 .intro-screen__quote-author { display: block; font-size: clamp(0.8rem, 2.4vw, 1rem); color: var(--c-on-surface-secondary); font-weight: 500; }
 
 /* --- Estructura de la App --- */
-.app-layout { 
-    display: none; 
-    max-width: 500px; 
-    margin: 0 auto; 
-    
-    /* CAMBIO AQUÍ: 100dvh se adapta al teclado y barra del navegador */
-    height: 100dvh; 
-    height: 100vh; /* Fallback para navegadores muy viejos */
-    
-    background-color: var(--c-background); 
-    flex-direction: column; 
-    opacity: 0; 
-    transition: opacity 0.5s ease-out;
-    overflow: hidden; /* Importante para que solo scrollee el main */
-} transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.4s; }
+.app-layout { display: none; max-width: 500px; margin: 0 auto; height: 100vh; background-color: var(--c-background); flex-direction: column; opacity: 0; transition: opacity 0.5s ease-out, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.4s; }
 .app-layout--visible { display: flex; opacity: 1; }
-.app-layout__main {
-    flex: 1;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-top: 50px; /* Espacio para top-bar */
-    
-    /* CORRECCIÓN: Asegura que el último item se vea por encima del menú */
-    padding-bottom: calc(60px + env(safe-area-inset-bottom)); 
-}
+.app-layout__main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 44px 0 48px 0; }
 .view { display: none; flex-direction: column; width: 100%; padding: 0 var(--sp-4); gap: var(--sp-4); }
 .view--active { display: flex; }
 
@@ -2801,8 +2779,7 @@ body[data-theme="default"] .cartilla-container {
 
 .cartilla-row {
     display: grid;
-    /* Tu grid original para pantallas grandes */
-    grid-template-columns: 90px 1fr 90px 90px 90px; 
+    grid-template-columns: 70px 1fr 85px 85px 90px; /* Columnas fijas para alineación numérica */
     gap: 10px;
     padding: 6px 4px;
     border-bottom: 1px dotted #bbb;
@@ -2854,58 +2831,39 @@ body[data-theme="default"] .cartilla-container {
     letter-spacing: 2px;
 }
 
-/* Vista MÓVIL (< 600px): Se transforma en tarjeta */
+/* Adaptación Móvil para la Cartilla */
 @media (max-width: 600px) {
-    .cartilla-header-info h4 { font-size: 1rem; }
+    .cartilla-container { padding: 10px; font-size: 0.75rem; }
     
-    /* Ocultamos la cabecera de la tabla, no sirve en móvil */
-    .cartilla-row.cartilla-head {
-        display: none;
-    }
-
+    /* En móvil colapsamos cargos/abonos en una sola columna de "importe" para ganar espacio */
     .cartilla-row {
-        /* Grid de 2x2: Izquierda (Fecha/Concepto) - Derecha (Importe/Saldo) */
-        grid-template-columns: 1fr auto; 
+        grid-template-columns: 60px 1fr 75px; /* Fecha | Concepto | Importe */
         grid-template-areas: 
-            "date amount"
-            "concept balance";
-        gap: 4px 10px;
-        padding: 12px 4px; /* Más área táctil */
-        border-bottom: 1px solid var(--c-outline);
+            "date concept amount"
+            "empty balance balance"; /* El saldo va debajo */
+        gap: 2px 8px;
+        padding: 8px 2px;
     }
 
-    /* Celdas que no necesitamos en móvil las ocultamos */
+    .cartilla-head { display: none; } /* Ocultar cabecera en móvil */
+
+    .cartilla-date { grid-area: date; font-weight: 700; }
+    .cartilla-concept { grid-area: concept; max-height: 2.4em; overflow: hidden; }
+    
+    .cartilla-amount { 
+        grid-area: amount; 
+        font-size: 0.9rem;
+    }
+    
+    /* En móvil mostramos saldo debajo */
+    .cartilla-balance { 
+        grid-area: balance; 
+        text-align: right;
+        font-size: 0.7rem;
+        color: #555;
+    }
+    .cartilla-balance::before { content: "Saldo: "; }
+    
+    /* Ocultar celdas vacías en la lógica de móvil */
     .cartilla-cell:empty { display: none; }
-
-    .cartilla-date {
-        grid-area: date;
-        font-size: 0.75rem;
-        color: var(--c-on-surface-secondary);
-    }
-
-    .cartilla-concept {
-        grid-area: concept;
-        font-size: 0.85rem;
-        font-weight: 600;
-        white-space: normal; /* Permite que el texto ocupe varias líneas */
-        line-height: 1.2;
-    }
-
-    .cartilla-amount {
-        grid-area: amount;
-        font-size: 0.95rem;
-        font-weight: 700;
-        text-align: right;
-    }
-
-    .cartilla-balance {
-        grid-area: balance;
-        font-size: 0.75rem;
-        color: var(--c-on-surface-tertiary);
-        text-align: right;
-    }
-    /* Añadimos el prefijo "Saldo:" solo en móvil para dar contexto */
-    .cartilla-balance::before {
-        content: "Saldo: ";
-    }
 }

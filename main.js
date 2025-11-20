@@ -7662,35 +7662,24 @@ const applyDescriptionSuggestion = (target) => {
 const initAmountInput = () => {
     const amountInput = select('movimiento-cantidad');
     const calculatorToggle = select('calculator-toggle-btn');
-    if (!amountInput) return;
+    if (!amountInput || !calculatorToggle) return;
+    
+    amountInput.onclick = null;
+    calculatorToggle.onclick = null;
     
     if (isMobileDevice()) {
-        // DOBLE SEGURIDAD para que no se abra el teclado nativo
-        amountInput.setAttribute('inputmode', 'none'); 
-        amountInput.setAttribute('readonly', 'true'); 
-        
-        // El botón de la calculadora sobra en móvil si al tocar el input ya se abre
-        if(calculatorToggle) calculatorToggle.style.display = 'none';
+        amountInput.setAttribute('inputmode', 'none');
+		amountInput.setAttribute('readonly', 'true'); // Evita el cursor parpadeando
+        calculatorToggle.style.display = 'none';
         
         amountInput.onclick = (e) => {
-            e.preventDefault(); // Evita cualquier comportamiento nativo
-            e.target.blur();    // Quita el foco para ocultar cursor
-            showCalculator(amountInput);
-        };
-        
-        // Añadimos focus para asegurarnos
-        amountInput.onfocus = (e) => {
             e.preventDefault();
-            e.target.blur();
             showCalculator(amountInput);
         };
     } else {
         amountInput.setAttribute('inputmode', 'decimal');
-        amountInput.removeAttribute('readonly');
-        if(calculatorToggle) {
-            calculatorToggle.style.display = 'inline-flex';
-            calculatorToggle.onclick = () => showCalculator(amountInput);
-        }
+        calculatorToggle.style.display = 'inline-flex';
+        calculatorToggle.onclick = () => showCalculator(amountInput);
     }
 };
 // --- PARCHES DE COMPATIBILIDAD ---
