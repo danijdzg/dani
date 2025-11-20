@@ -699,12 +699,53 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 /* --- Estructura de la App --- */
 .app-layout { display: none; max-width: 500px; margin: 0 auto; height: 100vh; background-color: var(--c-background); flex-direction: column; opacity: 0; transition: opacity 0.5s ease-out, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.4s; }
 .app-layout--visible { display: flex; opacity: 1; }
-.app-layout__main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 44px 0 48px 0; }
+.app-layout__main { 
+    flex: 1; 
+    overflow-y: auto; 
+    -webkit-overflow-scrolling: touch; 
+    
+    /* Padding Superior: 60px base + lo que mida el notch */
+    padding-top: calc(60px + env(safe-area-inset-top)); 
+    
+    /* Padding Inferior: 80px para librar la barra de navegación y el gesto de inicio */
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    
+    /* Evita rebote elástico en toda la página */
+    overscroll-behavior-y: contain; 
+}
 .view { display: none; flex-direction: column; width: 100%; padding: 0 var(--sp-4); gap: var(--sp-4); }
 .view--active { display: flex; }
 
 /* --- Navegación Superior (Top Bar) --- */
-.top-bar { display: flex; align-items: center; justify-content: space-between; padding: var(--sp-2) var(--sp-4); background-color: rgba(0,0,0,0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--c-outline); z-index: 200; height: 44px; position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; transition: background-color 0.3s ease-in-out; }
+.top-bar { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    
+    /* CLAVE: Añadimos el espacio del área segura arriba */
+    padding-top: calc(var(--sp-2) + env(safe-area-inset-top));
+    padding-bottom: var(--sp-2);
+    padding-left: var(--sp-4);
+    padding-right: var(--sp-4);
+    
+    background-color: rgba(10, 10, 15, 0.85); /* Un poco más opaco para mejor lectura */
+    backdrop-filter: blur(12px); 
+    -webkit-backdrop-filter: blur(12px); 
+    border-bottom: 1px solid var(--c-outline); 
+    z-index: 200; 
+    
+    /* CLAVE: La altura ya no es fija, se adapta al dispositivo */
+    height: auto;
+    min-height: calc(50px + env(safe-area-inset-top));
+    
+    position: fixed; 
+    top: 0; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    width: 100%; 
+    max-width: 500px; 
+    transition: background-color 0.3s ease-in-out; 
+}
 .top-bar__title { font-size: var(--fs-lg); font-weight: 800; padding-left: var(--sp-2); text-align: center; }
 #page-title-display { font-size: var(--fs-base); font-weight: 700; margin-left: var(--sp-3); color: inherit; white-space: nowrap; }
 .top-bar__actions { display: flex; align-items: center; gap: var(--sp-1); }
@@ -2375,8 +2416,12 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 12px;
+    
+    /* Ajuste de posición */
+    margin-bottom: calc(18px + env(safe-area-inset-bottom));
     box-shadow: var(--shadow-md);
+    z-index: 201;
+    
     cursor: pointer;
     transition: all 0.2s ease-in-out;
 }
@@ -2874,4 +2919,11 @@ body[data-theme="default"] .cartilla-container {
     
     /* Ocultar celdas vacías en la lógica de móvil */
     .cartilla-cell:empty { display: none; }
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden; /* Evita el scroll doble */
+    position: fixed; /* Fija el cuerpo para evitar el rebote elástico de la página entera */
 }
