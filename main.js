@@ -8179,6 +8179,7 @@ if (fechaDisplayButton && fechaRealInput) {
             if (nextDateEl) nextDateEl.value = fechaRealInput.value;
         }
     }); 
+	}
     const daySelector = select('weekly-day-selector-buttons');
     if (daySelector) {
         daySelector.addEventListener('click', (e) => {
