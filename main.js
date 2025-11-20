@@ -8158,38 +8158,54 @@ if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || tar
 	const frequencySelect = select('recurrent-frequency');
     if (frequencySelect) {
         frequencySelect.addEventListener('change', (e) => {
-            select('weekly-day-selector').classList.toggle('hidden', e.target.value !== 'weekly');
+            const isWeekly = e.target.value === 'weekly';
+            const weeklySelector = select('weekly-day-selector');
+            const endGroup = select('recurrent-end-date')?.closest('.form-group');
+            
+            if (weeklySelector) weeklySelector.classList.toggle('hidden', !isWeekly);
+            if (endGroup) endGroup.classList.toggle('hidden', e.target.value === 'once');
         });
     }
-	const fechaDisplayButton = select('movimiento-fecha-display'); 
+
+    const fechaDisplayButton = select('movimiento-fecha-display'); 
     const fechaRealInput = select('movimiento-fecha'); 
-if (fechaDisplayButton && fechaRealInput) { 
-    fechaDisplayButton.addEventListener('click', () => {
-        try { fechaRealInput.showPicker(); } 
-        catch (error) { fechaRealInput.click(); }
-    });
-    
-    // === BLOQUE CORREGIDO ===
-    fechaRealInput.addEventListener('input', () => {
-        updateDateDisplay(fechaRealInput);
-        // Si el modo recurrente está activo, copiamos la fecha a la "próxima ejecución"
-        // para ahorrarle un clic al usuario.
-        if (select('movimiento-recurrente').checked) {
-            const nextDateEl = select('recurrent-next-date');
-            if (nextDateEl) nextDateEl.value = fechaRealInput.value;
-        }
-    }); 
-	}
-    const daySelector = select('weekly-day-selector-buttons');
-    if (daySelector) {
-        daySelector.addEventListener('click', (e) => {
-            const btn = e.target.closest('.day-selector-btn');
-            if (btn) {
-                btn.classList.toggle('active');
-                hapticFeedback('light');
+    if (fechaDisplayButton && fechaRealInput) { 
+        fechaDisplayButton.addEventListener('click', () => {
+            try {
+                fechaRealInput.showPicker();
+            } catch (error) {
+                console.warn("showPicker() no soportado. Fallback click.");
+                fechaRealInput.click(); 
             }
         });
-   
+        
+        fechaRealInput.addEventListener('input', () => {
+            updateDateDisplay(fechaRealInput);
+            // Si estamos en modo recurrente, sincronizamos la fecha de "próxima ejecución"
+            // para mayor comodidad del usuario.
+            const isRecurrent = select('movimiento-recurrente')?.checked;
+            if (isRecurrent) {
+                const nextDateEl = select('recurrent-next-date');
+                if (nextDateEl) nextDateEl.value = fechaRealInput.value;
+            }
+        }); 
+    }
+
+}; // <--- ¡IMPORTANTE! ESTA LLAVE CIERRA LA FUNCIÓN attachEventListeners
+
+// Lógica separada para el selector de días semanales (para que no se duplique)
+const daySelector = select('weekly-day-selector-buttons');
+if (daySelector) {
+    daySelector.addEventListener('click', (e) => {
+        // Permite que cualquier parte del botón active la selección (incluido texto)
+        const btn = e.target.closest('.day-selector-btn');
+        if (btn) {
+            e.preventDefault(); // Prevenir envío de formulario si es type="button"
+            btn.classList.toggle('active');
+            hapticFeedback('light');
+        }
+    });
+}
 
 // =================================================================
 // === FIN: BLOQUE DE CÓDIGO CORREGIDO PARA REEMPLAZAR           ===
@@ -10056,10 +10072,15 @@ const handleDescriptionInput = () => {
 
 // --- REGISTRO DEL SERVICE WORKER ---
 // Comprobamos si el navegador soporta Service Workers
+// Registro del Service Worker para soporte Offline y PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js')
-      .then(registration => console.log('Service Worker registrado:', registration))
-      .catch(error => console.log('Fallo SW:', error));
+      .then(registration => {
+        console.log('Service Worker registrado con éxito:', registration.scope);
+      })
+      .catch(error => {
+        console.log('Fallo en el registro del Service Worker:', error);
+      });
   });
 }
