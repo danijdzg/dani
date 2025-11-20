@@ -10057,14 +10057,9 @@ const handleDescriptionInput = () => {
 // --- REGISTRO DEL SERVICE WORKER ---
 // Comprobamos si el navegador soporta Service Workers
 if ('serviceWorker' in navigator) {
-  // Usamos el evento 'load' para no retrasar la carga inicial de la app
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js')
-      .then(registration => {
-        console.log('Service Worker registrado con éxito:', registration);
-      })
-      .catch(error => {
-        console.log('Fallo en el registro del Service Worker:', error);
-      });
+      .then(registration => console.log('Service Worker registrado:', registration))
+      .catch(error => console.log('Fallo SW:', error));
   });
 }
