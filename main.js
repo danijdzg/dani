@@ -1,3 +1,167 @@
+// --- ESTADO DEL CAJERO RÁPIDO ---
+let quickEntryState = {
+    valueString: '0',
+    type: 'gasto', // gasto, ingreso, traspaso
+    accountId: null,
+    date: new Date().toISOString().slice(0, 10)
+};
+
+// --- FUNCIONES DE UI ---
+
+const updateQuickDisplay = () => {
+    const display = document.getElementById('quick-amount-display');
+    const saveBtn = document.getElementById('quick-save-btn');
+    if(!display) return;
+
+    // Formatear visualmente: 1234 -> 12,34
+    let val = parseInt(quickEntryState.valueString, 10);
+    let formatted = (val / 100).toLocaleString('es-ES', { minimumFractionDigits: 2 });
+    
+    display.textContent = formatted + ' €';
+    
+    // Colores según tipo
+    display.className = 'quick-display'; // reset
+    if (quickEntryState.type === 'gasto') display.classList.add('text-negative');
+    else if (quickEntryState.type === 'ingreso') display.classList.add('text-positive');
+    else display.classList.add('text-info');
+
+    // Habilitar botón guardar solo si > 0
+    if (saveBtn) {
+        saveBtn.disabled = val === 0;
+        saveBtn.style.opacity = val === 0 ? '0.5' : '1';
+    }
+};
+
+const handleNumPadClick = (key) => {
+    hapticFeedback('light');
+    
+    if (key === 'backspace') {
+        if (quickEntryState.valueString.length > 1) {
+            quickEntryState.valueString = quickEntryState.valueString.slice(0, -1);
+        } else {
+            quickEntryState.valueString = '0';
+        }
+    } else {
+        // Límite de seguridad para no escribir millones por error
+        if (quickEntryState.valueString.length < 9) {
+            if (quickEntryState.valueString === '0') quickEntryState.valueString = key;
+            else quickEntryState.valueString += key;
+        }
+    }
+    updateQuickDisplay();
+};
+
+const renderQuickSuggestions = () => {
+    const container = document.getElementById('quick-suggestions-row');
+    if (!container) return;
+
+    // Obtenemos los 5 conceptos más usados del índice inteligente
+    // o los primeros 5 de la base de datos si no hay historia.
+    let topConcepts = [];
+    
+    // Intentamos sacar del intelligentIndex (ordenado por uso)
+    const sortedSuggestions = Array.from(intelligentIndex.entries())
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 6);
+
+    if (sortedSuggestions.length > 0) {
+        // Mapear a objetos concepto reales
+        topConcepts = sortedSuggestions.map(([desc, data]) => {
+            const concepto = db.conceptos.find(c => c.id === data.conceptoId);
+            return { 
+                id: data.conceptoId, 
+                nombre: concepto ? concepto.nombre : desc, // Nombre del concepto o la descripción
+                icon: concepto ? concepto.icon : 'star',
+                desc: desc // La descripción exacta (ej: "Mercadona")
+            };
+        });
+    } else {
+        // Fallback: Conceptos generales
+        topConcepts = db.conceptos.slice(0, 6).map(c => ({ 
+            id: c.id, 
+            nombre: c.nombre, 
+            icon: c.icon || 'label',
+            desc: c.nombre // Descripción = Nombre del concepto
+        }));
+    }
+
+    container.innerHTML = topConcepts.map(c => `
+        <div class="quick-chip" data-action="quick-save-chip" data-concept-id="${c.id}" data-desc="${c.desc}">
+            <i class="material-icons">${c.icon}</i>
+            <span>${escapeHTML(toSentenceCase(c.nombre))}</span>
+        </div>
+    `).join('');
+};
+
+// --- NUEVA FUNCIÓN DE INICIO (Reemplaza lógica en startMovementForm) ---
+
+const initQuickEntryModal = (type = 'gasto') => {
+    quickEntryState.valueString = '0';
+    quickEntryState.type = type;
+    quickEntryState.date = new Date().toISOString().slice(0, 10);
+    
+    // Rellenar selector de cuentas rápido
+    const accSelect = document.getElementById('quick-account-selector');
+    const visibleAccounts = getVisibleAccounts();
+    accSelect.innerHTML = visibleAccounts.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+    
+    // Seleccionar cuenta por defecto (o la última usada)
+    if (visibleAccounts.length > 0) {
+        quickEntryState.accountId = visibleAccounts[0].id;
+        accSelect.value = visibleAccounts[0].id;
+    }
+
+    // Renderizar sugerencias
+    renderQuickSuggestions();
+    
+    // Actualizar UI
+    updateQuickDisplay();
+    
+    // Resaltar tipo (Pills)
+    document.querySelectorAll('.filter-pill').forEach(btn => {
+        btn.classList.toggle('filter-pill--active', btn.dataset.type === type);
+    });
+    
+    // Ocultar form clásico si estaba visible
+    document.getElementById('form-movimiento').style.display = 'none'; 
+};
+
+// --- ACCIONES DE GUARDADO RÁPIDO ---
+
+const handleQuickSave = async (desc = null, conceptId = null) => {
+    const val = parseInt(quickEntryState.valueString, 10);
+    if (val === 0) {
+        hapticFeedback('error');
+        return;
+    }
+
+    // Llenar el formulario oculto real con los datos del cajero
+    // y reutilizar tu robusta función handleSaveMovement
+    document.getElementById('movimiento-cantidad').value = (val / 100).toFixed(2);
+    
+    // Si pulsó "Check" (Manual), la descripción es genérica o vacía
+    document.getElementById('movimiento-descripcion').value = desc ? toSentenceCase(desc) : (quickEntryState.type === 'gasto' ? 'Gasto vario' : 'Ingreso');
+    
+    if (conceptId) {
+        document.getElementById('movimiento-concepto').value = conceptId;
+    } else {
+        // Concepto por defecto (ej: el primero o "Varios")
+        const defaultConcept = db.conceptos.find(c => c.nombre.toLowerCase().includes('vario')) || db.conceptos[0];
+        document.getElementById('movimiento-concepto').value = defaultConcept?.id;
+    }
+
+    document.getElementById('movimiento-cuenta').value = document.getElementById('quick-account-selector').value;
+    document.getElementById('movimiento-fecha').value = quickEntryState.date;
+    document.getElementById('movimiento-mode').value = 'new';
+    document.getElementById('movimiento-id').value = generateId(); // ID Nuevo
+
+    // Sincronizar tipo en formulario
+    // Esto ya se gestiona por tu función global pero aseguramos:
+    const fakeBtn = document.createElement('button'); // Botón dummy para la función
+    
+    await handleSaveMovement(document.getElementById('form-movimiento'), fakeBtn);
+};
+
 // ▼▼▼ REEMPLAZA TUS FUNCIONES handleGenerateInformeCuenta y renderInformeCuentaRow CON ESTE BLOQUE ÚNICO Y CORREGIDO ▼▼▼
 
 /**
@@ -7836,6 +8000,61 @@ if (ptrElement && mainScrollerPtr) {
     });
 
     document.body.addEventListener('click', async (e) => {
+		'numpad-click': (e) => { 
+    const num = e.target.closest('.num-btn').dataset.num;
+    handleNumPadClick(num); 
+},
+'numpad-delete': () => { 
+    handleNumPadClick('backspace'); 
+},
+'manual-save': () => {
+    handleQuickSave(null, null); // Guardado manual sin concepto específico (se usará por defecto)
+},
+'quick-save-chip': (e) => {
+    const chip = e.target.closest('.quick-chip');
+    const desc = chip.dataset.desc;
+    const cId = chip.dataset.conceptId;
+    // Guardado "One Tap": Coge el valor, la cuenta seleccionada y este concepto
+    handleQuickSave(desc, cId);
+},
+// Sobrescribimos la apertura del modal para iniciar el modo cajero
+'open-movement-form': (e) => {
+    const type = e.target.closest('[data-type]').dataset.type;
+    hideModal('main-add-sheet');
+    setTimeout(() => {
+        // StartMovementForm clásica (si quieres mantener edición)
+        // O usar nueva Init para 'new'.
+        // Vamos a "engañar" a startMovementForm para que use esto.
+        showModal('movimiento-modal'); // Abrimos el modal
+        initQuickEntryModal(type);     // Inicializamos modo cajero
+    }, 250);
+},
+// Para cambiar entre Gasto/Ingreso dentro del modal
+'set-movimiento-type': (e) => {
+    const type = e.target.dataset.type;
+    quickEntryState.type = type;
+    initQuickEntryModal(type); // Refresca colores
+},
+// Cambiar cuenta rápido
+'quick-account-change': (e) => {
+    quickEntryState.accountId = e.target.value;
+},
+document.body.addEventListener('click', (e) => {
+    if (e.target.closest('.num-btn') && !e.target.closest('[data-action]')) {
+        const btn = e.target.closest('.num-btn');
+        if (btn.dataset.num) handleNumPadClick(btn.dataset.num);
+    }
+    if (e.target.id === 'quick-account-selector') {
+       // Selector nativo maneja su propio cambio, escuchamos 'change'
+    }
+});
+
+// Listener para cambio de cuenta en el select nativo pequeño
+document.addEventListener('change', (e) => {
+    if (e.target.id === 'quick-account-selector') {
+        quickEntryState.accountId = e.target.value;
+    }
+});
         const target = e.target;
 
         if (!target.closest('.custom-select-wrapper')) {
