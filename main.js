@@ -564,11 +564,14 @@ const handleCalculatorInput = (key) => {
                     });
                     // Disparamos eventos para que cualquier otra lógica reaccione
                     calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    calculatorState.targetInput.dispatchEvent(new Event('blur')); 
-                }
+					calculatorState.targetInput.blur();
+                    }
                 historyValue = '';
                 hideCalculator();
-                select('movimiento-descripcion').focus(); // Llevamos al usuario al siguiente paso
+				select('movimiento-descripcion').focus(); // Llevamos al usuario al siguiente paso
+				if (!isMobileDevice()) {
+    select('movimiento-descripcion').focus(); 
+}
                 return;
             case 'comma':
                 if (waitingForNewValue) {
@@ -7437,133 +7440,150 @@ function closeAllCustomSelects(exceptThisOne) {
 
 /**
  * Transforma un elemento <select> nativo en un componente de dropdown personalizado.
- * VERSIÓN FINAL: Variables globales a la función para evitar ReferenceError.
+ * CORRECCIÓN DE MEMORIA: Evita crear múltiples wrappers y listeners duplicados.
  */
 function createCustomSelect(selectElement) {
     if (!selectElement) return;
 
-    // --- 1. DECLARACIÓN DE VARIABLES (CRÍTICO: Deben estar aquí arriba) ---
-    let wrapper, trigger, optionsContainer;
-    
-    const existingWrapper = selectElement.closest('.custom-select-wrapper');
-
-    if (existingWrapper) {
-        // Si ya existe, recuperamos las referencias en las variables de arriba
-        wrapper = existingWrapper;
-        trigger = wrapper.querySelector('.custom-select__trigger');
-        optionsContainer = wrapper.querySelector('.custom-select__options');
-    } else {
-        // Si no existe, creamos la estructura
-        wrapper = document.createElement('div');
-        wrapper.className = 'custom-select-wrapper';
-        
-        const inputWrapper = selectElement.closest('.input-wrapper');
-        if (!inputWrapper) {
-            console.error("No se encontró '.input-wrapper' para el select:", selectElement);
-            return;
+    // Si ya lo hemos convertido, actualizamos el texto del trigger y salimos.
+    if (selectElement.dataset.hasCustomWrapper === 'true') {
+        const wrapper = selectElement.closest('.custom-select-wrapper');
+        if (wrapper) {
+            const trigger = wrapper.querySelector('.custom-select__trigger');
+            const optionsContainer = wrapper.querySelector('.custom-select__options');
+            if (trigger && optionsContainer) {
+                // Regeneramos SOLO las opciones y el texto
+                populateOptions(selectElement, optionsContainer, trigger, wrapper); 
+            }
         }
-        
-        const formFieldCompact = inputWrapper.parentNode;
-
-        // Asignamos a las variables declaradas arriba (sin poner 'const' ni 'let' aquí)
-        trigger = document.createElement('div');
-        trigger.className = 'custom-select__trigger';
-        trigger.setAttribute('role', 'combobox');
-        trigger.setAttribute('aria-expanded', 'false');
-        trigger.tabIndex = 0; 
-        
-        optionsContainer = document.createElement('div');
-        optionsContainer.className = 'custom-select__options';
-        optionsContainer.setAttribute('role', 'listbox');
-
-        // Reemplazo en el DOM
-        formFieldCompact.replaceChild(wrapper, inputWrapper);
-        wrapper.appendChild(inputWrapper);
-        inputWrapper.appendChild(trigger);
-        wrapper.appendChild(selectElement); 
-        wrapper.appendChild(optionsContainer); 
-        selectElement.classList.add('form-select-hidden');
-
-        // --- Event Listeners (Solo se añaden una vez, al crear) ---
-
-        const toggleSelect = (forceState = null) => {
-            const isOpen = forceState !== null ? forceState : !wrapper.classList.contains('is-open');
-            
-            if (isOpen) {
-                closeAllCustomSelects(wrapper); 
-                wrapper.classList.add('is-open');
-                const selected = optionsContainer.querySelector('.is-selected');
-                if (selected) {
-                    requestAnimationFrame(() => {
-                        optionsContainer.scrollTop = selected.offsetTop - optionsContainer.offsetHeight / 2;
-                    });
-                }
-            } else {
-                wrapper.classList.remove('is-open');
-            }
-            trigger.setAttribute('aria-expanded', isOpen);
-        };
-
-        trigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleSelect();
-        });
-
-        trigger.addEventListener('focus', (e) => {
-            setTimeout(() => {
-                 if (document.activeElement === trigger) toggleSelect(true);
-            }, 50);
-        });
-
-        trigger.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                toggleSelect(true);
-            }
-        });
-
-        selectElement.addEventListener('change', () => {
-             populateOptions();
-        });
+        return; 
     }
 
-    // --- FUNCIÓN DE POBLADO DE OPCIONES ---
-    // Al estar dentro de createCustomSelect, tiene acceso a 'trigger' y 'optionsContainer'
-    const populateOptions = () => {
-        if (!optionsContainer || !trigger) return; // Protección extra
+    // --- 1. Creación de Estructura (Solo sucede 1 vez) ---
+    selectElement.dataset.hasCustomWrapper = 'true'; // Marcamos el elemento
+    
+    let wrapper = document.createElement('div');
+    wrapper.className = 'custom-select-wrapper';
+    
+    const inputWrapper = selectElement.closest('.input-wrapper');
+    if (!inputWrapper) {
+        console.error("No se encontró '.input-wrapper' para el select:", selectElement);
+        return;
+    }
+    
+    const formFieldCompact = inputWrapper.parentNode;
 
-        optionsContainer.innerHTML = ''; 
-        let selectedText = 'Ninguno'; 
+    // Variables
+    let trigger = document.createElement('div');
+    trigger.className = 'custom-select__trigger';
+    trigger.setAttribute('role', 'combobox');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.tabIndex = 0; 
+    
+    let optionsContainer = document.createElement('div');
+    optionsContainer.className = 'custom-select__options';
+    optionsContainer.setAttribute('role', 'listbox');
 
-        Array.from(selectElement.options).forEach(optionEl => {
-            if (optionEl.value === "" && optionEl.textContent.includes("Seleccionar")) return;
+    // Reemplazo en el DOM
+    formFieldCompact.replaceChild(wrapper, inputWrapper);
+    wrapper.appendChild(inputWrapper);
+    inputWrapper.appendChild(trigger);
+    wrapper.appendChild(selectElement); 
+    wrapper.appendChild(optionsContainer); 
+    selectElement.classList.add('form-select-hidden');
 
-            const customOption = document.createElement('div');
-            customOption.className = 'custom-select__option';
-            customOption.textContent = optionEl.textContent;
-            customOption.dataset.value = optionEl.value;
-            customOption.setAttribute('role', 'option');
+    // --- 2. Funciones de utilidad encapsuladas ---
+    
+    const closeMe = () => {
+        wrapper.classList.remove('is-open');
+        trigger.setAttribute('aria-expanded', 'false');
+    };
 
-            if (optionEl.selected) {
-                customOption.classList.add('is-selected');
-                selectedText = optionEl.textContent;
+    const toggleSelect = (forceState = null) => {
+        const isOpen = forceState !== null ? forceState : !wrapper.classList.contains('is-open');
+        
+        if (isOpen) {
+            closeAllCustomSelects(wrapper); 
+            wrapper.classList.add('is-open');
+            // Scroll al elemento seleccionado
+            const selected = optionsContainer.querySelector('.is-selected');
+            if (selected) {
+                requestAnimationFrame(() => {
+                    optionsContainer.scrollTop = selected.offsetTop - optionsContainer.offsetHeight / 2;
+                });
             }
+        } else {
+            wrapper.classList.remove('is-open');
+        }
+        trigger.setAttribute('aria-expanded', isOpen);
+    };
 
-            customOption.addEventListener('click', (e) => {
-                e.stopPropagation();
-                selectElement.value = optionEl.value;
-                selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-                
-                // Aquí es donde fallaba antes si 'trigger' no era visible
-                wrapper.classList.remove('is-open');
-                trigger.setAttribute('aria-expanded', 'false');
-                trigger.focus(); 
-            });
+    // --- 3. Event Listeners (Solo se añaden 1 vez) ---
 
-            optionsContainer.appendChild(customOption);
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleSelect();
+    });
+
+    trigger.addEventListener('focus', () => {
+        // Pequeño delay para evitar conflicto con clicks
+        setTimeout(() => {
+                if (document.activeElement === trigger) toggleSelect(true);
+        }, 50);
+    });
+
+    trigger.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleSelect(true);
+        }
+    });
+
+    // Al cambiar el select nativo programáticamente, refrescamos visualmente
+    selectElement.addEventListener('change', () => {
+            populateOptions(selectElement, optionsContainer, trigger, wrapper);
+    });
+
+    // Inicializar opciones por primera vez
+    populateOptions(selectElement, optionsContainer, trigger, wrapper);
+}
+
+// Helper function fuera para poder ser llamada en la actualización
+function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
+    optionsContainer.innerHTML = ''; 
+    let selectedText = 'Ninguno'; 
+
+    Array.from(selectElement.options).forEach(optionEl => {
+        if (optionEl.value === "" && optionEl.textContent.includes("Seleccionar")) return;
+
+        const customOption = document.createElement('div');
+        customOption.className = 'custom-select__option';
+        customOption.textContent = optionEl.textContent;
+        customOption.dataset.value = optionEl.value;
+        customOption.setAttribute('role', 'option');
+
+        if (optionEl.selected) {
+            customOption.classList.add('is-selected');
+            selectedText = optionEl.textContent;
+        }
+
+        customOption.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectElement.value = optionEl.value;
+            selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            wrapper.classList.remove('is-open');
+            const triggerRef = wrapper.querySelector('.custom-select__trigger');
+            if(triggerRef) {
+                triggerRef.setAttribute('aria-expanded', 'false');
+                triggerRef.focus();
+            }
         });
 
-        trigger.textContent = selectedText;
+        optionsContainer.appendChild(customOption);
+    });
+
+    trigger.textContent = selectedText;
     };
 
     // Ejecutamos el poblado inmediatamente

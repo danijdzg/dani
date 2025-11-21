@@ -9,7 +9,18 @@ const URLS_TO_CACHE = [
   'manifest.json',
   'aiDANaI.webp',
   'icons/android-chrome-192x192.png',
-  'icons/android-chrome-512x512.png'
+  'icons/android-chrome-512x512.png',
+  // LIBRERÍAS EXTERNAS IMPRESCINDIBLES
+  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap',
+  'https://fonts.googleapis.com/icon?family=Material+Icons',
+  'https://cdn.jsdelivr.net/npm/chart.js',
+  'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns',
+  'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0',
+  'https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@2.3.0',
+  'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js',
+  'https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js',
+  'https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js'
 ];
 
 // Evento 'install': Se dispara cuando el Service Worker se instala por primera vez.

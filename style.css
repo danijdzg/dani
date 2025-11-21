@@ -2867,3 +2867,10 @@ body[data-theme="default"] .cartilla-container {
     /* Ocultar celdas vacías en la lógica de móvil */
     .cartilla-cell:empty { display: none; }
 }
+	.input-amount-calculator {
+    caret-color: transparent; /* Oculta el cursor de texto parpadeante */
+    cursor: pointer;          /* Indica que es pulsable */
+    user-select: none;        /* Evita selección de texto al pulsar repetidamente */
+    -webkit-user-select: none;
+    touch-action: manipulation; /* Mejora rendimiento scroll vs click */
+}
