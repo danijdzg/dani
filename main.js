@@ -4006,7 +4006,6 @@ const TransactionCardComponent = (m, dbData) => {
         const origen = cuentas.find(c => c.id === m.cuentaOrigenId);
         const destino = cuentas.find(c => c.id === m.cuentaDestinoId);
         
-        // CORRECCIÓN: El HTML ahora incluye el indicador DENTRO de este bloque.
         cardContentHTML = `
             <div class="transaction-card__indicator transaction-card__indicator--transfer"></div>
             <div class="transaction-card__content">
@@ -4033,7 +4032,6 @@ const TransactionCardComponent = (m, dbData) => {
         const concept = conceptos.find(c => c.id === m.conceptoId);
         const amountClass = m.cantidad >= 0 ? 'text-positive' : 'text-negative';
         
-        // CORRECCIÓN: La variable 'indicatorClass' se define y se usa solo dentro de este bloque.
         const indicatorClass = m.cantidad >= 0 ? 'transaction-card__indicator--income' : 'transaction-card__indicator--expense';
         
         cardContentHTML = `
@@ -4051,7 +4049,7 @@ const TransactionCardComponent = (m, dbData) => {
             </div>`;
     }
     
-    // El contenedor exterior sigue siendo el mismo, pero ahora solo envuelve el contenido ya completo.
+    // CAMBIO AQUÍ: Eliminado 'data-action="edit-movement-from-list"' del div .transaction-card
     return `
     <div class="swipe-container list-item-animate">
         <div class="swipe-actions-container left">
@@ -4066,7 +4064,7 @@ const TransactionCardComponent = (m, dbData) => {
                 <span>Borrar</span>
             </button>
         </div>
-        <div class="transaction-card ${highlightClass}" data-id="${m.id}" data-action="edit-movement-from-list">
+        <div class="transaction-card ${highlightClass}" data-id="${m.id}">
             ${cardContentHTML}
         </div>
     </div>`;
@@ -7900,10 +7898,7 @@ if (ptrElement && mainScrollerPtr) {
                 amountInput.value = newValue.toLocaleString('es-ES', { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 updateAmountTypeUI(!isCurrentlyGasto);
             },
-			
-            'context-edit': () => { hideModal('generic-modal'); startMovementForm(id, false); },
-            'context-duplicate': () => { hideModal('generic-modal'); const movement = db.movimientos.find(m => m.id === id); if(movement) handleDuplicateMovement(movement); },
-            'context-delete': () => { hideModal('generic-modal'); showConfirmationModal('¿Seguro que quieres eliminar este movimiento?', async () => { await deleteMovementAndAdjustBalance(id, false); }); },
+			            
             'show-kpi-drilldown': () => handleKpiDrilldown(actionTarget),
             'edit-movement-from-modal': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; hideModal('generic-modal'); startMovementForm(movementId, false); },
             'edit-movement-from-list': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; startMovementForm(movementId, false); },
@@ -9895,11 +9890,16 @@ const handleInteractionStart = (e) => {
     resetActiveSwipe();
 
     longPressState.isLongPress = false;
+    // Iniciamos el temporizador para detectar pulsación larga (500ms)
     longPressState.timer = setTimeout(() => {
         longPressState.isLongPress = true;
         swipeState.isSwiping = false;
-        hapticFeedback('medium');
-        showContextMenuForMovement(card.dataset.id);
+        
+        hapticFeedback('medium'); // Vibración para indicar que se ha activado
+        
+        // CAMBIO AQUÍ: En lugar de mostrar el menú contextual, abrimos el formulario directamente
+        startMovementForm(card.dataset.id, false); 
+        
     }, 500);
 
     swipeState.isSwiping = true;
@@ -9988,27 +9988,7 @@ const handleInteractionEnd = (e) => {
     swipeState.isSwipeIntent = false;
 };
 
-const showContextMenuForMovement = (movementId) => {
-    const movement = db.movimientos.find(m => m.id === movementId);
-    if (!movement) return;
 
-    const html = `
-        <div style="display: flex; flex-direction: column; gap: var(--sp-2);">
-            <button class="btn btn--secondary btn--full" data-action="context-edit" data-id="${movementId}">
-                <span class="material-icons">edit</span> Editar Movimiento
-            </button>
-            <button class="btn btn--secondary btn--full" data-action="context-duplicate" data-id="${movementId}">
-                <span class="material-icons">content_copy</span> Duplicar
-            </button>
-            <button class="btn btn--danger btn--full" data-action="context-delete" data-id="${movementId}">
-                <span class="material-icons">delete</span> Eliminar
-            </button>
-        </div>
-    `;
-    
-    // Usamos el modal genérico para mostrar las opciones
-    showGenericModal(`Acciones para: ${movement.descripcion}`, html);
-};
 // Asegúrate de que tu función resetActiveSwipe también oculte las acciones
 const resetActiveSwipe = () => {
 if (swipeState.activeCard) {
