@@ -8000,6 +8000,8 @@ if (ptrElement && mainScrollerPtr) {
     });
 
     document.body.addEventListener('click', async (e) => {
+	
+document.body.addEventListener('click', (e) => {
 		'numpad-click': (e) => { 
     const num = e.target.closest('.num-btn').dataset.num;
     handleNumPadClick(num); 
@@ -8039,7 +8041,6 @@ if (ptrElement && mainScrollerPtr) {
 'quick-account-change': (e) => {
     quickEntryState.accountId = e.target.value;
 },
-document.body.addEventListener('click', (e) => {
     if (e.target.closest('.num-btn') && !e.target.closest('[data-action]')) {
         const btn = e.target.closest('.num-btn');
         if (btn.dataset.num) handleNumPadClick(btn.dataset.num);
