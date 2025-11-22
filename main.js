@@ -7440,7 +7440,6 @@ function closeAllCustomSelects(exceptThisOne) {
 
 /**
  * Transforma un elemento <select> nativo en un componente de dropdown personalizado.
- * CORRECCIÓN DE MEMORIA: Evita crear múltiples wrappers y listeners duplicados.
  */
 function createCustomSelect(selectElement) {
     if (!selectElement) return;
@@ -7471,8 +7470,6 @@ function createCustomSelect(selectElement) {
         return;
     }
     
-    const formFieldCompact = inputWrapper.parentNode;
-
     // Variables
     let trigger = document.createElement('div');
     trigger.className = 'custom-select__trigger';
@@ -7485,27 +7482,28 @@ function createCustomSelect(selectElement) {
     optionsContainer.setAttribute('role', 'listbox');
 
     // Reemplazo en el DOM
-    formFieldCompact.replaceChild(wrapper, inputWrapper);
+    // Truco: Insertamos el wrapper antes, movemos el inputWrapper dentro, etc.
+    // O mejor, envolvemos el select existente limpiamente:
+    
+    // 1. Insertar el wrapper antes del inputWrapper actual
+    inputWrapper.parentNode.insertBefore(wrapper, inputWrapper);
+    // 2. Mover inputWrapper dentro del wrapper
     wrapper.appendChild(inputWrapper);
+    // 3. Añadir trigger y options
     inputWrapper.appendChild(trigger);
-    wrapper.appendChild(selectElement); 
+    wrapper.appendChild(selectElement); // Movemos el select original fuera del input-wrapper visual si es necesario, o lo dejamos oculto
     wrapper.appendChild(optionsContainer); 
+    
     selectElement.classList.add('form-select-hidden');
 
     // --- 2. Funciones de utilidad encapsuladas ---
     
-    const closeMe = () => {
-        wrapper.classList.remove('is-open');
-        trigger.setAttribute('aria-expanded', 'false');
-    };
-
     const toggleSelect = (forceState = null) => {
         const isOpen = forceState !== null ? forceState : !wrapper.classList.contains('is-open');
         
         if (isOpen) {
             closeAllCustomSelects(wrapper); 
             wrapper.classList.add('is-open');
-            // Scroll al elemento seleccionado
             const selected = optionsContainer.querySelector('.is-selected');
             if (selected) {
                 requestAnimationFrame(() => {
@@ -7526,7 +7524,6 @@ function createCustomSelect(selectElement) {
     });
 
     trigger.addEventListener('focus', () => {
-        // Pequeño delay para evitar conflicto con clicks
         setTimeout(() => {
                 if (document.activeElement === trigger) toggleSelect(true);
         }, 50);
@@ -7539,17 +7536,18 @@ function createCustomSelect(selectElement) {
         }
     });
 
-    // Al cambiar el select nativo programáticamente, refrescamos visualmente
     selectElement.addEventListener('change', () => {
             populateOptions(selectElement, optionsContainer, trigger, wrapper);
     });
 
-    // Inicializar opciones por primera vez
+    // Inicializar opciones por primera vez (ESTA ES LA LLAMADA IMPORTANTE)
     populateOptions(selectElement, optionsContainer, trigger, wrapper);
 }
 
 // Helper function fuera para poder ser llamada en la actualización
 function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
+    if (!optionsContainer || !trigger) return; // Protección extra
+
     optionsContainer.innerHTML = ''; 
     let selectedText = 'Ninguno'; 
 
@@ -7573,18 +7571,15 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
             selectElement.dispatchEvent(new Event('change', { bubbles: true }));
             
             wrapper.classList.remove('is-open');
-            const triggerRef = wrapper.querySelector('.custom-select__trigger');
-            if(triggerRef) {
-                triggerRef.setAttribute('aria-expanded', 'false');
-                triggerRef.focus();
-            }
+            trigger.setAttribute('aria-expanded', 'false');
+            trigger.focus();
         });
 
         optionsContainer.appendChild(customOption);
     });
 
     trigger.textContent = selectedText;
-    };
+}
 
     // Ejecutamos el poblado inmediatamente
     populateOptions();
