@@ -130,17 +130,7 @@ const handleGenerateInformeCuenta = async (form, btn) => {
                         <div class="cartilla-cell text-right">ABONOS</div>
                         <div class="cartilla-cell text-right">SALDO</div>
                     </div>`;
-        
-        // Fila de Saldo Inicial (virtual, siempre 0 si es historial completo)
-        html += `
-            <div class="cartilla-row cartilla-initial">
-                <div class="cartilla-cell">--/--/--</div>
-                <div class="cartilla-cell">SALDO ANTERIOR</div>
-                <div class="cartilla-cell"></div>
-                <div class="cartilla-cell"></div>
-                <div class="cartilla-cell cartilla-balance">${formatCurrency(0)}</div>
-            </div>`;
-
+                
         for (const mov of movimientosDeLaCuenta) {
             html += renderInformeCuentaRow(mov, cuentaId, db.cuentas);
         }
