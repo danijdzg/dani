@@ -118,7 +118,6 @@ const handleGenerateInformeCuenta = async (form, btn) => {
                 <div class="cartilla-header-info">
                     <h4>EXTRACTO DE CUENTA</h4>
                     <p><strong>Titular:</strong> ${escapeHTML(cuenta.nombre)}</p>
-                    <p><strong>IBAN/ID:</strong> ...${cuenta.id.slice(-6).toUpperCase()}</p>
                     <p class="cartilla-print-date">Impreso el: ${new Date().toLocaleDateString()}</p>
                 </div>
                 
