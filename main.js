@@ -7588,7 +7588,6 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
 
     // Ejecutamos el poblado inmediatamente
     populateOptions();
-}
 
     // Lógica de apertura/cierre
     const toggleSelect = (forceState = null) => {
@@ -10094,3 +10093,4 @@ if ('serviceWorker' in navigator) {
         console.log('Fallo en el registro del Service Worker:', error);
       });
   });
+ }
