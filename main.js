@@ -109,6 +109,9 @@ const handleGenerateInformeCuenta = async (form, btn) => {
             mov.runningBalance = saldoAcumulado;
         }
 
+        // <--- NUEVO: INVERTIR EL ORDEN PARA MOSTRAR EL MÁS NUEVO ARRIBA --->
+        movimientosDeLaCuenta.reverse(); 
+
         // 4. Construir HTML Estilo Cartilla
         let html = `
             <div class="cartilla-container">
