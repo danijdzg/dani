@@ -5076,9 +5076,9 @@ const renderPatrimonioPage = () => {
     const container = select(PAGE_IDS.PATRIMONIO);
     if (!container) return;
 
-    // Se mantiene la estructura con los dos acordeones existentes
     container.innerHTML = `
-        <details class="accordion" style="margin-bottom: var(--sp-4);">
+        <!-- Sección 1: Visión General (Esta la dejamos abierta 'open' para que se vea el total nada más entrar) -->
+        <details class="accordion" open style="margin-bottom: var(--sp-4);">
             <summary>
                 <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
                     <span class="material-icons">account_balance</span>
@@ -5091,7 +5091,8 @@ const renderPatrimonioPage = () => {
             </div>
         </details>
 
-        <details class="accordion" style="margin-bottom: var(--sp-4);">
+        <!-- Sección 2: Portafolio (Sin el atributo 'open' para que salga cerrado y con ID para detectarlo) -->
+        <details id="acordeon-portafolio" class="accordion" style="margin-bottom: var(--sp-4);">
             <summary>
                 <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
                     <span class="material-icons">rocket_launch</span>
@@ -5109,7 +5110,7 @@ const renderPatrimonioPage = () => {
             </div>
         </details>
         
-        <!-- ▼▼▼ INICIO: NUEVA SECCIÓN AÑADIDA - EXTRACTO DE CUENTA ▼▼▼ -->
+        <!-- Sección 3: Extracto -->
         <div class="card card--no-bg accordion-wrapper">
             <details id="acordeon-extracto_cuenta" class="accordion informe-acordeon">
                 <summary>
@@ -5133,16 +5134,13 @@ const renderPatrimonioPage = () => {
                 </div>
             </details>
         </div>
-        <!-- ▲▲▲ FIN: SECCIÓN AÑADIDA ▲▲▲ -->
     `;
 
-    // Usamos un pequeño retardo para asegurar que el DOM está listo antes de dibujar gráficos y rellenar desplegables
     setTimeout(async () => {
-        await renderPatrimonioOverviewWidget('patrimonio-overview-container'); 
-        await renderPortfolioEvolutionChart('portfolio-evolution-container');
-        await renderPortfolioMainContent('portfolio-main-content');
+        // 1. Carga INMEDIATA de la Visión General (porque está abierta)
+        await renderPatrimonioOverviewWidget('patrimonio-overview-container');
         
-        // ¡LA CLAVE! Rellenamos el nuevo selector de cuentas del extracto
+        // Rellenar selector del extracto (siempre necesario por si se abre rápido)
         const populate = (id, data, nameKey, valKey='id') => {
             const el = select(id); if (!el) return;
             let opts = '<option value="">Seleccionar cuenta...</option>';
@@ -5150,6 +5148,30 @@ const renderPatrimonioPage = () => {
             el.innerHTML = opts;
         };
         populate('informe-cuenta-select', getVisibleAccounts(), 'nombre', 'id');
+
+        // 2. Lógica LAZY LOADING para el Portafolio
+        // Solo cargamos el gráfico y los cálculos pesados cuando el usuario abre la pestaña
+        const acordeonPortafolio = select('acordeon-portafolio');
+        
+        if (acordeonPortafolio) {
+            // Función que carga el portafolio
+            const loadPortfolioData = async () => {
+                await renderPortfolioEvolutionChart('portfolio-evolution-container');
+                await renderPortfolioMainContent('portfolio-main-content');
+            };
+
+            // Escuchamos el evento 'toggle'
+            acordeonPortafolio.addEventListener('toggle', async (e) => {
+                if (acordeonPortafolio.open) {
+                    // Si se abre, cargamos los datos
+                    // (Usamos una bandera en el elemento para no recargar si ya se cargó una vez, opcionalmente)
+                    if (!acordeonPortafolio.dataset.loaded) {
+                        await loadPortfolioData();
+                        acordeonPortafolio.dataset.loaded = "true"; // Marcamos como cargado para evitar recargas constantes si lo cierra y abre rápido
+                    }
+                }
+            });
+        }
         
     }, 50);
 };
