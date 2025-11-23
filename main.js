@@ -1734,11 +1734,10 @@ const navigateTo = async (pageId, isInitial = false) => {
     const newView = select(pageId);
     const mainScroller = selectOne('.app-layout__main');
 
-    // Cerrar el menú si está abierto (nueva lógica de seguridad)
     const menu = select('main-menu-popover');
     if (menu) menu.classList.remove('popover-menu--visible');
 
-    // Guardar la posición del scroll de la vista anterior
+    // 1. GUARDADO INTELIGENTE DE SCROLL
     if (oldView && mainScroller) {
         pageScrollPositions[oldView.id] = mainScroller.scrollTop;
     }
@@ -1746,33 +1745,26 @@ const navigateTo = async (pageId, isInitial = false) => {
     if (!newView || (oldView && oldView.id === pageId)) return;
     
     destroyAllCharts();
-
     if (!isInitial) hapticFeedback('light');
 
     if (!isInitial && window.history.state?.page !== pageId) {
         history.pushState({ page: pageId }, '', `#${pageId}`);
     }
 
+    // Gestión de Nav Inferior
     const navItems = Array.from(selectAll('.bottom-nav__item'));
     const oldIndex = oldView ? navItems.findIndex(item => item.dataset.page === oldView.id) : -1;
     const newIndex = navItems.findIndex(item => item.dataset.page === newView.id);
     const isForward = newIndex > oldIndex;
 
+    // Gestión de Barra Superior (igual que antes)
     const actionsEl = select('top-bar-actions');
     const leftEl = select('top-bar-left-button');
     
-    // --> ¡CAMBIO CLAVE AQUÍ! <--
-    // Reemplazamos los botones antiguos por el nuevo botón de menú.
     const standardActions = `
-        <button data-action="global-search" class="icon-btn" title="Búsqueda Global (Cmd/Ctrl+K)" aria-label="Búsqueda Global">
-            <span class="material-icons">search</span>
-        </button>
-        <button data-action="toggle-theme" id="theme-toggle-btn" class="icon-btn" title="Cambiar Tema" aria-label="Cambiar tema visual">
-             <span class="material-icons"></span>
-        </button>
-        <button data-action="show-main-menu" class="icon-btn" title="Menú Principal" aria-label="Abrir Menú Principal">
-            <span class="material-icons">more_vert</span>
-        </button>
+        <button data-action="global-search" class="icon-btn"><span class="material-icons">search</span></button>
+        <button data-action="toggle-theme" id="theme-toggle-btn" class="icon-btn"><span class="material-icons"></span></button>
+        <button data-action="show-main-menu" class="icon-btn"><span class="material-icons">more_vert</span></button>
     `;
     
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
@@ -1789,48 +1781,52 @@ const navigateTo = async (pageId, isInitial = false) => {
     if (pageRenderers[pageId]) { 
         if (leftEl) {
             let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar a Contabilidad ${isOffBalanceMode ? 'A' : 'B'}"> ${isOffBalanceMode ? 'B' : 'A'}</button><span id="page-title-display">${pageRenderers[pageId].title}</span>`;
-            if (pageId === PAGE_IDS.PANEL) leftSideHTML += `<button data-action="configure-dashboard" class="icon-btn" title="Personalizar qué se ve en el Panel" style="margin-left: 8px;"><span class="material-icons">dashboard_customize</span></button>`;
+            if (pageId === PAGE_IDS.PANEL) leftSideHTML += `<button data-action="configure-dashboard" class="icon-btn" style="margin-left: 8px;"><span class="material-icons">dashboard_customize</span></button>`;
             if (pageId === PAGE_IDS.DIARIO) {
                 leftSideHTML += `
-                    <button data-action="show-diario-filters" class="icon-btn" title="Filtrar y Buscar" style="margin-left: 8px;">
-                        <span class="material-icons">filter_list</span>
-                    </button>
-                    <button data-action="toggle-diario-view" class="icon-btn" title="Cambiar Vista">
-                        <span class="material-icons">${diarioViewMode === 'list' ? 'calendar_month' : 'list'}</span>
-                    </button>
+                    <button data-action="show-diario-filters" class="icon-btn" style="margin-left: 8px;"><span class="material-icons">filter_list</span></button>
+                    <button data-action="toggle-diario-view" class="icon-btn"><span class="material-icons">${diarioViewMode === 'list' ? 'calendar_month' : 'list'}</span></button>
                 `;
             }
             leftEl.innerHTML = leftSideHTML;
         }
-
         if (actionsEl) actionsEl.innerHTML = pageRenderers[pageId].actions;
         
+        // Renderizamos la vista
         await pageRenderers[pageId].render();
     }
     
+    // Animación de Transición
     selectAll('.bottom-nav__item').forEach(b => b.classList.toggle('bottom-nav__item--active', b.dataset.page === newView.id));
     updateThemeIcon();
-    
     newView.classList.add('view--active'); 
-    
     if (oldView && !isInitial) {
         const outClass = isForward ? 'view-transition-out-forward' : 'view-transition-out-backward';
         const inClass = isForward ? 'view-transition-in-forward' : 'view-transition-in-backward';
-
         newView.classList.add(inClass);
         oldView.classList.add(outClass);
-
         oldView.addEventListener('animationend', () => {
             oldView.classList.remove('view--active', outClass);
             newView.classList.remove(inClass);
         }, { once: true });
-
     } else if (oldView) {
         oldView.classList.remove('view--active');
     }
 
+    // 2. RESTAURACIÓN INTELIGENTE DE SCROLL
     if (mainScroller) {
-        mainScroller.scrollTop = pageScrollPositions[pageId] || 0;
+        // Restauramos el scroll guardado (o 0 si es la primera vez)
+        const targetScroll = pageScrollPositions[pageId] || 0;
+        mainScroller.scrollTop = targetScroll;
+
+        // ¡IMPORTANTE! Si es el diario, la lista virtual piensa que está en 0 si no forzamos un re-cálculo
+        if (pageId === PAGE_IDS.DIARIO && diarioViewMode === 'list') {
+            // Forzamos un frame para que la lista detecte la nueva posición del scroll y pinte los elementos correctos
+            requestAnimationFrame(() => {
+                mainScroller.scrollTop = targetScroll; 
+                renderVisibleItems(); // <-- Función de tu lista virtual que dibuja los elementos
+            });
+        }
     }
 
     if (pageId === PAGE_IDS.PANEL) {
@@ -8920,7 +8916,28 @@ const handleSaveMovement = async (form, btn) => {
 
             await batch.commit();
             hapticFeedback('success');
-            showToast(mode.startsWith('edit') ? 'Movimiento actualizado.' : 'Movimiento guardado.');
+            
+            // --- FEEDBACK VISUAL AGRESIVO (BOTÓN VERDE) ---
+            const activeBtn = isSaveAndNew ? saveNewBtn : saveBtn;
+            if (activeBtn) {
+                // Guardamos texto original
+                const originalText = activeBtn.innerHTML;
+                
+                // Cambiamos a estado de éxito
+                activeBtn.classList.remove('btn--loading');
+                activeBtn.classList.add('btn--success-state');
+                activeBtn.innerHTML = '<span class="material-icons">check_circle</span> ¡Hecho!';
+                
+                // Esperamos 650ms para que el usuario lo goce
+                await wait(650); 
+                
+                // Restauramos botón
+                activeBtn.classList.remove('btn--success-state');
+                activeBtn.innerHTML = originalText;
+            }
+            // ----------------------------------------------
+
+            showToast(mode.startsWith('edit') ? 'Movimiento actualizado.' : 'Movimiento guardado.', 'info');
         }
         
     } catch (error) {

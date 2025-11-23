@@ -1,6 +1,7 @@
 // service-worker.js
+// Versión: 3.1 (Sin caché de Firestore)
 
-const CACHE_NAME = 'DaniCtas';
+const CACHE_NAME = 'DaniCtas-v3.1';
 const URLS_TO_CACHE = [
   '.',
   'index.html',
@@ -9,99 +10,67 @@ const URLS_TO_CACHE = [
   'manifest.json',
   'aiDANaI.webp',
   'icons/android-chrome-192x192.png',
-  'icons/android-chrome-512x512.png',
-  // LIBRERÍAS EXTERNAS IMPRESCINDIBLES
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap',
-  'https://fonts.googleapis.com/icon?family=Material+Icons',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns',
-  'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0',
-  'https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@2.3.0',
-  'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js',
-  'https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js',
-  'https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js',
-  'https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js'
+  'icons/android-chrome-512x512.png'
 ];
 
-// Evento 'install': Se dispara cuando el Service Worker se instala por primera vez.
 self.addEventListener('install', event => {
-  // skipWaiting() fuerza al nuevo Service Worker a activarse inmediatamente.
   self.skipWaiting(); 
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Cache abierta. Guardando ficheros de la app...');
+        console.log('Service Worker: Cacheando app shell...');
         return cache.addAll(URLS_TO_CACHE);
       })
   );
 });
 
-// Evento 'activate': Se dispara cuando el Service Worker se activa.
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (CACHE_NAME !== cacheName) {
-            console.log('Borrando caché antigua:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => self.clients.claim()) // Toma el control de las páginas abiertas.
+    }).then(() => self.clients.claim())
   );
 });
 
-// REEMPLAZA TU self.addEventListener('fetch', ...) con este bloque
 self.addEventListener('fetch', event => {
     const { request } = event;
 
-    // No interceptar peticiones que no sean GET
-    if (request.method !== 'GET') {
-        return;
+    // 1. REGLA DE ORO: Ignorar completamente Firestore
+    // Dejamos que el SDK de Firebase gestione su propia caché interna (IndexedDB)
+    // Esto arregla el problema de datos obsoletos y conflictos de escritura.
+    if (request.url.includes('firestore.googleapis.com') || request.url.includes('google.com')) {
+        return; 
     }
 
-    // Estrategia para los recursos de la App (CSS, JS, HTML, imágenes)
-    // Stale-While-Revalidate: Sirve desde la caché al instante, y actualiza en segundo plano.
-    const url = new URL(request.url);
+    // 2. Solo gestionamos peticiones GET para recursos de la interfaz
+    if (request.method !== 'GET') return;
 
-    // Ajustamos la lógica para que 'index.html' se sirva para la raíz '.'
+    const url = new URL(request.url);
+    // Normalización de index.html para PWA
     const resourcePath = url.pathname.endsWith('/') ? '/index.html' : url.pathname;
-    const isAppShellResource = URLS_TO_CACHE.map(path => path.replace(/^\./, '')).includes(resourcePath);
+    
+    // Comprobamos si es un recurso estático que queremos controlar
+    const isAppShellResource = URLS_TO_CACHE.some(path => path.endsWith(resourcePath.replace(/^\//, '')));
 
     if (isAppShellResource) {
+        // Estrategia Stale-While-Revalidate: Rapidez + Actualización
         event.respondWith(
             caches.open(CACHE_NAME).then(cache => {
                 return cache.match(request).then(cachedResponse => {
                     const fetchPromise = fetch(request).then(networkResponse => {
                         cache.put(request, networkResponse.clone());
                         return networkResponse;
-                    });
-                    // Devuelve la respuesta de la caché si existe, si no, espera a la red.
+                    }).catch(err => console.log('Fallo red SW (no crítico si hay caché)', err));
+                    
                     return cachedResponse || fetchPromise;
                 });
             })
         );
-        return; // <-- ¡ESTA ES LA LÍNEA CLAVE QUE LO ARREGLA!
     }
-
-    // Estrategia para datos de Firebase (Network First)
-    // Siempre intenta obtener los datos más frescos, con fallback a la caché si no hay red.
-    event.respondWith(
-        fetch(request)
-            .then(networkResponse => {
-                // Aumentamos la caché guardando los datos de Firebase también
-                return caches.open(CACHE_NAME).then(cache => {
-                    // Solo cacheamos peticiones GET a Firestore
-                    if (request.url.includes('firestore.googleapis.com')) {
-                        cache.put(request, networkResponse.clone());
-                    }
-                    return networkResponse;
-                });
-            })
-            .catch(() => {
-                // Si la red falla, intentamos servir desde la caché
-                return caches.match(request);
-            })
-    );
 });
