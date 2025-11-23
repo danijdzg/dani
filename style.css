@@ -1701,25 +1701,31 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 #movimiento-modal .form-group {
     margin-bottom: var(--sp-2);
 }
-/* === INICIO: ESTILOS PARA FORMULARIO DE ALTA DENSIDAD === */
+/* === REEMPLAZA EL BLOQUE .dense-form-grid COMPLETO POR ESTE === */
 
-/* 1. La nueva rejilla principal del formulario */
+/* Nueva rejilla secuencial para el flujo: Cantidad > Concepto > Detalle > Cuenta */
 .dense-form-grid {
-    display: grid;
-    grid-template-columns: 40% 1fr; /* Columna de cantidad más pequeña */
-    grid-template-areas:
-        "amount      description"
-        "details     details";
-    gap: var(--sp-3) var(--sp-2);
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
 }
 
-/* El contenedor de "details" (Concepto/Cuenta o Traspaso) será otra rejilla interna */
-#movimiento-fields, #traspaso-fields {
-    grid-area: details;
+/* Ajustamos el contenedor interno para que cuando se vea el formulario normal
+   los campos ocupen el ancho completo para facilitar el toque */
+#movimiento-fields {
+    display: contents; /* Permite que los hijos (Concepto, Cuenta) fluyan con el padre */
+}
+
+/* Para los traspasos, mantenemos las dos cuentas lado a lado para ver el flujo */
+#traspaso-fields {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--sp-3) var(--sp-2);
+    gap: var(--sp-3);
+}
+
+/* El campo de cantidad le damos un poco más de aire */
+#movimiento-cantidad-form-group {
+    margin-bottom: 4px;
 }
 
 /* 2. El nuevo componente de campo de formulario compacto */

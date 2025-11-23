@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -162,7 +160,8 @@
 
                 <div class="dense-form-grid">
                     
-                    <div class="form-field-compact" id="movimiento-cantidad-form-group" style="grid-area: amount;">
+                    <!-- 1. IMPORTE -->
+                    <div class="form-field-compact" id="movimiento-cantidad-form-group">
                         <label for="movimiento-cantidad">Cantidad (€)</label>
                         <div class="input-wrapper">
                              <input type="text" id="movimiento-cantidad" required placeholder="0,00" inputmode="none" autocomplete="off" class="input-amount-calculator" />
@@ -173,33 +172,60 @@
                         <span class="form-error" id="movimiento-cantidad-error"></span>
                     </div>
                     
-                    <div class="form-field-compact" style="grid-area: description;">
-                        <label for="movimiento-descripcion">Descripción</label>
-                        <div class="input-wrapper">
-                            <input type="text" id="movimiento-descripcion" required placeholder="Compra semanal, café..." autocomplete="off" enterkeyhint="next" />
-                        </div>
-                        <span class="form-error" id="movimiento-descripcion-error"></span>
-                        <div id="description-suggestions"></div>
-                    </div>
-                    
                     <div id="movimiento-fields">
+                        <!-- 2. CONCEPTO (Movido arriba) -->
                         <div class="form-field-compact">
                             <label for="movimiento-concepto">Concepto</label>
-                            <!-- ⭐ CORRECCIÓN CLAVE: El SELECT está ahora dentro de su input-wrapper -->
                             <div class="input-wrapper">
                                 <select id="movimiento-concepto" required></select>
                             </div>
                             <span class="form-error" id="movimiento-concepto-error"></span>
                         </div>
+
+                        <!-- 3. DETALLE (Antigua Descripción, renombrada y movida aquí) -->
+                        <div class="form-field-compact">
+                            <label for="movimiento-descripcion">Detalle</label>
+                            <div class="input-wrapper">
+                                <!-- Eliminado enterkeyhint="next" para manejarlo nosotros en JS -->
+                                <input type="text" id="movimiento-descripcion" required placeholder="..." autocomplete="off" />
+                            </div>
+                            <span class="form-error" id="movimiento-descripcion-error"></span>
+                            <div id="description-suggestions"></div>
+                        </div>
+
+                        <!-- 4. CUENTA (Movida al final) -->
                         <div class="form-field-compact">
                             <label for="movimiento-cuenta">Cuenta</label>
-                            <!-- ⭐ CORRECCIÓN CLAVE: El SELECT está ahora dentro de su input-wrapper -->
                             <div class="input-wrapper">
                                 <select id="movimiento-cuenta" required></select>
                             </div>
                             <span class="form-error" id="movimiento-cuenta-error"></span>
                         </div>
                     </div>
+
+                    <!-- Campos alternativos para Traspaso (Mismo sitio, solo visibles si es traspaso) -->
+                    <div id="traspaso-fields" class="hidden">
+                        <div class="form-field-compact">
+                            <label for="movimiento-cuenta-origen">Desde Cuenta</label>
+                            <div class="input-wrapper">
+                                <select id="movimiento-cuenta-origen"></select>
+                            </div>
+                            <span class="form-error" id="movimiento-cuenta-origen-error"></span>
+                        </div>
+                        <div class="form-field-compact">
+                            <label for="movimiento-cuenta-destino">Hacia Cuenta</label>
+                            <div class="input-wrapper">
+                                <select id="movimiento-cuenta-destino"></select>
+                            </div>
+                            <span class="form-error" id="movimiento-cuenta-destino-error"></span>
+                        </div>
+                        <!-- Para traspaso, la descripción (Detalle) la dejamos visible pero opcional en lógica JS -->
+                        <div class="form-field-compact" style="grid-column: 1 / -1; margin-top: 8px;">
+                             <label for="movimiento-descripcion-traspaso-proxy" style="color: var(--c-on-surface-secondary);">Nota (Opcional)</label>
+                             <p style="font-size: 0.75rem; color: var(--c-on-surface-tertiary); margin-top: 4px;">El detalle del traspaso se genera automáticamente.</p>
+                        </div>
+                    </div>
+                </div>
 
                     <div id="traspaso-fields" class="hidden">
                         <div class="form-field-compact">

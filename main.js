@@ -1077,59 +1077,73 @@ const calculatePreviousDueDate = (currentDueDate, frequency, weekDays = []) => {
         </div>`;
 };
 
-// EN main.js - AÑADE ESTA NUEVA FUNCIÓN COMPLETA
-
 /**
- * Configura la navegación secuencial con la tecla "Enter" dentro del formulario de movimientos.
+ * Configura la navegación secuencial inteligente.
+ * Orden: Cantidad -> Concepto -> Detalle (Auto-relleno) -> Cuenta -> Guardar
  */
 const setupFormNavigation = () => {
-    // 1. Referencias
+    // Referencias
     const cantidadInput = select('movimiento-cantidad');
+    const conceptoSelect = select('movimiento-concepto'); // Select real
     const descripcionInput = select('movimiento-descripcion');
+    const cuentaSelect = select('movimiento-cuenta'); // Select real
     
-    // Referencias a los triggers de los selectores
-    const conceptoTrigger = select('movimiento-concepto')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
-    const cuentaTrigger = select('movimiento-cuenta')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
-    const origenTrigger = select('movimiento-cuenta-origen')?.closest('.form-field-compact').querySelector('.custom-select__trigger');
-    const fechaButton = select('movimiento-fecha-display');
     const saveButton = select('save-movimiento-btn');
 
-    const addEnterListener = (element, nextAction) => {
-        if (!element) return;
-        element.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault(); 
-                nextAction();
-            }
-        });
-    };
+    // Helpers para encontrar los "Triggers" (los divs falsos que se ven en pantalla)
+    const getTrigger = (id) => select(id)?.closest('.form-field-compact')?.querySelector('.custom-select__trigger');
 
-    // 2. Cadena de eventos
-    addEnterListener(cantidadInput, () => descripcionInput.focus());
-
-    // ✅ AL PULSAR ENTER EN DESCRIPCIÓN -> Hacemos .focus() al siguiente
-    // Como modificamos createCustomSelect, el .focus() abrirá la lista automáticamente.
-    addEnterListener(descripcionInput, () => {
-        const isTraspaso = !select('traspaso-fields').classList.contains('hidden');
-        if (isTraspaso) {
-            origenTrigger?.focus();
-        } else {
-            conceptoTrigger?.focus();
+    // 1. CANTIDAD [ENTER] -> Abrir CONCEPTO
+    cantidadInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            // Enfocamos el disparador visual del concepto
+            getTrigger('movimiento-concepto')?.focus();
         }
     });
-    
-    // Si eliges un concepto y pulsas Enter (esto requiere que el div tenga foco), pasar a Cuenta
-    if (conceptoTrigger) {
-        conceptoTrigger.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === 'Tab') {
-                // Si la lista está cerrada, pasar al siguiente. Si está abierta, seleccionar (eso lo maneja el navegador o lógica adicional)
-                // Simplificamos: Al pulsar Enter sobre el trigger cerrado o tras elegir, ir a cuenta.
-                 setTimeout(() => cuentaTrigger?.focus(), 100);
-            }
-        });
-    }
 
-    addEnterListener(fechaButton, () => saveButton.click());
+    // 2. AL CAMBIAR CONCEPTO (Lógica de autocompletado del detalle)
+    // Usamos 'change' en el select real, que nuestra función createCustomSelect ya dispara.
+    conceptoSelect.addEventListener('change', () => {
+        const conceptoTexto = conceptoSelect.options[conceptoSelect.selectedIndex]?.text;
+        
+        // Si el detalle está vacío o tiene el mismo valor que el concepto anterior (lógica simple), rellenamos.
+        // La regla: "si no se cambia pondrá el mismo nombre que concepto". 
+        // Hacemos que SIEMPRE sugiera el concepto si el campo está vacío.
+        if (conceptoTexto && descripcionInput.value.trim() === '') {
+            descripcionInput.value = toSentenceCase(conceptoTexto);
+        }
+        
+        // Tras elegir concepto, saltamos al campo Detalle
+        // Pequeño timeout para dar tiempo a que se cierre el dropdown visual
+        setTimeout(() => {
+            descripcionInput.focus();
+            descripcionInput.select(); // Seleccionamos texto para facilitar sobrescritura si se desea cambiar
+        }, 100);
+    });
+
+    // 3. DETALLE [ENTER] -> Abrir CUENTA
+    descripcionInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            getTrigger('movimiento-cuenta')?.focus();
+        }
+    });
+
+    // 4. AL CAMBIAR CUENTA -> Enfocar GUARDAR (o guardar directamente)
+    cuentaSelect.addEventListener('change', () => {
+        setTimeout(() => {
+            saveButton.focus(); // Llevamos al usuario al botón guardar
+            // Opcional: Si quieres que guarde directamente al elegir cuenta, descomenta:
+            // saveButton.click(); 
+        }, 100);
+    });
+    
+    // Lógica para TRASPASOS (Camino alternativo)
+    const origenTrigger = getTrigger('movimiento-cuenta-origen');
+    
+    // Si estamos en modo traspaso (detectamos por visibilidad), cambiamos el flujo desde descripción
+    // (o podemos saltar descripción en traspasos, pero lo dejamos accesible).
 };
 
 	/**
