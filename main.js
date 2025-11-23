@@ -8435,72 +8435,89 @@ const handleConfirmRecurrent = async (id, btn) => {
     const recurrente = db.recurrentes[recurrenteIndex];
 
     try {
-        // --- INICIO DE LA ACTUALIZACIÓN OPTIMISTA ---
-        // 1. Aplicamos la animación de borrado al elemento en la UI.
+        // 1. Efecto visual inmediato (UI Optimista)
         const itemEl = document.getElementById(`pending-recurrente-${id}`);
         if (itemEl) itemEl.classList.add('item-deleting');
 
-        // 2. Simulamos el guardado en la memoria local para una respuesta instantánea.
+        // 2. Cálculo de la nueva fecha
+        let newNextDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency, recurrente.weekDays);
+
+        // 3. Preparar el Batch de Firebase (Escritura Atómica)
         const batch = fbDb.batch();
         const userRef = fbDb.collection('users').doc(currentUser.uid);
 
-        let newNextDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency, recurrente.weekDays);
-
-        // 3. Persistimos los cambios en la base de datos en segundo plano.
+        // A. ¿Se ha terminado la serie o continúa?
         if (recurrente.frequency === 'once' || (recurrente.endDate && newNextDate > parseDateStringAsUTC(recurrente.endDate))) {
+            // Si era una vez o se pasó la fecha fin, borramos el recurrente de la DB
             batch.delete(userRef.collection('recurrentes').doc(id));
-            db.recurrentes.splice(recurrenteIndex, 1); // Lo borramos de la memoria local
+            // Actualizamos memoria local para que el refresco visual sea coherente
+            db.recurrentes.splice(recurrenteIndex, 1); 
         } else {
+            // Si sigue, actualizamos la próxima fecha en la DB
             batch.update(userRef.collection('recurrentes').doc(id), { nextDate: newNextDate.toISOString().slice(0, 10) });
-            db.recurrentes[recurrenteIndex].nextDate = newNextDate.toISOString().slice(0, 10); // Actualizamos la memoria local
+            // Actualizamos memoria local
+            db.recurrentes[recurrenteIndex].nextDate = newNextDate.toISOString().slice(0, 10);
         }
         
-        // El resto de la lógica para crear el movimiento
+        // B. Crear el movimiento real en el historial
         const newMovementId = generateId();
+        // Importante: La fecha del movimiento se graba como ISO completo (T12:00:00Z)
+        // Usamos la fecha "Programada" (nextDate original), no la fecha "de hoy", para respetar la contabilidad.
+        const transactionDateISO = new Date(recurrente.nextDate + 'T12:00:00Z').toISOString();
+
         const newMovementData = {
             id: newMovementId,
             cantidad: recurrente.cantidad,
             descripcion: recurrente.descripcion,
-            fecha: new Date(recurrente.nextDate + 'T12:00:00Z').toISOString(),
+            fecha: transactionDateISO,
             tipo: recurrente.tipo,
-            cuentaId: recurrente.cuentaId,
-            conceptoId: recurrente.conceptoId,
-            cuentaOrigenId: recurrente.cuentaOrigenId,
-            cuentaDestinoId: recurrente.cuentaDestinoId
+            // Campos opcionales que pueden ser null en el recurrente
+            cuentaId: recurrente.cuentaId || null,
+            conceptoId: recurrente.conceptoId || null,
+            cuentaOrigenId: recurrente.cuentaOrigenId || null,
+            cuentaDestinoId: recurrente.cuentaDestinoId || null
         };
         batch.set(userRef.collection('movimientos').doc(newMovementId), newMovementData);
+
+        // C. Actualizar saldos de las cuentas afectadas
         if (recurrente.tipo === 'traspaso') {
-            batch.update(userRef.collection('cuentas').doc(recurrente.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-recurrente.cantidad) });
-            batch.update(userRef.collection('cuentas').doc(recurrente.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
+            batch.update(userRef.collection('cuentas').doc(recurrente.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-Math.abs(recurrente.cantidad)) });
+            batch.update(userRef.collection('cuentas').doc(recurrente.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(Math.abs(recurrente.cantidad)) });
         } else {
+            // Si es ingreso/gasto normal
             batch.update(userRef.collection('cuentas').doc(recurrente.cuentaId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
         }
 
-        // --- FIN DE LA ACTUALIZACIÓN OPTIMISTA ---
-
-        // Lanzamos el guardado en la nube
+        // 4. ¡FUEGO! (Commit a Firebase)
         await batch.commit();
         
         hapticFeedback('success');
-        showToast("Movimiento añadido desde recurrente.", "info");
+        showToast("Movimiento añadido.", "info");
 
-        // Refrescamos la UI local AHORA que sabemos que la operación ha tenido éxito.
-        await loadCoreData(currentUser.uid); // Recargamos para obtener los nuevos saldos y listas actualizadas
-        
+        // NOTA: NO llamamos a loadCoreData(). Los listeners de Firebase
+        // detectarán el cambio en 'cuentas' y 'recurrentes' y actualizarán la UI automáticamente.
+        // Sin embargo, para los movimientos en el panel 'Planificar' (pendientes), forzamos el repintado
+        // una vez termine la animación, usando los datos que ya hemos actualizado en local (paso 3A).
+
     } catch (error) {
         console.error("Error al confirmar recurrente:", error);
-        showToast("No se pudo añadir el movimiento. Revisa tu conexión.", "danger");
-        // Aquí iría la lógica para revertir el cambio optimista si fuese necesario.
+        showToast("Error de conexión al procesar.", "danger");
+        if (btn) setButtonLoading(btn, false);
+        // Si falla, quitamos la clase de borrado para que el usuario pueda reintentar
+        const itemEl = document.getElementById(`pending-recurrente-${id}`);
+        if (itemEl) itemEl.classList.remove('item-deleting');
+        return; 
     } finally {
         if (btn) setButtonLoading(btn, false);
-        // Retrasamos el refresco visual para dar tiempo a la animación de borrado.
+        
+        // Esperamos a que acabe la animación CSS (400ms) antes de redibujar
         setTimeout(() => {
             const activePage = document.querySelector('.view--active');
-            if (activePage && (activePage.id === PAGE_IDS.DIARIO || activePage.id === PAGE_IDS.PLANIFICAR)) {
-                if (activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
-                if (activePage.id === PAGE_IDS.PLANIFICAR) renderPlanificacionPage();
+            // Refrescamos solo si estamos viendo la página relevante
+            if (activePage && activePage.id === PAGE_IDS.PLANIFICAR) {
+                renderPlanificacionPage();
             }
-        }, 400); // 400ms es la duración de la animación 'item-deleting'
+        }, 450);
     }
 };
 const handleSkipRecurrent = async (id, btn) => {
