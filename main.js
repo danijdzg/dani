@@ -6616,16 +6616,20 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
 
     showModal('movimiento-modal');
     initAmountInput(); 
-    
-    if (isMobileDevice() && mode === 'new') {
+    setupFormNavigation();
+    // ESTRATEGIA 1 + 2: FOCO DIRECTO Y RÁPIDO
+    if (mode === 'new') {
         setTimeout(() => {
             const amountInput = select('movimiento-cantidad');
-            if(document.activeElement !== amountInput) { 
-                showCalculator(amountInput);
+            if (amountInput) {
+                // 1. Enfocamos el input nativo para que salte el teclado
+                amountInput.focus(); 
+                
+                // 2. NO abrimos la calculadora personalizada automáticamente. 
+                // Dejamos que el usuario use su teclado veloz.
             }
-        }, 150);
+        }, 150); // Pequeño retraso para asegurar que el modal ya es visible
     }
-    setupFormNavigation();
 };
         
         
@@ -7662,29 +7666,91 @@ const applyDescriptionSuggestion = (target) => {
     hapticFeedback('light');
     select('movimiento-cantidad').focus();
 };
+// =============================================================
+// === LÓGICA DEL BOTÓN FLOTANTE INTELIGENTE (FAB)           ===
+// =============================================================
+const setupFabInteractions = () => {
+    const fab = document.getElementById('bottom-nav-add-btn');
+    if (!fab) return;
+
+    let longPressTimer;
+    let isLongPress = false;
+    // 500ms es un estándar cómodo para pulsación larga
+    const LONG_PRESS_DURATION = 500; 
+
+    const startPress = (e) => {
+        // Evitamos que el evento se propague si es táctil para no duplicar con el ratón
+        if (e.type === 'mousedown' && e.buttons !== 1) return;
+        
+        isLongPress = false;
+        fab.style.transform = "scale(0.90)"; // Efecto visual de presión
+        fab.style.transition = "transform 0.1s";
+
+        longPressTimer = setTimeout(() => {
+            // ¡BINGO! Se ha mantenido pulsado: Abrimos el menú de selección
+            isLongPress = true;
+            hapticFeedback('medium');
+            fab.style.transform = "scale(1)";
+            
+            // Estrategia 1 (Pulsación larga): Abrimos el Sheet para elegir (Traspaso, Ingreso, Gasto)
+            showModal('main-add-sheet'); 
+        }, LONG_PRESS_DURATION);
+    };
+
+    const endPress = (e) => {
+        clearTimeout(longPressTimer);
+        fab.style.transform = "scale(1)";
+
+        // Si NO fue una pulsación larga, es un CLIC normal
+        if (!isLongPress) {
+            e.preventDefault(); // Evita comportamientos dobles
+            
+            // Estrategia 1 (Entrada Directa): Abrimos directamente "Nuevo Gasto"
+            // Es la opción más común, ahorramos un clic.
+            startMovementForm(null, false, 'gasto');
+        }
+    };
+
+    // Eventos para Móvil (Touch) y Ordenador (Mouse)
+    fab.addEventListener('touchstart', startPress, { passive: true });
+    fab.addEventListener('touchend', endPress);
+    fab.addEventListener('mousedown', startPress);
+    fab.addEventListener('mouseup', endPress);
+    // Cancelamos si el usuario mueve el dedo fuera del botón o ocurre un error
+    fab.addEventListener('mouseleave', () => { clearTimeout(longPressTimer); fab.style.transform = "scale(1)"; });
+    fab.addEventListener('touchcancel', () => { clearTimeout(longPressTimer); fab.style.transform = "scale(1)"; });
+};
 
 const initAmountInput = () => {
     const amountInput = select('movimiento-cantidad');
     const calculatorToggle = select('calculator-toggle-btn');
-    if (!amountInput || !calculatorToggle) return;
     
+    if (!amountInput) return;
+    
+    // Limpiamos eventos anteriores
     amountInput.onclick = null;
-    calculatorToggle.onclick = null;
+    if (calculatorToggle) calculatorToggle.onclick = null;
     
-    if (isMobileDevice()) {
-        amountInput.setAttribute('inputmode', 'none');
-		amountInput.setAttribute('readonly', 'true'); // Evita el cursor parpadeando
-        calculatorToggle.style.display = 'none';
-        
-        amountInput.onclick = (e) => {
-            e.preventDefault();
+    // CONFIGURACIÓN HÍBRIDA: 
+    // 1. inputmode="decimal" fuerza el teclado numérico nativo en iPhone/Android.
+    amountInput.setAttribute('inputmode', 'decimal');
+    amountInput.removeAttribute('readonly'); // Aseguramos que se pueda escribir
+    
+    // 2. Mantenemos el botón de calculadora visible siempre (incluso en móvil)
+    // por si el usuario necesita hacer operaciones matemáticas.
+    if (calculatorToggle) {
+        calculatorToggle.style.display = 'inline-flex';
+        calculatorToggle.onclick = (e) => {
+            e.preventDefault(); // Evitamos que el botón haga submit
+            hapticFeedback('light');
             showCalculator(amountInput);
         };
-    } else {
-        amountInput.setAttribute('inputmode', 'decimal');
-        calculatorToggle.style.display = 'inline-flex';
-        calculatorToggle.onclick = () => showCalculator(amountInput);
     }
+    
+    // Pequeña mejora: al tocar el input, seleccionamos todo el texto para sobrescribir fácil
+    amountInput.addEventListener('focus', function() {
+        this.select();
+    });
 };
 // --- PARCHES DE COMPATIBILIDAD ---
 // Añade esto al final de main.js o en el bloque de funciones globales
@@ -8191,7 +8257,7 @@ if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || tar
             }
         }); 
     }
-
+	 setupFabInteractions();
 }; // <--- ¡IMPORTANTE! ESTA LLAVE CIERRA LA FUNCIÓN attachEventListeners
 
 // Lógica separada para el selector de días semanales (para que no se duplique)
