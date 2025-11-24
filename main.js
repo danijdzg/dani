@@ -1804,7 +1804,9 @@ const navigateTo = async (pageId, isInitial = false) => {
 
     if (pageRenderers[pageId]) { 
         if (leftEl) {
-            let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar a Contabilidad ${isOffBalanceMode ? 'A' : 'B'}"> ${isOffBalanceMode ? 'B' : 'A'}</button><span id="page-title-display">${pageRenderers[pageId].title}</span>`;
+            let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar a Contabilidad ${isOffBalanceMode ? 'B' : 'A'}"> ${isOffBalanceMode ? 'B' : 'A'}</button>
+            <a href="https://danijdzg.github.io/aiDANaI/dani/DaniCalc/" target="_blank" id="page-title-display" style="text-decoration: none; color: inherit; cursor: pointer;">${pageRenderers[pageId].title}</a>`;
+            
             if (pageId === PAGE_IDS.PANEL) leftSideHTML += `<button data-action="configure-dashboard" class="icon-btn" style="margin-left: 8px;"><span class="material-icons">dashboard_customize</span></button>`;
             if (pageId === PAGE_IDS.DIARIO) {
                 leftSideHTML += `
