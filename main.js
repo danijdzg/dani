@@ -6577,15 +6577,18 @@ const renderQuickAccessChips = () => {
 const startMovementForm = async (id = null, isRecurrent = false, initialType = 'gasto') => {
     hapticFeedback('medium');
     const form = select('form-movimiento');
+    if (!form) return; // Seguridad extra
+    
     form.reset();
     clearAllErrors(form.id);
     
-    // 1. Rellenamos los desplegables primero para asegurarnos de que las opciones existen
+    // 1. Rellenamos los desplegables
     populateAllDropdowns();
 
     // Resetear selector de días semanal
     selectAll('.day-selector-btn').forEach(btn => btn.classList.remove('active'));
-    select('weekly-day-selector').classList.add('hidden');
+    const weeklySelector = select('weekly-day-selector');
+    if (weeklySelector) weeklySelector.classList.add('hidden');
     
     let data = null;
     let mode = 'new';
@@ -6615,40 +6618,35 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
     select('movimiento-id').value = id || '';
 
     if (data) {
-        // Rellenar Cantidad
+        // Rellenar Cantidad (formato ES)
         select('movimiento-cantidad').value = `${(Math.abs(data.cantidad) / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, useGrouping: false })}`;
         
-        // Rellenar Fecha
+        // Rellenar Fecha (Manejo robusto)
         const fechaInput = select('movimiento-fecha');
-        // Usamos data.nextDate para recurrentes, data.fecha para normales
         const dateStringForInput = isRecurrent ? data.nextDate : data.fecha;
         
         if (dateStringForInput) {
-            // Intentamos crear la fecha. Si es ISO string, slice funciona bien.
-            // Si viene del objeto Date de JS, lo convertimos.
             let fechaISO = '';
             if (dateStringForInput.includes('T')) {
                 fechaISO = dateStringForInput.split('T')[0];
             } else {
-                fechaISO = dateStringForInput; // Asumimos YYYY-MM-DD
+                fechaISO = dateStringForInput;
             }
             
             if (fechaISO) {
                 fechaInput.value = fechaISO;
-                updateDateDisplay(fechaInput); // ✅ Actualizamos el botón visual de la fecha
+                updateDateDisplay(fechaInput); 
             }
         }
 
         // Rellenar Descripción
         select('movimiento-descripcion').value = data.descripcion || '';
 
-        // ✅ CORRECCIÓN CRÍTICA: Rellenar Selects y DISPARAR EL EVENTO
-        // Función auxiliar para asignar y notificar cambio
+        // Helper para selects
         const setSelectValue = (selectId, value) => {
             const el = select(selectId);
             if (el) {
                 el.value = value || '';
-                // ¡ESTA ES LA CLAVE! Avisamos al componente visual que el valor cambió
                 el.dispatchEvent(new Event('change')); 
             }
         };
@@ -6666,55 +6664,70 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
         const recurrentOptions = select('recurrent-options');
         
         if (mode === 'edit-recurrent') {
-            recurrenteCheckbox.checked = true;
-            setSelectValue('recurrent-frequency', data.frequency); // Usamos el helper aquí también
+            if (recurrenteCheckbox) recurrenteCheckbox.checked = true;
+            setSelectValue('recurrent-frequency', data.frequency);
             
-            select('recurrent-next-date').value = data.nextDate;
-            select('recurrent-end-date').value = data.endDate || '';
-            recurrentOptions.classList.remove('hidden');
+            if(select('recurrent-next-date')) select('recurrent-next-date').value = data.nextDate;
+            if(select('recurrent-end-date')) select('recurrent-end-date').value = data.endDate || '';
+            if(recurrentOptions) recurrentOptions.classList.remove('hidden');
             
             if (data.frequency === 'weekly' && data.weekDays) {
-                select('weekly-day-selector').classList.remove('hidden');
+                if(select('weekly-day-selector')) select('weekly-day-selector').classList.remove('hidden');
                 data.weekDays.forEach(day => {
                     const btn = document.querySelector(`.day-selector-btn[data-day="${day}"]`);
                     if(btn) btn.classList.add('active');
                 });
             }
         } else {
-            recurrenteCheckbox.checked = false;
-            recurrentOptions.classList.add('hidden');
+            if (recurrenteCheckbox) recurrenteCheckbox.checked = false;
+            if (recurrentOptions) recurrentOptions.classList.add('hidden');
         }
 
     } else {
-        // Modo Nuevo: Fecha de hoy por defecto
+        // MODO NUEVO: Fecha de hoy local correcta
         const fechaInput = select('movimiento-fecha');
         const now = new Date();
-        // Ajuste de zona horaria simple para YYYY-MM-DD local
         const localIsoDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
         fechaInput.value = localIsoDate;
         updateDateDisplay(fechaInput);
     }
     
-    // Gestión de botones Borrar/Duplicar
-    select('delete-movimiento-btn').classList.toggle('hidden', !id || !data);
-    select('delete-movimiento-btn').dataset.isRecurrent = String(isRecurrent);
-    select('duplicate-movimiento-btn').classList.toggle('hidden', !(mode === 'edit-single' && data));
+    // --- CORRECCIÓN DEL ERROR ---
+    // Comprobamos que los botones existen antes de intentar acceder a su classList
+    const deleteBtn = select('delete-movimiento-btn');
+    const duplicateBtn = select('duplicate-movimiento-btn'); // Este es el que causaba el crash al no existir
+
+    if (deleteBtn) {
+        deleteBtn.classList.toggle('hidden', !id || !data);
+        deleteBtn.dataset.isRecurrent = String(isRecurrent);
+    }
+    
+    if (duplicateBtn) {
+        duplicateBtn.classList.toggle('hidden', !(mode === 'edit-single' && data));
+    }
 
     showModal('movimiento-modal');
+    
+    // Si la función renderQuickAccessChips existe, la llamamos
+    if (typeof renderQuickAccessChips === 'function') {
+        renderQuickAccessChips(); 
+    }
+
     initAmountInput(); 
-    setupFormNavigation();
-    // ESTRATEGIA 1 + 2: FOCO DIRECTO Y RÁPIDO
+    
+    // Si existe setupFormNavigation, la llamamos
+    if (typeof setupFormNavigation === 'function') {
+        setupFormNavigation();
+    }
+
+    // Foco rápido al abrir
     if (mode === 'new') {
         setTimeout(() => {
             const amountInput = select('movimiento-cantidad');
             if (amountInput) {
-                // 1. Enfocamos el input nativo para que salte el teclado
                 amountInput.focus(); 
-                
-                // 2. NO abrimos la calculadora personalizada automáticamente. 
-                // Dejamos que el usuario use su teclado veloz.
             }
-        }, 150); // Pequeño retraso para asegurar que el modal ya es visible
+        }, 150); 
     }
 };
         
