@@ -8521,13 +8521,19 @@ const handleConfirmRecurrent = async (id, btn) => {
     }
     const recurrente = db.recurrentes[recurrenteIndex];
 
+    // ▼▼▼ CORRECCIÓN CLAVE AQUÍ ▼▼▼
+    // Guardamos la fecha original ("Hoy") en una variable separada ANTES de que nada cambie.
+    const originalScheduledDate = recurrente.nextDate; 
+    // ▲▲▲ FIN CORRECCIÓN ▲▲▲
+
     try {
         // 1. Efecto visual inmediato (UI Optimista)
         const itemEl = document.getElementById(`pending-recurrente-${id}`);
         if (itemEl) itemEl.classList.add('item-deleting');
 
-        // 2. Cálculo de la nueva fecha
-        let newNextDate = calculateNextDueDate(recurrente.nextDate, recurrente.frequency, recurrente.weekDays);
+        // 2. Cálculo de la nueva fecha (para el futuro)
+        // Usamos originalScheduledDate como base para el cálculo
+        let newNextDate = calculateNextDueDate(originalScheduledDate, recurrente.frequency, recurrente.weekDays);
 
         // 3. Preparar el Batch de Firebase (Escritura Atómica)
         const batch = fbDb.batch();
@@ -8535,22 +8541,21 @@ const handleConfirmRecurrent = async (id, btn) => {
 
         // A. ¿Se ha terminado la serie o continúa?
         if (recurrente.frequency === 'once' || (recurrente.endDate && newNextDate > parseDateStringAsUTC(recurrente.endDate))) {
-            // Si era una vez o se pasó la fecha fin, borramos el recurrente de la DB
             batch.delete(userRef.collection('recurrentes').doc(id));
-            // Actualizamos memoria local para que el refresco visual sea coherente
             db.recurrentes.splice(recurrenteIndex, 1); 
         } else {
-            // Si sigue, actualizamos la próxima fecha en la DB
-            batch.update(userRef.collection('recurrentes').doc(id), { nextDate: newNextDate.toISOString().slice(0, 10) });
-            // Actualizamos memoria local
-            db.recurrentes[recurrenteIndex].nextDate = newNextDate.toISOString().slice(0, 10);
+            // Si sigue, actualizamos la próxima fecha en la DB y en local
+            const newDateString = newNextDate.toISOString().slice(0, 10);
+            batch.update(userRef.collection('recurrentes').doc(id), { nextDate: newDateString });
+            db.recurrentes[recurrenteIndex].nextDate = newDateString;
         }
         
         // B. Crear el movimiento real en el historial
         const newMovementId = generateId();
-        // Importante: La fecha del movimiento se graba como ISO completo (T12:00:00Z)
-        // Usamos la fecha "Programada" (nextDate original), no la fecha "de hoy", para respetar la contabilidad.
-        const transactionDateISO = new Date(recurrente.nextDate + 'T12:00:00Z').toISOString();
+        
+        // ▼▼▼ USO DE LA FECHA CORRECTA ▼▼▼
+        // Usamos 'originalScheduledDate' (la que tenía la tarjeta al pulsar), forzando mediodía UTC.
+        const transactionDateISO = new Date(originalScheduledDate + 'T12:00:00Z').toISOString();
 
         const newMovementData = {
             id: newMovementId,
@@ -8558,7 +8563,6 @@ const handleConfirmRecurrent = async (id, btn) => {
             descripcion: recurrente.descripcion,
             fecha: transactionDateISO,
             tipo: recurrente.tipo,
-            // Campos opcionales que pueden ser null en el recurrente
             cuentaId: recurrente.cuentaId || null,
             conceptoId: recurrente.conceptoId || null,
             cuentaOrigenId: recurrente.cuentaOrigenId || null,
@@ -8571,7 +8575,6 @@ const handleConfirmRecurrent = async (id, btn) => {
             batch.update(userRef.collection('cuentas').doc(recurrente.cuentaOrigenId), { saldo: firebase.firestore.FieldValue.increment(-Math.abs(recurrente.cantidad)) });
             batch.update(userRef.collection('cuentas').doc(recurrente.cuentaDestinoId), { saldo: firebase.firestore.FieldValue.increment(Math.abs(recurrente.cantidad)) });
         } else {
-            // Si es ingreso/gasto normal
             batch.update(userRef.collection('cuentas').doc(recurrente.cuentaId), { saldo: firebase.firestore.FieldValue.increment(recurrente.cantidad) });
         }
 
@@ -8579,28 +8582,20 @@ const handleConfirmRecurrent = async (id, btn) => {
         await batch.commit();
         
         hapticFeedback('success');
-        showToast("Movimiento añadido.", "info");
-
-        // NOTA: NO llamamos a loadCoreData(). Los listeners de Firebase
-        // detectarán el cambio en 'cuentas' y 'recurrentes' y actualizarán la UI automáticamente.
-        // Sin embargo, para los movimientos en el panel 'Planificar' (pendientes), forzamos el repintado
-        // una vez termine la animación, usando los datos que ya hemos actualizado en local (paso 3A).
+        showToast("Movimiento añadido correctamente.", "info");
 
     } catch (error) {
         console.error("Error al confirmar recurrente:", error);
         showToast("Error de conexión al procesar.", "danger");
         if (btn) setButtonLoading(btn, false);
-        // Si falla, quitamos la clase de borrado para que el usuario pueda reintentar
         const itemEl = document.getElementById(`pending-recurrente-${id}`);
         if (itemEl) itemEl.classList.remove('item-deleting');
         return; 
     } finally {
         if (btn) setButtonLoading(btn, false);
         
-        // Esperamos a que acabe la animación CSS (400ms) antes de redibujar
         setTimeout(() => {
             const activePage = document.querySelector('.view--active');
-            // Refrescamos solo si estamos viendo la página relevante
             if (activePage && activePage.id === PAGE_IDS.PLANIFICAR) {
                 renderPlanificacionPage();
             }
