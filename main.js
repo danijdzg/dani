@@ -941,28 +941,28 @@ async function loadCoreData(uid) {
         };
 
  const calculateNextDueDate = (currentDueDate, frequency, weekDays = []) => {
-    // Usamos parseDateStringAsUTC para garantizar consistencia con UTC
-    const d = parseDateStringAsUTC(currentDueDate);
-    if (!d) return new Date();
+    // Parseamos la fecha base asegurando mediodía UTC para evitar saltos
+    const d = new Date(currentDueDate + 'T12:00:00Z');
+    
+    if (isNaN(d.getTime())) return new Date(); // Fallback de seguridad
 
     switch (frequency) {
         case 'daily': return addDays(d, 1);
         case 'monthly': return addMonths(d, 1);
         case 'yearly': return addYears(d, 1);
         case 'weekly': {
-            if (!weekDays || weekDays.length === 0) return d; // No hacer nada si no hay días
+            if (!weekDays || weekDays.length === 0) return addDays(d, 7); // Fallback si no hay días
 
             const sortedDays = [...weekDays].map(Number).sort((a, b) => a - b);
-            const currentDay = d.getUTCDay(); // 0 (Domingo) a 6 (Sábado)
+            const currentDay = d.getUTCDay(); // Usamos getUTCDay para ser consistentes
 
-            // Buscar el próximo día válido en la misma semana
+            // Buscar el próximo día en la misma semana
             const nextDayInWeek = sortedDays.find(day => day > currentDay);
             
             if (nextDayInWeek !== undefined) {
-                // Encontrado un día más adelante en la semana
                 return addDays(d, nextDayInWeek - currentDay);
             } else {
-                // No hay más días en esta semana, saltar a la siguiente
+                // Saltar a la siguiente semana
                 const daysUntilNextWeek = 7 - currentDay;
                 const firstDayOfNextWeek = sortedDays[0];
                 return addDays(d, daysUntilNextWeek + firstDayOfNextWeek);
@@ -8867,12 +8867,21 @@ const handleSaveMovement = async (form, btn) => {
 
     try {
         if (isRecurrent) {
-            // === LÓGICA PARA GUARDAR RECURRENTE ===
-            
-            // 1. Recopilamos datos específicos de recurrencia
-            const frequency = select('recurrent-frequency').value;
-            const nextDateInput = select('recurrent-next-date').value || select('movimiento-fecha').value;
-            const endDateInput = select('recurrent-end-date').value;
+    // ... (código anterior) ...
+    const frequency = select('recurrent-frequency').value;
+    
+    // --- CORRECCIÓN AQUÍ ---
+    // Tomamos el valor del input (YYYY-MM-DD) y nos aseguramos de usarlo tal cual
+    let rawNextDate = select('recurrent-next-date').value;
+    if (!rawNextDate) rawNextDate = select('movimiento-fecha').value;
+    
+    // No hacemos conversiones de zona horaria complejas aquí, 
+    // simplemente guardamos el String "YYYY-MM-DD" en la base de datos.
+    // El sistema de lectura ya lo interpreta como mediodía.
+    const nextDateInput = rawNextDate; 
+    // -----------------------
+
+    const endDateInput = select('recurrent-end-date').value;
             
             let weekDays = [];
             if (frequency === 'weekly') {

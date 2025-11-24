@@ -140,125 +140,125 @@
     <div id="toast-container" aria-live="assertive"></div>
     
  <!-- EN index.html - REEMPLAZA EL MODAL #movimiento-modal POR COMPLETO -->
-<div id="movimiento-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="form-movimiento-title">
+<div id="movimiento-modal" class="modal-overlay" role="dialog" aria-modal="true">
     <div class="modal">
         <div class="modal__grabber"></div>
-        <header class="modal__header" style="padding-top: var(--sp-2);">
-            <h3 id="form-movimiento-title" class="modal__title">Añadir Movimiento</h3>
-            <button class="icon-btn" data-action="close-modal" data-modal-id="movimiento-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
-        </header>
-        <div class="modal__body">
-    <form id="form-movimiento" novalidate>
-        <input type="hidden" id="movimiento-id" />
-        <input type="hidden" id="movimiento-mode" value="new" />
-
-        <div class="filter-pills" style="justify-content: center;">
-            <button type="button" class="filter-pill filter-pill--active" data-action="set-movimiento-type" data-type="gasto">Gasto</button>
-            <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="ingreso">Ingreso</button>
-            <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="traspaso">Traspaso</button>
-        </div>
-
-        <div class="dense-form-grid">
-            
-            <div class="form-field-compact" id="movimiento-cantidad-form-group">
-                <label for="movimiento-cantidad">IMPORTE (€)</label>
-                <div class="input-wrapper">
-                     <input type="text" id="movimiento-cantidad" required placeholder="0,00" inputmode="decimal" autocomplete="off" class="input-amount-calculator" />
-                     </div>
-                <span class="form-error" id="movimiento-cantidad-error"></span>
-            </div>
-            
-            <div id="quick-access-chips"></div>
-
-            <div id="movimiento-fields">
-                <div class="form-field-compact">
-                    <label for="movimiento-concepto">CONCEPTO</label>
-                    <div class="input-wrapper">
-                        <select id="movimiento-concepto" required></select>
-                    </div>
-                </div>
-
-                <div class="form-field-compact">
-                    <label for="movimiento-cuenta">CUENTA</label>
-                    <div class="input-wrapper">
-                        <select id="movimiento-cuenta" required></select>
-                    </div>
-                </div>
-
-                <div class="form-field-compact">
-                    <label for="movimiento-descripcion">DETALLE / NOTA</label>
-                    <div class="input-wrapper">
-                        <input type="text" id="movimiento-descripcion" required placeholder="Descripción..." autocomplete="off" />
-                    </div>
-                    <div id="description-suggestions"></div>
-                </div>
-            </div>
-
-            <div id="traspaso-fields" class="hidden">
-                <div class="form-field-compact">
-                    <label for="movimiento-cuenta-origen">DESDE</label>
-                    <div class="input-wrapper">
-                        <select id="movimiento-cuenta-origen"></select>
-                    </div>
-                </div>
-                <div class="form-field-compact">
-                    <label for="movimiento-cuenta-destino">HACIA</label>
-                    <div class="input-wrapper">
-                        <select id="movimiento-cuenta-destino"></select>
-                    </div>
-                </div>
-            </div>
-        </div>
         
-        <div class="date-recurrent-row">
-            <div class="input-wrapper" style="flex: 1;">
-                <input type="date" id="movimiento-fecha" class="visually-hidden" required />
-                <button type="button" id="movimiento-fecha-display" class="date-button-compact">
-                    <span class="material-icons" style="font-size: 18px;">calendar_today</span>
-                    <span id="movimiento-fecha-text">Hoy</span>
-                </button>
-            </div>
-            
-            <div class="recurrent-toggle-compact">
-                <label for="movimiento-recurrente">Repetir</label>
-                <label class="form-switch" style="transform: scale(0.8); margin-left: 4px;">
-                    <input type="checkbox" id="movimiento-recurrente">
-                    <span class="slider"></span>
-                </label>
-            </div>
-        </div>
+        <header class="modal__header">
+            <h3 id="form-movimiento-title" class="modal__title">Nuevo Movimiento</h3>
+            <button class="icon-btn" data-action="close-modal" data-modal-id="movimiento-modal"><span class="material-icons">close</span></button>
+        </header>
+        
+        <div class="modal__body">
+            <form id="form-movimiento" novalidate>
+                <input type="hidden" id="movimiento-id" />
+                <input type="hidden" id="movimiento-mode" value="new" />
 
-        <div id="recurrent-options" class="hidden">
-            <div class="recurrent-options__main">
-                <select id="recurrent-frequency" style="flex:1;">
-                    <option value="monthly" selected>Mensual</option>
-                    <option value="weekly">Semanal</option>
-                    <option value="daily">Diaria</option>
-                    <option value="yearly">Anual</option>
-                </select>
-                <input type="date" id="recurrent-next-date" title="Inicio" style="flex:1;">
-            </div>
-            <div id="weekly-day-selector" class="hidden" style="margin-top:8px;">
-                <div id="weekly-day-selector-buttons">
-                    <button type="button" class="day-selector-btn" data-day="1">L</button>
-                    <button type="button" class="day-selector-btn" data-day="2">M</button>
-                    <button type="button" class="day-selector-btn" data-day="3">X</button>
-                    <button type="button" class="day-selector-btn" data-day="4">J</button>
-                    <button type="button" class="day-selector-btn" data-day="5">V</button>
-                    <button type="button" class="day-selector-btn" data-day="6">S</button>
-                    <button type="button" class="day-selector-btn" data-day="0">D</button>
+                <div class="filter-pills" style="justify-content: center;">
+                    <button type="button" class="filter-pill filter-pill--active" data-action="set-movimiento-type" data-type="gasto">Gasto</button>
+                    <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="ingreso">Ingreso</button>
+                    <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="traspaso">Traspaso</button>
                 </div>
-            </div>
-        </div>
 
-        <div class="modal__actions" style="display:flex; gap: var(--sp-2); padding-top: var(--sp-3);">
-             <button type="button" id="delete-movimiento-btn" data-action="delete-movement-from-modal" class="icon-btn hidden" style="color: var(--c-danger); background: var(--c-surface-variant);"><span class="material-icons">delete</span></button>
-             
-             <button id="save-and-new-movimiento-btn" type="button" data-action="save-and-new-movement" class="btn btn--secondary" style="flex: 1;">+ Otro</button>
-             <button id="save-movimiento-btn" type="submit" class="btn btn--primary" style="flex: 2;">Guardar</button>
+                <div class="form-field-compact" id="movimiento-cantidad-form-group">
+                    <label for="movimiento-cantidad">IMPORTE (€)</label>
+                    <div class="input-wrapper">
+                         <input type="text" id="movimiento-cantidad" required placeholder="0,00" inputmode="decimal" autocomplete="off" class="input-amount-calculator" />
+                    </div>
+                    <span class="form-error" id="movimiento-cantidad-error"></span>
+                </div>
+
+                <div id="quick-access-chips"></div>
+
+                <div class="dense-form-grid">
+                    
+                    <div id="movimiento-fields">
+                        <div class="form-field-compact">
+                            <label for="movimiento-concepto">CONCEPTO</label>
+                            <div class="input-wrapper">
+                                <select id="movimiento-concepto" required></select>
+                            </div>
+                        </div>
+                        <div class="form-field-compact">
+                            <label for="movimiento-cuenta">CUENTA</label>
+                            <div class="input-wrapper">
+                                <select id="movimiento-cuenta" required></select>
+                            </div>
+                        </div>
+                        <div class="form-field-compact">
+                            <label for="movimiento-descripcion">DETALLE</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="movimiento-descripcion" required placeholder="Nota..." autocomplete="off" />
+                            </div>
+                            <div id="description-suggestions"></div>
+                        </div>
+                    </div>
+
+                    <div id="traspaso-fields" class="hidden">
+                        <div class="form-field-compact">
+                            <label for="movimiento-cuenta-origen">DESDE</label>
+                            <div class="input-wrapper">
+                                <select id="movimiento-cuenta-origen"></select>
+                            </div>
+                        </div>
+                        <div class="form-field-compact">
+                            <label for="movimiento-cuenta-destino">HACIA</label>
+                            <div class="input-wrapper">
+                                <select id="movimiento-cuenta-destino"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="date-recurrent-row">
+                    <div class="input-wrapper" style="flex: 1;">
+                        <input type="date" id="movimiento-fecha" class="visually-hidden" required />
+                        <button type="button" id="movimiento-fecha-display" class="date-button-compact">
+                            <span class="material-icons" style="font-size: 16px;">calendar_today</span>
+                            <span id="movimiento-fecha-text">Hoy</span>
+                        </button>
+                    </div>
+                    
+                    <div class="recurrent-toggle-compact">
+                        <label for="movimiento-recurrente">Repetir</label>
+                        <label class="form-switch">
+                            <input type="checkbox" id="movimiento-recurrente">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="recurrent-options" class="hidden" style="margin-bottom: 4px;">
+                    <div class="recurrent-options__main">
+                        <select id="recurrent-frequency" style="flex:1;">
+                            <option value="monthly" selected>Mensual</option>
+                            <option value="weekly">Semanal</option>
+                            <option value="daily">Diaria</option>
+                            <option value="yearly">Anual</option>
+                        </select>
+                        <input type="date" id="recurrent-next-date" title="Inicio" style="flex:1;">
+                    </div>
+                    <div id="weekly-day-selector" class="hidden" style="margin-top:6px;">
+                        <div id="weekly-day-selector-buttons">
+                            <button type="button" class="day-selector-btn" data-day="1">L</button>
+                            <button type="button" class="day-selector-btn" data-day="2">M</button>
+                            <button type="button" class="day-selector-btn" data-day="3">X</button>
+                            <button type="button" class="day-selector-btn" data-day="4">J</button>
+                            <button type="button" class="day-selector-btn" data-day="5">V</button>
+                            <button type="button" class="day-selector-btn" data-day="6">S</button>
+                            <button type="button" class="day-selector-btn" data-day="0">D</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal__actions">
+                     <button type="button" id="delete-movimiento-btn" data-action="delete-movement-from-modal" class="icon-btn hidden" style="background: var(--c-surface-variant); width: 40px;"><span class="material-icons text-danger">delete</span></button>
+                     
+                     <button id="save-and-new-movimiento-btn" type="button" data-action="save-and-new-movement" class="btn btn--secondary" style="flex: 1;">+ Otro</button>
+                     <button id="save-movimiento-btn" type="submit" class="btn btn--primary" style="flex: 1.5;">Guardar</button>
+                </div>
+            </form>
         </div>
-    </form>
-</div>
     </div>
 </div>
                  
