@@ -1742,8 +1742,18 @@ const buildIntelligentIndex = (movementsSource = db.movimientos) => {
     intelligentIndex = tempIndex;
     console.log(`Índice inteligente MEJORADO con ${intelligentIndex.size} entradas.`);
 };
-
+const cleanupObservers = () => {
+    if (movementsObserver) {
+        movementsObserver.disconnect();
+        movementsObserver = null;
+    }
+    if (widgetObserver) {
+        widgetObserver.disconnect();
+        widgetObserver = null;
+    }
+};
 const navigateTo = async (pageId, isInitial = false) => {
+	cleanupObservers(); // <--- AÑADIR ESTO AL PRINCIPIO
     const oldView = document.querySelector('.view--active');
     const newView = select(pageId);
     const mainScroller = selectOne('.app-layout__main');
@@ -3333,6 +3343,8 @@ const loadMoreMovements = async (isInitial = false) => {
         }
     }
 };
+
+
 
 // =========================================================================
 // === INICIO: REEMPLAZO COMPLETO Y MEJORADO DE loadInitialMovements     ===

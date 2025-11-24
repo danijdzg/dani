@@ -3174,3 +3174,28 @@ body[data-theme="default"] .cartilla-container {
     #movimiento-modal .modal__actions {
     padding-bottom: calc(var(--sp-3) + env(safe-area-inset-bottom, 16px));
 }
+/* --- FIX iOS: Evita zoom en inputs --- */
+@media screen and (-webkit-min-device-pixel-ratio: 0) { 
+    select:focus,
+    textarea:focus,
+    input:focus {
+        font-size: 16px !important;
+    }
+}
+
+/* Mantenemos el tamaño visualmente pequeño escalando el elemento, no la fuente */
+.form-field-compact input, 
+.form-field-compact select {
+    /* Truco: fuente grande pero escalada hacia abajo si es necesario, 
+       aunque normalmente 16px se ve bien en tus inputs de 50px de alto */
+    font-size: 16px !important; 
+}
+
+/* Añadir interactividad a las tarjetas */
+.transaction-card:active, 
+.settings-item:active,
+.modal__list-item:active {
+    background-color: var(--c-surface-variant);
+    transform: scale(0.98);
+    transition: transform 0.1s ease-out;
+}
