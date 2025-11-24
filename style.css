@@ -3199,22 +3199,3 @@ body[data-theme="default"] .cartilla-container {
     transform: scale(0.98);
     transition: transform 0.1s ease-out;
 }
-/* --- MODIFICACIÓN: Ocultar etiquetas en el formulario de movimiento --- */
-#movimiento-modal .form-field-compact > label {
-    display: none !important;
-}
-
-/* Ajustar el padding de los inputs ya que no hay etiquetas */
-#movimiento-modal .form-field-compact input, 
-#movimiento-modal .form-field-compact select,
-#movimiento-modal .custom-select__trigger {
-    padding-top: 12px !important; /* Centrado verticalmente */
-    padding-bottom: 12px !important;
-}
-
-/* --- MODIFICACIÓN: Campo Importe estricto --- */
-#movimiento-cantidad {
-    caret-color: transparent; /* Oculta el cursor de texto */
-    cursor: pointer; /* Muestra mano/dedo para indicar clic */
-    user-select: none; /* Evita selección de texto */
-}
