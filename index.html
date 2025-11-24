@@ -148,164 +148,117 @@
             <button class="icon-btn" data-action="close-modal" data-modal-id="movimiento-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
         </header>
         <div class="modal__body">
-            <form id="form-movimiento" novalidate>
-                <input type="hidden" id="movimiento-id" />
-                <input type="hidden" id="movimiento-mode" value="new" />
+    <form id="form-movimiento" novalidate>
+        <input type="hidden" id="movimiento-id" />
+        <input type="hidden" id="movimiento-mode" value="new" />
 
-                <div class="filter-pills" style="justify-content: center; margin-bottom: var(--sp-3);">
-                    <button type="button" class="filter-pill filter-pill--active" data-action="set-movimiento-type" data-type="gasto">Gasto</button>
-                    <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="ingreso">Ingreso</button>
-                    <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="traspaso">Traspaso</button>
-                </div>
+        <div class="filter-pills" style="justify-content: center;">
+            <button type="button" class="filter-pill filter-pill--active" data-action="set-movimiento-type" data-type="gasto">Gasto</button>
+            <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="ingreso">Ingreso</button>
+            <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="traspaso">Traspaso</button>
+        </div>
 
-                <div class="dense-form-grid">
-                    
-                    <!-- 1. IMPORTE -->
-                    <div class="form-field-compact" id="movimiento-cantidad-form-group">
-                        <label for="movimiento-cantidad">Cantidad (€)</label>
-                        <div class="input-wrapper">
-                             <input type="text" id="movimiento-cantidad" required placeholder="0,00" inputmode="none" autocomplete="off" class="input-amount-calculator" />
-                            <button type="button" id="calculator-toggle-btn" class="icon-btn" title="Abrir Calculadora">
-                                <span class="material-icons">calculate</span>
-                            </button>
-                        </div>
-                        <span class="form-error" id="movimiento-cantidad-error"></span>
-                    </div>
-                    
-                    <div id="movimiento-fields">
-						<!-- NUEVO: Contenedor para Chips de Acceso Rápido -->
-            <!-- Lo ponemos justo antes del Concepto para que sea lo primero que se ve -->
+        <div class="dense-form-grid">
+            
+            <div class="form-field-compact" id="movimiento-cantidad-form-group">
+                <label for="movimiento-cantidad">IMPORTE (€)</label>
+                <div class="input-wrapper">
+                     <input type="text" id="movimiento-cantidad" required placeholder="0,00" inputmode="decimal" autocomplete="off" class="input-amount-calculator" />
+                     </div>
+                <span class="form-error" id="movimiento-cantidad-error"></span>
+            </div>
+            
             <div id="quick-access-chips"></div>
 
-                        <!-- 2. CONCEPTO (Movido arriba) -->
-                        <div class="form-field-compact">
-                            <label for="movimiento-concepto">Concepto</label>
-                            <div class="input-wrapper">
-                                <select id="movimiento-concepto" required></select>
-                            </div>
-                            <span class="form-error" id="movimiento-concepto-error"></span>
-                        </div>
-
-                        <!-- 3. DETALLE (Antigua Descripción, renombrada y movida aquí) -->
-                        <div class="form-field-compact">
-                            <label for="movimiento-descripcion">Detalle</label>
-                            <div class="input-wrapper">
-                                <!-- Eliminado enterkeyhint="next" para manejarlo nosotros en JS -->
-                                <input type="text" id="movimiento-descripcion" required placeholder="..." autocomplete="off" />
-                            </div>
-                            <span class="form-error" id="movimiento-descripcion-error"></span>
-                            <div id="description-suggestions"></div>
-                        </div>
-
-                        <!-- 4. CUENTA (Movida al final) -->
-                        <div class="form-field-compact">
-                            <label for="movimiento-cuenta">Cuenta</label>
-                            <div class="input-wrapper">
-                                <select id="movimiento-cuenta" required></select>
-                            </div>
-                            <span class="form-error" id="movimiento-cuenta-error"></span>
-                        </div>
-                    </div>
-
-                    <!-- Campos alternativos para Traspaso (Mismo sitio, solo visibles si es traspaso) -->
-                    <div id="traspaso-fields" class="hidden">
-                        <div class="form-field-compact">
-                            <label for="movimiento-cuenta-origen">Desde Cuenta</label>
-                            <div class="input-wrapper">
-                                <select id="movimiento-cuenta-origen"></select>
-                            </div>
-                            <span class="form-error" id="movimiento-cuenta-origen-error"></span>
-                        </div>
-                        <div class="form-field-compact">
-                            <label for="movimiento-cuenta-destino">Hacia Cuenta</label>
-                            <div class="input-wrapper">
-                                <select id="movimiento-cuenta-destino"></select>
-                            </div>
-                            <span class="form-error" id="movimiento-cuenta-destino-error"></span>
-                        </div>
-                        <!-- Para traspaso, la descripción (Detalle) la dejamos visible pero opcional en lógica JS -->
-                        <div class="form-field-compact" style="grid-column: 1 / -1; margin-top: 8px;">
-                             <label for="movimiento-descripcion-traspaso-proxy" style="color: var(--c-on-surface-secondary);">Nota (Opcional)</label>
-                             <p style="font-size: 0.75rem; color: var(--c-on-surface-tertiary); margin-top: 4px;">El detalle del traspaso se genera automáticamente.</p>
-                        </div>
-                    </div>
-                </div>
-
-                    <div id="traspaso-fields" class="hidden">
-                        <div class="form-field-compact">
-                            <label for="movimiento-cuenta-origen">Desde Cuenta</label>
-                            <!-- ⭐ CORRECCIÓN CLAVE: El SELECT está ahora dentro de su input-wrapper -->
-                            <div class="input-wrapper">
-                                <select id="movimiento-cuenta-origen"></select>
-                            </div>
-                            <span class="form-error" id="movimiento-cuenta-origen-error"></span>
-                        </div>
-                        <div class="form-field-compact">
-                            <label for="movimiento-cuenta-destino">Hacia Cuenta</label>
-                            <!-- ⭐ CORRECCIÓN CLAVE: El SELECT está ahora dentro de su input-wrapper -->
-                            <div class="input-wrapper">
-                                <select id="movimiento-cuenta-destino"></select>
-                            </div>
-                            <span class="form-error" id="movimiento-cuenta-destino-error"></span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="recurrent-section">
-                    <div class="form-switch-group" style="padding: var(--sp-2) 0;">
-                        <label for="movimiento-recurrente" class="recurrent-section__label">Programar como recurrente</label>
-                        <label class="form-switch"><input type="checkbox" id="movimiento-recurrente"><span class="slider"></span></label>
-                    </div>
-                    <div id="recurrent-options" class="hidden">
-                        <div class="recurrent-options__main">
-                            <select id="recurrent-frequency">
-                                <option value="once">Única vez</option>
-                                <option value="daily">Diaria</option>
-                                <option value="weekly">Semanal</option>
-                                <option value="monthly" selected>Mensual</option>
-                                <option value="yearly">Anual</option>
-                            </select>
-                            <input type="date" id="recurrent-next-date" title="Próxima ejecución">
-                            <input type="date" id="recurrent-end-date" title="Finaliza el (opcional)">
-                        </div>
-                        <div id="weekly-day-selector" class="hidden">
-                            <div id="weekly-day-selector-buttons">
-                                <button type="button" class="day-selector-btn" data-day="1">L</button>
-                                <button type="button" class="day-selector-btn" data-day="2">M</button>
-                                <button type="button" class="day-selector-btn" data-day="3">X</button>
-                                <button type="button" class="day-selector-btn" data-day="4">J</button>
-                                <button type="button" class="day-selector-btn" data-day="5">V</button>
-                                <button type="button" class="day-selector-btn" data-day="6">S</button>
-                                <button type="button" class="day-selector-btn" data-day="0">D</button>
-                            </div>
-                        </div>
-                        <span class="form-error" id="recurrent-frequency-error"></span>
-                    </div>
-                </div>
-                
-                <div class="form-field-compact" style="margin-top: var(--sp-3);">
+            <div id="movimiento-fields">
+                <div class="form-field-compact">
+                    <label for="movimiento-concepto">CONCEPTO</label>
                     <div class="input-wrapper">
-                        <input type="date" id="movimiento-fecha" class="visually-hidden" required />
-                        <button type="button" id="movimiento-fecha-display" class="date-button-compact">
-                            <span class="material-icons">edit_calendar</span>
-                            <span id="movimiento-fecha-text"></span>
-                        </button>
+                        <select id="movimiento-concepto" required></select>
                     </div>
-                    <span class="form-error" id="movimiento-fecha-error"></span>
                 </div>
 
-                <div class="modal__actions" style="display:flex; justify-content: space-between; align-items:center; margin-top: var(--sp-4);">
-                    <div class="left-actions" style="display:flex; gap: var(--sp-1);">
-                        <button type="button" id="delete-movimiento-btn" data-action="delete-movement-from-modal" class="icon-btn hidden" title="Borrar"><span class="material-icons">delete</span></button>
-                        <button type="button" id="duplicate-movimiento-btn" data-action="duplicate-movement" class="icon-btn hidden" title="Duplicar"><span class="material-icons">content_copy</span></button>
-                    </div>
-                    <div class="right-actions" style="display:flex; gap: var(--sp-2);">
-                        <button id="save-and-new-movimiento-btn" type="button" data-action="save-and-new-movement" class="btn btn--secondary">Guardar y Nuevo</button>
-                        <button id="save-movimiento-btn" type="submit" class="btn btn--primary">Guardar</button>
+                <div class="form-field-compact">
+                    <label for="movimiento-cuenta">CUENTA</label>
+                    <div class="input-wrapper">
+                        <select id="movimiento-cuenta" required></select>
                     </div>
                 </div>
-            </form>
+
+                <div class="form-field-compact">
+                    <label for="movimiento-descripcion">DETALLE / NOTA</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="movimiento-descripcion" required placeholder="Descripción..." autocomplete="off" />
+                    </div>
+                    <div id="description-suggestions"></div>
+                </div>
+            </div>
+
+            <div id="traspaso-fields" class="hidden">
+                <div class="form-field-compact">
+                    <label for="movimiento-cuenta-origen">DESDE</label>
+                    <div class="input-wrapper">
+                        <select id="movimiento-cuenta-origen"></select>
+                    </div>
+                </div>
+                <div class="form-field-compact">
+                    <label for="movimiento-cuenta-destino">HACIA</label>
+                    <div class="input-wrapper">
+                        <select id="movimiento-cuenta-destino"></select>
+                    </div>
+                </div>
+            </div>
         </div>
+        
+        <div class="date-recurrent-row">
+            <div class="input-wrapper" style="flex: 1;">
+                <input type="date" id="movimiento-fecha" class="visually-hidden" required />
+                <button type="button" id="movimiento-fecha-display" class="date-button-compact">
+                    <span class="material-icons" style="font-size: 18px;">calendar_today</span>
+                    <span id="movimiento-fecha-text">Hoy</span>
+                </button>
+            </div>
+            
+            <div class="recurrent-toggle-compact">
+                <label for="movimiento-recurrente">Repetir</label>
+                <label class="form-switch" style="transform: scale(0.8); margin-left: 4px;">
+                    <input type="checkbox" id="movimiento-recurrente">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div id="recurrent-options" class="hidden">
+            <div class="recurrent-options__main">
+                <select id="recurrent-frequency" style="flex:1;">
+                    <option value="monthly" selected>Mensual</option>
+                    <option value="weekly">Semanal</option>
+                    <option value="daily">Diaria</option>
+                    <option value="yearly">Anual</option>
+                </select>
+                <input type="date" id="recurrent-next-date" title="Inicio" style="flex:1;">
+            </div>
+            <div id="weekly-day-selector" class="hidden" style="margin-top:8px;">
+                <div id="weekly-day-selector-buttons">
+                    <button type="button" class="day-selector-btn" data-day="1">L</button>
+                    <button type="button" class="day-selector-btn" data-day="2">M</button>
+                    <button type="button" class="day-selector-btn" data-day="3">X</button>
+                    <button type="button" class="day-selector-btn" data-day="4">J</button>
+                    <button type="button" class="day-selector-btn" data-day="5">V</button>
+                    <button type="button" class="day-selector-btn" data-day="6">S</button>
+                    <button type="button" class="day-selector-btn" data-day="0">D</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal__actions" style="display:flex; gap: var(--sp-2); padding-top: var(--sp-3);">
+             <button type="button" id="delete-movimiento-btn" data-action="delete-movement-from-modal" class="icon-btn hidden" style="color: var(--c-danger); background: var(--c-surface-variant);"><span class="material-icons">delete</span></button>
+             
+             <button id="save-and-new-movimiento-btn" type="button" data-action="save-and-new-movement" class="btn btn--secondary" style="flex: 1;">+ Otro</button>
+             <button id="save-movimiento-btn" type="submit" class="btn btn--primary" style="flex: 2;">Guardar</button>
+        </div>
+    </form>
+</div>
     </div>
 </div>
                  

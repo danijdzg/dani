@@ -8939,12 +8939,15 @@ const handleSaveMovement = async (form, btn) => {
                 const originalMovement = db.movimientos.find(m => m.id === id);
                 if (originalMovement) oldData = { ...originalMovement };
             }
-
-            const dataToSave = {
-                id: id,
-                fecha: new Date(select('movimiento-fecha').value).toISOString(),
-                ...baseData
-            };
+			// ▼▼▼ CORRECCIÓN DE FECHA AQUÍ ▼▼▼
+    // Forzamos T12:00:00Z para asegurar que la fecha sea estable en cualquier zona horaria
+    const rawDate = select('movimiento-fecha').value; // YYYY-MM-DD
+    const safeDateISO = new Date(rawDate + 'T12:00:00Z').toISOString();
+           const dataToSave = {
+        id: id,
+        fecha: safeDateISO, // Usamos la fecha segura
+        ...baseData
+    };
 
             // Actualización optimista de la lista local
             if (oldData) {

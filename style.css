@@ -2390,113 +2390,194 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     font-weight: 700;
 }
 
-/* 2. Rejilla principal del formulario denso */
+/* ================================================================= */
+/* === FORMULARIO ULTRA-COMPACTO (Optimizado para Móvil) v3.0 === */
+/* ================================================================= */
+
+/* 1. Contenedor Principal del Grid */
 .dense-form-grid {
     display: grid;
-    grid-template-columns: 40% 1fr;
-    grid-template-areas:
-        "amount      description"
-        "details     details";
-    gap: var(--sp-3) var(--sp-2);
-    align-items: start;
-}
-#movimiento-fields, #traspaso-fields {
-    grid-area: details;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--sp-3) var(--sp-2);
+    grid-template-columns: 1fr 1fr; /* Dos columnas iguales */
+    gap: 8px; /* Espacio reducido entre campos */
+    margin-bottom: 8px;
 }
 
-/* 3. Componente de campo de formulario compacto */
+/* 2. Distribución de los Campos */
+
+/* El campo de Cantidad ocupa todo el ancho para ser el protagonista */
+#movimiento-cantidad-form-group {
+    grid-column: 1 / -1;
+    margin-bottom: 4px;
+}
+
+/* El contenedor de campos dinámicos (Concepto/Cuenta/Detalle) */
+#movimiento-fields {
+    display: contents; /* Permite que sus hijos sean parte del grid principal */
+}
+
+/* Concepto y Cuenta: Lado a lado (50% cada uno) */
+.form-field-compact:has(#movimiento-concepto),
+.form-field-compact:has(#movimiento-cuenta) {
+    grid-column: span 1; 
+}
+
+/* Detalle (Descripción): Ancho completo */
+.form-field-compact:has(#movimiento-descripcion) {
+    grid-column: 1 / -1;
+}
+
+/* Chips de acceso rápido: Ancho completo */
+#quick-access-chips {
+    grid-column: 1 / -1;
+    margin-bottom: 4px;
+}
+
+/* --- Layout Específico para Traspasos --- */
+#traspaso-fields {
+    display: contents; /* También se integra en el grid */
+}
+/* Origen y Destino lado a lado */
+.form-field-compact:has(#movimiento-cuenta-origen),
+.form-field-compact:has(#movimiento-cuenta-destino) {
+    grid-column: span 1;
+}
+
+/* 3. Estilización de Campos Compactos */
 .form-field-compact {
     position: relative;
-    font-size: var(--fs-sm);
-}
-.form-field-compact > label {
-    position: absolute;
-    top: 5px;
-    left: 12px;
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: var(--c-on-surface-secondary);
-    pointer-events: none;
-}
-.form-field-compact .input-wrapper {
-    display: flex;
-    align-items: center;
-    border-radius: var(--border-radius-md);
-    background: var(--c-surface-variant);
-    border: 1px solid var(--c-outline);
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.form-field-compact .input-wrapper:focus-within {
-    border-color: var(--c-primary);
-    box-shadow: var(--c-border-glow);
-}
-.form-field-compact input,
-.form-field-compact select {
-    width: 100%;
-    padding: 22px 12px 6px 12px;
-    border: none;
-    background: transparent;
-    color: var(--c-on-surface);
-    font-size: 0.95rem;
-    font-weight: 500;
-}
-.form-field-compact input:focus,
-.form-field-compact select:focus {
-    outline: none;
-}
-.form-field-compact .form-error {
-    margin-top: 4px;
-    padding-left: 4px;
-}
-#movimiento-cantidad-form-group input {
-    font-size: 1.25rem;
-    font-weight: 700;
-    text-align: right;
-    padding-right: 4px;
-}
-#movimiento-cantidad-form-group .icon-btn {
-    margin-right: 4px;
-}
-.input-wrapper--with-addon .icon-btn {
-    flex-shrink: 0;
 }
 
-/* 4. Sección Recurrente compacta */
-.recurrent-section {
+.form-field-compact .input-wrapper {
     background-color: var(--c-surface-variant);
     border: 1px solid var(--c-outline);
     border-radius: var(--border-radius-md);
-    margin-top: var(--sp-3);
-    padding: 0 var(--sp-3);
+    display: flex;
+    align-items: center;
+    height: 50px; /* Altura fija compacta */
+    transition: border-color 0.2s;
 }
-.recurrent-section__label {
+
+.form-field-compact:focus-within .input-wrapper {
+    border-color: var(--c-primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-primary) 20%, transparent);
+}
+
+/* Etiquetas flotantes integradas (Tiny Labels) */
+.form-field-compact > label {
+    position: absolute;
+    top: 2px;
+    left: 10px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--c-on-surface-secondary);
+    z-index: 2;
+    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Inputs y Selects */
+.form-field-compact input, 
+.form-field-compact select,
+.custom-select__trigger {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    padding: 14px 10px 0 10px !important; /* Padding superior para dejar sitio a la etiqueta */
+    font-size: 0.9rem;
     font-weight: 600;
-    font-size: var(--fs-sm);
     color: var(--c-on-surface);
+    border-radius: var(--border-radius-md);
 }
-#recurrent-options {
+
+/* Ajuste especial para el campo de Importe (Más grande) */
+#movimiento-cantidad-form-group .input-wrapper {
+    height: 60px;
+    background-color: var(--c-surface); /* Destacar el importe */
+}
+#movimiento-cantidad {
+    font-size: 1.5rem !important;
+    text-align: center;
+    padding-top: 10px !important;
+    font-weight: 800;
+}
+#movimiento-cantidad-form-group label {
+    width: 100%;
+    text-align: center;
+    left: 0;
+    top: 4px;
+}
+
+/* 4. Sección de Fecha y Recurrente (En una sola fila compacta) */
+.date-recurrent-row {
     display: flex;
-    flex-direction: column;
-    gap: var(--sp-3);
-    padding: var(--sp-3);
-    border-top: 1px solid var(--c-outline);
-    margin-top: var(--sp-2);
+    gap: 8px;
+    margin-top: 4px;
+    align-items: stretch;
 }
-.recurrent-options__main {
-    display: flex;
-    gap: var(--sp-2);
-}
-#recurrent-options select,
-#recurrent-options input {
-    background-color: var(--c-surface);
-    border-radius: 6px;
-    font-size: 0.8rem;
-    padding: 6px 8px;
-    color: var(--c-on-surface);
+
+.date-button-compact {
+    flex: 1; /* Ocupa espacio disponible */
+    background-color: var(--c-surface-variant);
     border: 1px solid var(--c-outline);
+    border-radius: var(--border-radius-md);
+    color: var(--c-on-surface);
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 42px;
+}
+
+.recurrent-toggle-compact {
+    flex: 0 0 auto; /* Ancho automático según contenido */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--c-surface-variant);
+    border: 1px solid var(--c-outline);
+    border-radius: var(--border-radius-md);
+    padding: 0 12px;
+    height: 42px;
+}
+.recurrent-toggle-compact label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--c-on-surface-secondary);
+}
+
+/* Ocultar opciones recurrentes extendidas por defecto para ahorrar espacio */
+#recurrent-options {
+    margin-top: 8px;
+    padding: 10px;
+    background-color: var(--c-surface-variant);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--c-warning); /* Borde amarillo para indicar modo especial */
+}
+
+/* Ajustes del Modal para quitar espacios muertos */
+#movimiento-modal .modal__body {
+    padding-top: 0 !important;
+    padding-bottom: 70px !important; /* Espacio para botones fijos */
+}
+#movimiento-modal .modal__header {
+    padding-bottom: 0;
+    margin-bottom: 10px;
+    border-bottom: none;
+}
+#form-movimiento-title {
+    font-size: 1.1rem; /* Título un poco más pequeño */
+}
+.filter-pills {
+    margin-bottom: 8px;
+    gap: 4px;
+}
+.filter-pill {
+    padding: 4px 12px;
+    font-size: 0.75rem;
 }
 #weekly-day-selector-buttons {
     display: flex;
