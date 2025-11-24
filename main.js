@@ -564,6 +564,29 @@ const handleCalculatorInput = (key) => {
 				if (!isMobileDevice()) {
     select('movimiento-descripcion').focus(); 
 }
+			case 'done':
+                hapticFeedback('medium');
+                if (operand1 !== null && operator !== null && !waitingForNewValue) {
+                    calculate();
+                    displayValue = calculatorState.displayValue;
+                }
+                if (calculatorState.targetInput) {
+                    // ... (código existente de formateo) ...
+                    calculatorState.targetInput.blur();
+                }
+                historyValue = '';
+                hideCalculator();
+                
+                // ▼▼▼▼▼▼ MODIFICACIÓN AQUÍ ▼▼▼▼▼▼
+                // Al dar OK en la calculadora, saltamos al Concepto y lo abrimos
+                setTimeout(() => {
+                    const conceptoTrigger = select('movimiento-concepto')?.closest('.custom-select-wrapper')?.querySelector('.custom-select__trigger');
+                    if (conceptoTrigger) {
+                        conceptoTrigger.focus(); // El focus trigger dispara la apertura automática
+                    }
+                }, 50);
+                // ▲▲▲▲▲▲ FIN MODIFICACIÓN ▲▲▲▲▲▲
+                
                 return;
             case 'comma':
                 if (waitingForNewValue) {
@@ -1078,72 +1101,79 @@ const calculatePreviousDueDate = (currentDueDate, frequency, weekDays = []) => {
 };
 
 /**
- * Configura la navegación secuencial inteligente.
- * Orden: Cantidad -> Concepto -> Detalle (Auto-relleno) -> Cuenta -> Guardar
+ * Configura la navegación secuencial ESTRICTA:
+ * Importe (Calc) -> Concepto (Auto-open) -> Cuenta (Auto-open) -> Descripción (Auto-fill) -> Guardar
  */
 const setupFormNavigation = () => {
-    // Referencias
-    const cantidadInput = select('movimiento-cantidad');
-    const conceptoSelect = select('movimiento-concepto'); // Select real
+    const conceptoSelect = select('movimiento-concepto');
+    const cuentaSelect = select('movimiento-cuenta');
     const descripcionInput = select('movimiento-descripcion');
-    const cuentaSelect = select('movimiento-cuenta'); // Select real
-    
     const saveButton = select('save-movimiento-btn');
 
-    // Helpers para encontrar los "Triggers" (los divs falsos que se ven en pantalla)
-    const getTrigger = (id) => select(id)?.closest('.form-field-compact')?.querySelector('.custom-select__trigger');
+    // Helpers para encontrar los disparadores visuales
+    const getTrigger = (id) => select(id)?.closest('.custom-select-wrapper')?.querySelector('.custom-select__trigger');
 
-    // 1. CANTIDAD [ENTER] -> Abrir CONCEPTO
-    cantidadInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            // Enfocamos el disparador visual del concepto
-            getTrigger('movimiento-concepto')?.focus();
-        }
-    });
-
-    // 2. AL CAMBIAR CONCEPTO (Lógica de autocompletado del detalle)
-    // Usamos 'change' en el select real, que nuestra función createCustomSelect ya dispara.
+    // 1. AL SELECCIONAR CONCEPTO
+    // -> Rellena descripción temporalmente
+    // -> Salta a CUENTA y la despliega
     conceptoSelect.addEventListener('change', () => {
         const conceptoTexto = conceptoSelect.options[conceptoSelect.selectedIndex]?.text;
         
-        // Si el detalle está vacío o tiene el mismo valor que el concepto anterior (lógica simple), rellenamos.
-        // La regla: "si no se cambia pondrá el mismo nombre que concepto". 
-        // Hacemos que SIEMPRE sugiera el concepto si el campo está vacío.
-        if (conceptoTexto && descripcionInput.value.trim() === '') {
-            descripcionInput.value = toSentenceCase(conceptoTexto);
+        // Auto-rellenado: Si la descripción está vacía o es igual al valor anterior por defecto
+        if (conceptoTexto && (descripcionInput.value.trim() === '' || descripcionInput.value === descripcionInput.dataset.lastAuto)) {
+            const textoFormateado = toSentenceCase(conceptoTexto);
+            descripcionInput.value = textoFormateado;
+            descripcionInput.dataset.lastAuto = textoFormateado; // Marcamos que fue auto-rellenado
         }
         
-        // Tras elegir concepto, saltamos al campo Detalle
-        // Pequeño timeout para dar tiempo a que se cierre el dropdown visual
+        // SALTO A CUENTA (con pequeño retardo para que la UI respire)
         setTimeout(() => {
-            descripcionInput.focus();
-            descripcionInput.select(); // Seleccionamos texto para facilitar sobrescritura si se desea cambiar
-        }, 100);
+            const cuentaTrigger = getTrigger('movimiento-cuenta');
+            if (cuentaTrigger) {
+                cuentaTrigger.focus(); // Esto disparará la apertura automática definida en createCustomSelect
+            }
+        }, 150);
     });
 
-    // 3. DETALLE [ENTER] -> Abrir CUENTA
+    // 2. AL SELECCIONAR CUENTA
+    // -> Salta a DESCRIPCIÓN
+    // -> Selecciona todo el texto para facilitar la edición rápida si se quiere cambiar
+    cuentaSelect.addEventListener('change', () => {
+        setTimeout(() => {
+            descripcionInput.focus();
+            descripcionInput.select(); // Seleccionar texto para sobrescribir fácil
+        }, 150);
+    });
+
+    // 3. EN DESCRIPCIÓN (ENTER)
+    // -> Salta al botón GUARDAR
     descripcionInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            getTrigger('movimiento-cuenta')?.focus();
+            saveButton.focus();
+            // Opcional: saveButton.click(); si quieres guardar directamente al dar Enter
         }
     });
-
-    // 4. AL CAMBIAR CUENTA -> Enfocar GUARDAR (o guardar directamente)
-    cuentaSelect.addEventListener('change', () => {
-        setTimeout(() => {
-            saveButton.focus(); // Llevamos al usuario al botón guardar
-            // Opcional: Si quieres que guarde directamente al elegir cuenta, descomenta:
-            // saveButton.click(); 
-        }, 100);
-    });
     
-    // Lógica para TRASPASOS (Camino alternativo)
-    const origenTrigger = getTrigger('movimiento-cuenta-origen');
-    
-    // Si estamos en modo traspaso (detectamos por visibilidad), cambiamos el flujo desde descripción
-    // (o podemos saltar descripción en traspasos, pero lo dejamos accesible).
+    // Lógica para TRASPASOS (Flujo alternativo si es necesario)
+    const tipoPill = document.querySelector('.filter-pill--active[data-type="traspaso"]');
+    if (tipoPill) {
+        const origenSelect = select('movimiento-cuenta-origen');
+        
+        origenSelect.addEventListener('change', () => {
+             setTimeout(() => {
+                const destinoTrigger = getTrigger('movimiento-cuenta-destino');
+                if(destinoTrigger) destinoTrigger.focus();
+            }, 150);
+        });
+        
+        const destinoSelect = select('movimiento-cuenta-destino');
+        destinoSelect.addEventListener('change', () => {
+             setTimeout(() => {
+                saveButton.focus();
+            }, 150);
+        });
+    }
 };
 
 	/**
@@ -7824,34 +7854,36 @@ const setupFabInteractions = () => {
 
 const initAmountInput = () => {
     const amountInput = select('movimiento-cantidad');
-    const calculatorToggle = select('calculator-toggle-btn');
+    const calculatorToggle = select('calculator-toggle-btn'); // Si existe
     
     if (!amountInput) return;
     
-    // Limpiamos eventos anteriores
-    amountInput.onclick = null;
-    if (calculatorToggle) calculatorToggle.onclick = null;
+    // Limpiamos eventos anteriores para evitar duplicados
+    const newAmountInput = amountInput.cloneNode(true);
+    amountInput.parentNode.replaceChild(newAmountInput, amountInput);
     
-    // CONFIGURACIÓN HÍBRIDA: 
-    // 1. inputmode="decimal" fuerza el teclado numérico nativo en iPhone/Android.
-    amountInput.setAttribute('inputmode', 'decimal');
-    amountInput.removeAttribute('readonly'); // Aseguramos que se pueda escribir
+    // CONFIGURACIÓN ESTRICTA: SIEMPRE CALCULADORA
+    newAmountInput.setAttribute('readonly', 'true'); // Bloquea teclado nativo en PC y Móvil
+    newAmountInput.setAttribute('inputmode', 'none'); // Refuerzo para móviles
     
-    // 2. Mantenemos el botón de calculadora visible siempre (incluso en móvil)
-    // por si el usuario necesita hacer operaciones matemáticas.
+    const openCalc = (e) => {
+        e.preventDefault();
+        e.target.blur(); // Quita el foco para asegurar que no salga teclado
+        hapticFeedback('light');
+        showCalculator(e.target);
+    };
+
+    // Eventos para abrir la calculadora
+    newAmountInput.addEventListener('click', openCalc);
+    newAmountInput.addEventListener('focus', openCalc); // Por si llega con Tabulador
+    
+    // Si tienes un botón de calculadora explícito, también lo vinculamos
     if (calculatorToggle) {
-        calculatorToggle.style.display = 'inline-flex';
         calculatorToggle.onclick = (e) => {
-            e.preventDefault(); // Evitamos que el botón haga submit
-            hapticFeedback('light');
-            showCalculator(amountInput);
+            e.preventDefault();
+            showCalculator(newAmountInput);
         };
     }
-    
-    // Pequeña mejora: al tocar el input, seleccionamos todo el texto para sobrescribir fácil
-    amountInput.addEventListener('focus', function() {
-        this.select();
-    });
 };
 // --- PARCHES DE COMPATIBILIDAD ---
 // Añade esto al final de main.js o en el bloque de funciones globales
