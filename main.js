@@ -7665,21 +7665,7 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
 
     trigger.innerHTML = selectedHTML;
 }
-    // Ejecutamos el poblado inmediatamente
-    populateOptions();
-
-    // Lógica de apertura/cierre
-    const toggleSelect = (forceState = null) => {
-        const isOpen = forceState !== null ? forceState : !wrapper.classList.contains('is-open');
-        
-        if (isOpen) {
-            closeAllCustomSelects(wrapper); // Cierra otros abiertos
-            wrapper.classList.add('is-open');
-        } else {
-            wrapper.classList.remove('is-open');
-        }
-        trigger.setAttribute('aria-expanded', isOpen);
-    };
+  
 
 
 const showCalculator = (targetInput) => {
