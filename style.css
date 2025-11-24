@@ -2549,33 +2549,19 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-primary) 20%, transparent);
 }
 
-/* Etiquetas flotantes integradas (Tiny Labels) */
+/* Ocultar etiquetas visualmente para un diseño más limpio */
 .form-field-compact > label {
-    position: absolute;
-    top: 2px;
-    left: 10px;
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: var(--c-on-surface-secondary);
-    z-index: 2;
-    pointer-events: none;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    display: none;
 }
 
-/* Inputs y Selects */
+/* Ajustar el relleno (padding) de los inputs para que el texto quede centrado verticalmente */
 .form-field-compact input, 
 .form-field-compact select,
 .custom-select__trigger {
-    width: 100%;
-    height: 100%;
-    border: none;
-    background: transparent;
-    padding: 14px 10px 0 10px !important; /* Padding superior para dejar sitio a la etiqueta */
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--c-on-surface);
-    border-radius: var(--border-radius-md);
+    /* Cambiamos el padding superior de 14px a 0 para centrar el texto */
+    padding: 0 12px !important; 
+    /* Aseguramos que la altura de línea sea igual a la altura del contenedor para centrar */
+    line-height: 50px; 
 }
 
 /* Ajuste especial para el campo de Importe (Más grande) */
