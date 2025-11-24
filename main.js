@@ -6519,7 +6519,61 @@ const setMovimientoFormType = (type) => {
                 });
             }
         };
+		/**
+ * Renderiza burbujas con los 4 conceptos más usados para selección inmediata.
+ * Se debe llamar al iniciar el formulario (startMovementForm).
+ */
+const renderQuickAccessChips = () => {
+    const container = document.getElementById('quick-access-chips');
+    if (!container) return; // Asegúrate de añadir este div en el HTML
 
+    // Usamos tu índice inteligente para saber cuáles son los más usados
+    // Convertimos el Map a array y ordenamos por uso
+    const topConcepts = Array.from(intelligentIndex.entries())
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 4); // Cogemos los top 4
+
+    if (topConcepts.length === 0) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'flex';
+    container.innerHTML = topConcepts.map(([key, data]) => {
+        const concepto = db.conceptos.find(c => c.id === data.conceptoId);
+        if (!concepto) return '';
+        const icon = concepto.icon || 'label';
+        
+        return `
+        <button type="button" class="quick-chip" 
+            data-action="apply-quick-concept" 
+            data-concept-id="${concepto.id}" 
+            data-concept-name="${concepto.nombre}">
+            <span class="material-icons">${icon}</span>
+            <span>${concepto.nombre}</span>
+        </button>`;
+    }).join('');
+
+    // Listener para los chips
+    container.querySelectorAll('.quick-chip').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const { conceptId, conceptName } = btn.dataset;
+            
+            // 1. Seleccionar el concepto
+            const selectEl = document.getElementById('movimiento-concepto');
+            selectEl.value = conceptId;
+            selectEl.dispatchEvent(new Event('change')); // Dispara la lógica existente
+
+            // 2. Feedback visual
+            hapticFeedback('light');
+            
+            // 3. Saltar directamente a Descripción o Guardar
+            // (Dependiendo de tu flujo preferido, aquí saltamos a descripción)
+            document.getElementById('movimiento-descripcion').focus();
+        });
+    });
+};
 const startMovementForm = async (id = null, isRecurrent = false, initialType = 'gasto') => {
     hapticFeedback('medium');
     const form = select('form-movimiento');
@@ -7467,82 +7521,57 @@ function closeAllCustomSelects(exceptThisOne) {
 }
 
 /**
- * Transforma un elemento <select> nativo en un componente de dropdown personalizado.
+ * Versión mejorada de createCustomSelect.
+ * - Soporta iconos en las opciones.
+ * - Se abre automáticamente al recibir foco (navegación por teclado/enter).
  */
 function createCustomSelect(selectElement) {
     if (!selectElement) return;
-
-    // Si ya lo hemos convertido, actualizamos el texto del trigger y salimos.
     if (selectElement.dataset.hasCustomWrapper === 'true') {
+        // Si ya existe, actualizamos opciones y salimos
         const wrapper = selectElement.closest('.custom-select-wrapper');
         if (wrapper) {
             const trigger = wrapper.querySelector('.custom-select__trigger');
             const optionsContainer = wrapper.querySelector('.custom-select__options');
-            if (trigger && optionsContainer) {
-                // Regeneramos SOLO las opciones y el texto
-                populateOptions(selectElement, optionsContainer, trigger, wrapper); 
-            }
+            if (trigger && optionsContainer) populateOptions(selectElement, optionsContainer, trigger, wrapper);
         }
-        return; 
+        return;
     }
 
-    // --- 1. Creación de Estructura (Solo sucede 1 vez) ---
-    selectElement.dataset.hasCustomWrapper = 'true'; // Marcamos el elemento
+    selectElement.dataset.hasCustomWrapper = 'true';
     
     let wrapper = document.createElement('div');
     wrapper.className = 'custom-select-wrapper';
     
     const inputWrapper = selectElement.closest('.input-wrapper');
-    if (!inputWrapper) {
-        console.error("No se encontró '.input-wrapper' para el select:", selectElement);
-        return;
-    }
+    inputWrapper.parentNode.insertBefore(wrapper, inputWrapper);
+    wrapper.appendChild(inputWrapper);
     
-    // Variables
     let trigger = document.createElement('div');
     trigger.className = 'custom-select__trigger';
-    trigger.setAttribute('role', 'combobox');
-    trigger.setAttribute('aria-expanded', 'false');
-    trigger.tabIndex = 0; 
+    trigger.tabIndex = 0; // Hace que el div sea "focusable"
     
     let optionsContainer = document.createElement('div');
     optionsContainer.className = 'custom-select__options';
-    optionsContainer.setAttribute('role', 'listbox');
 
-    // Reemplazo en el DOM
-    // Truco: Insertamos el wrapper antes, movemos el inputWrapper dentro, etc.
-    // O mejor, envolvemos el select existente limpiamente:
-    
-    // 1. Insertar el wrapper antes del inputWrapper actual
-    inputWrapper.parentNode.insertBefore(wrapper, inputWrapper);
-    // 2. Mover inputWrapper dentro del wrapper
-    wrapper.appendChild(inputWrapper);
-    // 3. Añadir trigger y options
     inputWrapper.appendChild(trigger);
-    wrapper.appendChild(selectElement); // Movemos el select original fuera del input-wrapper visual si es necesario, o lo dejamos oculto
-    wrapper.appendChild(optionsContainer); 
-    
+    wrapper.appendChild(selectElement); // Select original oculto
+    wrapper.appendChild(optionsContainer);
     selectElement.classList.add('form-select-hidden');
 
-    // --- 2. Funciones de utilidad encapsuladas ---
-    
     const toggleSelect = (forceState = null) => {
         const isOpen = forceState !== null ? forceState : !wrapper.classList.contains('is-open');
-        
         if (isOpen) {
-            closeAllCustomSelects(wrapper); 
+            closeAllCustomSelects(wrapper);
             wrapper.classList.add('is-open');
+            // Scroll automático al seleccionado
             const selected = optionsContainer.querySelector('.is-selected');
-            if (selected) {
-                requestAnimationFrame(() => {
-                    optionsContainer.scrollTop = selected.offsetTop - optionsContainer.offsetHeight / 2;
-                });
-            }
+            if (selected) requestAnimationFrame(() => optionsContainer.scrollTop = selected.offsetTop - 50);
         } else {
             wrapper.classList.remove('is-open');
         }
-        trigger.setAttribute('aria-expanded', isOpen);
     };
+
 
     // --- 3. Event Listeners (Solo se añaden 1 vez) ---
 
@@ -7551,64 +7580,91 @@ function createCustomSelect(selectElement) {
         toggleSelect();
     });
 
+   // **LA CLAVE DE TU PETICIÓN: AUTO-APERTURA AL ENFOCAR**
     trigger.addEventListener('focus', () => {
+        // Usamos un pequeño timeout para no conflictuar con clics
         setTimeout(() => {
-                if (document.activeElement === trigger) toggleSelect(true);
-        }, 50);
+            if (document.activeElement === trigger) {
+                toggleSelect(true); // Forzamos apertura
+                // Hacemos scroll al contenedor para asegurar que se ve en móvil si el teclado está abierto
+                trigger.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 150);
     });
 
+    // Navegación por teclado (Enter abre/cierra)
     trigger.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            toggleSelect(true);
+            toggleSelect();
         }
     });
 
-    selectElement.addEventListener('change', () => {
-            populateOptions(selectElement, optionsContainer, trigger, wrapper);
-    });
-
-    // Inicializar opciones por primera vez (ESTA ES LA LLAMADA IMPORTANTE)
+    selectElement.addEventListener('change', () => populateOptions(selectElement, optionsContainer, trigger, wrapper));
+ // Inicializar
     populateOptions(selectElement, optionsContainer, trigger, wrapper);
 }
 
-// Helper function fuera para poder ser llamada en la actualización
+// Helper para poblar opciones con ICONOS
 function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
-    if (!optionsContainer || !trigger) return; // Protección extra
-
     optionsContainer.innerHTML = ''; 
-    let selectedText = 'Ninguno'; 
+    let selectedHTML = '<span style="color: var(--c-on-surface-tertiary);">Seleccionar...</span>'; 
 
     Array.from(selectElement.options).forEach(optionEl => {
-        if (optionEl.value === "" && optionEl.textContent.includes("Seleccionar")) return;
+        if (optionEl.value === "") return;
+
+        // Buscamos el icono en la base de datos si es posible
+        // (Asumimos que el ID del option coincide con el ID del concepto o cuenta)
+        let icon = 'label'; // Icono por defecto
+        let isAccount = false;
+        
+        // Intentamos buscar en Conceptos
+        const concepto = db.conceptos.find(c => c.id === optionEl.value);
+        if (concepto && concepto.icon) icon = concepto.icon;
+        
+        // Si no, buscamos en Cuentas
+        const cuenta = db.cuentas.find(c => c.id === optionEl.value);
+        if (cuenta) {
+            icon = 'account_balance_wallet'; // Icono genérico para cuentas
+            if (cuenta.tipo.toLowerCase().includes('banco')) icon = 'account_balance';
+            if (cuenta.tipo.toLowerCase().includes('efectivo')) icon = 'payments';
+            isAccount = true;
+        }
 
         const customOption = document.createElement('div');
         customOption.className = 'custom-select__option';
-        customOption.textContent = optionEl.textContent;
+        
+        // HTML RICO PARA LA OPCIÓN
+        customOption.innerHTML = `
+            <span class="material-icons option-icon" style="font-size: 18px; opacity: 0.7;">${icon}</span>
+            <span class="option-text">${optionEl.textContent}</span>
+        `;
+        
         customOption.dataset.value = optionEl.value;
-        customOption.setAttribute('role', 'option');
 
         if (optionEl.selected) {
             customOption.classList.add('is-selected');
-            selectedText = optionEl.textContent;
+            // Actualizamos el trigger también con el icono
+            selectedHTML = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="material-icons" style="font-size: 20px; color: var(--c-primary);">${icon}</span>
+                    <span>${optionEl.textContent}</span>
+                </div>`;
         }
 
         customOption.addEventListener('click', (e) => {
             e.stopPropagation();
             selectElement.value = optionEl.value;
             selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-            
             wrapper.classList.remove('is-open');
-            trigger.setAttribute('aria-expanded', 'false');
-            trigger.focus();
+            trigger.focus(); // Devolver foco al trigger
         });
 
         optionsContainer.appendChild(customOption);
     });
 
-    trigger.textContent = selectedText;
+    trigger.innerHTML = selectedHTML;
 }
-
     // Ejecutamos el poblado inmediatamente
     populateOptions();
 

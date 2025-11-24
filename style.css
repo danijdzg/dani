@@ -2892,3 +2892,118 @@ body[data-theme="default"] .cartilla-container {
     font-weight: 800;
 }
 /* === FIN: Animación de Feedback de Botón === */
+
+/* === MEJORA 1: CHIPS DE ACCESO RÁPIDO === */
+#quick-access-chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    /* Ocultar scrollbar pero permitir scroll */
+    scrollbar-width: none; 
+    -ms-overflow-style: none;
+}
+#quick-access-chips::-webkit-scrollbar {
+    display: none;
+}
+
+.quick-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: var(--c-surface-variant);
+    border: 1px solid var(--c-outline);
+    border-radius: 20px;
+    color: var(--c-on-surface);
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0; /* Evita que se aplasten */
+}
+
+.quick-chip .material-icons {
+    font-size: 16px;
+    color: var(--c-primary);
+}
+
+.quick-chip:active {
+    background-color: var(--c-primary);
+    color: white;
+    border-color: var(--c-primary);
+}
+.quick-chip:active .material-icons {
+    color: white;
+}
+
+/* === MEJORA 2: ESTILOS RICOS PARA EL DROPDOWN === */
+
+/* Ajuste al trigger para permitir contenido HTML (flex) */
+.custom-select__trigger {
+    display: flex; 
+    align-items: center;
+    /* El padding original estaba bien, aseguramos altura mínima */
+    min-height: 50px; 
+}
+
+.custom-select__option {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espacio entre icono y texto */
+    padding: 10px 12px; /* Más espacio vertical para dedos gordos */
+    border-bottom: 1px solid var(--c-outline);
+}
+.custom-select__option:last-child {
+    border-bottom: none;
+}
+
+.custom-select__option .material-icons {
+    color: var(--c-on-surface-secondary);
+}
+
+.custom-select__option.is-selected .material-icons {
+    color: var(--c-white);
+}
+
+/* Animación de entrada suave para el menú desplegable */
+.custom-select__options {
+    transform-origin: top center;
+    animation: dropdown-scale-in 0.15s ease-out forwards;
+}
+
+@keyframes dropdown-scale-in {
+    0% { opacity: 0; transform: translateY(-10px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* === MEJORA 3: BOTONES FLOTANTES (STICKY FOOTER) === */
+/* Esto asegura que el botón Guardar esté siempre visible encima del teclado en móviles */
+#movimiento-modal .modal__body {
+    display: flex;
+    flex-direction: column;
+    /* Importante: dejar espacio abajo para que el contenido no quede detrás de los botones fijos */
+    padding-bottom: 80px !important; 
+}
+
+#movimiento-modal .modal__actions {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--c-surface); /* Fondo sólido para tapar contenido */
+    border-top: 1px solid var(--c-outline);
+    padding: var(--sp-3) var(--sp-4);
+    z-index: 20; /* Por encima de todo */
+    margin-top: 0; /* Reset */
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+}
+
+/* Ajuste para iPhone X/11/12 etc (Safe Area) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    #movimiento-modal .modal__actions {
+        padding-bottom: calc(var(--sp-3) + env(safe-area-inset-bottom));
+    }
+}
