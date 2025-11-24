@@ -229,27 +229,31 @@
                 </div>
 
                 <div id="recurrent-options" class="hidden" style="margin-bottom: 4px;">
-                    <div class="recurrent-options__main">
-                        <select id="recurrent-frequency" style="flex:1;">
-                            <option value="monthly" selected>Mensual</option>
-                            <option value="weekly">Semanal</option>
-                            <option value="daily">Diaria</option>
-                            <option value="yearly">Anual</option>
-                        </select>
-                        <input type="date" id="recurrent-next-date" title="Inicio" style="flex:1;">
-                    </div>
-                    <div id="weekly-day-selector" class="hidden" style="margin-top:6px;">
-                        <div id="weekly-day-selector-buttons">
-                            <button type="button" class="day-selector-btn" data-day="1">L</button>
-                            <button type="button" class="day-selector-btn" data-day="2">M</button>
-                            <button type="button" class="day-selector-btn" data-day="3">X</button>
-                            <button type="button" class="day-selector-btn" data-day="4">J</button>
-                            <button type="button" class="day-selector-btn" data-day="5">V</button>
-                            <button type="button" class="day-selector-btn" data-day="6">S</button>
-                            <button type="button" class="day-selector-btn" data-day="0">D</button>
-                        </div>
-                    </div>
-                </div>
+    <div class="recurrent-options__main" style="display: flex; gap: 6px;">
+        <select id="recurrent-frequency" style="flex: 1.2; min-width: 0;">
+            <option value="monthly" selected>Mensual</option>
+            <option value="weekly">Semanal</option>
+            <option value="daily">Diaria</option>
+            <option value="yearly">Anual</option>
+        </select>
+        
+        <input type="date" id="recurrent-next-date" title="Inicio" style="flex: 1; min-width: 0;">
+        
+        <input type="date" id="recurrent-end-date" title="Fin (Opcional)" style="flex: 1; min-width: 0; color: var(--c-on-surface-secondary);">
+    </div>
+    
+    <div id="weekly-day-selector" class="hidden" style="margin-top:6px;">
+        <div id="weekly-day-selector-buttons">
+            <button type="button" class="day-selector-btn" data-day="1">L</button>
+            <button type="button" class="day-selector-btn" data-day="2">M</button>
+            <button type="button" class="day-selector-btn" data-day="3">X</button>
+            <button type="button" class="day-selector-btn" data-day="4">J</button>
+            <button type="button" class="day-selector-btn" data-day="5">V</button>
+            <button type="button" class="day-selector-btn" data-day="6">S</button>
+            <button type="button" class="day-selector-btn" data-day="0">D</button>
+        </div>
+    </div>
+</div>
 
                 <div class="modal__actions">
                      <button type="button" id="delete-movimiento-btn" data-action="delete-movement-from-modal" class="icon-btn hidden" style="background: var(--c-surface-variant); width: 40px;"><span class="material-icons text-danger">delete</span></button>
