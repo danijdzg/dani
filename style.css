@@ -470,9 +470,10 @@ body[data-theme="sunset-groove"] {
 /* 1. Estilo base del encabezado (oscuro, para que contraste en ambos temas) */
 .top-bar {
     background-color: rgba(10, 10, 15, 0.7); /* Un fondo oscuro translúcido */
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--c-outline); /* Usa el borde del tema activo */
+    backdrop-filter: blur(20px) saturate(180%);
+-webkit-backdrop-filter: blur(20px) saturate(180%);
+background-color: rgba(28, 42, 58, 0.75); /* Un poco más de opacidad */
+border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */
 }
 
 /* 2. Anulación específica para Contabilidad A (el encabezado se vuelve azul corporativo) */
@@ -704,7 +705,11 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 .view--active { display: flex; }
 
 /* --- Navegación Superior (Top Bar) --- */
-.top-bar { display: flex; align-items: center; justify-content: space-between; padding: var(--sp-2) var(--sp-4); background-color: rgba(0,0,0,0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--c-outline); z-index: 200; height: 44px; position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; transition: background-color 0.3s ease-in-out; }
+.top-bar { display: flex; align-items: center; justify-content: space-between; padding: var(--sp-2) var(--sp-4); background-color: rgba(0,0,0,0.7); backdrop-filter: blur(20px) saturate(180%);
+-webkit-backdrop-filter: blur(20px) saturate(180%);
+background-color: rgba(28, 42, 58, 0.75); /* Un poco más de opacidad */
+border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */
+ border-bottom: 1px solid var(--c-outline); z-index: 200; height: 44px; position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; transition: background-color 0.3s ease-in-out; }
 .top-bar__title { font-size: var(--fs-lg); font-weight: 800; padding-left: var(--sp-2); text-align: center; }
 #page-title-display { font-size: var(--fs-base); font-weight: 700; margin-left: var(--sp-3); color: inherit; white-space: nowrap; }
 .top-bar__actions { display: flex; align-items: center; gap: var(--sp-1); }
@@ -757,8 +762,16 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 
 
 /* --- Modales --- */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); display: flex; align-items: flex-end; justify-content: center; z-index: 1050; opacity: 0; transition: opacity 0.3s ease-out; pointer-events: none; }
-.app-layout.app-layout--transformed-by-modal { transform: scale(0.96) translateY(-8px); border-radius: var(--border-radius-lg); overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px) saturate(180%);
+-webkit-backdrop-filter: blur(20px) saturate(180%);
+background-color: rgba(28, 42, 58, 0.75); /* Un poco más de opacidad */
+border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ display: flex; align-items: flex-end; justify-content: center; z-index: 1050; opacity: 0; transition: opacity 0.3s ease-out; pointer-events: none; }
+.app-layout--transformed-by-modal {
+    transform: scale(0.92) translateY(-10px); /* Efecto de "irse al fondo" */
+    border-radius: 20px; /* Recorta los bordes de la app de fondo */
+    opacity: 0.8;
+    transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1); /* Física iOS */
+}
 .modal-overlay--active { opacity: 1; pointer-events: auto; }
 .modal { background: var(--c-surface); border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0; padding: var(--sp-5); width: 100%; max-width: 420px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 0 30px rgba(0,0,0,0.5); transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 .modal-overlay--active .modal { transform: translateY(0); }
@@ -3159,6 +3172,5 @@ body[data-theme="default"] .cartilla-container {
 /* Ajuste para iPhone X/11/12 etc (Safe Area) */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
     #movimiento-modal .modal__actions {
-        padding-bottom: calc(var(--sp-3) + env(safe-area-inset-bottom));
-    }
+    padding-bottom: calc(var(--sp-3) + env(safe-area-inset-bottom, 16px));
 }
