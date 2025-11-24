@@ -7632,51 +7632,45 @@ function createCustomSelect(selectElement) {
     populateOptions(selectElement, optionsContainer, trigger, wrapper);
 }
 
-// Helper para poblar opciones con ICONOS
+// Helper para poblar opciones SOLO CON TEXTO (Sin Iconos)
 function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
     optionsContainer.innerHTML = ''; 
-    let selectedHTML = '<span style="color: var(--c-on-surface-tertiary);">Seleccionar...</span>'; 
+    
+    // 1. Lógica del Texto Predictivo (Mantenemos esto porque queda bien)
+    let placeholderText = 'Seleccionar...';
+    const id = selectElement.id;
+    
+    if (id.includes('concepto')) placeholderText = 'Concepto';
+    else if (id.includes('cuenta-origen')) placeholderText = 'Desde cuenta...';
+    else if (id.includes('cuenta-destino')) placeholderText = 'Hacia cuenta...';
+    else if (id.includes('cuenta')) placeholderText = 'Cuenta';
+    
+    // Este es el texto gris que se ve cuando no hay nada seleccionado
+    let selectedHTML = `<span style="color: var(--c-on-surface-tertiary); opacity: 0.7;">${placeholderText}</span>`; 
 
     Array.from(selectElement.options).forEach(optionEl => {
         if (optionEl.value === "") return;
 
-        // Buscamos el icono en la base de datos si es posible
-        // (Asumimos que el ID del option coincide con el ID del concepto o cuenta)
-        let icon = 'label'; // Icono por defecto
-        let isAccount = false;
-        
-        // Intentamos buscar en Conceptos
-        const concepto = db.conceptos.find(c => c.id === optionEl.value);
-        if (concepto && concepto.icon) icon = concepto.icon;
-        
-        // Si no, buscamos en Cuentas
-        const cuenta = db.cuentas.find(c => c.id === optionEl.value);
-        if (cuenta) {
-            icon = 'account_balance_wallet'; // Icono genérico para cuentas
-            if (cuenta.tipo.toLowerCase().includes('banco')) icon = 'account_balance';
-            if (cuenta.tipo.toLowerCase().includes('efectivo')) icon = 'payments';
-            isAccount = true;
-        }
-
         const customOption = document.createElement('div');
         customOption.className = 'custom-select__option';
         
-        // HTML RICO PARA LA OPCIÓN
+        // ▼▼▼ CAMBIO AQUÍ ▼▼▼
+        // Antes había un <span> con el icono. Lo he borrado.
+        // Ahora solo mostramos el texto limpio.
         customOption.innerHTML = `
-            <span class="material-icons option-icon" style="font-size: 18px; opacity: 0.7;">${icon}</span>
             <span class="option-text">${optionEl.textContent}</span>
         `;
+        // ▲▲▲ FIN DEL CAMBIO ▲▲▲
         
         customOption.dataset.value = optionEl.value;
 
         if (optionEl.selected) {
             customOption.classList.add('is-selected');
-            // Actualizamos el trigger también con el icono
-            selectedHTML = `
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="material-icons" style="font-size: 20px; color: var(--c-primary);">${icon}</span>
-                    <span>${optionEl.textContent}</span>
-                </div>`;
+            
+            // ▼▼▼ CAMBIO TAMBIÉN AQUÍ (Para el valor seleccionado) ▼▼▼
+            // Eliminamos el icono y el contenedor flex innecesario
+            selectedHTML = `<span style="font-weight: 600; color: var(--c-on-surface);">${optionEl.textContent}</span>`;
+            // ▲▲▲ FIN DEL CAMBIO ▲▲▲
         }
 
         customOption.addEventListener('click', (e) => {
@@ -7684,7 +7678,7 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
             selectElement.value = optionEl.value;
             selectElement.dispatchEvent(new Event('change', { bubbles: true }));
             wrapper.classList.remove('is-open');
-            trigger.focus(); // Devolver foco al trigger
+            trigger.focus(); 
         });
 
         optionsContainer.appendChild(customOption);
@@ -7692,7 +7686,6 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
 
     trigger.innerHTML = selectedHTML;
 }
-  
 
 
 const showCalculator = (targetInput) => {
