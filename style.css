@@ -3205,3 +3205,45 @@ body[data-theme="default"] .cartilla-container {
 #calculator-overlay {
     z-index: 12000 !important; 
 }
+/* Asegura que la calculadora esté SIEMPRE encima de todo, incluidos los toasts */
+#calculator-overlay {
+    z-index: 2147483647 !important; /* Valor máximo de 32-bit integer */
+}
+.save-animation-bubble {
+    z-index: 2147483646 !important; /* Justo debajo de la calculadora */
+}
+/* Evitar el zoom en iOS al enfocar inputs (Regla general vital) */
+@media screen and (max-width: 768px) {
+    input, select, textarea {
+        font-size: 16px !important; /* iOS hace zoom si es menor a 16px */
+    }
+}
+/* Modificación para que el cuerpo del modal tenga scroll interno y el footer sea fijo */
+#movimiento-modal .modal {
+    max-height: 90vh; /* Altura máxima */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Evita scroll en el contenedor principal */
+}
+
+#movimiento-modal .modal__header {
+    flex-shrink: 0; /* La cabecera no se encoge */
+}
+
+#movimiento-modal .modal__body {
+    flex-grow: 1;
+    overflow-y: auto; /* Solo el cuerpo hace scroll */
+    padding-bottom: 0 !important; /* Quitamos padding extra porque el footer está fuera */
+}
+
+/* Sacamos las acciones del body o las fijamos */
+#movimiento-modal .modal__actions {
+    flex-shrink: 0;
+    background-color: var(--c-surface);
+    border-top: 1px solid var(--c-outline);
+    padding: var(--sp-3) var(--sp-4);
+    padding-bottom: calc(var(--sp-3) + env(safe-area-inset-bottom)); /* Soporte iPhone X */
+    z-index: 10;
+    position: relative; /* Ya no absolute, sino parte del flujo flex */
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+}

@@ -937,26 +937,42 @@ async function loadCoreData(uid) {
 
     }
     const checkAuthState = () => {
-            fbAuth.onAuthStateChanged((user) => {
-                if (user) {
-                    const storedPinHash = localStorage.getItem('pinUserHash');
-                    const storedPinEmail = localStorage.getItem('pinUserEmail');
+    fbAuth.onAuthStateChanged((user) => {
+        if (user) {
+            const storedPinHash = localStorage.getItem('pinUserHash');
+            const storedPinEmail = localStorage.getItem('pinUserEmail');
 
-                    if (storedPinHash && storedPinEmail === user.email) {
-                        showPinScreen(user);
-                    } else {
-                        currentUser = user;
-                        loadCoreData(user.uid);
-                    }
-                } else {
-                    currentUser = null;
-                    unsubscribeListeners.forEach(unsub => unsub());
-                    unsubscribeListeners = [];
-                    db = getInitialDb();
-                    showLoginScreen();
-                }
-            });
-        };
+            if (storedPinHash && storedPinEmail === user.email) {
+                showPinScreen(user);
+            } else {
+                currentUser = user;
+                loadCoreData(user.uid);
+            }
+        } else {
+            currentUser = null;
+            // Limpieza profunda de Suscripciones
+            unsubscribeListeners.forEach(unsub => unsub());
+            unsubscribeListeners = [];
+            if (unsubscribeRecientesListener) {
+                unsubscribeRecientesListener();
+                unsubscribeRecientesListener = null;
+            }
+            
+            // Limpieza profunda de Datos en Memoria
+            db = getInitialDb();
+            recentMovementsCache = [];
+            allDiarioMovementsCache = [];
+            runningBalancesCache = null;
+            lastVisibleMovementDoc = null;
+            allMovementsLoaded = false;
+            intelligentIndex.clear();
+            
+            // Limpieza de la UI
+            destroyAllCharts();
+            showLoginScreen();
+        }
+    });
+};
 
  const calculateNextDueDate = (currentDueDate, frequency, weekDays = []) => {
     // Parseamos la fecha base asegurando mediodía UTC para evitar saltos
@@ -2080,6 +2096,10 @@ const getFilteredMovements = async (forComparison = false) => {
 // === VERSIÓN FINAL: P&L basado en Saldo Contable y TIR basada en CADA movimiento        ===
 // =========================================================================================
 const calculatePortfolioPerformance = async (cuentaId = null) => {
+	// Optimización: Usar caché global si está disponible
+const allMovements = (typeof allDiarioMovementsCache !== 'undefined' && allDiarioMovementsCache.length > 0) 
+    ? allDiarioMovementsCache 
+    : await fetchAllMovementsForHistory();
     if (!dataLoaded.inversiones) await loadInversiones();
 
     const allInvestmentAccounts = getVisibleAccounts().filter(c => c.esInversion);
@@ -8036,11 +8056,21 @@ const handleStart = (e) => {
 
         ptrElement.addEventListener('touchmove', (e) => {
             if (!ptrState.isPulling) return;
+			// Si el usuario ha hecho scroll hacia abajo aunque sea 1px, cancelamos el pull
+    if (mainScrollerPtr.scrollTop > 0) {
+        ptrState.isPulling = false;
+        ptrState.distance = 0;
+        ptrIndicator.classList.remove('visible');
+        return;
+    }
             const currentY = e.touches[0].clientY;
             ptrState.distance = currentY - ptrState.startY;
-            if (ptrState.distance > 0) {
-                e.preventDefault();
-                ptrIndicator.classList.add('visible');
+            // Solo activamos el efecto visual si arrastra hacia abajo y estamos en el tope
+    if (ptrState.distance > 0 && mainScrollerPtr.scrollTop <= 0) {
+        // Solo prevenimos el defecto si realmente estamos "tirando" para refrescar
+        if (e.cancelable) e.preventDefault(); 
+        
+        ptrIndicator.classList.add('visible');
                 const rotation = Math.min(ptrState.distance * 2.5, 360);
                 ptrIndicator.querySelector('.spinner').style.transform = `rotate(${rotation}deg)`;
                 ptrIndicator.style.opacity = Math.min(ptrState.distance / ptrState.threshold, 1);
@@ -10129,8 +10159,6 @@ const handleDescriptionInput = () => {
         }
     }, 250);
 };
-
-// EN main.js - AÑADE ESTO AL FINAL DEL FICHERO
 
 // --- REGISTRO DEL SERVICE WORKER ---
 // Comprobamos si el navegador soporta Service Workers
