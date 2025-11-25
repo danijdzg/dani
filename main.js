@@ -544,27 +544,48 @@ const handleCalculatorInput = (key) => {
     } else {
         switch(key) {
             case 'done':
-                hapticFeedback('medium');
-                if (operand1 !== null && operator !== null && !waitingForNewValue) {
-                    calculate();
-                    displayValue = calculatorState.displayValue;
-                }
-                if (calculatorState.targetInput) {
-                    const finalValue = parseFloat(displayValue.replace(',', '.')) || 0;
-                    calculatorState.targetInput.value = finalValue.toLocaleString('es-ES', { 
-                        useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 
-                    });
-                    // Disparamos eventos para que cualquier otra lógica reaccione
-                    calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-					calculatorState.targetInput.blur();
-                    }
-                historyValue = '';
-                hideCalculator();
-				select('movimiento-descripcion').focus(); // Llevamos al usuario al siguiente paso
-				if (!isMobileDevice()) {
-    select('movimiento-descripcion').focus(); 
-}
-                return;
+    hapticFeedback('medium');
+    if (operand1 !== null && operator !== null && !waitingForNewValue) {
+        calculate();
+        displayValue = calculatorState.displayValue;
+    }
+    if (calculatorState.targetInput) {
+        // ... (tu código existente para formatear valor) ...
+        const finalValue = parseFloat(displayValue.replace(',', '.')) || 0;
+        calculatorState.targetInput.value = finalValue.toLocaleString('es-ES', { 
+            useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 
+        });
+        calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+        calculatorState.targetInput.blur();
+    }
+    historyValue = '';
+    hideCalculator();
+
+    // --- ▼▼▼ MEJORA UX: SALTO DE FOCO AUTOMÁTICO ▼▼▼ ---
+    setTimeout(() => {
+        // 1. Intentamos ir al Concepto (prioridad)
+        const conceptoSelect = document.getElementById('movimiento-concepto');
+        
+        if (conceptoSelect) {
+            // Como usas un Select Personalizado, debemos enfocar el TRIGGER (el div), no el select oculto
+            const wrapper = conceptoSelect.closest('.custom-select-wrapper');
+            const trigger = wrapper ? wrapper.querySelector('.custom-select__trigger') : null;
+            
+            if (trigger) {
+                trigger.focus();
+                // Opcional: Si quieres que se despliegue automáticamente la lista de opciones:
+                trigger.click(); 
+            } else {
+                conceptoSelect.focus(); // Fallback por si acaso
+            }
+        } else {
+            // Si no hay concepto (ej. traspaso), vamos a la descripción
+            const descInput = document.getElementById('movimiento-descripcion');
+            if (descInput) descInput.focus();
+        }
+    }, 100); // Pequeño delay para dar tiempo a que la calculadora desaparezca visualmente
+    // --- ▲▲▲ FIN MEJORA UX ▲▲▲ ---
+    return;
             case 'comma':
                 if (waitingForNewValue) {
                     displayValue = '0,';
@@ -7663,16 +7684,32 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
         }
 
         customOption.addEventListener('click', (e) => {
-            e.stopPropagation();
-            selectElement.value = optionEl.value;
-            selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-            wrapper.classList.remove('is-open');
-            trigger.focus(); 
-        });
+    e.stopPropagation();
+    selectElement.value = optionEl.value;
+    selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+    wrapper.classList.remove('is-open');
+    trigger.focus(); 
 
-        optionsContainer.appendChild(customOption);
-    });
-
+    // ▼▼▼ MEJORA UX: AVANCE AUTOMÁTICO ▼▼▼
+    // Si acabamos de elegir un CONCEPTO, saltar a DESCRIPCIÓN
+    if (selectElement.id === 'movimiento-concepto') {
+        setTimeout(() => {
+            const descInput = document.getElementById('movimiento-descripcion');
+            if (descInput) descInput.focus();
+        }, 50);
+    }
+    // Si acabamos de elegir una CUENTA ORIGEN (en traspaso), saltar a CUENTA DESTINO
+    if (selectElement.id === 'movimiento-cuenta-origen') {
+         setTimeout(() => {
+            // Buscar el trigger del siguiente select custom
+            const destinoSelect = document.getElementById('movimiento-cuenta-destino');
+            const wrapper = destinoSelect?.closest('.custom-select-wrapper');
+            const trigger = wrapper?.querySelector('.custom-select__trigger');
+            if(trigger) trigger.click(); // Abrir directamente el siguiente
+        }, 50);
+    }
+    // ▲▲▲ FIN MEJORA ▲▲▲
+});
     trigger.innerHTML = selectedHTML;
 }
 
@@ -7887,42 +7924,50 @@ const attachEventListeners = () => {
         let startY = 0;
         const LONG_PRESS_DURATION = 800; // Tiempo en ms para activar (0.8 segundos)
 
-        const handleStart = (e) => {
-            // Solo nos interesa si tocamos una tarjeta de transacción
-            const card = e.target.closest('.transaction-card');
-            if (!card) return;
+        // Dentro de attachEventListeners...
 
-            const point = e.touches ? e.touches[0] : e;
-            startX = point.clientX;
-            startY = point.clientY;
+const handleStart = (e) => {
+    const card = e.target.closest('.transaction-card');
+    if (!card) return;
 
-            longPressTimer = setTimeout(() => {
-                // ¡Pulsación prolongada detectada!
-                hapticFeedback('medium'); // Vibra para avisar
-                const id = card.dataset.id;
-                // Abrimos el formulario de edición
-                startMovementForm(id, false); 
-            }, LONG_PRESS_DURATION);
-        };
+    // --- FEEDBACK VISUAL ---
+    card.classList.add('is-pressing'); 
+    // -----------------------
 
-        const handleMove = (e) => {
-            if (!longPressTimer) return;
-            const point = e.touches ? e.touches[0] : e;
-            
-            // Si el dedo se mueve más de 10px, cancelamos (es un scroll, no una pulsación)
-            if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-        };
+    // ... resto de tu lógica de coordenadas ...
+    const point = e.touches ? e.touches[0] : e;
+    startX = point.clientX;
+    startY = point.clientY;
 
-        const handleEnd = () => {
-            // Si soltamos el dedo antes de tiempo, cancelamos.
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-        };
+    longPressTimer = setTimeout(() => {
+        card.classList.remove('is-pressing'); // Quitamos efecto al ejecutarse
+        hapticFeedback('medium');
+        const id = card.dataset.id;
+        startMovementForm(id, false); 
+    }, LONG_PRESS_DURATION);
+};
+
+const handleMove = (e) => {
+    // ... lógica existente ...
+    if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        // --- CANCELAR FEEDBACK ---
+        const card = e.target.closest('.transaction-card');
+        if(card) card.classList.remove('is-pressing');
+    }
+};
+
+const handleEnd = (e) => {
+    // --- CANCELAR FEEDBACK ---
+    const card = e.target.closest('.transaction-card');
+    if(card) card.classList.remove('is-pressing');
+    
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+    }
+};
 
         // Añadimos los escuchadores (soporte para Táctil y Ratón)
         diarioPage.addEventListener('touchstart', handleStart, { passive: true });
@@ -8175,7 +8220,22 @@ const attachEventListeners = () => {
             'search-result-movimiento': (e) => { hideModal('global-search-modal'); startMovementForm(e.target.closest('[data-id]').dataset.id, false); },
             'delete-concepto': async () => { const movsCheck = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').where('conceptoId', '==', id).limit(1).get(); if(!movsCheck.empty) { showToast("Concepto en uso.","warning"); return; } showConfirmationModal('¿Eliminar concepto?', async () => { await deleteDoc('conceptos', id); hapticFeedback('success'); showToast("Concepto eliminado."); renderConceptosModalList(); }); },
             'delete-cuenta': async () => { const movsCheck = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').where('cuentaId', '==', id).limit(1).get(); if(!movsCheck.empty) { showToast("Cuenta con movimientos.","warning"); return; } showConfirmationModal('¿Eliminar cuenta?', async () => { await deleteDoc('cuentas', id); hapticFeedback('success'); showToast("Cuenta eliminada."); renderCuentasModalList(); }); },
-            'close-modal': () => { const closestOverlay = target.closest('.modal-overlay'); const effectiveModalId = modalId || (closestOverlay ? closestOverlay.id : null); if (effectiveModalId) hideModal(effectiveModalId); },
+            'close-modal': () => {
+    const currentModal = document.getElementById(modalId) || target.closest('.modal-overlay');
+    
+    // Chequeo de seguridad para el formulario de movimiento
+    if (currentModal && currentModal.id === 'movimiento-modal') {
+        const cantidad = document.getElementById('movimiento-cantidad').value;
+        // Si hay cantidad escrita y no es 0, y no estamos guardando
+        if (cantidad && cantidad !== '' && cantidad !== '0,00') {
+            if (!confirm("¿Descartar este movimiento?")) {
+                return; // Cancelar cierre
+            }
+        }
+    }
+    
+    if (currentModal) hideModal(currentModal.id);
+},
             'manage-conceptos': showConceptosModal, 'manage-cuentas': showCuentasModal,
             'save-config': () => handleSaveConfig(btn),
             'export-data': () => handleExportData(btn), 'export-csv': () => handleExportCsv(btn), 'import-data': () => showImportJSONWizard(),
