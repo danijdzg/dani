@@ -3163,8 +3163,9 @@ body[data-theme="default"] .cartilla-container {
 /* Ajuste para iPhone X/11/12 etc (Safe Area) */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
     #movimiento-modal .modal__actions {
-    padding-bottom: calc(var(--sp-3) + env(safe-area-inset-bottom, 16px));
-}
+        padding-bottom: calc(var(--sp-3) + env(safe-area-inset-bottom, 16px));
+    } /* Cierre de la regla CSS */
+} /* <--- ¡ESTA LLAVE FALTABA! Cierre del @supports */
 /* --- FIX iOS: Evita zoom en inputs --- */
 @media screen and (-webkit-min-device-pixel-ratio: 0) { 
     select:focus,

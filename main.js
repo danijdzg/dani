@@ -1,17 +1,4 @@
-// ▼▼▼ REEMPLAZA TUS FUNCIONES handleGenerateInformeCuenta y renderInformeCuentaRow CON ESTE BLOQUE ÚNICO Y CORREGIDO ▼▼▼
-
-/**
- * Renderiza una única fila del extracto de cuenta con un diseño adaptable y claro.
- * @param {object} mov - El objeto de movimiento, que ya incluye 'runningBalance'.
- * @param {string} cuentaId - El ID de la cuenta para la que se genera el extracto.
- * @param {Array} allCuentas - La lista completa de cuentas para buscar nombres en traspasos.
- * @returns {string} El HTML de la fila del movimiento.
- */
-// ▼▼▼ REEMPLAZA TUS FUNCIONES handleGenerateInformeCuenta y renderInformeCuentaRow CON ESTE BLOQUE ▼▼▼
-
-/**
- * Renderiza una fila estilo cartilla bancaria.
- */
+import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
 const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
     const fecha = new Date(mov.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
     let cargo = '';
@@ -151,7 +138,7 @@ const handleGenerateInformeCuenta = async (form, btn) => {
 };
 // ▲▲▲ FIN DEL BLOQUE A REEMPLAZAR ▲▲▲
 
-import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
+
 
 const handleExportFilteredCsv = (btn) => {
     // La lista de movimientos a exportar es la que ya tenemos filtrada en db.movimientos
@@ -2108,9 +2095,7 @@ const allMovements = (typeof allDiarioMovementsCache !== 'undefined' && allDiari
     if (investmentAccounts.length === 0) {
         return { valorActual: 0, capitalInvertido: 0, pnlAbsoluto: 0, pnlPorcentual: 0, irr: 0 };
     }
-
-    const allMovements = await fetchAllMovementsForHistory();
-
+    
     let totalValorActual = 0;
     let totalCapitalInvertido_para_PNL = 0;
     let allIrrCashflows = [];
