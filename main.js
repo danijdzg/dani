@@ -7708,10 +7708,10 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
             if(trigger) trigger.click(); // Abrir directamente el siguiente
         }, 50);
     }
-    // ▲▲▲ FIN MEJORA ▲▲▲
+    
 });
     trigger.innerHTML = selectedHTML;
-}
+} }
 
 
 const showCalculator = (targetInput) => {
