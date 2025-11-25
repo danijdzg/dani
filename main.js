@@ -6869,19 +6869,17 @@ const showValoracionModal = (cuentaId) => {
     if (!cuenta) return;
 
     const fechaISO = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
-    
     const ultimaValoracion = (db.inversiones_historial || []).filter(v => v.cuentaId === cuentaId).sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())[0];
-
     const valorActualInput = ultimaValoracion ? (ultimaValoracion.valor / 100).toLocaleString('es-ES', { useGrouping: false, minimumFractionDigits: 2 }) : '';
 
     const formHtml = `
     <form id="form-valoracion" data-id="${cuentaId}" novalidate>
         <p class="form-label" style="margin-bottom: var(--sp-3);">
-            Introduce el valor de mercado actual para <strong>${escapeHTML(cuenta.nombre)}</strong>. Esto actualizará el P&L y la TIR.
+            Introduce el valor de mercado actual para <strong>${escapeHTML(cuenta.nombre)}</strong>.
         </p>
         <div class="form-group">
-            <label for="valoracion-valor" class="form-label">Nuevo Valor Total del Activo</label>
-            <input type="text" id="valoracion-valor" class="form-input input-amount-calculator" inputmode="none" required value="${valorActualInput}" placeholder="Ej: 15250,75">
+            <label for="valoracion-valor" class="form-label">Nuevo Valor Total</label>
+            <input type="text" id="valoracion-valor" class="form-input input-amount-calculator" inputmode="none" required value="${valorActualInput}" placeholder="0,00" autocomplete="off">
         </div>
         <div class="form-group">
             <label for="valoracion-fecha" class="form-label">Fecha de la Valoración</label>
@@ -6893,6 +6891,9 @@ const showValoracionModal = (cuentaId) => {
     </form>`;
 
     showGenericModal(`Actualizar Valor de ${cuenta.nombre}`, formHtml);
+    
+    // IMPORTANTE: Inicializamos el input recién creado para que use la calculadora
+    setTimeout(() => initAmountInput(), 50);
 };
 
 const handleSaveValoracion = async (form, btn) => {
@@ -7692,34 +7693,45 @@ const showCalculator = (targetInput) => {
     const calculatorOverlay = select('calculator-overlay');
     if (!calculatorOverlay) return;
     
+    // Mostramos la UI
     calculatorOverlay.classList.add('modal-overlay--active');
     calculatorState.isVisible = true;
     calculatorState.targetInput = targetInput;
-    calculatorState.displayValue = '0';
-    calculatorState.waitingForNewValue = true;
+    
+    // Cargar el valor actual del input en la calculadora si existe
+    const currentValue = parseCurrencyString(targetInput.value);
+    calculatorState.displayValue = currentValue ? currentValue.toString().replace('.', ',') : '0';
+    calculatorState.waitingForNewValue = true; // Al empezar, si escribe un número, reemplaza el 0
+    
     updateCalculatorDisplay();
+    updateCalculatorHistoryDisplay(); // Limpia o actualiza el historial si lo hubiera
 
-    if (!isMobileDevice()) {
-        if (calculatorKeyboardHandler) {
-            document.removeEventListener('keydown', calculatorKeyboardHandler);
-        }
-        calculatorKeyboardHandler = (e) => {
-            if ("0123456789,.+-*\/".includes(e.key) || ['Enter', 'Backspace', 'Escape', 'Delete'].includes(e.key)) {
-                e.preventDefault();
-            }
-            if (e.key >= '0' && e.key <= '9') handleCalculatorInput(e.key);
-            else if (e.key === ',' || e.key === '.') handleCalculatorInput('comma');
-            else if (e.key === 'Enter') handleCalculatorInput('done');
-            else if (e.key === 'Backspace') handleCalculatorInput('backspace');
-            else if (e.key === 'Delete' || e.key.toLowerCase() === 'c') handleCalculatorInput('clear');
-            else if (e.key === 'Escape') hideCalculator();
-            else if (e.key === '+') handleCalculatorInput('add');
-            else if (e.key === '-') handleCalculatorInput('subtract');
-            else if (e.key === '*' || e.key.toLowerCase() === 'x') handleCalculatorInput('multiply');
-            else if (e.key === '/') handleCalculatorInput('divide');
-        };
-        document.addEventListener('keydown', calculatorKeyboardHandler);
+    // --- GESTIÓN DEL TECLADO FÍSICO ---
+    // Eliminamos listener previo por seguridad
+    if (calculatorKeyboardHandler) {
+        document.removeEventListener('keydown', calculatorKeyboardHandler);
     }
+
+    // Definimos el manejador del teclado físico
+    calculatorKeyboardHandler = (e) => {
+        // Permitir F5, F12, Tab, etc. pero bloquear teclas de escritura en el fondo
+        const key = e.key;
+        
+        // Mapeo de teclas físicas a las acciones de nuestra calculadora
+        if (key >= '0' && key <= '9') { e.preventDefault(); handleCalculatorInput(key); }
+        else if (key === ',' || key === '.') { e.preventDefault(); handleCalculatorInput('comma'); }
+        else if (key === 'Enter') { e.preventDefault(); handleCalculatorInput('done'); }
+        else if (key === 'Backspace') { e.preventDefault(); handleCalculatorInput('backspace'); }
+        else if (key === 'Delete' || key.toLowerCase() === 'c') { e.preventDefault(); handleCalculatorInput('clear'); }
+        else if (key === 'Escape') { e.preventDefault(); hideCalculator(); }
+        else if (key === '+') { e.preventDefault(); handleCalculatorInput('add'); }
+        else if (key === '-') { e.preventDefault(); handleCalculatorInput('subtract'); }
+        else if (key === '*' || key.toLowerCase() === 'x') { e.preventDefault(); handleCalculatorInput('multiply'); }
+        else if (key === '/') { e.preventDefault(); handleCalculatorInput('divide'); }
+    };
+
+    // Activamos el listener global
+    document.addEventListener('keydown', calculatorKeyboardHandler);
 };
 
 const hideCalculator = () => {
@@ -7729,9 +7741,15 @@ const hideCalculator = () => {
     }
     calculatorState.isVisible = false;
     
+    // Limpiamos el listener del teclado físico
     if (calculatorKeyboardHandler) {
         document.removeEventListener('keydown', calculatorKeyboardHandler);
         calculatorKeyboardHandler = null;
+    }
+    
+    // Devolvemos el foco al documento para quitarlo de cualquier input residual
+    if (document.activeElement) {
+        document.activeElement.blur();
     }
 };
 
@@ -7816,35 +7834,45 @@ const setupFabInteractions = () => {
 };
 
 const initAmountInput = () => {
-    const amountInput = select('movimiento-cantidad');
-    const calculatorToggle = select('calculator-toggle-btn');
-    
-    if (!amountInput) return;
-    
-    // Limpiamos eventos anteriores
-    amountInput.onclick = null;
-    if (calculatorToggle) calculatorToggle.onclick = null;
-    
-    // CONFIGURACIÓN HÍBRIDA: 
-    // 1. inputmode="decimal" fuerza el teclado numérico nativo en iPhone/Android.
-    amountInput.setAttribute('inputmode', 'decimal');
-    amountInput.removeAttribute('readonly'); // Aseguramos que se pueda escribir
-    
-    // 2. Mantenemos el botón de calculadora visible siempre (incluso en móvil)
-    // por si el usuario necesita hacer operaciones matemáticas.
+    // Seleccionamos todos los inputs que deban usar calculadora (por clase)
+    const amountInputs = document.querySelectorAll('.input-amount-calculator');
+    const calculatorToggle = select('calculator-toggle-btn'); // El botón antiguo (si existe)
+
+    // Si hay botón de calculadora manual, lo ocultamos, ya que ahora es automático/obligatorio
     if (calculatorToggle) {
-        calculatorToggle.style.display = 'inline-flex';
-        calculatorToggle.onclick = (e) => {
-            e.preventDefault(); // Evitamos que el botón haga submit
-            hapticFeedback('light');
-            showCalculator(amountInput);
-        };
+        calculatorToggle.style.display = 'none';
     }
-    
-    // Pequeña mejora: al tocar el input, seleccionamos todo el texto para sobrescribir fácil
-    amountInput.addEventListener('focus', function() {
-        this.select();
+
+    amountInputs.forEach(input => {
+        // 1. 'inputmode="none"' impide que el teclado virtual del móvil se abra
+        input.setAttribute('inputmode', 'none');
+        // 2. Mantenemos autocomplete off
+        input.setAttribute('autocomplete', 'off');
+        
+        // 3. Limpiamos eventos anteriores para evitar duplicados
+        input.removeEventListener('focus', handleInputFocus);
+        input.removeEventListener('click', handleInputFocus);
+
+        // 4. Añadimos el evento para abrir la calculadora
+        input.addEventListener('focus', handleInputFocus);
+        input.addEventListener('click', handleInputFocus);
+        
+        // 5. Seleccionar texto al enfocar para facilitar la sobreescritura
+        input.addEventListener('focus', function() {
+            // Pequeño delay para asegurar que el foco está establecido
+            setTimeout(() => this.select(), 50); 
+        });
     });
+};
+
+// Función auxiliar para manejar el evento de foco/click
+const handleInputFocus = (e) => {
+    e.preventDefault();
+    // Quitamos el foco del input para evitar parpadeos del cursor nativo,
+    // pero guardamos la referencia para saber dónde escribir.
+    e.target.blur(); 
+    hapticFeedback('light');
+    showCalculator(e.target);
 };
 // --- PARCHES DE COMPATIBILIDAD ---
 // Añade esto al final de main.js o en el bloque de funciones globales
@@ -7951,6 +7979,25 @@ if (ptrElement && mainScrollerPtr) {
             if (e.detail.modalId === "movimiento-modal") {
                 setTimeout(() => cantidadInput.focus(), 100);
             }
+			showModal('movimiento-modal');
+
+// Renderizar chips y configurar navegación
+if (typeof renderQuickAccessChips === 'function') renderQuickAccessChips(); 
+if (typeof setupFormNavigation === 'function') setupFormNavigation();
+
+// ¡ESTO ES LO IMPORTANTE! Forzamos la inicialización de los inputs con la calculadora
+initAmountInput();
+
+// Opcional: Abrir calculadora automáticamente al entrar en "Nuevo"
+if (mode === 'new') {
+    setTimeout(() => {
+        const amountInput = select('movimiento-cantidad');
+        if (amountInput) {
+            // Esto disparará el evento focus que hemos configurado en initAmountInput
+            amountInput.focus(); 
+        }
+    }, 150); 
+}
         });
         cantidadInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
