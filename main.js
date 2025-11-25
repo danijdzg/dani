@@ -4071,7 +4071,7 @@ const TransactionCardComponent = (m, dbData) => {
     // CAMBIO AQUÍ: Eliminado 'data-action="edit-movement-from-list"' del div .transaction-card
     return `
     <div class="list-item-animate"> 
-        <div class="transaction-card ${highlightClass}" data-id="${m.id}" data-action="edit-movement-from-list">
+        <div class="transaction-card ${highlightClass}" data-id="${m.id}">
             ${cardContentHTML}
         </div>
     </div>`;
@@ -7879,6 +7879,68 @@ const renderInversionesPage = async (containerId) => {
 
 // ▼▼▼ REEMPLAZA TU FUNCIÓN attachEventListeners CON ESTA VERSIÓN LIMPIA ▼▼▼
 const attachEventListeners = () => {
+	// --- INICIO: LÓGICA DE PULSACIÓN PROLONGADA PARA DIARIO ---
+    const diarioPage = document.getElementById('diario-page');
+    if (diarioPage) {
+        let longPressTimer = null;
+        let startX = 0;
+        let startY = 0;
+        const LONG_PRESS_DURATION = 800; // Tiempo en ms para activar (0.8 segundos)
+
+        const handleStart = (e) => {
+            // Solo nos interesa si tocamos una tarjeta de transacción
+            const card = e.target.closest('.transaction-card');
+            if (!card) return;
+
+            const point = e.touches ? e.touches[0] : e;
+            startX = point.clientX;
+            startY = point.clientY;
+
+            longPressTimer = setTimeout(() => {
+                // ¡Pulsación prolongada detectada!
+                hapticFeedback('medium'); // Vibra para avisar
+                const id = card.dataset.id;
+                // Abrimos el formulario de edición
+                startMovementForm(id, false); 
+            }, LONG_PRESS_DURATION);
+        };
+
+        const handleMove = (e) => {
+            if (!longPressTimer) return;
+            const point = e.touches ? e.touches[0] : e;
+            
+            // Si el dedo se mueve más de 10px, cancelamos (es un scroll, no una pulsación)
+            if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        };
+
+        const handleEnd = () => {
+            // Si soltamos el dedo antes de tiempo, cancelamos.
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        };
+
+        // Añadimos los escuchadores (soporte para Táctil y Ratón)
+        diarioPage.addEventListener('touchstart', handleStart, { passive: true });
+        diarioPage.addEventListener('touchmove', handleMove, { passive: true });
+        diarioPage.addEventListener('touchend', handleEnd);
+        diarioPage.addEventListener('contextmenu', (e) => {
+            // Evita que salga el menú del navegador si pulsas mucho rato
+            if (e.target.closest('.transaction-card')) {
+                e.preventDefault();
+            }
+        });
+
+        // Soporte para PC (Ratón)
+        diarioPage.addEventListener('mousedown', handleStart);
+        diarioPage.addEventListener('mousemove', handleMove);
+        diarioPage.addEventListener('mouseup', handleEnd);
+        diarioPage.addEventListener('mouseleave', handleEnd);
+    }
 	const diarioContainer = select('diario-page'); 
     if (diarioContainer) { 
         const mainScroller = selectOne('.app-layout__main'); 
