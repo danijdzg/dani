@@ -7643,7 +7643,7 @@ function createCustomSelect(selectElement) {
 function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
     optionsContainer.innerHTML = ''; 
     
-    // 1. Lógica del Texto Predictivo (Mantenemos esto porque queda bien)
+    // 1. Lógica del Texto Predictivo
     let placeholderText = 'Seleccionar...';
     const id = selectElement.id;
     
@@ -7661,26 +7661,17 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
         const customOption = document.createElement('div');
         customOption.className = 'custom-select__option';
         
-        // ▼▼▼ CAMBIO AQUÍ ▼▼▼
-        // Antes había un <span> con el icono. Lo he borrado.
-        // Ahora solo mostramos el texto limpio.
-        customOption.innerHTML = `
-            <span class="option-text">${optionEl.textContent}</span>
-        `;
-        // ▲▲▲ FIN DEL CAMBIO ▲▲▲
-        
+        // Mostramos solo el texto limpio
+        customOption.innerHTML = `<span class="option-text">${optionEl.textContent}</span>`;
         customOption.dataset.value = optionEl.value;
 
         if (optionEl.selected) {
             customOption.classList.add('is-selected');
-            
-            // ▼▼▼ CAMBIO TAMBIÉN AQUÍ (Para el valor seleccionado) ▼▼▼
-            // Eliminamos el icono y el contenedor flex innecesario
+            // Actualizamos el HTML seleccionado
             selectedHTML = `<span style="font-weight: 600; color: var(--c-on-surface);">${optionEl.textContent}</span>`;
-            // ▲▲▲ FIN DEL CAMBIO ▲▲▲
         }
 
-   customOption.addEventListener('click', (e) => {
+        customOption.addEventListener('click', (e) => {
             e.stopPropagation();
             selectElement.value = optionEl.value;
             selectElement.dispatchEvent(new Event('change', { bubbles: true }));
@@ -7688,29 +7679,32 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
             trigger.focus(); 
 
             // ▼▼▼ MEJORA UX: AVANCE AUTOMÁTICO ▼▼▼
-            // Si acabamos de elegir un CONCEPTO, saltar directamente a la DESCRIPCIÓN
             if (selectElement.id === 'movimiento-concepto') {
                 setTimeout(() => {
                     const descInput = document.getElementById('movimiento-descripcion');
                     if (descInput) {
                         descInput.focus();
-                        descInput.select(); // Selecciona el texto por si quiere borrarlo rápido
+                        descInput.select();
                     }
                 }, 50);
             }
-            // Si acabamos de elegir CUENTA ORIGEN (en traspaso), saltar a CUENTA DESTINO
             if (selectElement.id === 'movimiento-cuenta-origen') {
                  setTimeout(() => {
                     const destinoSelect = document.getElementById('movimiento-cuenta-destino');
                     const wrapperDest = destinoSelect?.closest('.custom-select-wrapper');
                     const triggerDest = wrapperDest?.querySelector('.custom-select__trigger');
-                    if(triggerDest) triggerDest.click(); // Abrir el siguiente automáticamente
+                    if(triggerDest) triggerDest.click();
                 }, 50);
             }
             // ▲▲▲ FIN MEJORA ▲▲▲
         });
+
+        // ⚠️ ESTA LÍNEA FALTABA Y ERA CRÍTICA PARA QUE APAREZCAN LAS OPCIONES
+        optionsContainer.appendChild(customOption); 
+    }); // ⚠️ AQUÍ FALTABA EL CIERRE ); QUE PROVOCABA EL ERROR DE SINTAXIS
+
     trigger.innerHTML = selectedHTML;
-} }
+}
 
 
 const showCalculator = (targetInput) => {
