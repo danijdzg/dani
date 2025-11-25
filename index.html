@@ -311,35 +311,33 @@
     </div>
  
     <!-- ▼▼▼ INICIO: REEMPLAZA TU #calculator-overlay CON ESTE ▼▼▼ -->
-    <div id="calculator-overlay" class="modal-overlay" style="background: transparent; pointer-events: none;">
-        <div id="calculator-ui" class="calculator-ui" style="pointer-events: auto;">
-            <!-- NUEVO: Display para el historial -->
-            <div id="calculator-history-display" class="calculator-history-display"></div>
-            <!-- El display principal se mantiene -->
-            <div id="calculator-display" class="calculator-display">0</div>
-            <div id="calculator-grid" class="calculator-grid">
-                <button class="calculator-btn btn-operator" data-key="clear">C</button>
-                <button class="calculator-btn btn-operator" data-key="sign">+/-</button>
-                <button class="calculator-btn btn-operator" data-key="backspace"><span class="material-icons backspace-icon">backspace</span></button>
-                <button class="btn btn--primary calculator-btn" id="calculator-btn-done" data-key="done">OK</button>
-                <button class="calculator-btn" data-key="7">7</button>
-                <button class="calculator-btn" data-key="8">8</button>
-                <button class="calculator-btn" data-key="9">9</button>
-                <button class="calculator-btn btn-operator" data-key="divide">÷</button>
-                <button class="calculator-btn" data-key="4">4</button>
-                <button class="calculator-btn" data-key="5">5</button>
-                <button class="calculator-btn" data-key="6">6</button>
-                <button class="calculator-btn btn-operator" data-key="multiply">×</button>
-                <button class="calculator-btn" data-key="1">1</button>
-                <button class="calculator-btn" data-key="2">2</button>
-                <button class="calculator-btn" data-key="3">3</button>
-                <button class="calculator-btn btn-operator" data-key="subtract">−</button>
-                <button class="calculator-btn zero" data-key="0">0</button>
-                <button class="calculator-btn" data-key="comma">,</button>
-                <button class="calculator-btn btn-operator" data-key="add">+</button>
-            </div>
+    <div id="calculator-overlay" class="modal-overlay" style="background: transparent;">
+    <div id="calculator-ui" class="calculator-ui">
+        <div id="calculator-history-display" class="calculator-history-display"></div>
+        <div id="calculator-display" class="calculator-display">0</div>
+        <div id="calculator-grid" class="calculator-grid">
+            <button class="calculator-btn btn-operator" data-key="clear">C</button>
+            <button class="calculator-btn btn-operator" data-key="sign">+/-</button>
+            <button class="calculator-btn btn-operator" data-key="backspace"><span class="material-icons backspace-icon">backspace</span></button>
+            <button class="btn btn--primary calculator-btn" id="calculator-btn-done" data-key="done">OK</button>
+            <button class="calculator-btn" data-key="7">7</button>
+            <button class="calculator-btn" data-key="8">8</button>
+            <button class="calculator-btn" data-key="9">9</button>
+            <button class="calculator-btn btn-operator" data-key="divide">÷</button>
+            <button class="calculator-btn" data-key="4">4</button>
+            <button class="calculator-btn" data-key="5">5</button>
+            <button class="calculator-btn" data-key="6">6</button>
+            <button class="calculator-btn btn-operator" data-key="multiply">×</button>
+            <button class="calculator-btn" data-key="1">1</button>
+            <button class="calculator-btn" data-key="2">2</button>
+            <button class="calculator-btn" data-key="3">3</button>
+            <button class="calculator-btn btn-operator" data-key="subtract">−</button>
+            <button class="calculator-btn zero" data-key="0">0</button>
+            <button class="calculator-btn" data-key="comma">,</button>
+            <button class="calculator-btn btn-operator" data-key="add">+</button>
         </div>
     </div>
+</div>
     <!-- ▲▲▲ FIN: REEMPLAZO DE LA CALCULADORA ▲▲▲ -->
 	
 	<div id="irr-history-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="irr-history-title">
