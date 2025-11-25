@@ -3185,3 +3185,18 @@ body[data-theme="default"] .cartilla-container {
     transform: scale(0.98);
     transition: transform 0.1s ease-out;
 }
+/* Añade esto al final de tu CSS */
+
+/* Hacemos que los inputs de la calculadora parezcan normales aunque sean readonly */
+.input-amount-calculator {
+    caret-color: transparent; /* Oculta el cursor parpadeante */
+    cursor: pointer; /* Muestra manita en PC */
+    user-select: none; /* Evita selección de texto nativa que estorba */
+    -webkit-user-select: none;
+    background-color: var(--c-surface-variant) !important; /* Fuerza el color de fondo correcto */
+}
+
+/* Asegurar que la calculadora esté por encima de todo */
+#calculator-overlay {
+    z-index: 12000 !important; 
+}

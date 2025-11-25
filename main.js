@@ -7833,34 +7833,37 @@ const setupFabInteractions = () => {
     fab.addEventListener('touchcancel', () => { clearTimeout(longPressTimer); fab.style.transform = "scale(1)"; });
 };
 
+// ▼▼▼ REEMPLAZA ESTA FUNCIÓN EN main.js ▼▼▼
 const initAmountInput = () => {
-    // Seleccionamos todos los inputs que deban usar calculadora (por clase)
     const amountInputs = document.querySelectorAll('.input-amount-calculator');
-    const calculatorToggle = select('calculator-toggle-btn'); // El botón antiguo (si existe)
+    const calculatorToggle = select('calculator-toggle-btn'); 
 
-    // Si hay botón de calculadora manual, lo ocultamos, ya que ahora es automático/obligatorio
-    if (calculatorToggle) {
-        calculatorToggle.style.display = 'none';
-    }
+    if (calculatorToggle) calculatorToggle.style.display = 'none';
 
     amountInputs.forEach(input => {
-        // 1. 'inputmode="none"' impide que el teclado virtual del móvil se abra
+        // 1. EL TRUCO MAESTRO: Readonly evita que el teclado móvil se abra
+        // Así no tenemos que luchar con focus/blur ni vibraciones fantasma.
+        input.readOnly = true; 
+        
+        // 2. inputmode="none" es una seguridad extra para algunos Androids
         input.setAttribute('inputmode', 'none');
-        // 2. Mantenemos autocomplete off
         input.setAttribute('autocomplete', 'off');
         
-        // 3. Limpiamos eventos anteriores para evitar duplicados
-        input.removeEventListener('focus', handleInputFocus);
-        input.removeEventListener('click', handleInputFocus);
+        // 3. Limpieza total de eventos antiguos
+        // Clonamos el nodo para eliminar CUALQUIER event listener "fantasma" anterior
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
 
-        // 4. Añadimos el evento para abrir la calculadora
-        input.addEventListener('focus', handleInputFocus);
-        input.addEventListener('click', handleInputFocus);
-        
-        // 5. Seleccionar texto al enfocar para facilitar la sobreescritura
-        input.addEventListener('focus', function() {
-            // Pequeño delay para asegurar que el foco está establecido
-            setTimeout(() => this.select(), 50); 
+        // 4. Añadimos UN SOLO evento limpio: Click
+        newInput.addEventListener('click', (e) => {
+            e.preventDefault(); // Evita comportamientos nativos
+            e.stopPropagation(); // Evita que el click atraviese y cierre cosas
+            
+            // Solo abrimos si no está ya visible para evitar parpadeos
+            if (!calculatorState.isVisible || calculatorState.targetInput !== newInput) {
+                hapticFeedback('light');
+                showCalculator(newInput);
+            }
         });
     });
 };
@@ -7970,13 +7973,6 @@ const attachEventListeners = () => {
         // Cerrar dropdowns personalizados al hacer clic fuera
         if (!target.closest('.custom-select-wrapper')) {
             closeAllCustomSelects(null);
-        }
-
-        // ABRIR CALCULADORA (Para cualquier input marcado con la clase)
-        if (target.matches('.input-amount-calculator')) {
-            e.preventDefault();
-            showCalculator(target);
-            return;
         }
 
         // Gestión de acciones [data-action]
