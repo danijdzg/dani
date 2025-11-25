@@ -543,49 +543,46 @@ const handleCalculatorInput = (key) => {
         isResultDisplayed = false;
     } else {
         switch(key) {
-            case 'done':
-    hapticFeedback('medium');
-    if (operand1 !== null && operator !== null && !waitingForNewValue) {
-        calculate();
-        displayValue = calculatorState.displayValue;
-    }
-    if (calculatorState.targetInput) {
-        // ... (tu código existente para formatear valor) ...
-        const finalValue = parseFloat(displayValue.replace(',', '.')) || 0;
-        calculatorState.targetInput.value = finalValue.toLocaleString('es-ES', { 
-            useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 
-        });
-        calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-        calculatorState.targetInput.blur();
-    }
-    historyValue = '';
-    hideCalculator();
+         case 'done':
+                hapticFeedback('medium');
+                if (operand1 !== null && operator !== null && !waitingForNewValue) {
+                    calculate();
+                    displayValue = calculatorState.displayValue;
+                }
+                if (calculatorState.targetInput) {
+                    const finalValue = parseFloat(displayValue.replace(',', '.')) || 0;
+                    calculatorState.targetInput.value = finalValue.toLocaleString('es-ES', { 
+                        useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 
+                    });
+                    calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    calculatorState.targetInput.blur();
+                }
+                historyValue = '';
+                hideCalculator();
 
-    // --- ▼▼▼ MEJORA UX: SALTO DE FOCO AUTOMÁTICO ▼▼▼ ---
-    setTimeout(() => {
-        // 1. Intentamos ir al Concepto (prioridad)
-        const conceptoSelect = document.getElementById('movimiento-concepto');
-        
-        if (conceptoSelect) {
-            // Como usas un Select Personalizado, debemos enfocar el TRIGGER (el div), no el select oculto
-            const wrapper = conceptoSelect.closest('.custom-select-wrapper');
-            const trigger = wrapper ? wrapper.querySelector('.custom-select__trigger') : null;
-            
-            if (trigger) {
-                trigger.focus();
-                // Opcional: Si quieres que se despliegue automáticamente la lista de opciones:
-                trigger.click(); 
-            } else {
-                conceptoSelect.focus(); // Fallback por si acaso
-            }
-        } else {
-            // Si no hay concepto (ej. traspaso), vamos a la descripción
-            const descInput = document.getElementById('movimiento-descripcion');
-            if (descInput) descInput.focus();
-        }
-    }, 100); // Pequeño delay para dar tiempo a que la calculadora desaparezca visualmente
-    // --- ▲▲▲ FIN MEJORA UX ▲▲▲ ---
-    return;
+                // ▼▼▼ MEJORA UX: SALTO DE FOCO AUTOMÁTICO ▼▼▼
+                setTimeout(() => {
+                    // 1. Intentamos ir al Concepto (prioridad)
+                    const conceptoSelect = document.getElementById('movimiento-concepto');
+                    
+                    if (conceptoSelect) {
+                        // Como usas un Select Personalizado, enfocamos el disparador visual
+                        const wrapper = conceptoSelect.closest('.custom-select-wrapper');
+                        const trigger = wrapper ? wrapper.querySelector('.custom-select__trigger') : null;
+                        
+                        if (trigger) {
+                            trigger.focus();
+                            trigger.click(); // Abre el menú automáticamente para agilizar
+                        } else {
+                            conceptoSelect.focus(); 
+                        }
+                    } else {
+                        // Si es traspaso (no hay concepto), saltar a la descripción
+                        const descInput = document.getElementById('movimiento-descripcion');
+                        if (descInput) descInput.focus();
+                    }
+                }, 150); // Pequeño retardo para que la animación de cierre termine
+                return;
             case 'comma':
                 if (waitingForNewValue) {
                     displayValue = '0,';
@@ -7683,33 +7680,35 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
             // ▲▲▲ FIN DEL CAMBIO ▲▲▲
         }
 
-        customOption.addEventListener('click', (e) => {
-    e.stopPropagation();
-    selectElement.value = optionEl.value;
-    selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-    wrapper.classList.remove('is-open');
-    trigger.focus(); 
+   customOption.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectElement.value = optionEl.value;
+            selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+            wrapper.classList.remove('is-open');
+            trigger.focus(); 
 
-    // ▼▼▼ MEJORA UX: AVANCE AUTOMÁTICO ▼▼▼
-    // Si acabamos de elegir un CONCEPTO, saltar a DESCRIPCIÓN
-    if (selectElement.id === 'movimiento-concepto') {
-        setTimeout(() => {
-            const descInput = document.getElementById('movimiento-descripcion');
-            if (descInput) descInput.focus();
-        }, 50);
-    }
-    // Si acabamos de elegir una CUENTA ORIGEN (en traspaso), saltar a CUENTA DESTINO
-    if (selectElement.id === 'movimiento-cuenta-origen') {
-         setTimeout(() => {
-            // Buscar el trigger del siguiente select custom
-            const destinoSelect = document.getElementById('movimiento-cuenta-destino');
-            const wrapper = destinoSelect?.closest('.custom-select-wrapper');
-            const trigger = wrapper?.querySelector('.custom-select__trigger');
-            if(trigger) trigger.click(); // Abrir directamente el siguiente
-        }, 50);
-    }
-    
-});
+            // ▼▼▼ MEJORA UX: AVANCE AUTOMÁTICO ▼▼▼
+            // Si acabamos de elegir un CONCEPTO, saltar directamente a la DESCRIPCIÓN
+            if (selectElement.id === 'movimiento-concepto') {
+                setTimeout(() => {
+                    const descInput = document.getElementById('movimiento-descripcion');
+                    if (descInput) {
+                        descInput.focus();
+                        descInput.select(); // Selecciona el texto por si quiere borrarlo rápido
+                    }
+                }, 50);
+            }
+            // Si acabamos de elegir CUENTA ORIGEN (en traspaso), saltar a CUENTA DESTINO
+            if (selectElement.id === 'movimiento-cuenta-origen') {
+                 setTimeout(() => {
+                    const destinoSelect = document.getElementById('movimiento-cuenta-destino');
+                    const wrapperDest = destinoSelect?.closest('.custom-select-wrapper');
+                    const triggerDest = wrapperDest?.querySelector('.custom-select__trigger');
+                    if(triggerDest) triggerDest.click(); // Abrir el siguiente automáticamente
+                }, 50);
+            }
+            // ▲▲▲ FIN MEJORA ▲▲▲
+        });
     trigger.innerHTML = selectedHTML;
 } }
 
@@ -7927,47 +7926,48 @@ const attachEventListeners = () => {
         // Dentro de attachEventListeners...
 
 const handleStart = (e) => {
-    const card = e.target.closest('.transaction-card');
-    if (!card) return;
+            const card = e.target.closest('.transaction-card');
+            if (!card) return;
 
-    // --- FEEDBACK VISUAL ---
-    card.classList.add('is-pressing'); 
-    // -----------------------
+            // ▼▼▼ FEEDBACK VISUAL: AÑADIR CLASE ▼▼▼
+            card.classList.add('is-pressing'); 
 
-    // ... resto de tu lógica de coordenadas ...
-    const point = e.touches ? e.touches[0] : e;
-    startX = point.clientX;
-    startY = point.clientY;
+            const point = e.touches ? e.touches[0] : e;
+            startX = point.clientX;
+            startY = point.clientY;
 
-    longPressTimer = setTimeout(() => {
-        card.classList.remove('is-pressing'); // Quitamos efecto al ejecutarse
-        hapticFeedback('medium');
-        const id = card.dataset.id;
-        startMovementForm(id, false); 
-    }, LONG_PRESS_DURATION);
-};
+            longPressTimer = setTimeout(() => {
+                // ▼▼▼ FEEDBACK VISUAL: QUITAR CLASE ▼▼▼
+                card.classList.remove('is-pressing');
+                
+                hapticFeedback('medium');
+                const id = card.dataset.id;
+                startMovementForm(id, false); 
+            }, LONG_PRESS_DURATION);
+        };
 
-const handleMove = (e) => {
-    // ... lógica existente ...
-    if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
-        // --- CANCELAR FEEDBACK ---
-        const card = e.target.closest('.transaction-card');
-        if(card) card.classList.remove('is-pressing');
-    }
-};
+        const handleMove = (e) => {
+            if (!longPressTimer) return;
+            const point = e.touches ? e.touches[0] : e;
+            if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+                // ▼▼▼ CANCELAR SI SE MUEVE (SCROLL) ▼▼▼
+                const card = e.target.closest('.transaction-card');
+                if(card) card.classList.remove('is-pressing');
+            }
+        };
 
-const handleEnd = (e) => {
-    // --- CANCELAR FEEDBACK ---
-    const card = e.target.closest('.transaction-card');
-    if(card) card.classList.remove('is-pressing');
-    
-    if (longPressTimer) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
-    }
-};
+        const handleEnd = (e) => {
+            // ▼▼▼ CANCELAR SI SE SUELTA ANTES DE TIEMPO ▼▼▼
+            const card = e.target.closest('.transaction-card');
+            if(card) card.classList.remove('is-pressing');
+
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        };
 
         // Añadimos los escuchadores (soporte para Táctil y Ratón)
         diarioPage.addEventListener('touchstart', handleStart, { passive: true });
@@ -8220,22 +8220,23 @@ const handleEnd = (e) => {
             'search-result-movimiento': (e) => { hideModal('global-search-modal'); startMovementForm(e.target.closest('[data-id]').dataset.id, false); },
             'delete-concepto': async () => { const movsCheck = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').where('conceptoId', '==', id).limit(1).get(); if(!movsCheck.empty) { showToast("Concepto en uso.","warning"); return; } showConfirmationModal('¿Eliminar concepto?', async () => { await deleteDoc('conceptos', id); hapticFeedback('success'); showToast("Concepto eliminado."); renderConceptosModalList(); }); },
             'delete-cuenta': async () => { const movsCheck = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').where('cuentaId', '==', id).limit(1).get(); if(!movsCheck.empty) { showToast("Cuenta con movimientos.","warning"); return; } showConfirmationModal('¿Eliminar cuenta?', async () => { await deleteDoc('cuentas', id); hapticFeedback('success'); showToast("Cuenta eliminada."); renderCuentasModalList(); }); },
-            'close-modal': () => {
-    const currentModal = document.getElementById(modalId) || target.closest('.modal-overlay');
-    
-    // Chequeo de seguridad para el formulario de movimiento
-    if (currentModal && currentModal.id === 'movimiento-modal') {
-        const cantidad = document.getElementById('movimiento-cantidad').value;
-        // Si hay cantidad escrita y no es 0, y no estamos guardando
-        if (cantidad && cantidad !== '' && cantidad !== '0,00') {
-            if (!confirm("¿Descartar este movimiento?")) {
-                return; // Cancelar cierre
-            }
-        }
-    }
-    
-    if (currentModal) hideModal(currentModal.id);
-},
+            'close-modal': () => { 
+                const closestOverlay = target.closest('.modal-overlay'); 
+                const effectiveModalId = modalId || (closestOverlay ? closestOverlay.id : null); 
+                
+                // ▼▼▼ SEGURIDAD ▼▼▼
+                if (effectiveModalId === 'movimiento-modal') {
+                    const cantidad = document.getElementById('movimiento-cantidad').value;
+                    // Si hay cantidad (>0) o descripción y no estamos guardando
+                    const desc = document.getElementById('movimiento-descripcion').value;
+                    if ((cantidad && cantidad !== '0,00') || desc.length > 2) {
+                        if (!confirm("¿Descartar los cambios?")) return;
+                    }
+                }
+                // ▲▲▲ FIN SEGURIDAD ▲▲▲
+
+                if (effectiveModalId) hideModal(effectiveModalId); 
+            },
             'manage-conceptos': showConceptosModal, 'manage-cuentas': showCuentasModal,
             'save-config': () => handleSaveConfig(btn),
             'export-data': () => handleExportData(btn), 'export-csv': () => handleExportCsv(btn), 'import-data': () => showImportJSONWizard(),
