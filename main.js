@@ -4070,20 +4070,8 @@ const TransactionCardComponent = (m, dbData) => {
     
     // CAMBIO AQUÍ: Eliminado 'data-action="edit-movement-from-list"' del div .transaction-card
     return `
-    <div class="swipe-container list-item-animate">
-        <div class="swipe-actions-container left">
-            <button class="swipe-action-btn duplicate" data-action="swipe-duplicate-movement" data-id="${m.id}">
-                <span class="material-icons">content_copy</span>
-                <span>Duplicar</span>
-            </button>
-        </div>
-        <div class="swipe-actions-container right">
-            <button class="swipe-action-btn delete" data-action="swipe-delete-movement" data-id="${m.id}" data-is-recurrent="false">
-                <span class="material-icons">delete</span>
-                <span>Borrar</span>
-            </button>
-        </div>
-        <div class="transaction-card ${highlightClass}" data-id="${m.id}">
+    <div class="list-item-animate"> 
+        <div class="transaction-card ${highlightClass}" data-id="${m.id}" data-action="edit-movement-from-list">
             ${cardContentHTML}
         </div>
     </div>`;
@@ -7891,6 +7879,33 @@ const renderInversionesPage = async (containerId) => {
 
 // ▼▼▼ REEMPLAZA TU FUNCIÓN attachEventListeners CON ESTA VERSIÓN LIMPIA ▼▼▼
 const attachEventListeners = () => {
+	const diarioContainer = select('diario-page'); 
+    if (diarioContainer) { 
+        const mainScroller = selectOne('.app-layout__main'); 
+        
+        diarioContainer.addEventListener('touchstart', (e) => { 
+            if (mainScroller.scrollTop > 0) return; 
+            ptrState.startY = e.touches[0].clientY; 
+            ptrState.isPulling = true; 
+                        
+        }, { passive: true }); 
+
+        diarioContainer.addEventListener('touchmove', (e) => { 
+            if (!ptrState.isPulling) { 
+               
+                return; 
+            } 
+            // ... (El resto del código del Pull-to-refresh se mantiene igual) ...
+             const currentY = e.touches[0].clientY; 
+             ptrState.distance = currentY - ptrState.startY; 
+             // ... etc ...
+        }, { passive: false }); 
+
+        diarioContainer.addEventListener('touchend', async (e) => { 
+           
+        }); 
+      
+    }
     // 1. Habilitador de vibración (Haptics)
     const enableHaptics = () => {
         userHasInteracted = true;
@@ -9940,126 +9955,6 @@ const validateMovementForm = () => {
 };
  
 const longPressState = { timer: null, isLongPress: false };
-const swipeState = { activeCard: null, startX: 0, currentX: 0, isSwiping: false, isSwipeIntent: false, threshold: 60 };
-
-const handleInteractionStart = (e) => {
-    const card = e.target.closest('.transaction-card');
-    if (!card || !card.dataset.id) return;
-
-    resetActiveSwipe();
-
-    longPressState.isLongPress = false;
-    // Iniciamos el temporizador para detectar pulsación larga (500ms)
-    longPressState.timer = setTimeout(() => {
-        longPressState.isLongPress = true;
-        swipeState.isSwiping = false;
-        
-        hapticFeedback('medium'); // Vibración para indicar que se ha activado
-        
-        // CAMBIO AQUÍ: En lugar de mostrar el menú contextual, abrimos el formulario directamente
-        startMovementForm(card.dataset.id, false); 
-        
-    }, 500);
-
-    swipeState.isSwiping = true;
-    swipeState.isSwipeIntent = false;
-    swipeState.activeCard = card;
-    const point = e.type === 'touchstart' ? e.touches[0] : e;
-    swipeState.startX = point.clientX;
-    swipeState.currentX = swipeState.startX;
-    swipeState.startY = point.clientY;
-};
-
-const handleInteractionMove = (e) => {
-    if (!swipeState.isSwiping || !swipeState.activeCard) return;
-
-    const point = e.type === 'touchmove' ? e.touches[0] : e;
-    const deltaX = point.clientX - swipeState.startX;
-    const deltaY = point.clientY - swipeState.startY;
-
-    if (!swipeState.isSwipeIntent && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
-        if (Math.abs(deltaY) > Math.abs(deltaX)) {
-            if (longPressState.timer) clearTimeout(longPressState.timer);
-            swipeState.isSwiping = false;
-            return;
-        }
-        swipeState.isSwipeIntent = true;
-        if (longPressState.timer) clearTimeout(longPressState.timer);
-    }
-
-    if (swipeState.isSwipeIntent) {
-        e.preventDefault();
-        // ... (El resto de la lógica de movimiento para el swipe se mantiene igual)
-        swipeState.currentX = point.clientX;
-        const currentDiff = swipeState.currentX - swipeState.startX;
-        const direction = currentDiff > 0 ? 'right' : 'left';
-        const leftActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.left');
-        const rightActions = swipeState.activeCard.parentElement.querySelector('.swipe-actions-container.right');
-        const activeActions = direction === 'right' ? leftActions : rightActions;
-        const inactiveActions = direction === 'right' ? rightActions : leftActions;
-
-        if (activeActions) activeActions.classList.add('swipe-actions-container--visible');
-        if (inactiveActions) inactiveActions.classList.remove('swipe-actions-container--visible');
-        
-        const progress = Math.min(Math.abs(currentDiff) / swipeState.threshold, 1);
-        const icon = activeActions ? activeActions.querySelector('.material-icons') : null;
-        if (icon) {
-            icon.style.transform = `scale(${0.5 + (progress * 0.7)})`;
-            icon.style.opacity = progress;
-        }
-        
-        swipeState.activeCard.style.transition = 'none';
-        swipeState.activeCard.style.transform = `translateX(${currentDiff}px)`;
-    }
-};
-
-const handleInteractionEnd = (e) => {
-    if (longPressState.timer) {
-        clearTimeout(longPressState.timer);
-        longPressState.timer = null;
-    }
-    
-    if (longPressState.isLongPress) {
-        longPressState.isLongPress = false;
-        // ¡LA CORRECCIÓN! Prevenimos el click si fue una pulsación larga
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-    }
-
-    if (!swipeState.isSwiping || !swipeState.activeCard) return;
-    
-    if (swipeState.isSwipeIntent) {
-        const diff = swipeState.currentX - swipeState.startX;
-        swipeState.activeCard.style.transition = 'transform 0.3s ease-out';
-        
-        if (Math.abs(diff) > swipeState.threshold) {
-            const direction = diff > 0 ? 'right' : 'left';
-            const finalX = direction === 'right' ? 75 : -75;
-            swipeState.activeCard.style.transform = `translateX(${finalX}px)`;
-            hapticFeedback('light');
-        } else {
-            resetActiveSwipe();
-        }
-    } 
-
-    swipeState.isSwiping = false;
-    swipeState.isSwipeIntent = false;
-};
-
-
-// Asegúrate de que tu función resetActiveSwipe también oculte las acciones
-const resetActiveSwipe = () => {
-if (swipeState.activeCard) {
-swipeState.activeCard.style.transition = 'transform 0.3s ease-out';
-swipeState.activeCard.style.transform = 'translateX(0px)';
-// También nos aseguramos de ocultar las acciones aquí
-const parent = swipeState.activeCard.parentElement;
-parent.querySelector('.swipe-actions-container.left')?.classList.remove('swipe-actions-container--visible');
-parent.querySelector('.swipe-actions-container.right')?.classList.remove('swipe-actions-container--visible');
-}
-swipeState.activeCard = null;
-};
 
 const handleDescriptionInput = () => {
     clearTimeout(descriptionSuggestionDebounceTimer);
