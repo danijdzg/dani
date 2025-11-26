@@ -6330,110 +6330,46 @@ const hideModal = (id) => {
     // 6. Mostramos el resultado final en el modal.
     showGenericModal(`Desglose TIR: ${cuenta.nombre}`, modalHtml);
 };	
-
-/**
- * Renderiza una fila estilo Cartilla Bancaria para cualquier contexto (Cuenta o Concepto).
- */
-const renderCartillaRowGeneric = (mov, allCuentas, allConceptos) => {
-    const fecha = new Date(mov.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
-    let conceptoTexto = '';
-    
-    // Lógica de texto (igual que antes)
-    if (mov.tipo === 'traspaso') {
-        const origen = allCuentas.find(c => c.id === mov.cuentaOrigenId);
-        const destino = allCuentas.find(c => c.id === mov.cuentaDestinoId);
-        const nombreOrigen = origen ? escapeHTML(origen.nombre) : '?';
-        const nombreDestino = destino ? escapeHTML(destino.nombre) : '?';
-        conceptoTexto = `TRASPASO: ${nombreOrigen} -> ${nombreDestino}`;
-    } else {
-        const concepto = allConceptos.find(c => c.id === mov.conceptoId);
-        const cuenta = allCuentas.find(c => c.id === mov.cuentaId);
-        const nombreConcepto = concepto ? concepto.nombre.toUpperCase() : 'VARIO';
-        const nombreCuenta = cuenta ? cuenta.nombre : '';
-        conceptoTexto = `${nombreConcepto}`;
-        if (nombreCuenta) conceptoTexto += ` (${nombreCuenta})`;
-    }
-    if (mov.descripcion && mov.descripcion !== 'Traspaso' && mov.descripcion !== 'Movimiento') {
-        conceptoTexto += ` - ${escapeHTML(mov.descripcion)}`;
-    }
-
-    // --- NUEVA LÓGICA DE IMPORTE UNIFICADO ---
-    const amount = mov.cantidad;
-    const formattedAmount = formatCurrency(Math.abs(amount));
-    
-    // Determinamos el color y el signo visual
-    let amountClass = '';
-    let sign = '';
-
-    if (amount < 0) {
-        amountClass = 'text-debit'; // Rojo (definido en CSS como var(--c-danger))
-        sign = '-';
-    } else {
-        amountClass = 'text-credit'; // Verde (definido en CSS como var(--c-success))
-        sign = '+';
-    }
-
-    const saldoDisplay = (mov.runningBalance !== undefined) ? formatCurrency(mov.runningBalance) : '-';
-
-    return `
-        <div class="cartilla-row" onclick="startMovementForm('${mov.id}', false)" style="cursor: pointer;">
-            <div class="cartilla-cell cartilla-date">${fecha}</div>
-            <div class="cartilla-cell cartilla-spacer"></div> <div class="cartilla-cell cartilla-amount ${amountClass}">${sign}${formattedAmount}</div>
-            <div class="cartilla-cell cartilla-balance">${saldoDisplay}</div>
-            <div class="cartilla-cell cartilla-concept">${conceptoTexto}</div>
-        </div>
-    `;
-};
-// ▼▼▼ REEMPLAZA TU FUNCIÓN showDrillDownModal ACTUAL CON ESTA ▼▼▼
-
 const showDrillDownModal = (title, movements) => {
-    // 1. Ordenamos Cronológicamente Inverso (Más reciente arriba) para la vista,
-    // aunque la cartilla clásica es al revés, en digital es mejor ver lo último primero.
-    // Si prefieres estilo papel antiguo (antiguo arriba), cambia (b.fecha - a.fecha) por (a.fecha - b.fecha).
+    // Ordenamos los movimientos para que se muestren cronológicamente
     movements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
-    let modalContentHTML = '';
+    // Construimos el contenido del modal
+    let modalContentHTML = movements.length === 0
+    ? `<div class="empty-state" style="background:transparent; border:none; padding-top: var(--sp-4);">
+           <span class="material-icons">search_off</span>
+           <h3>Sin movimientos</h3>
+           <p>No se han encontrado movimientos para esta selección.</p>
+       </div>`
+    : movements.map(m => 
+          // Mantenemos la clase de animación 'list-item-animate'
+          TransactionCardComponent(m, { cuentas: db.cuentas, conceptos: db.conceptos })
+      )
+      .join('')
+      // Cambiamos la acción para que la edición funcione desde dentro del modal
+      .replace(/data-action="edit-movement-from-list"/g, 'data-action="edit-movement-from-modal"');
 
-    if (movements.length === 0) {
-        modalContentHTML = `
-            <div class="empty-state" style="background:transparent; border:none; padding-top: var(--sp-4);">
-                <span class="material-icons">search_off</span>
-                <h3>Sin movimientos</h3>
-                <p>No se han encontrado movimientos para esta selección.</p>
-            </div>`;
-    } else {
-        // 2. Construimos la estructura de la Cartilla
-        let rowsHTML = movements.map(m => 
-            renderCartillaRowGeneric(m, db.cuentas, db.conceptos)
-        ).join('');
-
-        modalContentHTML = `
-            <div class="cartilla-container" style="border: none; box-shadow: none; padding: 0; background: transparent;">
-                <div class="cartilla-header-info">
-                    <h4 style="color: var(--c-on-surface);">${title}</h4>
-                    <p style="color: var(--c-on-surface-secondary); font-size: 0.8em;">
-                        Registros: ${movements.length} | Fecha: ${new Date().toLocaleDateString()}
-                    </p>
-                </div>
-                
-                <div class="cartilla-table">
-    <div class="cartilla-row cartilla-head">
-        <div class="cartilla-cell">FECHA</div>
-        <div class="cartilla-cell"></div> <div class="cartilla-cell text-right">IMPORTE</div>
-        <div class="cartilla-cell text-right">SALDO</div>
-    </div>
-    ${rowsHTML}
-</div>
-                
-                <div class="cartilla-footer">
-                    *** FIN DEL EXTRACTO ***
-                </div>
-            </div>
-        `;
-    }
-
-    // 3. Mostramos el modal con el nuevo contenido
+    // Llamamos a la función para mostrar el modal
     showGenericModal(title, modalContentHTML);
+    
+    // --- ¡LA MAGIA SUCEDE AQUÍ! ---
+    // Después de que el modal se muestra, activamos la animación en cascada.
+    setTimeout(() => {
+        const modalBody = document.getElementById('generic-modal-body');
+        if (modalBody) {
+            const itemsToAnimate = modalBody.querySelectorAll('.list-item-animate');
+            itemsToAnimate.forEach((item, index) => {
+                // Aplicamos la clase que dispara la animación con un pequeño retardo
+                // para cada elemento, creando el efecto cascada.
+                setTimeout(() => {
+                    item.classList.add('item-enter-active');
+                }, index * 40); // 40 milisegundos de retraso entre cada item
+            });
+        }
+    }, 50); // Un pequeño retardo para asegurar que el modal es visible
+	setTimeout(() => {
+        applyInvestmentItemInteractions(document.getElementById('generic-modal-body'));
+    }, 100);
 };
         const showConfirmationModal=(msg, onConfirm, title="Confirmar Acción")=>{ hapticFeedback('medium'); const id='confirmation-modal';const existingModal = document.getElementById(id); if(existingModal) existingModal.remove(); const overlay=document.createElement('div');overlay.id=id;overlay.className='modal-overlay modal-overlay--active'; overlay.innerHTML=`<div class="modal" role="alertdialog" style="border-radius:var(--border-radius-lg)"><div class="modal__header"><h3 class="modal__title">${title}</h3></div><div class="modal__body"><p>${msg}</p><div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-4);"><button class="btn btn--secondary btn--full" data-action="close-modal" data-modal-id="confirmation-modal">Cancelar</button><button class="btn btn--danger btn--full" data-action="confirm-action">Sí, continuar</button></div></div></div>`; document.body.appendChild(overlay); (overlay.querySelector('[data-action="confirm-action"]')).onclick=()=>{hapticFeedback('medium');onConfirm();overlay.remove();}; (overlay.querySelector('[data-action="close-modal"]')).onclick=()=>overlay.remove(); };
 
