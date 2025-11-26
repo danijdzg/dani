@@ -6425,15 +6425,14 @@ const showDrillDownModal = (title, movements) => {
                 </div>
                 
                 <div class="cartilla-table">
-                    <div class="cartilla-row cartilla-head">
-                        <div class="cartilla-cell">FECHA</div>
-                        <div class="cartilla-cell">CONCEPTO / DETALLE</div>
-                        <div class="cartilla-cell text-right">CARGOS</div>
-                        <div class="cartilla-cell text-right">ABONOS</div>
-                        <div class="cartilla-cell text-right">SALDO</div>
-                    </div>
-                    ${rowsHTML}
-                </div>
+    <div class="cartilla-row cartilla-head">
+        <div class="cartilla-cell">FECHA</div>
+        <div class="cartilla-cell text-right">CARGOS</div>
+        <div class="cartilla-cell text-right">ABONOS</div>
+        <div class="cartilla-cell text-right">SALDO</div>
+        </div>
+    ${rowsHTML}
+</div>
                 
                 <div class="cartilla-footer">
                     *** FIN DEL EXTRACTO ***
