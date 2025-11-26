@@ -1729,39 +1729,10 @@ const setupTheme = () => {
     Chart.register(ChartDataLabels);
 };
 
-const buildIntelligentIndex = (movementsSource = db.movimientos) => {
-    intelligentIndex.clear(); 
-    if (!movementsSource || movementsSource.length === 0) return;
-
-    const visibleAccounts = getVisibleAccounts().map(c => c.id);
-    const tempIndex = new Map();
-
-    const movementsToIndex = [...movementsSource]
-        .filter(mov => mov.tipo === 'movimiento' && visibleAccounts.includes(mov.cuentaId)) // Filtramos solo por el ledger activo
-        .sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordenamos por fecha
-
-    for (const mov of movementsToIndex) {
-        const desc = mov.descripcion.trim().toLowerCase();
-        if (desc.length > 3) {
-            const key = desc;
-            if (!tempIndex.has(key)) {
-                tempIndex.set(key, {
-                    conceptoId: mov.conceptoId,
-                    cuentaId: mov.cuentaId,
-                    count: 0, // Reiniciamos el contador
-                    lastUsed: 0
-                });
-            }
-            const entry = tempIndex.get(key);
-            entry.conceptoId = mov.conceptoId; 
-            entry.cuentaId = mov.cuentaId;
-            entry.count++; 
-            entry.lastUsed = new Date(mov.fecha).getTime();
-        }
-    }
-    
-    intelligentIndex = tempIndex;
-    console.log(`Índice inteligente MEJORADO con ${intelligentIndex.size} entradas.`);
+const buildIntelligentIndex = (movementsSource = []) => {
+    // Indexación desactivada: No es necesaria si no usamos sugerencias.
+    intelligentIndex.clear();
+    console.log("Índice inteligente desactivado por el usuario.");
 };
 const cleanupObservers = () => {
     if (movementsObserver) {
@@ -6544,61 +6515,17 @@ const setMovimientoFormType = (type) => {
                 });
             }
         };
-		/**
- * Renderiza burbujas con los 4 conceptos más usados para selección inmediata.
- * Se debe llamar al iniciar el formulario (startMovementForm).
- */
+/* --- REEMPLAZA TU FUNCIÓN renderQuickAccessChips ACTUAL POR ESTA --- */
+
 const renderQuickAccessChips = () => {
+    // Lógica de accesos rápidos inteligentes ELIMINADA.
     const container = document.getElementById('quick-access-chips');
-    if (!container) return; // Asegúrate de añadir este div en el HTML
-
-    // Usamos tu índice inteligente para saber cuáles son los más usados
-    // Convertimos el Map a array y ordenamos por uso
-    const topConcepts = Array.from(intelligentIndex.entries())
-        .sort((a, b) => b[1].count - a[1].count)
-        .slice(0, 4); // Cogemos los top 4
-
-    if (topConcepts.length === 0) {
+    if (container) {
         container.innerHTML = '';
         container.style.display = 'none';
-        return;
     }
-
-    container.style.display = 'flex';
-    container.innerHTML = topConcepts.map(([key, data]) => {
-        const concepto = db.conceptos.find(c => c.id === data.conceptoId);
-        if (!concepto) return '';
-        const icon = concepto.icon || 'label';
-        
-        return `
-        <button type="button" class="quick-chip" 
-            data-action="apply-quick-concept" 
-            data-concept-id="${concepto.id}" 
-            data-concept-name="${concepto.nombre}">
-            <span class="material-icons">${icon}</span>
-            <span>${concepto.nombre}</span>
-        </button>`;
-    }).join('');
-
-    // Listener para los chips
-    container.querySelectorAll('.quick-chip').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const { conceptId, conceptName } = btn.dataset;
-            
-            // 1. Seleccionar el concepto
-            const selectEl = document.getElementById('movimiento-concepto');
-            selectEl.value = conceptId;
-            selectEl.dispatchEvent(new Event('change')); // Dispara la lógica existente
-
-            // 2. Feedback visual
-            hapticFeedback('light');
-            
-            // 3. Saltar directamente a Descripción o Guardar
-            // (Dependiendo de tu flujo preferido, aquí saltamos a descripción)
-            document.getElementById('movimiento-descripcion').focus();
-        });
-    });
 };
+
 const startMovementForm = async (id = null, isRecurrent = false, initialType = 'gasto') => {
     hapticFeedback('medium');
     const form = select('form-movimiento');
@@ -10102,60 +10029,13 @@ const validateMovementForm = () => {
 const longPressState = { timer: null, isLongPress: false };
 
 const handleDescriptionInput = () => {
-    clearTimeout(descriptionSuggestionDebounceTimer);
-    descriptionSuggestionDebounceTimer = setTimeout(() => {
-        const descriptionInput = select('movimiento-descripcion');
-        const suggestionsBox = select('description-suggestions');
-        if (!descriptionInput || !suggestionsBox) return;
-
-        const query = descriptionInput.value.trim().toLowerCase();
+    // Lógica de predicción y sugerencias ELIMINADA.
+    // Ocultamos el cuadro de sugerencias por si acaso estaba visible.
+    const suggestionsBox = document.getElementById('description-suggestions');
+    if (suggestionsBox) {
+        suggestionsBox.style.display = 'none';
         suggestionsBox.innerHTML = '';
-
-        if (query.length < 2) {
-            suggestionsBox.style.display = 'none';
-            return;
-        }
-
-        // 1. Busca las mejores sugerencias basadas en tus hábitos
-        const suggestions = [];
-        for (const [desc, data] of intelligentIndex.entries()) {
-            if (desc.includes(query)) {
-                suggestions.push({ description: desc, ...data });
-            }
-        }
-
-        const now = Date.now();
-        suggestions.sort((a, b) => {
-            const recencyA = Math.exp((a.lastUsed - now) / (1000 * 3600 * 24 * 30));
-            const recencyB = Math.exp((b.lastUsed - now) / (1000 * 3600 * 24 * 30));
-            const scoreA = (a.count * 0.6) + (recencyA * 0.4);
-            const scoreB = (b.count * 0.6) + (recencyB * 0.4);
-            return scoreB - scoreA;
-        });
-
-        // [CAMBIO UX] Esta función ya NO RELLENA los campos automáticamente.
-        // Solo prepara la lista de sugerencias para que el usuario elija.
-
-        if (suggestions.length > 0) {
-            suggestionsBox.innerHTML = suggestions.slice(0, DESCRIPTION_SUGGESTION_LIMIT).map(s => {
-                const concepto = db.conceptos.find(c => c.id === s.conceptoId)?.nombre || 'S/C';
-                const cuenta = db.cuentas.find(c => c.id === s.cuentaId)?.nombre || 'S/C';
-                return `
-                    <div class="suggestion-item" 
-                         data-action="apply-description-suggestion"
-                         data-description="${escapeHTML(s.description)}" 
-                         data-concepto-id="${s.conceptoId}" 
-                         data-cuenta-id="${s.cuentaId}"
-                         tabindex="0">
-                        <p>${escapeHTML(toSentenceCase(s.description))}</p>
-                        <small>${escapeHTML(concepto)} • ${escapeHTML(cuenta)}</small>
-                    </div>`;
-            }).join('');
-            suggestionsBox.style.display = 'block';
-        } else {
-            suggestionsBox.style.display = 'none';
-        }
-    }, 250);
+    }
 };
 
 // --- REGISTRO DEL SERVICE WORKER ---
