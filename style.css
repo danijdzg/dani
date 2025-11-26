@@ -3248,3 +3248,30 @@ body[data-theme="default"] .cartilla-container {
     position: relative; /* Ya no absolute, sino parte del flujo flex */
     box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
 }
+/* Optimización para el contenedor de scroll principal y listas virtuales */
+.app-layout__main, 
+#virtual-list-content, 
+.modal__body {
+    /* Promueve el elemento a una capa separada para scroll suave */
+    will-change: transform, scroll-position; 
+    -webkit-overflow-scrolling: touch; /* Imprescindible en iOS */
+    backface-visibility: hidden; /* Evita parpadeos en animaciones */
+}
+
+/* Evita que el input 'readonly' de la calculadora parezca deshabilitado en iOS/Safari */
+.input-amount-calculator[readonly] {
+    opacity: 1; /* iOS baja la opacidad por defecto */
+    background-color: var(--c-surface) !important; /* Fuerza el fondo correcto */
+    color: var(--c-on-surface);
+    cursor: pointer; /* Indica que es interactivo */
+    -webkit-text-fill-color: var(--c-on-surface);
+}
+/* Reemplaza o ajusta tus z-index actuales con esta escala lógica */
+.bottom-nav { z-index: 100; }
+.fab-container, #bottom-nav-add-btn { z-index: 110; }
+.modal-overlay { z-index: 1000; } /* Modales estándar */
+.popover-menu { z-index: 1100; } /* Menú de 3 puntos */
+#calculator-overlay { z-index: 2000; } /* Calculadora siempre encima de modales */
+.save-animation-bubble { z-index: 2100; } /* Animación de monedas/guardado */
+.toast-container { z-index: 3000; } /* Notificaciones urgentes siempre visibles */
+#start-overlay, #video-intro-overlay { z-index: 9999; } /* Intro */

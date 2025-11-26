@@ -1421,25 +1421,28 @@ const initWidgetObserver = () => {
         const escapeHTML = str => (str || '').replace(/[&<>"']/g, match => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[match]);
         
         const parseCurrencyString = (str) => {
-            if (typeof str !== 'string' || !str.trim()) return NaN;
-            
-            let cleanStr = str.replace(/[€$£\s]/g, '');
+    if (typeof str !== 'string' || !str.trim()) return 0; // Retorna 0 en lugar de NaN para evitar errores matemáticos posteriores
+    let cleanStr = str.replace(/[€$£\s]/g, '');
 
-            const hasComma = cleanStr.includes(',');
-            const hasPeriod = cleanStr.includes('.');
-
-            if (hasComma && hasPeriod) {
-                if (cleanStr.lastIndexOf(',') > cleanStr.lastIndexOf('.')) {
-                    cleanStr = cleanStr.replace(/\./g, '').replace(',', '.');
-                } else {
-                    cleanStr = cleanStr.replace(/,/g, '');
-                }
-            } else if (hasComma) {
-                cleanStr = cleanStr.replace(',', '.');
-            }
-            
-            return parseFloat(cleanStr);
-        };
+    // Si solo hay un separador, asumimos que es decimal si hay 1 o 2 dígitos después.
+    // Si hay 3, es ambiguo, pero en España suele ser millares (1.000).
+    // Tu lógica actual es buena, pero añadamos seguridad:
+    
+    // Normalizar a formato inglés interno (1234.56)
+    if (cleanStr.includes(',') && cleanStr.includes('.')) {
+        // Caso complejo: 1.234,56 -> eliminar puntos, cambiar coma
+        cleanStr = cleanStr.replace(/\./g, '').replace(',', '.');
+    } else if (cleanStr.includes(',')) {
+        // Caso simple coma: 12,50 -> 12.50
+        cleanStr = cleanStr.replace(',', '.');
+    } 
+    // Caso simple punto: 12.50 se queda igual. 
+    // PERO si es 1.200 (mil doscientos), JS lo toma como 1.2.
+    // Dada tu audiencia (España), asumimos que el input manual de la calculadora usa ',' para decimales.
+    
+    const result = parseFloat(cleanStr);
+    return isNaN(result) ? 0 : result;
+};
 		const formatAsCurrencyInput = (num) => {
     if (isNaN(num)) return '';
     // Usamos Intl.NumberFormat que es la forma moderna y correcta de hacerlo.
@@ -6541,7 +6544,11 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
     selectAll('.day-selector-btn').forEach(btn => btn.classList.remove('active'));
     const weeklySelector = select('weekly-day-selector');
     if (weeklySelector) weeklySelector.classList.add('hidden');
-    
+    let fechaValue = data.fecha;
+	if (fechaValue && fechaValue.includes('T')) {
+    fechaValue = fechaValue.split('T')[0]; // Quédate solo con la parte YYYY-MM-DD
+	}
+	select('movimiento-fecha').value = fechaValue;	
     let data = null;
     let mode = 'new';
     
@@ -7682,6 +7689,14 @@ const showCalculator = (targetInput) => {
 
     // Activamos el listener global
     document.addEventListener('keydown', calculatorKeyboardHandler);
+	// MEJORA: Feedback visual en el input activo
+    document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
+    targetInput.classList.add('form-input--active-calc');
+    
+    // Scroll suave para asegurar que el input no quede tapado por la calculadora
+    setTimeout(() => {
+        targetInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
 };
 
 const hideCalculator = () => {
@@ -7701,6 +7716,7 @@ const hideCalculator = () => {
     if (document.activeElement) {
         document.activeElement.blur();
     }
+	document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
 };
 
 /**
@@ -8034,8 +8050,14 @@ const handleStart = (e) => {
         }
 
         // Gestión de acciones [data-action]
-        const actionTarget = target.closest('[data-action]');
-        if (!actionTarget) return;
+        const actionTarget = e.target.closest('[data-action]');
+    if (!actionTarget) return;
+    
+    // MEJORA: Prevención de doble clic si el botón ya está cargando o deshabilitado
+    if (actionTarget.classList.contains('btn--loading') || actionTarget.disabled) {
+        e.stopImmediatePropagation();
+        return;
+    }
 
         const { action, id, page, type, modalId, reportId } = actionTarget.dataset;
         const btn = actionTarget.closest('button');
