@@ -3105,14 +3105,7 @@ const handleShowPnlBreakdown = async (accountId) => {
                 if (vList.items[i]) visibleHtml += renderVirtualListItem(vList.items[i]);
             }
             vList.contentEl.innerHTML = visibleHtml; 
-			const renderedItems = vList.contentEl.querySelectorAll('.list-item-animate');
-renderedItems.forEach((item, index) => {
-    // Aplicamos la clase que dispara la animación con un pequeño retraso
-    // para cada elemento, creando el efecto cascada.
-    setTimeout(() => {
-        item.classList.add('item-enter-active');
-    }, index * 40); // 40 milisegundos de retraso entre cada item
-});
+			
             const offsetY = vList.itemMap[startIndex] ? vList.itemMap[startIndex].offset : 0; 
             vList.contentEl.style.transform = `translateY(${offsetY}px)`; 
             vList.lastRenderedRange = { start: startIndex, end: endIndex };
@@ -4859,8 +4852,7 @@ const renderInicioResumenView = () => {
         switch(widgetId) {
         case 'super-centro-operaciones':
             return `<div data-widget-type="super-centro-operaciones">${renderDashboardSuperCentroOperaciones()}</div>`;
-        case 'action-center':
-            return `<div data-widget-type="action-center">${renderDashboardActionCenter()}</div>`;
+        
         case 'net-worth-trend':
             return `<div data-widget-type="net-worth-trend">${renderDashboardNetWorthTrend()}</div>`;
         case 'emergency-fund':
@@ -9393,7 +9385,7 @@ const handleAddConcept = async (btn) => {
                      const conceptoLimpio = conceptoStr.trim().toUpperCase().replace(/\s*;-$/, '');
                      const offBalance = cuentaStr.startsWith('N-');
                      const nombreCuentaLimpio = cuentaStr.replace(/^(D-|N-)/, '');
-                     const cantidad = csv_parseCurrency(importeStr);
+                     const cantidad = Math.round(parseCurrencyString(importeStr) * 100);
 
                      if (!cuentasMap.has(nombreCuentaLimpio)) {
                          const { tipo, esInversion } = csv_inferType(nombreCuentaLimpio);
