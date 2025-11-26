@@ -3003,38 +3003,42 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     line-height: 1.2;
 }
 /* === FIN: Estilos para la Tarjeta de Sumario del Portafolio === */
+/* =============================================================== */
+/* === ESTILOS CARTILLA BANCARIA (ADAPTATIVA CLARO/OSCURO) === */
+/* =============================================================== */
 
-/* === ESTILOS CARTILLA BANCARIA (Retro & Clean) === */
 .cartilla-container {
-    background-color: #fff; /* Fondo papel blanco */
-    color: #000; /* Tinta negra */
-    font-family: 'Courier New', Courier, monospace; /* Fuente monoespaciada tipo máquina de escribir */
-    border: 1px solid #ccc;
-    box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
-    padding: 20px;
-    max-width: 800px;
-    margin: 0 auto;
+    /* Eliminamos el fondo blanco fijo. Usamos el del tema o transparente */
+    background-color: transparent; 
+    color: var(--c-on-surface); /* El texto se adapta (blanco en oscuro, negro en claro) */
+    font-family: 'Courier New', Courier, monospace; /* Mantenemos la fuente retro */
+    border: 1px solid var(--c-outline); /* Borde sutil del tema */
+    border-radius: var(--border-radius-md);
+    padding: var(--sp-4);
+    width: 100%;
     font-size: 0.85rem;
 }
 
-/* En modo oscuro, invertimos para que sea legible pero manteniendo el estilo */
-body[data-theme="default"] .cartilla-container {
-    background-color: #e0e0e0; /* Gris claro papel */
-    color: #1a1a1a;
-}
+/* Eliminamos la regla específica del body[data-theme="default"] anterior 
+   porque ahora usamos variables que cambian solas. */
 
 .cartilla-header-info {
-    border-bottom: 2px dashed #444;
+    border-bottom: 2px dashed var(--c-outline); /* Línea discontinua adaptativa */
     margin-bottom: 15px;
     padding-bottom: 10px;
 }
 
 .cartilla-header-info h4 {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     margin-bottom: 5px;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #000;
+    color: var(--c-primary); /* Usamos el color principal (Verde/Azul) */
+    font-weight: 800;
+}
+
+.cartilla-header-info p {
+    color: var(--c-on-surface-secondary); /* Gris suave legible en ambos modos */
 }
 
 .cartilla-table {
@@ -3045,27 +3049,27 @@ body[data-theme="default"] .cartilla-container {
 
 .cartilla-row {
     display: grid;
-    grid-template-columns: 70px 1fr 85px 85px 90px; /* Columnas fijas para alineación numérica */
+    /* Ajustamos columnas para que encajen bien */
+    grid-template-columns: 75px 1fr 80px 80px 80px; 
     gap: 10px;
-    padding: 6px 4px;
-    border-bottom: 1px dotted #bbb;
-    align-items: baseline;
+    padding: 8px 4px;
+    border-bottom: 1px dotted var(--c-outline); /* Línea de puntos sutil */
+    align-items: center;
 }
 
+/* Quitamos el borde del último para que no se duplique con el footer */
 .cartilla-row:last-child {
-    border-bottom: 2px solid #000;
+    border-bottom: 2px solid var(--c-on-surface);
 }
 
 .cartilla-head {
     font-weight: 800;
-    border-bottom: 2px solid #000;
+    border-bottom: 2px solid var(--c-on-surface); /* Línea sólida fuerte del color del texto */
     padding-bottom: 8px;
     margin-bottom: 4px;
-}
-
-.cartilla-initial {
-    background-color: rgba(0,0,0,0.03);
-    font-style: italic;
+    color: var(--c-on-surface);
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
 }
 
 .cartilla-cell {
@@ -3074,20 +3078,40 @@ body[data-theme="default"] .cartilla-container {
     white-space: nowrap;
 }
 
+.cartilla-date {
+    color: var(--c-on-surface-secondary);
+    font-size: 0.75rem;
+}
+
 .cartilla-concept {
-    white-space: normal; /* Permitir salto de línea en concepto si es necesario */
-    line-height: 1.1;
-    font-size: 0.8rem;
+    white-space: normal; 
+    line-height: 1.2;
+    font-size: 0.85rem;
     text-transform: uppercase;
+    color: var(--c-on-surface);
+    font-weight: 600;
 }
 
 .cartilla-amount, .cartilla-balance {
     text-align: right;
     font-weight: 600;
+    font-family: monospace; /* Alineación numérica perfecta */
+    font-size: 0.9rem;
 }
 
-.text-debit { color: #a00; } /* Rojo oscuro para cargos */
-.text-credit { color: #000; } /* Negro para abonos */
+/* Colores semánticos que se ven bien en fondo oscuro */
+.text-debit { 
+    color: var(--c-danger); /* Rojo brillante en modo oscuro */
+} 
+.text-credit { 
+    color: var(--c-on-surface); /* Usamos el color de texto normal para ingresos (estilo banco clásico) */
+}
+/* Opcional: Si prefieres verde para ingresos, usa esta línea: */
+/* .text-credit { color: var(--c-success); } */
+
+.cartilla-balance {
+    color: var(--c-on-surface-secondary); /* El saldo un poco más apagado */
+}
 
 .cartilla-footer {
     text-align: center;
@@ -3095,42 +3119,54 @@ body[data-theme="default"] .cartilla-container {
     font-style: italic;
     font-size: 0.7rem;
     letter-spacing: 2px;
+    color: var(--c-on-surface-tertiary);
 }
 
-/* Adaptación Móvil para la Cartilla */
+/* --- Adaptación Móvil (< 600px) --- */
 @media (max-width: 600px) {
-    .cartilla-container { padding: 10px; font-size: 0.75rem; }
+    .cartilla-container { 
+        padding: 0; /* Quitamos padding contenedor en móvil para ganar espacio */
+        border: none; /* Sin borde en móvil */
+    }
     
-    /* En móvil colapsamos cargos/abonos en una sola columna de "importe" para ganar espacio */
     .cartilla-row {
-        grid-template-columns: 60px 1fr 75px; /* Fecha | Concepto | Importe */
+        grid-template-columns: 65px 1fr 80px; /* Fecha | Concepto | Importe */
+        grid-template-rows: auto auto; /* Dos filas */
         grid-template-areas: 
             "date concept amount"
             "empty balance balance"; /* El saldo va debajo */
-        gap: 2px 8px;
-        padding: 8px 2px;
+        gap: 4px 10px;
+        padding: 10px 2px;
     }
 
-    .cartilla-head { display: none; } /* Ocultar cabecera en móvil */
+    .cartilla-head { display: none; } /* Ocultar cabecera de tabla en móvil */
 
-    .cartilla-date { grid-area: date; font-weight: 700; }
-    .cartilla-concept { grid-area: concept; max-height: 2.4em; overflow: hidden; }
+    .cartilla-date { 
+        grid-area: date; 
+        font-weight: 600;
+        align-self: start;
+    }
+    .cartilla-concept { 
+        grid-area: concept; 
+        max-height: none; /* Permitir que el texto fluya */
+        font-size: 0.8rem;
+    }
     
     .cartilla-amount { 
         grid-area: amount; 
-        font-size: 0.9rem;
+        font-size: 1rem; /* Importe más grande en móvil */
+        align-self: start;
     }
     
-    /* En móvil mostramos saldo debajo */
     .cartilla-balance { 
         grid-area: balance; 
         text-align: right;
-        font-size: 0.7rem;
-        color: #555;
+        font-size: 0.75rem;
+        color: var(--c-on-surface-tertiary);
+        padding-top: 4px;
     }
-    .cartilla-balance::before { content: "Saldo: "; }
+    .cartilla-balance::before { content: "Saldo: "; opacity: 0.7; }
     
-    /* Ocultar celdas vacías en la lógica de móvil */
     .cartilla-cell:empty { display: none; }
 }
 /* === INICIO: Animación de Feedback de Botón === */
