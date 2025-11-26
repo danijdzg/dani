@@ -5076,8 +5076,8 @@ const renderPatrimonioPage = () => {
     if (!container) return;
 
     container.innerHTML = `
-        <!-- Sección 1: Visión General (Esta la dejamos abierta 'open' para que se vea el total nada más entrar) -->
-        <details class="accordion" open style="margin-bottom: var(--sp-4);">
+        <!-- Sección 1: Visión General 
+        <details class="accordion" style="margin-bottom: var(--sp-4);">
             <summary>
                 <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
                     <span class="material-icons">account_balance</span>
