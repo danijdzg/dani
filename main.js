@@ -5076,7 +5076,7 @@ const renderPatrimonioPage = () => {
     if (!container) return;
 
     container.innerHTML = `
-        <!-- Sección 1: Visión General 
+        <!-- Sección 1: Visión General -->
         <details class="accordion" style="margin-bottom: var(--sp-4);">
             <summary>
                 <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
