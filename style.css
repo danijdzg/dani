@@ -3087,7 +3087,7 @@ body[data-theme="default"] .cartilla-container {
 }
 
 .text-debit { color: #a00; } /* Rojo oscuro para cargos */
-.text-credit { color: #000; } /* Negro para abonos */
+.text-credit { color: #008000; } /* Verde oscuro (Office Green) para abonos */
 
 .cartilla-footer {
     text-align: center;
