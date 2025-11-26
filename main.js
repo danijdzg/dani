@@ -1034,7 +1034,19 @@ const calculatePreviousDueDate = (currentDueDate, frequency, weekDays = []) => {
 			}
 			return chunks;
 		};
-		
+		const measureListItemHeights = () => {
+    // Ya no medimos nada. Usamos valores fijos basados en el CSS.
+    // Es un "contrato" entre nuestro estilo y nuestro código.
+    vList.heights = {
+        transaction: 64, // Coincide con el min-height que pusimos en el CSS
+        transfer: 76,    // Valor estimado para traspasos, puedes ajustarlo
+        header: 40,      // Valor estimado para cabeceras
+        pendingHeader: 40, // Valor estimado
+        pendingItem: 72    // Valor estimado
+    };
+    
+    console.log('Alturas de elementos definidas (Robusto):', vList.heights);
+};
         const hapticFeedback = (type = 'light') => {
     // Solo vibra si el navegador lo soporta Y el usuario ya ha interactuado.
     if (!userHasInteracted || !('vibrate' in navigator)) {
@@ -1577,7 +1589,9 @@ window.addEventListener('offline', () => {
     
     populateAllDropdowns();
     loadConfig();
-            
+    
+    measureListItemHeights();
+    
     updateSyncStatusIcon();
     buildIntelligentIndex();
     
@@ -3091,7 +3105,14 @@ const handleShowPnlBreakdown = async (accountId) => {
                 if (vList.items[i]) visibleHtml += renderVirtualListItem(vList.items[i]);
             }
             vList.contentEl.innerHTML = visibleHtml; 
-			
+			const renderedItems = vList.contentEl.querySelectorAll('.list-item-animate');
+renderedItems.forEach((item, index) => {
+    // Aplicamos la clase que dispara la animación con un pequeño retraso
+    // para cada elemento, creando el efecto cascada.
+    setTimeout(() => {
+        item.classList.add('item-enter-active');
+    }, index * 40); // 40 milisegundos de retraso entre cada item
+});
             const offsetY = vList.itemMap[startIndex] ? vList.itemMap[startIndex].offset : 0; 
             vList.contentEl.style.transform = `translateY(${offsetY}px)`; 
             vList.lastRenderedRange = { start: startIndex, end: endIndex };
@@ -4571,6 +4592,26 @@ const renderSavingsRateGauge = (canvasId, percentage) => {
     });
 };
 
+const renderDashboardKpiSummary = () => {
+   // ¡Simplemente eliminamos el atributo style!
+   return `<div class="kpi-grid" id="kpi-container">
+            <div class="kpi-item">
+                <h4 class="kpi-item__label">Ingresos</h4>
+                <strong id="kpi-ingresos-value" class="kpi-item__value text-positive skeleton" data-current-value="0">+0,00 €</strong> 
+                <div id="kpi-ingresos-comparison" class="kpi-item__comparison"></div>
+            </div>
+            <div class="kpi-item">
+                <h4 class="kpi-item__label">Gastos</h4>
+                <strong id="kpi-gastos-value" class="kpi-item__value text-negative skeleton" data-current-value="0">0,00 €</strong>
+                <div id="kpi-gastos-comparison" class="kpi-item__comparison"></div>
+            </div>
+            <div class="kpi-item">
+                <h4 class="kpi-item__label">Saldo Neto Periodo</h4>
+                <strong id="kpi-saldo-neto-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
+                <div id="kpi-saldo-neto-comparison" class="kpi-item__comparison"></div>
+            </div>
+        </div>`;
+};
 // ▼▼▼ REEMPLAZA TU FUNCIÓN renderDashboardSuperCentroOperaciones CON ESTA VERSIÓN COMPLETA ▼▼▼
 
 const renderDashboardSuperCentroOperaciones = () => {
@@ -4716,6 +4757,92 @@ const renderDashboardInformeWidget = () => {
     `;
 };
 
+// =========================================================================
+// === FIN: FUNCIÓN AÑADIDA                                              ===
+// =========================================================================
+
+const renderDashboardExpandedKpiSummary = () => {
+    return `
+    <div class="card" id="kpi-ampliado-widget">
+        <h3 class="card__title"><span class="material-icons">query_stats</span>Centro de Operaciones</h3>
+        <div class="card__content">
+            <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+                
+                <div class="kpi-item">
+                    <h4 class="kpi-item__label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                        <span>Tasa de Ahorro</span>
+                        <button class="icon-btn" data-action="show-help-topic" data-topic="tasa-ahorro" style="width: 20px; height: 20px;">
+                            <span class="material-icons" style="font-size: 16px;">help_outline</span>
+                        </button>
+                    </h4>
+                    <div style="position: relative; height: 60px; margin: auto;">
+                         <canvas id="kpi-savings-rate-chart"></canvas>
+                         <div id="kpi-tasa-ahorro-value" class="kpi-item__value skeleton" style="position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%);">0%</div>
+                    </div>
+                    <div id="kpi-tasa-ahorro-comparison" class="kpi-item__comparison"></div>
+                </div>
+
+                <div class="kpi-item">
+                    <h4 class="kpi-item__label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                        <span>Patrimonio Neto Total</span>
+                        <button class="icon-btn" data-action="show-help-topic" data-topic="patrimonio-neto" style="width: 20px; height: 20px;">
+                            <span class="material-icons" style="font-size: 16px;">help_outline</span>
+                        </button>
+                    </h4>
+                    <strong id="kpi-patrimonio-neto-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
+                    <div class="kpi-item__comparison">Vista global actual</div>
+                </div>
+                
+                <div class="kpi-item">
+                    <h4 class="kpi-item__label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                        <span>P&L Portafolio Inversión</span>
+                         <button class="icon-btn" data-action="show-help-topic" data-topic="pnl-inversion" style="width: 20px; height: 20px;">
+                            <span class="material-icons" style="font-size: 16px;">help_outline</span>
+                        </button>
+                    </h4>
+                    <strong id="kpi-pnl-inversion-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
+                    <div id="kpi-pnl-inversion-comparison" class="kpi-item__comparison">Rentabilidad total</div>
+                </div>
+
+                <div class="kpi-item" style="grid-column: 1 / -1;">
+                     <h4 class="kpi-item__label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                        <span>Progreso Presupuesto (Gastos del Periodo)</span>
+                        <button class="icon-btn" data-action="show-help-topic" data-topic="progreso-presupuesto" style="width: 20px; height: 20px;">
+                            <span class="material-icons" style="font-size: 16px;">help_outline</span>
+                        </button>
+                    </h4>
+                    <div class="budget-item__progress" style="margin: 8px 0;">
+                        <progress id="kpi-presupuesto-progress" max="100" value="0" style="width: 100%; height: 8px;" class="budget-item__progress"></progress>
+                    </div>
+                    <div id="kpi-presupuesto-text" class="kpi-item__comparison skeleton" style="height: auto; min-height: 14px;">Calculando...</div>
+                </div>
+
+            </div>
+        </div>
+    </div>`;
+};
+           const renderDashboardConceptTotals = () => {
+            // Generamos 3 filas de esqueleto para la lista
+            const skeletonRows = Array(3).fill('<div class="skeleton" style="height: 48px; margin-bottom: var(--sp-2); border-radius: 8px;"></div>').join('');
+            
+            return `
+                <div class="card card--no-bg" id="concept-totals-widget">
+                    <div class="accordion-wrapper">
+                        <details class="accordion" open>
+                            <summary>
+                                <h3 class="card__title" style="margin: 0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">category</span>Totales por Concepto</h3>
+                                <span class="material-icons accordion__icon">expand_more</span>
+                            </summary>
+                            <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
+                                <div class="chart-container skeleton" style="height: 240px; margin-bottom: var(--sp-2); border-radius: var(--border-radius-lg);">
+                                    <canvas id="conceptos-chart"></canvas>
+                                </div>
+                                <div id="concepto-totals-list">${skeletonRows}</div>
+                            </div>
+                        </details>
+                    </div>
+                </div>`;
+        };
 
 /// ▼▼▼ REEMPLAZA TU FUNCIÓN renderInicioResumenView POR COMPLETO CON ESTA VERSIÓN ▼▼▼
 const renderInicioResumenView = () => {
@@ -4732,6 +4859,8 @@ const renderInicioResumenView = () => {
         switch(widgetId) {
         case 'super-centro-operaciones':
             return `<div data-widget-type="super-centro-operaciones">${renderDashboardSuperCentroOperaciones()}</div>`;
+        case 'action-center':
+            return `<div data-widget-type="action-center">${renderDashboardActionCenter()}</div>`;
         case 'net-worth-trend':
             return `<div data-widget-type="net-worth-trend">${renderDashboardNetWorthTrend()}</div>`;
         case 'emergency-fund':
@@ -4748,7 +4877,53 @@ const renderInicioResumenView = () => {
     // ¡IMPORTANTE! Después de dibujar los esqueletos, le decimos a nuestro "asistente" que empiece a observar.
     initWidgetObserver();
 };
+		
+        const _renderRecientesFromCache = async () => {
+            const recientesContainer = select('inicio-view-recientes');
+            if (!recientesContainer) return;
+            
+            const movsToDisplay = recentMovementsCache;
+            
+            if (movsToDisplay.length === 0) {
+                recientesContainer.innerHTML = `<div class="empty-state" style="border: none; background: transparent;"><p>No hay movimientos recientes en esta contabilidad.</p></div>`;
+                return;
+            }
 
+            await processMovementsForRunningBalance(movsToDisplay, true); 
+
+            const grouped = {};
+            const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+            movsToDisplay.forEach(mov => {
+                const dateKey = mov.fecha.slice(0, 10);
+                if (!grouped[dateKey]) {
+                    grouped[dateKey] = { movements: [], total: 0 };
+                }
+                grouped[dateKey].movements.push(mov);
+                if (mov.tipo === 'traspaso') {
+                    const origenVisible = visibleAccountIds.has(mov.cuentaOrigenId);
+                    const destinoVisible = visibleAccountIds.has(mov.cuentaDestinoId);
+                    if (origenVisible && !destinoVisible) { grouped[dateKey].total -= mov.cantidad; }
+                    else if (!origenVisible && destinoVisible) { grouped[dateKey].total += mov.cantidad; }
+                } else {
+                    grouped[dateKey].total += mov.cantidad;
+                }
+            });
+
+            let html = '';
+            const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+            for (const dateKey of sortedDates) {
+                const group = grouped[dateKey];
+                html += renderVirtualListItem({ type: 'date-header', date: dateKey, total: group.total });
+                
+                group.movements.sort((a, b) => b.id.localeCompare(a.id));
+
+                for (const mov of group.movements) {
+                    html += renderVirtualListItem({ type: 'transaction', movement: mov });
+                }
+            }
+            html += `<div style="text-align: center; margin-top: var(--sp-4);"><button class="btn btn--secondary" data-action="navigate" data-page="${PAGE_IDS.DIARIO}">Ver todos los movimientos</button></div>`;
+            recientesContainer.innerHTML = html;
+        };
 	const renderPendingRecurrents = () => {
     const container = select('pending-recurrents-container');
     if (!container || !db.recurrentes) return;
@@ -7549,7 +7724,6 @@ const showCalculator = (targetInput) => {
     // Cargar el valor actual del input en la calculadora si existe
     const currentValue = parseCurrencyString(targetInput.value);
     calculatorState.displayValue = currentValue ? currentValue.toString().replace('.', ',') : '0';
-	calculatorState.isResultDisplayed = true; // Marcar como resultado para que si escribe un número, se borre.
     calculatorState.waitingForNewValue = true; // Al empezar, si escribe un número, reemplaza el 0
     
     updateCalculatorDisplay();
@@ -9219,7 +9393,7 @@ const handleAddConcept = async (btn) => {
                      const conceptoLimpio = conceptoStr.trim().toUpperCase().replace(/\s*;-$/, '');
                      const offBalance = cuentaStr.startsWith('N-');
                      const nombreCuentaLimpio = cuentaStr.replace(/^(D-|N-)/, '');
-                     const cantidad = Math.round(parseCurrencyString(importeStr) * 100);
+                     const cantidad = csv_parseCurrency(importeStr);
 
                      if (!cuentasMap.has(nombreCuentaLimpio)) {
                          const { tipo, esInversion } = csv_inferType(nombreCuentaLimpio);
@@ -9911,6 +10085,8 @@ const validateMovementForm = () => {
     }
     return isValid;
 };
+ 
+const longPressState = { timer: null, isLongPress: false };
 
 const handleDescriptionInput = () => {
     clearTimeout(descriptionSuggestionDebounceTimer);
