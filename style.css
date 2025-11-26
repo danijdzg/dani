@@ -3003,7 +3003,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     line-height: 1.2;
 }
 /* =============================================================== */
-/* === ESTILOS CARTILLA BANCARIA (EXTRACTO) v3.0 === */
+/* === ESTILOS CARTILLA BANCARIA (COLUMNA UNIFICADA) v4.0 === */
 /* =============================================================== */
 
 .cartilla-container {
@@ -3015,7 +3015,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     padding: var(--sp-3);
     width: 100%;
     font-size: 0.85rem;
-    overflow: hidden; /* Evita desbordes */
+    overflow: hidden;
 }
 
 .cartilla-header-info {
@@ -3032,9 +3032,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     font-weight: 800;
 }
 
-.cartilla-header-info p {
-    color: var(--c-on-surface-secondary);
-}
+.cartilla-header-info p { color: var(--c-on-surface-secondary); }
 
 .cartilla-table {
     display: flex;
@@ -3042,125 +3040,104 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     width: 100%;
 }
 
-/* --- CABECERA DE LA TABLA (Oculta en móvil para ahorrar espacio) --- */
-.cartilla-row.cartilla-head {
+/* --- DEFINICIÓN DE LA REJILLA (GRID) --- */
+/* Col 1: Fecha (Fijo 70px)
+   Col 2: Espacio flexible (1fr) para separar
+   Col 3: IMPORTE (Fijo ancho suficiente, ej: 110px)
+   Col 4: SALDO (min-content para que nunca se corte)
+*/
+.cartilla-row {
     display: grid;
-    /* Mismas columnas que el contenido para alinear, pero simplificado */
-    grid-template-columns: 70px 1fr 1fr min-content; 
-    gap: 8px;
+    grid-template-columns: 70px 1fr 110px min-content;
+    grid-template-areas: 
+        "date spacer amount balance"
+        "concept concept concept concept";
+    gap: 2px 10px;
+    padding: 8px 4px;
+    border-bottom: 1px dotted var(--c-outline);
+    align-items: center;
+}
+
+/* Cabecera de la tabla */
+.cartilla-row.cartilla-head {
     border-bottom: 2px solid var(--c-on-surface);
     padding-bottom: 8px;
     margin-bottom: 8px;
     font-weight: 800;
     color: var(--c-on-surface);
     text-transform: uppercase;
+    /* Mismo grid, pero sin áreas de concepto */
+    grid-template-areas: "date spacer amount balance"; 
 }
 
-/* --- FILA DE DATOS (La Magia del Diseño) --- */
-.cartilla-row {
-    display: grid;
-    /* Columnas: 
-       1. Fecha (fija)
-       2. Cargos (flexible)
-       3. Abonos (flexible)
-       4. SALDO (min-content = se ajusta al ancho del número, NUNCA se corta)
-    */
-    grid-template-columns: 70px 1fr 1fr min-content;
-    
-    /* Definimos las áreas:
-       Fila 1: Fecha | Cargos | Abonos | Saldo
-       Fila 2: Concepto (ocupa las 4 columnas)
-    */
-    grid-template-areas: 
-        "date debit credit balance"
-        "concept concept concept concept";
-        
-    gap: 2px 10px; /* Espacio vertical pequeño, horizontal medio */
-    padding: 8px 4px;
-    border-bottom: 1px dotted var(--c-outline);
-    align-items: center;
-}
+.cartilla-row:last-child { border-bottom: none; }
 
-.cartilla-row:last-child {
-    border-bottom: none;
-}
+/* --- ESTILOS DE CELDAS --- */
 
-/* --- CELDAS INDIVIDUALES --- */
-
-/* 1. Fecha */
 .cartilla-date {
     grid-area: date;
     color: var(--c-on-surface-secondary);
     font-weight: 600;
     font-size: 0.75rem;
-    align-self: start; /* Alineado arriba */
+    align-self: start;
 }
 
-/* 2. Concepto (La nueva segunda línea) */
+/* El spacer simplemente ocupa espacio vacío en la fila 1 */
+.cartilla-spacer { grid-area: spacer; }
+
+.cartilla-amount {
+    grid-area: amount;
+    text-align: right;
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
+
+/* Colores para diferenciar */
+.text-debit { color: var(--c-danger); } /* Rojo */
+.text-credit { color: var(--c-success); } /* Verde (o usa var(--c-on-surface) si prefieres neutro) */
+
+.cartilla-balance {
+    grid-area: balance;
+    text-align: right;
+    font-family: monospace;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--c-on-surface);
+    white-space: nowrap;
+    min-width: fit-content;
+    background-color: color-mix(in srgb, var(--c-surface-variant) 50%, transparent);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
 .cartilla-concept {
     grid-area: concept;
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--c-on-surface);
-    margin-top: 2px;
-    
-    /* Permitir que el texto fluya y no se corte */
-    white-space: normal; 
+    margin-top: 4px;
+    white-space: normal;
     line-height: 1.3;
-    overflow-wrap: break-word; /* Rompe palabras largas si es necesario */
+    overflow-wrap: break-word;
 }
 
-/* 3. Cargos y Abonos */
-.cartilla-amount {
-    text-align: right;
-    font-family: monospace;
-    font-size: 0.9rem;
-    white-space: nowrap; /* Los números no deben partirse */
-}
-.cartilla-amount.text-debit { grid-area: debit; color: var(--c-danger); }
-.cartilla-amount.text-credit { grid-area: credit; color: var(--c-on-surface); }
-
-/* 4. Saldo (Protegido) */
-.cartilla-balance {
-    grid-area: balance;
-    text-align: right;
-    font-family: monospace;
-    font-weight: 800; /* Más grueso para destacar */
-    font-size: 0.95rem;
-    color: var(--c-on-surface); /* Color principal para destacar */
-    
-    /* CLAVE: Asegurar que no se corte */
-    white-space: nowrap; 
-    min-width: fit-content;
-    background-color: color-mix(in srgb, var(--c-surface-variant) 50%, transparent); /* Fondo sutil */
-    padding: 2px 6px;
-    border-radius: 4px;
-}
-
-/* Footer */
 .cartilla-footer {
     text-align: center;
     margin-top: 20px;
     font-style: italic;
     font-size: 0.7rem;
-    letter-spacing: 2px;
     color: var(--c-on-surface-tertiary);
 }
 
-/* --- Ajustes para Pantallas Muy Pequeñas (< 380px) --- */
+/* --- Adaptación Móvil --- */
 @media (max-width: 380px) {
-    .cartilla-head { display: none; } /* Ocultar cabecera solo en móviles muy pequeños */
-    
     .cartilla-row {
-        /* En pantallas minúsculas, juntamos cargos/abonos para dar espacio al saldo */
-        grid-template-columns: 60px 1fr min-content;
-        grid-template-areas:
-            "date amounts balance"
-            "concept concept concept";
+        /* En pantallas muy pequeñas, reducimos un poco el espacio del importe */
+        grid-template-columns: 60px 1fr 90px min-content;
     }
-    
-    /* Unimos visualmente debit y credit en la misma celda si es necesario */
-    .cartilla-amount { font-size: 0.85rem; }
+    .cartilla-amount, .cartilla-balance { font-size: 0.85rem; }
 }
 /* === INICIO: Animación de Feedback de Botón === */
 @keyframes btn-success-pulse {

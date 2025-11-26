@@ -6336,59 +6336,51 @@ const hideModal = (id) => {
  */
 const renderCartillaRowGeneric = (mov, allCuentas, allConceptos) => {
     const fecha = new Date(mov.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
-    let cargo = '';
-    let abono = '';
     let conceptoTexto = '';
     
-    // 1. Determinar Concepto y Descripción
+    // Lógica de texto (igual que antes)
     if (mov.tipo === 'traspaso') {
         const origen = allCuentas.find(c => c.id === mov.cuentaOrigenId);
         const destino = allCuentas.find(c => c.id === mov.cuentaDestinoId);
         const nombreOrigen = origen ? escapeHTML(origen.nombre) : '?';
         const nombreDestino = destino ? escapeHTML(destino.nombre) : '?';
-        
         conceptoTexto = `TRASPASO: ${nombreOrigen} -> ${nombreDestino}`;
     } else {
         const concepto = allConceptos.find(c => c.id === mov.conceptoId);
         const cuenta = allCuentas.find(c => c.id === mov.cuentaId);
         const nombreConcepto = concepto ? concepto.nombre.toUpperCase() : 'VARIO';
         const nombreCuenta = cuenta ? cuenta.nombre : '';
-        
-        // En la cartilla mostramos Concepto y si hay espacio, la cuenta
         conceptoTexto = `${nombreConcepto}`;
         if (nombreCuenta) conceptoTexto += ` (${nombreCuenta})`;
     }
-    
-    // Añadir nota personal si existe
     if (mov.descripcion && mov.descripcion !== 'Traspaso' && mov.descripcion !== 'Movimiento') {
         conceptoTexto += ` - ${escapeHTML(mov.descripcion)}`;
     }
 
-    // 2. Determinar Columnas de Importe (Debe / Haber)
-    // Si es gasto (negativo) va al DEBE (Cargos). Si es ingreso (positivo) va al HABER (Abonos).
-    // Nota: En traspasos, mov.cantidad siempre es positivo en base de datos, 
-    // pero si estamos aquí, la lógica de negocio ya debería haber ajustado signos 
-    // o usamos la lógica visual simple:
-    
+    // --- NUEVA LÓGICA DE IMPORTE UNIFICADO ---
     const amount = mov.cantidad;
+    const formattedAmount = formatCurrency(Math.abs(amount));
     
-    // Si venimos de una vista de cuenta específica, usamos la lógica de entrada/salida relativa
+    // Determinamos el color y el signo visual
+    let amountClass = '';
+    let sign = '';
+
     if (amount < 0) {
-        cargo = formatCurrency(Math.abs(amount));
+        amountClass = 'text-debit'; // Rojo (definido en CSS como var(--c-danger))
+        sign = '-';
     } else {
-        abono = formatCurrency(amount);
+        amountClass = 'text-credit'; // Verde (definido en CSS como var(--c-success))
+        sign = '+';
     }
 
-    // 3. Saldo (Si existe el cálculo previo)
     const saldoDisplay = (mov.runningBalance !== undefined) ? formatCurrency(mov.runningBalance) : '-';
 
     return `
         <div class="cartilla-row" onclick="startMovementForm('${mov.id}', false)" style="cursor: pointer;">
             <div class="cartilla-cell cartilla-date">${fecha}</div>
-            <div class="cartilla-cell cartilla-concept">${conceptoTexto}</div>
-            <div class="cartilla-cell cartilla-amount text-debit">${cargo}</div>
-            <div class="cartilla-cell cartilla-amount text-credit">${abono}</div>
+            <div class="cartilla-cell cartilla-spacer"></div> <div class="cartilla-cell cartilla-amount ${amountClass}">${sign}${formattedAmount}</div>
             <div class="cartilla-cell cartilla-balance">${saldoDisplay}</div>
+            <div class="cartilla-cell cartilla-concept">${conceptoTexto}</div>
         </div>
     `;
 };
@@ -6427,10 +6419,9 @@ const showDrillDownModal = (title, movements) => {
                 <div class="cartilla-table">
     <div class="cartilla-row cartilla-head">
         <div class="cartilla-cell">FECHA</div>
-        <div class="cartilla-cell text-right">CARGOS</div>
-        <div class="cartilla-cell text-right">ABONOS</div>
+        <div class="cartilla-cell"></div> <div class="cartilla-cell text-right">IMPORTE</div>
         <div class="cartilla-cell text-right">SALDO</div>
-        </div>
+    </div>
     ${rowsHTML}
 </div>
                 
