@@ -6529,28 +6529,27 @@ const renderQuickAccessChips = () => {
     }
 };
 
+// En main.js, reemplaza la función startMovementForm completa:
+
 const startMovementForm = async (id = null, isRecurrent = false, initialType = 'gasto') => {
     hapticFeedback('medium');
     const form = select('form-movimiento');
     if (!form) return; // Seguridad extra
     
+    // 1. IMPORTANTE: Declarar las variables al principio de la función
+    let data = null;
+    let mode = 'new';
+
     form.reset();
     clearAllErrors(form.id);
     
-    // 1. Rellenamos los desplegables
+    // 2. Rellenamos los desplegables
     populateAllDropdowns();
 
     // Resetear selector de días semanal
     selectAll('.day-selector-btn').forEach(btn => btn.classList.remove('active'));
     const weeklySelector = select('weekly-day-selector');
     if (weeklySelector) weeklySelector.classList.add('hidden');
-    let fechaValue = data.fecha;
-	if (fechaValue && fechaValue.includes('T')) {
-    fechaValue = fechaValue.split('T')[0]; // Quédate solo con la parte YYYY-MM-DD
-	}
-	select('movimiento-fecha').value = fechaValue;	
-    let data = null;
-    let mode = 'new';
     
     if (id) {
         try {
@@ -6558,6 +6557,7 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
             const doc = await fbDb.collection('users').doc(currentUser.uid).collection(collectionName).doc(id).get();
 
             if (doc.exists) {
+                // Asignamos a la variable 'data' que declaramos arriba (sin usar 'let' ni 'const' aquí)
                 data = { id: doc.id, ...doc.data() };
                 mode = isRecurrent ? 'edit-recurrent' : 'edit-single';
                 initialType = data.tipo === 'traspaso' ? 'traspaso' : (data.cantidad < 0 ? 'gasto' : 'ingreso');
@@ -6651,10 +6651,9 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
         updateDateDisplay(fechaInput);
     }
     
-    // --- CORRECCIÓN DEL ERROR ---
-    // Comprobamos que los botones existen antes de intentar acceder a su classList
+    // Gestión de botones de borrado/duplicado
     const deleteBtn = select('delete-movimiento-btn');
-    const duplicateBtn = select('duplicate-movimiento-btn'); // Este es el que causaba el crash al no existir
+    const duplicateBtn = select('duplicate-movimiento-btn'); 
 
     if (deleteBtn) {
         deleteBtn.classList.toggle('hidden', !id || !data);
@@ -6667,14 +6666,15 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
 
     showModal('movimiento-modal');
     
-    // Si la función renderQuickAccessChips existe, la llamamos
+    // Inicializaciones de UI
     if (typeof renderQuickAccessChips === 'function') {
         renderQuickAccessChips(); 
     }
 
-    initAmountInput(); 
+    if (typeof initAmountInput === 'function') {
+        initAmountInput(); 
+    }
     
-    // Si existe setupFormNavigation, la llamamos
     if (typeof setupFormNavigation === 'function') {
         setupFormNavigation();
     }
