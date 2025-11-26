@@ -1035,19 +1035,120 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     font-size: var(--fs-sm);
     font-weight: 700;
 }
-/* --- Calculadora Flotante --- */
-#calculator-overlay { z-index: 1100; /* Debe estar por encima de otros modales */ }
-.calculator-ui { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 420px; z-index: 10; background-color: var(--c-surface-variant); border-top: 1px solid var(--c-outline); padding: var(--sp-3); padding-bottom: calc(var(--sp-3) + env(safe-area-inset-bottom)); border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.3); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); visibility: hidden; }
-#calculator-overlay.modal-overlay--active .calculator-ui { transform: translateX(-50%) translateY(0); visibility: visible; }
-.modal__body.calculator-active { padding-bottom: 0; }
-.calculator-display { font-size: 2.1rem; font-weight: 300; text-align: right; padding: var(--sp-1) var(--sp-3); margin-bottom: var(--sp-3); min-height: 48px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.calculator-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.calculator-btn { font-family: var(--font-family); font-size: 1.2rem; font-weight: 500; height: 48px; border-radius: var(--border-radius-md); border: none; background-color: var(--c-surface); color: var(--c-on-surface); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s, transform 0.1s; }
-.calculator-btn:active { transform: scale(0.95); }
-.calculator-btn.btn-operator { color: var(--c-primary); }
-.calculator-btn.btn-confirm { background-color: var(--c-primary); color: var(--c-white); }
-.calculator-btn.zero { grid-column: span 2; }
-.material-icons.backspace-icon { font-size: 1.2rem; }
+/* ================================================================= */
+/* === CALCULADORA EFICIENTE v2.0 (Estilo Teclado Nativo) === */
+/* ================================================================= */
+
+/* El contenedor se pega abajo y ocupa menos espacio innecesario */
+.calculator-ui {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    width: 100%;
+    max-width: 500px; /* Ancho máximo igual que la app */
+    z-index: 2147483647; /* Máxima prioridad */
+    background-color: var(--c-surface); /* Fondo sólido para contraste */
+    border-top: 1px solid var(--c-outline);
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom)) 10px;
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
+    transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1); /* Efecto resorte rápido */
+    visibility: hidden;
+}
+
+#calculator-overlay.modal-overlay--active .calculator-ui {
+    transform: translateX(-50%) translateY(0);
+    visibility: visible;
+}
+
+/* Pantalla de resultados simplificada */
+.calculator-history-display {
+    font-size: 0.9rem;
+    color: var(--c-on-surface-tertiary);
+    text-align: right;
+    padding: 0 12px;
+    height: 20px;
+    margin-bottom: 4px;
+}
+
+.calculator-display {
+    font-size: 3rem; /* Números enormes para claridad */
+    font-weight: 700;
+    text-align: right;
+    padding: 0 12px;
+    margin-bottom: 16px;
+    color: var(--c-on-surface);
+    line-height: 1;
+    letter-spacing: -1px;
+}
+
+/* Grid optimizado para dedos */
+.calculator-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px; /* Espacio entre botones */
+    height: auto;
+}
+
+/* Botones base */
+.calculator-btn {
+    font-family: var(--font-family);
+    font-size: 1.5rem; /* Números grandes y legibles */
+    font-weight: 500;
+    height: 60px; /* Altura generosa para el dedo */
+    border-radius: 16px; /* Botones redondeados modernos */
+    border: none;
+    background-color: var(--c-surface-variant); /* Gris suave */
+    color: var(--c-on-surface);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.1s, transform 0.1s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Efecto al pulsar */
+.calculator-btn:active {
+    background-color: var(--c-outline);
+    transform: scale(0.95);
+}
+
+/* Operadores (Columna derecha) */
+.calculator-btn.btn-operator {
+    background-color: color-mix(in srgb, var(--c-primary) 15%, transparent);
+    color: var(--c-primary);
+    font-weight: 700;
+    font-size: 1.8rem;
+}
+.calculator-btn.btn-operator--active {
+    background-color: var(--c-primary);
+    color: var(--c-white);
+}
+
+/* Botón OK/Enter (Destacado) */
+.calculator-btn.btn-confirm {
+    background-color: var(--c-primary);
+    color: var(--c-white);
+    font-weight: 700;
+    font-size: 1.2rem;
+    grid-column: 4;
+    grid-row: 2 / span 2; /* Ocupa 2 filas de alto para ser fácil de dar */
+    height: auto; /* Se ajusta a las 2 filas */
+}
+
+/* Botón Cero ancho */
+.calculator-btn.zero {
+    grid-column: span 2; /* Ocupa 2 columnas */
+    border-radius: 16px;
+}
+
+/* Tecla Borrar */
+.material-icons.backspace-icon {
+    font-size: 1.6rem;
+}
 /* Estilo para el nuevo display de historial */
 .calculator-history-display {
     font-size: 1.1rem; font-weight: 500; color: var(--c-on-surface-secondary); text-align: right;

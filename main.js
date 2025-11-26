@@ -531,45 +531,54 @@ const handleCalculatorInput = (key) => {
     } else {
         switch(key) {
          case 'done':
-                hapticFeedback('medium');
-                if (operand1 !== null && operator !== null && !waitingForNewValue) {
-                    calculate();
-                    displayValue = calculatorState.displayValue;
-                }
-                if (calculatorState.targetInput) {
-                    const finalValue = parseFloat(displayValue.replace(',', '.')) || 0;
-                    calculatorState.targetInput.value = finalValue.toLocaleString('es-ES', { 
-                        useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 
-                    });
-                    calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    calculatorState.targetInput.blur();
-                }
-                historyValue = '';
-                hideCalculator();
+    hapticFeedback('medium');
+    // Realizar cálculo si quedaba algo pendiente
+    if (operand1 !== null && operator !== null && !waitingForNewValue) {
+        calculate();
+        displayValue = calculatorState.displayValue;
+    }
+    
+    // Actualizar el input con el valor final
+    if (calculatorState.targetInput) {
+        const finalValue = parseFloat(displayValue.replace(',', '.')) || 0;
+        calculatorState.targetInput.value = finalValue.toLocaleString('es-ES', { 
+            useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 
+        });
+        calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+        calculatorState.targetInput.blur();
+    }
+    
+    historyValue = '';
+    hideCalculator(); // Cerrar calculadora
 
-                // ▼▼▼ MEJORA UX: SALTO DE FOCO AUTOMÁTICO ▼▼▼
-                setTimeout(() => {
-                    // 1. Intentamos ir al Concepto (prioridad)
-                    const conceptoSelect = document.getElementById('movimiento-concepto');
-                    
-                    if (conceptoSelect) {
-                        // Como usas un Select Personalizado, enfocamos el disparador visual
-                        const wrapper = conceptoSelect.closest('.custom-select-wrapper');
-                        const trigger = wrapper ? wrapper.querySelector('.custom-select__trigger') : null;
-                        
-                        if (trigger) {
-                            trigger.focus();
-                            trigger.click(); // Abre el menú automáticamente para agilizar
-                        } else {
-                            conceptoSelect.focus(); 
-                        }
-                    } else {
-                        // Si es traspaso (no hay concepto), saltar a la descripción
-                        const descInput = document.getElementById('movimiento-descripcion');
-                        if (descInput) descInput.focus();
-                    }
-                }, 150); // Pequeño retardo para que la animación de cierre termine
-                return;
+    // ▼▼▼ MEJORA 2: FLUJO EN CASCADA (Auto-Focus Siguiente Campo) ▼▼▼
+    setTimeout(() => {
+        // 1. Detectar si estamos en Traspaso o Movimiento normal
+        const typePill = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active');
+        const tipo = typePill ? typePill.dataset.type : 'gasto';
+
+        if (tipo === 'traspaso') {
+            // Si es traspaso, abrir Cuenta Origen
+            const origenSelect = document.getElementById('movimiento-cuenta-origen');
+            if (origenSelect) {
+                const wrapper = origenSelect.closest('.custom-select-wrapper');
+                const trigger = wrapper ? wrapper.querySelector('.custom-select__trigger') : null;
+                if (trigger) trigger.click();
+            }
+        } else {
+            // Si es Gasto/Ingreso, abrir CONCEPTO
+            const conceptoSelect = document.getElementById('movimiento-concepto');
+            if (conceptoSelect) {
+                const wrapper = conceptoSelect.closest('.custom-select-wrapper');
+                const trigger = wrapper ? wrapper.querySelector('.custom-select__trigger') : null;
+                if (trigger) {
+                    trigger.focus(); // Enfocar para accesibilidad
+                    trigger.click(); // ¡Abrir el desplegable automáticamente!
+                }
+            }
+        }
+    }, 100); // Pequeña pausa para que la calculadora desaparezca suavemente
+    return;
             case 'comma':
                 if (waitingForNewValue) {
                     displayValue = '0,';
@@ -6529,21 +6538,19 @@ const renderQuickAccessChips = () => {
     }
 };
 
-// En main.js, reemplaza la función startMovementForm completa:
 
 const startMovementForm = async (id = null, isRecurrent = false, initialType = 'gasto') => {
     hapticFeedback('medium');
     const form = select('form-movimiento');
-    if (!form) return; // Seguridad extra
+    if (!form) return;
     
-    // 1. IMPORTANTE: Declarar las variables al principio de la función
     let data = null;
     let mode = 'new';
 
     form.reset();
     clearAllErrors(form.id);
     
-    // 2. Rellenamos los desplegables
+    // Rellenamos los desplegables
     populateAllDropdowns();
 
     // Resetear selector de días semanal
@@ -6557,17 +6564,15 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
             const doc = await fbDb.collection('users').doc(currentUser.uid).collection(collectionName).doc(id).get();
 
             if (doc.exists) {
-                // Asignamos a la variable 'data' que declaramos arriba (sin usar 'let' ni 'const' aquí)
                 data = { id: doc.id, ...doc.data() };
                 mode = isRecurrent ? 'edit-recurrent' : 'edit-single';
                 initialType = data.tipo === 'traspaso' ? 'traspaso' : (data.cantidad < 0 ? 'gasto' : 'ingreso');
             } else {
-                showToast("Error: No se encontró el elemento para editar.", "danger");
+                showToast("Error: No se encontró el elemento.", "danger");
                 id = null;
             }
         } catch (error) {
-            console.error("Error al cargar datos para editar:", error);
-            showToast("Error al cargar los datos.", "danger");
+            console.error("Error al cargar datos:", error);
             return;
         }
     }
@@ -6577,31 +6582,21 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
     select('movimiento-id').value = id || '';
 
     if (data) {
-        // Rellenar Cantidad (formato ES)
+        // --- Lógica de Edición (Cargar datos) ---
         select('movimiento-cantidad').value = `${(Math.abs(data.cantidad) / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, useGrouping: false })}`;
         
-        // Rellenar Fecha (Manejo robusto)
         const fechaInput = select('movimiento-fecha');
         const dateStringForInput = isRecurrent ? data.nextDate : data.fecha;
-        
         if (dateStringForInput) {
-            let fechaISO = '';
-            if (dateStringForInput.includes('T')) {
-                fechaISO = dateStringForInput.split('T')[0];
-            } else {
-                fechaISO = dateStringForInput;
-            }
-            
+            const fechaISO = dateStringForInput.includes('T') ? dateStringForInput.split('T')[0] : dateStringForInput;
             if (fechaISO) {
                 fechaInput.value = fechaISO;
                 updateDateDisplay(fechaInput); 
             }
         }
 
-        // Rellenar Descripción
         select('movimiento-descripcion').value = data.descripcion || '';
 
-        // Helper para selects
         const setSelectValue = (selectId, value) => {
             const el = select(selectId);
             if (el) {
@@ -6618,18 +6613,16 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
             setSelectValue('movimiento-concepto', data.conceptoId);
         }
 
-        // Lógica de Recurrentes
+        // Recurrentes
         const recurrenteCheckbox = select('movimiento-recurrente');
         const recurrentOptions = select('recurrent-options');
         
         if (mode === 'edit-recurrent') {
             if (recurrenteCheckbox) recurrenteCheckbox.checked = true;
             setSelectValue('recurrent-frequency', data.frequency);
-            
             if(select('recurrent-next-date')) select('recurrent-next-date').value = data.nextDate;
             if(select('recurrent-end-date')) select('recurrent-end-date').value = data.endDate || '';
             if(recurrentOptions) recurrentOptions.classList.remove('hidden');
-            
             if (data.frequency === 'weekly' && data.weekDays) {
                 if(select('weekly-day-selector')) select('weekly-day-selector').classList.remove('hidden');
                 data.weekDays.forEach(day => {
@@ -6643,7 +6636,7 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
         }
 
     } else {
-        // MODO NUEVO: Fecha de hoy local correcta
+        // --- Lógica de Nuevo Movimiento ---
         const fechaInput = select('movimiento-fecha');
         const now = new Date();
         const localIsoDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
@@ -6651,42 +6644,31 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
         updateDateDisplay(fechaInput);
     }
     
-    // Gestión de botones de borrado/duplicado
+    // Gestión de botones
     const deleteBtn = select('delete-movimiento-btn');
     const duplicateBtn = select('duplicate-movimiento-btn'); 
-
     if (deleteBtn) {
         deleteBtn.classList.toggle('hidden', !id || !data);
         deleteBtn.dataset.isRecurrent = String(isRecurrent);
     }
-    
     if (duplicateBtn) {
         duplicateBtn.classList.toggle('hidden', !(mode === 'edit-single' && data));
     }
 
     showModal('movimiento-modal');
     
-    // Inicializaciones de UI
-    if (typeof renderQuickAccessChips === 'function') {
-        renderQuickAccessChips(); 
-    }
+    if (typeof initAmountInput === 'function') initAmountInput(); 
+    if (typeof setupFormNavigation === 'function') setupFormNavigation();
 
-    if (typeof initAmountInput === 'function') {
-        initAmountInput(); 
-    }
-    
-    if (typeof setupFormNavigation === 'function') {
-        setupFormNavigation();
-    }
-
-    // Foco rápido al abrir
+    // ▼▼▼ AQUÍ ESTÁ LA MEJORA 1: AUTO-APERTURA INTELIGENTE ▼▼▼
     if (mode === 'new') {
         setTimeout(() => {
             const amountInput = select('movimiento-cantidad');
             if (amountInput) {
-                amountInput.focus(); 
+                // En lugar de solo focus(), llamamos directamente a la calculadora
+                showCalculator(amountInput);
             }
-        }, 150); 
+        }, 300); // Un poco más de tiempo para asegurar que el modal terminó de subir
     }
 };
         

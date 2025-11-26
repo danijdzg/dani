@@ -312,35 +312,37 @@
         <div class="modal" style="max-width: 650px; max-height: 80vh;"><header class="modal__header"><h3 id="help-modal-title" class="modal__title"></h3><button class="icon-btn" data-action="close-modal" data-modal-id="help-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button></header><div id="help-modal-body" class="modal__body"></div></div>
     </div>
  
-    <!-- ▼▼▼ INICIO: REEMPLAZA TU #calculator-overlay CON ESTE ▼▼▼ -->
     <div id="calculator-overlay" class="modal-overlay" style="background: transparent;">
     <div id="calculator-ui" class="calculator-ui">
         <div id="calculator-history-display" class="calculator-history-display"></div>
         <div id="calculator-display" class="calculator-display">0</div>
+        
         <div id="calculator-grid" class="calculator-grid">
-            <button class="calculator-btn btn-operator" data-key="clear">C</button>
-            <button class="calculator-btn btn-operator" data-key="sign">+/-</button>
-            <button class="calculator-btn btn-operator" data-key="backspace"><span class="material-icons backspace-icon">backspace</span></button>
-            <button class="btn btn--primary calculator-btn" id="calculator-btn-done" data-key="done">OK</button>
+            <button class="calculator-btn" data-key="clear" style="color: var(--c-danger); font-weight:700;">AC</button>
+            <button class="calculator-btn" data-key="divide" style="font-size: 1.4rem;">÷</button>
+            <button class="calculator-btn" data-key="multiply" style="font-size: 1.4rem;">×</button>
+            <button class="calculator-btn" data-key="backspace"><span class="material-icons backspace-icon">backspace</span></button>
+
             <button class="calculator-btn" data-key="7">7</button>
             <button class="calculator-btn" data-key="8">8</button>
             <button class="calculator-btn" data-key="9">9</button>
-            <button class="calculator-btn btn-operator" data-key="divide">÷</button>
+            <button class="calculator-btn" data-key="subtract" style="font-size: 1.8rem;">−</button>
+
             <button class="calculator-btn" data-key="4">4</button>
             <button class="calculator-btn" data-key="5">5</button>
             <button class="calculator-btn" data-key="6">6</button>
-            <button class="calculator-btn btn-operator" data-key="multiply">×</button>
+            <button class="calculator-btn" data-key="add" style="font-size: 1.6rem;">+</button>
+
             <button class="calculator-btn" data-key="1">1</button>
             <button class="calculator-btn" data-key="2">2</button>
             <button class="calculator-btn" data-key="3">3</button>
-            <button class="calculator-btn btn-operator" data-key="subtract">−</button>
+            <button class="btn btn--primary calculator-btn btn-confirm" id="calculator-btn-done" data-key="done" style="grid-row: span 2; background-color: var(--c-primary);">OK</button>
+
             <button class="calculator-btn zero" data-key="0">0</button>
             <button class="calculator-btn" data-key="comma">,</button>
-            <button class="calculator-btn btn-operator" data-key="add">+</button>
         </div>
     </div>
 </div>
-    <!-- ▲▲▲ FIN: REEMPLAZO DE LA CALCULADORA ▲▲▲ -->
 	
 	<div id="irr-history-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="irr-history-title">
         <div class="modal"><div class="modal__grabber"></div><header class="modal__header"><h3 id="irr-history-title" class="modal__title">Evolución de la TIR</h3><button class="icon-btn" data-action="close-modal" data-modal-id="irr-history-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button></header><div id="irr-history-body" class="modal__body"><div class="chart-container" style="height: 100%;"><canvas id="irr-history-chart"></canvas></div></div></div>
