@@ -6295,20 +6295,6 @@ const hideModal = (id) => {
             }
         };
         
-
-        const updateCalculatorDisplay = () => {
-    const display = select('calculator-display');
-    if (!display) return;
-
-    const value = calculatorState.displayValue;
-    display.textContent = value;
-
-    // MEJORA: Escala dinámica de fuente para evitar desbordamientos
-    const length = value.length;
-    if (length > 9) display.style.fontSize = '2rem';
-    else if (length > 7) display.style.fontSize = '2.5rem';
-    else display.style.fontSize = '3rem';
-};
         const showGenericModal=(title,html)=>{const titleEl = select('generic-modal-title'); if (titleEl) titleEl.textContent=title; const bodyEl = select('generic-modal-body'); if(bodyEl) bodyEl.innerHTML=html;showModal('generic-modal');};
 	const handleShowIrrBreakdown = async (accountId) => {
     const cuenta = db.cuentas.find(c => c.id === accountId);
