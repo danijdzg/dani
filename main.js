@@ -7612,11 +7612,14 @@ function createCustomSelect(selectElement) {
             wrapper.classList.add('is-open');
             // Scroll automático al seleccionado
             const selected = optionsContainer.querySelector('.is-selected');
-            if (selected) requestAnimationFrame(() => optionsContainer.scrollTop = selected.offsetTop - 50);
-        } else {
-            wrapper.classList.remove('is-open');
-        }
-    };
+            if (selectedEl) {
+        // requestAnimationFrame asegura que el contenedor ya es visible
+        requestAnimationFrame(() => {
+            // center lo pone en medio, evitando scrolls innecesarios al borde
+            selectedEl.scrollIntoView({ block: 'center' }); 
+        });
+    }
+}
 
 
     // --- 3. Event Listeners (Solo se añaden 1 vez) ---
