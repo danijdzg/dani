@@ -483,7 +483,9 @@ body[data-ledger-mode="A"] .top-bar {
 
 /* 3. Anulación específica para Contabilidad B (el encabezado se vuelve rojo oscuro) */
 body[data-ledger-mode="B"] .top-bar {
-    background-color: #5B0000; /* Rojo oscuro, serio */
+    /* Un rojo oscuro o púrpura profundo en lugar del gris translúcido estándar */
+    background-color: rgba(80, 0, 0, 0.85) !important; 
+    border-bottom: 1px solid var(--c-danger);
 }
 
 /* 4. Asegura que el texto y botones dentro del encabezado SIEMPRE sean blancos y legibles */

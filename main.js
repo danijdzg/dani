@@ -5716,7 +5716,12 @@ const updateDashboardData = async () => {
             const chartCtx = chartCanvas.getContext('2d');
             const chartContainer = chartCanvas.closest('.chart-container');
             if(chartContainer) chartContainer.classList.remove('skeleton');
-            if (conceptosChart) conceptosChart.destroy();
+            if (conceptosChart) {
+    conceptosChart.data = newData; // Asigna los nuevos datos
+    conceptosChart.update();       // Anima el cambio
+} else {
+    conceptosChart = new Chart(...); // Solo crea si no existe
+}
             
             const cTots = current.reduce((a, m) => {
                 if (m.tipo === 'movimiento' && m.conceptoId) {
@@ -6238,6 +6243,7 @@ const showModal = (id) => {
 
 // FUNCIÓN hideModal ACTUALIZADA
 const hideModal = (id) => {
+	if (document.activeElement) document.activeElement.blur(); 
     const m = select(id);
     if (m) {
         m.classList.remove('modal-overlay--active');
