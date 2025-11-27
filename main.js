@@ -616,63 +616,70 @@ const handleCalculatorInput = (key) => {
     updateActiveOperatorButton();
 };
 
+// --- INICIO: BLOQUE CALCULADORA REPARADO Y BLINDADO ---
+
+// Función auxiliar segura: Convierte cualquier entrada (texto o número) a CENTIMOS (entero)
+// Se define FUERA para evitar errores de "already declared"
+const parseCalculatorValue = (val) => {
+    if (val === null || val === undefined || val === '') return NaN;
+    // Convierte a string, cambia coma por punto y multiplica por 100 para evitar decimales extraños
+    const num = parseFloat(val.toString().replace(',', '.'));
+    return Math.round(num * 100);
+};
+
 const calculate = () => {
-    // Convertimos todo a enteros (multiplicando por 100) para operar con seguridad
-    // Nota: Asumimos que calculatorState.operand1 y displayValue vienen como strings con coma
-    const parseToInt = (str) => Math.round(parseFloat(str.toString().replace(',', '.')) * 100);
+    // 1. Convertimos todo a enteros (céntimos) usando la función segura
+    const val1 = parseCalculatorValue(calculatorState.operand1);
+    const val2 = parseCalculatorValue(calculatorState.displayValue);
     
-    const val1 = parseToInt(calculatorState.operand1);
-    const val2 = parseToInt(calculatorState.displayValue);
-    
+    // 2. Verificaciones de seguridad: Si no son números válidos o no hay operador, no hacemos nada
     if (isNaN(val1) || isNaN(val2) || !calculatorState.operator) return;
 
     let resultInCents = 0;
+    
+    // 3. Operamos todo en enteros para precisión matemática perfecta
     switch (calculatorState.operator) {
-        case 'add': resultInCents = val1 + val2; break;
-        case 'subtract': resultInCents = val1 - val2; break;
-        case 'multiply': resultInCents = (val1 * val2) / 100; break; // Ajuste por multiplicación
+        case 'add': 
+            resultInCents = val1 + val2; 
+            break;
+        case 'subtract': 
+            resultInCents = val1 - val2; 
+            break;
+        case 'multiply': 
+            // Al multiplicar céntimos x céntimos, hay que dividir por 100 una vez para volver a céntimos
+            resultInCents = Math.round((val1 * val2) / 100); 
+            break; 
         case 'divide':
-            if (val2 === 0) { showToast("No dividirás por cero.", "danger"); return; }
-            resultInCents = (val1 * 100) / val2; // Ajuste por división
+            if (val2 === 0) { 
+                showToast("No se puede dividir por cero.", "danger"); 
+                calculatorState.displayValue = 'Error';
+                return; 
+            }
+            // Al dividir, multiplicamos por 100 para mantener la escala de céntimos
+            resultInCents = Math.round((val1 * 100) / val2); 
             break;
     }
 
-    // Devolvemos a formato visual
+    // 4. Convertimos de vuelta a formato visual (dividimos por 100)
     const result = resultInCents / 100;
-    // Usamos Intl para formatear correctamente según locale
+    
+    // 5. Formateamos bonito para el usuario (coma decimal, sin miles si no es necesario)
     calculatorState.displayValue = result.toLocaleString('es-ES', { 
         minimumFractionDigits: 0, 
-        maximumFractionDigits: 2 
-    });
-	const parseToInt = (str) => Math.round(parseFloat(str.toString().replace(',', '.')) * 100);
-    const val1 = calculatorState.operand1;
-    const val2 = parseFloat(calculatorState.displayValue.replace(',', '.'));
-    if (isNaN(val1) || isNaN(val2) || !calculatorState.operator) return;
-
-    let result = 0;
-    switch (calculatorState.operator) {
-        case 'add': result = val1 + val2; break;
-        case 'subtract': result = val1 - val2; break;
-        case 'multiply': result = val1 * val2; break;
-        case 'divide':
-            if (val2 === 0) {
-                showToast("No se puede dividir por cero.", "danger");
-                result = 0;
-            } else {
-                result = val1 / val2;
-            }
-            break;
-    }
-
-    const resultString = parseFloat(result.toPrecision(12)).toString().replace('.', ',');
+        maximumFractionDigits: 2,
+        useGrouping: false // Sin puntos de miles para facilitar la edición posterior
+    }); 
     
-    calculatorState.displayValue = resultString;
+    // 6. Reseteamos estado para la siguiente operación
     calculatorState.operand1 = null;
     calculatorState.operator = null;
     calculatorState.waitingForNewValue = true;
     calculatorState.isResultDisplayed = true;
+    
+    // 7. Actualizamos la pantalla
+    updateCalculatorDisplay();
 };
-
+// --- FIN: BLOQUE CALCULADORA REPARADO ---
 // ▲▲▲ FIN DEL BLOQUE DE LA CALCULADORA ▲▲▲
 
         let descriptionSuggestionDebounceTimer = null; 
