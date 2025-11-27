@@ -5716,12 +5716,7 @@ const updateDashboardData = async () => {
             const chartCtx = chartCanvas.getContext('2d');
             const chartContainer = chartCanvas.closest('.chart-container');
             if(chartContainer) chartContainer.classList.remove('skeleton');
-            if (conceptosChart) {
-    conceptosChart.data = newData; // Asigna los nuevos datos
-    conceptosChart.update();       // Anima el cambio
-} else {
-    conceptosChart = new Chart(...); // Solo crea si no existe
-}
+            if (conceptosChart) conceptosChart.destroy();
             
             const cTots = current.reduce((a, m) => {
                 if (m.tipo === 'movimiento' && m.conceptoId) {
