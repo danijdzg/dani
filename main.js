@@ -7922,16 +7922,13 @@ const handleStart = (e) => {
         };
 
         const handleMove = (e) => {
-            if (!longPressTimer) return;
-            const point = e.touches ? e.touches[0] : e;
-            if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-                // ▼▼▼ CANCELAR SI SE MUEVE (SCROLL) ▼▼▼
-                const card = e.target.closest('.transaction-card');
-                if(card) card.classList.remove('is-pressing');
-            }
-        };
+    const moveX = e.touches[0].clientX;
+    const moveY = e.touches[0].clientY;
+    // Si se mueve más de 10px, cancelamos
+    if (Math.abs(startX - moveX) > 10 || Math.abs(startY - moveY) > 10) {
+        clearTimeout(longPressTimer);
+    }
+};
 
         const handleEnd = (e) => {
             // ▼▼▼ CANCELAR SI SE SUELTA ANTES DE TIEMPO ▼▼▼
@@ -7979,7 +7976,7 @@ const handleStart = (e) => {
             } 
             // ... (El resto del código del Pull-to-refresh se mantiene igual) ...
              const currentY = e.touches[0].clientY; 
-             ptrState.distance = currentY - ptrState.startY; 
+             ptrState.distance = (currentY - ptrState.startY) * 0.5; // Factor de resistencia simple
              // ... etc ...
         }, { passive: false }); 
 
@@ -8025,7 +8022,7 @@ const handleStart = (e) => {
         return;
     }
             const currentY = e.touches[0].clientY;
-            ptrState.distance = currentY - ptrState.startY;
+            ptrState.distance = (currentY - ptrState.startY) * 0.5; // Factor de resistencia simple
             // Solo activamos el efecto visual si arrastra hacia abajo y estamos en el tope
     if (ptrState.distance > 0 && mainScrollerPtr.scrollTop <= 0) {
         // Solo prevenimos el defecto si realmente estamos "tirando" para refrescar

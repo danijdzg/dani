@@ -3392,3 +3392,7 @@ body[data-theme="default"] .cartilla-container {
 .save-animation-bubble { z-index: 2100; } /* Animación moneda */
 .toast-container { z-index: 3000; } /* Notificaciones SIEMPRE encima de todo */
 #start-overlay, #video-intro-overlay { z-index: 9999; } /* Pantallas de carga */
+
+html, body {
+    overscroll-behavior-y: none; /* Bloquea el rebote nativo del navegador */
+}
