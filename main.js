@@ -510,10 +510,11 @@ const handleCalculatorInput = (key) => {
     hapticFeedback('light');
     let { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue } = calculatorState;
     
+    // Si mostramos un resultado y el usuario toca un número, reseteamos. Si toca operador, seguimos.
     if (isResultDisplayed && !['add', 'subtract', 'multiply', 'divide', 'sign'].includes(key)) {
         displayValue = '0';
         isResultDisplayed = false;
-        historyValue = ''; // Limpiamos historial al empezar un nuevo cálculo
+        historyValue = ''; 
     }
 
     const isOperator = ['add', 'subtract', 'multiply', 'divide'].includes(key);
@@ -530,58 +531,60 @@ const handleCalculatorInput = (key) => {
         isResultDisplayed = false;
     } else {
         switch(key) {
-         case 'done':
-    hapticFeedback('medium');
-    // Realizar cálculo si quedaba algo pendiente
-    if (operand1 !== null && operator !== null && !waitingForNewValue) {
-        calculate();
-        displayValue = calculatorState.displayValue;
-    }
-    
-    // Actualizar el input con el valor final
-    if (calculatorState.targetInput) {
-        const finalValue = parseFloat(displayValue.replace(',', '.')) || 0;
-        calculatorState.targetInput.value = finalValue.toLocaleString('es-ES', { 
-            useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 
-        });
-        calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-        calculatorState.targetInput.blur();
-		calculatorState.targetInput.classList.add('field-highlighted');
-    setTimeout(() => calculatorState.targetInput.classList.remove('field-highlighted'), 1000);
-}
-    }
-    
-    historyValue = '';
-    hideCalculator(); // Cerrar calculadora
-
-    // ▼▼▼ MEJORA 2: FLUJO EN CASCADA (Auto-Focus Siguiente Campo) ▼▼▼
-    setTimeout(() => {
-        // 1. Detectar si estamos en Traspaso o Movimiento normal
-        const typePill = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active');
-        const tipo = typePill ? typePill.dataset.type : 'gasto';
-
-        if (tipo === 'traspaso') {
-            // Si es traspaso, abrir Cuenta Origen
-            const origenSelect = document.getElementById('movimiento-cuenta-origen');
-            if (origenSelect) {
-                const wrapper = origenSelect.closest('.custom-select-wrapper');
-                const trigger = wrapper ? wrapper.querySelector('.custom-select__trigger') : null;
-                if (trigger) trigger.click();
-            }
-        } else {
-            // Si es Gasto/Ingreso, abrir CONCEPTO
-            const conceptoSelect = document.getElementById('movimiento-concepto');
-            if (conceptoSelect) {
-                const wrapper = conceptoSelect.closest('.custom-select-wrapper');
-                const trigger = wrapper ? wrapper.querySelector('.custom-select__trigger') : null;
-                if (trigger) {
-                    trigger.focus(); // Enfocar para accesibilidad
-                    trigger.click(); // ¡Abrir el desplegable automáticamente!
+            case 'done':
+                hapticFeedback('medium');
+                // Realizar cálculo si quedaba algo pendiente
+                if (operand1 !== null && operator !== null && !waitingForNewValue) {
+                    calculate();
+                    displayValue = calculatorState.displayValue;
                 }
-            }
-        }
-    }, 100); // Pequeña pausa para que la calculadora desaparezca suavemente
-    return;
+                
+                // Actualizar el input con el valor final
+                if (calculatorState.targetInput) {
+                    const finalValue = parseFloat(displayValue.replace(',', '.')) || 0;
+                    calculatorState.targetInput.value = finalValue.toLocaleString('es-ES', { 
+                        useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 
+                    });
+                    calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    
+                    // Feedback visual en el input (Mejora #5)
+                    calculatorState.targetInput.classList.add('field-highlighted');
+                    setTimeout(() => calculatorState.targetInput.classList.remove('field-highlighted'), 1000);
+                    
+                    calculatorState.targetInput.blur();
+                }
+                
+                historyValue = '';
+                hideCalculator(); // Cerrar calculadora
+
+                // ▼▼▼ Lógica de Flujo en Cascada (Auto-foco) ▼▼▼
+                setTimeout(() => {
+                    const typePill = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active');
+                    const tipo = typePill ? typePill.dataset.type : 'gasto';
+
+                    if (tipo === 'traspaso') {
+                        // Si es traspaso, abrir Cuenta Origen
+                        const origenSelect = document.getElementById('movimiento-cuenta-origen');
+                        if (origenSelect) {
+                            const wrapper = origenSelect.closest('.custom-select-wrapper');
+                            const trigger = wrapper ? wrapper.querySelector('.custom-select__trigger') : null;
+                            if (trigger) trigger.click();
+                        }
+                    } else {
+                        // Si es Gasto/Ingreso, abrir CONCEPTO
+                        const conceptoSelect = document.getElementById('movimiento-concepto');
+                        if (conceptoSelect) {
+                            const wrapper = conceptoSelect.closest('.custom-select-wrapper');
+                            const trigger = wrapper ? wrapper.querySelector('.custom-select__trigger') : null;
+                            if (trigger) {
+                                trigger.focus(); 
+                                trigger.click(); 
+                            }
+                        }
+                    }
+                }, 100); 
+                return; // IMPORTANTE: Salir de la función aquí
+
             case 'comma':
                 if (waitingForNewValue) {
                     displayValue = '0,';
@@ -589,22 +592,26 @@ const handleCalculatorInput = (key) => {
                 } else if (!displayValue.includes(',')) displayValue += ',';
                 isResultDisplayed = false;
                 break;
+
             case 'clear': 
                 displayValue = '0'; waitingForNewValue = true; operand1 = null; operator = null; isResultDisplayed = false; historyValue = '';
                 break;
+
             case 'backspace': 
                 displayValue = displayValue.length > 1 ? displayValue.slice(0, -1) : '0';
                 if (displayValue === '0') waitingForNewValue = true;
                 isResultDisplayed = false;
                 break;
+
             case 'sign': 
                 if (displayValue !== '0') displayValue = displayValue.startsWith('-') ? displayValue.slice(1) : `-${displayValue}`; 
                 break;
-            default: // Dígitos
+
+            default: // Dígitos (0-9)
                 if (waitingForNewValue || displayValue === '0') {
                     displayValue = key;
                     waitingForNewValue = false;
-                } else if (displayValue.length < 12) { // Límite para evitar desbordes
+                } else if (displayValue.length < 12) { 
                     displayValue += key;
                 }
                 isResultDisplayed = false;
