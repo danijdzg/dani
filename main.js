@@ -618,35 +618,31 @@ const handleCalculatorInput = (key) => {
 
 // --- INICIO: BLOQUE CALCULADORA REPARADO Y BLINDADO ---
 
-// Función auxiliar segura: Convierte cualquier entrada (texto o número) a CENTIMOS (entero)
-// Se define FUERA para evitar errores de "already declared"
+// Función auxiliar segura: Convierte cualquier entrada a CÉNTIMOS (entero)
+// Definida fuera para evitar errores de redeclaración
 const parseCalculatorValue = (val) => {
     if (val === null || val === undefined || val === '') return NaN;
-    // Convierte a string, cambia coma por punto y multiplica por 100 para evitar decimales extraños
+    // Convierte a string, cambia coma por punto y multiplica por 100
     const num = parseFloat(val.toString().replace(',', '.'));
     return Math.round(num * 100);
 };
 
 const calculate = () => {
-    // 1. Convertimos todo a enteros (céntimos) usando la función segura
+    // 1. Convertimos todo a enteros (céntimos)
     const val1 = parseCalculatorValue(calculatorState.operand1);
     const val2 = parseCalculatorValue(calculatorState.displayValue);
     
-    // 2. Verificaciones de seguridad: Si no son números válidos o no hay operador, no hacemos nada
+    // 2. Seguridad: Si no hay datos válidos, no hacemos nada
     if (isNaN(val1) || isNaN(val2) || !calculatorState.operator) return;
 
     let resultInCents = 0;
     
-    // 3. Operamos todo en enteros para precisión matemática perfecta
+    // 3. Operamos en enteros para precisión financiera perfecta
     switch (calculatorState.operator) {
-        case 'add': 
-            resultInCents = val1 + val2; 
-            break;
-        case 'subtract': 
-            resultInCents = val1 - val2; 
-            break;
+        case 'add': resultInCents = val1 + val2; break;
+        case 'subtract': resultInCents = val1 - val2; break;
         case 'multiply': 
-            // Al multiplicar céntimos x céntimos, hay que dividir por 100 una vez para volver a céntimos
+            // Al multiplicar céntimos*céntimos, dividimos por 100 para volver a escala real
             resultInCents = Math.round((val1 * val2) / 100); 
             break; 
         case 'divide':
@@ -655,32 +651,42 @@ const calculate = () => {
                 calculatorState.displayValue = 'Error';
                 return; 
             }
-            // Al dividir, multiplicamos por 100 para mantener la escala de céntimos
+            // Al dividir, multiplicamos por 100 antes para mantener la precisión
             resultInCents = Math.round((val1 * 100) / val2); 
             break;
     }
 
-    // 4. Convertimos de vuelta a formato visual (dividimos por 100)
+    // 4. Formateamos bonito para el usuario
     const result = resultInCents / 100;
-    
-    // 5. Formateamos bonito para el usuario (coma decimal, sin miles si no es necesario)
     calculatorState.displayValue = result.toLocaleString('es-ES', { 
         minimumFractionDigits: 0, 
         maximumFractionDigits: 2,
-        useGrouping: false // Sin puntos de miles para facilitar la edición posterior
+        useGrouping: false // Sin puntos de miles para facilitar edición
     }); 
     
-    // 6. Reseteamos estado para la siguiente operación
+    // 5. Reset de estado
     calculatorState.operand1 = null;
     calculatorState.operator = null;
     calculatorState.waitingForNewValue = true;
     calculatorState.isResultDisplayed = true;
     
-    // 7. Actualizamos la pantalla
     updateCalculatorDisplay();
 };
-// --- FIN: BLOQUE CALCULADORA REPARADO ---
-// ▲▲▲ FIN DEL BLOQUE DE LA CALCULADORA ▲▲▲
+
+// Mejora visual: Escala dinámica de fuente en el display para que quepan números grandes
+const updateCalculatorDisplay = () => {
+    const display = select('calculator-display');
+    if (!display) return;
+    const value = calculatorState.displayValue;
+    display.textContent = value;
+    
+    const length = value.length;
+    if (length > 11) display.style.fontSize = '1.8rem';
+    else if (length > 9) display.style.fontSize = '2.2rem';
+    else if (length > 7) display.style.fontSize = '2.5rem';
+    else display.style.fontSize = '3rem';
+};
+// --- FIN: BLOQUE CALCULADORA ---
 
         let descriptionSuggestionDebounceTimer = null; 
         const DESCRIPTION_SUGGESTION_LIMIT = 5;

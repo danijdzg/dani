@@ -1009,14 +1009,14 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     margin-bottom: var(--sp-2);
 }
 .movimiento-month-header {
-   position: sticky;
+    position: sticky; /* La clave mágica */
     top: 0;
-    z-index: 5; /* Por encima de los items, por debajo de modales */
-    margin-top: 0; /* Eliminar margen superior para que pegue bien */
-    border-radius: 0; /* Recto cuando pega */
-    border-left: none;
+    z-index: 5; 
+    margin-top: 0; 
+    border-radius: 0; 
+    border-left: none; 
     border-right: none;
-    /* Sombra suave para dar profundidad al flotar */
+    /* Sombra suave para dar sensación de profundidad al flotar */
     box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
 }
 
@@ -3381,20 +3381,18 @@ body[data-theme="default"] .cartilla-container {
     cursor: pointer; /* Indica que es interactivo */
     -webkit-text-fill-color: var(--c-on-surface);
 }
-/* JERARQUÍA VISUAL ESTRICTA */
-/* Contenido base */
+/* JERARQUÍA VISUAL ESTRICTA Y DEFINITIVA */
 .app-layout { z-index: 1; }
-.bottom-nav { z-index: 100; }
-.top-bar { z-index: 100; }
+.bottom-nav, .top-bar { z-index: 100; }
+.fab-container, #bottom-nav-add-btn { z-index: 110; }
 
 /* Capas superpuestas */
-.fab-container, #bottom-nav-add-btn { z-index: 110; }
 .modal-overlay { z-index: 1000; } /* Modales normales */
 .popover-menu { z-index: 1100; } /* Menú contextual */
 
 /* Elementos críticos de sistema */
-#calculator-overlay { z-index: 2000; } /* Calculadora sobre modales */
-.save-animation-bubble { z-index: 2100; } /* Animación moneda */
+#calculator-overlay { z-index: 2000; } /* Calculadora SIEMPRE sobre modales */
+.save-animation-bubble { z-index: 2100; } 
 .toast-container { z-index: 3000; } /* Notificaciones SIEMPRE encima de todo */
 #start-overlay, #video-intro-overlay { z-index: 9999; } /* Pantallas de carga */
 
