@@ -890,7 +890,8 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
 
 /* --- Formularios --- */
 .form-group { margin-bottom: var(--sp-3); position: relative; }
-.form-label { display: block; font-size: var(--fs-sm); font-weight: 600; margin-bottom: var(--sp-2); color: var(--c-on-surface-secondary); }
+.form-label { color: var(--c-on-surface-tertiary); /* En vez de secondary si es muy claro */
+    letter-spacing: 0.3px; display: block; font-size: var(--fs-sm); font-weight: 600; margin-bottom: var(--sp-2); color: var(--c-on-surface-secondary); }
 .form-input, .form-select { width: 100%; padding: var(--sp-3); border: 1px solid var(--c-outline); border-radius: var(--border-radius-md); background: var(--c-surface-variant); color: var(--c-on-surface); font-size: var(--fs-base); appearance: none; transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s; }
 .form-input:focus, .form-select:focus { outline: none; border-color: var(--c-primary); background-color: var(--c-surface); box-shadow: var(--c-border-glow); }
 .form-select { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23FFFFFF' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3csvg%3e"); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px; padding-right: 36px; }
@@ -1049,7 +1050,9 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     width: 100%;
     max-width: 500px; /* Ancho máximo igual que la app */
     z-index: 2147483647; /* Máxima prioridad */
-    background-color: var(--c-surface); /* Fondo sólido para contraste */
+    background-color: color-mix(in srgb, var(--c-surface) 95%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-top: 1px solid var(--c-outline);
     padding: 10px 10px calc(10px + env(safe-area-inset-bottom)) 10px;
     border-radius: 24px 24px 0 0;
@@ -1106,7 +1109,7 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.1s, transform 0.1s;
+    transition: background-color 0.1s, transform 0.05s !important;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
 }
@@ -1217,7 +1220,9 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 .investment-asset-card__value { font-size: var(--fs-lg); font-weight: 800; text-align: right; }
 .investment-asset-card__pnl { font-size: var(--fs-xs); font-weight: 600; text-align: right; }
 .budget-item__progress { width: 100%; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 99px; overflow: hidden; background-color: var(--c-surface-variant); }
-.budget-item__progress::-webkit-progress-bar { background-color: var(--c-surface-variant); }
+.budget-item__progress::-webkit-progress-value {
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s;
+}
 .budget-item__progress::-webkit-progress-value { background-color: var(--c-primary); transition: width 0.3s ease; }
 .budget-item__progress.budget-item__progress--danger::-webkit-progress-value { background-color: var(--c-danger); }
 .budget-item__progress.budget-item__progress--warning::-webkit-progress-value { background-color: var(--c-warning); }
@@ -3398,4 +3403,26 @@ body[data-theme="default"] .cartilla-container {
 
 html, body {
     overscroll-behavior-y: none; /* Bloquea el rebote nativo del navegador */
+}
+
+/* Feedback visual mejorado */
+.transaction-card {
+    position: relative;
+    overflow: hidden; /* Para contener el efecto de llenado */
+}
+
+/* Efecto de llenado progresivo al mantener pulsado */
+.transaction-card.is-pressing::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0; width: 0;
+    background-color: color-mix(in srgb, var(--c-primary) 10%, transparent);
+    /* La animación dura exactamente lo que dura tu timer de JS */
+    transition: width 0.5s linear; 
+    z-index: 0;
+    pointer-events: none;
+}
+
+.transaction-card.is-pressing::after {
+    width: 100%; /* Se llena hasta el final */
 }

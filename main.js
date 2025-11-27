@@ -546,6 +546,9 @@ const handleCalculatorInput = (key) => {
         });
         calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
         calculatorState.targetInput.blur();
+		calculatorState.targetInput.classList.add('field-highlighted');
+    setTimeout(() => calculatorState.targetInput.classList.remove('field-highlighted'), 1000);
+}
     }
     
     historyValue = '';
@@ -6217,24 +6220,32 @@ function handleModalDragEnd(e) {
     modalDragState.targetModal = null;
 }
 
-// FUNCIÓN showModal ACTUALIZADA
+// En main.js
+
 const showModal = (id) => {
     const m = select(id);
     if (m) {
+        // --- NUEVA LÓGICA DE HISTORIAL ---
+        // Solo añadimos historia si el modal NO estaba ya abierto (para evitar duplicados)
+        if (!m.classList.contains('modal-overlay--active')) {
+            // pushState añade una entrada al historial del navegador.
+            // 1er param: datos del estado ({ modalId: id })
+            // 2do param: título (no se usa mucho hoy día)
+            // 3er param: URL visual (añadimos un hash #modal-id para que se vea pro)
+            window.history.pushState({ modalId: id }, '', `#modal-${id}`);
+        }
+        // ---------------------------------
+
         m.classList.add('modal-overlay--active');
         select('app-root').classList.add('app-layout--transformed-by-modal');
 
+        // (Resto de tu código original para gestos y foco...)
         const modalElement = m.querySelector('.modal');
         if (modalElement) {
             modalElement.addEventListener('mousedown', handleModalDragStart);
             modalElement.addEventListener('touchstart', handleModalDragStart, { passive: true });
         }
-
-        document.addEventListener('mousemove', handleModalDragMove);
-        document.addEventListener('touchmove', handleModalDragMove, { passive: false });
-        document.addEventListener('mouseup', handleModalDragEnd);
-        document.addEventListener('touchend', handleModalDragEnd);
-
+        // ... listeners de drag ...
         if (!id.includes('calculator')) {
             const f = m.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
             if (f) f.focus();
@@ -6242,27 +6253,44 @@ const showModal = (id) => {
     }
 };
 
-// FUNCIÓN hideModal ACTUALIZADA
 const hideModal = (id) => {
-	if (document.activeElement) document.activeElement.blur(); 
+    if (document.activeElement) document.activeElement.blur(); 
     const m = select(id);
+    
+    // --- NUEVA LÓGICA DE HISTORIAL ---
+    // Verificamos: ¿El estado actual del historial pertenece a ESTE modal?
+    if (window.history.state && window.history.state.modalId === id) {
+        // Si es así, volvemos atrás en el historial nosotros mismos.
+        // Esto disparará el evento 'popstate', pero como ya hemos cerrado visualmente
+        // o lo vamos a hacer, el flujo se mantiene correcto.
+        window.history.back();
+        // Nota: Al hacer history.back(), se disparará el listener de popstate que
+        // se encargará de la limpieza visual si aún no se ha hecho.
+        // Pero para asegurar una respuesta instantánea (UI Optimista),
+        // dejamos el código visual aquí abajo también.
+    }
+    // ---------------------------------
+
     if (m) {
         m.classList.remove('modal-overlay--active');
         select('app-root').classList.remove('app-layout--transformed-by-modal');
 
         const modalElement = m.querySelector('.modal');
+        // ... (resto de tu código de limpieza de listeners) ...
         if (modalElement) {
             modalElement.removeEventListener('mousedown', handleModalDragStart);
             modalElement.removeEventListener('touchstart', handleModalDragStart);
+            modalElement.style.transform = ''; // Resetear posición
         }
+        
+        // Limpiar listeners globales de arrastre
         document.removeEventListener('mousemove', handleModalDragMove);
         document.removeEventListener('touchmove', handleModalDragMove);
         document.removeEventListener('mouseup', handleModalDragEnd);
         document.removeEventListener('touchend', handleModalDragEnd);
-
-        if (modalElement) modalElement.style.transform = '';
     }
 
+    // (Resto de tu código de scroll restoration)
     const mainScroller = selectOne('.app-layout__main');
     if (mainScroller && lastScrollTop !== null) {
         requestAnimationFrame(() => {
@@ -7936,7 +7964,7 @@ const attachEventListeners = () => {
         let longPressTimer = null;
         let startX = 0;
         let startY = 0;
-        const LONG_PRESS_DURATION = 800; // Tiempo en ms para activar (0.8 segundos)
+        const LONG_PRESS_DURATION = 600; // Tiempo en ms para activar (0.6 segundos)
 
         // Dentro de attachEventListeners...
 
@@ -8099,16 +8127,40 @@ const handleStart = (e) => {
 
     // 4. Navegación del historial (Botón atrás del navegador)
     window.addEventListener('popstate', (event) => {
-        const activeModal = document.querySelector('.modal-overlay--active');
-        if (activeModal) {
-            hideModal(activeModal.id);
-            // Restaurar estado de historial para no salir de la app
-            history.pushState({ page: window.history.state?.page }, '', `#${window.history.state?.page || 'panel-page'}`);
-            return;
+    // Buscamos si hay algún modal abierto visualmente
+    const activeModal = document.querySelector('.modal-overlay--active');
+    
+    // Si hay un modal abierto Y el nuevo estado ya no tiene 'modalId' 
+    // (significa que el usuario ha vuelto atrás al estado base)
+    if (activeModal && (!event.state || !event.state.modalId)) {
+        
+        // Cerramos el modal VISUALMENTE "a mano".
+        // NOTA: No llamamos a hideModal(id) aquí porque esa función
+        // intentaría manipular el historial de nuevo, creando un bucle.
+        
+        // 1. Quitar clases de visibilidad
+        activeModal.classList.remove('modal-overlay--active');
+        select('app-root').classList.remove('app-layout--transformed-by-modal');
+
+        // 2. Limpiar estilos inline del arrastre (si los hubiera)
+        const modalElement = activeModal.querySelector('.modal');
+        if (modalElement) {
+            modalElement.style.transform = '';
+            // Limpieza de listeners de arrastre (igual que en hideModal)
+            modalElement.removeEventListener('mousedown', handleModalDragStart);
+            modalElement.removeEventListener('touchstart', handleModalDragStart);
         }
-        const pageToNavigate = event.state ? event.state.page : PAGE_IDS.PANEL;
-        if (pageToNavigate) navigateTo(pageToNavigate, false);
-    });
+        
+        // 3. Si tienes lógica específica al cerrar (como desenfocar inputs), ponla aquí
+        if (document.activeElement) document.activeElement.blur();
+        
+        return; // Importante: paramos aquí para que no ejecute navegación de páginas
+    }
+    
+    // Si NO era un modal, dejamos que tu lógica de navegación entre páginas (Panel -> Diario) funcione.
+    const pageToNavigate = event.state ? event.state.page : PAGE_IDS.PANEL;
+    if (pageToNavigate) navigateTo(pageToNavigate, false);
+});
 
     // 5. GESTIÓN DE CLICS (Delegación de eventos)
     document.body.addEventListener('click', async (e) => {
