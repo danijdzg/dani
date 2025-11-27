@@ -7029,21 +7029,20 @@ const showHelpModal = () => {
                     2. Diario: El Libro de la Verdad
                 </summary>
                 <div class="accordion__content" style="padding-top: 1rem;">
-                    <p>Donde se registra cada céntimo. Es una lista infinita (virtualizada, muy moderna) de tus movimientos.</p>
+                    <p>Donde se registra cada céntimo. Es una lista infinita (virtualizada, tecnología punta) de tus movimientos.</p>
                     
-                    <h4 style="color: var(--c-on-surface); margin-top: 1rem;">Gestos Ninja (Solo Móvil) 🥷</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem;">
-                        <div style="background: #333; padding: 10px; border-radius: 8px; text-align: center;">
-                            <span class="material-icons text-warning" style="font-size: 2rem;">content_copy</span>
-                            <p style="font-size: 0.8rem; margin: 5px 0;">Desliza a la <strong>DERECHA</strong> para <strong>DUPLICAR</strong>.</p>
-                        </div>
-                        <div style="background: #333; padding: 10px; border-radius: 8px; text-align: center;">
-                            <span class="material-icons text-danger" style="font-size: 2rem;">delete</span>
-                            <p style="font-size: 0.8rem; margin: 5px 0;">Desliza a la <strong>IZQUIERDA</strong> para <strong>BORRAR</strong>.</p>
-                        </div>
+                    <h4 style="color: var(--c-on-surface); margin-top: 1rem;">👆 El Toque Maestro</h4>
+                    <p>Olvídate de gestos complicados. Si te equivocaste o quieres borrar un movimiento:</p>
+                    
+                    <div style="background: var(--c-surface-variant); padding: 15px; border-radius: 12px; text-align: center; border: 1px dashed var(--c-primary); margin: 1rem 0;">
+                        <span class="material-icons text-primary" style="font-size: 2rem; margin-bottom: 8px;">touch_app</span>
+                        <p style="font-weight: 700; font-size: 1.1rem; margin: 0;">Mantén pulsado</p>
+                        <p style="font-size: 0.9rem; margin: 5px 0 0 0; opacity: 0.8;">(Long Press sobre la tarjeta)</p>
                     </div>
-                    <p><strong>¿Pulsación Larga?</strong> Mantén pulsado cualquier movimiento para abrir un menú contextual secreto.</p>
-                    <p><strong>¿Modo Calendario?</strong> Toca <span class="material-icons" style="font-size: 1em; vertical-align: bottom;">calendar_month</span> arriba para ver tus gastos organizados como en una agenda. Ideal para ver qué días gastas más.</p>
+                    
+                    <p>Al mantener el dedo, se abrirá la ficha del movimiento donde podrás <strong>Editar</strong> cualquier dato o pulsar el botón de la papelera para <strong>Eliminarlo</strong>.</p>
+
+                    <p style="margin-top: 1rem;"><strong>¿Modo Calendario?</strong> Toca <span class="material-icons" style="font-size: 1em; vertical-align: bottom;">calendar_month</span> arriba para ver tus gastos organizados como en una agenda. Ideal para detectar qué días se te va la mano.</p>
                 </div>
             </details>
 
@@ -7109,7 +7108,6 @@ const showHelpModal = () => {
 
     showModal('help-modal');
 };
- 
 	const updateThemeIcon = () => {
     const themeBtn = select('theme-toggle-btn');
     if (!themeBtn) return;
