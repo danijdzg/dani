@@ -6964,8 +6964,150 @@ const handleSaveValoracion = async (form, btn) => {
 // ======================================================================================
 // === FIN: GUARDADO DE VALORACIÓN - VERSIÓN FINAL                                      ===
 // ======================================================================================
-
 const showHelpModal = () => {
+    const titleEl = select('help-modal-title');
+    const bodyEl = select('help-modal-body');
+
+    if (titleEl) {
+        titleEl.innerHTML = '<span class="material-icons text-primary" style="vertical-align: bottom; margin-right: 8px;">auto_awesome</span> Manual del Piloto';
+    }
+
+    if (bodyEl) {
+        bodyEl.innerHTML = `
+            <div style="text-align: center; margin-bottom: 2rem; animation: pop-in 0.5s ease-out;">
+                <img src="aiDANaI.webp" alt="Logo" style="width: 100px; height: 100px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-bottom: 1rem;">
+                <h2 style="font-size: 1.8rem; color: var(--c-primary); margin-bottom: 0.5rem;">¡Hola! Soy aiDANaI 🤖</h2>
+                <p style="font-size: 1rem; color: var(--c-on-surface-secondary); max-width: 80%; margin: 0 auto; line-height: 1.5;">
+                    Tu copiloto financiero de bolsillo. He sido programada para convertir el caos de tus cuentas en una sinfonía de orden y riqueza. ¡Abróchate el cinturón!
+                </p>
+            </div>
+
+            <div class="card" style="background: var(--c-surface-variant); border: 1px solid var(--c-primary); margin-bottom: 2rem;">
+                <div class="card__content">
+                    <h3 style="color: var(--c-primary); display: flex; align-items: center; gap: 8px; margin-top: 0;">
+                        <span class="material-icons">swap_horiz</span> El Multiverso (Modo A/B)
+                    </h3>
+                    <p>¿Tienes una doble vida? ¡Yo también! En la barra superior verás un botón mágico <strong>[A]</strong> o <strong>[B]</strong>.</p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li><strong>🅰️ Contabilidad A:</strong> Tu vida real. El súper, la nómina, el alquiler.</li>
+                        <li><strong>🅱️ Contabilidad B:</strong> Ese proyecto secreto, las cuentas de la peña, o tu "dinero en negro" (es broma... ¿o no? 😉).</li>
+                    </ul>
+                    <p style="font-size: 0.9em; font-style: italic;">*Son dos mundos paralelos que nunca se tocan. Lo que pasa en la B, se queda en la B.*</p>
+                </div>
+            </div>
+
+            <h3>🗺️ Mapa de Navegación</h3>
+
+            <details class="accordion" style="margin-bottom: 1rem;">
+                <summary style="font-size: 1.1rem; font-weight: 700; color: var(--c-on-surface);">
+                    <span class="material-icons text-info" style="margin-right: 10px;">dashboard</span>
+                    1. Panel: Tu Torre de Control
+                </summary>
+                <div class="accordion__content" style="padding-top: 1rem;">
+                    <p>Aquí tienes la "foto finish" de tu salud financiera. No son solo números, son señales de vida:</p>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 10px;">
+                            🛡️ <strong>Colchón de Emergencia:</strong> Te digo cuántos meses podrías sobrevivir tirado en el sofá sin ingresar ni un euro. ¡Intenta que la barra esté verde!
+                        </li>
+                        <li style="margin-bottom: 10px;">
+                            🚩 <strong>Independencia Financiera (I.F.):</strong> La barra de progreso hacia tu libertad. Cuando llegue al 100%, despide a tu jefe (bajo tu responsabilidad).
+                        </li>
+                        <li>
+                            📈 <strong>Evolución:</strong> Un gráfico precioso de tu patrimonio. Si la línea sube, eres un genio. Si baja... bueno, para eso estoy yo aquí.
+                        </li>
+                    </ul>
+                    <div style="background: var(--c-background); padding: 10px; border-radius: 8px; font-size: 0.9em;">
+                        <strong>💡 Truco Pro:</strong> Pulsa el botón <span class="material-icons" style="font-size: 1em; vertical-align: middle;">dashboard_customize</span> arriba a la derecha para elegir qué widgets quieres ver. ¡Tu panel, tus reglas!
+                    </div>
+                </div>
+            </details>
+
+            <details class="accordion" style="margin-bottom: 1rem;">
+                <summary style="font-size: 1.1rem; font-weight: 700; color: var(--c-on-surface);">
+                    <span class="material-icons text-warning" style="margin-right: 10px;">receipt_long</span>
+                    2. Diario: El Libro de la Verdad
+                </summary>
+                <div class="accordion__content" style="padding-top: 1rem;">
+                    <p>Donde se registra cada céntimo. Es una lista infinita (virtualizada, muy moderna) de tus movimientos.</p>
+                    
+                    <h4 style="color: var(--c-on-surface); margin-top: 1rem;">Gestos Ninja (Solo Móvil) 🥷</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem;">
+                        <div style="background: #333; padding: 10px; border-radius: 8px; text-align: center;">
+                            <span class="material-icons text-warning" style="font-size: 2rem;">content_copy</span>
+                            <p style="font-size: 0.8rem; margin: 5px 0;">Desliza a la <strong>DERECHA</strong> para <strong>DUPLICAR</strong>.</p>
+                        </div>
+                        <div style="background: #333; padding: 10px; border-radius: 8px; text-align: center;">
+                            <span class="material-icons text-danger" style="font-size: 2rem;">delete</span>
+                            <p style="font-size: 0.8rem; margin: 5px 0;">Desliza a la <strong>IZQUIERDA</strong> para <strong>BORRAR</strong>.</p>
+                        </div>
+                    </div>
+                    <p><strong>¿Pulsación Larga?</strong> Mantén pulsado cualquier movimiento para abrir un menú contextual secreto.</p>
+                    <p><strong>¿Modo Calendario?</strong> Toca <span class="material-icons" style="font-size: 1em; vertical-align: bottom;">calendar_month</span> arriba para ver tus gastos organizados como en una agenda. Ideal para ver qué días gastas más.</p>
+                </div>
+            </details>
+
+            <details class="accordion" style="margin-bottom: 1rem;">
+                <summary style="font-size: 1.1rem; font-weight: 700; color: var(--c-on-surface);">
+                    <span class="material-icons text-success" style="margin-right: 10px;">account_balance</span>
+                    3. Patrimonio: La Cámara del Tesoro
+                </summary>
+                <div class="accordion__content" style="padding-top: 1rem;">
+                    <p>Aquí es donde diferenciamos "tener dinero" de "ser rico". Gestiona tus activos (Fondos, Cripto, Inmuebles).</p>
+                    
+                    <h4 style="color: var(--c-on-surface);">Conceptos para impresionar a tus amigos:</h4>
+                    <ul style="padding-left: 20px;">
+                        <li style="margin-bottom: 8px;"><strong>P&L (Profit & Loss):</strong> Simplemente: <em>Valor Actual - Lo que te costó</em>. Si está en verde, invítame a algo.</li>
+                        <li style="margin-bottom: 8px;"><strong>TIR (Tasa Interna de Retorno):</strong> La joya de la corona. Calcula la rentabilidad real anualizada teniendo en cuenta cuándo metiste o sacaste dinero. ¡Matemáticas financieras de alto nivel hechas solas!</li>
+                    </ul>
+                    <p><strong>¡Interactúa!</strong> Pulsa en las etiquetas de colores (P&L o TIR) de cada activo para ver el desglose matemático exacto. Sin secretos.</p>
+                </div>
+            </details>
+
+            <details class="accordion" style="margin-bottom: 1rem;">
+                <summary style="font-size: 1.1rem; font-weight: 700; color: var(--c-on-surface);">
+                    <span class="material-icons text-info" style="margin-right: 10px;">edit_calendar</span>
+                    4. Planificar: El Oráculo
+                </summary>
+                <div class="accordion__content" style="padding-top: 1rem;">
+                    <p>Deja de sufrir por los gastos que sabes que van a llegar.</p>
+                    <ul>
+                        <li><strong>Recurrentes:</strong> Netflix, el alquiler, la nómina... Configúralos una vez y yo me encargo de avisarte o crearlos cuando toque.</li>
+                        <li><strong>Presupuestos:</strong> Marca un límite anual para "Comida" o una meta para "Ingresos". Verás velocímetros que te dicen si vas muy rápido o si puedes permitirte ese capricho.</li>
+                    </ul>
+                </div>
+            </details>
+
+            <hr style="border-color: var(--c-outline); opacity: 0.3; margin: 2rem 0;">
+
+            <h3>🧙‍♂️ Trucos de Magia (Funcionalidades Extra)</h3>
+
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="display:flex; align-items:center; gap: 8px;"><span class="material-icons text-primary">search</span> El Buscador Universal</h4>
+                <p>Pulsa la lupa (o <code>Cmd/Ctrl + K</code> en PC) y escribe lo que sea: "Mercadona", "25,50", "Nómina". Busco en todas las cuentas, todos los años y todos los rincones de la app en milisegundos.</p>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="display:flex; align-items:center; gap: 8px;"><span class="material-icons text-warning">grid_on</span> Importación CSV</h4>
+                <p>¿Vienes de Excel? ¿Del banco? No piques datos a mano como un cavernícola. Ve a <strong>Ajustes > Importar CSV</strong>. Solo necesito 5 columnas:</p>
+                <code style="display:block; background:#222; color:#eee; padding:10px; border-radius:6px; font-size:0.85em; margin-top:5px;">FECHA ; CUENTA ; CONCEPTO ; IMPORTE ; DESCRIPCIÓN</code>
+                <p style="font-size: 0.9em; margin-top: 5px;">Si el concepto o la cuenta no existen, ¡los creo yo sola! Magia pura.</p>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="display:flex; align-items:center; gap: 8px;"><span class="material-icons text-danger">calculate</span> Calculadora Integrada</h4>
+                <p>¿Añadiendo un gasto? No salgas de la app. Toca el campo de "Importe" y aparecerá mi calculadora gigante. Suma tickets, divide la cuenta de la cena... y al darle a OK, se guarda el resultado.</p>
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(0, 179, 77, 0.1), rgba(0,0,0,0)); border-radius: 16px; border: 1px solid var(--c-outline);">
+                <p style="font-size: 1.2rem; font-weight: 700; color: var(--c-on-surface); margin-bottom: 0.5rem;">¿Listo para dominar tus finanzas?</p>
+                <p style="color: var(--c-on-surface-secondary);">aiDANaI está lista. El piloto eres tú.</p>
+                <button class="btn btn--primary" data-action="close-modal" style="margin-top: 1rem;">¡A Volar! 🚀</button>
+            </div>
+        `;
+    }
+
+    showModal('help-modal');
+};
     const titleEl = select('help-modal-title');
     const bodyEl = select('help-modal-body');
 
