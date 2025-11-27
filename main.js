@@ -617,6 +617,34 @@ const handleCalculatorInput = (key) => {
 };
 
 const calculate = () => {
+    // Convertimos todo a enteros (multiplicando por 100) para operar con seguridad
+    // Nota: Asumimos que calculatorState.operand1 y displayValue vienen como strings con coma
+    const parseToInt = (str) => Math.round(parseFloat(str.toString().replace(',', '.')) * 100);
+    
+    const val1 = parseToInt(calculatorState.operand1);
+    const val2 = parseToInt(calculatorState.displayValue);
+    
+    if (isNaN(val1) || isNaN(val2) || !calculatorState.operator) return;
+
+    let resultInCents = 0;
+    switch (calculatorState.operator) {
+        case 'add': resultInCents = val1 + val2; break;
+        case 'subtract': resultInCents = val1 - val2; break;
+        case 'multiply': resultInCents = (val1 * val2) / 100; break; // Ajuste por multiplicación
+        case 'divide':
+            if (val2 === 0) { showToast("No dividirás por cero.", "danger"); return; }
+            resultInCents = (val1 * 100) / val2; // Ajuste por división
+            break;
+    }
+
+    // Devolvemos a formato visual
+    const result = resultInCents / 100;
+    // Usamos Intl para formatear correctamente según locale
+    calculatorState.displayValue = result.toLocaleString('es-ES', { 
+        minimumFractionDigits: 0, 
+        maximumFractionDigits: 2 
+    });
+	const parseToInt = (str) => Math.round(parseFloat(str.toString().replace(',', '.')) * 100);
     const val1 = calculatorState.operand1;
     const val2 = parseFloat(calculatorState.displayValue.replace(',', '.'));
     if (isNaN(val1) || isNaN(val2) || !calculatorState.operator) return;
@@ -1131,7 +1159,7 @@ const setupFormNavigation = () => {
             getTrigger('movimiento-concepto')?.focus();
         }
     });
-
+	const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     // 2. AL CAMBIAR CONCEPTO (Lógica de autocompletado del detalle)
     // Usamos 'change' en el select real, que nuestra función createCustomSelect ya dispara.
     conceptoSelect.addEventListener('change', () => {
@@ -1150,6 +1178,15 @@ const setupFormNavigation = () => {
             descripcionInput.focus();
             descripcionInput.select(); // Seleccionamos texto para facilitar sobrescritura si se desea cambiar
         }, 100);
+		if (!isTouch) {
+        setTimeout(() => {
+            descripcionInput.focus();
+            descripcionInput.select();
+        }, 100);
+    } else {
+        // En móvil, al menos aseguramos que el campo sea visible
+        descripcionInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
     });
 
     // 3. DETALLE [ENTER] -> Abrir CUENTA
@@ -3413,6 +3450,9 @@ const renderDiarioPage = async () => {
 
         viewContainer.innerHTML = `
             <div id="diario-filter-active-indicator" class="hidden">
+			<button data-action="clear-diario-filters" class="icon-btn" style="width: 24px; height: 24px;">
+        <span class="material-icons" style="font-size: 16px;">close</span>
+    </button>
                 <p>Mostrando resultados filtrados.</p>
                 <div>
                     <button data-action="export-filtered-csv" class="btn btn--secondary" style="padding: 4px 10px; font-size: 0.75rem;"><span class="material-icons" style="font-size: 14px;">download</span>Exportar</button>
@@ -6244,12 +6284,16 @@ const hideModal = (id) => {
 
         const updateCalculatorDisplay = () => {
     const display = select('calculator-display');
-    if (display) {
-        // Esta función ahora es muy "tonta". Simplemente muestra lo que hay en
-        // calculatorState.displayValue, sin intentar formatearlo o cambiarlo.
-        // ¡El camarero obediente!
-        display.textContent = calculatorState.displayValue;
-    }
+    if (!display) return;
+
+    const value = calculatorState.displayValue;
+    display.textContent = value;
+
+    // MEJORA: Escala dinámica de fuente para evitar desbordamientos
+    const length = value.length;
+    if (length > 9) display.style.fontSize = '2rem';
+    else if (length > 7) display.style.fontSize = '2.5rem';
+    else display.style.fontSize = '3rem';
 };
         const showGenericModal=(title,html)=>{const titleEl = select('generic-modal-title'); if (titleEl) titleEl.textContent=title; const bodyEl = select('generic-modal-body'); if(bodyEl) bodyEl.innerHTML=html;showModal('generic-modal');};
 	const handleShowIrrBreakdown = async (accountId) => {

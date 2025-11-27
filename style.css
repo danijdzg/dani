@@ -1007,16 +1007,15 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     margin-bottom: var(--sp-2);
 }
 .movimiento-month-header {
-    background-color: var(--c-surface);
-    padding: var(--sp-3) var(--sp-4);
-    margin-top: var(--sp-4);
-    border-radius: var(--border-radius-lg);
-    border: 1px solid var(--c-outline);
-    box-shadow: var(--shadow-sm);
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+   position: sticky;
+    top: 0;
+    z-index: 5; /* Por encima de los items, por debajo de modales */
+    margin-top: 0; /* Eliminar margen superior para que pegue bien */
+    border-radius: 0; /* Recto cuando pega */
+    border-left: none;
+    border-right: none;
+    /* Sombra suave para dar profundidad al flotar */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
 }
 
 .movimiento-month-header__title {
@@ -3287,6 +3286,13 @@ body[data-theme="default"] .cartilla-container {
 /* Añadir interactividad a las tarjetas */
 .transaction-card:active, 
 .settings-item:active,
+.kpi-item[data-action]:active,
+.search-result-item:active,
+.calendar-day:not(.empty):active {
+    transform: scale(0.97);
+    transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--c-surface-variant) !important; /* Feedback de color instantáneo */
+}
 .modal__list-item:active {
     background-color: var(--c-surface-variant);
     transform: scale(0.98);
@@ -3322,7 +3328,10 @@ body[data-theme="default"] .cartilla-container {
 }
 /* Modificación para que el cuerpo del modal tenga scroll interno y el footer sea fijo */
 #movimiento-modal .modal {
-    max-height: 90vh; /* Altura máxima */
+    /* En lugar de max-height: 90vh, usa dynamic viewport height si está soportado */
+    max-height: 90dvh; 
+    /* Evita que el teclado deforme el layout flex */
+    min-height: 50%;
     display: flex;
     flex-direction: column;
     overflow: hidden; /* Evita scroll en el contenedor principal */
@@ -3367,12 +3376,19 @@ body[data-theme="default"] .cartilla-container {
     cursor: pointer; /* Indica que es interactivo */
     -webkit-text-fill-color: var(--c-on-surface);
 }
-/* Reemplaza o ajusta tus z-index actuales con esta escala lógica */
+/* JERARQUÍA VISUAL ESTRICTA */
+/* Contenido base */
+.app-layout { z-index: 1; }
 .bottom-nav { z-index: 100; }
+.top-bar { z-index: 100; }
+
+/* Capas superpuestas */
 .fab-container, #bottom-nav-add-btn { z-index: 110; }
-.modal-overlay { z-index: 1000; } /* Modales estándar */
-.popover-menu { z-index: 1100; } /* Menú de 3 puntos */
-#calculator-overlay { z-index: 2000; } /* Calculadora siempre encima de modales */
-.save-animation-bubble { z-index: 2100; } /* Animación de monedas/guardado */
-.toast-container { z-index: 3000; } /* Notificaciones urgentes siempre visibles */
-#start-overlay, #video-intro-overlay { z-index: 9999; } /* Intro */
+.modal-overlay { z-index: 1000; } /* Modales normales */
+.popover-menu { z-index: 1100; } /* Menú contextual */
+
+/* Elementos críticos de sistema */
+#calculator-overlay { z-index: 2000; } /* Calculadora sobre modales */
+.save-animation-bubble { z-index: 2100; } /* Animación moneda */
+.toast-container { z-index: 3000; } /* Notificaciones SIEMPRE encima de todo */
+#start-overlay, #video-intro-overlay { z-index: 9999; } /* Pantallas de carga */
