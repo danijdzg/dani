@@ -6964,6 +6964,7 @@ const handleSaveValoracion = async (form, btn) => {
 // ======================================================================================
 // === FIN: GUARDADO DE VALORACIÓN - VERSIÓN FINAL                                      ===
 // ======================================================================================
+
 const showHelpModal = () => {
     const titleEl = select('help-modal-title');
     const bodyEl = select('help-modal-body');
@@ -7103,100 +7104,6 @@ const showHelpModal = () => {
                 <p style="color: var(--c-on-surface-secondary);">aiDANaI está lista. El piloto eres tú.</p>
                 <button class="btn btn--primary" data-action="close-modal" style="margin-top: 1rem;">¡A Volar! 🚀</button>
             </div>
-        `;
-    }
-
-    showModal('help-modal');
-};
-    const titleEl = select('help-modal-title');
-    const bodyEl = select('help-modal-body');
-
-    if (titleEl) {
-        titleEl.innerHTML = '<span class="material-icons" style="color: var(--c-primary);">support_agent</span> Guía del Copiloto Financiero';
-    }
-
-    if (bodyEl) {
-        bodyEl.innerHTML = `
-            <div style="text-align: center; margin-bottom: 2rem;">
-                <img src="aiDANaI.webp" alt="Logo de aiDANaI" style="width: 120px; height: auto; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
-                <h2 style="font-size: 1.8rem; margin-top: 1rem; color: var(--c-primary);">¡Hola! Soy aiDANaI</h2>
-                <p style="font-style: italic; color: var(--c-on-surface-secondary);">Tu copiloto financiero. Mi misión es darte la claridad que necesitas para que tus ideas se hagan realidad. ¡Vamos a despegar!</p>
-            </div>
-
-            <h3><span class="material-icons">explore</span>El Gran Tour: Un Paseo por Tu Imperio</h3>
-            <p>Cada pestaña de la aplicación es un departamento de tu imperio, diseñado para responder a una pregunta clave sobre tu dinero. ¡Empecemos el recorrido!</p>
-
-            <details class="accordion" style="margin-bottom: 1rem;" open>
-                <summary style="font-size: 1.2rem;"><span class="material-icons" style="margin-right:8px; color: var(--c-primary);">dashboard</span><strong>1. Panel: ¿Cómo voy ahora?</strong></summary>
-                <div class="accordion__content" style="padding-top: 1rem;">
-                    <p>Esta es tu <strong>Torre de Control</strong>. De un solo vistazo, tienes el pulso de tu situación financiera. Puedes personalizarla con "Widgets" (tus asesores personales) desde el botón <span class="material-icons" style="font-size:1em; vertical-align:bottom;">dashboard_customize</span> en la barra superior de esta misma pantalla.</p>
-                    <p><strong>Superpoder Secreto:</strong> ¡Casi todo es interactivo! ¿Ves que la barra de "Comida" en el gráfico de conceptos es la más alta? <strong>¡Tócala!</strong> Te mostraré la lista exacta de esos gastos. Lo mismo ocurre con los KPIs (Ingresos, Gastos, etc).</p>
-                </div>
-            </details>
-
-            <details class="accordion" style="margin-bottom: 1rem;">
-                <summary style="font-size: 1.2rem;"><span class="material-icons" style="margin-right:8px; color: var(--c-primary);">receipt_long</span><strong>2. Diario: ¿Qué ha pasado?</strong></summary>
-                <div class="accordion__content" style="padding-top: 1rem;">
-                    <p>Este es tu <strong>Libro de la Verdad</strong>, el historial completo de cada céntimo. Usa el icono de calendario <span class="material-icons" style="font-size:1em; vertical-align:bottom;">calendar_month</span> para una vista visual de tus días de gastos e ingresos, ¡perfecto para detectar patrones!</p>
-                    <p><strong>Superpoder Secreto:</strong> ¡El Gesto Mágico! En tu móvil, desliza cualquier movimiento:</p>
-                    <ul>
-                        <li>➡️ <strong>Hacia la DERECHA para DUPLICARLO.</strong></li>
-                        <li>⬅️ <strong>Hacia la IZQUIERDA para BORRARLO.</strong></li>
-                    </ul>
-                    <p>Y si haces una <strong>pulsación larga</strong>, aparecerá un menú de acciones rápidas. ¡Pruébalo!</p>
-                </div>
-            </details>
-
-            <details class="accordion" style="margin-bottom: 1rem;">
-                <summary style="font-size: 1.2rem;"><span class="material-icons" style="margin-right:8px; color: var(--c-primary);">account_balance</span><strong>3. Patrimonio: ¿Cuánto tengo?</strong></summary>
-                <div class="accordion__content" style="padding-top: 1rem;">
-                    <p>La foto de tu riqueza, tu <strong>Sala del Tesoro</strong>. Aquí analizas el valor total de tu imperio, filtras por tipo de activo y estudias a fondo tu portafolio de inversión con métricas profesionales como el P&L (Ganancias/Pérdidas) y la TIR (Tasa Interna de Retorno, o rentabilidad real anualizada).</p>
-                    <p><strong>Superpoder Secreto:</strong> Haz una <strong>pulsación larga</strong> sobre un activo de inversión y te revelaré un gráfico secreto con la evolución histórica de su rentabilidad (TIR).</p>
-                </div>
-            </details>
-
-            <details class="accordion" style="margin-bottom: 1rem;">
-                <summary style="font-size: 1.2rem;"><span class="material-icons" style="margin-right:8px; color: var(--c-primary);">edit_calendar</span><strong>4. Planificar: ¿A dónde voy?</strong></summary>
-                <div class="accordion__content" style="padding-top: 1rem;">
-                    <p>Tu <strong>Sala de Mapas</strong>. Aquí le dices a tu dinero qué hacer en el futuro. Automatiza tus ingresos y gastos fijos con los <strong>Movimientos Recurrentes</strong> y define tus límites y metas anuales con los <strong>Presupuestos Anuales</strong> para saber si vas por el buen camino.</p>
-                </div>
-            </details>
-
-            <h3><span class="material-icons">stars</span>Funciones Estrella: Tus Superpoderes Secretos</h3>
-
-            <details class="accordion" style="margin-bottom: 1rem;">
-                <summary style="font-size: 1.2rem;">🚀 <strong>Contabilidad Dual (A/B): Tu Arma Secreta</strong></summary>
-                <div class="accordion__content" style="padding-top: 1rem;">
-                    <p>El botón <strong>[A] / [B]</strong> en la barra superior es pura magia. Te permite llevar dos contabilidades <strong>totalmente separadas</strong> dentro de la misma app. ¡Dos mundos financieros en uno!</p>
-                    <ul>
-                        <li><strong>Contabilidad A:</strong> Úsala para tu vida personal, el día a día.</li>
-                        <li><strong>Contabilidad B:</strong> Perfecta para tu negocio, un proyecto de reforma, la economía de un viaje con amigos... ¡Las posibilidades son infinitas!</li>
-                    </ul>
-                    <p>Puedes mover cuentas de una contabilidad a otra desde <strong>Ajustes > Gestionar Cuentas</strong>.</p>
-                </div>
-            </details>
-
-            <details class="accordion" style="margin-bottom: 1rem;">
-                <summary style="font-size: 1.2rem;">🔍 <strong>Búsqueda Global (Atajo: Ctrl/Cmd + K)</strong></summary>
-                <div class="accordion__content" style="padding-top: 1rem;"><p>Pulsa el icono <span class="material-icons" style="font-size:1em; vertical-align:bottom;">search</span> en la barra superior y busca lo que sea: "pizza", "nómina", "Amazon"... Encuentra cualquier movimiento, cuenta o concepto en segundos, sin importar en qué pantalla estés.</p></div>
-            </details>
-
-            <details class="accordion" style="margin-bottom: 1rem;">
-                <summary style="font-size: 1.2rem;">🔄 <strong>Importación Mágica desde CSV</strong></summary>
-                <div class="accordion__content" style="padding-top: 1rem;">
-                    <p>Ve a <strong>Ajustes > Importar desde CSV</strong>. Con un archivo de 5 columnas (<code>FECHA;CUENTA;CONCEPTO;IMPORTE;DESCRIPCIÓN</code>), puedo importar todo tu historial de movimientos. Lo mejor es que si encuentra una cuenta o un concepto que no existe, ¡lo crearé automáticamente por ti!</p>
-                    <p>También he sido entrenado para emparejar inteligentemente los traspasos entre cuentas.</p>
-                </div>
-            </details>
-            
-            <details class="accordion" style="margin-bottom: 1rem;">
-                <summary style="font-size: 1.2rem;"><span class="material-icons" style="margin-right:8px;">psychology</span> <strong>Inteligencia Predictiva</strong></summary>
-                <div class="accordion__content" style="padding-top: 1rem;">
-                    <p>Conforme vas usando la app, aprendo de tus hábitos. Cuando empieces a escribir una descripción en el formulario de un nuevo movimiento (ej. "café con..."), te sugeriré automáticamente el concepto y la cuenta que sueles usar para ese tipo de gasto. Un toque y ¡listo!</p>
-                </div>
-            </details>
-
-            <p style="text-align: center; margin-top: 2rem; font-size: 1.1rem; font-style: italic; color: var(--c-on-surface-secondary);">¡Explora, registra y toma el control definitivo! <br><strong>Estás al mando.</strong></p>
         `;
     }
 
