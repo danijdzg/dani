@@ -8,7 +8,6 @@ const URLS_TO_CACHE = [
   'style.css',
   'main.js',
   'manifest.json',
-  'aiDANaI.webp',
   'icons/android-chrome-192x192.png',
   'icons/android-chrome-512x512.png'
 ];

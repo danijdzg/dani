@@ -7003,7 +7003,9 @@ const showHelpModal = () => {
     if (bodyEl) {
         bodyEl.innerHTML = `
             <div style="text-align: center; margin-bottom: 2rem; animation: pop-in 0.5s ease-out;">
-                <img src="aiDANaI.webp" alt="Logo" style="width: 100px; height: 100px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-bottom: 1rem;">
+                <div style="width: 100px; height: 100px; border-radius: 24px; background: var(--c-surface-variant); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+					<span class="material-icons" style="font-size: 50px; color: var(--c-primary);">smart_toy</span>
+				</div>
                 <h2 style="font-size: 1.8rem; color: var(--c-primary); margin-bottom: 0.5rem;">¡Hola! Soy aiDANaI 🤖</h2>
                 <p style="font-size: 1rem; color: var(--c-on-surface-secondary); max-width: 80%; margin: 0 auto; line-height: 1.5;">
                     Tu copiloto financiero de bolsillo. He sido programada para convertir el caos de tus cuentas en una sinfonía de orden y riqueza. ¡Abróchate el cinturón!
