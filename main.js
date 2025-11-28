@@ -7430,25 +7430,6 @@ const calculateFinancialIndependence = (patrimonioNeto, gastoMensualPromedio) =>
     return { patrimonioNeto, gastoAnualEstimado, objetivoFI, progresoFI };
 };
 
-/**
- * Calcula los datos de progreso hacia la Independencia Financiera.
- * @param {number} patrimonioNeto - El patrimonio neto total del usuario.
- * @param {number} gastoMensualPromedio - El gasto mensual promedio.
- * @returns {object} Un objeto con los resultados del cálculo.
- */
-const calculateFinancialIndependence = (patrimonioNeto, gastoMensualPromedio) => {
-    const gastoAnualEstimado = gastoMensualPromedio * 12;
-    const objetivoFI = gastoAnualEstimado * 30;
-    
-    let progresoFI = 0;
-    if (objetivoFI > 0 && patrimonioNeto > 0) {
-        progresoFI = (patrimonioNeto / objetivoFI) * 100;
-    }
-
-    return { patrimonioNeto, gastoAnualEstimado, objetivoFI, progresoFI };
-};
-
-// --- ▲▲▲ FIN DEL CÓDIGO A PEGAR ▲▲▲ ---
 
  // REEMPLAZA LA FUNCIÓN ANTIGUA CON ESTA
 const handleToggleTheme = () => {
