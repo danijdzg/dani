@@ -712,8 +712,26 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 background-color: rgba(28, 42, 58, 0.75); /* Un poco más de opacidad */
 border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */
  border-bottom: 1px solid var(--c-outline); z-index: 200; height: 44px; position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; transition: background-color 0.3s ease-in-out; }
-.top-bar__title { font-size: var(--fs-lg); font-weight: 800; padding-left: var(--sp-2); text-align: center; }
-#page-title-display { font-size: var(--fs-base); font-weight: 700; margin-left: var(--sp-3); color: inherit; white-space: nowrap; }
+.top-bar__title { 
+    flex: 1; 
+    min-width: 0; /* CRÍTICO: Permite que el flex-item se encoja por debajo de su contenido */
+    padding: 0 var(--sp-2);
+    text-align: center;
+    display: flex;
+    justify-content: center;
+}
+#page-title-display { 
+    font-weight: 800; 
+    color: inherit; 
+    text-decoration: none;
+    /* Ajuste fluido de fuente: Mínimo 12px, Preferido dinámico, Máximo 1.1rem */
+    font-size: clamp(0.75rem, 4vw, 1.125rem); 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
+    display: block;
+    max-width: 100%;
+}
 .top-bar__actions { display: flex; align-items: center; gap: var(--sp-1); }
 .top-bar__left-button { min-width: 85px; display: flex; align-items: center; }
 .top-bar__left-group { display: flex; align-items: center; gap: var(--sp-3); }
@@ -1275,17 +1293,14 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 @media (max-width: 380px) {
     /* 1. Hacemos que el contenedor del título sea flexible y pueda encogerse */
     .top-bar__left-button {
-        flex-shrink: 1; /* Permite que este elemento se encoja si no hay espacio */
-        min-width: 0;   /* Un truco de flexbox para permitir el encogimiento real */
-        flex-grow: 1;   /* Permite que ocupe el espacio disponible */
+        min-width: auto;
+        margin-right: 4px;
     }
-
-    /* 2. Aplicamos la magia del truncado al título */
-    #page-title-display {
-        display: none; /* ¡Y con esto desaparece! */
+	.top-bar__title {
+        text-align: left; /* En pantallas muy chicas queda mejor alineado a la izquierda */
+        padding-left: 0;
     }
-    
-    /* 3. Optimizamos el espaciado de los iconos */
+    /* 2. Optimizamos el espaciado de los iconos */
     .top-bar__left-group {
         gap: var(--sp-1); /* Reducimos el espacio en el grupo izquierdo */
     }
@@ -1293,7 +1308,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
         gap: 0; /* Eliminamos el espacio entre los iconos de la derecha */
     }
     
-    /* 4. Ajustamos el tamaño de los iconos para que sean un poco más compactos */
+    /* 3. Ajustamos el tamaño de los iconos para que sean un poco más compactos */
     .top-bar .top-bar__actions .icon-btn {
         width: 38px; /* Ligeramente más grande para un toque más fácil */
         height: 38px;

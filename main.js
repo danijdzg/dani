@@ -51,38 +51,48 @@ const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
     `;
 };
 
-const handleGenerateInformeCuenta = async (form, btn) => {
-    setButtonLoading(btn, true, 'Imprimiendo...');
+const handleGenerateInformeCuenta = async (form, btn = null) => {
+    // Solo activamos la animación de carga si existe un botón físico
+    if (btn) setButtonLoading(btn, true, 'Imprimiendo...');
+    
     const cuentaId = select('informe-cuenta-select').value;
     const resultadoContainer = select('informe-resultado-container');
 
     if (!cuentaId) {
-        showToast("Selecciona una cuenta.", "warning");
-        setButtonLoading(btn, false);
+        // Si el usuario selecciona la opción vacía "Seleccionar...", limpiamos
+        resultadoContainer.innerHTML = '';
+        if (btn) setButtonLoading(btn, false);
         return;
     }
 
     const cuenta = db.cuentas.find(c => c.id === cuentaId);
-    resultadoContainer.innerHTML = `<div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>`;
+    
+    // Feedback visual inmediato en el contenedor de resultados
+    resultadoContainer.innerHTML = `<div style="text-align:center; padding: var(--sp-5);"><span class="spinner" style="color:var(--c-primary); width: 24px; height:24px;"></span><p style="font-size:var(--fs-xs); margin-top:8px; color:var(--c-on-surface-secondary);">Analizando movimientos...</p></div>`;
 
     try {
-        // 1. Obtener movimientos
+        // 1. Obtener todos los movimientos
         const todosLosMovimientos = await fetchAllMovementsForHistory();
+        
+        // 2. Filtrar movimientos que afecten a esta cuenta
         let movimientosDeLaCuenta = todosLosMovimientos.filter(m =>
             (m.cuentaId === cuentaId) || (m.cuentaOrigenId === cuentaId) || (m.cuentaDestinoId === cuentaId)
         );
 
         if (movimientosDeLaCuenta.length === 0) {
-             resultadoContainer.innerHTML = `<div class="empty-state"><p>Sin movimientos registrados en la libreta.</p></div>`;
-             setButtonLoading(btn, false);
+             resultadoContainer.innerHTML = `<div class="empty-state" style="background:transparent; border:none; padding:var(--sp-4);"><p>Sin movimientos registrados en la libreta.</p></div>`;
+             if (btn) setButtonLoading(btn, false);
              return;
         }
 
-        // 2. Ordenar cronológicamente (del más antiguo al más nuevo) - TÍPICO DE CARTILLA
+        // 3. Ordenar cronológicamente (antiguo -> nuevo) para calcular saldos
         movimientosDeLaCuenta.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-        // 3. Calcular Saldos Línea a Línea
-        let saldoAcumulado = 0; // Asumimos que el historial es completo. Si hay paginación, esto debería ajustarse.
+        // 4. Calcular Saldos Línea a Línea (Running Balance)
+        let saldoAcumulado = 0;
+        
+        // Si tuviéramos un saldo inicial histórico, lo sumaríamos aquí.
+        // Asumimos saldo 0 al inicio de los tiempos o recalculamos todo.
         
         for (const mov of movimientosDeLaCuenta) {
             let impacto = 0;
@@ -90,22 +100,22 @@ const handleGenerateInformeCuenta = async (form, btn) => {
                 if (mov.cuentaOrigenId === cuentaId) impacto = -mov.cantidad;
                 if (mov.cuentaDestinoId === cuentaId) impacto = mov.cantidad;
             } else {
-                impacto = mov.cantidad;
+                impacto = mov.cantidad; // Ingreso (+) o Gasto (-)
             }
             saldoAcumulado += impacto;
             mov.runningBalance = saldoAcumulado;
         }
 
-        // <--- NUEVO: INVERTIR EL ORDEN PARA MOSTRAR EL MÁS NUEVO ARRIBA --->
+        // 5. Invertir orden para mostrar lo más reciente arriba (Estilo app moderna)
         movimientosDeLaCuenta.reverse(); 
 
-        // 4. Construir HTML Estilo Cartilla
+        // 6. Construir HTML Estilo Cartilla
         let html = `
             <div class="cartilla-container">
                 <div class="cartilla-header-info">
                     <h4>EXTRACTO DE CUENTA</h4>
                     <p><strong>Titular:</strong> ${escapeHTML(cuenta.nombre)}</p>
-                    <p class="cartilla-print-date">Impreso el: ${new Date().toLocaleDateString()}</p>
+                    <p class="cartilla-print-date">Actualizado: ${new Date().toLocaleDateString()}</p>
                 </div>
                 
                 <div class="cartilla-table">
@@ -118,6 +128,7 @@ const handleGenerateInformeCuenta = async (form, btn) => {
                     </div>`;
                 
         for (const mov of movimientosDeLaCuenta) {
+            // Usamos la función auxiliar renderInformeCuentaRow que ya existe en tu código
             html += renderInformeCuentaRow(mov, cuentaId, db.cuentas);
         }
         
@@ -132,12 +143,11 @@ const handleGenerateInformeCuenta = async (form, btn) => {
     } catch (error) {
         console.error(error);
         showToast("Error generando la cartilla.", "danger");
+        resultadoContainer.innerHTML = `<div class="empty-state text-danger"><p>Error al cargar los datos.</p></div>`;
     } finally {
-        setButtonLoading(btn, false);
+        if (btn) setButtonLoading(btn, false);
     }
 };
-// ▲▲▲ FIN DEL BLOQUE A REEMPLAZAR ▲▲▲
-
 
 
 const handleExportFilteredCsv = (btn) => {
@@ -5141,14 +5151,13 @@ const renderPlanificacionPage = () => {
     // --> LLAMADA AÑADIDA: Rellenamos el widget del informe personalizado que acabamos de añadir
     renderInformeWidgetContent();
 };
-// ▼▼▼ REEMPLAZA POR COMPLETO TU FUNCIÓN 'renderPatrimonioPage' CON ESTA VERSIÓN ▼▼▼
-
 const renderPatrimonioPage = () => {
     const container = select(PAGE_IDS.PATRIMONIO);
     if (!container) return;
 
+    // Generamos la estructura HTML.
+    // CAMBIO IMPORTANTE: En la sección del Extracto (Sección 3), hemos eliminado el botón.
     container.innerHTML = `
-        <!-- Sección 1: Visión General -->
         <details class="accordion" style="margin-bottom: var(--sp-4);">
             <summary>
                 <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
@@ -5162,7 +5171,6 @@ const renderPatrimonioPage = () => {
             </div>
         </details>
 
-        <!-- Sección 2: Portafolio (Sin el atributo 'open' para que salga cerrado y con ID para detectarlo) -->
         <details id="acordeon-portafolio" class="accordion" style="margin-bottom: var(--sp-4);">
             <summary>
                 <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
@@ -5181,7 +5189,6 @@ const renderPatrimonioPage = () => {
             </div>
         </details>
         
-        <!-- Sección 3: Extracto -->
         <div class="card card--no-bg accordion-wrapper">
             <details id="acordeon-extracto_cuenta" class="accordion informe-acordeon">
                 <summary>
@@ -5193,52 +5200,69 @@ const renderPatrimonioPage = () => {
                 </summary>
                 <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
                     <div id="informe-content-extracto_cuenta">
-                         <form id="informe-cuenta-form" novalidate>
-                            <div class="form-group">
-                                <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta para ver su historial completo:</label>
-                                <select id="informe-cuenta-select" class="form-select" required></select>
+                         <div id="informe-cuenta-wrapper">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta para ver sus movimientos:</label>
+                                <select id="informe-cuenta-select" class="form-select"></select>
                             </div>
-                            <button type="submit" class="btn btn--primary btn--full">Generar Extracto</button>
-                        </form>
-                        <div id="informe-resultado-container" style="margin-top: var(--sp-4);"></div>
+                        </div>
+                        <div id="informe-resultado-container" style="margin-top: var(--sp-4);">
+                            <div class="empty-state" style="background:transparent; padding:var(--sp-2); border:none;">
+                                <p style="font-size:0.85rem;">Selecciona una cuenta arriba para ver el extracto.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </details>
         </div>
     `;
 
+    // Ejecutamos la lógica de inicialización en el siguiente ciclo del event loop
     setTimeout(async () => {
-        // 1. Carga INMEDIATA de la Visión General (porque está abierta)
+        // 1. Carga INMEDIATA de la Visión General (porque está abierta por defecto en el HTML, o no)
+        // Nota: He quitado el 'open' de la visión general en el HTML de arriba para que sea más limpio, 
+        // pero si quieres que se abra sola, añade 'open' al <details>.
         await renderPatrimonioOverviewWidget('patrimonio-overview-container');
         
-        // Rellenar selector del extracto (siempre necesario por si se abre rápido)
-        const populate = (id, data, nameKey, valKey='id') => {
-            const el = select(id); if (!el) return;
-            let opts = '<option value="">Seleccionar cuenta...</option>';
-            [...data].sort((a,b) => (a[nameKey]||"").localeCompare(b[nameKey]||"")).forEach(i => opts += `<option value="${i[valKey]}">${i[nameKey]}</option>`);
-            el.innerHTML = opts;
-        };
-        populate('informe-cuenta-select', getVisibleAccounts(), 'nombre', 'id');
+        // 2. Lógica REACTIVA del Extracto de Cuenta
+        const selectCuenta = select('informe-cuenta-select');
+        if (selectCuenta) {
+            // Rellenar selector del extracto con las cuentas visibles
+            const populate = (el, data) => {
+                let opts = '<option value="">Seleccionar cuenta...</option>';
+                [...data].sort((a,b) => a.nombre.localeCompare(b.nombre))
+                         .forEach(i => opts += `<option value="${i.id}">${i.nombre}</option>`);
+                el.innerHTML = opts;
+            };
+            populate(selectCuenta, getVisibleAccounts());
 
-        // 2. Lógica LAZY LOADING para el Portafolio
-        // Solo cargamos el gráfico y los cálculos pesados cuando el usuario abre la pestaña
+            // Convertimos el select en uno bonito (Custom Select)
+            createCustomSelect(selectCuenta);
+
+            // AÑADIMOS EL EVENT LISTENER 'CHANGE'
+            // Esto dispara la generación del informe inmediatamente al elegir una opción.
+            selectCuenta.addEventListener('change', () => {
+                // Pasamos null como segundo argumento porque no hay botón de carga
+                handleGenerateInformeCuenta(null, null);
+            });
+        }
+
+        // 3. Lógica LAZY LOADING para el Portafolio (Se carga solo al abrir)
         const acordeonPortafolio = select('acordeon-portafolio');
         
         if (acordeonPortafolio) {
-            // Función que carga el portafolio
+            // Función interna para cargar los datos pesados
             const loadPortfolioData = async () => {
                 await renderPortfolioEvolutionChart('portfolio-evolution-container');
                 await renderPortfolioMainContent('portfolio-main-content');
             };
 
-            // Escuchamos el evento 'toggle'
-            acordeonPortafolio.addEventListener('toggle', async (e) => {
+            acordeonPortafolio.addEventListener('toggle', async () => {
                 if (acordeonPortafolio.open) {
-                    // Si se abre, cargamos los datos
-                    // (Usamos una bandera en el elemento para no recargar si ya se cargó una vez, opcionalmente)
+                    // Si se abre y no se ha cargado antes, cargamos los datos
                     if (!acordeonPortafolio.dataset.loaded) {
                         await loadPortfolioData();
-                        acordeonPortafolio.dataset.loaded = "true"; // Marcamos como cargado para evitar recargas constantes si lo cierra y abre rápido
+                        acordeonPortafolio.dataset.loaded = "true"; 
                     }
                 }
             });
@@ -5246,7 +5270,6 @@ const renderPatrimonioPage = () => {
         
     }, 50);
 };
- 
 
 const renderEstrategiaPage = () => {
     const container = select(PAGE_IDS.ESTRATEGIA);
