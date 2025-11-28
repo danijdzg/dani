@@ -4492,16 +4492,14 @@ async function renderInformeDetallado(informeId) {
     try {
         const reportRenderers = {
             'extracto_cuenta': () => { 
-                // 1. Estructura HTML (Sin botones, con wrapper correcto)
+                // 1. HTML Limpio (Sin botón)
                 const content = `
                     <div id="informe-cuenta-wrapper">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta para ver su historial:</label>
-                            
                             <div class="input-wrapper">
                                 <select id="informe-cuenta-select" class="form-select"></select>
                             </div>
-                            
                         </div>
                     </div>
                     
@@ -4513,38 +4511,47 @@ async function renderInformeDetallado(informeId) {
                 
                 container.innerHTML = content;
 
-                // 2. Lógica JS
+                // 2. Lógica de activación
                 const selectEl = select('informe-cuenta-select');
                 if (selectEl) {
-                    // --- CORRECCIÓN AQUÍ: Función populate simplificada y sin errores ---
+                    // Función simple para rellenar opciones (sin errores de variables)
                     const populate = (el, data) => {
                         let opts = '<option value="">Seleccionar cuenta...</option>';
-                        // Ordenamos y creamos las opciones usando directamente .id y .nombre
                         [...data].sort((a,b) => a.nombre.localeCompare(b.nombre))
                                  .forEach(cuenta => {
                                      opts += `<option value="${cuenta.id}">${cuenta.nombre}</option>`;
                                  });
                         el.innerHTML = opts;
                     };
-                    
-                    // Rellenamos con las cuentas visibles
                     populate(selectEl, getVisibleAccounts());
 
-                    // 3. Convertir en Desplegable Inteligente (gestiona visualmente la apertura/cierre)
+                    // Inicializamos el selector visual
                     createCustomSelect(selectEl);
 
-                    // 4. Evento Reactivo: Al cambiar, genera el informe automáticamente
+                    // --- SOLUCIÓN AL PROBLEMA DE CIERRE ---
                     selectEl.addEventListener('change', () => {
-                        // Quitamos foco para cerrar teclados en móvil
-                        if (document.activeElement) document.activeElement.blur();
-                        
-                        // Generamos el informe (pasamos null porque no hay botón)
+                        // A. Generar el informe inmediatamente
                         handleGenerateInformeCuenta(null, null);
+
+                        // B. Forzar el cierre del menú y quitar el foco
+                        // Usamos setTimeout para ejecutarnos DESPUÉS de que el componente intente reabrirse
+                        setTimeout(() => {
+                            // 1. Quitar el foco del navegador (cierra teclados en móvil y evita auto-apertura)
+                            if (document.activeElement) document.activeElement.blur();
+                            
+                            // 2. Forzar visualmente el cierre del wrapper personalizado
+                            const wrapper = selectEl.closest('.custom-select-wrapper');
+                            if (wrapper) {
+                                wrapper.classList.remove('is-open');
+                                const trigger = wrapper.querySelector('.custom-select__trigger');
+                                if (trigger) trigger.blur(); // Aseguramos que el disparador también pierda el foco
+                            }
+                        }, 50); // 50ms es suficiente para anular el comportamiento por defecto
                     });
                 }
             },
             
-            // Mapeo del resto de informes
+            // Resto de informes (sin cambios)
             'flujo_caja': () => renderInformeFlujoCaja(container),
             'resumen_ejecutivo': () => renderInformeResumenEjecutivo(container),
             'rendimiento_inversiones': () => renderInformeRendimientoInversiones(container),
