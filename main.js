@@ -4480,28 +4480,31 @@ async function renderInformeDetallado(informeId) {
     const container = select(`informe-content-${informeId}`);
     if (!container) return;
 
-    // Limpiamos gráficos previos si existen para evitar solapamientos
+    // Limpiamos gráficos previos
     if (informeActivoChart) {
         informeActivoChart.destroy();
         informeActivoChart = null;
     }
     
-    // Mostramos un esqueleto de carga inicial
+    // Esqueleto de carga
     container.innerHTML = `<div class="skeleton" style="height: 200px; border-radius: var(--border-radius-lg);"></div>`;
 
     try {
         const reportRenderers = {
             'extracto_cuenta': () => { 
-                // --- CAMBIO 1: HTML sin formulario ni botón ---
+                // --- CAMBIO: Estructura HTML sin botón y con el wrapper necesario ---
                 const content = `
                     <div id="informe-cuenta-wrapper">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta para ver su historial completo:</label>
+                            <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta para ver su historial:</label>
+                            
                             <div class="input-wrapper">
                                 <select id="informe-cuenta-select" class="form-select"></select>
                             </div>
+                            
                         </div>
                     </div>
+                    
                     <div id="informe-resultado-container" style="margin-top: var(--sp-4);">
                         <div class="empty-state" style="background:transparent; padding:var(--sp-2); border:none;">
                             <p style="font-size:0.85rem;">Selecciona una cuenta arriba para ver el extracto.</p>
@@ -4510,30 +4513,33 @@ async function renderInformeDetallado(informeId) {
                 
                 container.innerHTML = content;
 
-                // --- CAMBIO 2: Lógica de poblado y activación automática ---
+                // --- Lógica de activación ---
                 const selectEl = select('informe-cuenta-select');
                 if (selectEl) {
                     // 1. Rellenar opciones
-                    const populate = (el, data, nameKey, valKey='id') => {
+                    const populate = (el, data) => {
                         let opts = '<option value="">Seleccionar cuenta...</option>';
-                        [...data].sort((a,b) => (a[nameKey]||"").localeCompare(b[nameKey]||"")).forEach(i => opts += `<option value="${i[valKey]}">${i[nameKey]}</option>`);
+                        [...data].sort((a,b) => a.nombre.localeCompare(b.nombre))
+                                 .forEach(i => opts += `<option value="${i[valKey='id']}">${i['nombre']}</option>`);
                         el.innerHTML = opts;
                     };
-                    populate(selectEl, getVisibleAccounts(), 'nombre', 'id');
+                    populate(selectEl, getVisibleAccounts());
 
-                    // 2. Inicializar el estilo visual (Custom Select)
-                    // Esto requiere que el select esté dentro de un .input-wrapper (añadido arriba)
+                    // 2. Convertir en Desplegable Inteligente (Esto gestiona el abrir/cerrar)
                     createCustomSelect(selectEl);
 
-                    // 3. Añadir el evento para carga automática
+                    // 3. Evento: Al cambiar, genera el informe
                     selectEl.addEventListener('change', () => {
-                        // Llamamos a la función pasando null porque ya no hay botón
+                        // Quitamos el foco para asegurar que se cierre cualquier teclado en móvil
+                        if (document.activeElement) document.activeElement.blur();
+                        
+                        // Generamos el informe sin necesidad de botón (pasamos null)
                         handleGenerateInformeCuenta(null, null);
                     });
                 }
             },
             
-            // Mapeo del resto de informes (se mantienen igual)
+            // Resto de informes (se mantienen igual)
             'flujo_caja': () => renderInformeFlujoCaja(container),
             'resumen_ejecutivo': () => renderInformeResumenEjecutivo(container),
             'rendimiento_inversiones': () => renderInformeRendimientoInversiones(container),
