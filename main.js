@@ -340,18 +340,17 @@ const THEMES = {
     'sunset-groove': { name: 'Brisa Alpina', icon: 'light_mode' }
 };
 	        
-// CÓDIGO CORRECTO Y ÚNICO QUE DEBE QUEDAR EN TU ARCHIVO
-// PEGA ESTE BLOQUE ÚNICO Y CORRECTO EN SU LUGAR
-	const AVAILABLE_WIDGETS = {
-        'super-centro-operaciones': { title: 'Centro de Operaciones', description: 'Visión completa con filtros, KPIs y análisis de conceptos.', icon: 'query_stats' },
-        'net-worth-trend': { title: 'Evolución del Patrimonio', description: 'Gráfico histórico de la variación de tu patrimonio neto.', icon: 'show_chart' },
-        'emergency-fund': { title: 'Colchón de Emergencia', description: 'Mide tu red de seguridad financiera.', icon: 'shield' },
-        'fi-progress': { title: 'Independencia Financiera', description: 'Sigue tu progreso hacia la libertad financiera.', icon: 'flag' },
-        };
+const AVAILABLE_WIDGETS = {
+    'super-centro-operaciones': { title: 'Centro de Operaciones', description: 'Visión completa y filtros.', icon: 'query_stats' },
+    'net-worth-trend': { title: 'Evolución del Patrimonio', description: 'Gráfico histórico.', icon: 'show_chart' },
+    'financial-health': { title: 'Salud Financiera', description: 'Liquidez y Libertad en un vistazo.', icon: 'health_and_safety' }, // NUEVO
+    'informe-personalizado': { title: 'Informe Personalizado', description: 'Tu gráfico a medida.', icon: 'auto_graph' }
+};
+
 const DEFAULT_DASHBOARD_WIDGETS = [
-    'super-centro-operaciones', // <-- El widget principal y más completo
-    'net-worth-trend',          // Evolución del Patrimonio
-    
+    'super-centro-operaciones', 
+    'financial-health', // AÑADIDO AQUÍ
+    'net-worth-trend'
 ];
 
 // ▼▼▼ REEMPLAZAR TU FUNCIÓN updateAnalisisWidgets CON ESTA VERSIÓN SIMPLIFICADA ▼▼▼
@@ -4894,8 +4893,8 @@ const renderDashboardSuperCentroOperaciones = () => {
                                 <span class="kpi-resaltado-azul">Patrimonio Neto</span>
                             </h4>
                             <strong id="kpi-patrimonio-neto-value" class="kpi-item__value skeleton kpi-resaltado-azul" data-current-value="0">0,00 €</strong>
-                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.2; margin-top: 4px; opacity: 0.8;">
-                                Valor real de tu riqueza (Activos - Deudas)
+                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; opacity: 0.8;">
+                                Valor total de tu riqueza<br>(Activos - Deudas)
                             </div>
                         </div>
 
@@ -4905,16 +4904,16 @@ const renderDashboardSuperCentroOperaciones = () => {
                                  <canvas id="kpi-savings-rate-chart"></canvas>
                                  <div id="kpi-tasa-ahorro-value" class="kpi-item__value skeleton" style="position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%);">0%</div>
                             </div>
-                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.2; margin-top: 4px; opacity: 0.8;">
-                                % de Ingresos que conservas tras gastos
+                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; opacity: 0.8;">
+                                % de tus ingresos que<br>conservas tras gastos
                             </div>
                         </div>
 
                         <div class="kpi-item">
                             <h4 class="kpi-item__label">Resultado Inversión</h4>
                             <strong id="kpi-pnl-inversion-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
-                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.2; margin-top: 4px; opacity: 0.8;">
-                                Ganancia/Pérdida histórica del mercado
+                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; opacity: 0.8;">
+                                Ganancia/Pérdida histórica<br>acumulada del mercado
                             </div>
                         </div>
                     </div>
@@ -4923,7 +4922,7 @@ const renderDashboardSuperCentroOperaciones = () => {
 
                     <div class="report-filters">
                         <div class="form-group" style="margin-bottom: var(--sp-2);">
-                            <select id="filter-periodo" class="form-select report-period-selector">
+                            <select id="filter-periodo" class="form-select report-period-selector" style="font-size: 0.9rem;">
                                 <option value="mes-actual">Este Mes</option>
                                 <option value="año-actual">Este Año</option>
                                 <option value="custom">Personalizado</option>
@@ -4939,17 +4938,17 @@ const renderDashboardSuperCentroOperaciones = () => {
                         <button class="kpi-item" data-action="show-kpi-drilldown" data-type="ingresos">
                             <h4 class="kpi-item__label">Ingresos</h4>
                             <strong id="kpi-ingresos-value" class="kpi-item__value text-positive skeleton" data-current-value="0">+0,00 €</strong> 
-                            <div style="font-size: 0.65rem; margin-top:2px;">Entradas totales</div>
+                            <div style="font-size: 0.65rem; margin-top:4px; opacity: 0.7;">Entradas del periodo</div>
                         </button>
                         <button class="kpi-item" data-action="show-kpi-drilldown" data-type="gastos">
                             <h4 class="kpi-item__label">Gastos</h4>
                             <strong id="kpi-gastos-value" class="kpi-item__value text-negative skeleton" data-current-value="0">0,00 €</strong>
-                            <div style="font-size: 0.65rem; margin-top:2px;">Salidas totales</div>
+                            <div style="font-size: 0.65rem; margin-top:4px; opacity: 0.7;">Salidas del periodo</div>
                         </button>
                         <button class="kpi-item" data-action="show-kpi-drilldown" data-type="saldoNeto">
                             <h4 class="kpi-item__label">Flujo de Caja</h4>
                             <strong id="kpi-saldo-neto-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
-                            <div style="font-size: 0.65rem; margin-top:2px;">Capacidad de ahorro real</div>
+                            <div style="font-size: 0.65rem; margin-top:4px; opacity: 0.7;">Capacidad de ahorro real</div>
                         </button>
                     </div>
                     
@@ -4965,9 +4964,46 @@ const renderDashboardSuperCentroOperaciones = () => {
     </div>`;
 };
 
-// =========================================================================
-// === INICIO: FUNCIÓN FALTANTE PARA EL WIDGET DE INFORME PERSONALIZADO ===
-// =========================================================================
+const renderDashboardFinancialHealth = () => {
+    return `
+    <div class="card" id="financial-health-widget">
+        <h3 class="card__title">
+            <span class="material-icons" style="color: #FFD60A;">health_and_safety</span>
+            <span>Salud Financiera</span>
+        </h3>
+        <div class="card__content skeleton" style="display: flex; flex-direction: column; gap: var(--sp-5);">
+            
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
+                    <span style="font-size: 0.9rem; font-weight: 700;">Liquidez (Runway)</span>
+                    <strong id="health-runway-val" class="text-positive" style="font-size: 1.1rem;">0 Meses</strong>
+                </div>
+                <div class="budget-item__progress" style="height: 10px; background-color: var(--c-surface-variant);">
+                    <progress id="health-runway-progress" max="12" value="0" style="width: 100%; height: 100%; border-radius: 99px;"></progress>
+                </div>
+                <p style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-top: 6px; line-height: 1.4;">
+                    Tiempo que podrías vivir sin ingresos manteniendo tu nivel de vida actual.<br>
+                    <strong>Meta: 6 meses</strong> para seguridad plena.
+                </p>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
+                    <span style="font-size: 0.9rem; font-weight: 700;">Libertad Financiera</span>
+                    <strong id="health-fi-val" class="text-warning" style="font-size: 1.1rem;">0.0%</strong>
+                </div>
+                <div class="budget-item__progress" style="height: 10px; background-color: var(--c-surface-variant);">
+                    <progress id="health-fi-progress" max="100" value="0" style="width: 100%; height: 100%; border-radius: 99px;"></progress>
+                </div>
+                <p style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-top: 6px; line-height: 1.4;">
+                    Progreso hacia vivir de tus rentas (basado en la Regla del 4%).<br>
+                    <strong>Meta: 100%</strong> para dejar de trabajar obligatoriamente.
+                </p>
+            </div>
+
+        </div>
+    </div>`;
+};
 
 /**
  * Renderiza el esqueleto del widget de "Informe Personalizado".
@@ -5108,7 +5144,9 @@ const renderInicioResumenView = () => {
         case 'emergency-fund':
             return `<div data-widget-type="emergency-fund">${renderDashboardEmergencyFund()}</div>`;
         case 'fi-progress':
-            return `<div data-widget-type="fi-progress">${renderDashboardFIProgress()}</div>`;
+			return `<div data-widget-type="fi-progress">${renderDashboardFIProgress()}</div>`;
+		case 'financial-health': 
+			return `<div data-widget-type="financial-health">${renderDashboardFinancialHealth()}</div>`;	
         case 'informe-personalizado':
              return `<div data-widget-type="informe-personalizado">${renderDashboardInformeWidget()}</div>`;
         default:
@@ -6022,7 +6060,28 @@ const updateDashboardData = async () => {
 		
 		if (select('patrimonio-completo-container')) { await renderPatrimonioPage(); }
         if (select('patrimonio-inversiones-container')) { await renderInversionesPage('patrimonio-inversiones-container'); }
-		
+		const healthWidget = select('financial-health-widget');
+    if (healthWidget) {
+        healthWidget.querySelector('.card__content').classList.remove('skeleton');
+        
+        // 1. Liquidez (Colchón)
+        const runVal = select('health-runway-val');
+        const runProg = select('health-runway-progress');
+        const meses = isFinite(efData.mesesCobertura) ? efData.mesesCobertura : 99;
+        
+        if(runVal) {
+            runVal.textContent = isFinite(efData.mesesCobertura) ? `${efData.mesesCobertura.toFixed(1)} Meses` : '∞';
+            // Cambio de color según seguridad
+            runVal.className = meses >= 6 ? 'text-positive' : (meses >= 3 ? 'text-warning' : 'text-danger');
+        }
+        if(runProg) runProg.value = Math.min(meses, 12); // Tope visual de 12 meses
+
+        // 2. Libertad (FI)
+        const fiVal = select('health-fi-val');
+        const fiProg = select('health-fi-progress');
+        if(fiVal) fiVal.textContent = `${fiData.progresoFI.toFixed(2)}%`;
+        if(fiProg) fiProg.value = Math.min(fiData.progresoFI, 100);
+    }
     } finally {
         const widgetContainers = document.querySelectorAll('[data-widget-type]');
         
