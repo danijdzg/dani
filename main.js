@@ -5187,6 +5187,7 @@ const renderPatrimonioPage = () => {
                 </summary>
                 <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
                     <div id="informe-content-extracto_cuenta">
+                         
                          <div id="informe-cuenta-wrapper">
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta:</label>
@@ -5195,11 +5196,13 @@ const renderPatrimonioPage = () => {
                                 </div>
                             </div>
                         </div>
+
                         <div id="informe-resultado-container" style="margin-top: var(--sp-4);">
                             <div class="empty-state" style="background:transparent; padding:var(--sp-2); border:none;">
                                 <p style="font-size:0.85rem;">Selecciona una cuenta arriba para ver el extracto.</p>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </details>
