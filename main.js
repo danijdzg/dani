@@ -5286,11 +5286,11 @@ const renderPatrimonioPage = () => {
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta:</label>
                                 
-                                <div style="display: flex; gap: 8px; align-items: stretch;">
-                                    <div class="input-wrapper" style="flex-grow: 1;">
+                                <div style="display: flex; gap: 8px; align-items: stretch; width: 100%;">
+                                    <div class="input-wrapper" style="flex-grow: 1; min-width: 0;">
                                         <select id="informe-cuenta-select" class="form-select"></select>
                                     </div>
-                                    <button id="btn-extracto-todo" class="btn btn--secondary" style="min-width: 60px; font-weight: 700; padding: 0 16px;" title="Ver todo ordenado por fecha">
+                                    <button id="btn-extracto-todo" class="btn btn--secondary" style="flex-shrink: 0; min-width: auto; padding: 0 16px; font-weight: 700; white-space: nowrap;" title="Ver todo ordenado por fecha">
                                         TODO
                                     </button>
                                 </div>
@@ -5313,13 +5313,25 @@ const renderPatrimonioPage = () => {
         // Carga Visión General
         await renderPatrimonioOverviewWidget('patrimonio-overview-container');
         
-        // --- LÓGICA DEL BOTÓN "TODO" ---
+        // --- LÓGICA DEL BOTÓN "TODO" REFORZADA ---
         const btnTodo = select('btn-extracto-todo');
         if (btnTodo) {
-            btnTodo.addEventListener('click', (e) => {
-                e.preventDefault(); // Evita comportamientos raros en móviles
-                e.target.blur();    // Quita el foco visual
-                handleGenerateGlobalExtract(e.target); // Llama a la función cronológica
+            // Eliminamos listeners previos clonando el nodo (truco de seguridad)
+            const newBtn = btnTodo.cloneNode(true);
+            btnTodo.parentNode.replaceChild(newBtn, btnTodo);
+            
+            newBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation(); // Evitar que cierre el acordeón
+                e.target.blur();
+                
+                // Aseguramos que la función existe antes de llamarla
+                if (typeof handleGenerateGlobalExtract === 'function') {
+                    handleGenerateGlobalExtract(e.target);
+                } else {
+                    console.error("La función handleGenerateGlobalExtract no está definida.");
+                    showToast("Error interno: función no encontrada.", "danger");
+                }
             });
         }
         // ------------------------------
