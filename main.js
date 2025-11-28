@@ -146,30 +146,41 @@ const handleGenerateInformeCuenta = async (form, btn = null) => {
         if (btn) setButtonLoading(btn, false);
     }
 };
-const handleGenerateGlobalExtract = async () => {
+const handleGenerateGlobalExtract = async (btn = null) => {
     const resultadoContainer = select('informe-resultado-container');
     if (!resultadoContainer) return;
 
-    hapticFeedback('medium');
+    // Si viene de un botón, mostramos estado de carga
+    if (btn) setButtonLoading(btn, true, 'Procesando...');
+    else hapticFeedback('medium');
     
-    // Feedback de carga visual
+    // Limpiamos el selector de cuenta individual para evitar confusión
+    const selectCuenta = select('informe-cuenta-select');
+    if (selectCuenta) {
+        selectCuenta.value = "";
+        // Reset visual del custom select
+        const wrapper = selectCuenta.closest('.custom-select-wrapper');
+        const trigger = wrapper?.querySelector('.custom-select__trigger');
+        if(trigger) trigger.innerHTML = `<span style="color: var(--c-on-surface-tertiary); opacity: 0.7;">Seleccionar cuenta...</span>`;
+    }
+
     resultadoContainer.innerHTML = `
         <div style="text-align:center; padding: var(--sp-5);">
             <span class="spinner" style="color:var(--c-primary); width: 24px; height:24px;"></span>
             <p style="font-size:var(--fs-xs); margin-top:8px; color:var(--c-on-surface-secondary);">
-                Consolidando todas las cuentas...
+                Consolidando movimientos por fecha...
             </p>
         </div>`;
 
     try {
-        // 1. Obtener todos los datos
+        // 1. Obtener datos
         const allMovements = await fetchAllMovementsForHistory();
         const saldos = await getSaldos();
         
         // 2. Calcular Patrimonio Neto Actual (Punto de partida)
         let currentGlobalBalance = Object.values(saldos).reduce((sum, s) => sum + s, 0);
         
-        // 3. Filtrar movimientos solo de la contabilidad visible actual
+        // 3. Filtrar movimientos de la contabilidad visible
         const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
         
         let globalMovements = allMovements.filter(m => {
@@ -179,18 +190,18 @@ const handleGenerateGlobalExtract = async () => {
             return visibleAccountIds.has(m.cuentaId);
         });
 
-        // 4. Ordenar: Reciente -> Antiguo
+        // 4. ORDENAR POR FECHA (Reciente -> Antiguo)
+        // Esto es vital para calcular el saldo hacia atrás correctamente
         globalMovements.sort((a, b) => {
             const dateDiff = new Date(b.fecha) - new Date(a.fecha);
             if (dateDiff !== 0) return dateDiff;
             return b.id.localeCompare(a.id);
         });
 
-        // 5. Calcular Saldos Históricos y Ajustar Visualización
+        // 5. Calcular Saldos Históricos (Running Balance Inverso)
         let runningBalance = currentGlobalBalance;
 
         for (const mov of globalMovements) {
-            // Guardamos el saldo resultante en este momento
             mov.runningBalance = runningBalance; 
 
             let impact = 0;
@@ -198,19 +209,19 @@ const handleGenerateGlobalExtract = async () => {
                 const origenVisible = visibleAccountIds.has(mov.cuentaOrigenId);
                 const destinoVisible = visibleAccountIds.has(mov.cuentaDestinoId);
                 
-                // Calculamos el impacto real en el patrimonio
-                if (origenVisible && !destinoVisible) impact = -mov.cantidad; // Sale dinero
-                else if (!origenVisible && destinoVisible) impact = mov.cantidad; // Entra dinero
+                // Calculamos impacto neto en el patrimonio visible
+                if (origenVisible && !destinoVisible) impact = -mov.cantidad; // Sale
+                else if (!origenVisible && destinoVisible) impact = mov.cantidad; // Entra
                 
-                // TRUCO: Modificamos la cantidad del objeto temporalmente para que
-                // el renderizador sepa si pintarlo en rojo (Cargo) o verde (Abono)
+                // Ajuste visual: Sobrescribimos cantidad para que se pinte en la columna correcta (Rojo/Verde)
+                // aunque sea un traspaso interno (que será 0), para mantener la coherencia visual.
                 mov.cantidad = impact; 
                 
             } else {
                 impact = mov.cantidad;
             }
 
-            // "Deshacemos" el movimiento para calcular el saldo anterior
+            // Restamos el impacto para saber el saldo anterior
             runningBalance -= impact;
         }
 
@@ -220,7 +231,7 @@ const handleGenerateGlobalExtract = async () => {
                 <div class="cartilla-header-info">
                     <h4 style="color: var(--c-primary);">LIBRO MAYOR GLOBAL</h4>
                     <p><strong>Contabilidad:</strong> ${isOffBalanceMode ? 'B (Oculta)' : 'A (Principal)'}</p>
-                    <p class="cartilla-print-date">Consolidado a: ${new Date().toLocaleDateString()}</p>
+                    <p class="cartilla-print-date">Ordenado por fecha · ${new Date().toLocaleDateString()}</p>
                 </div>
                 
                 <div class="cartilla-table">
@@ -229,26 +240,28 @@ const handleGenerateGlobalExtract = async () => {
                         <div class="cartilla-cell">CUENTA / CONCEPTO</div>
                         <div class="cartilla-cell text-right">CARGOS</div>
                         <div class="cartilla-cell text-right">ABONOS</div>
-                        <div class="cartilla-cell text-right">PATRIMONIO</div>
+                        <div class="cartilla-cell text-right">GLOBAL</div>
                     </div>`;
                 
         for (const mov of globalMovements) {
-            // Pasamos null como cuentaId para activar el modo "Global"
+            // Pasamos null como cuentaId para activar el modo Global
             html += renderInformeCuentaRow(mov, null, db.cuentas);
         }
         
         html += `</div>
             <div class="cartilla-footer">
-                ** FIN DEL INFORME CONSOLIDADO **
+                ** FIN DEL INFORME **
             </div>
         </div>`;
 
         resultadoContainer.innerHTML = html;
-        showToast("Libro Mayor Global generado.", "success");
+        showToast("Extracto Global generado.", "success");
 
     } catch (error) {
         console.error(error);
-        resultadoContainer.innerHTML = `<div class="empty-state text-danger"><p>Error al calcular global.</p></div>`;
+        resultadoContainer.innerHTML = `<div class="empty-state text-danger"><p>Error al calcular.</p></div>`;
+    } finally {
+        if (btn) setButtonLoading(btn, false);
     }
 };
 
@@ -5260,7 +5273,7 @@ const renderPatrimonioPage = () => {
         
         <div class="card card--no-bg accordion-wrapper">
             <details id="acordeon-extracto_cuenta" class="accordion informe-acordeon">
-                <summary id="summary-extracto-trigger" style="user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;"> 
+                <summary id="summary-extracto-trigger" style="user-select: none; -webkit-user-select: none;"> 
                     <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
                         <span class="material-icons">wysiwyg</span>
                         <span>Extracto de Cuenta</span>
@@ -5272,16 +5285,21 @@ const renderPatrimonioPage = () => {
                          <div id="informe-cuenta-wrapper">
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta:</label>
-                                <div class="input-wrapper">
-                                    <select id="informe-cuenta-select" class="form-select"></select>
+                                
+                                <div style="display: flex; gap: 8px; align-items: stretch;">
+                                    <div class="input-wrapper" style="flex-grow: 1;">
+                                        <select id="informe-cuenta-select" class="form-select"></select>
+                                    </div>
+                                    <button id="btn-extracto-todo" class="btn btn--secondary" style="min-width: 60px; font-weight: 700; padding: 0 16px;" title="Ver todo ordenado por fecha">
+                                        TODO
+                                    </button>
                                 </div>
-                            </div>
+                                </div>
                         </div>
                         <div id="informe-resultado-container" style="margin-top: var(--sp-4);">
                             <div class="empty-state" style="background:transparent; padding:var(--sp-2); border:none;">
                                 <p style="font-size:0.85rem;">
-                                    Selecciona una cuenta arriba.<br>
-                                    <small style="opacity: 0.7;">(Mantén pulsado aquí para Extracto Global)</small>
+                                    Selecciona una cuenta o pulsa <strong>TODO</strong>.
                                 </p>
                             </div>
                         </div>
@@ -5295,7 +5313,18 @@ const renderPatrimonioPage = () => {
         // Carga Visión General
         await renderPatrimonioOverviewWidget('patrimonio-overview-container');
         
-        // --- LÓGICA DEL EXTRACTO AUTOMÁTICO ---
+        // --- LÓGICA DEL BOTÓN "TODO" ---
+        const btnTodo = select('btn-extracto-todo');
+        if (btnTodo) {
+            btnTodo.addEventListener('click', (e) => {
+                e.preventDefault(); // Evita comportamientos raros en móviles
+                e.target.blur();    // Quita el foco visual
+                handleGenerateGlobalExtract(e.target); // Llama a la función cronológica
+            });
+        }
+        // ------------------------------
+
+        // Lógica Selector Individual
         const selectCuenta = select('informe-cuenta-select');
         if (selectCuenta) {
             const populate = (el, data) => {
@@ -5312,7 +5341,7 @@ const renderPatrimonioPage = () => {
             });
         }
 
-        // Lógica Lazy Load del Portafolio
+        // Lógica Portafolio
         const acordeonPortafolio = select('acordeon-portafolio');
         if (acordeonPortafolio) {
             const loadPortfolioData = async () => {
@@ -5324,62 +5353,6 @@ const renderPatrimonioPage = () => {
                     await loadPortfolioData();
                     acordeonPortafolio.dataset.loaded = "true"; 
                 }
-            });
-        }
-
-        // --- LÓGICA DE PULSACIÓN LARGA (Long Press) ---
-        const summaryTrigger = select('summary-extracto-trigger');
-        if (summaryTrigger) {
-            let pressTimer = null;
-            const LONG_PRESS_DURATION = 600; // 0.6 segundos para activar
-
-            const startPress = (e) => {
-                // No prevenimos el default aquí para que el acordeón funcione si es un toque corto
-                
-                pressTimer = setTimeout(() => {
-                    // ¡Éxito! Se ha mantenido pulsado
-                    hapticFeedback('medium');
-                    
-                    // 1. Aseguramos que el acordeón se abra para ver el resultado
-                    const details = select('acordeon-extracto_cuenta');
-                    if (details && !details.open) details.open = true;
-
-                    // 2. Limpiamos la selección individual para no confundir
-                    if (selectCuenta) {
-                        selectCuenta.value = "";
-                        // Actualizamos visualmente el custom select si existe
-                        const wrapper = selectCuenta.closest('.custom-select-wrapper');
-                        const trigger = wrapper?.querySelector('.custom-select__trigger');
-                        if(trigger) trigger.innerHTML = `<span style="color: var(--c-on-surface-tertiary); opacity: 0.7;">Cuenta</span>`;
-                    }
-
-                    // 3. Ejecutamos la función global
-                    handleGenerateGlobalExtract();
-                    
-                }, LONG_PRESS_DURATION);
-            };
-
-            const cancelPress = () => {
-                if (pressTimer) {
-                    clearTimeout(pressTimer);
-                    pressTimer = null;
-                }
-            };
-
-            // Eventos para Ratón (PC)
-            summaryTrigger.addEventListener('mousedown', startPress);
-            summaryTrigger.addEventListener('mouseup', cancelPress);
-            summaryTrigger.addEventListener('mouseleave', cancelPress);
-
-            // Eventos para Táctil (Móvil)
-            summaryTrigger.addEventListener('touchstart', startPress, { passive: true });
-            summaryTrigger.addEventListener('touchend', cancelPress);
-            summaryTrigger.addEventListener('touchmove', cancelPress);
-            
-            // Evitar menú contextual nativo al mantener pulsado
-            summaryTrigger.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
             });
         }
         
