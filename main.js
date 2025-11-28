@@ -5225,7 +5225,7 @@ const renderPatrimonioPage = () => {
     const container = select(PAGE_IDS.PATRIMONIO);
     if (!container) return;
 
-    // Estructura HTML (Añadido user-select: none para evitar seleccionar texto al pulsar rápido)
+    // Estructura HTML
     container.innerHTML = `
         <details class="accordion" style="margin-bottom: var(--sp-4);">
             <summary>
@@ -5260,7 +5260,7 @@ const renderPatrimonioPage = () => {
         
         <div class="card card--no-bg accordion-wrapper">
             <details id="acordeon-extracto_cuenta" class="accordion informe-acordeon">
-                <summary id="summary-extracto-trigger" style="user-select: none; -webkit-user-select: none;"> 
+                <summary id="summary-extracto-trigger" style="user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;"> 
                     <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
                         <span class="material-icons">wysiwyg</span>
                         <span>Extracto de Cuenta</span>
@@ -5281,7 +5281,7 @@ const renderPatrimonioPage = () => {
                             <div class="empty-state" style="background:transparent; padding:var(--sp-2); border:none;">
                                 <p style="font-size:0.85rem;">
                                     Selecciona una cuenta arriba.<br>
-                                    <small style="opacity: 0.7;">(Doble clic aquí para ver todo)</small>
+                                    <small style="opacity: 0.7;">(Mantén pulsado aquí para Extracto Global)</small>
                                 </p>
                             </div>
                         </div>
@@ -5327,46 +5327,59 @@ const renderPatrimonioPage = () => {
             });
         }
 
-        // --- LÓGICA DE DOBLE CLIC / DOBLE TAP (SOLUCIÓN DEFINITIVA) ---
+        // --- LÓGICA DE PULSACIÓN LARGA (Long Press) ---
         const summaryTrigger = select('summary-extracto-trigger');
         if (summaryTrigger) {
-            let lastTap = 0;
-            
-            // Función común para ejecutar la acción
-            const executeDoubleAction = (e) => {
-                e.preventDefault(); 
-                e.stopPropagation();
+            let pressTimer = null;
+            const LONG_PRESS_DURATION = 600; // 0.6 segundos para activar
+
+            const startPress = (e) => {
+                // No prevenimos el default aquí para que el acordeón funcione si es un toque corto
                 
-                // 1. Aseguramos que el acordeón se quede abierto
-                const details = select('acordeon-extracto_cuenta');
-                if (details && !details.open) details.open = true;
+                pressTimer = setTimeout(() => {
+                    // ¡Éxito! Se ha mantenido pulsado
+                    hapticFeedback('medium');
+                    
+                    // 1. Aseguramos que el acordeón se abra para ver el resultado
+                    const details = select('acordeon-extracto_cuenta');
+                    if (details && !details.open) details.open = true;
 
-                // 2. Limpiamos la selección individual para no confundir
-                if (selectCuenta) {
-                    selectCuenta.value = "";
-                    // Forzamos actualización visual del custom select si existe
-                    const wrapper = selectCuenta.closest('.custom-select-wrapper');
-                    const trigger = wrapper?.querySelector('.custom-select__trigger');
-                    if(trigger) trigger.innerHTML = `<span style="color: var(--c-on-surface-tertiary); opacity: 0.7;">Cuenta</span>`;
-                }
+                    // 2. Limpiamos la selección individual para no confundir
+                    if (selectCuenta) {
+                        selectCuenta.value = "";
+                        // Actualizamos visualmente el custom select si existe
+                        const wrapper = selectCuenta.closest('.custom-select-wrapper');
+                        const trigger = wrapper?.querySelector('.custom-select__trigger');
+                        if(trigger) trigger.innerHTML = `<span style="color: var(--c-on-surface-tertiary); opacity: 0.7;">Cuenta</span>`;
+                    }
 
-                // 3. Ejecutamos la función global
-                handleGenerateGlobalExtract();
+                    // 3. Ejecutamos la función global
+                    handleGenerateGlobalExtract();
+                    
+                }, LONG_PRESS_DURATION);
             };
 
-            // Listener 1: Para PC (Doble Clic estándar)
-            summaryTrigger.addEventListener('dblclick', executeDoubleAction);
-
-            // Listener 2: Para MÓVIL (Simulación manual de Doble Tap)
-            summaryTrigger.addEventListener('touchend', (e) => {
-                const currentTime = new Date().getTime();
-                const tapLength = currentTime - lastTap;
-                
-                // Si el segundo toque ocurre menos de 300ms después del primero...
-                if (tapLength < 300 && tapLength > 0) {
-                    executeDoubleAction(e);
+            const cancelPress = () => {
+                if (pressTimer) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
                 }
-                lastTap = currentTime;
+            };
+
+            // Eventos para Ratón (PC)
+            summaryTrigger.addEventListener('mousedown', startPress);
+            summaryTrigger.addEventListener('mouseup', cancelPress);
+            summaryTrigger.addEventListener('mouseleave', cancelPress);
+
+            // Eventos para Táctil (Móvil)
+            summaryTrigger.addEventListener('touchstart', startPress, { passive: true });
+            summaryTrigger.addEventListener('touchend', cancelPress);
+            summaryTrigger.addEventListener('touchmove', cancelPress);
+            
+            // Evitar menú contextual nativo al mantener pulsado
+            summaryTrigger.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
             });
         }
         
