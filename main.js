@@ -431,11 +431,9 @@ const clearDiarioFilters = async () => {
 		let calculatorKeyboardHandler = null;
 		let deselectedInvestmentTypesFilter = new Set();
 		let selectedInvestmentTypeFilter = null;
-		let intelligentIndex = new Map();
 		let syncState = 'synced'; 
 		let isOffBalanceMode = false;
-        let descriptionIndex = {};
-		let globalSearchDebounceTimer = null;
+        let globalSearchDebounceTimer = null;
 		let newMovementIdToHighlight = null;
 		let unsubscribeRecientesListener = null
         const originalButtonTexts = new Map();
@@ -695,10 +693,6 @@ const updateCalculatorDisplay = () => {
     else display.style.fontSize = '3rem';
 };
 // --- FIN: BLOQUE CALCULADORA ---
-
-        let descriptionSuggestionDebounceTimer = null; 
-        const DESCRIPTION_SUGGESTION_LIMIT = 5;
-        
                     
 
 		let isDashboardRendering = false;
@@ -752,26 +746,7 @@ const updateSyncStatusIcon = () => {
     iconEl.title = iconTitle;
     iconEl.className = `material-icons ${iconClass}`;
 };
-                const buildDescriptionIndex = () => {
-            descriptionIndex = {};
-            if (!db.movimientos || db.movimientos.length === 0) return;
-
-            const movementsToIndex = db.movimientos.slice(0, 500); 
-
-            movementsToIndex.forEach(mov => {
-                const desc = mov.descripcion.trim().toLowerCase();
-                if (desc.length > 3) {
-                    if (!descriptionIndex[desc]) {
-                        descriptionIndex[desc] = {
-                            conceptoId: mov.conceptoId,
-                            count: 0
-                        };
-                    }
-                    descriptionIndex[desc].count++;
-                }
-            });
-        };
-               
+                       
     
         firebase.initializeApp(firebaseConfig);
         const fbAuth = firebase.auth();
@@ -918,8 +893,7 @@ async function loadCoreData(uid) {
 
         }, error => console.error("Error escuchando movimientos recientes: ", error));
                         
-    buildDescriptionIndex();
-    startMainApp();
+        startMainApp();
 };
 
         
@@ -1010,8 +984,7 @@ async function loadCoreData(uid) {
             runningBalancesCache = null;
             lastVisibleMovementDoc = null;
             allMovementsLoaded = false;
-            intelligentIndex.clear();
-            
+                        
             // Limpieza de la UI
             destroyAllCharts();
             showLoginScreen();
@@ -1663,8 +1636,7 @@ window.addEventListener('offline', () => {
     measureListItemHeights();
     
     updateSyncStatusIcon();
-    buildIntelligentIndex();
-    
+        
     // === ¡LA CORRECCIÓN CLAVE ESTÁ AQUÍ! ===
     navigateTo(PAGE_IDS.PANEL, true); 
     // =====================================
@@ -1799,11 +1771,6 @@ const setupTheme = () => {
     Chart.register(ChartDataLabels);
 };
 
-const buildIntelligentIndex = (movementsSource = []) => {
-    // Indexación desactivada: No es necesaria si no usamos sugerencias.
-    intelligentIndex.clear();
-    console.log("Índice inteligente desactivado por el usuario.");
-};
 const cleanupObservers = () => {
     if (movementsObserver) {
         movementsObserver.disconnect();
@@ -3166,8 +3133,6 @@ const updateLocalDataAndRefreshUI = async () => {
     // 2. Le dice a la lista virtual que se redibuje con los nuevos datos.
     updateVirtualListUI();
 
-    // 3. (Opcional pero recomendado) Actualiza el índice de autocompletado.
-    buildIntelligentIndex();
 };
 // =================================================================
 // === FIN: NUEVA FUNCIÓN AYUDANTE                               ===
@@ -7878,31 +7843,6 @@ const hideCalculator = () => {
 	document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
 };
 
-/**
- * Lógica para las sugerencias predictivas.
- */
-const applyDescriptionSuggestion = (target) => {
-    const { description, conceptoId, cuentaId } = target.dataset;
-
-    select('movimiento-descripcion').value = toSentenceCase(description);
-    
-    const conceptoSelect = select('movimiento-concepto');
-    if (conceptoSelect) {
-        conceptoSelect.value = conceptoId;
-        conceptoSelect.dispatchEvent(new Event('change'));
-    }
-    
-    const cuentaSelect = select('movimiento-cuenta');
-    if (cuentaSelect) {
-        cuentaSelect.value = cuentaId;
-        cuentaSelect.dispatchEvent(new Event('change'));
-    }
-    
-    select('description-suggestions').style.display = 'none';
-
-    hapticFeedback('light');
-    select('movimiento-cantidad').focus();
-};
 // =============================================================
 // === LÓGICA DEL BOTÓN FLOTANTE INTELIGENTE (FAB)           ===
 // =============================================================
@@ -8287,10 +8227,6 @@ const handleStart = (e) => {
             'edit-movement-from-list': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; startMovementForm(movementId, false); },
             'edit-recurrente': () => { hideModal('generic-modal'); startMovementForm(id, true); },
             'view-account-details': (e) => { const accountId = e.target.closest('[data-id]').dataset.id; showAccountMovementsModal(accountId); },
-            'apply-description-suggestion': (e) => {
-                const suggestionItem = e.target.closest('.suggestion-item');
-                if (suggestionItem) applyDescriptionSuggestion(suggestionItem);
-            },
             'show-concept-drilldown': () => {
                 const conceptId = actionTarget.dataset.conceptId;
                 const conceptName = actionTarget.dataset.conceptName;
@@ -8453,7 +8389,6 @@ const handleStart = (e) => {
         if (id) { 
             clearError(id); 
             if (id === 'movimiento-cantidad') validateField('movimiento-cantidad', true); 
-            if (id === 'movimiento-descripcion') handleDescriptionInput(); 
             if (id === 'movimiento-concepto' || id === 'movimiento-cuenta') validateField(id, true); 
             // ... validaciones restantes
             if (id === 'concepto-search-input') { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => renderConceptosModalList(), 200); } 
@@ -8468,7 +8403,7 @@ const handleStart = (e) => {
     
     document.body.addEventListener('focusin', (e) => { 
         if (e.target.matches('.pin-input')) handlePinInputInteraction(); 
-        if (e.target.id === 'movimiento-descripcion') handleDescriptionInput(); 
+        
     });
     
     // 9. Cambios en filtros y selects
@@ -8513,8 +8448,7 @@ const handleStart = (e) => {
     
     // Dropzone JSON y Scroll
     const dropZone = select('json-drop-zone'); if (dropZone) { /* Lógica Dropzone (sin cambios) */ }
-    const suggestionsBox = select('description-suggestions'); if (suggestionsBox) { suggestionsBox.addEventListener('click', (e) => { const suggestionItem = e.target.closest('.suggestion-item'); if (suggestionItem) applyDescriptionSuggestion(suggestionItem); }); }
-    
+        
     // Scroll infinito
     const mainScroller = selectOne('.app-layout__main'); 
     if (mainScroller) { 
@@ -10238,15 +10172,6 @@ const validateMovementForm = () => {
  
 const longPressState = { timer: null, isLongPress: false };
 
-const handleDescriptionInput = () => {
-    // Lógica de predicción y sugerencias ELIMINADA.
-    // Ocultamos el cuadro de sugerencias por si acaso estaba visible.
-    const suggestionsBox = document.getElementById('description-suggestions');
-    if (suggestionsBox) {
-        suggestionsBox.style.display = 'none';
-        suggestionsBox.innerHTML = '';
-    }
-};
 
 // --- REGISTRO DEL SERVICE WORKER ---
 // Comprobamos si el navegador soporta Service Workers
