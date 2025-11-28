@@ -430,7 +430,7 @@
     /* VARIABLES BASE (No se tocan) */
     --c-white: #FFFFFF; --c-black: #000000;
     --c-chart-positive: var(--c-success); --c-chart-negative: var(--c-danger);
-    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
     --fs-xs: 0.75rem; --fs-sm: 0.875rem; --fs-base: 1rem; --fs-lg: 1.125rem; --fs-xl: 1.25rem;
     --sp-1: 0.25rem; --sp-2: 0.5rem; --sp-3: 0.75rem; --sp-4: 1rem; --sp-5: 1.25rem; --sp-6: 1.5rem;
     --border-radius-md: 10px; --border-radius-lg: 16px;
@@ -469,11 +469,17 @@ body[data-theme="sunset-groove"] {
 
 /* 1. Estilo base del encabezado (oscuro, para que contraste en ambos temas) */
 .top-bar {
-    background-color: rgba(10, 10, 15, 0.7); /* Un fondo oscuro translúcido */
-    backdrop-filter: blur(20px) saturate(180%);
--webkit-backdrop-filter: blur(20px) saturate(180%);
-background-color: rgba(28, 42, 58, 0.75); /* Un poco más de opacidad */
-border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */
+    /* Un blur más fuerte y saturado (estilo Apple) */
+    background-color: rgba(28, 42, 58, 0.65); /* Más transparencia */
+    backdrop-filter: blur(25px) saturate(180%); /* Saturate aviva los colores de fondo */
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Borde sutilísimo */
+}
+
+/* En Modo Claro (Sunset Groove) necesitarás ajustar el rgba del background a algo claro */
+body[data-theme="sunset-groove"] .top-bar {
+    background-color: rgba(255, 255, 255, 0.65);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 /* 2. Anulación específica para Contabilidad A (el encabezado se vuelve azul corporativo) */
@@ -3420,7 +3426,21 @@ body[data-theme="default"] .cartilla-container {
 #start-overlay, #video-intro-overlay { z-index: 9999; } /* Pantallas de carga */
 
 html, body {
-    overscroll-behavior-y: none; /* Bloquea el rebote nativo del navegador */
+    height: 100%;
+    overflow: hidden; /* Crucial */
+    overscroll-behavior-y: none; /* Estándar moderno */
+    position: fixed; /* Evita scrolls accidentales en iOS */
+    width: 100%;
+}
+
+/* Permite scroll suave y rebote nativo SOLO donde debe haberlo */
+.app-layout__main, 
+.modal__body, 
+.custom-select__options,
+#virtual-list-container {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Habilita inercia en iOS */
+    overscroll-behavior-y: contain; /* El rebote se queda aquí, no pasa al body */
 }
 
 /* Feedback visual mejorado */
@@ -3443,4 +3463,47 @@ html, body {
 
 .transaction-card.is-pressing::after {
     width: 100%; /* Se llena hasta el final */
+}
+.btn, .icon-btn, .transaction-card, .settings-item {
+    /* Transición rápida al soltar (retorno) */
+    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s;
+    touch-action: manipulation; /* Elimina delay de doble tap en algunos navegadores */
+}
+
+.btn:active, .icon-btn:active, .transaction-card:active, .settings-item:active {
+    /* Respuesta INSTANTÁNEA al pulsar */
+    transform: scale(0.96);
+    transition-duration: 0s; /* Sin demora al presionar */
+    background-color: var(--c-surface-variant) !important;
+}
+/* Asegura que NINGÚN input provoque zoom, pero mantiene apariencia compacta mediante escala si es necesario */
+input, select, textarea, .form-input, .form-select {
+    font-size: 16px !important; 
+}
+
+/* Opcional: Si quieres que se vean pequeños visualmente pero sean 16px reales: */
+.form-field-compact input {
+    font-size: 16px;
+    transform: scale(0.85); /* Truco visual */
+    transform-origin: left center;
+    width: 117%; /* Compensar la escala */
+}
+@keyframes slide-in-ios {
+    from { transform: translateX(100%); box-shadow: -5px 0 25px rgba(0,0,0,0.1); }
+    to { transform: translateX(0); box-shadow: none; }
+}
+
+@keyframes slide-out-ios-background {
+    from { transform: translateX(0); filter: brightness(1); }
+    to { transform: translateX(-30%); filter: brightness(0.8); } /* Parallax + Oscurecimiento */
+}
+
+.view-transition-in-forward {
+    animation: slide-in-ios 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards; /* Curva iOS */
+    z-index: 10; /* Siempre por encima */
+}
+
+.view-transition-out-forward {
+    animation: slide-out-ios-background 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+    z-index: 0;
 }
