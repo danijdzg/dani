@@ -2809,11 +2809,11 @@ const handleToggleInvestmentTypeFilter = (type) => {
     renderPortfolioEvolutionChart('portfolio-evolution-container');
 };
 
-
 const renderPortfolioMainContent = async (targetContainerId) => {
     const container = select(targetContainerId);
     if (!container) return;
 
+    // Se mantiene la lógica existente para obtener los activos y sus datos
     const investmentAccounts = getVisibleAccounts().filter((c) => c.esInversion);
     const CHART_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
 
@@ -2821,7 +2821,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         container.innerHTML = `<div id="empty-investments" class="empty-state" style="margin-top: 0; border: none; background: transparent;">
                 <span class="material-icons">rocket_launch</span>
                 <h3>Tu Portafolio empieza aquí</h3>
-                <p>Ve a 'Ajustes' > 'Cuentas' y marca una cuenta como 'de inversión'.</p>
+                <p>Ve a 'Ajustes' > 'Cuentas' y marca una cuenta como 'de inversión' para empezar el seguimiento.</p>
                 <button class="btn btn--primary" data-action="manage-investment-accounts" style="margin-top: var(--sp-4);">
                     <span class="material-icons" style="font-size: 16px;">checklist</span>
                     <span>Gestionar Activos</span>
@@ -2837,7 +2837,6 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         })
     );
 
-    // --- Agrupación por Tipo para los Filtros ---
     const allInvestmentTypes = [...new Set(performanceData.map(asset => toSentenceCase(asset.tipo || 'S/T')))].sort();
     const colorMap = {};
     allInvestmentTypes.forEach((label, index) => { colorMap[label] = CHART_COLORS[index % CHART_COLORS.length]; });
@@ -2851,167 +2850,198 @@ const renderPortfolioMainContent = async (targetContainerId) => {
 
     const displayAssetsData = performanceData.filter(asset => !deselectedInvestmentTypesFilter.has(toSentenceCase(asset.tipo || 'S/T')));
 
-    // --- Totales ---
     const portfolioTotalValorado = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.valorActual, 0);
     const portfolioTotalInvertido = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.capitalInvertido, 0);
     const rentabilidadTotalAbsoluta = portfolioTotalValorado - portfolioTotalInvertido;
     const rentabilidadTotalPorcentual = portfolioTotalInvertido !== 0 ? (rentabilidadTotalAbsoluta / portfolioTotalInvertido) * 100 : 0;
     const rentabilidadClass = rentabilidadTotalAbsoluta >= 0 ? 'text-positive' : 'text-negative';
 
+    // =========================================================================
+    // === ▼▼▼ INICIO: NUEVO CÓDIGO AÑADIDO PARA EL SUMARIO FINAL ▼▼▼ =========
+    // =========================================================================
+    
+    // 1. Calculamos el rendimiento TOTAL de todo el portafolio filtrado.
     const portfolioTotalPerformance = await calculatePortfolioPerformance();
+
+    // 2. Preparamos las variables para el HTML.
     const totalPnlAbsoluto = portfolioTotalPerformance.pnlAbsoluto;
     const totalPnlPorcentual = portfolioTotalPerformance.pnlPorcentual;
     const totalIrr = portfolioTotalPerformance.irr;
+
     const totalPnlClass = totalPnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
     const totalIrrClass = totalIrr >= 0 ? 'text-positive' : 'text-negative';
 
+    // 3. Creamos el bloque HTML para la nueva tarjeta de sumario.
     const summaryCardHtml = `
         <div class="portfolio-summary-card">
-            <h3 class="portfolio-summary-card__title"><span class="material-icons">military_tech</span>Sumario Total</h3>
+            <h3 class="portfolio-summary-card__title">
+                <span class="material-icons">military_tech</span>
+                Sumario Total del Portafolio
+            </h3>
             <div class="portfolio-summary-card__grid">
-                <div class="summary-kpi"><div class="summary-kpi__label">P&L Total</div><div class="summary-kpi__value ${totalPnlClass}">${formatCurrency(totalPnlAbsoluto)}<div style="font-size: 0.6em; font-weight: 600;">(${totalPnlPorcentual.toFixed(1)}%)</div></div></div>
-                <div class="summary-kpi"><div class="summary-kpi__label">TIR Total Anual</div><div class="summary-kpi__value ${totalIrrClass}">${(totalIrr * 100).toFixed(2)}%</div></div>
+                <div class="summary-kpi">
+                    <div class="summary-kpi__label">P&L Total</div>
+                    <div class="summary-kpi__value ${totalPnlClass}">
+                        ${formatCurrency(totalPnlAbsoluto)}
+                        <div style="font-size: 0.6em; font-weight: 600;">(${totalPnlPorcentual.toFixed(1)}%)</div>
+                    </div>
+                </div>
+                <div class="summary-kpi">
+                    <div class="summary-kpi__label">TIR Total Anualizada</div>
+                    <div class="summary-kpi__value ${totalIrrClass}">
+                        ${(totalIrr * 100).toFixed(2)}%
+                    </div>
+                </div>
             </div>
-        </div>`;
+        </div>
+    `;
+    
+    // =========================================================================
+    // === ▲▲▲ FIN: NUEVO CÓDIGO AÑADIDO PARA EL SUMARIO FINAL ▲▲▲ ===========
+    // =========================================================================
+
 
     container.innerHTML = `
         <div class="card" style="margin-bottom: var(--sp-4);">
             <div class="card__content" style="display: flex; justify-content: space-around; text-align: center; padding: var(--sp-3);">
-                <div><h4 class="kpi-item__label">Capital</h4><strong class="kpi-item__value" style="font-size: var(--fs-lg);">${formatCurrency(portfolioTotalInvertido)}</strong></div>
-                <div><h4 class="kpi-item__label">Valor</h4><strong class="kpi-item__value" style="font-size: var(--fs-lg);">${formatCurrency(portfolioTotalValorado)}</strong></div>
-                <div><h4 class="kpi-item__label">P&L</h4><strong class="kpi-item__value ${rentabilidadClass}" style="font-size: var(--fs-lg);">${formatCurrency(rentabilidadTotalAbsoluta)}</strong><div class="kpi-item__comparison ${rentabilidadClass}" style="font-weight: 600;">(${rentabilidadTotalPorcentual.toFixed(1)}%)</div></div>
+                <div>
+                    <h4 class="kpi-item__label">Capital Aportado</h4>
+                    <strong class="kpi-item__value" style="font-size: var(--fs-lg);">${formatCurrency(portfolioTotalInvertido)}</strong>
+                </div>
+                <div>
+                    <h4 class="kpi-item__label">Valor de Mercado</h4>
+                    <strong class="kpi-item__value" style="font-size: var(--fs-lg);">${formatCurrency(portfolioTotalValorado)}</strong>
+                </div>
+                <div>
+                    <h4 class="kpi-item__label">Ganancia / Pérdida</h4>
+                    <strong class="kpi-item__value ${rentabilidadClass}" style="font-size: var(--fs-lg);">${formatCurrency(rentabilidadTotalAbsoluta)}</strong>
+                    <div class="kpi-item__comparison ${rentabilidadClass}" style="font-weight: 600;">(${rentabilidadTotalPorcentual.toFixed(1)}%)</div>
+                </div>
             </div>
         </div>
         <details class="accordion" open style="margin-bottom: var(--sp-4);">
-            <summary><h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">pie_chart</span>Asignación</h3><span class="material-icons accordion__icon">expand_more</span></summary>
+            <summary><h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">pie_chart</span>Asignación y Filtros</h3><span class="material-icons accordion__icon">expand_more</span></summary>
             <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
                 <div class="filter-pills" style="margin-bottom: var(--sp-2);">${pillsHTML}</div>
-                <div class="chart-container" style="height: 260px; margin-bottom: 0;"><canvas id="asset-allocation-chart"></canvas></div>
+                <div class="chart-container" style="height: 250px; margin-bottom: 0;"><canvas id="asset-allocation-chart"></canvas></div>
             </div>
         </details>
         <div id="investment-assets-list"></div>
-        ${summaryCardHtml}
-        <div class="card card--no-bg" style="padding:0; margin-top: var(--sp-4);"><button class="btn btn--secondary btn--full" data-action="manage-investment-accounts"><span class="material-icons" style="font-size: 16px;">checklist</span>Gestionar Activos</button></div>`;
+
+        ${summaryCardHtml} <!-- <-- INYECTAMOS LA NUEVA TARJETA AQUÍ -->
+        
+        <div class="card card--no-bg" style="padding:0; margin-top: var(--sp-4);">
+            <button class="btn btn--secondary btn--full" data-action="manage-investment-accounts"><span class="material-icons" style="font-size: 16px;">checklist</span>Gestionar Activos</button>
+        </div>`;
     
-    // --- RENDERIZADO ASÍNCRONO ---
     setTimeout(() => {
-        // 1. GRÁFICO DE DONUT (Limpieza visual)
         const chartCtx = select('asset-allocation-chart')?.getContext('2d');
         if (chartCtx) {
             if (assetAllocationChart) assetAllocationChart.destroy();
-            
-            // Agrupamos por TIPO para el gráfico (mucho menos ruido que por activo individual)
-            const dataByType = {};
+            const keyToSum = 'valorActual';
+            const treeData = [];
             displayAssetsData.forEach(asset => {
-                const tipo = toSentenceCase(asset.tipo || 'S/T');
-                dataByType[tipo] = (dataByType[tipo] || 0) + asset.valorActual;
+                const valor = asset[keyToSum] / 100;
+                if (valor > 0) treeData.push({ tipo: toSentenceCase(asset.tipo || 'S/T'), nombre: asset.nombre, valor: valor });
             });
-
-            const labels = Object.keys(dataByType).sort();
-            const dataValues = labels.map(l => dataByType[l] / 100);
-            const backgroundColors = labels.map(l => colorMap[l] || '#888');
-
-            if (dataValues.length > 0) {
+            if (treeData.length > 0) {
                 assetAllocationChart = new Chart(chartCtx, {
-                    type: 'doughnut', // VOLVEMOS AL DONUT
+                    type: 'treemap',
                     data: {
-                        labels: labels,
                         datasets: [{
-                            data: dataValues,
-                            backgroundColor: backgroundColors,
-                            borderWidth: 0, // Sin bordes para look moderno
-                            hoverOffset: 4
+                            tree: treeData,
+                            key: 'valor',
+                            groups: ['tipo', 'nombre'],
+                            spacing: 0.5,
+                            borderWidth: 1.5,
+                            borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'),
+                            backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'),
+                            labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) }
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '65%', // Donut más fino
-                        plugins: {
-                            legend: { 
-                                display: true, 
-                                position: 'right', // Leyenda a la derecha para aprovechar el ancho
-                                labels: { 
-                                    usePointStyle: true, 
-                                    boxWidth: 8,
-                                    font: { size: 11 }
-                                } 
-                            },
-                            tooltip: { 
-                                callbacks: { 
-                                    label: (ctx) => ` ${ctx.label}: ${formatCurrency(ctx.raw * 100)}` 
-                                } 
-                            },
-                            datalabels: { display: false } // Quitamos etiquetas dentro del gráfico
-                        }
-                    }
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false } } }
                 });
-            } else { 
-                select('asset-allocation-chart').closest('.chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos visibles.</p></div>`; 
+            } else {
+                select('asset-allocation-chart').closest('.chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con valor para mostrar.</p></div>`;
             }
         }
         
-        // 2. LISTA DE ACTIVOS CON SPARKLINES (Se mantiene porque aporta valor sin ensuciar)
         const listContainer = select('investment-assets-list');
         if (listContainer) {
             const listHtml = displayAssetsData
                 .sort((a, b) => b.valorActual - a.valorActual)
                 .map(cuenta => {
                     const pnlClassPill = cuenta.pnlAbsoluto >= 0 ? 'is-positive' : 'is-negative';
+                    const pnlClassText = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
                     const tirClassPill = cuenta.irr >= 0 ? 'is-positive' : 'is-negative';
 
+                    // ▼▼▼ ¡NUEVA LÓGICA AQUÍ! ▼▼▼
+                    // 1. Buscamos la última valoración para esta cuenta específica.
                     const ultimaValoracion = (db.inversiones_historial || [])
                         .filter(v => v.cuentaId === cuenta.id)
                         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
+
+                    // 2. Preparamos el texto a mostrar.
                     let fechaUltimaValoracionHTML = '<small class="asset-card__last-valuation-date">Sin valorar</small>';
                     if (ultimaValoracion) {
                         const fecha = new Date(ultimaValoracion.fecha + 'T12:00:00Z');
                         const fechaFormateada = fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
                         fechaUltimaValoracionHTML = `<small class="asset-card__last-valuation-date">Val. ${fechaFormateada}</small>`;
                     }
-
-                    const isShortTerm = cuenta.daysActive < 365;
-                    const performanceLabel = isShortTerm ? 'Retorno' : 'TIR Anual';
-                    const performanceValue = isShortTerm ? cuenta.pnlPorcentual : (cuenta.irr * 100);
-                    const performanceText = `${performanceValue.toFixed(1)}%`;
-                    const tooltipText = isShortTerm ? `Retorno simple (activo < 1 año)` : `Tasa Interna de Retorno Anualizada`;
+                    // ▲▲▲ FIN DE LA NUEVA LÓGICA ▲▲▲
 
                     return `
-                    <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true" style="align-items: flex-start;">
+                    <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
+                        
                         <div class="asset-card__details">
                             <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
-                            <div style="height: 30px; width: 100px; margin-top: 4px; margin-bottom: 2px;">
-                                <canvas id="spark-${cuenta.id}"></canvas>
+                            <div class="asset-card__allocation">
+                                Aportado: ${formatCurrency(cuenta.capitalInvertido)}
                             </div>
-                            <div class="asset-card__allocation">Aportado: ${formatCurrency(cuenta.capitalInvertido)}</div>
+                            <div class="asset-card__pnl-absolute ${pnlClassText}" style="font-size: var(--fs-sm); font-weight: 600;">
+                                ${cuenta.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(cuenta.pnlAbsoluto)}
+                            </div>
                         </div>
+
                         <div class="asset-card__figures">
                             <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
-                            <div style="display: flex; gap: var(--sp-2); align-items: center; justify-content: flex-end; flex-wrap: wrap;">
-                                <button class="asset-card__pnl-pill ${pnlClassPill}" style="border:none; cursor:pointer;" data-action="show-pnl-breakdown" data-id="${cuenta.id}">P&L: ${formatCurrency(cuenta.pnlAbsoluto)}</button>
-                                <button class="asset-card__pnl-pill ${tirClassPill}" style="border:none; cursor:pointer;" data-action="show-irr-breakdown" data-id="${cuenta.id}" title="${tooltipText}">${performanceLabel}: ${performanceText}</button>
+                            
+                            <div style="display: flex; gap: var(--sp-2); align-items: center; justify-content: flex-end;">
+                                <button 
+                                    class="asset-card__pnl-pill ${pnlClassPill}" 
+                                    style="border:none; cursor:pointer;"
+                                    data-action="show-pnl-breakdown" 
+                                    data-id="${cuenta.id}" 
+                                    title="Pulsar para ver desglose de P&L">
+                                    P&L: ${cuenta.pnlPorcentual.toFixed(1)}%
+                                </button>
+                                <button 
+                                    class="asset-card__pnl-pill ${tirClassPill}" 
+                                    style="border:none; cursor:pointer;"
+                                    data-action="show-irr-breakdown" 
+                                    data-id="${cuenta.id}" 
+                                    title="Pulsar para ver desglose de TIR">
+                                    TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
+                                </button>
                             </div>
+                            
+                            <!-- ▼▼▼ HTML MODIFICADO AQUÍ ▼▼▼ -->
                             <div class="asset-card__valuation-area">
                                 ${fechaUltimaValoracionHTML}
-                                <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}"><span class="material-icons" style="font-size: 14px;">add_chart</span> Valorar</button>
+                                <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}">
+                                    <span class="material-icons" style="font-size: 14px;">add_chart</span>
+                                    Valorar
+                                </button>
                             </div>
+                            <!-- ▲▲▲ FIN DEL HTML MODIFICADO ▲▲▲ -->
+
                         </div>
                     </div>`;
                 }).join('');
 
             listContainer.innerHTML = listHtml ? `<div class="card"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
+            
             applyInvestmentItemInteractions(listContainer);
-
-            displayAssetsData.forEach(cuenta => {
-                const ctx = document.getElementById(`spark-${cuenta.id}`)?.getContext('2d');
-                if (!ctx) return;
-                const historial = (db.inversiones_historial || []).filter(v => v.cuentaId === cuenta.id).sort((a, b) => new Date(a.fecha) - new Date(b.fecha)).slice(-6);
-                if (historial.length < 2) return;
-                const dataPoints = historial.map(h => h.valor);
-                const isUp = dataPoints[dataPoints.length - 1] >= dataPoints[0];
-                const lineColor = isUp ? getComputedStyle(document.body).getPropertyValue('--c-success').trim() : getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
-                new Chart(ctx, { type: 'line', data: { labels: dataPoints.map((_, i) => i), datasets: [{ data: dataPoints, borderColor: lineColor, borderWidth: 2, tension: 0.3, pointRadius: 0, fill: false }] }, options: { responsive: true, maintainAspectRatio: false, events: [], plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false, min: Math.min(...dataPoints) * 0.95, max: Math.max(...dataPoints) * 1.05 } }, animation: false } });
-            });
         }
     }, 50);
 };
