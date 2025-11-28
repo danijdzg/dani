@@ -4868,7 +4868,7 @@ const renderDashboardKpiSummary = () => {
             </div>
         </div>`;
 };
-// ▼▼▼ REEMPLAZA TU FUNCIÓN renderDashboardSuperCentroOperaciones CON ESTA VERSIÓN COMPLETA ▼▼▼
+
 
 const renderDashboardSuperCentroOperaciones = () => {
     const skeletonRows = Array(3).fill('<div class="skeleton" style="height: 48px; margin-bottom: var(--sp-2); border-radius: 8px;"></div>').join('');
@@ -4888,47 +4888,39 @@ const renderDashboardSuperCentroOperaciones = () => {
                 <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
                     
                     <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+                        
                         <div class="kpi-item">
-                            <h4 class="kpi-item__label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                <!-- ✅ MEJORA 1: Clase añadida al texto "Patrimonio Neto Total" -->
-                                <span class="kpi-resaltado-azul">Patrimonio Neto Total</span>
-                                <button class="icon-btn" data-action="show-help-topic" data-topic="patrimonio-neto" style="width: 20px; height: 20px;">
-                                    <span class="material-icons" style="font-size: 16px;">help_outline</span>
-                                </button>
+                            <h4 class="kpi-item__label">
+                                <span class="kpi-resaltado-azul">Patrimonio Neto</span>
                             </h4>
-                            <!-- ✅ MEJORA 2: Clase añadida al importe del patrimonio -->
                             <strong id="kpi-patrimonio-neto-value" class="kpi-item__value skeleton kpi-resaltado-azul" data-current-value="0">0,00 €</strong>
-                            <!-- ✅ MEJORA 3: Clase añadida al texto "Vista global actual" -->
-                            <div class="kpi-item__comparison kpi-resaltado-azul">Vista global actual</div>
+                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.2; margin-top: 4px; opacity: 0.8;">
+                                Valor real de tu riqueza (Activos - Deudas)
+                            </div>
                         </div>
+
                         <div class="kpi-item">
-                            <h4 class="kpi-item__label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                <span>Tasa de Ahorro</span>
-                                <button class="icon-btn" data-action="show-help-topic" data-topic="tasa-ahorro" style="width: 20px; height: 20px;">
-                                    <span class="material-icons" style="font-size: 16px;">help_outline</span>
-                                </button>
-                            </h4>
+                            <h4 class="kpi-item__label">Tasa de Ahorro</h4>
                             <div style="position: relative; height: 60px; margin: auto;">
                                  <canvas id="kpi-savings-rate-chart"></canvas>
                                  <div id="kpi-tasa-ahorro-value" class="kpi-item__value skeleton" style="position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%);">0%</div>
                             </div>
-                            <div id="kpi-tasa-ahorro-comparison" class="kpi-item__comparison"></div>
+                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.2; margin-top: 4px; opacity: 0.8;">
+                                % de Ingresos que conservas tras gastos
+                            </div>
                         </div>
+
                         <div class="kpi-item">
-                            <h4 class="kpi-item__label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                <span>P&L Portafolio Inversión</span>
-                                 <button class="icon-btn" data-action="show-help-topic" data-topic="pnl-inversion" style="width: 20px; height: 20px;">
-                                    <span class="material-icons" style="font-size: 16px;">help_outline</span>
-                                </button>
-                            </h4>
+                            <h4 class="kpi-item__label">Resultado Inversión</h4>
                             <strong id="kpi-pnl-inversion-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
-                            <div id="kpi-pnl-inversion-comparison" class="kpi-item__comparison">Rentabilidad total</div>
+                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.2; margin-top: 4px; opacity: 0.8;">
+                                Ganancia/Pérdida histórica del mercado
+                            </div>
                         </div>
                     </div>
 
                     <hr style="border-color: var(--c-outline); opacity: 0.5; margin: var(--sp-5) 0;">
 
-                    <!-- ▼▼▼ BLOQUE DE FILTROS MOVIDO AQUÍ ▼▼▼ -->
                     <div class="report-filters">
                         <div class="form-group" style="margin-bottom: var(--sp-2);">
                             <select id="filter-periodo" class="form-select report-period-selector">
@@ -4941,33 +4933,27 @@ const renderDashboardSuperCentroOperaciones = () => {
                             <input type="date" id="filter-fecha-inicio" class="form-input">
                             <input type="date" id="filter-fecha-fin" class="form-input">
                         </div>
-                        
                     </div>
-                    <!-- ▲▲▲ FIN DEL BLOQUE DE FILTROS MOVIDO ▲▲▲ -->
 
-                    <hr style="border-color: var(--c-outline); opacity: 0.5; margin: var(--sp-5) 0;">
-
-                    <div class="kpi-grid" id="kpi-container" style="margin-bottom: var(--sp-5);">
+                    <div class="kpi-grid" id="kpi-container" style="margin-top: var(--sp-4); margin-bottom: var(--sp-5);">
                         <button class="kpi-item" data-action="show-kpi-drilldown" data-type="ingresos">
                             <h4 class="kpi-item__label">Ingresos</h4>
                             <strong id="kpi-ingresos-value" class="kpi-item__value text-positive skeleton" data-current-value="0">+0,00 €</strong> 
-                            <div id="kpi-ingresos-comparison" class="kpi-item__comparison"></div>
+                            <div style="font-size: 0.65rem; margin-top:2px;">Entradas totales</div>
                         </button>
                         <button class="kpi-item" data-action="show-kpi-drilldown" data-type="gastos">
                             <h4 class="kpi-item__label">Gastos</h4>
                             <strong id="kpi-gastos-value" class="kpi-item__value text-negative skeleton" data-current-value="0">0,00 €</strong>
-                            <div id="kpi-gastos-comparison" class="kpi-item__comparison"></div>
+                            <div style="font-size: 0.65rem; margin-top:2px;">Salidas totales</div>
                         </button>
                         <button class="kpi-item" data-action="show-kpi-drilldown" data-type="saldoNeto">
-                            <h4 class="kpi-item__label">Saldo Neto Periodo</h4>
+                            <h4 class="kpi-item__label">Flujo de Caja</h4>
                             <strong id="kpi-saldo-neto-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
-                            <div id="kpi-saldo-neto-comparison" class="kpi-item__comparison"></div>
+                            <div style="font-size: 0.65rem; margin-top:2px;">Capacidad de ahorro real</div>
                         </button>
                     </div>
                     
-                    <hr style="border-color: var(--c-outline); opacity: 0.5; margin: var(--sp-5) 0;">
-
-                    <h3 class="card__title" style="padding: 0 0 var(--sp-3) 0;"><span class="material-icons">category</span>Totales por Concepto</h3>
+                    <h3 class="card__title" style="padding: 0 0 var(--sp-3) 0;"><span class="material-icons">category</span>Distribución</h3>
                     <div class="chart-container skeleton" style="height: 240px; margin-bottom: var(--sp-2); border-radius: var(--border-radius-lg);">
                         <canvas id="conceptos-chart"></canvas>
                     </div>
