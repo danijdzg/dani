@@ -4492,7 +4492,7 @@ async function renderInformeDetallado(informeId) {
     try {
         const reportRenderers = {
             'extracto_cuenta': () => { 
-                // --- CAMBIO: Estructura HTML sin botón y con el wrapper necesario ---
+                // 1. Estructura HTML (Sin botones, con wrapper correcto)
                 const content = `
                     <div id="informe-cuenta-wrapper">
                         <div class="form-group" style="margin-bottom: 0;">
@@ -4513,33 +4513,38 @@ async function renderInformeDetallado(informeId) {
                 
                 container.innerHTML = content;
 
-                // --- Lógica de activación ---
+                // 2. Lógica JS
                 const selectEl = select('informe-cuenta-select');
                 if (selectEl) {
-                    // 1. Rellenar opciones
+                    // --- CORRECCIÓN AQUÍ: Función populate simplificada y sin errores ---
                     const populate = (el, data) => {
                         let opts = '<option value="">Seleccionar cuenta...</option>';
+                        // Ordenamos y creamos las opciones usando directamente .id y .nombre
                         [...data].sort((a,b) => a.nombre.localeCompare(b.nombre))
-                                 .forEach(i => opts += `<option value="${i[valKey='id']}">${i['nombre']}</option>`);
+                                 .forEach(cuenta => {
+                                     opts += `<option value="${cuenta.id}">${cuenta.nombre}</option>`;
+                                 });
                         el.innerHTML = opts;
                     };
+                    
+                    // Rellenamos con las cuentas visibles
                     populate(selectEl, getVisibleAccounts());
 
-                    // 2. Convertir en Desplegable Inteligente (Esto gestiona el abrir/cerrar)
+                    // 3. Convertir en Desplegable Inteligente (gestiona visualmente la apertura/cierre)
                     createCustomSelect(selectEl);
 
-                    // 3. Evento: Al cambiar, genera el informe
+                    // 4. Evento Reactivo: Al cambiar, genera el informe automáticamente
                     selectEl.addEventListener('change', () => {
-                        // Quitamos el foco para asegurar que se cierre cualquier teclado en móvil
+                        // Quitamos foco para cerrar teclados en móvil
                         if (document.activeElement) document.activeElement.blur();
                         
-                        // Generamos el informe sin necesidad de botón (pasamos null)
+                        // Generamos el informe (pasamos null porque no hay botón)
                         handleGenerateInformeCuenta(null, null);
                     });
                 }
             },
             
-            // Resto de informes (se mantienen igual)
+            // Mapeo del resto de informes
             'flujo_caja': () => renderInformeFlujoCaja(container),
             'resumen_ejecutivo': () => renderInformeResumenEjecutivo(container),
             'rendimiento_inversiones': () => renderInformeRendimientoInversiones(container),
