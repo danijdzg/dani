@@ -5876,7 +5876,7 @@ const updateDashboardData = async () => {
     isDashboardRendering = true;
 
     try {
-        const { current, previous, label } = await getFilteredMovements(true);
+        const { current } = await getFilteredMovements(true); // Ya no necesitamos 'previous' ni 'label'
         const saldos = await getSaldos();
         
         await updateNetWorthChart(saldos);
@@ -5907,21 +5907,7 @@ const updateDashboardData = async () => {
         const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
         const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
 
-        // 1. ACTUALIZAR KPIS PRINCIPALES (INGRESOS, GASTOS, NETO)
-        // Usamos comprobaciones de seguridad (?) para no fallar si el elemento no existe
-        if (select('kpi-ingresos-value')) {
-            selectAll('#kpi-container .skeleton').forEach(el => el.classList.remove('skeleton'));
-            animateCountUp(select('kpi-ingresos-value'), currentTotals.ingresos);
-            animateCountUp(select('kpi-gastos-value'), currentTotals.gastos);
-        }
-        
-        const saldoNetoEl = select('kpi-saldo-neto-value');
-        if (saldoNetoEl) {
-            saldoNetoEl.className = `kpi-item__value ${saldoNetoActual >= 0 ? 'text-positive' : 'text-negative'}`;
-            animateCountUp(saldoNetoEl, saldoNetoActual);
-        }
-
-        // 2. ACTUALIZAR SUPER CENTRO DE OPERACIONES
+        // 1. ACTUALIZAR SUPER CENTRO DE OPERACIONES
         if (select('kpi-tasa-ahorro-value')) {
             selectAll('#super-centro-operaciones-widget .skeleton').forEach(el => el.classList.remove('skeleton'));
             
@@ -5943,9 +5929,19 @@ const updateDashboardData = async () => {
                 if (investmentAccountIds.size > 0) animateCountUp(kpiPnlEl, pnlInversionActual); 
                 else kpiPnlEl.textContent = 'N/A';
             }
+
+            // KPIs Desglose (Ingreso/Gasto/Neto)
+            animateCountUp(select('kpi-ingresos-value'), currentTotals.ingresos);
+            animateCountUp(select('kpi-gastos-value'), currentTotals.gastos);
+            
+            const saldoNetoEl = select('kpi-saldo-neto-value');
+            if (saldoNetoEl) {
+                saldoNetoEl.className = `kpi-item__value ${saldoNetoActual >= 0 ? 'text-positive' : 'text-negative'}`;
+                animateCountUp(saldoNetoEl, saldoNetoActual);
+            }
         } 
         
-        [cite_start]// 3. ACTUALIZAR WIDGET DE SALUD FINANCIERA (Nuevo Unificado) [cite: 21]
+        // 2. ACTUALIZAR WIDGET DE SALUD FINANCIERA (Nuevo)
         const healthWidget = select('financial-health-widget');
         if (healthWidget) {
             healthWidget.querySelector('.card__content').classList.remove('skeleton');
@@ -5968,15 +5964,11 @@ const updateDashboardData = async () => {
             if(fiProg) fiProg.value = Math.min(fiData.progresoFI, 100);
         }
 
-        // 4. ACTUALIZAR GRÁFICO DE CONCEPTOS
+        // 3. ACTUALIZAR GRÁFICO DE CONCEPTOS
         const conceptListContainer = select('concepto-totals-list');
         const chartCanvas = select('conceptos-chart');
         
         if (conceptListContainer && chartCanvas && current.length > 0) {
-            // ... (Lógica de gráfico de conceptos se mantiene igual, omitida por brevedad pero debe estar aquí) ...
-            // Si necesitas el código del gráfico de conceptos, avísame, pero el error venía de arriba.
-            
-            // Renderizado simplificado para evitar el error si no hay datos
             const chartCtx = chartCanvas.getContext('2d');
             const chartContainer = chartCanvas.closest('.chart-container');
             if(chartContainer) chartContainer.classList.remove('skeleton');
@@ -6009,13 +6001,19 @@ const updateDashboardData = async () => {
                     responsive: true, 
                     maintainAspectRatio: false, 
                     plugins: { legend: { display: false }, datalabels: { display: false } }, 
-                    scales: { y: { ticks: { callback: (v) => v.toLocaleString('es-ES') } } } 
+                    scales: { y: { ticks: { callback: (v) => v.toLocaleString('es-ES') } } },
+                    onClick: (event, elements) => { 
+                        if (elements.length === 0) return; 
+                        const index = elements[0].index; 
+                        const [conceptoId, data] = sortedTotals[index]; 
+                        const concepto = db.conceptos.find(c => c.id === conceptoId); 
+                        const conceptoNombre = concepto ? toSentenceCase(concepto.nombre) : 'Desconocido'; 
+                        hapticFeedback('light'); 
+                        showDrillDownModal(`Movimientos de: ${conceptoNombre}`, data.movements); 
+                    }
                 } 
             });
-            
-            // (La lista de conceptos debajo del gráfico se omite aquí para ahorrar espacio, 
-            // pero asegúrate de que tu función original la tenga o esté limpia).
-            conceptListContainer.innerHTML = ''; // Limpiamos la lista por ahora para evitar conflictos
+            conceptListContainer.innerHTML = ''; 
         } else if (conceptListContainer) {
              conceptListContainer.innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Sin datos para los filtros.</p></div>`;
         }
@@ -7401,11 +7399,11 @@ const calculateEmergencyFund = (saldos, cuentas, recentMovements) => {
         if (LIQUIDO_TYPES.includes(tipo)) {
             totalLiquido += (saldos[c.id] || 0);
         } else if (DEBT_TYPES.includes(tipo)) {
-            totalDeudaTarjeta += (saldos[c.id] || 0); // La deuda ya es negativa
+            totalDeudaTarjeta += (saldos[c.id] || 0);
         }
     });
 
-    const colchonNeto = totalLiquido + totalDeudaTarjeta; // Sumamos porque la deuda ya es negativa
+    const colchonNeto = totalLiquido + totalDeudaTarjeta; 
 
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
@@ -7415,10 +7413,21 @@ const calculateEmergencyFund = (saldos, cuentas, recentMovements) => {
         .reduce((sum, m) => sum + m.cantidad, 0);
 
     const gastoMensualPromedio = Math.abs(expensesLast3Months / 3);
-
-    const mesesCobertura = (gastoMensualPromedio > 0) ? (colchonNeto / gastoMensualPromedio) : Infinity;
+    const mesesCobertura = (gastoMensualPromedio > 0) ? (colchonNeto / gastoMensualPromedio) : 999;
 
     return { colchonNeto, gastoMensualPromedio, mesesCobertura };
+};
+
+const calculateFinancialIndependence = (patrimonioNeto, gastoMensualPromedio) => {
+    const gastoAnualEstimado = gastoMensualPromedio * 12;
+    const objetivoFI = gastoAnualEstimado * 30; // Regla del 3.33% o multiplicador de 30 años
+    
+    let progresoFI = 0;
+    if (objetivoFI > 0 && patrimonioNeto > 0) {
+        progresoFI = (patrimonioNeto / objetivoFI) * 100;
+    }
+
+    return { patrimonioNeto, gastoAnualEstimado, objetivoFI, progresoFI };
 };
 
 /**
