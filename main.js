@@ -2809,7 +2809,6 @@ const handleToggleInvestmentTypeFilter = (type) => {
     renderPortfolioEvolutionChart('portfolio-evolution-container');
 };
 
-// ▼▼▼ REEMPLAZA TU FUNCIÓN renderPortfolioMainContent COMPLETA POR ESTA VERSIÓN ▼▼▼
 
 const renderPortfolioMainContent = async (targetContainerId) => {
     const container = select(targetContainerId);
@@ -2822,7 +2821,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         container.innerHTML = `<div id="empty-investments" class="empty-state" style="margin-top: 0; border: none; background: transparent;">
                 <span class="material-icons">rocket_launch</span>
                 <h3>Tu Portafolio empieza aquí</h3>
-                <p>Ve a 'Ajustes' > 'Cuentas' y marca una cuenta como 'de inversión' para empezar el seguimiento.</p>
+                <p>Ve a 'Ajustes' > 'Cuentas' y marca una cuenta como 'de inversión'.</p>
                 <button class="btn btn--primary" data-action="manage-investment-accounts" style="margin-top: var(--sp-4);">
                     <span class="material-icons" style="font-size: 16px;">checklist</span>
                     <span>Gestionar Activos</span>
@@ -2838,6 +2837,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         })
     );
 
+    // --- Agrupación por Tipo para los Filtros ---
     const allInvestmentTypes = [...new Set(performanceData.map(asset => toSentenceCase(asset.tipo || 'S/T')))].sort();
     const colorMap = {};
     allInvestmentTypes.forEach((label, index) => { colorMap[label] = CHART_COLORS[index % CHART_COLORS.length]; });
@@ -2851,6 +2851,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
 
     const displayAssetsData = performanceData.filter(asset => !deselectedInvestmentTypesFilter.has(toSentenceCase(asset.tipo || 'S/T')));
 
+    // --- Totales ---
     const portfolioTotalValorado = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.valorActual, 0);
     const portfolioTotalInvertido = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.capitalInvertido, 0);
     const rentabilidadTotalAbsoluta = portfolioTotalValorado - portfolioTotalInvertido;
@@ -2864,7 +2865,6 @@ const renderPortfolioMainContent = async (targetContainerId) => {
     const totalPnlClass = totalPnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
     const totalIrrClass = totalIrr >= 0 ? 'text-positive' : 'text-negative';
 
-    // Sumario HTML
     const summaryCardHtml = `
         <div class="portfolio-summary-card">
             <h3 class="portfolio-summary-card__title"><span class="material-icons">military_tech</span>Sumario Total</h3>
@@ -2886,30 +2886,72 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             <summary><h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">pie_chart</span>Asignación</h3><span class="material-icons accordion__icon">expand_more</span></summary>
             <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
                 <div class="filter-pills" style="margin-bottom: var(--sp-2);">${pillsHTML}</div>
-                <div class="chart-container" style="height: 250px; margin-bottom: 0;"><canvas id="asset-allocation-chart"></canvas></div>
+                <div class="chart-container" style="height: 260px; margin-bottom: 0;"><canvas id="asset-allocation-chart"></canvas></div>
             </div>
         </details>
         <div id="investment-assets-list"></div>
         ${summaryCardHtml}
         <div class="card card--no-bg" style="padding:0; margin-top: var(--sp-4);"><button class="btn btn--secondary btn--full" data-action="manage-investment-accounts"><span class="material-icons" style="font-size: 16px;">checklist</span>Gestionar Activos</button></div>`;
     
-    // --- RENDERIZADO ASÍNCRONO DE GRÁFICOS Y LISTA ---
+    // --- RENDERIZADO ASÍNCRONO ---
     setTimeout(() => {
+        // 1. GRÁFICO DE DONUT (Limpieza visual)
         const chartCtx = select('asset-allocation-chart')?.getContext('2d');
         if (chartCtx) {
             if (assetAllocationChart) assetAllocationChart.destroy();
-            const keyToSum = 'valorActual';
-            const treeData = [];
+            
+            // Agrupamos por TIPO para el gráfico (mucho menos ruido que por activo individual)
+            const dataByType = {};
             displayAssetsData.forEach(asset => {
-                const valor = asset[keyToSum] / 100;
-                if (valor > 0) treeData.push({ tipo: toSentenceCase(asset.tipo || 'S/T'), nombre: asset.nombre, valor: valor });
+                const tipo = toSentenceCase(asset.tipo || 'S/T');
+                dataByType[tipo] = (dataByType[tipo] || 0) + asset.valorActual;
             });
-            if (treeData.length > 0) {
-                assetAllocationChart = new Chart(chartCtx, { type: 'treemap', data: { datasets: [{ tree: treeData, key: 'valor', groups: ['tipo', 'nombre'], spacing: 0.5, borderWidth: 1.5, borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'), backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'), labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) } }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false } } } });
-            } else { select('asset-allocation-chart').closest('.chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos.</p></div>`; }
+
+            const labels = Object.keys(dataByType).sort();
+            const dataValues = labels.map(l => dataByType[l] / 100);
+            const backgroundColors = labels.map(l => colorMap[l] || '#888');
+
+            if (dataValues.length > 0) {
+                assetAllocationChart = new Chart(chartCtx, {
+                    type: 'doughnut', // VOLVEMOS AL DONUT
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: dataValues,
+                            backgroundColor: backgroundColors,
+                            borderWidth: 0, // Sin bordes para look moderno
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '65%', // Donut más fino
+                        plugins: {
+                            legend: { 
+                                display: true, 
+                                position: 'right', // Leyenda a la derecha para aprovechar el ancho
+                                labels: { 
+                                    usePointStyle: true, 
+                                    boxWidth: 8,
+                                    font: { size: 11 }
+                                } 
+                            },
+                            tooltip: { 
+                                callbacks: { 
+                                    label: (ctx) => ` ${ctx.label}: ${formatCurrency(ctx.raw * 100)}` 
+                                } 
+                            },
+                            datalabels: { display: false } // Quitamos etiquetas dentro del gráfico
+                        }
+                    }
+                });
+            } else { 
+                select('asset-allocation-chart').closest('.chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos visibles.</p></div>`; 
+            }
         }
         
-        // --- RENDERIZADO DE LA LISTA DE ACTIVOS CON SPARKLINES ---
+        // 2. LISTA DE ACTIVOS CON SPARKLINES (Se mantiene porque aporta valor sin ensuciar)
         const listContainer = select('investment-assets-list');
         if (listContainer) {
             const listHtml = displayAssetsData
@@ -2918,7 +2960,6 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                     const pnlClassPill = cuenta.pnlAbsoluto >= 0 ? 'is-positive' : 'is-negative';
                     const tirClassPill = cuenta.irr >= 0 ? 'is-positive' : 'is-negative';
 
-                    // Lógica para última valoración
                     const ultimaValoracion = (db.inversiones_historial || [])
                         .filter(v => v.cuentaId === cuenta.id)
                         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
@@ -2929,47 +2970,30 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                         fechaUltimaValoracionHTML = `<small class="asset-card__last-valuation-date">Val. ${fechaFormateada}</small>`;
                     }
 
-                    // ▼▼▼ LÓGICA DE TIR INTELIGENTE ▼▼▼
-                    // Si tiene menos de 1 año (365 días), mostramos Retorno Simple en lugar de TIR anualizada.
                     const isShortTerm = cuenta.daysActive < 365;
                     const performanceLabel = isShortTerm ? 'Retorno' : 'TIR Anual';
                     const performanceValue = isShortTerm ? cuenta.pnlPorcentual : (cuenta.irr * 100);
                     const performanceText = `${performanceValue.toFixed(1)}%`;
-                    const tooltipText = isShortTerm 
-                        ? `Retorno simple (activo < 1 año)` 
-                        : `Tasa Interna de Retorno Anualizada`;
+                    const tooltipText = isShortTerm ? `Retorno simple (activo < 1 año)` : `Tasa Interna de Retorno Anualizada`;
 
                     return `
                     <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true" style="align-items: flex-start;">
-                        
                         <div class="asset-card__details">
                             <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
                             <div style="height: 30px; width: 100px; margin-top: 4px; margin-bottom: 2px;">
                                 <canvas id="spark-${cuenta.id}"></canvas>
                             </div>
-                            <div class="asset-card__allocation">
-                                Aportado: ${formatCurrency(cuenta.capitalInvertido)}
-                            </div>
+                            <div class="asset-card__allocation">Aportado: ${formatCurrency(cuenta.capitalInvertido)}</div>
                         </div>
-
                         <div class="asset-card__figures">
                             <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
-                            
                             <div style="display: flex; gap: var(--sp-2); align-items: center; justify-content: flex-end; flex-wrap: wrap;">
-                                <button class="asset-card__pnl-pill ${pnlClassPill}" style="border:none; cursor:pointer;" data-action="show-pnl-breakdown" data-id="${cuenta.id}">
-                                    P&L: ${formatCurrency(cuenta.pnlAbsoluto)}
-                                </button>
-                                <button class="asset-card__pnl-pill ${tirClassPill}" style="border:none; cursor:pointer;" data-action="show-irr-breakdown" data-id="${cuenta.id}" title="${tooltipText}">
-                                    ${performanceLabel}: ${performanceText}
-                                </button>
+                                <button class="asset-card__pnl-pill ${pnlClassPill}" style="border:none; cursor:pointer;" data-action="show-pnl-breakdown" data-id="${cuenta.id}">P&L: ${formatCurrency(cuenta.pnlAbsoluto)}</button>
+                                <button class="asset-card__pnl-pill ${tirClassPill}" style="border:none; cursor:pointer;" data-action="show-irr-breakdown" data-id="${cuenta.id}" title="${tooltipText}">${performanceLabel}: ${performanceText}</button>
                             </div>
-                            
                             <div class="asset-card__valuation-area">
                                 ${fechaUltimaValoracionHTML}
-                                <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}">
-                                    <span class="material-icons" style="font-size: 14px;">add_chart</span>
-                                    Valorar
-                                </button>
+                                <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}"><span class="material-icons" style="font-size: 14px;">add_chart</span> Valorar</button>
                             </div>
                         </div>
                     </div>`;
@@ -2978,50 +3002,15 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             listContainer.innerHTML = listHtml ? `<div class="card"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
             applyInvestmentItemInteractions(listContainer);
 
-            // ▼▼▼ GENERACIÓN DE SPARKLINES ▼▼▼
             displayAssetsData.forEach(cuenta => {
                 const ctx = document.getElementById(`spark-${cuenta.id}`)?.getContext('2d');
                 if (!ctx) return;
-
-                // Obtenemos últimas 6 valoraciones para ver tendencia
-                const historial = (db.inversiones_historial || [])
-                    .filter(v => v.cuentaId === cuenta.id)
-                    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha)) // Ordenar ascendente por fecha
-                    .slice(-6); // Tomar las últimas
-
-                if (historial.length < 2) return; // Necesitamos al menos 2 puntos para una línea
-
+                const historial = (db.inversiones_historial || []).filter(v => v.cuentaId === cuenta.id).sort((a, b) => new Date(a.fecha) - new Date(b.fecha)).slice(-6);
+                if (historial.length < 2) return;
                 const dataPoints = historial.map(h => h.valor);
-                // Color verde si sube, rojo si baja (comparando último con penúltimo)
                 const isUp = dataPoints[dataPoints.length - 1] >= dataPoints[0];
-                const lineColor = isUp ? getComputedStyle(document.body).getPropertyValue('--c-success').trim() 
-                                       : getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
-
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: dataPoints.map((_, i) => i), // Labels dummy
-                        datasets: [{
-                            data: dataPoints,
-                            borderColor: lineColor,
-                            borderWidth: 2,
-                            tension: 0.3, // Curva suave
-                            pointRadius: 0, // Sin puntos
-                            fill: false
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        events: [], // Desactivar interacciones (hover, tooltip) para rendimiento
-                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                        scales: {
-                            x: { display: false },
-                            y: { display: false, min: Math.min(...dataPoints) * 0.95, max: Math.max(...dataPoints) * 1.05 }
-                        },
-                        animation: false // Desactivar animación para carga instantánea
-                    }
-                });
+                const lineColor = isUp ? getComputedStyle(document.body).getPropertyValue('--c-success').trim() : getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
+                new Chart(ctx, { type: 'line', data: { labels: dataPoints.map((_, i) => i), datasets: [{ data: dataPoints, borderColor: lineColor, borderWidth: 2, tension: 0.3, pointRadius: 0, fill: false }] }, options: { responsive: true, maintainAspectRatio: false, events: [], plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false, min: Math.min(...dataPoints) * 0.95, max: Math.max(...dataPoints) * 1.05 } }, animation: false } });
             });
         }
     }, 50);
