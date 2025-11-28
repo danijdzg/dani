@@ -1612,9 +1612,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
         min-width: 0;   
         flex-grow: 1;   
     }
-    #page-title-display {
-        display: none; 
-    }
+    
     .top-bar__left-group {
         gap: var(--sp-1);
     }
