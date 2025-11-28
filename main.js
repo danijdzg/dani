@@ -4541,20 +4541,26 @@ async function renderInformeDetallado(informeId) {
     try {
         const reportRenderers = {
             'extracto_cuenta': () => { 
-                // 1. HTML Limpio (Sin botón)
+                // 1. HTML ACTUALIZADO (Con el botón TODO)
                 const content = `
                     <div id="informe-cuenta-wrapper">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta para ver su historial:</label>
-                            <div class="input-wrapper">
-                                <select id="informe-cuenta-select" class="form-select"></select>
+                            <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta:</label>
+                            
+                            <div style="display: flex; gap: 8px; align-items: stretch; width: 100%;">
+                                <div class="input-wrapper" style="flex-grow: 1; min-width: 0;">
+                                    <select id="informe-cuenta-select" class="form-select"></select>
+                                </div>
+                                <button id="btn-extracto-todo" class="btn btn--secondary" style="flex-shrink: 0; min-width: auto; padding: 0 16px; font-weight: 700; white-space: nowrap;" title="Ver todo ordenado por fecha">
+                                    TODO
+                                </button>
                             </div>
-                        </div>
+                            </div>
                     </div>
                     
                     <div id="informe-resultado-container" style="margin-top: var(--sp-4);">
                         <div class="empty-state" style="background:transparent; padding:var(--sp-2); border:none;">
-                            <p style="font-size:0.85rem;">Selecciona una cuenta arriba para ver el extracto.</p>
+                            <p style="font-size:0.85rem;">Selecciona una cuenta o pulsa <strong>TODO</strong>.</p>
                         </div>
                     </div>`;
                 
@@ -4563,7 +4569,6 @@ async function renderInformeDetallado(informeId) {
                 // 2. Lógica de activación
                 const selectEl = select('informe-cuenta-select');
                 if (selectEl) {
-                    // Función simple para rellenar opciones (sin errores de variables)
                     const populate = (el, data) => {
                         let opts = '<option value="">Seleccionar cuenta...</option>';
                         [...data].sort((a,b) => a.nombre.localeCompare(b.nombre))
@@ -4577,25 +4582,36 @@ async function renderInformeDetallado(informeId) {
                     // Inicializamos el selector visual
                     createCustomSelect(selectEl);
 
-                    // --- SOLUCIÓN AL PROBLEMA DE CIERRE ---
+                    // Evento al cambiar selección individual
                     selectEl.addEventListener('change', () => {
-                        // A. Generar el informe inmediatamente
                         handleGenerateInformeCuenta(null, null);
-
-                        // B. Forzar el cierre del menú y quitar el foco
-                        // Usamos setTimeout para ejecutarnos DESPUÉS de que el componente intente reabrirse
                         setTimeout(() => {
-                            // 1. Quitar el foco del navegador (cierra teclados en móvil y evita auto-apertura)
                             if (document.activeElement) document.activeElement.blur();
-                            
-                            // 2. Forzar visualmente el cierre del wrapper personalizado
                             const wrapper = selectEl.closest('.custom-select-wrapper');
                             if (wrapper) {
                                 wrapper.classList.remove('is-open');
                                 const trigger = wrapper.querySelector('.custom-select__trigger');
-                                if (trigger) trigger.blur(); // Aseguramos que el disparador también pierda el foco
+                                if (trigger) trigger.blur();
                             }
-                        }, 50); // 50ms es suficiente para anular el comportamiento por defecto
+                        }, 50);
+                    });
+                }
+
+                // 3. Lógica del Botón TODO (Crucial añadirla aquí también)
+                const btnTodo = select('btn-extracto-todo');
+                if (btnTodo) {
+                    // Clonamos para eliminar listeners previos por seguridad
+                    const newBtn = btnTodo.cloneNode(true);
+                    btnTodo.parentNode.replaceChild(newBtn, btnTodo);
+                    
+                    newBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.target.blur();
+                        // Llamamos a la función global que ordena por fecha
+                        if (typeof handleGenerateGlobalExtract === 'function') {
+                            handleGenerateGlobalExtract(e.target);
+                        }
                     });
                 }
             },
