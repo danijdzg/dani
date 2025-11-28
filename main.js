@@ -152,7 +152,7 @@ const handleGenerateGlobalExtract = async () => {
 
     hapticFeedback('medium');
     
-    // Feedback de carga
+    // Feedback de carga visual
     resultadoContainer.innerHTML = `
         <div style="text-align:center; padding: var(--sp-5);">
             <span class="spinner" style="color:var(--c-primary); width: 24px; height:24px;"></span>
@@ -162,14 +162,14 @@ const handleGenerateGlobalExtract = async () => {
         </div>`;
 
     try {
-        // 1. Obtener datos
+        // 1. Obtener todos los datos
         const allMovements = await fetchAllMovementsForHistory();
         const saldos = await getSaldos();
         
-        // 2. Calcular Patrimonio Neto Actual (Punto de partida inverso)
+        // 2. Calcular Patrimonio Neto Actual (Punto de partida)
         let currentGlobalBalance = Object.values(saldos).reduce((sum, s) => sum + s, 0);
         
-        // 3. Filtrar movimientos solo de la contabilidad visible
+        // 3. Filtrar movimientos solo de la contabilidad visible actual
         const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
         
         let globalMovements = allMovements.filter(m => {
@@ -186,10 +186,11 @@ const handleGenerateGlobalExtract = async () => {
             return b.id.localeCompare(a.id);
         });
 
-        // 5. Calcular Saldos Históricos y CORREGIR CANTIDADES VISUALES
+        // 5. Calcular Saldos Históricos y Ajustar Visualización
         let runningBalance = currentGlobalBalance;
 
         for (const mov of globalMovements) {
+            // Guardamos el saldo resultante en este momento
             mov.runningBalance = runningBalance; 
 
             let impact = 0;
@@ -197,20 +198,19 @@ const handleGenerateGlobalExtract = async () => {
                 const origenVisible = visibleAccountIds.has(mov.cuentaOrigenId);
                 const destinoVisible = visibleAccountIds.has(mov.cuentaDestinoId);
                 
-                // Calculamos el impacto real en el patrimonio visible
-                if (origenVisible && !destinoVisible) impact = -mov.cantidad; // Sale dinero (Gasto patrimonial)
-                else if (!origenVisible && destinoVisible) impact = mov.cantidad; // Entra dinero (Ingreso patrimonial)
-                // Si es interno (A->A), impacto es 0.
-
-                // ¡CORRECCIÓN VISUAL CRÍTICA!
-                // Sobrescribimos la cantidad visual para que renderInformeCuentaRow la pinte en la columna correcta.
+                // Calculamos el impacto real en el patrimonio
+                if (origenVisible && !destinoVisible) impact = -mov.cantidad; // Sale dinero
+                else if (!origenVisible && destinoVisible) impact = mov.cantidad; // Entra dinero
+                
+                // TRUCO: Modificamos la cantidad del objeto temporalmente para que
+                // el renderizador sepa si pintarlo en rojo (Cargo) o verde (Abono)
                 mov.cantidad = impact; 
                 
             } else {
                 impact = mov.cantidad;
             }
 
-            // Revertimos el saldo para la siguiente iteración (hacia el pasado)
+            // "Deshacemos" el movimiento para calcular el saldo anterior
             runningBalance -= impact;
         }
 
@@ -233,7 +233,7 @@ const handleGenerateGlobalExtract = async () => {
                     </div>`;
                 
         for (const mov of globalMovements) {
-            // Pasamos null como cuentaId para activar el modo "Global" en el renderizador
+            // Pasamos null como cuentaId para activar el modo "Global"
             html += renderInformeCuentaRow(mov, null, db.cuentas);
         }
         
@@ -5225,7 +5225,7 @@ const renderPatrimonioPage = () => {
     const container = select(PAGE_IDS.PATRIMONIO);
     if (!container) return;
 
-    // Estructura HTML
+    // Estructura HTML (Añadido user-select: none para evitar seleccionar texto al pulsar rápido)
     container.innerHTML = `
         <details class="accordion" style="margin-bottom: var(--sp-4);">
             <summary>
@@ -5260,7 +5260,7 @@ const renderPatrimonioPage = () => {
         
         <div class="card card--no-bg accordion-wrapper">
             <details id="acordeon-extracto_cuenta" class="accordion informe-acordeon">
-                <summary id="summary-extracto-trigger" style="user-select: none;"> 
+                <summary id="summary-extracto-trigger" style="user-select: none; -webkit-user-select: none;"> 
                     <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
                         <span class="material-icons">wysiwyg</span>
                         <span>Extracto de Cuenta</span>
@@ -5281,7 +5281,7 @@ const renderPatrimonioPage = () => {
                             <div class="empty-state" style="background:transparent; padding:var(--sp-2); border:none;">
                                 <p style="font-size:0.85rem;">
                                     Selecciona una cuenta arriba.<br>
-                                    <small style="opacity: 0.7;">(Doble clic para Extracto Global)</small>
+                                    <small style="opacity: 0.7;">(Doble clic aquí para ver todo)</small>
                                 </p>
                             </div>
                         </div>
@@ -5327,21 +5327,21 @@ const renderPatrimonioPage = () => {
             });
         }
 
-        // --- LÓGICA DE DOBLE CLIC / DOBLE TAP ROBUSTA ---
+        // --- LÓGICA DE DOBLE CLIC / DOBLE TAP (SOLUCIÓN DEFINITIVA) ---
         const summaryTrigger = select('summary-extracto-trigger');
         if (summaryTrigger) {
             let lastTap = 0;
             
-            const handleDoubleAction = (e) => {
-                // Prevenimos que el acordeón se cierre/abra erráticamente
+            // Función común para ejecutar la acción
+            const executeDoubleAction = (e) => {
                 e.preventDefault(); 
                 e.stopPropagation();
                 
-                // Aseguramos que el acordeón se quede abierto para ver el resultado
+                // 1. Aseguramos que el acordeón se quede abierto
                 const details = select('acordeon-extracto_cuenta');
                 if (details && !details.open) details.open = true;
 
-                // Limpiamos la selección individual para no confundir
+                // 2. Limpiamos la selección individual para no confundir
                 if (selectCuenta) {
                     selectCuenta.value = "";
                     // Forzamos actualización visual del custom select si existe
@@ -5350,21 +5350,21 @@ const renderPatrimonioPage = () => {
                     if(trigger) trigger.innerHTML = `<span style="color: var(--c-on-surface-tertiary); opacity: 0.7;">Cuenta</span>`;
                 }
 
-                // Ejecutamos la función global
+                // 3. Ejecutamos la función global
                 handleGenerateGlobalExtract();
             };
 
-            // 1. Para PC (Doble Clic estándar)
-            summaryTrigger.addEventListener('dblclick', handleDoubleAction);
+            // Listener 1: Para PC (Doble Clic estándar)
+            summaryTrigger.addEventListener('dblclick', executeDoubleAction);
 
-            // 2. Para MÓVIL (Simulación de Doble Tap)
+            // Listener 2: Para MÓVIL (Simulación manual de Doble Tap)
             summaryTrigger.addEventListener('touchend', (e) => {
                 const currentTime = new Date().getTime();
                 const tapLength = currentTime - lastTap;
                 
                 // Si el segundo toque ocurre menos de 300ms después del primero...
                 if (tapLength < 300 && tapLength > 0) {
-                    handleDoubleAction(e);
+                    executeDoubleAction(e);
                 }
                 lastTap = currentTime;
             });
