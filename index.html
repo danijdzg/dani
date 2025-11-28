@@ -373,23 +373,39 @@
 	<!-- ▲▲▲ FIN: MEJORA 1 - Bottom Sheet para Acciones Rápidas ▲▲▲ -->
 	<!-- ▼▼▼ INICIO: NUEVO MENÚ DESPLEGABLE PRINCIPAL ▼▼▼ -->
     <div id="main-menu-popover" class="popover-menu">
-        <!-- Cada botón es un item del menú -->
-        <button class="popover-menu__item" data-action="navigate" data-page="ajustes-page">
-            <span class="material-icons">settings</span>
-            <span>Ajustes</span>
-        </button>
-        <button class="popover-menu__item" data-action="help">
-            <span class="material-icons">help_outline</span>
-            <span>Guía de Usuario</span>
-        </button>
-        <!-- Un separador visual -->
-        <div class="popover-menu__divider"></div>
-        <!-- Una acción importante, como cerrar sesión, se puede destacar en rojo -->
-        <button class="popover-menu__item popover-menu__item--danger" data-action="logout">
-            <span class="material-icons">logout</span>
-            <span>Cerrar Sesión</span>
-        </button>
-    </div>
+    <button class="popover-menu__item" data-action="open-external-calculator">
+        <span class="material-icons">calculate</span>
+        <span>Calculadora</span>
+    </button>
+
+    <button class="popover-menu__item" data-action="global-search">
+        <span class="material-icons">search</span>
+        <span>Buscar</span>
+    </button>
+
+    <button class="popover-menu__item" data-action="toggle-theme">
+        <span class="material-icons">brightness_6</span>
+        <span>Cambiar Tema</span>
+    </button>
+
+    <div class="popover-menu__divider"></div>
+
+    <button class="popover-menu__item" data-action="navigate" data-page="ajustes-page">
+        <span class="material-icons">settings</span>
+        <span>Ajustes</span>
+    </button>
+    <button class="popover-menu__item" data-action="help">
+        <span class="material-icons">help_outline</span>
+        <span>Guía de Usuario</span>
+    </button>
+    
+    <div class="popover-menu__divider"></div>
+    
+    <button class="popover-menu__item popover-menu__item--danger" data-action="logout">
+        <span class="material-icons">logout</span>
+        <span>Cerrar Sesión</span>
+    </button>
+</div>
     <!-- ▲▲▲ FIN: NUEVO MENÚ DESPLEGABLE PRINCIPAL ▲▲▲ -->
 
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>

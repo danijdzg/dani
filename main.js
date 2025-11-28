@@ -1848,8 +1848,6 @@ const navigateTo = async (pageId, isInitial = false) => {
     const leftEl = select('top-bar-left-button');
     
     const standardActions = `
-        <button data-action="global-search" class="icon-btn"><span class="material-icons">search</span></button>
-        <button data-action="toggle-theme" id="theme-toggle-btn" class="icon-btn"><span class="material-icons"></span></button>
         <button data-action="show-main-menu" class="icon-btn"><span class="material-icons">more_vert</span></button>
     `;
     
@@ -8264,6 +8262,14 @@ const handleStart = (e) => {
                     }, 0);
                 }
             },
+			'open-external-calculator': () => {
+        // Cierra el menú primero
+        const menu = document.getElementById('main-menu-popover');
+        if (menu) menu.classList.remove('popover-menu--visible');
+        
+        // Abre la calculadora en una nueva pestaña (mismo enlace que el título)
+        window.open('https://danijdzg.github.io/aiDANaI/dani/DaniCalc/', '_blank');
+    },
             'show-main-add-sheet': () => showModal('main-add-sheet'),
             'show-pnl-breakdown': () => handleShowPnlBreakdown(actionTarget.dataset.id),
             'show-irr-breakdown': () => handleShowIrrBreakdown(actionTarget.dataset.id),
