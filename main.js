@@ -1,27 +1,35 @@
 import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
+
 const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
     const fecha = new Date(mov.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
     let cargo = '';
     let abono = '';
     let conceptoTexto = '';
     
+    // Si estamos en modo GLOBAL (cuentaId es null), mostramos el nombre de la cuenta
+    const isGlobal = cuentaId === null;
+    const cuentaPropia = isGlobal ? allCuentas.find(c => c.id === mov.cuentaId) : null;
+    const prefixCuenta = cuentaPropia ? `[${cuentaPropia.nombre}] ` : '';
+
     // Lógica de importes y descripciones
     if (mov.tipo === 'traspaso') {
-        const esOrigen = mov.cuentaOrigenId === cuentaId;
-        const otraCuenta = esOrigen 
-            ? allCuentas.find(c => c.id === mov.cuentaDestinoId) 
-            : allCuentas.find(c => c.id === mov.cuentaOrigenId);
-            
-        const nombreOtra = otraCuenta ? escapeHTML(otraCuenta.nombre) : '?';
+        // En modo global, el traspaso interno se anula visualmente o se muestra neutro
+        // pero vamos a mantener la lógica relativa para mostrar flujo.
+        const esOrigen = mov.cuentaOrigenId === cuentaId || (isGlobal && mov.cantidad < 0); // Simplificación
         
-        if (esOrigen) {
-            cargo = formatCurrency(mov.cantidad);
-            conceptoTexto = `TRANSFERENCIA A ${nombreOtra}`;
-        } else {
-            abono = formatCurrency(mov.cantidad);
-            conceptoTexto = `TRANSFERENCIA DE ${nombreOtra}`;
-        }
-        // Añadimos la nota personal si existe
+        const origen = allCuentas.find(c => c.id === mov.cuentaOrigenId);
+        const destino = allCuentas.find(c => c.id === mov.cuentaDestinoId);
+        
+        const nombreOrigen = origen ? escapeHTML(origen.nombre) : '?';
+        const nombreDestino = destino ? escapeHTML(destino.nombre) : '?';
+        
+        conceptoTexto = `TRASPASO: ${nombreOrigen} -> ${nombreDestino}`;
+        
+        // En extracto global, un traspaso interno no afecta al saldo neto global,
+        // pero lo mostramos en la columna que corresponda al signo para referencia.
+        if (mov.cantidad < 0) cargo = formatCurrency(Math.abs(mov.cantidad));
+        else abono = formatCurrency(mov.cantidad);
+
         if (mov.descripcion && mov.descripcion !== 'Traspaso') {
             conceptoTexto += ` (${escapeHTML(mov.descripcion)})`;
         }
@@ -30,7 +38,8 @@ const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
         const concepto = db.conceptos.find(c => c.id === mov.conceptoId);
         const nombreConcepto = concepto ? concepto.nombre.toUpperCase() : 'VARIO';
         
-        conceptoTexto = `${nombreConcepto}`;
+        // En modo global añadimos el nombre de la cuenta al principio
+        conceptoTexto = `${prefixCuenta}${nombreConcepto}`;
         if (mov.descripcion) conceptoTexto += ` - ${escapeHTML(mov.descripcion)}`;
 
         if (mov.cantidad < 0) {
@@ -135,6 +144,115 @@ const handleGenerateInformeCuenta = async (form, btn = null) => {
         resultadoContainer.innerHTML = `<div class="empty-state text-danger"><p>Error al cargar datos.</p></div>`;
     } finally {
         if (btn) setButtonLoading(btn, false);
+    }
+};
+
+const handleGenerateGlobalExtract = async () => {
+    const resultadoContainer = select('informe-resultado-container');
+    if (!resultadoContainer) return;
+
+    hapticFeedback('medium');
+    
+    // Feedback de carga
+    resultadoContainer.innerHTML = `
+        <div style="text-align:center; padding: var(--sp-5);">
+            <span class="spinner" style="color:var(--c-primary); width: 24px; height:24px;"></span>
+            <p style="font-size:var(--fs-xs); margin-top:8px; color:var(--c-on-surface-secondary);">
+                Generando Libro Mayor Global...
+            </p>
+        </div>`;
+
+    try {
+        // 1. Obtener datos
+        const allMovements = await fetchAllMovementsForHistory();
+        const saldos = await getSaldos();
+        
+        // 2. Calcular Patrimonio Neto Actual (Punto de partida inverso)
+        let currentGlobalBalance = Object.values(saldos).reduce((sum, s) => sum + s, 0);
+        
+        // 3. Filtrar movimientos solo de la contabilidad visible
+        const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+        
+        let globalMovements = allMovements.filter(m => {
+            if (m.tipo === 'traspaso') {
+                // Solo incluimos traspasos si entran o salen de la contabilidad visible
+                // (Opcional: Si es interno A->A, el impacto neto es 0, pero lo mostramos para historial)
+                return visibleAccountIds.has(m.cuentaOrigenId) || visibleAccountIds.has(m.cuentaDestinoId);
+            }
+            return visibleAccountIds.has(m.cuentaId);
+        });
+
+        // 4. Ordenar: Reciente -> Antiguo (Para calcular saldo hacia atrás)
+        // Ordenamos por fecha descendente y ID para consistencia
+        globalMovements.sort((a, b) => {
+            const dateDiff = new Date(b.fecha) - new Date(a.fecha);
+            if (dateDiff !== 0) return dateDiff;
+            return b.id.localeCompare(a.id);
+        });
+
+        // 5. Calcular Saldos Históricos (Running Balance Inverso)
+        // Asignamos el saldo actual al movimiento más reciente, y vamos restando/sumando inversamente
+        // para deducir el saldo que había antes.
+        
+        let runningBalance = currentGlobalBalance;
+
+        for (const mov of globalMovements) {
+            mov.runningBalance = runningBalance; // El saldo DESPUÉS de este movimiento fue este.
+
+            // Calculamos el impacto neto de este movimiento en el global
+            let impact = 0;
+            if (mov.tipo === 'traspaso') {
+                const origenVisible = visibleAccountIds.has(mov.cuentaOrigenId);
+                const destinoVisible = visibleAccountIds.has(mov.cuentaDestinoId);
+                // Si sale de visible (A) a oculto (B), resta. Si entra, suma.
+                if (origenVisible && !destinoVisible) impact = -mov.cantidad;
+                else if (!origenVisible && destinoVisible) impact = mov.cantidad;
+                // Si es interno (A->A), impacto es 0.
+            } else {
+                impact = mov.cantidad;
+            }
+
+            // Para saber el saldo ANTES de este movimiento, RESTAMOS el impacto
+            // (Matemática inversa: SaldoAntes + Impacto = SaldoActual -> SaldoAntes = SaldoActual - Impacto)
+            runningBalance -= impact;
+        }
+
+        // 6. Renderizar HTML
+        let html = `
+            <div class="cartilla-container" style="border-top: 4px solid var(--c-primary);">
+                <div class="cartilla-header-info">
+                    <h4 style="color: var(--c-primary);">LIBRO MAYOR GLOBAL</h4>
+                    <p><strong>Contabilidad:</strong> ${isOffBalanceMode ? 'B (Oculta)' : 'A (Principal)'}</p>
+                    <p class="cartilla-print-date">Consolidado a: ${new Date().toLocaleDateString()}</p>
+                </div>
+                
+                <div class="cartilla-table">
+                    <div class="cartilla-row cartilla-head">
+                        <div class="cartilla-cell">FECHA</div>
+                        <div class="cartilla-cell">CUENTA / CONCEPTO</div>
+                        <div class="cartilla-cell text-right">CARGOS</div>
+                        <div class="cartilla-cell text-right">ABONOS</div>
+                        <div class="cartilla-cell text-right">PATRIMONIO</div>
+                    </div>`;
+                
+        // Iteramos los movimientos (ya están ordenados Reciente -> Antiguo)
+        for (const mov of globalMovements) {
+            // Pasamos null como cuentaId para activar el modo global en el renderizador
+            html += renderInformeCuentaRow(mov, null, db.cuentas);
+        }
+        
+        html += `</div>
+            <div class="cartilla-footer">
+                ** FIN DEL INFORME CONSOLIDADO **
+            </div>
+        </div>`;
+
+        resultadoContainer.innerHTML = html;
+        showToast("Extracto Global generado.", "success");
+
+    } catch (error) {
+        console.error(error);
+        resultadoContainer.innerHTML = `<div class="empty-state text-danger"><p>Error al calcular global.</p></div>`;
     }
 };
 
@@ -5146,8 +5264,7 @@ const renderPatrimonioPage = () => {
         
         <div class="card card--no-bg accordion-wrapper">
             <details id="acordeon-extracto_cuenta" class="accordion informe-acordeon">
-                <summary>
-                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                <summary id="summary-extracto-trigger"> <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
                         <span class="material-icons">wysiwyg</span>
                         <span>Extracto de Cuenta</span>
                     </h3>
@@ -5155,7 +5272,6 @@ const renderPatrimonioPage = () => {
                 </summary>
                 <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
                     <div id="informe-content-extracto_cuenta">
-                         
                          <div id="informe-cuenta-wrapper">
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta:</label>
@@ -5164,20 +5280,20 @@ const renderPatrimonioPage = () => {
                                 </div>
                             </div>
                         </div>
-
                         <div id="informe-resultado-container" style="margin-top: var(--sp-4);">
                             <div class="empty-state" style="background:transparent; padding:var(--sp-2); border:none;">
-                                <p style="font-size:0.85rem;">Selecciona una cuenta arriba para ver el extracto.</p>
+                                <p style="font-size:0.85rem;">
+                                    Selecciona una cuenta arriba.<br>
+                                    <small style="opacity: 0.7;">(Doble clic en el título para Extracto Global)</small>
+                                </p>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </details>
         </div>
     `;
 
-    // --- LÓGICA JS ---
     setTimeout(async () => {
         // Carga Visión General
         await renderPatrimonioOverviewWidget('patrimonio-overview-container');
@@ -5217,7 +5333,24 @@ const renderPatrimonioPage = () => {
                 }
             });
         }
-        
+        // --- LÓGICA DEL DOBLE CLIC (NUEVO) ---
+        const summaryTrigger = select('summary-extracto-trigger');
+        if (summaryTrigger) {
+            summaryTrigger.addEventListener('dblclick', (e) => {
+                e.preventDefault(); // Evita que el acordeón se cierre/abra erráticamente
+                
+                // Aseguramos que el acordeón esté abierto
+                const details = select('acordeon-extracto_cuenta');
+                if (details && !details.open) details.open = true;
+
+                // Limpiamos el selector de cuenta individual para no confundir
+                const selectCuenta = select('informe-cuenta-select');
+                if (selectCuenta) selectCuenta.value = "";
+
+                // Lanzamos el global
+                handleGenerateGlobalExtract();
+            });
+        }
     }, 50);
 };
 
