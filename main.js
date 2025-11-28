@@ -5144,13 +5144,13 @@ const renderPatrimonioPage = () => {
     const container = select(PAGE_IDS.PATRIMONIO);
     if (!container) return;
 
-    // --- CAMBIO EN EL HTML: Eliminamos <form> y el <button> ---
+    // --- HTML ---
     container.innerHTML = `
         <details class="accordion" style="margin-bottom: var(--sp-4);">
             <summary>
                 <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
                     <span class="material-icons">account_balance</span>
-                    Visión General del Patrimonio
+                    Visión General
                 </h3>
                 <span class="material-icons accordion__icon">expand_more</span>
             </summary>
@@ -5182,7 +5182,7 @@ const renderPatrimonioPage = () => {
                 <summary>
                     <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
                         <span class="material-icons">wysiwyg</span>
-                        <span>Extracto de Cuenta (Cartilla)</span>
+                        <span>Extracto de Cuenta</span>
                     </h3>
                     <span class="material-icons accordion__icon">expand_more</span>
                 </summary>
@@ -5191,25 +5191,30 @@ const renderPatrimonioPage = () => {
                          <div id="informe-cuenta-wrapper">
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta:</label>
-                                <select id="informe-cuenta-select" class="form-select"></select>
+                                <div class="input-wrapper">
+                                    <select id="informe-cuenta-select" class="form-select"></select>
+                                </div>
                             </div>
                         </div>
                         <div id="informe-resultado-container" style="margin-top: var(--sp-4);">
+                            <div class="empty-state" style="background:transparent; padding:var(--sp-2); border:none;">
+                                <p style="font-size:0.85rem;">Selecciona una cuenta arriba para ver el extracto.</p>
                             </div>
+                        </div>
                     </div>
                 </div>
             </details>
         </div>
     `;
 
+    // --- LÓGICA JS ---
     setTimeout(async () => {
-        // Carga Visión General
+        // 1. Carga Visión General
         await renderPatrimonioOverviewWidget('patrimonio-overview-container');
         
-        // --- CAMBIO EN LA LÓGICA JS: Activación automática ---
+        // 2. Extracto Automático
         const selectCuenta = select('informe-cuenta-select');
         if (selectCuenta) {
-            // Rellenar selector
             const populate = (el, data) => {
                 let opts = '<option value="">Seleccionar cuenta...</option>';
                 [...data].sort((a,b) => a.nombre.localeCompare(b.nombre))
@@ -5218,18 +5223,15 @@ const renderPatrimonioPage = () => {
             };
             populate(selectCuenta, getVisibleAccounts());
 
-            // Si usas createCustomSelect, esto hace que se vea bonito
+            // Ahora sí funcionará porque tiene el padre .input-wrapper
             createCustomSelect(selectCuenta);
 
-            // ¡AQUÍ ESTÁ LA CLAVE! Escuchamos el cambio y llamamos a la función
             selectCuenta.addEventListener('change', () => {
-                // Llamamos a la función pasando 'null' en lugar del botón
                 handleGenerateInformeCuenta(null, null);
             });
         }
-        // -----------------------------------------------------
 
-        // Lógica Portafolio (Lazy Load)
+        // 3. Portafolio Lazy Load
         const acordeonPortafolio = select('acordeon-portafolio');
         if (acordeonPortafolio) {
             const loadPortfolioData = async () => {
@@ -5243,7 +5245,6 @@ const renderPatrimonioPage = () => {
                 }
             });
         }
-        
     }, 50);
 };
 
