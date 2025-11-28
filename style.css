@@ -1052,72 +1052,94 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     font-weight: 700;
 }
 /* ================================================================= */
-/* === CALCULADORA NATIVA COMPACTA (Corrección Definitiva) === */
+/* === CALCULADORA NATIVA COMPACTA Y CENTRADA v4.0 === */
 /* ================================================================= */
 
-/* 1. ELIMINAR EL FONDO Y EL DESENFOQUE (BLUR) */
+/* 1. CONTENEDOR PRINCIPAL */
 #calculator-overlay {
-    background: transparent !important;       /* Sin color de fondo */
-    background-color: transparent !important; 
-    backdrop-filter: none !important;         /* QUITA EL DESENFOQUE */
-    -webkit-backdrop-filter: none !important; /* Quita el desenfoque en iOS */
-    pointer-events: none;                     /* Permite ver y tocar lo de atrás en la zona vacía */
-    z-index: 2147483647 !important;           /* Siempre encima de todo */
-    align-items: flex-end !important;         /* Fuerza posición abajo */
-    padding: 0 !important;                    /* Sin rellenos extra */
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    pointer-events: none; /* Permite clicks a través en la zona vacía */
+    z-index: 2147483647 !important;
+    padding: 0 !important;
+    /* Eliminamos align-items para gestionar posición manualmente */
 }
 
-/* 2. DISEÑO DEL TECLADO (PANEL BLANCO/OSCURO) */
+/* Solo activamos eventos de puntero cuando está visible */
+#calculator-overlay.modal-overlay--active {
+    pointer-events: auto; 
+    /* Pero permitimos que los clicks fuera de la UI cierren (gestionado por JS) 
+       o pasen al fondo si ajustamos el pointer-events de la UI */
+}
+
+/* 2. EL PANEL DE LA CALCULADORA (El teclado) */
 .calculator-ui {
     position: fixed;
     bottom: 0;
-    left: 0;
+    left: 50%; /* 1. La colocamos en el centro horizontal */
     width: 100%;
+    max-width: 380px; /* 2. Límite de ancho para que no se estire */
+    
     z-index: 2147483647;
+    background-color: var(--c-surface);
     
-    /* Color sólido del tema (sin transparencias raras) */
-    background-color: var(--c-surface); 
-    border-top: 1px solid var(--c-outline);
+    /* 3. Estética de tarjeta "Premium" */
+    border-radius: 20px 20px 0 0; /* Bordes superiores redondeados */
+    border: 1px solid var(--c-outline);
+    border-bottom: none; /* Pegado abajo no necesita borde */
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.25); /* Sombra elegante */
     
-    /* Sombra superior suave para separarlo del contenido */
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-    
-    /* Ajuste para iPhone X/11/12/etc */
     padding-bottom: env(safe-area-inset-bottom);
     
-    /* Animación rápida y seca (tipo teclado) */
-    transform: translateY(100%);
-    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    /* 4. Animación corregida para incluir el centrado */
+    /* translate(-50%, 100%) = Centrada en X, Escondida abajo en Y */
+    transform: translate(-50%, 100%); 
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    
     visibility: hidden;
-    pointer-events: auto; /* El teclado sí debe recibir clics */
+    pointer-events: auto;
 }
 
-/* Cuando se activa, sube */
+/* Estado Activo: Sube hacia arriba (Y=0) manteniendo el centro (X=-50%) */
 #calculator-overlay.modal-overlay--active .calculator-ui {
-    transform: translateY(0);
+    transform: translate(-50%, 0);
     visibility: visible;
 }
 
-/* 3. BARRA DE HISTORIAL ULTRA-COMPACTA */
+/* 3. BARRA DE HISTORIAL MINIMALISTA */
 .calculator-history-display {
     background-color: var(--c-surface-variant);
     color: var(--c-on-surface-secondary);
-    font-size: 0.8rem;
-    height: 28px; /* Altura mínima */
+    font-size: 0.75rem;
+    font-weight: 600;
+    height: 24px; /* Aún más compacta */
     display: flex;
     align-items: center;
     justify-content: flex-end;
     padding: 0 12px;
     border-bottom: 1px solid var(--c-outline);
     font-family: monospace;
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
 }
 
-/* 4. BOTONES MÁS PEQUEÑOS Y COMPACTOS */
-.calculator-btn {
-    height: 46px; /* Altura reducida (estándar iOS keyboard) */
-    font-size: 1.3rem;
+.calculator-display { display: none; }
+
+/* 4. GRID DE BOTONES */
+.calculator-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    width: 100%;
+    gap: 0;
     border: none;
-    border-right: 1px solid var(--c-outline); /* Líneas finas */
+}
+
+/* 5. BOTONES OPTIMIZADOS */
+.calculator-btn {
+    height: 44px; /* Altura ideal para dedo pero compacta */
+    font-size: 1.25rem;
+    border: none;
+    border-right: 1px solid var(--c-outline);
     border-bottom: 1px solid var(--c-outline);
     background-color: var(--c-surface);
     color: var(--c-on-surface);
@@ -1126,41 +1148,34 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     justify-content: center;
     cursor: pointer;
     margin: 0;
+    transition: background-color 0.1s;
 }
 
-/* Quitamos bordes redundantes */
-.calculator-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    width: 100%;
-    gap: 0; /* Sin huecos */
-    border: none;
-    background-color: transparent;
+.calculator-btn:active {
+    background-color: var(--c-surface-variant);
 }
 
-/* Columna de operadores */
 .calculator-btn.btn-operator {
     background-color: var(--c-surface-variant);
-    font-weight: 500;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
 }
 
-/* Botón OK destacado */
 .calculator-btn.btn-confirm {
     background-color: var(--c-primary);
     color: var(--c-white);
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.9rem;
     grid-column: 4;
     grid-row: 3 / span 2;
-    height: auto; /* Se ajusta a las 2 filas */
+    height: auto; 
 }
 
-/* Feedback táctil */
-.calculator-btn:active {
-    background-color: color-mix(in srgb, var(--c-primary) 10%, transparent);
+.calculator-btn.zero {
+    grid-column: span 2;
 }
 
+/* Quitar bordes externos sobrantes */
+.calculator-grid .calculator-btn:nth-child(4n) { border-right: none; }
 
 /* --- Estilos de Contabilidad Dual (A/B) --- */
 body[data-ledger-mode="A"] #ledger-toggle-btn { background-color: var(--c-primary); border-color: var(--c-primary); color: var(--c-white); box-shadow: var(--shadow-sm); }
