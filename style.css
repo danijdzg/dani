@@ -1052,129 +1052,116 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     font-weight: 700;
 }
 /* ================================================================= */
-/* === CALCULADORA COMPACTA (Estilo Teclado Nativo) v3.1 === */
+/* === CALCULADORA NATIVA COMPACTA (Corrección Definitiva) === */
 /* ================================================================= */
 
-/* El contenedor principal: Invisible y permite clicks a través de él en la zona vacía */
+/* 1. ELIMINAR EL FONDO Y EL DESENFOQUE (BLUR) */
 #calculator-overlay {
+    background: transparent !important;       /* Sin color de fondo */
     background-color: transparent !important; 
-    pointer-events: none; 
-    z-index: 2147483647 !important; /* Capa máxima */
-    align-items: flex-end !important; /* Forzamos que esté abajo */
+    backdrop-filter: none !important;         /* QUITA EL DESENFOQUE */
+    -webkit-backdrop-filter: none !important; /* Quita el desenfoque en iOS */
+    pointer-events: none;                     /* Permite ver y tocar lo de atrás en la zona vacía */
+    z-index: 2147483647 !important;           /* Siempre encima de todo */
+    align-items: flex-end !important;         /* Fuerza posición abajo */
+    padding: 0 !important;                    /* Sin rellenos extra */
 }
 
-/* Solo activamos eventos cuando está visible para detectar clicks */
-#calculator-overlay.modal-overlay--active {
-    pointer-events: auto; 
-}
-
-/* El panel de la calculadora */
+/* 2. DISEÑO DEL TECLADO (PANEL BLANCO/OSCURO) */
 .calculator-ui {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
     z-index: 2147483647;
-    background-color: var(--c-surface);
+    
+    /* Color sólido del tema (sin transparencias raras) */
+    background-color: var(--c-surface); 
     border-top: 1px solid var(--c-outline);
-    padding-bottom: env(safe-area-inset-bottom); /* Respetar zona segura iPhone */
     
-    /* Animación de deslizamiento */
+    /* Sombra superior suave para separarlo del contenido */
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    
+    /* Ajuste para iPhone X/11/12/etc */
+    padding-bottom: env(safe-area-inset-bottom);
+    
+    /* Animación rápida y seca (tipo teclado) */
     transform: translateY(100%);
-    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
     visibility: hidden;
-    
-    /* Sombra para separarlo visualmente del contenido */
-    box-shadow: 0 -4px 25px rgba(0,0,0,0.3);
+    pointer-events: auto; /* El teclado sí debe recibir clics */
 }
 
+/* Cuando se activa, sube */
 #calculator-overlay.modal-overlay--active .calculator-ui {
     transform: translateY(0);
     visibility: visible;
 }
 
-/* Barra superior pequeña (Historial) */
+/* 3. BARRA DE HISTORIAL ULTRA-COMPACTA */
 .calculator-history-display {
     background-color: var(--c-surface-variant);
     color: var(--c-on-surface-secondary);
-    font-size: 0.85rem;
-    font-weight: 600;
-    height: 32px; /* Reducido de 36px */
+    font-size: 0.8rem;
+    height: 28px; /* Altura mínima */
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    padding: 0 16px;
+    padding: 0 12px;
     border-bottom: 1px solid var(--c-outline);
     font-family: monospace;
-    opacity: 0.8;
 }
 
-/* Display principal oculto (usamos el input real) */
-.calculator-display { display: none; }
-
-/* Grid de botones */
-.calculator-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    background-color: var(--c-outline); /* Crea las líneas divisorias */
-    border: none;
-}
-
-/* Botones individuales */
+/* 4. BOTONES MÁS PEQUEÑOS Y COMPACTOS */
 .calculator-btn {
+    height: 46px; /* Altura reducida (estándar iOS keyboard) */
+    font-size: 1.3rem;
+    border: none;
+    border-right: 1px solid var(--c-outline); /* Líneas finas */
+    border-bottom: 1px solid var(--c-outline);
     background-color: var(--c-surface);
     color: var(--c-on-surface);
-    font-size: 1.25rem; /* Fuente más pequeña (antes 1.5rem) */
-    font-weight: 400;
-    height: 48px; /* ALTURA REDUCIDA (antes 56px) */
-    border: none;
-    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    user-select: none;
+    margin: 0;
 }
 
-/* Efecto al pulsar (Feedback táctil visual) */
-.calculator-btn:active {
-    background-color: var(--c-surface-variant);
+/* Quitamos bordes redundantes */
+.calculator-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    width: 100%;
+    gap: 0; /* Sin huecos */
+    border: none;
+    background-color: transparent;
 }
 
-/* Columna de operadores (Derecha) */
+/* Columna de operadores */
 .calculator-btn.btn-operator {
-    background-color: color-mix(in srgb, var(--c-surface) 95%, var(--c-primary)); 
+    background-color: var(--c-surface-variant);
     font-weight: 500;
-    font-size: 1.1rem;
-}
-.calculator-btn.btn-operator--active {
-    background-color: var(--c-primary);
-    color: var(--c-white);
+    font-size: 1.2rem;
 }
 
-/* Botón OK */
+/* Botón OK destacado */
 .calculator-btn.btn-confirm {
     background-color: var(--c-primary);
     color: var(--c-white);
     font-weight: 700;
     font-size: 1rem;
     grid-column: 4;
-    grid-row: 3 / span 2; /* Ocupa 2 filas */
-    height: auto; /* Se adapta a las 2 filas */
+    grid-row: 3 / span 2;
+    height: auto; /* Se ajusta a las 2 filas */
 }
 
-/* Botón Cero ancho */
-.calculator-btn.zero {
-    grid-column: span 2;
-    justify-content: flex-start;
-    padding-left: 32px; /* Alinear visualmente */
+/* Feedback táctil */
+.calculator-btn:active {
+    background-color: color-mix(in srgb, var(--c-primary) 10%, transparent);
 }
 
-/* Icono borrar */
-.material-icons.backspace-icon {
-    font-size: 1.2rem;
-}
+
 /* --- Estilos de Contabilidad Dual (A/B) --- */
 body[data-ledger-mode="A"] #ledger-toggle-btn { background-color: var(--c-primary); border-color: var(--c-primary); color: var(--c-white); box-shadow: var(--shadow-sm); }
 body[data-ledger-mode="A"] #ledger-toggle-btn:hover { background-color: var(--c-primary-hover); border-color: var(--c-primary-hover); box-shadow: var(--shadow-md); }
