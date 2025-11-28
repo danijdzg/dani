@@ -1046,36 +1046,40 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     font-weight: 700;
 }
 /* ================================================================= */
-/* === CALCULADORA "INVISIBLE" (Estilo Teclado Nativo) v3.0 === */
+/* === CALCULADORA COMPACTA (Estilo Teclado Nativo) v3.1 === */
 /* ================================================================= */
 
-/* El overlay ahora es invisible, solo sirve para detectar clics fuera */
+/* El contenedor principal: Invisible y permite clicks a través de él en la zona vacía */
 #calculator-overlay {
-    background-color: transparent !important; /* Sin fondo oscuro */
-    pointer-events: none; /* Permite ver y clicar (si quisiéramos) lo de atrás */
-    z-index: 2000;
+    background-color: transparent !important; 
+    pointer-events: none; 
+    z-index: 2147483647 !important; /* Capa máxima */
+    align-items: flex-end !important; /* Forzamos que esté abajo */
 }
 
+/* Solo activamos eventos cuando está visible para detectar clicks */
 #calculator-overlay.modal-overlay--active {
-    pointer-events: auto; /* Reactivamos eventos cuando está abierta para detectar clic fuera */
+    pointer-events: auto; 
 }
 
-/* El panel de la calculadora imita al teclado del móvil */
+/* El panel de la calculadora */
 .calculator-ui {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    max-width: 100%; /* Ocupa todo el ancho en móvil */
-    z-index: 2001;
-    background-color: var(--c-surface); /* Color sólido del tema */
+    z-index: 2147483647;
+    background-color: var(--c-surface);
     border-top: 1px solid var(--c-outline);
-    padding: 0; /* Sin padding externo */
-    padding-bottom: env(safe-area-inset-bottom);
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+    padding-bottom: env(safe-area-inset-bottom); /* Respetar zona segura iPhone */
+    
+    /* Animación de deslizamiento */
     transform: translateY(100%);
-    transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
     visibility: hidden;
+    
+    /* Sombra para separarlo visualmente del contenido */
+    box-shadow: 0 -4px 25px rgba(0,0,0,0.3);
 }
 
 #calculator-overlay.modal-overlay--active .calculator-ui {
@@ -1083,87 +1087,87 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     visibility: visible;
 }
 
-/* Ocultamos el display grande de la calculadora, usaremos el input real */
-.calculator-display {
-    display: none; 
-}
-
-/* El historial se ve pequeño arriba, como una "barra de sugerencias" del teclado */
+/* Barra superior pequeña (Historial) */
 .calculator-history-display {
     background-color: var(--c-surface-variant);
     color: var(--c-on-surface-secondary);
-    font-size: 0.9rem;
-    height: 36px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    height: 32px; /* Reducido de 36px */
     display: flex;
     align-items: center;
     justify-content: flex-end;
     padding: 0 16px;
     border-bottom: 1px solid var(--c-outline);
     font-family: monospace;
+    opacity: 0.8;
 }
 
-/* Grid de botones pegado borde a borde */
+/* Display principal oculto (usamos el input real) */
+.calculator-display { display: none; }
+
+/* Grid de botones */
 .calculator-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1px; /* Espacio mínimo para las líneas divisorias */
-    background-color: var(--c-outline); /* Color de las líneas */
-    border: 1px solid var(--c-outline);
-    border-left: none; border-right: none; border-bottom: none;
+    gap: 1px;
+    background-color: var(--c-outline); /* Crea las líneas divisorias */
+    border: none;
 }
 
+/* Botones individuales */
 .calculator-btn {
     background-color: var(--c-surface);
     color: var(--c-on-surface);
-    font-size: 1.5rem;
+    font-size: 1.25rem; /* Fuente más pequeña (antes 1.5rem) */
     font-weight: 400;
-    height: 56px; /* Altura estándar de teclado móvil */
+    height: 48px; /* ALTURA REDUCIDA (antes 56px) */
     border: none;
-    border-radius: 0; /* Cuadrados perfectos */
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.1s;
+    cursor: pointer;
+    user-select: none;
 }
 
+/* Efecto al pulsar (Feedback táctil visual) */
 .calculator-btn:active {
     background-color: var(--c-surface-variant);
 }
 
 /* Columna de operadores (Derecha) */
 .calculator-btn.btn-operator {
-    background-color: var(--c-surface-variant);
+    background-color: color-mix(in srgb, var(--c-surface) 95%, var(--c-primary)); 
     font-weight: 500;
-    font-size: 1.3rem;
+    font-size: 1.1rem;
+}
+.calculator-btn.btn-operator--active {
+    background-color: var(--c-primary);
+    color: var(--c-white);
 }
 
-/* Botón OK (Confirmar) */
+/* Botón OK */
 .calculator-btn.btn-confirm {
     background-color: var(--c-primary);
     color: var(--c-white);
     font-weight: 700;
+    font-size: 1rem;
     grid-column: 4;
-    grid-row: 3 / span 2; /* Ocupa las dos últimas filas */
-    height: auto;
+    grid-row: 3 / span 2; /* Ocupa 2 filas */
+    height: auto; /* Se adapta a las 2 filas */
 }
 
-/* Botón Cero */
+/* Botón Cero ancho */
 .calculator-btn.zero {
     grid-column: span 2;
+    justify-content: flex-start;
+    padding-left: 32px; /* Alinear visualmente */
 }
 
-/* Ajuste del botón borrar */
+/* Icono borrar */
 .material-icons.backspace-icon {
-    font-size: 1.4rem;
-}
-/* Estilo para el nuevo display de historial */
-.calculator-history-display {
-    font-size: 1.1rem; font-weight: 500; color: var(--c-on-surface-secondary); text-align: right;
-    padding: 0 var(--sp-3); min-height: 22px; margin-bottom: var(--sp-1);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.calculator-btn.btn-operator--active {
-    background-color: var(--c-primary); color: var(--c-white);
+    font-size: 1.2rem;
 }
 /* --- Estilos de Contabilidad Dual (A/B) --- */
 body[data-ledger-mode="A"] #ledger-toggle-btn { background-color: var(--c-primary); border-color: var(--c-primary); color: var(--c-white); box-shadow: var(--shadow-sm); }

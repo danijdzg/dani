@@ -7728,10 +7728,10 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
     trigger.innerHTML = selectedHTML;
 }
 
-/* EN main.js - Reemplaza showCalculator */
-
 const showCalculator = (targetInput) => {
     const calculatorOverlay = select('calculator-overlay');
+    const calculatorUi = select('calculator-ui'); // Seleccionamos la UI para medirla
+    
     if (!calculatorOverlay) return;
     
     // 1. Mostrar la UI
@@ -7744,10 +7744,10 @@ const showCalculator = (targetInput) => {
     calculatorState.displayValue = currentValue ? currentValue.toString().replace('.', ',') : '0';
     calculatorState.waitingForNewValue = true;
     
-    updateCalculatorDisplay(); // (Aunque esté oculto por CSS, lo actualizamos por si acaso)
+    updateCalculatorDisplay(); 
     updateCalculatorHistoryDisplay();
 
-    // 3. GESTIÓN DEL TECLADO FÍSICO (Se mantiene igual)
+    // 3. GESTIÓN DEL TECLADO FÍSICO (Sin cambios)
     if (calculatorKeyboardHandler) document.removeEventListener('keydown', calculatorKeyboardHandler);
     calculatorKeyboardHandler = (e) => {
         const key = e.key;
@@ -7764,23 +7764,42 @@ const showCalculator = (targetInput) => {
     };
     document.addEventListener('keydown', calculatorKeyboardHandler);
 
-    // 4. FEEDBACK VISUAL
+    // 4. FEEDBACK VISUAL EN EL INPUT
     document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
     targetInput.classList.add('form-input--active-calc');
     
-    // 5. === LA MAGIA INVISIBLE: SCROLL INTELIGENTE ===
-    // Esperamos a que la calculadora suba (300ms) y luego ajustamos el scroll
+    // 5. === SCROLL INTELIGENTE MEJORADO ===
     setTimeout(() => {
-        // Calculamos la altura de la calculadora (aprox 280px en móvil)
-        const keyboardHeight = 300; 
-        const inputRect = targetInput.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
+        // Medimos la altura REAL de la calculadora (o usamos 280px por defecto si no está lista)
+        const uiHeight = calculatorUi ? calculatorUi.offsetHeight : 280;
         
-        // Si el input está muy abajo (tapado por la calculadora), lo subimos
-        if (inputRect.bottom > (viewportHeight - keyboardHeight)) {
+        // Calculamos posición
+        const inputRect = targetInput.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        
+        // Espacio disponible arriba de la calculadora
+        const spaceAbove = windowHeight - uiHeight;
+        
+        // Si el input está cubierto (su parte de abajo está más abajo que el inicio de la calculadora)
+        if (inputRect.bottom > spaceAbove) {
+            // Hacemos scroll para que el input quede centrado en el ESPACIO DISPONIBLE (no en toda la pantalla)
+            // Truco: scrollIntoView pone el elemento arriba o abajo. Nosotros calculamos el scroll manual.
+            
             targetInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Ajuste fino adicional por si el 'center' no fue suficiente debido al teclado superpuesto
+            setTimeout(() => {
+                const rectCheck = targetInput.getBoundingClientRect();
+                if (rectCheck.bottom > spaceAbove) {
+                    // Si sigue tapado, forzamos scroll del contenedor padre (normalmente el modal body o el main)
+                    const scroller = targetInput.closest('.modal__body') || selectOne('.app-layout__main');
+                    if (scroller) {
+                        scroller.scrollBy({ top: 150, behavior: 'smooth' }); // Empujamos 150px más
+                    }
+                }
+            }, 300);
         }
-    }, 100);
+    }, 150); // Esperamos a que la animación CSS de subida empiece
 };
 
 const hideCalculator = () => {
