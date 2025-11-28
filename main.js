@@ -506,7 +506,7 @@ const handleCalculatorInput = (key) => {
     hapticFeedback('light');
     let { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue } = calculatorState;
     
-    // Si mostramos un resultado y el usuario toca un número, reseteamos. Si toca operador, seguimos.
+    // Reset si venimos de un resultado y se escribe número
     if (isResultDisplayed && !['add', 'subtract', 'multiply', 'divide', 'sign'].includes(key)) {
         displayValue = '0';
         isResultDisplayed = false;
@@ -522,6 +522,7 @@ const handleCalculatorInput = (key) => {
         }
         operand1 = parseFloat(displayValue.replace(',', '.'));
         operator = key;
+        // Mostramos la operación en la barrita pequeña de historial
         historyValue = `${displayValue} ${getOperatorSymbol(operator)}`;
         waitingForNewValue = true;
         isResultDisplayed = false;
@@ -529,64 +530,36 @@ const handleCalculatorInput = (key) => {
         switch(key) {
             case 'done':
                 hapticFeedback('medium');
-                // Realizar cálculo si quedaba algo pendiente
+                // Calcular final si hay pendiente
                 if (operand1 !== null && operator !== null && !waitingForNewValue) {
                     calculate();
                     displayValue = calculatorState.displayValue;
                 }
                 
-                // Actualizar el input con el valor final
-                if (calculatorState.targetInput) {
-                    const finalValue = parseFloat(displayValue.replace(',', '.')) || 0;
-                    calculatorState.targetInput.value = finalValue.toLocaleString('es-ES', { 
-                        useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 
-                    });
-                    calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    
-                    // Feedback visual en el input (Mejora #5)
-                    calculatorState.targetInput.classList.add('field-highlighted');
-                    setTimeout(() => calculatorState.targetInput.classList.remove('field-highlighted'), 1000);
-                    
-                    calculatorState.targetInput.blur();
-                }
+                // Actualizar input final
+                updateTargetInput(displayValue);
                 
                 historyValue = '';
-                hideCalculator(); // Cerrar calculadora
+                hideCalculator(); 
 
-                // ▼▼▼ Lógica de Flujo en Cascada (Auto-foco) ▼▼▼
+                // --- AVANCE AUTOMÁTICO AL SIGUIENTE CAMPO ---
+                // Al dar OK, pasamos al concepto automáticamente
                 setTimeout(() => {
-                    const typePill = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active');
-                    const tipo = typePill ? typePill.dataset.type : 'gasto';
-
-                    if (tipo === 'traspaso') {
-                        // Si es traspaso, abrir Cuenta Origen
-                        const origenSelect = document.getElementById('movimiento-cuenta-origen');
-                        if (origenSelect) {
-                            const wrapper = origenSelect.closest('.custom-select-wrapper');
-                            const trigger = wrapper ? wrapper.querySelector('.custom-select__trigger') : null;
-                            if (trigger) trigger.click();
-                        }
-                    } else {
-                        // Si es Gasto/Ingreso, abrir CONCEPTO
-                        const conceptoSelect = document.getElementById('movimiento-concepto');
-                        if (conceptoSelect) {
-                            const wrapper = conceptoSelect.closest('.custom-select-wrapper');
-                            const trigger = wrapper ? wrapper.querySelector('.custom-select__trigger') : null;
-                            if (trigger) {
-                                trigger.focus(); 
-                                trigger.click(); 
-                            }
-                        }
+                    const conceptoSelect = document.getElementById('movimiento-concepto');
+                    // Buscamos el trigger del custom select
+                    const wrapper = conceptoSelect?.closest('.custom-select-wrapper');
+                    const trigger = wrapper?.querySelector('.custom-select__trigger');
+                    
+                    if (trigger) {
+                        trigger.focus(); // Enfocar para navegación teclado
+                        trigger.click(); // Abrir el menú
                     }
                 }, 100); 
-                return; // IMPORTANTE: Salir de la función aquí
+                return;
 
             case 'comma':
-                if (waitingForNewValue) {
-                    displayValue = '0,';
-                    waitingForNewValue = false;
-                } else if (!displayValue.includes(',')) displayValue += ',';
-                isResultDisplayed = false;
+                if (waitingForNewValue) { displayValue = '0,'; waitingForNewValue = false; } 
+                else if (!displayValue.includes(',')) displayValue += ',';
                 break;
 
             case 'clear': 
@@ -596,7 +569,6 @@ const handleCalculatorInput = (key) => {
             case 'backspace': 
                 displayValue = displayValue.length > 1 ? displayValue.slice(0, -1) : '0';
                 if (displayValue === '0') waitingForNewValue = true;
-                isResultDisplayed = false;
                 break;
 
             case 'sign': 
@@ -610,16 +582,36 @@ const handleCalculatorInput = (key) => {
                 } else if (displayValue.length < 12) { 
                     displayValue += key;
                 }
-                isResultDisplayed = false;
                 break;
         }
     }
     
-    // Guardamos y actualizamos la UI
+    // Guardamos estado
     Object.assign(calculatorState, { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue });
+    
+    // Actualizamos UI interna
     updateCalculatorDisplay();
     updateCalculatorHistoryDisplay();
     updateActiveOperatorButton();
+
+    // === FEEDBACK EN VIVO: Actualizamos el input mientras escribes ===
+    // Solo si no estamos en medio de una operación pendiente (para no confundir)
+    if (!operand1) {
+        updateTargetInput(displayValue);
+    }
+};
+
+// Función auxiliar para escribir en el input real
+const updateTargetInput = (val) => {
+    if (calculatorState.targetInput) {
+        const num = parseFloat(val.replace(',', '.')) || 0;
+        // Formateamos bonito en el input real
+        calculatorState.targetInput.value = num.toLocaleString('es-ES', { 
+            useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 
+        });
+        // Disparamos evento para que el sistema sepa que cambió
+        calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
 };
 
 // --- INICIO: BLOQUE CALCULADORA REPARADO Y BLINDADO ---
@@ -7769,36 +7761,29 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
     trigger.innerHTML = selectedHTML;
 }
 
+/* EN main.js - Reemplaza showCalculator */
 
 const showCalculator = (targetInput) => {
     const calculatorOverlay = select('calculator-overlay');
     if (!calculatorOverlay) return;
     
-    // Mostramos la UI
+    // 1. Mostrar la UI
     calculatorOverlay.classList.add('modal-overlay--active');
     calculatorState.isVisible = true;
     calculatorState.targetInput = targetInput;
     
-    // Cargar el valor actual del input en la calculadora si existe
+    // 2. Cargar valor inicial
     const currentValue = parseCurrencyString(targetInput.value);
     calculatorState.displayValue = currentValue ? currentValue.toString().replace('.', ',') : '0';
-    calculatorState.waitingForNewValue = true; // Al empezar, si escribe un número, reemplaza el 0
+    calculatorState.waitingForNewValue = true;
     
-    updateCalculatorDisplay();
-    updateCalculatorHistoryDisplay(); // Limpia o actualiza el historial si lo hubiera
+    updateCalculatorDisplay(); // (Aunque esté oculto por CSS, lo actualizamos por si acaso)
+    updateCalculatorHistoryDisplay();
 
-    // --- GESTIÓN DEL TECLADO FÍSICO ---
-    // Eliminamos listener previo por seguridad
-    if (calculatorKeyboardHandler) {
-        document.removeEventListener('keydown', calculatorKeyboardHandler);
-    }
-
-    // Definimos el manejador del teclado físico
+    // 3. GESTIÓN DEL TECLADO FÍSICO (Se mantiene igual)
+    if (calculatorKeyboardHandler) document.removeEventListener('keydown', calculatorKeyboardHandler);
     calculatorKeyboardHandler = (e) => {
-        // Permitir F5, F12, Tab, etc. pero bloquear teclas de escritura en el fondo
         const key = e.key;
-        
-        // Mapeo de teclas físicas a las acciones de nuestra calculadora
         if (key >= '0' && key <= '9') { e.preventDefault(); handleCalculatorInput(key); }
         else if (key === ',' || key === '.') { e.preventDefault(); handleCalculatorInput('comma'); }
         else if (key === 'Enter') { e.preventDefault(); handleCalculatorInput('done'); }
@@ -7810,17 +7795,25 @@ const showCalculator = (targetInput) => {
         else if (key === '*' || key.toLowerCase() === 'x') { e.preventDefault(); handleCalculatorInput('multiply'); }
         else if (key === '/') { e.preventDefault(); handleCalculatorInput('divide'); }
     };
-
-    // Activamos el listener global
     document.addEventListener('keydown', calculatorKeyboardHandler);
-	// MEJORA: Feedback visual en el input activo
+
+    // 4. FEEDBACK VISUAL
     document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
     targetInput.classList.add('form-input--active-calc');
     
-    // Scroll suave para asegurar que el input no quede tapado por la calculadora
+    // 5. === LA MAGIA INVISIBLE: SCROLL INTELIGENTE ===
+    // Esperamos a que la calculadora suba (300ms) y luego ajustamos el scroll
     setTimeout(() => {
-        targetInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 300);
+        // Calculamos la altura de la calculadora (aprox 280px en móvil)
+        const keyboardHeight = 300; 
+        const inputRect = targetInput.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        
+        // Si el input está muy abajo (tapado por la calculadora), lo subimos
+        if (inputRect.bottom > (viewportHeight - keyboardHeight)) {
+            targetInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 100);
 };
 
 const hideCalculator = () => {
