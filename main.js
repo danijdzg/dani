@@ -1441,6 +1441,24 @@ document.body.addEventListener('change', e => {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(number);
 };
 
+/* --- HELPER: Convierte HEX a RGBA para los gradientes --- */
+const hexToRgba = (hex, alpha) => {
+    let r = 0, g = 0, b = 0;
+    // Manejo de 3 dígitos (#FFF)
+    if (hex.length === 4) {
+        r = parseInt("0x" + hex[1] + hex[1]);
+        g = parseInt("0x" + hex[2] + hex[2]);
+        b = parseInt("0x" + hex[3] + hex[3]);
+    } 
+    // Manejo de 6 dígitos (#FFFFFF)
+    else if (hex.length === 7) {
+        r = parseInt("0x" + hex[1] + hex[2]);
+        g = parseInt("0x" + hex[3] + hex[4]);
+        b = parseInt("0x" + hex[5] + hex[6]);
+    }
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 // --- Habilitador de Interacción ---
 // Los navegadores modernos, por seguridad, solo permiten la vibración DESPUÉS de que el usuario
 // haya tocado la pantalla al menos una vez. Esta pequeña pieza de código se encarga de eso.
@@ -4212,7 +4230,17 @@ const TransactionCardComponent = (m, dbData) => {
     </div>`;
 };
 
-// ▼▼▼ REEMPLAZO COMPLETO Y RECOMENDADO para renderPortfolioEvolutionChart (v3.0) ▼▼▼
+const createChartGradient = (ctx, colorHex) => {
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400); // Ajusta 400 según altura aprox
+    // Convertimos HEX a RGBA para manejar opacidad
+    // Truco rápido: Asumimos que el color viene en formato HEX o Var, 
+    // pero para simplificar, usaremos un color fijo base o manipularemos el string si es rgba
+    // Para tu app, usemos una aproximación visual simple:
+    
+    gradient.addColorStop(0, colorHex.replace(')', ', 0.6)').replace('rgb', 'rgba')); // 60% opacidad arriba
+    gradient.addColorStop(1, colorHex.replace(')', ', 0.0)').replace('rgb', 'rgba')); // 0% opacidad abajo (transparente)
+    return gradient;
+};
 
 async function renderPortfolioEvolutionChart(targetContainerId) {
     const container = select(targetContainerId);
@@ -4220,17 +4248,18 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
 
     container.innerHTML = `<div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"><canvas id="portfolio-evolution-chart"></canvas></div>`;
 
-    // --- El bloque de obtención y procesamiento de datos se mantiene, ya que es correcto ---
+    // 1. Obtención de datos (Igual que antes)
     await loadInversiones();
     const allMovements = await fetchAllMovementsForHistory();
     const filteredInvestmentAccounts = getVisibleAccounts().filter(account => !deselectedInvestmentTypesFilter.has(toSentenceCase(account.tipo || 'S/T')) && account.esInversion);
     const filteredAccountIds = new Set(filteredInvestmentAccounts.map(c => c.id));
 
     if (filteredInvestmentAccounts.length === 0) {
-        container.innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos seleccionados para mostrar la evolución.</p></div>`;
+        container.innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos seleccionados.</p></div>`;
         return;
     }
 
+    // Procesamiento de datos (Timeline)
     const timeline = [];
     const history = (db.inversiones_historial || []).filter(h => filteredAccountIds.has(h.cuentaId));
     history.forEach(v => timeline.push({ date: v.fecha.slice(0, 10), type: 'valuation', value: v.valor, accountId: v.cuentaId }));
@@ -4246,7 +4275,7 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     });
     
     if (timeline.length < 1) {
-         container.innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay datos suficientes para mostrar la evolución.</p></div>`;
+         container.innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Datos insuficientes.</p></div>`;
          return;
     }
     timeline.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -4261,7 +4290,6 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         for (const value of lastKnownValues.values()) { totalValue += value; }
         dailyData.set(event.date, { capital: runningCapital, value: totalValue });
     });
-    // --- Fin del bloque de procesamiento de datos ---
 
     const sortedDates = [...dailyData.keys()].sort();
     const chartLabels = sortedDates;
@@ -4277,10 +4305,27 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     
     chartCanvas.closest('.chart-container').classList.remove('skeleton');
 
-    // Definimos los colores base a partir de tus variables CSS
-    const colorSuccess = getComputedStyle(document.body).getPropertyValue('--c-success').trim();
-    const colorDanger = getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
-    const colorPrimary = getComputedStyle(document.body).getPropertyValue('--c-primary').trim(); // Azul de tu tema claro
+    // --- AQUI EMPIEZA LA MAGIA VISUAL "LUJOSA" ---
+
+    // 1. Obtenemos los colores base del CSS
+    const colorSuccessHex = getComputedStyle(document.body).getPropertyValue('--c-success').trim();
+    const colorDangerHex = getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
+    const colorPrimaryHex = getComputedStyle(document.body).getPropertyValue('--c-primary').trim();
+
+    // 2. Determinamos la tendencia global (¿El final es mayor que el principio?)
+    //    Si el valor actual es mayor que el capital aportado actual, estamos en GANANCIA (Verde).
+    //    Si es menor, estamos en PÉRDIDA (Rojo).
+    const currentVal = totalValueData[totalValueData.length - 1] || 0;
+    const currentCap = capitalData[capitalData.length - 1] || 0;
+    const isProfitable = currentVal >= currentCap;
+
+    const mainColorHex = isProfitable ? colorSuccessHex : colorDangerHex;
+
+    // 3. Creamos el Gradiente Vertical
+    // (0,0) es arriba, (0, 300) es abajo.
+    const gradient = chartCtx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, hexToRgba(mainColorHex, 0.4)); // Arriba: Color con 40% de opacidad
+    gradient.addColorStop(1, hexToRgba(mainColorHex, 0.0)); // Abajo: Totalmente transparente
 
     new Chart(chartCtx, {
         type: 'line',
@@ -4290,53 +4335,90 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                 {
                     label: 'Valor Total',
 					data: totalValueData,
-                    // ▼▼▼ CAMBIO CLAVE 1: El color de la línea ahora es dinámico ▼▼▼
-                    segment: {
-                        borderColor: ctx => {
-                            const y1 = ctx.p0.parsed.y; // Valor en el punto inicial del segmento
-                            const x1 = ctx.p1.parsed.y; // Valor en el punto final del segmento
-                            const capitalY1 = capitalData[ctx.p0DataIndex];
-                            const capitalX1 = capitalData[ctx.p1DataIndex];
-
-                            // Si ambos puntos están por debajo, rojo. Si no, verde.
-                            return y1 < capitalY1 && x1 < capitalX1 ? colorDanger : colorSuccess;
-                        }
-                    },
-                    fill: false, // <-- CAMBIO CLAVE 2: Eliminamos el área de relleno
-					tension: 0.4,
-					pointRadius: 0,
+                    borderColor: mainColorHex, // La línea sólida del color principal
+                    backgroundColor: gradient, // El relleno degradado "Lujoso"
+                    fill: true,                // ¡Activamos el relleno!
+					tension: 0.4,              // Curva suave
+					pointRadius: 0,            // Sin puntos para limpieza
+                    pointHoverRadius: 6,       // Puntos aparecen al tocar
 					borderWidth: 2.5,
 				},
                 {
                     label: 'Capital Aportado',
                     data: capitalData,
-                    borderColor: colorPrimary, // <-- CAMBIO CLAVE 3: La línea de capital ahora es azul
-                    fill: false, // <-- Y tampoco tiene relleno
+                    borderColor: colorPrimaryHex, // Azul para diferenciar
+                    backgroundColor: 'transparent',
+                    fill: false, 
                     pointRadius: 0,
                     borderWidth: 2,
-                    borderDash: [5, 5],
+                    borderDash: [5, 5], // Línea punteada para diferenciar del valor
+                    order: 1 // Asegura que se pinte encima o debajo según se desee
                 }
             ]
         },
-        options: { // Las opciones del gráfico (escalas, tooltip, etc.) se mantienen igual
+        options: {
             responsive: true, 
             maintainAspectRatio: false,
             scales: {
-                y: { beginAtZero: false, ticks: { callback: value => formatCurrency(value * 100) } },
-                x: { type: 'time', time: { unit: 'month', tooltipFormat: 'dd MMM yyyy' }, grid: { display: false } }
+                y: { 
+                    beginAtZero: false, 
+                    ticks: { 
+                        callback: value => formatCurrency(value * 100),
+                        font: { size: 10, family: 'var(--font-family)' },
+                        color: 'rgba(150, 150, 150, 0.5)'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)',
+                        borderDash: [5, 5]
+                    }
+                },
+                x: { 
+                    type: 'time', 
+                    time: { unit: 'month', tooltipFormat: 'dd MMM yyyy' }, 
+                    grid: { display: false },
+                    ticks: {
+                        font: { size: 10, family: 'var(--font-family)' },
+                        color: 'rgba(150, 150, 150, 0.5)'
+                    }
+                }
             },
             plugins: {
-                legend: { display: true, position: 'bottom', align: 'start', labels: { usePointStyle: true, boxWidth: 8, padding: 20 }},
-                datalabels: { display: false },
-                tooltip: { mode: 'index', intersect: false, callbacks: {
-                    label: (context) => `${context.dataset.label || ''}: ${formatCurrency(context.parsed.y * 100)}`,
-                    footer: (tooltipItems) => {
-                        const total = tooltipItems.find(i => i.dataset.label === 'Valor Total')?.parsed.y || 0;
-                        const capital = tooltipItems.find(i => i.dataset.label === 'Capital Aportado')?.parsed.y || 0;
-                        const pnl = total - capital;
-                        return `P&L: ${formatCurrency(pnl * 100)}`;
+                legend: { 
+                    display: true, 
+                    position: 'top', 
+                    align: 'end', 
+                    labels: { 
+                        usePointStyle: true, 
+                        boxWidth: 8, 
+                        padding: 10,
+                        font: { size: 11, weight: '600' }
                     }
-                }}
+                },
+                datalabels: { display: false },
+                tooltip: { 
+                    mode: 'index', 
+                    intersect: false, 
+                    backgroundColor: 'rgba(20, 20, 30, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#eee',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    padding: 10,
+                    callbacks: {
+                        label: (context) => {
+                            let label = context.dataset.label || '';
+                            if (label) label += ': ';
+                            if (context.parsed.y !== null) label += formatCurrency(context.parsed.y * 100);
+                            return label;
+                        },
+                        footer: (tooltipItems) => {
+                            const total = tooltipItems.find(i => i.dataset.label === 'Valor Total')?.parsed.y || 0;
+                            const capital = tooltipItems.find(i => i.dataset.label === 'Capital Aportado')?.parsed.y || 0;
+                            const pnl = total - capital;
+                            return `P&L: ${formatCurrency(pnl * 100)}`;
+                        }
+                    }
+                }
             },
             interaction: { mode: 'index', intersect: false }
         }
