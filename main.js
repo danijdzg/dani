@@ -3914,8 +3914,8 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             };
 
             const moveHandler = (e) => {
-                if (!longPressTimer) return;
-                const point = e.touches ? e.touches[0] : e;
+				if (!longPressTimer) return;
+				const point = e.type === 'touchmove' ? e.touches[0] : e;
                 if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
                     clearTimeout(longPressTimer);
                     longPressTimer = null;
@@ -10008,7 +10008,7 @@ const applyInvestmentItemInteractions = (containerElement) => {
             return;
         }
 
-        // Evita añadir listeners duplicados
+        // Avoid adding duplicate listeners
         if (item.dataset.longPressApplied) return;
         item.dataset.longPressApplied = 'true';
 
@@ -10017,25 +10017,37 @@ const applyInvestmentItemInteractions = (containerElement) => {
         let longPressTriggered = false;
 
         const startHandler = (e) => {
-            const point = e.type === 'touchstart' ? e.touches[0] : e;
+            // Get coordinates safely for both Mouse and Touch
+            const point = e.type.includes('touch') ? e.touches[0] : e;
+            
             startX = point.clientX;
             startY = point.clientY;
             longPressTriggered = false;
             
-            e.stopPropagation(); // Evita que se disparen otros eventos de click en el contenedor
+            // Only stop propagation if it's a touch event to allow scrolling, 
+            // but we want to prevent the click from firing immediately if it's a long press.
+            if (e.type === 'mousedown') {
+                // Optional: e.preventDefault(); 
+            }
 
             longPressTimer = setTimeout(() => {
                 longPressTriggered = true;
                 const accountId = item.dataset.id;
+                // Vibration feedback
+                hapticFeedback('medium');
                 handleShowIrrHistory({ accountId: accountId });
             }, 500);
         };
 
         const moveHandler = (e) => {
             if (!longPressTimer) return;
-            const point = e.type === 'touchmove' ? e.touches[0] : e;
+            
+            // ERROR FIX: Check event type before accessing touches
+            const point = e.type.includes('touch') ? e.touches[0] : e;
+            
             if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
                 clearTimeout(longPressTimer);
+                longPressTimer = null;
             }
         };
 
@@ -10043,17 +10055,21 @@ const applyInvestmentItemInteractions = (containerElement) => {
             clearTimeout(longPressTimer);
             if (longPressTriggered) {
                 e.preventDefault();
-                e.stopPropagation(); // ¡LA CORRECCIÓN CLAVE! Evita que se dispare el click normal.
+                e.stopPropagation(); 
             }
         };
 
-        item.addEventListener('mousedown', startHandler);
+        // Touch Events
         item.addEventListener('touchstart', startHandler, { passive: true });
-        item.addEventListener('mousemove', moveHandler);
         item.addEventListener('touchmove', moveHandler, { passive: true });
-        item.addEventListener('mouseup', endHandler);
         item.addEventListener('touchend', endHandler);
+        
+        // Mouse Events
+        item.addEventListener('mousedown', startHandler);
+        item.addEventListener('mousemove', moveHandler); // This was causing the error
+        item.addEventListener('mouseup', endHandler);
         item.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
+        
         item.addEventListener('contextmenu', e => e.preventDefault());
     });
 };
