@@ -724,16 +724,23 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */
     font-weight: 800; 
     color: inherit; 
     text-decoration: none;
-    /* Ajuste fluido de fuente: Mínimo 12px, Preferido dinámico, Máximo 1.1rem */
-    font-size: clamp(0.75rem, 4vw, 1.125rem); 
+    
+    /* --- CAMBIO CRÍTICO: FUENTE ADAPTABLE --- */
+    /* Mínimo 11px, Preferido 4% del ancho de pantalla, Máximo 18px */
+    font-size: clamp(0.7rem, 4.5vw, 1.125rem);
+    
+    /* Asegurar que se comporte como bloque en línea para el ellipsis */
     white-space: nowrap; 
     overflow: hidden; 
     text-overflow: ellipsis;
     display: block;
     max-width: 100%;
+    margin-left: 8px; /* Un poco de aire respecto al botón A/B */
+    line-height: 1.2;
 }
 .top-bar__actions { display: flex; align-items: center; gap: var(--sp-1); }
-.top-bar__left-button { min-width: 85px; display: flex; align-items: center; }
+.top-bar__left-button {display: flex; align-items: center;flex: 1; min-width: 0;
+    margin-right: var(--sp-2); }
 .top-bar__left-group { display: flex; align-items: center; gap: var(--sp-3); }
 
 /* --- Navegación Inferior (Bottom Nav) --- */
@@ -1293,8 +1300,8 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 @media (max-width: 380px) {
     /* 1. Hacemos que el contenedor del título sea flexible y pueda encogerse */
     .top-bar__left-button {
-        min-width: auto;
-        margin-right: 4px;
+        flex-grow: 1;
+        width: auto;
     }
 	.top-bar__title {
         text-align: left; /* En pantallas muy chicas queda mejor alineado a la izquierda */
@@ -2428,7 +2435,6 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     .kpi-grid, .form-grid { grid-template-columns: 1fr !important; gap: var(--sp-2); }
     #custom-date-filters.form-grid { grid-template-columns: 1fr !important; }
     .top-bar__left-button { flex-shrink: 1; min-width: 0; flex-grow: 1; }
-    #page-title-display { display: none; }
     .top-bar__left-group { gap: var(--sp-1); }
     .top-bar__actions { gap: 0; }
     .top-bar .top-bar__actions .icon-btn { width: 38px; height: 38px; }
