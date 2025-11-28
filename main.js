@@ -52,28 +52,30 @@ const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
 };
 
 const handleGenerateInformeCuenta = async (form, btn = null) => {
-    // 1. Solo activamos la animación de carga en el botón si existe
+    // 1. Solo activamos la animación del botón si se proporciona (ahora es opcional)
     if (btn) setButtonLoading(btn, true, 'Imprimiendo...');
     
     const cuentaId = select('informe-cuenta-select').value;
     const resultadoContainer = select('informe-resultado-container');
 
-    // 2. Si no hay cuenta seleccionada, limpiamos el resultado y salimos
+    // 2. Si no hay cuenta seleccionada, limpiamos y salimos
     if (!cuentaId) {
         resultadoContainer.innerHTML = '';
         if (btn) setButtonLoading(btn, false);
         return;
     }
 
-    // 3. Mostramos un indicador de carga (spinner) donde irán los resultados
+    // 3. Mostramos un indicador de carga en el contenedor de resultados
     resultadoContainer.innerHTML = `
         <div style="text-align:center; padding: var(--sp-5);">
             <span class="spinner" style="color:var(--c-primary); width: 24px; height:24px;"></span>
-            <p style="font-size:var(--fs-xs); margin-top:8px; color:var(--c-on-surface-tertiary);">Cargando movimientos...</p>
+            <p style="font-size:var(--fs-xs); margin-top:8px; color:var(--c-on-surface-secondary);">Cargando movimientos...</p>
         </div>`;
 
+    const cuenta = db.cuentas.find(c => c.id === cuentaId);
+
     try {
-        const cuenta = db.cuentas.find(c => c.id === cuentaId);
+        // --- Obtención y cálculo de datos (IGUAL QUE ANTES) ---
         const todosLosMovimientos = await fetchAllMovementsForHistory();
         
         let movimientosDeLaCuenta = todosLosMovimientos.filter(m =>
@@ -86,10 +88,8 @@ const handleGenerateInformeCuenta = async (form, btn = null) => {
              return;
         }
 
-        // Ordenar cronológicamente para calcular saldos
         movimientosDeLaCuenta.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-        // Calcular Saldos
         let saldoAcumulado = 0;
         for (const mov of movimientosDeLaCuenta) {
             let impacto = 0;
@@ -103,9 +103,9 @@ const handleGenerateInformeCuenta = async (form, btn = null) => {
             mov.runningBalance = saldoAcumulado;
         }
 
-        // Invertir para mostrar el más reciente arriba
         movimientosDeLaCuenta.reverse(); 
 
+        // --- Renderizado HTML ---
         let html = `
             <div class="cartilla-container">
                 <div class="cartilla-header-info">
@@ -137,7 +137,6 @@ const handleGenerateInformeCuenta = async (form, btn = null) => {
         if (btn) setButtonLoading(btn, false);
     }
 };
-
 
 const handleExportFilteredCsv = (btn) => {
     // La lista de movimientos a exportar es la que ya tenemos filtrada en db.movimientos
@@ -5144,7 +5143,7 @@ const renderPatrimonioPage = () => {
     const container = select(PAGE_IDS.PATRIMONIO);
     if (!container) return;
 
-    // --- HTML ---
+    // --- HTML MODIFICADO: Sin <form> y sin botón ---
     container.innerHTML = `
         <details class="accordion" style="margin-bottom: var(--sp-4);">
             <summary>
@@ -5209,10 +5208,10 @@ const renderPatrimonioPage = () => {
 
     // --- LÓGICA JS ---
     setTimeout(async () => {
-        // 1. Carga Visión General
+        // Carga Visión General
         await renderPatrimonioOverviewWidget('patrimonio-overview-container');
         
-        // 2. Extracto Automático
+        // --- LÓGICA DEL EXTRACTO AUTOMÁTICO ---
         const selectCuenta = select('informe-cuenta-select');
         if (selectCuenta) {
             const populate = (el, data) => {
@@ -5223,15 +5222,17 @@ const renderPatrimonioPage = () => {
             };
             populate(selectCuenta, getVisibleAccounts());
 
-            // Ahora sí funcionará porque tiene el padre .input-wrapper
+            // Convertimos el select en uno "bonito"
             createCustomSelect(selectCuenta);
 
+            // AÑADIMOS EL EVENTO: Al cambiar, se genera el informe solo
             selectCuenta.addEventListener('change', () => {
+                // Llamamos a la función pasando 'null' en lugar del botón
                 handleGenerateInformeCuenta(null, null);
             });
         }
 
-        // 3. Portafolio Lazy Load
+        // Lógica Lazy Load del Portafolio
         const acordeonPortafolio = select('acordeon-portafolio');
         if (acordeonPortafolio) {
             const loadPortfolioData = async () => {
@@ -5245,6 +5246,7 @@ const renderPatrimonioPage = () => {
                 }
             });
         }
+        
     }, 50);
 };
 
