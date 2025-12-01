@@ -2976,24 +2976,16 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     font-size: var(--fs-xs); 
 }
 
-/* === FIN: ESTILOS PARA FORMULARIO DE ALTA DENSIDAD Y NAVEGACIÓN === */
-
-/* === INICIO: Estilo personalizado para KPI de Patrimonio Neto === */
-
-/*
-  Esta clase es la que define el color azul brillante y el resplandor.
-  - 'color': Establece el color del texto. He elegido un azul vibrante y moderno.
-  - 'text-shadow': Este es el truco para el efecto "brillante". Crea un suave resplandor
-    del mismo color alrededor de las letras, haciéndolas destacar.
-*/
 .kpi-resaltado-azul {
-    color: #00BFFF !important; /* !important asegura que este estilo anule cualquier otro. */
+    color: #00BFFF !important; 
     text-shadow: 0 0 8px rgba(0, 122, 255, 0.7);
 }
 
-/* === FIN: Estilo personalizado para KPI de Patrimonio Neto === */
-
-/* === INICIO: Estilos para la Tarjeta de Sumario del Portafolio === */
+body[data-theme="sunset-groove"] .kpi-resaltado-azul {
+    color: #0056b3 !important; /* Azul oscuro corporativo sólido */
+    text-shadow: none !important; /* Quitamos el brillo neón que ensucia en fondo blanco */
+    font-weight: 800; /* Extra negrita para compensar la falta de brillo */
+}
 
 .portfolio-summary-card {
     background-color: var(--c-surface-variant);

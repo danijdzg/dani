@@ -342,14 +342,13 @@ const THEMES = {
 	        
 const AVAILABLE_WIDGETS = {
     'super-centro-operaciones': { title: 'Centro de Operaciones', description: 'Visión completa y filtros.', icon: 'query_stats' },
-    'net-worth-trend': { title: 'Evolución del Patrimonio', description: 'Gráfico histórico.', icon: 'show_chart' },
-    'financial-health': { title: 'Salud Financiera', description: 'Liquidez y Libertad en un vistazo.', icon: 'health_and_safety' }, // NUEVO
-    'informe-personalizado': { title: 'Informe Personalizado', description: 'Tu gráfico a medida.', icon: 'auto_graph' }
+    'financial-health': { title: 'Salud Financiera', description: 'Liquidez y Libertad en un vistazo.', icon: 'health_and_safety' },
+	'net-worth-trend': { title: 'Evolución del Patrimonio', description: 'Gráfico histórico.', icon: 'show_chart' }
 };
 
 const DEFAULT_DASHBOARD_WIDGETS = [
     'super-centro-operaciones', 
-    'financial-health', // AÑADIDO AQUÍ
+    'financial-health',
     'net-worth-trend'
 ];
 
@@ -4893,18 +4892,18 @@ const renderDashboardSuperCentroOperaciones = () => {
                                 <span class="kpi-resaltado-azul">Patrimonio Neto</span>
                             </h4>
                             <strong id="kpi-patrimonio-neto-value" class="kpi-item__value skeleton kpi-resaltado-azul" data-current-value="0">0,00 €</strong>
-                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; opacity: 0.8;">
+                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; color: var(--c-on-surface-secondary);">
                                 Valor total de tu riqueza<br>(Activos - Deudas)
                             </div>
                         </div>
 
                         <div class="kpi-item">
                             <h4 class="kpi-item__label">Tasa de Ahorro</h4>
-                            <div style="position: relative; height: 60px; margin: auto;">
+                            <div style="position: relative; height: 60px; margin: auto; display: flex; align-items: center; justify-content: center;">
                                  <canvas id="kpi-savings-rate-chart"></canvas>
-                                 <div id="kpi-tasa-ahorro-value" class="kpi-item__value skeleton" style="position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%);">0%</div>
+                                 <div id="kpi-tasa-ahorro-value" class="kpi-item__value skeleton" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); line-height: 1;">0%</div>
                             </div>
-                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; opacity: 0.8;">
+                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; color: var(--c-on-surface-secondary);">
                                 % de tus ingresos que<br>conservas tras gastos
                             </div>
                         </div>
@@ -4912,7 +4911,7 @@ const renderDashboardSuperCentroOperaciones = () => {
                         <div class="kpi-item">
                             <h4 class="kpi-item__label">Resultado Inversión</h4>
                             <strong id="kpi-pnl-inversion-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
-                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; opacity: 0.8;">
+                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; color: var(--c-on-surface-secondary);">
                                 Ganancia/Pérdida histórica<br>acumulada del mercado
                             </div>
                         </div>
@@ -4938,17 +4937,17 @@ const renderDashboardSuperCentroOperaciones = () => {
                         <button class="kpi-item" data-action="show-kpi-drilldown" data-type="ingresos">
                             <h4 class="kpi-item__label">Ingresos</h4>
                             <strong id="kpi-ingresos-value" class="kpi-item__value text-positive skeleton" data-current-value="0">+0,00 €</strong> 
-                            <div style="font-size: 0.65rem; margin-top:4px; opacity: 0.7;">Entradas del periodo</div>
+                            <div style="font-size: 0.65rem; margin-top:4px; color: var(--c-on-surface-secondary);">Entradas del periodo</div>
                         </button>
                         <button class="kpi-item" data-action="show-kpi-drilldown" data-type="gastos">
                             <h4 class="kpi-item__label">Gastos</h4>
                             <strong id="kpi-gastos-value" class="kpi-item__value text-negative skeleton" data-current-value="0">0,00 €</strong>
-                            <div style="font-size: 0.65rem; margin-top:4px; opacity: 0.7;">Salidas del periodo</div>
+                            <div style="font-size: 0.65rem; margin-top:4px; color: var(--c-on-surface-secondary);">Salidas del periodo</div>
                         </button>
                         <button class="kpi-item" data-action="show-kpi-drilldown" data-type="saldoNeto">
                             <h4 class="kpi-item__label">Flujo de Caja</h4>
                             <strong id="kpi-saldo-neto-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
-                            <div style="font-size: 0.65rem; margin-top:4px; opacity: 0.7;">Capacidad de ahorro real</div>
+                            <div style="font-size: 0.65rem; margin-top:4px; color: var(--c-on-surface-secondary);">Capacidad de ahorro real</div>
                         </button>
                     </div>
                     
@@ -5122,7 +5121,6 @@ const renderDashboardExpandedKpiSummary = () => {
                 </div>`;
         };
 
-/// ▼▼▼ REEMPLAZA TU FUNCIÓN renderInicioResumenView POR COMPLETO CON ESTA VERSIÓN ▼▼▼
 const renderInicioResumenView = () => {
     const resumenContentContainer = select('resumen-content-container');
     if (!resumenContentContainer) return;
@@ -5131,28 +5129,24 @@ const renderInicioResumenView = () => {
 
     const widgetOrder = (db.config && db.config.dashboardWidgets) || DEFAULT_DASHBOARD_WIDGETS;
 
-    // AHORA, esta función solo imprime los esqueletos con una etiqueta especial.
     resumenContentContainer.innerHTML = widgetOrder.map(widgetId => {
-        // La etiqueta es 'data-widget-type'
         switch(widgetId) {
-        case 'super-centro-operaciones':
-            return `<div data-widget-type="super-centro-operaciones">${renderDashboardSuperCentroOperaciones()}</div>`;
-        case 'action-center':
-            return `<div data-widget-type="action-center">${renderDashboardActionCenter()}</div>`;
-        case 'net-worth-trend':
-            return `<div data-widget-type="net-worth-trend">${renderDashboardNetWorthTrend()}</div>`;
-        case 'emergency-fund':
-            return `<div data-widget-type="emergency-fund">${renderDashboardEmergencyFund()}</div>`;
-        case 'fi-progress':
-			return `<div data-widget-type="fi-progress">${renderDashboardFIProgress()}</div>`;
-		case 'financial-health': // Usamos este nombre para el widget unificado
-			return `<div data-widget-type="financial-health">${renderDashboardFinancialHealth()}</div>`;
-        default:
-            return '';
-    }
+            case 'super-centro-operaciones':
+                return `<div data-widget-type="super-centro-operaciones">${renderDashboardSuperCentroOperaciones()}</div>`;
+            case 'net-worth-trend':
+                return `<div data-widget-type="net-worth-trend">${renderDashboardNetWorthTrend()}</div>`;
+            case 'emergency-fund': // (Legacy support)
+                return `<div data-widget-type="emergency-fund">${renderDashboardEmergencyFund()}</div>`;
+            case 'fi-progress': // (Legacy support)
+                return `<div data-widget-type="fi-progress">${renderDashboardFIProgress()}</div>`;
+            case 'financial-health': 
+                return `<div data-widget-type="financial-health">${renderDashboardFinancialHealth()}</div>`;
+            /* ELIMINADO EL CASE DE 'informe-personalizado' */
+            default:
+                return '';
+        }
     }).join('<div style="height: var(--sp-4);"></div>');
     
-    // ¡IMPORTANTE! Después de dibujar los esqueletos, le decimos a nuestro "asistente" que empiece a observar.
     initWidgetObserver();
 };
 		
@@ -5868,6 +5862,7 @@ const scheduleDashboardUpdate = () => {
 
 const updateDashboardData = async () => {
     const activePage = document.querySelector('.view--active');
+    // Si no estamos en el panel, no gastamos recursos calculando
     if (!activePage || activePage.id !== PAGE_IDS.PANEL) {
         return;
     }
@@ -5876,9 +5871,11 @@ const updateDashboardData = async () => {
     isDashboardRendering = true;
 
     try {
-        const { current } = await getFilteredMovements(true); // Ya no necesitamos 'previous' ni 'label'
+        // 1. Obtener datos básicos
+        const { current } = await getFilteredMovements(true);
         const saldos = await getSaldos();
         
+        // 2. Gráfico de Tendencia (Si el widget está activo)
         await updateNetWorthChart(saldos);
 
         const visibleAccountIds = new Set(Object.keys(saldos));
@@ -5897,21 +5894,26 @@ const updateDashboardData = async () => {
 		
         const currentTotals = calculateTotals(current);
         const saldoNetoActual = currentTotals.saldoNeto;
+        // Evitamos división por cero
         const tasaAhorroActual = currentTotals.ingresos > 0 ? (saldoNetoActual / currentTotals.ingresos) * 100 : (saldoNetoActual < 0 ? -100 : 0);
         
         const patrimonioNeto = Object.values(saldos).reduce((sum, s) => sum + s, 0);
+        
+        // Cálculo rendimiento inversión
         const portfolioPerformance = await calculatePortfolioPerformance();
         const pnlInversionActual = portfolioPerformance.pnlAbsoluto;
         
-        // --- Cálculo de Salud Financiera ---
+        // Cálculo Salud Financiera
         const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
         const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
 
-        // 1. ACTUALIZAR SUPER CENTRO DE OPERACIONES
+        // --- ACTUALIZACIÓN DE LA UI ---
+
+        // A. Widget: Centro de Operaciones
         if (select('kpi-tasa-ahorro-value')) {
             selectAll('#super-centro-operaciones-widget .skeleton').forEach(el => el.classList.remove('skeleton'));
             
-            // Tasa de Ahorro
+            // Tasa de Ahorro (Texto y Gráfico)
             const kpiTasaAhorroValueEl = select('kpi-tasa-ahorro-value');
             if (kpiTasaAhorroValueEl) {
                 kpiTasaAhorroValueEl.textContent = `${tasaAhorroActual.toFixed(1)}%`;
@@ -5926,11 +5928,12 @@ const updateDashboardData = async () => {
             const kpiPnlEl = select('kpi-pnl-inversion-value');
             if (kpiPnlEl) {
                 kpiPnlEl.className = `kpi-item__value ${pnlInversionActual >= 0 ? 'text-positive' : 'text-negative'}`;
+                // Solo mostramos P&L si hay cuentas de inversión configuradas
                 if (investmentAccountIds.size > 0) animateCountUp(kpiPnlEl, pnlInversionActual); 
-                else kpiPnlEl.textContent = 'N/A';
+                else kpiPnlEl.textContent = '---';
             }
 
-            // KPIs Desglose (Ingreso/Gasto/Neto)
+            // Desglose Ingresos/Gastos/Neto
             animateCountUp(select('kpi-ingresos-value'), currentTotals.ingresos);
             animateCountUp(select('kpi-gastos-value'), currentTotals.gastos);
             
@@ -5941,12 +5944,12 @@ const updateDashboardData = async () => {
             }
         } 
         
-        // 2. ACTUALIZAR WIDGET DE SALUD FINANCIERA (Nuevo)
+        // B. Widget: Salud Financiera
         const healthWidget = select('financial-health-widget');
         if (healthWidget) {
             healthWidget.querySelector('.card__content').classList.remove('skeleton');
             
-            // Liquidez (Colchón)
+            // Liquidez
             const runVal = select('health-runway-val');
             const runProg = select('health-runway-progress');
             const meses = isFinite(efData.mesesCobertura) ? efData.mesesCobertura : 99;
@@ -5957,32 +5960,32 @@ const updateDashboardData = async () => {
             }
             if(runProg) runProg.value = Math.min(meses, 12);
 
-            // Libertad (FI)
+            // Libertad Financiera
             const fiVal = select('health-fi-val');
             const fiProg = select('health-fi-progress');
             if(fiVal) fiVal.textContent = `${fiData.progresoFI.toFixed(2)}%`;
             if(fiProg) fiProg.value = Math.min(fiData.progresoFI, 100);
         }
 
-        // 3. ACTUALIZAR GRÁFICO DE CONCEPTOS
-        const conceptListContainer = select('concepto-totals-list');
+        // C. Gráfico de Conceptos (Bar Chart)
         const chartCanvas = select('conceptos-chart');
-        
-        if (conceptListContainer && chartCanvas && current.length > 0) {
+        if (chartCanvas && current.length > 0) {
             const chartCtx = chartCanvas.getContext('2d');
             const chartContainer = chartCanvas.closest('.chart-container');
             if(chartContainer) chartContainer.classList.remove('skeleton');
+            
             if (conceptosChart) conceptosChart.destroy();
             
+            // Agrupar por concepto
             const cTots = current.reduce((a, m) => {
                 if (m.tipo === 'movimiento' && m.conceptoId) {
-                    if (!a[m.conceptoId]) a[m.conceptoId] = { total: 0, movements: [] };
+                    if (!a[m.conceptoId]) a[m.conceptoId] = { total: 0 };
                     a[m.conceptoId].total += m.cantidad;
-                    a[m.conceptoId].movements.push(m);
                 }
                 return a;
             }, {});
 
+            // Ordenar y preparar datos
             const sortedTotals = Object.entries(cTots).sort(([, a], [, b]) => a.total - b.total);
             const colorSuccess = getComputedStyle(document.body).getPropertyValue('--c-success').trim();
             const colorDanger = getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
@@ -6001,43 +6004,55 @@ const updateDashboardData = async () => {
                     responsive: true, 
                     maintainAspectRatio: false, 
                     plugins: { legend: { display: false }, datalabels: { display: false } }, 
-                    scales: { y: { ticks: { callback: (v) => v.toLocaleString('es-ES') } } },
+                    scales: { 
+                        y: { 
+                            ticks: { callback: (v) => v.toLocaleString('es-ES') },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        x: { grid: { display: false } }
+                    },
+                    // Interactividad: Clic para ver detalle
                     onClick: (event, elements) => { 
                         if (elements.length === 0) return; 
                         const index = elements[0].index; 
-                        const [conceptoId, data] = sortedTotals[index]; 
+                        const [conceptoId] = sortedTotals[index]; 
                         const concepto = db.conceptos.find(c => c.id === conceptoId); 
                         const conceptoNombre = concepto ? toSentenceCase(concepto.nombre) : 'Desconocido'; 
+                        
+                        // Filtrar movimientos de este concepto
+                        const movsConcepto = current.filter(m => m.conceptoId === conceptoId);
+                        
                         hapticFeedback('light'); 
-                        showDrillDownModal(`Movimientos de: ${conceptoNombre}`, data.movements); 
+                        showDrillDownModal(`Movimientos: ${conceptoNombre}`, movsConcepto); 
                     }
                 } 
             });
-            conceptListContainer.innerHTML = ''; 
-        } else if (conceptListContainer) {
-             conceptListContainer.innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Sin datos para los filtros.</p></div>`;
-        }
-		
-		if (select('patrimonio-completo-container')) { await renderPatrimonioPage(); }
+            
+            // Rellenar lista de texto debajo del gráfico
+            const conceptListContainer = select('concepto-totals-list');
+            if (conceptListContainer) {
+                // Tomamos los top 5 para la lista (invertimos para ver los mayores primero)
+                const top5 = [...sortedTotals].sort((a,b) => Math.abs(b[1].total) - Math.abs(a[1].total)).slice(0, 5);
+                
+                conceptListContainer.innerHTML = top5.map(([id, data]) => {
+                    const concepto = db.conceptos.find(c => c.id === id);
+                    const nombre = toSentenceCase(concepto?.nombre || 'Desconocido');
+                    const colorClass = data.total >= 0 ? 'text-positive' : 'text-negative';
+                    return `
+                    <div style="display:flex; justify-content:space-between; padding: 8px 0; border-bottom: 1px solid var(--c-outline);">
+                        <span>${nombre}</span>
+                        <strong class="${colorClass}">${formatCurrency(data.total)}</strong>
+                    </div>`;
+                }).join('');
+            }
+        } 
         
     } catch (error) {
         console.error("Error en updateDashboardData:", error);
     } finally {
-        const widgetContainers = document.querySelectorAll('[data-widget-type]');
-        widgetContainers.forEach(container => {
-            container.classList.remove('widget--loading');
-            const spinner = container.querySelector('.widget-spinner');
-            if (spinner) spinner.remove();
-        });
         isDashboardRendering = false;
     }
 };
-/**
- * Calcula y renderiza el gráfico de evolución del patrimonio neto.
- * @param {object} saldos - El objeto con los saldos actuales de las cuentas.
- */
-
-
 
 
 let informeChart = null; // Variable global para el gráfico del informe
