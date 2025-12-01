@@ -1904,23 +1904,36 @@ const setupTheme = () => {
     // Configuración Base
     Chart.defaults.color = textColor; 
     Chart.defaults.borderColor = 'transparent'; // Quitamos bordes de contenedores
-    Chart.register(ChartDataLabels);
+    
+    // Registramos el plugin solo si está disponible
+    if (typeof ChartDataLabels !== 'undefined') {
+        Chart.register(ChartDataLabels);
+    }
 
-    // --- NUEVO: CONFIGURACIÓN MINIMALISTA GLOBAL ---
+    // --- CORRECCIÓN DEL ERROR: Inicialización segura ---
     
-    // 1. Ocultar Ejes y Rejillas por defecto en todos los gráficos
-    Chart.defaults.scale.grid.display = false;      // Quita la rejilla interior
-    Chart.defaults.scale.grid.drawBorder = false;   // Quita la línea del eje
-    Chart.defaults.scale.ticks.display = false;     // Quita los números de los ejes (opcional, limpio)
+    // 1. Asegurar configuración de escala base (si la librería la usa)
+    if (!Chart.defaults.scale) Chart.defaults.scale = {};
+    if (!Chart.defaults.scale.grid) Chart.defaults.scale.grid = {};
+    if (!Chart.defaults.scale.ticks) Chart.defaults.scale.ticks = {};
+
+    Chart.defaults.scale.grid.display = false;      
+    Chart.defaults.scale.grid.drawBorder = false;   
+    Chart.defaults.scale.ticks.display = false;     
     
-    // 2. Si quieres mantener las fechas (Eje X) pero quitar el resto:
-    // (Esto sobreescribe lo anterior solo para el eje X)
+    // 2. Asegurar configuración de escalas cartesianas (Eje X)
+    if (!Chart.defaults.scales) Chart.defaults.scales = {};
+    if (!Chart.defaults.scales.x) Chart.defaults.scales.x = {};
+    if (!Chart.defaults.scales.x.ticks) Chart.defaults.scales.x.ticks = {};
+    
+    // Ahora es seguro asignar las propiedades
     Chart.defaults.scales.x.ticks.display = true;   
-    Chart.defaults.scales.x.ticks.color = 'rgba(255, 255, 255, 0.5)'; // Texto sutil
+    Chart.defaults.scales.x.ticks.color = 'rgba(255, 255, 255, 0.5)'; 
     
-    // 3. Quitar puntos en las líneas (se ven al pasar el ratón)
+    // 3. Quitar puntos en las líneas
+    if (!Chart.defaults.elements.point) Chart.defaults.elements.point = {};
     Chart.defaults.elements.point.radius = 0;
-    Chart.defaults.elements.point.hitRadius = 10; // Facilita tocar en móvil
+    Chart.defaults.elements.point.hitRadius = 10; 
 };
 
 const cleanupObservers = () => {
@@ -10143,12 +10156,7 @@ const applyInvestmentItemInteractions = (containerElement) => {
     const investmentItems = containerElement.querySelectorAll('[data-action="view-account-details"]');
 
     investmentItems.forEach(item => {
-        const cuenta = db.cuentas.find(c => c.id === item.dataset.id);
-        if (!cuenta || !cuenta.esInversion) {
-            return;
-        }
-
-        // Avoid adding duplicate listeners
+        // Evitamos duplicar listeners si ya se aplicaron
         if (item.dataset.longPressApplied) return;
         item.dataset.longPressApplied = 'true';
 
@@ -10157,33 +10165,26 @@ const applyInvestmentItemInteractions = (containerElement) => {
         let longPressTriggered = false;
 
         const startHandler = (e) => {
-            // Get coordinates safely for both Mouse and Touch
-            const point = e.type.includes('touch') ? e.touches[0] : e;
+            // Detección segura de coordenadas (Táctil o Ratón)
+            const point = (e.touches && e.touches.length > 0) ? e.touches[0] : e;
             
             startX = point.clientX;
             startY = point.clientY;
             longPressTriggered = false;
-            
-            // Only stop propagation if it's a touch event to allow scrolling, 
-            // but we want to prevent the click from firing immediately if it's a long press.
-            if (e.type === 'mousedown') {
-                // Optional: e.preventDefault(); 
-            }
 
             longPressTimer = setTimeout(() => {
                 longPressTriggered = true;
                 const accountId = item.dataset.id;
-                // Vibration feedback
                 hapticFeedback('medium');
                 handleShowIrrHistory({ accountId: accountId });
-            }, 500);
+            }, 500); 
         };
 
         const moveHandler = (e) => {
             if (!longPressTimer) return;
             
-            // ERROR FIX: Check event type before accessing touches
-            const point = e.type.includes('touch') ? e.touches[0] : e;
+            // CORRECCIÓN DEL ERROR AQUÍ:
+            const point = (e.touches && e.touches.length > 0) ? e.touches[0] : e;
             
             if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
                 clearTimeout(longPressTimer);
@@ -10194,19 +10195,19 @@ const applyInvestmentItemInteractions = (containerElement) => {
         const endHandler = (e) => {
             clearTimeout(longPressTimer);
             if (longPressTriggered) {
-                e.preventDefault();
+                if (e.cancelable) e.preventDefault();
                 e.stopPropagation(); 
             }
         };
-
-        // Touch Events
+        
+        // Listeners Táctiles
         item.addEventListener('touchstart', startHandler, { passive: true });
         item.addEventListener('touchmove', moveHandler, { passive: true });
         item.addEventListener('touchend', endHandler);
         
-        // Mouse Events
+        // Listeners Ratón
         item.addEventListener('mousedown', startHandler);
-        item.addEventListener('mousemove', moveHandler); // This was causing the error
+        item.addEventListener('mousemove', moveHandler);
         item.addEventListener('mouseup', endHandler);
         item.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
         
