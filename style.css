@@ -542,7 +542,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active {
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { height: -webkit-fill-available; scroll-behavior: smooth; }
 body { font-family: var(--font-family); background-color: var(--c-background); color: var(--c-on-surface); line-height: 1.4; min-height: 100vh; min-height: -webkit-fill-available; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow: hidden; font-weight: 500; }
-*:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; border-radius: var(--sp-2); }
+*:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; border-radius: var(--sp-2);font-variant-numeric: tabular-nums; }
 @keyframes fade-out-and-collapse {
     from {
         opacity: 1;
@@ -708,7 +708,7 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 /* --- Estructura de la App --- */
 .app-layout { display: none; max-width: 500px; margin: 0 auto; height: 100vh; background-color: var(--c-background); flex-direction: column; opacity: 0; transition: opacity 0.5s ease-out, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.4s; }
 .app-layout--visible { display: flex; opacity: 1; }
-.app-layout__main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 44px 0 48px 0; }
+.app-layout__main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 44px 0 100px 0; }
 .view { display: none; flex-direction: column; width: 100%; padding: 0 var(--sp-4); gap: var(--sp-4); }
 .view--active { display: flex; }
 
@@ -751,46 +751,65 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */
 
 /* --- Navegación Inferior (Bottom Nav) --- */
 .bottom-nav { 
-	align-items: flex-end; 
+    /* Posicionamiento Flotante */
     position: fixed; 
-    bottom: 0; 
+    bottom: 24px; /* Separación del borde inferior */
     left: 50%; 
     transform: translateX(-50%); 
-    width: 100%; 
-    max-width: 500px; 
-    background-color: var(--c-surface); 
-    border-top: 1px solid var(--c-outline); 
+    
+    /* Dimensiones y Forma */
+    width: calc(100% - 32px); /* Margen lateral de 16px a cada lado */
+    max-width: 420px; 
+    height: 64px; 
+    border-radius: 32px; /* Forma de píldora completa */
+    
+    /* Estilo Cristal (Glassmorphism) */
+    background-color: var(--c-surface); /* Usa el color de tu tema */
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--c-outline); 
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25); /* Sombra profunda para dar elevación */
+    
+    /* Alineación de Ítems */
     display: flex; 
-    padding-bottom: env(safe-area-inset-bottom); 
+    align-items: center; /* Centrado vertical */
+    justify-content: space-evenly; /* Distribución uniforme */
+    padding: 0 4px; /* Pequeño padding interno */
     z-index: 200; 
-    box-shadow: 0 -2px 15px rgba(0,0,0,0.2); 
-    height: 48px; 
 }
+
+/* Ajuste de los botones dentro de la barra */
 .bottom-nav__item { 
     flex: 1; 
     display: flex; 
     flex-direction: column; 
     align-items: center; 
     justify-content: center; 
-    padding: var(--sp-1) var(--sp-2); 
+    height: 100%; /* Ocupa toda la altura de la píldora */
     cursor: pointer; 
-    transition: color 0.2s; 
-    /* CAMBIO CLAVE: Usamos una variable semántica que se adapta al tema en lugar de un color fijo. */
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
     color: var(--c-on-surface-secondary); 
     border: none; 
     background: none; 
+    border-radius: 16px; /* Efecto hover redondeado */
 }
+
+/* Efecto al pulsar un botón del menú */
+.bottom-nav__item:active {
+    transform: scale(0.9);
+}
+
 .bottom-nav__item--active { 
-    /* Esta regla ya es correcta, el color primario cambia con el tema. */
     color: var(--c-primary); 
 }
+
 .bottom-nav__item .material-icons { 
-    font-size: 22px; 
+    font-size: 26px; /* Iconos un poco más grandes */
 } 
+
+/* Ocultamos las etiquetas de texto para un look más limpio y minimalista */
 .bottom-nav__label { 
     display: none; 
-    font-size: var(--fs-xs); 
-    margin-top: 2px; 
 }
 
 
@@ -827,7 +846,37 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
 .kpi-item__label { font-size: var(--fs-xs); font-weight: 600; color: var(--c-on-surface-secondary); margin-bottom: var(--sp-1); text-transform: uppercase; }
 .kpi-item__value { font-size: var(--fs-base); font-weight: 800; }
 .kpi-item__comparison { font-size: var(--fs-xs); font-weight: 500; margin-top: var(--sp-1); height: 14px; }
-/* --- AÑADE ESTE BLOQUE A TU CSS --- */
+.kpi-item__value, .transaction-card__amount {
+    font-feature-settings: "tnum" on, "cv11" on, "ss01" on; 
+    letter-spacing: -0.02em; /* Un toque más compacto y moderno */
+}
+.kpi-item:first-child {
+    position: relative;
+    overflow: hidden; /* Para que el brillo no se salga */
+}
+
+/* El brillo ambiental */
+.kpi-item:first-child::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120px;
+    height: 120px;
+    background: var(--c-primary);
+    filter: blur(60px); /* Difuminado extremo */
+    opacity: 0.15; /* Muy sutil */
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    border-radius: 50%;
+    z-index: 0;
+}
+
+/* Asegurar que el texto esté encima del brillo */
+.kpi-item__value, .kpi-item__label {
+    position: relative;
+    z-index: 1;
+}
 .kpi-item[data-action] {
     /* Reseteamos la apariencia de botón */
     border: none;
@@ -1148,11 +1197,13 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     justify-content: center;
     cursor: pointer;
     margin: 0;
-    transition: background-color 0.1s;
+    transition: background-color 0.1s; transform 0.05s;
 }
 
 .calculator-btn:active {
     background-color: var(--c-surface-variant);
+    transform: scale(0.92); /* Efecto de hundimiento físico */
+    border-radius: 8px; /* Un pequeño redondeo al pulsar queda muy orgánico */
 }
 
 .calculator-btn.btn-operator {
@@ -1344,7 +1395,24 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 @media (min-width: 1024px) {
     body { overflow-y: auto; }
     .app-layout { flex-direction: row; max-width: 100%; height: 100vh; }
-    .bottom-nav { position: fixed; flex-direction: column; width: 240px; height: 100vh; left: 0; top: 0; transform: none; border-top: none; border-right: 1px solid var(--c-outline); padding: var(--sp-5) var(--sp-3); justify-content: flex-start; gap: var(--sp-2); box-shadow: none; background-color: var(--c-background); }
+    .bottom-nav { 
+        position: fixed; 
+        flex-direction: column; 
+        width: 240px; 
+        height: 100vh; 
+        left: 0; 
+        top: 0; 
+        bottom: auto; /* IMPORTANTE: Anula el bottom: 24px de la versión móvil */
+        transform: none; 
+        border-top: none; 
+        border-right: 1px solid var(--c-outline); 
+        padding: var(--sp-5) var(--sp-3); 
+        justify-content: flex-start; 
+        gap: var(--sp-2); 
+        box-shadow: none; 
+        background-color: var(--c-background); 
+        border-radius: 0; /* Quitamos el borde redondeado en PC */
+    }
     .bottom-nav__item { flex: 0 0 auto; flex-direction: row; justify-content: flex-start; width: 100%; height: auto; padding: var(--sp-2) var(--sp-3); border-radius: var(--border-radius-md); }
     .bottom-nav__item:hover { background-color: var(--c-surface-variant); }
     body[data-ledger-mode="A"] .bottom-nav__item--active { background-color: var(--c-primary); color: var(--c-white); }
@@ -1734,20 +1802,27 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     align-items: center;
     justify-content: center;
     
-    /* La magia para que "flote" sobre la barra */
-    margin-bottom: 12px;
-    box-shadow: var(--shadow-md);
+    /* LA CLAVE: Lo empujamos hacia arriba para que "flote" sobre la isla */
+    margin-bottom: 35px; 
+    
+    /* Sombra fuerte para separarlo visualmente */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    
+    /* Borde del color del fondo para crear efecto de "recorte" visual (opcional) */
+    border: 4px solid var(--c-background); 
     
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* Efecto rebote */
 }
 
 #bottom-nav-add-btn:hover {
-    transform: scale(1.1) rotate(15deg);
+    transform: scale(1.1) rotate(90deg); /* Pequeño giro al pasar el ratón */
     background-color: var(--c-primary-hover);
 }
+
 #bottom-nav-add-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.9);
+}
 }
 
 #bottom-nav-add-btn .material-icons {
@@ -3500,4 +3575,20 @@ input, select, textarea, .form-input, .form-select {
 .view-transition-out-forward {
     animation: slide-out-ios-background 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards;
     z-index: 0;
+}
+
+/* Clase para la animación de entrada suave */
+.fade-in-up {
+    animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px); /* Empieza un poco más abajo */
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0); /* Termina en su sitio */
+    }
 }

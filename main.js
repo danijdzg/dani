@@ -1899,11 +1899,28 @@ window.addEventListener('offline', () => {
 };
 
 const setupTheme = () => { 
-    const gridColor = 'rgba(255, 255, 255, 0.1)';
     const textColor = '#FFFFFF';
+    
+    // Configuración Base
     Chart.defaults.color = textColor; 
-    Chart.defaults.borderColor = gridColor;
+    Chart.defaults.borderColor = 'transparent'; // Quitamos bordes de contenedores
     Chart.register(ChartDataLabels);
+
+    // --- NUEVO: CONFIGURACIÓN MINIMALISTA GLOBAL ---
+    
+    // 1. Ocultar Ejes y Rejillas por defecto en todos los gráficos
+    Chart.defaults.scale.grid.display = false;      // Quita la rejilla interior
+    Chart.defaults.scale.grid.drawBorder = false;   // Quita la línea del eje
+    Chart.defaults.scale.ticks.display = false;     // Quita los números de los ejes (opcional, limpio)
+    
+    // 2. Si quieres mantener las fechas (Eje X) pero quitar el resto:
+    // (Esto sobreescribe lo anterior solo para el eje X)
+    Chart.defaults.scales.x.ticks.display = true;   
+    Chart.defaults.scales.x.ticks.color = 'rgba(255, 255, 255, 0.5)'; // Texto sutil
+    
+    // 3. Quitar puntos en las líneas (se ven al pasar el ratón)
+    Chart.defaults.elements.point.radius = 0;
+    Chart.defaults.elements.point.hitRadius = 10; // Facilita tocar en móvil
 };
 
 const cleanupObservers = () => {
@@ -3055,7 +3072,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                     </div>`;
                 }).join('');
 
-            listContainer.innerHTML = listHtml ? `<div class="card"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
+            listContainer.innerHTML = listHtml ? `<div class="card fade-in-up"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
             
             applyInvestmentItemInteractions(listContainer);
         }
@@ -5721,7 +5738,10 @@ const updateNetWorthChart = async (saldos) => {
         }
         return;
     }
-    if(chartContainer) chartContainer.classList.remove('skeleton');
+    if(chartContainer) {
+    chartContainer.classList.remove('skeleton');
+    chartContainer.classList.add('fade-in-up'); // <--- Añade la animación
+}
 
     const currentComponentTotals = { 'Líquido': 0, 'Inversión': 0, 'Propiedades': 0, 'Deuda': 0 };
     cuentas.forEach(c => {
@@ -5803,17 +5823,17 @@ const updateNetWorthChart = async (saldos) => {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                y: {
-                    stacked: true,
-                    ticks: { callback: v => formatCurrency(v * 100).replace(/\s/g,'') }
-                },
-                x: {
-                    type: 'time',
-                    time: { unit: 'month', tooltipFormat: 'dd MMM yyyy', displayFormats: { month: 'MMM yy' } },
-                    ticks: { autoSkip: true, maxTicksLimit: 6 },
-                    grid: { display: false }
-                }
-            },
+    y: {
+        stacked: true,
+        display: false, // <--- AÑADIR: Oculta eje Y completamente
+    },
+    x: {
+        type: 'time',
+        time: { unit: 'month', tooltipFormat: 'dd MMM yyyy', displayFormats: { month: 'MMM yy' } },
+        ticks: { autoSkip: true, maxTicksLimit: 6 },
+        grid: { display: false, drawBorder: false } // <--- ASEGURAR ESTO
+    }
+},
             plugins: {
                 datalabels: { display: false },
                 // ▼▼▼ LA LÍNEA CLAVE QUE HEMOS CAMBIADO ▼▼▼
@@ -5911,7 +5931,11 @@ const updateDashboardData = async () => {
 
         // A. Widget: Centro de Operaciones
         if (select('kpi-tasa-ahorro-value')) {
-            selectAll('#super-centro-operaciones-widget .skeleton').forEach(el => el.classList.remove('skeleton'));
+            selectAll('#super-centro-operaciones-widget .skeleton').forEach(el => {
+    el.classList.remove('skeleton');
+    // Añadimos la clase de animación para que el texto aparezca suavemente
+    el.classList.add('fade-in-up');
+});
             
             // Tasa de Ahorro (Texto y Gráfico)
             const kpiTasaAhorroValueEl = select('kpi-tasa-ahorro-value');
