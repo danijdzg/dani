@@ -3144,19 +3144,28 @@ const handleShowPnlBreakdown = async (accountId) => {
         const renderVirtualListItem = (item) => {
 			if (item.type === 'month-header') {
     const monthName = item.date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    
+    // --- NUEVO HTML: Solo Título, Estilo Minimalista ---
     return `
-        <div class="movimiento-month-header">
-            <h3 class="movimiento-month-header__title">${monthName}</h3>
-            <div class="movimiento-month-header__summary">
-                <p class="text-positive">${formatCurrency(item.income)}</p>
-                <p class="text-negative">${formatCurrency(item.expense)}</p>
-                <p class="${item.net >= 0 ? 'text-positive' : 'text-negative'}" style="border-top: 1px solid var(--c-outline); margin-top: 2px; padding-top: 2px;">
-                    ${formatCurrency(item.net)}
-                </p>
-            </div>
+        <div class="movimiento-month-header" style="
+            height: 40px; 
+            display: flex; 
+            align-items: center; 
+            padding: 0 var(--sp-4); 
+            background-color: var(--c-background); /* Fondo sólido para que al hacer sticky tape lo de abajo */
+            border-bottom: 1px solid var(--c-outline);
+            z-index: 5;
+        ">
+            <h3 class="movimiento-month-header__title" style="
+                font-size: 1rem; 
+                margin: 0; 
+                color: var(--c-primary); 
+                font-weight: 800;
+                text-transform: capitalize;
+            ">${monthName}</h3>
         </div>
     `;
-    }
+}
             if (item.type === 'pending-header') {
                 return `
                     <div class="movimiento-date-header" style="background-color: var(--c-warning); color: var(--c-black); font-weight: 800; letter-spacing: 0.5px;">
@@ -3369,9 +3378,9 @@ const updateVirtualListUI = () => {
         const monthData = groupedByMonth[monthKey];
         const monthDate = new Date(monthKey + '-02T12:00:00Z');
 
-        vList.items.push({ type: 'month-header', date: monthDate, net: monthData.monthNet, income: monthData.monthIncome, expense: monthData.monthExpense });
-        vList.itemMap.push({ height: 70, offset: currentHeight });
-        currentHeight += 70;
+        vList.items.push({ type: 'month-header', date: monthDate, });
+        vList.itemMap.push({ height: 40, offset: currentHeight });
+        currentHeight += 40;
 
         const sortedDates = Object.keys(monthData.days).sort((a, b) => b.localeCompare(a));
         for (const dateKey of sortedDates) {
