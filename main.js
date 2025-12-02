@@ -4134,15 +4134,15 @@ async function calculateHistoricalIrrForGroup(accountIds) {
         </div>
 
         <div class="hero-card" id="kpi-patrimonio-card" style="margin-top: 0; padding-bottom: 0; overflow: hidden;">
-            <div style="padding: 0 20px;">
-                <div style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 1px;">Mi Riqueza Total</div>
-                <div id="kpi-patrimonio-neto-value" class="hero-value kpi-resaltado-azul skeleton" data-current-value="0">0,00 €</div>
-            </div>
-            
-            <div class="chart-container skeleton" id="net-worth-chart-container" style="height: 140px; width: 100%; margin-bottom: -5px;">
-                <canvas id="net-worth-chart"></canvas>
-            </div>
+        <div style="padding: 0 20px;">
+            <div style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 1px;">Patrimonio Total</div>
+            <div id="kpi-patrimonio-neto-value" class="hero-value kpi-resaltado-azul skeleton" data-current-value="0">0,00 €</div>
         </div>
+        
+        <div class="chart-container skeleton" id="net-worth-chart-container" style="height: 140px; width: 100%; margin-bottom: -5px;">
+            <canvas id="net-worth-chart"></canvas>
+        </div>
+    </div>
 
         <div class="section-header">Salud Financiera</div>
         <div class="horizontal-snap-container">
@@ -5406,114 +5406,106 @@ const updateNetWorthChart = async (saldos) => {
     if (existingChart) existingChart.destroy();
     
     const allMovements = await fetchAllMovementsForHistory();
-    const visibleAccountIds = new Set(Object.keys(saldos));
     
-    // Si no hay datos, mostramos estado vacío
     if (allMovements.length === 0 && Object.keys(saldos).length === 0) {
         if(chartContainer) {
             chartContainer.classList.remove('skeleton');
-            chartContainer.innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Aún no hay datos suficientes.</p></div>`;
+            chartContainer.innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Sin datos suficientes.</p></div>`;
         }
         return;
     }
 
-    // 1. Construimos la historia del patrimonio TOTAL día a día
-    // Calculamos el total actual inicial para ir restando hacia atrás
+    // 1. Preparamos el historial
+    const visibleAccountIds = new Set(Object.keys(saldos));
     const currentTotal = Object.values(saldos).reduce((sum, s) => sum + s, 0);
-    let runningTotal = currentTotal;
-
-    // Usamos un Map para guardar el historial (Fecha -> Valor)
-    const historyMap = new Map();
-    const todayKey = new Date().toISOString().slice(0, 10);
     
-    // Guardamos el punto de partida (Hoy)
-    historyMap.set(todayKey, currentTotal);
+    // Mapa de fechas con saldo final de ese día
+    const balancesByDate = new Map();
+    const todayKey = new Date().toISOString().slice(0, 10);
+    balancesByDate.set(todayKey, currentTotal);
 
-    // Ordenamos del más reciente al más antiguo
+    let runningTotal = currentTotal;
+    
+    // Ordenamos: Reciente -> Antiguo
     const sortedMovements = allMovements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     
+    // Calculamos saldo hacia atrás
     for (const mov of sortedMovements) {
         let impact = 0;
-        // Calculamos el impacto que tuvo este movimiento en el patrimonio visible
         if (mov.tipo === 'traspaso') {
-            const origenVisible = visibleAccountIds.has(mov.cuentaOrigenId);
-            const destinoVisible = visibleAccountIds.has(mov.cuentaDestinoId);
-            // Si sale de mi vista, restó patrimonio. Si entra, sumó.
-            if (origenVisible && !destinoVisible) impact = -mov.cantidad;
-            else if (!origenVisible && destinoVisible) impact = mov.cantidad;
-        } else {
-            if (visibleAccountIds.has(mov.cuentaId)) {
-                impact = mov.cantidad;
-            }
+            const origenVis = visibleAccountIds.has(mov.cuentaOrigenId);
+            const destinoVis = visibleAccountIds.has(mov.cuentaDestinoId);
+            if (origenVis && !destinoVis) impact = -mov.cantidad;
+            else if (!origenVis && destinoVis) impact = mov.cantidad;
+        } else if (visibleAccountIds.has(mov.cuentaId)) {
+            impact = mov.cantidad;
         }
-        
-        // El saldo ANTES de este movimiento era: SaldoActual - Impacto
+
+        // Saldo antes del movimiento = Saldo actual - Impacto
         runningTotal -= impact;
         
         const dateKey = mov.fecha.slice(0, 10);
-        // Guardamos el saldo al final de ese día (el primero que encontramos al ir hacia atrás)
-        if (!historyMap.has(dateKey)) {
-            historyMap.set(dateKey, runningTotal + impact); 
+        // Solo guardamos el saldo si es el último movimiento procesado de ese día (el cierre del día)
+        if (!balancesByDate.has(dateKey)) {
+            balancesByDate.set(dateKey, runningTotal + impact);
         }
     }
 
-    // Convertimos a array y ordenamos por fecha ascendente para el gráfico
-    const sortedDates = Array.from(historyMap.keys()).sort();
-    const dataValues = sortedDates.map(date => historyMap.get(date) / 100);
+    // 2. RELLENO DE HUECOS (Gap Filling) - Para una línea suave
+    const sortedDates = Array.from(balancesByDate.keys()).sort();
+    if (sortedDates.length === 0) return;
 
-    // Quitamos esqueleto y mostramos gráfico
+    const startDate = new Date(sortedDates[0]);
+    const endDate = new Date(sortedDates[sortedDates.length - 1]);
+    const fullHistoryLabels = [];
+    const fullHistoryData = [];
+    
+    let lastBalance = balancesByDate.get(sortedDates[0]);
+
+    // Recorremos día a día desde el inicio hasta hoy
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const isoDate = d.toISOString().slice(0, 10);
+        fullHistoryLabels.push(isoDate);
+        
+        if (balancesByDate.has(isoDate)) {
+            lastBalance = balancesByDate.get(isoDate);
+        }
+        fullHistoryData.push(lastBalance / 100);
+    }
+
+    // 3. Renderizado
     if(chartContainer) {
         chartContainer.classList.remove('skeleton');
         chartContainer.classList.add('fade-in-up');
     }
 
     const ctx = netWorthCanvas.getContext('2d');
-    
-    // --- CREAR GRADIENTE DE LUJO ---
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, 'rgba(0, 229, 255, 0.5)'); // Azul Cyan
-    gradient.addColorStop(1, 'rgba(0, 229, 255, 0.0)'); // Transparente
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(0, 229, 255, 0.4)');
+    gradient.addColorStop(1, 'rgba(0, 229, 255, 0.0)');
 
     netWorthChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: sortedDates,
+            labels: fullHistoryLabels,
             datasets: [{
-                label: 'Patrimonio Neto',
-                data: dataValues,
+                label: 'Patrimonio',
+                data: fullHistoryData,
                 fill: true,
                 backgroundColor: gradient,
-                borderColor: '#00E5FF', // Cian eléctrico
-                borderWidth: 3,
-                pointRadius: 0, // Sin puntos para una línea limpia
-                pointHoverRadius: 6,
-                pointBackgroundColor: '#fff',
-                tension: 0.4 // Curva suave
+                borderColor: '#00E5FF',
+                borderWidth: 2,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                tension: 0.3
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            scales: {
-                x: { display: false }, // Ocultamos eje X para limpieza total
-                y: { display: false }  // Ocultamos eje Y
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    titleColor: '#fff',
-                    bodyFont: { size: 14, weight: 'bold' },
-                    callbacks: {
-                        label: (context) => formatCurrency(context.parsed.y * 100),
-                        title: (tooltipItems) => {
-                            const date = new Date(tooltipItems[0].label);
-                            return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
-                        }
-                    }
-                }
-            }
+            scales: { x: { display: false }, y: { display: false } },
+            plugins: { legend: { display: false } }
         }
     });
 };
@@ -5538,42 +5530,53 @@ const updateDashboardData = async () => {
     isDashboardRendering = true;
 
     try {
-        // 1. OBTENEMOS LOS MOVIMIENTOS SEGÚN EL FILTRO (INCLUIDO CUSTOM)
+        // 1. Obtener movimientos filtrados
         const { current } = await getFilteredMovements(true);
         const saldos = await getSaldos();
+        const visibleAccountIds = new Set(Object.keys(saldos)); // IDs de cuentas visibles
         
-        // 2. Actualizamos el gráfico de patrimonio (Histórico completo)
+        // 2. Actualizar Patrimonio y Gráfico
         await updateNetWorthChart(saldos);
 
-        const visibleAccountIds = new Set(Object.keys(saldos));
-        
-        // 3. Cálculos del Periodo Seleccionado
+        // 3. CÁLCULO ROBUSTO DE TOTALES
         let ingresos = 0, gastos = 0, saldoNeto = 0;
+        
         current.forEach(m => {
+            // Usamos la función global calculateMovementAmount asegurando que visibleAccountIds es correcto
             const amount = calculateMovementAmount(m, visibleAccountIds);
+            
             if (amount > 0) ingresos += amount;
-            else gastos += amount;
+            else gastos += amount; // Gastos son negativos, se suman tal cual
+            
             saldoNeto += amount;
         });
 
-        // Evitar división por cero
         const tasaAhorroActual = ingresos > 0 ? (saldoNeto / ingresos) * 100 : (saldoNeto < 0 ? -100 : 0);
         const patrimonioNeto = Object.values(saldos).reduce((sum, s) => sum + s, 0);
         
-        // Cálculos de Salud Financiera
-        const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
-        const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
-
-        // --- ACTUALIZACIÓN UI ---
-
-        // A. Patrimonio (Héroe)
+        // 4. Actualizar UI
+        
+        // Patrimonio (Héroe)
         const kpiPatrimonio = select('kpi-patrimonio-neto-value');
         if (kpiPatrimonio) {
             kpiPatrimonio.classList.remove('skeleton');
             animateCountUp(kpiPatrimonio, patrimonioNeto);
         }
 
-        // B. Tasa Ahorro
+        // Resultados del Periodo (Ingresos/Gastos/Neto)
+        const elIng = select('kpi-ingresos-value');
+        const elGas = select('kpi-gastos-value');
+        const elNet = select('kpi-saldo-neto-value');
+        
+        if (elIng) {
+            [elIng, elGas, elNet].forEach(el => el.classList.remove('skeleton'));
+            animateCountUp(elIng, ingresos);
+            animateCountUp(elGas, gastos);
+            animateCountUp(elNet, saldoNeto);
+            elNet.className = saldoNeto >= 0 ? 'text-positive' : 'text-negative';
+        }
+
+        // Tasa Ahorro
         const kpiAhorro = select('kpi-tasa-ahorro-value');
         if (kpiAhorro) {
             kpiAhorro.classList.remove('skeleton');
@@ -5582,7 +5585,10 @@ const updateDashboardData = async () => {
             renderSavingsRateGauge('kpi-savings-rate-chart', tasaAhorroActual);
         }
 
-        // C. Liquidez & Libertad
+        // Salud Financiera (Liquidez y Libertad)
+        const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
+        const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
+
         const kpiRunway = select('health-runway-val');
         const barRunway = select('health-runway-progress-bar');
         if (kpiRunway) {
@@ -5595,6 +5601,7 @@ const updateDashboardData = async () => {
                 barRunway.style.backgroundColor = meses >= 6 ? 'var(--c-success)' : (meses >= 3 ? 'var(--c-warning)' : 'var(--c-danger)');
             }
         }
+
         const kpiFi = select('health-fi-val');
         const barFi = select('health-fi-progress-bar');
         if (kpiFi) {
@@ -5605,9 +5612,6 @@ const updateDashboardData = async () => {
                 barFi.style.backgroundColor = fiData.progresoFI >= 100 ? 'var(--c-success)' : 'var(--c-warning)';
             }
         }
-
-        // D. Conceptos ocultos (para mantener consistencia si se necesitan en otra lógica)
-        // (No renderizamos nada visual aquí porque quitamos el gráfico de flujo)
 
     } catch (error) {
         console.error("Error en updateDashboardData:", error);
