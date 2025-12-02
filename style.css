@@ -834,7 +834,22 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
 .modal__list-item:last-child { border-bottom: none; }
 .modal__actions { margin-top: var(--sp-4); display: flex; justify-content: flex-end; gap: var(--sp-2); width: 100%;}
 .modal__grabber { width: 40px; height: 5px; background-color: var(--c-outline); border-radius: 99px; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); }
-
+.modal__list-item .material-icons {
+    background-color: var(--c-surface-variant); /* Fondo suave */
+    color: var(--c-primary); /* Icono coloreado */
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px; /* Redondeado suave (Squircle) */
+    font-size: 22px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    
+    /* Sutil borde para definición */
+    border: 1px solid var(--c-outline);
+}
 /* --- Componentes UI --- */
 .card__title { font-size: var(--fs-lg); font-weight: 700; margin-bottom: var(--sp-3); display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-4) var(--sp-4) 0 var(--sp-4); }
 .card__content { padding: 0 var(--sp-4) var(--sp-4) var(--sp-4); }

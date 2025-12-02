@@ -4900,8 +4900,24 @@ const renderDashboardKpiSummary = () => {
 
 const renderDashboardSuperCentroOperaciones = () => {
     const skeletonRows = Array(3).fill('<div class="skeleton" style="height: 48px; margin-bottom: var(--sp-2); border-radius: 8px;"></div>').join('');
-    
+    // --- LÓGICA DEL SALUDO ---
+    const hour = new Date().getHours();
+    let greeting = 'Buenas noches';
+    if (hour >= 5 && hour < 12) greeting = 'Buenos días';
+    else if (hour >= 12 && hour < 21) greeting = 'Buenas tardes';
+
+    // Intentamos obtener el nombre del email (lo que va antes del @) o usamos "Piloto"
+    const userName = currentUser ? (currentUser.displayName || currentUser.email.split('@')[0]) : 'Piloto';
+    // -------------------------
     return `
+	<div style="padding: 0 var(--sp-4) var(--sp-2) var(--sp-4); margin-bottom: var(--sp-1);">
+        <h2 style="font-size: 1.4rem; font-weight: 800; margin: 0; color: var(--c-on-surface); letter-spacing: -0.5px;">
+            ${greeting}, <span style="color: var(--c-primary); text-transform: capitalize;">${userName}</span>.
+        </h2>
+        <p style="font-size: 0.85rem; color: var(--c-on-surface-secondary); margin-top: 4px; opacity: 0.8;">
+            Aquí tienes el estado de tus cuentas hoy.
+        </p>
+    </div>
     <div class="card card--no-bg" id="super-centro-operaciones-widget">
         <div class="accordion-wrapper">
             <details class="accordion" open>
@@ -4916,36 +4932,33 @@ const renderDashboardSuperCentroOperaciones = () => {
                 <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
                     
                     <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
-                        
-                        <div class="kpi-item">
-                            <h4 class="kpi-item__label">
-                                <span class="kpi-resaltado-azul">Patrimonio Neto</span>
-                            </h4>
-                            <strong id="kpi-patrimonio-neto-value" class="kpi-item__value skeleton kpi-resaltado-azul" data-current-value="0">0,00 €</strong>
-                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; color: var(--c-on-surface-secondary);">
-                                Valor total de tu riqueza<br>(Activos - Deudas)
-                            </div>
-                        </div>
+    
+    <div class="kpi-item">
+        <h4 class="kpi-item__label">
+            <span class="kpi-resaltado-azul">¿Cuánto tengo?</span> </h4>
+        <strong id="kpi-patrimonio-neto-value" class="kpi-item__value skeleton kpi-resaltado-azul" data-current-value="0">0,00 €</strong>
+        <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; color: var(--c-on-surface-secondary);">
+            Tu riqueza real hoy<br>(Lo tuyo menos lo que debes)
+        </div>
+    </div>
 
-                        <div class="kpi-item">
-                            <h4 class="kpi-item__label">Tasa de Ahorro</h4>
-                            <div style="position: relative; height: 60px; margin: auto; display: flex; align-items: center; justify-content: center;">
-                                 <canvas id="kpi-savings-rate-chart"></canvas>
-                                 <div id="kpi-tasa-ahorro-value" class="kpi-item__value skeleton" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); line-height: 1;">0%</div>
-                            </div>
-                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; color: var(--c-on-surface-secondary);">
-                                % de tus ingresos que<br>conservas tras gastos
-                            </div>
-                        </div>
+    <div class="kpi-item">
+        <h4 class="kpi-item__label">Velocidad de Ahorro</h4> <div style="position: relative; height: 60px; margin: auto; display: flex; align-items: center; justify-content: center;">
+             <canvas id="kpi-savings-rate-chart"></canvas>
+             <div id="kpi-tasa-ahorro-value" class="kpi-item__value skeleton" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); line-height: 1;">0%</div>
+        </div>
+        <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; color: var(--c-on-surface-secondary);">
+            De cada 100€ que entran,<br>cuántos te quedas tú
+        </div>
+    </div>
 
-                        <div class="kpi-item">
-                            <h4 class="kpi-item__label">Resultado Inversión</h4>
-                            <strong id="kpi-pnl-inversion-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
-                            <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; color: var(--c-on-surface-secondary);">
-                                Ganancia/Pérdida histórica<br>acumulada del mercado
-                            </div>
-                        </div>
-                    </div>
+    <div class="kpi-item">
+        <h4 class="kpi-item__label">Beneficio Inversión</h4> <strong id="kpi-pnl-inversion-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
+        <div class="kpi-item__comparison" style="font-size: 0.65rem; line-height: 1.3; margin-top: 6px; color: var(--c-on-surface-secondary);">
+            Dinero generado solo<br>por tu propio dinero
+        </div>
+    </div>
+</div>
 
                     <hr style="border-color: var(--c-outline); opacity: 0.5; margin: var(--sp-5) 0;">
 
@@ -9386,6 +9399,16 @@ const handleSaveMovement = async (form, btn) => {
             
             hapticFeedback('success');
             showToast('Movimiento guardado.', 'info');
+			
+			if (dataToSave.cantidad > 0 && dataToSave.tipo !== 'traspaso') {
+				confetti({
+				particleCount: 100,
+				spread: 70,
+				origin: { y: 0.7 }, // Sale desde la parte baja de la pantalla
+				colors: ['#39FF14', '#00B34D', '#FFD60A'], // Verdes y Oro
+			disableForReducedMotion: true
+			});
+		}
             setTimeout(() => updateLocalDataAndRefreshUI(), 50);
         }
 
