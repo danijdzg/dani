@@ -389,15 +389,7 @@
     flex-wrap: wrap; /* Esta línea es la clave para que no se amontonen si no caben */
 }
 
-	/* Pega este código CSS justo después de <style> */
-.widget-config-item { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-2); background-color: var(--c-surface-variant); border-radius: var(--border-radius-md); margin-bottom: var(--sp-2); border: 1px solid var(--c-outline); }
-.widget-config-item.dragging { opacity: 0.5; background-color: var(--c-primary); }
-.widget-config-item__details { flex-grow: 1; }
-.widget-config-item__title { font-weight: 700; color: var(--c-on-surface); }
-.widget-config-item__desc { font-size: var(--fs-xs); color: var(--c-on-surface-secondary); }
-.drag-handle { cursor: grab; color: var(--c-on-surface-tertiary); }
-.drag-handle:active { cursor: grabbing; }
-
+	
 :root {
     /* TEMA 1: "ABISMO DIGITAL" (Oscuro Profesional) */
     /* PALETA: Inspirada en fintech de lujo, con un fondo azul noche profundo. */

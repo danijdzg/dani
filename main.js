@@ -458,7 +458,6 @@ const getInitialDb = () => ({
     inversion_cashflows: [],
     config: { 
         skipIntro: false,
-        dashboardWidgets: DEFAULT_DASHBOARD_WIDGETS,
         savedReports: {} // <-- AÑADIDO: para guardar la configuración de los informes
     } 
 });
@@ -4846,28 +4845,6 @@ const renderSavingsRateGauge = (canvasId, percentage) => {
         }
     });
 };
-
-const renderDashboardKpiSummary = () => {
-   // ¡Simplemente eliminamos el atributo style!
-   return `<div class="kpi-grid" id="kpi-container">
-            <div class="kpi-item">
-                <h4 class="kpi-item__label">Ingresos</h4>
-                <strong id="kpi-ingresos-value" class="kpi-item__value text-positive skeleton" data-current-value="0">+0,00 €</strong> 
-                <div id="kpi-ingresos-comparison" class="kpi-item__comparison"></div>
-            </div>
-            <div class="kpi-item">
-                <h4 class="kpi-item__label">Gastos</h4>
-                <strong id="kpi-gastos-value" class="kpi-item__value text-negative skeleton" data-current-value="0">0,00 €</strong>
-                <div id="kpi-gastos-comparison" class="kpi-item__comparison"></div>
-            </div>
-            <div class="kpi-item">
-                <h4 class="kpi-item__label">Saldo Neto Periodo</h4>
-                <strong id="kpi-saldo-neto-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
-                <div id="kpi-saldo-neto-comparison" class="kpi-item__comparison"></div>
-            </div>
-        </div>`;
-};
-
 
 		
         const _renderRecientesFromCache = async () => {
