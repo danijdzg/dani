@@ -4101,10 +4101,10 @@ async function calculateHistoricalIrrForGroup(accountIds) {
                 </div>
             </div>
             
-            <div class="report-filters" style="background-color: var(--c-surface-variant); padding: 12px; border-radius: 16px; display: flex; flex-direction: column; gap: 10px;">
+            <div class="report-filters" style="background-color: var(--c-surface-variant); padding: 10px 12px; border-radius: 16px; display: flex; flex-direction: column; gap: 10px; margin-bottom: var(--sp-4); border: 1px solid var(--c-outline);">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.8rem; font-weight: 600; color: var(--c-on-surface-secondary);">Periodo de análisis</span>
-                    <select id="filter-periodo" class="form-select report-period-selector" style="font-size: 0.8rem; padding: 6px 12px; height: auto; width: auto; border: 1px solid var(--c-outline); background-color: var(--c-surface);">
+                    <span style="font-size: 0.8rem; font-weight: 600; color: var(--c-on-surface-secondary);">Periodo</span>
+                    <select id="filter-periodo" class="form-select report-period-selector" style="font-size: 0.8rem; padding: 6px 24px 6px 12px; height: auto; width: auto; border: 1px solid var(--c-outline); background-color: var(--c-surface);">
                         <option value="mes-actual">Este Mes</option>
                         <option value="año-actual">Este Año</option>
                         <option value="custom">Personalizado</option>
@@ -4116,19 +4116,39 @@ async function calculateHistoricalIrrForGroup(accountIds) {
                     <input type="date" id="filter-fecha-fin" class="form-input" style="font-size: 0.8rem; padding: 8px;">
                 </div>
             </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--sp-2); text-align: center; margin-bottom: var(--sp-4);">
+                <div style="background: var(--c-surface); padding: 10px 5px; border-radius: 12px; border: 1px solid var(--c-outline);">
+                    <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Ingresos</div>
+                    <div id="kpi-ingresos-value" class="text-positive skeleton" style="font-size: 0.95rem; font-weight: 700;">+0 €</div>
+                </div>
+                <div style="background: var(--c-surface); padding: 10px 5px; border-radius: 12px; border: 1px solid var(--c-outline);">
+                    <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Gastos</div>
+                    <div id="kpi-gastos-value" class="text-negative skeleton" style="font-size: 0.95rem; font-weight: 700;">-0 €</div>
+                </div>
+                <div style="background: var(--c-surface); padding: 10px 5px; border-radius: 12px; border: 1px solid var(--c-outline);">
+                    <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Neto</div>
+                    <div id="kpi-saldo-neto-value" class="skeleton" style="font-size: 0.95rem; font-weight: 700;">0 €</div>
+                </div>
+            </div>
         </div>
 
-        <div class="hero-card" id="kpi-patrimonio-card" style="margin-top: var(--sp-2);">
-            <div style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 1px;">Mi Riqueza Total</div>
-            <div id="kpi-patrimonio-neto-value" class="hero-value kpi-resaltado-azul skeleton" data-current-value="0">0,00 €</div>
-            <div style="font-size: 0.8rem; color: var(--c-on-surface-secondary); opacity: 0.8;">Activos Totales - Deudas</div>
+        <div class="hero-card" id="kpi-patrimonio-card" style="margin-top: 0; padding-bottom: 0; overflow: hidden;">
+            <div style="padding: 0 20px;">
+                <div style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 1px;">Mi Riqueza Total</div>
+                <div id="kpi-patrimonio-neto-value" class="hero-value kpi-resaltado-azul skeleton" data-current-value="0">0,00 €</div>
+            </div>
+            
+            <div class="chart-container skeleton" id="net-worth-chart-container" style="height: 140px; width: 100%; margin-bottom: -5px;">
+                <canvas id="net-worth-chart"></canvas>
+            </div>
         </div>
 
         <div class="section-header">Salud Financiera</div>
         <div class="horizontal-snap-container">
             <div class="snap-card">
                 <div style="display:flex; justify-content:space-between; align-items:start;">
-                    <div><div style="font-size:0.8rem; font-weight:700; color:var(--c-on-surface-secondary); margin-bottom:4px;">AHORRO DEL PERIODO</div><div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size:1.8rem; font-weight:800;">0%</div></div>
+                    <div><div style="font-size:0.8rem; font-weight:700; color:var(--c-on-surface-secondary); margin-bottom:4px;">AHORRO</div><div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size:1.8rem; font-weight:800;">0%</div></div>
                     <div style="width: 40px; height: 40px;"><canvas id="kpi-savings-rate-chart"></canvas></div>
                 </div>
                 <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-top: 8px;">De tus ingresos netos</div>
@@ -4139,31 +4159,20 @@ async function calculateHistoricalIrrForGroup(accountIds) {
                     <span class="material-icons" style="font-size: 32px; color: var(--c-success); opacity: 0.2;">shield</span>
                 </div>
                 <div class="mini-progress-bar"><div id="health-runway-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-success);"></div></div>
-                <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-top: 8px;">Meta: 6 meses de gastos</div>
+                <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-top: 8px;">Meta: 6 meses</div>
             </div>
             <div class="snap-card">
                 <div style="display:flex; justify-content:space-between; align-items:start;">
-                    <div><div style="font-size:0.8rem; font-weight:700; color:var(--c-on-surface-secondary); margin-bottom:4px;">LIBERTAD FINANCIERA</div><div id="health-fi-val" class="skeleton" style="font-size:1.8rem; font-weight:800; color: var(--c-warning);">0.0%</div></div>
+                    <div><div style="font-size:0.8rem; font-weight:700; color:var(--c-on-surface-secondary); margin-bottom:4px;">LIBERTAD</div><div id="health-fi-val" class="skeleton" style="font-size:1.8rem; font-weight:800; color: var(--c-warning);">0.0%</div></div>
                     <span class="material-icons" style="font-size: 32px; color: var(--c-warning); opacity: 0.2;">flag</span>
                 </div>
                 <div class="mini-progress-bar"><div id="health-fi-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-warning);"></div></div>
                 <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-top: 8px;">Meta: Vivir de rentas</div>
             </div>
         </div>
-
-        <div class="section-header">Evolución de mi Riqueza</div>
-        <div class="card fade-in-up">
-            <div class="card__content" style="padding: 0;">
-                <div class="chart-container skeleton" id="net-worth-chart-container" style="height: 300px; border-radius: 20px;">
-                    <canvas id="net-worth-chart"></canvas>
-                </div>
-            </div>
-        </div>
         
         <div id="concepto-totals-list" style="display:none;"></div>
-        <div id="kpi-ingresos-value" style="display:none;"></div>
-        <div id="kpi-gastos-value" style="display:none;"></div>
-        <div id="kpi-saldo-neto-value" style="display:none;"></div>
+        <canvas id="conceptos-chart" style="display:none;"></canvas>
     `;
     
     populateAllDropdowns();
