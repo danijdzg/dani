@@ -5388,10 +5388,10 @@ const updateNetWorthChart = async (saldos) => {
     if (existingChart) existingChart.destroy();
     
     const allMovements = await fetchAllMovementsForHistory();
-    // Filtramos solo las cuentas visibles (A o B)
     const visibleAccountIds = new Set(Object.keys(saldos));
     
-    if (allMovements.length === 0) {
+    // Si no hay datos, mostramos estado vacío
+    if (allMovements.length === 0 && Object.keys(saldos).length === 0) {
         if(chartContainer) {
             chartContainer.classList.remove('skeleton');
             chartContainer.innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Aún no hay datos suficientes.</p></div>`;
@@ -5400,27 +5400,27 @@ const updateNetWorthChart = async (saldos) => {
     }
 
     // 1. Construimos la historia del patrimonio TOTAL día a día
-    let runningTotal = 0;
     // Calculamos el total actual inicial para ir restando hacia atrás
     const currentTotal = Object.values(saldos).reduce((sum, s) => sum + s, 0);
-    runningTotal = currentTotal;
+    let runningTotal = currentTotal;
 
-    const dailyTotals = {};
-    const todayKey = new Date().toISOString().slice(0, 10);
-    dailyData[todayKey] = currentTotal; // Usamos dailyData o creamos map nuevo
-
-    // Ordenamos del más reciente al más antiguo para reconstruir la historia
-    const sortedMovements = allMovements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-    
+    // Usamos un Map para guardar el historial (Fecha -> Valor)
     const historyMap = new Map();
+    const todayKey = new Date().toISOString().slice(0, 10);
+    
+    // Guardamos el punto de partida (Hoy)
     historyMap.set(todayKey, currentTotal);
 
+    // Ordenamos del más reciente al más antiguo
+    const sortedMovements = allMovements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    
     for (const mov of sortedMovements) {
         let impact = 0;
+        // Calculamos el impacto que tuvo este movimiento en el patrimonio visible
         if (mov.tipo === 'traspaso') {
             const origenVisible = visibleAccountIds.has(mov.cuentaOrigenId);
             const destinoVisible = visibleAccountIds.has(mov.cuentaDestinoId);
-            // Si sale de mi vista, es como un gasto. Si entra, es ingreso.
+            // Si sale de mi vista, restó patrimonio. Si entra, sumó.
             if (origenVisible && !destinoVisible) impact = -mov.cantidad;
             else if (!origenVisible && destinoVisible) impact = mov.cantidad;
         } else {
@@ -5439,10 +5439,11 @@ const updateNetWorthChart = async (saldos) => {
         }
     }
 
-    // Convertimos a array y ordenamos por fecha ascendente
+    // Convertimos a array y ordenamos por fecha ascendente para el gráfico
     const sortedDates = Array.from(historyMap.keys()).sort();
     const dataValues = sortedDates.map(date => historyMap.get(date) / 100);
 
+    // Quitamos esqueleto y mostramos gráfico
     if(chartContainer) {
         chartContainer.classList.remove('skeleton');
         chartContainer.classList.add('fade-in-up');
@@ -5452,11 +5453,10 @@ const updateNetWorthChart = async (saldos) => {
     
     // --- CREAR GRADIENTE DE LUJO ---
     const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    // Azul/Verde cian muy moderno
-    gradient.addColorStop(0, 'rgba(0, 229, 255, 0.5)'); 
-    gradient.addColorStop(1, 'rgba(0, 229, 255, 0.0)');
+    gradient.addColorStop(0, 'rgba(0, 229, 255, 0.5)'); // Azul Cyan
+    gradient.addColorStop(1, 'rgba(0, 229, 255, 0.0)'); // Transparente
 
-    new Chart(ctx, {
+    netWorthChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: sortedDates,
