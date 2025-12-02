@@ -3861,3 +3861,94 @@ body.privacy-mode .asset-card__value:active {
     filter: blur(0); /* Quita el desenfoque temporalmente */
     cursor: pointer;
 }
+
+/* ================================================================= */
+/* === ESTILOS PANEL "iOS PREMIUM" (v5.0) === */
+/* ================================================================= */
+
+/* Contenedor de Scroll Horizontal (Estilo Apple Fitness) */
+.horizontal-snap-container {
+    display: flex;
+    overflow-x: auto;
+    gap: var(--sp-3);
+    padding: var(--sp-1) var(--sp-4) var(--sp-4) var(--sp-4); /* Padding para la sombra */
+    margin: 0 calc(-1 * var(--sp-4)); /* Romper márgenes del contenedor padre */
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Ocultar scrollbar Firefox */
+}
+.horizontal-snap-container::-webkit-scrollbar { display: none; } /* Ocultar scrollbar Chrome/Safari */
+
+/* Tarjetas del Carrusel */
+.snap-card {
+    flex: 0 0 85%; /* En móvil muestra una y un trozo de la siguiente */
+    max-width: 300px;
+    scroll-snap-align: center;
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-outline);
+    border-radius: 20px; /* Más redondeado */
+    padding: var(--sp-4);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 140px; /* Altura fija uniforme */
+    position: relative;
+    overflow: hidden;
+}
+
+/* Tarjeta Héroe (Patrimonio) */
+.hero-card {
+    text-align: center;
+    padding: 30px 20px;
+    margin-bottom: var(--sp-4);
+    background: linear-gradient(180deg, var(--c-surface) 0%, var(--c-surface-variant) 100%);
+    border: 1px solid var(--c-outline);
+    border-radius: 24px;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Decoración de fondo sutil */
+.hero-card::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, var(--c-primary) 0%, transparent 70%);
+    opacity: 0.08;
+    pointer-events: none;
+}
+
+.hero-value {
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin: 10px 0;
+    line-height: 1;
+}
+
+/* Títulos de sección estilo iOS */
+.section-header {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--c-on-surface);
+    margin: var(--sp-5) 0 var(--sp-3) 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Barras de progreso mini dentro de las tarjetas */
+.mini-progress-bar {
+    height: 6px;
+    background-color: var(--c-outline);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: auto; /* Empuja al fondo */
+}
+.mini-progress-value {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+}

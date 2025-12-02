@@ -339,18 +339,6 @@ const THEMES = {
     'default': { name: 'Abismo Digital', icon: 'dark_mode' },
     'sunset-groove': { name: 'Brisa Alpina', icon: 'light_mode' }
 };
-	        
-const AVAILABLE_WIDGETS = {
-    'super-centro-operaciones': { title: 'Centro de Operaciones', description: 'Visión completa y filtros.', icon: 'query_stats' },
-    'financial-health': { title: 'Salud Financiera', description: 'Liquidez y Libertad en un vistazo.', icon: 'health_and_safety' },
-	'net-worth-trend': { title: 'Evolución del Patrimonio', description: 'Gráfico histórico.', icon: 'show_chart' }
-};
-
-const DEFAULT_DASHBOARD_WIDGETS = [
-    'super-centro-operaciones', 
-    'financial-health',
-    'net-worth-trend'
-];
 
 // ▼▼▼ REEMPLAZAR TU FUNCIÓN updateAnalisisWidgets CON ESTA VERSIÓN SIMPLIFICADA ▼▼▼
 const updateAnalisisWidgets = async () => {
@@ -4165,19 +4153,113 @@ async function calculateHistoricalIrrForGroup(accountIds) {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // AHORA ESTA FUNCIÓN SOLO CREA EL CONTENEDOR PRINCIPAL PARA LOS WIDGETS
+    // --- SALUDO ---
+    const hour = new Date().getHours();
+    let greeting = 'Buenas noches';
+    if (hour >= 5 && hour < 12) greeting = 'Buenos días';
+    else if (hour >= 12 && hour < 21) greeting = 'Buenas tardes';
+    const userName = currentUser ? (currentUser.displayName || currentUser.email.split('@')[0]) : 'Piloto';
+
+    // --- ESTRUCTURA FIJA (SIN WIDGETS CONFIGURABLES) ---
     container.innerHTML = `
-        <div id="resumen-content-container">
-             <!-- Los esqueletos de los widgets se cargarán aquí -->
+        <div style="padding: 0 var(--sp-2) var(--sp-4); display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <p style="font-size: 0.9rem; color: var(--c-on-surface-secondary); margin-bottom: 4px;">${greeting},</p>
+                <h2 style="font-size: 1.8rem; font-weight: 800; margin: 0; color: var(--c-on-surface); text-transform: capitalize;">${userName}</h2>
+            </div>
+            <div class="report-filters" style="margin: 0;">
+                <select id="filter-periodo" class="form-select report-period-selector" style="font-size: 0.8rem; padding: 6px 12px; height: auto; width: auto; background-color: var(--c-surface-variant); border: none;">
+                    <option value="mes-actual">Este Mes</option>
+                    <option value="año-actual">Este Año</option>
+                </select>
+            </div>
         </div>
+
+        <div class="hero-card" id="kpi-patrimonio-card">
+            <div style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 1px;">Mi Riqueza Total</div>
+            <div id="kpi-patrimonio-neto-value" class="hero-value kpi-resaltado-azul skeleton" data-current-value="0">0,00 €</div>
+            <div style="font-size: 0.8rem; color: var(--c-on-surface-secondary); opacity: 0.8;">Activos Totales - Deudas</div>
+        </div>
+
+        <div class="section-header">Salud Financiera</div>
+        <div class="horizontal-snap-container">
+            
+            <div class="snap-card">
+                <div style="display:flex; justify-content:space-between; align-items:start;">
+                    <div>
+                        <div style="font-size:0.8rem; font-weight:700; color:var(--c-on-surface-secondary); margin-bottom:4px;">AHORRO DEL PERIODO</div>
+                        <div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size:1.8rem; font-weight:800;">0%</div>
+                    </div>
+                    <div style="width: 40px; height: 40px;"><canvas id="kpi-savings-rate-chart"></canvas></div>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-top: 8px;">De tus ingresos netos</div>
+            </div>
+
+            <div class="snap-card">
+                <div style="display:flex; justify-content:space-between; align-items:start;">
+                    <div>
+                        <div style="font-size:0.8rem; font-weight:700; color:var(--c-on-surface-secondary); margin-bottom:4px;">COBERTURA</div>
+                        <div id="health-runway-val" class="skeleton" style="font-size:1.8rem; font-weight:800; color: var(--c-success);">0 Meses</div>
+                    </div>
+                    <span class="material-icons" style="font-size: 32px; color: var(--c-success); opacity: 0.2;">shield</span>
+                </div>
+                <div class="mini-progress-bar"><div id="health-runway-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-success);"></div></div>
+                <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-top: 8px;">Meta: 6 meses de gastos</div>
+            </div>
+
+            <div class="snap-card">
+                <div style="display:flex; justify-content:space-between; align-items:start;">
+                    <div>
+                        <div style="font-size:0.8rem; font-weight:700; color:var(--c-on-surface-secondary); margin-bottom:4px;">LIBERTAD FINANCIERA</div>
+                        <div id="health-fi-val" class="skeleton" style="font-size:1.8rem; font-weight:800; color: var(--c-warning);">0.0%</div>
+                    </div>
+                    <span class="material-icons" style="font-size: 32px; color: var(--c-warning); opacity: 0.2;">flag</span>
+                </div>
+                <div class="mini-progress-bar"><div id="health-fi-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-warning);"></div></div>
+                <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-top: 8px;">Meta: Vivir de rentas</div>
+            </div>
+        </div>
+
+        <div class="section-header">Flujo del Periodo</div>
+        <div class="card fade-in-up">
+            <div class="card__content" style="padding-top: var(--sp-4);">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--sp-2); text-align: center; margin-bottom: var(--sp-4);">
+                    <div>
+                        <div style="font-size: 0.7rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase;">Ingresos</div>
+                        <div id="kpi-ingresos-value" class="text-positive skeleton" style="font-size: 1.1rem; font-weight: 700;">+0 €</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.7rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase;">Gastos</div>
+                        <div id="kpi-gastos-value" class="text-negative skeleton" style="font-size: 1.1rem; font-weight: 700;">-0 €</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.7rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase;">Neto</div>
+                        <div id="kpi-saldo-neto-value" class="skeleton" style="font-size: 1.1rem; font-weight: 700;">0 €</div>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: 180px;">
+                    <canvas id="conceptos-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-header">Tendencia Histórica</div>
+        <div class="card fade-in-up">
+            <div class="card__content" style="padding: 0;">
+                <div class="chart-container skeleton" id="net-worth-chart-container" style="height: 250px; border-radius: 20px;">
+                    <canvas id="net-worth-chart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div id="concepto-totals-list" style="display:none;"></div>
+        <input type="date" id="filter-fecha-inicio" class="hidden">
+        <input type="date" id="filter-fecha-fin" class="hidden">
     `;
     
-    // Las llamadas a otras funciones se mantienen
     populateAllDropdowns();
-    renderInicioResumenView(); // Esta función rellenará 'resumen-content-container'
-    
-    // Cargamos los datos para que el dashboard pueda pintarse
     await Promise.all([loadPresupuestos(), loadInversiones()]);
+    scheduleDashboardUpdate(); // Llama a la actualización de datos
 };
 
  const showEstrategiaTab = (tabName) => {
@@ -5193,34 +5275,6 @@ const renderDashboardExpandedKpiSummary = () => {
                 </div>`;
         };
 
-const renderInicioResumenView = () => {
-    const resumenContentContainer = select('resumen-content-container');
-    if (!resumenContentContainer) return;
-
-    destroyAllCharts();
-
-    const widgetOrder = (db.config && db.config.dashboardWidgets) || DEFAULT_DASHBOARD_WIDGETS;
-
-    resumenContentContainer.innerHTML = widgetOrder.map(widgetId => {
-        switch(widgetId) {
-            case 'super-centro-operaciones':
-                return `<div data-widget-type="super-centro-operaciones">${renderDashboardSuperCentroOperaciones()}</div>`;
-            case 'net-worth-trend':
-                return `<div data-widget-type="net-worth-trend">${renderDashboardNetWorthTrend()}</div>`;
-            case 'emergency-fund': // (Legacy support)
-                return `<div data-widget-type="emergency-fund">${renderDashboardEmergencyFund()}</div>`;
-            case 'fi-progress': // (Legacy support)
-                return `<div data-widget-type="fi-progress">${renderDashboardFIProgress()}</div>`;
-            case 'financial-health': 
-                return `<div data-widget-type="financial-health">${renderDashboardFinancialHealth()}</div>`;
-            /* ELIMINADO EL CASE DE 'informe-personalizado' */
-            default:
-                return '';
-        }
-    }).join('<div style="height: var(--sp-4);"></div>');
-    
-    initWidgetObserver();
-};
 		
         const _renderRecientesFromCache = async () => {
             const recientesContainer = select('inicio-view-recientes');
@@ -5945,122 +5999,105 @@ const scheduleDashboardUpdate = () => {
 
 const updateDashboardData = async () => {
     const activePage = document.querySelector('.view--active');
-    // Si no estamos en el panel, no gastamos recursos calculando
-    if (!activePage || activePage.id !== PAGE_IDS.PANEL) {
-        return;
-    }
+    if (!activePage || activePage.id !== PAGE_IDS.PANEL) return;
 
     if (isDashboardRendering) return;
     isDashboardRendering = true;
 
     try {
-        // 1. Obtener datos básicos
         const { current } = await getFilteredMovements(true);
         const saldos = await getSaldos();
         
-        // 2. Gráfico de Tendencia (Si el widget está activo)
+        // Renderizar el gráfico histórico (abajo del todo)
         await updateNetWorthChart(saldos);
+        const chartContainer = select('net-worth-chart-container');
+        if (chartContainer) {
+            chartContainer.classList.remove('skeleton');
+            chartContainer.classList.add('fade-in-up');
+        }
 
         const visibleAccountIds = new Set(Object.keys(saldos));
-        const investmentAccountIds = new Set(getVisibleAccounts().filter(c => c.esInversion).map(c => c.id));
-		
-        const calculateTotals = (movs) => {
-            let ingresos = 0, gastos = 0, saldoNeto = 0;
-            movs.forEach(m => {
-                const amount = calculateMovementAmount(m, visibleAccountIds);
-                if (amount > 0) ingresos += amount;
-                else gastos += amount;
-                saldoNeto += amount;
-            });
-            return { ingresos, gastos, saldoNeto };
-        };
-		
-        const currentTotals = calculateTotals(current);
-        const saldoNetoActual = currentTotals.saldoNeto;
-        // Evitamos división por cero
-        const tasaAhorroActual = currentTotals.ingresos > 0 ? (saldoNetoActual / currentTotals.ingresos) * 100 : (saldoNetoActual < 0 ? -100 : 0);
         
+        // Cálculos Totales
+        let ingresos = 0, gastos = 0, saldoNeto = 0;
+        current.forEach(m => {
+            const amount = calculateMovementAmount(m, visibleAccountIds);
+            if (amount > 0) ingresos += amount;
+            else gastos += amount;
+            saldoNeto += amount;
+        });
+
+        const tasaAhorroActual = ingresos > 0 ? (saldoNeto / ingresos) * 100 : (saldoNeto < 0 ? -100 : 0);
         const patrimonioNeto = Object.values(saldos).reduce((sum, s) => sum + s, 0);
         
-        // Cálculo rendimiento inversión
-        const portfolioPerformance = await calculatePortfolioPerformance();
-        const pnlInversionActual = portfolioPerformance.pnlAbsoluto;
-        
-        // Cálculo Salud Financiera
+        // Cálculos de Salud
         const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
         const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
 
-        // --- ACTUALIZACIÓN DE LA UI ---
+        // --- ACTUALIZACIÓN DE LA UI (NUEVO DISEÑO) ---
 
-        // A. Widget: Centro de Operaciones
-        if (select('kpi-tasa-ahorro-value')) {
-            selectAll('#super-centro-operaciones-widget .skeleton').forEach(el => {
-    el.classList.remove('skeleton');
-    // Añadimos la clase de animación para que el texto aparezca suavemente
-    el.classList.add('fade-in-up');
-});
-            
-            // Tasa de Ahorro (Texto y Gráfico)
-            const kpiTasaAhorroValueEl = select('kpi-tasa-ahorro-value');
-            if (kpiTasaAhorroValueEl) {
-                kpiTasaAhorroValueEl.textContent = `${tasaAhorroActual.toFixed(1)}%`;
-                kpiTasaAhorroValueEl.className = `kpi-item__value ${tasaAhorroActual >= 0 ? 'text-positive' : 'text-negative'}`;
-                renderSavingsRateGauge('kpi-savings-rate-chart', tasaAhorroActual);
-            }
-
-            // Patrimonio Neto
-            animateCountUp(select('kpi-patrimonio-neto-value'), patrimonioNeto);
-            
-            // P&L Inversión
-            const kpiPnlEl = select('kpi-pnl-inversion-value');
-            if (kpiPnlEl) {
-                kpiPnlEl.className = `kpi-item__value ${pnlInversionActual >= 0 ? 'text-positive' : 'text-negative'}`;
-                // Solo mostramos P&L si hay cuentas de inversión configuradas
-                if (investmentAccountIds.size > 0) animateCountUp(kpiPnlEl, pnlInversionActual); 
-                else kpiPnlEl.textContent = '---';
-            }
-
-            // Desglose Ingresos/Gastos/Neto
-            animateCountUp(select('kpi-ingresos-value'), currentTotals.ingresos);
-            animateCountUp(select('kpi-gastos-value'), currentTotals.gastos);
-            
-            const saldoNetoEl = select('kpi-saldo-neto-value');
-            if (saldoNetoEl) {
-                saldoNetoEl.className = `kpi-item__value ${saldoNetoActual >= 0 ? 'text-positive' : 'text-negative'}`;
-                animateCountUp(saldoNetoEl, saldoNetoActual);
-            }
-        } 
-        
-        // B. Widget: Salud Financiera
-        const healthWidget = select('financial-health-widget');
-        if (healthWidget) {
-            healthWidget.querySelector('.card__content').classList.remove('skeleton');
-            
-            // Liquidez
-            const runVal = select('health-runway-val');
-            const runProg = select('health-runway-progress');
-            const meses = isFinite(efData.mesesCobertura) ? efData.mesesCobertura : 99;
-            
-            if(runVal) {
-                runVal.textContent = isFinite(efData.mesesCobertura) ? `${efData.mesesCobertura.toFixed(1)} Meses` : '∞';
-                runVal.className = meses >= 6 ? 'text-positive' : (meses >= 3 ? 'text-warning' : 'text-danger');
-            }
-            if(runProg) runProg.value = Math.min(meses, 12);
-
-            // Libertad Financiera
-            const fiVal = select('health-fi-val');
-            const fiProg = select('health-fi-progress');
-            if(fiVal) fiVal.textContent = `${fiData.progresoFI.toFixed(2)}%`;
-            if(fiProg) fiProg.value = Math.min(fiData.progresoFI, 100);
+        // 1. Patrimonio (Héroe)
+        const kpiPatrimonio = select('kpi-patrimonio-neto-value');
+        if (kpiPatrimonio) {
+            kpiPatrimonio.classList.remove('skeleton');
+            animateCountUp(kpiPatrimonio, patrimonioNeto);
         }
 
-        // C. Gráfico de Conceptos (Bar Chart)
+        // 2. Carrusel Horizontal (Salud)
+        
+        // A. Tasa Ahorro
+        const kpiAhorro = select('kpi-tasa-ahorro-value');
+        if (kpiAhorro) {
+            kpiAhorro.classList.remove('skeleton');
+            kpiAhorro.textContent = `${tasaAhorroActual.toFixed(0)}%`;
+            kpiAhorro.className = tasaAhorroActual >= 0 ? 'text-positive' : 'text-negative';
+            renderSavingsRateGauge('kpi-savings-rate-chart', tasaAhorroActual);
+        }
+
+        // B. Liquidez (Barra CSS)
+        const kpiRunway = select('health-runway-val');
+        const barRunway = select('health-runway-progress-bar');
+        if (kpiRunway) {
+            kpiRunway.classList.remove('skeleton');
+            const meses = isFinite(efData.mesesCobertura) ? efData.mesesCobertura : 99;
+            kpiRunway.textContent = isFinite(efData.mesesCobertura) ? `${efData.mesesCobertura.toFixed(1)} Meses` : '∞';
+            
+            // Lógica de color y ancho de barra
+            const porcentajeBarra = Math.min((meses / 6) * 100, 100); // 6 meses es el 100%
+            if (barRunway) {
+                barRunway.style.width = `${porcentajeBarra}%`;
+                barRunway.style.backgroundColor = meses >= 6 ? 'var(--c-success)' : (meses >= 3 ? 'var(--c-warning)' : 'var(--c-danger)');
+            }
+        }
+
+        // C. Libertad (Barra CSS)
+        const kpiFi = select('health-fi-val');
+        const barFi = select('health-fi-progress-bar');
+        if (kpiFi) {
+            kpiFi.classList.remove('skeleton');
+            kpiFi.textContent = `${fiData.progresoFI.toFixed(1)}%`;
+            if (barFi) {
+                barFi.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
+            }
+        }
+
+        // 3. Flujo de Caja (Texto)
+        const elIng = select('kpi-ingresos-value');
+        const elGas = select('kpi-gastos-value');
+        const elNet = select('kpi-saldo-neto-value');
+        
+        if (elIng) {
+            [elIng, elGas, elNet].forEach(el => el.classList.remove('skeleton'));
+            animateCountUp(elIng, ingresos);
+            animateCountUp(elGas, gastos);
+            animateCountUp(elNet, saldoNeto);
+            elNet.className = saldoNeto >= 0 ? 'text-positive' : 'text-negative';
+        }
+
+        // 4. Gráfico de Conceptos (Simplificado para el Panel)
         const chartCanvas = select('conceptos-chart');
         if (chartCanvas && current.length > 0) {
             const chartCtx = chartCanvas.getContext('2d');
-            const chartContainer = chartCanvas.closest('.chart-container');
-            if(chartContainer) chartContainer.classList.remove('skeleton');
-            
             if (conceptosChart) conceptosChart.destroy();
             
             // Agrupar por concepto
@@ -6072,66 +6109,38 @@ const updateDashboardData = async () => {
                 return a;
             }, {});
 
-            // Ordenar y preparar datos
-            const sortedTotals = Object.entries(cTots).sort(([, a], [, b]) => a.total - b.total);
+            // Top 5 Conceptos
+            const sortedTotals = Object.entries(cTots)
+                .sort(([, a], [, b]) => Math.abs(b.total) - Math.abs(a.total)) // Ordenar por magnitud
+                .slice(0, 6);
+
             const colorSuccess = getComputedStyle(document.body).getPropertyValue('--c-success').trim();
             const colorDanger = getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
 
             conceptosChart = new Chart(chartCtx, { 
                 type: 'bar', 
                 data: { 
-                    labels: sortedTotals.map(([id]) => toSentenceCase(db.conceptos.find(c => c.id === id)?.nombre || '?')), 
+                    labels: sortedTotals.map(([id]) => {
+                        const c = db.conceptos.find(x => x.id === id);
+                        return c ? (c.nombre.length > 10 ? c.nombre.slice(0,8)+'...' : c.nombre) : '?';
+                    }), 
                     datasets: [{ 
                         data: sortedTotals.map(([, data]) => data.total / 100), 
                         backgroundColor: sortedTotals.map(([, data]) => data.total >= 0 ? colorSuccess : colorDanger), 
-                        borderRadius: 4, 
+                        borderRadius: 6,
+                        barThickness: 20,
                     }] 
                 }, 
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    plugins: { legend: { display: false }, datalabels: { display: false } }, 
+                    plugins: { legend: { display: false } }, 
                     scales: { 
-                        y: { 
-                            ticks: { callback: (v) => v.toLocaleString('es-ES') },
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
-                        },
-                        x: { grid: { display: false } }
-                    },
-                    // Interactividad: Clic para ver detalle
-                    onClick: (event, elements) => { 
-                        if (elements.length === 0) return; 
-                        const index = elements[0].index; 
-                        const [conceptoId] = sortedTotals[index]; 
-                        const concepto = db.conceptos.find(c => c.id === conceptoId); 
-                        const conceptoNombre = concepto ? toSentenceCase(concepto.nombre) : 'Desconocido'; 
-                        
-                        // Filtrar movimientos de este concepto
-                        const movsConcepto = current.filter(m => m.conceptoId === conceptoId);
-                        
-                        hapticFeedback('light'); 
-                        showDrillDownModal(`Movimientos: ${conceptoNombre}`, movsConcepto); 
+                        x: { grid: { display: false } },
+                        y: { display: false } // Ocultar eje Y para limpieza
                     }
                 } 
             });
-            
-            // Rellenar lista de texto debajo del gráfico
-            const conceptListContainer = select('concepto-totals-list');
-            if (conceptListContainer) {
-                // Tomamos los top 5 para la lista (invertimos para ver los mayores primero)
-                const top5 = [...sortedTotals].sort((a,b) => Math.abs(b[1].total) - Math.abs(a[1].total)).slice(0, 5);
-                
-                conceptListContainer.innerHTML = top5.map(([id, data]) => {
-                    const concepto = db.conceptos.find(c => c.id === id);
-                    const nombre = toSentenceCase(concepto?.nombre || 'Desconocido');
-                    const colorClass = data.total >= 0 ? 'text-positive' : 'text-negative';
-                    return `
-                    <div style="display:flex; justify-content:space-between; padding: 8px 0; border-bottom: 1px solid var(--c-outline);">
-                        <span>${nombre}</span>
-                        <strong class="${colorClass}">${formatCurrency(data.total)}</strong>
-                    </div>`;
-                }).join('');
-            }
         } 
         
     } catch (error) {
@@ -7767,44 +7776,6 @@ const handleToggleTheme = () => {
 // =========================================================================
 // === INICIO: MODAL DE CONFIGURACIÓN DE WIDGETS (v2.2 - VERSIÓN FINAL) ===
 // =========================================================================
-const showDashboardConfigModal = () => {
-    const savedWidgetOrder = (db.config && db.config.dashboardWidgets) || DEFAULT_DASHBOARD_WIDGETS;
-    const widgetOrder = savedWidgetOrder.filter(widgetId => AVAILABLE_WIDGETS[widgetId]);
-    
-    // 1. Construimos la lista de widgets activos e inactivos
-    let listHtml = widgetOrder.map(widgetId => 
-        renderWidgetConfigItem(widgetId, AVAILABLE_WIDGETS[widgetId], true)
-    ).join('');
-
-    listHtml += Object.keys(AVAILABLE_WIDGETS)
-        .filter(id => !widgetOrder.includes(id))
-        .map(widgetId => renderWidgetConfigItem(widgetId, AVAILABLE_WIDGETS[widgetId], false))
-        .join('');
-
-    // 2. CORRECCIÓN: Construimos el HTML correcto para el modal de configuración
-    const modalHtml = `
-        <p class="form-label" style="margin-bottom: var(--sp-3);">
-            Arrastra para reordenar los módulos de tu Panel. Activa o desactiva los que quieras ver.
-        </p>
-        <div id="widget-config-list">${listHtml}</div>
-        <div class="modal__actions">
-            <button class="btn btn--primary btn--full" data-action="save-dashboard-config">Guardar Configuración</button>
-        </div>
-    `;
-
-    // 3. Mostramos el modal correcto con el título correcto
-    showGenericModal('Personalizar Panel', modalHtml);
-    hapticFeedback('light');
-    
-    // 4. Activamos la funcionalidad de arrastrar y soltar DESPUÉS de que el modal es visible
-    const list = select('widget-config-list');
-    if (list) {
-        Sortable.create(list, {
-            handle: '.drag-handle', // El icono para arrastrar
-            animation: 150, // Animación suave al soltar
-        });
-    }
-};
 
 const renderWidgetConfigItem = (id, details, isEnabled) => `
     <div class="widget-config-item" data-id="${id}">
@@ -7833,8 +7804,7 @@ const handleSaveDashboardConfig = async (btn) => {
     hideModal('generic-modal');
     hapticFeedback('success');
     showToast('Panel actualizado.');
-    renderInicioResumenView();
-};
+    };
 
 // =============================================================
 // === BLOQUE ÚNICO Y DEFINITIVO PARA LA PESTAÑA DE INFORMES ===
