@@ -878,8 +878,34 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
 .card__title .material-icons { font-size: var(--fs-lg); }
 .card--no-bg { background: none; border: none; box-shadow: none; padding: 0; border-radius: 0; }
 .chart-container { position: relative; height: 220px; width: 100%; margin-bottom: var(--sp-4); }
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--sp-3); }
-.kpi-item { border-radius: var(--border-radius-lg); padding: var(--sp-3); text-align: center; transition: background-color 0.3s, transform 0.2s; }
+.kpi-grid { 
+    display: grid; 
+    /* Esto hace que las columnas se ajusten automáticamente y se centren */
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); 
+    gap: var(--sp-3); 
+    width: 100%;
+}
+.kpi-item { 
+    border-radius: var(--border-radius-lg); 
+    padding: var(--sp-3); 
+    
+    /* --- INICIO: LÓGICA DE CENTRADO PERFECTO --- */
+    display: flex;
+    flex-direction: column; /* Apila los elementos verticalmente */
+    align-items: center;    /* Centra horizontalmente */
+    justify-content: center; /* Centra verticalmente */
+    text-align: center;     /* Asegura que el texto interno esté centrado */
+    height: 100%;           /* Ocupa toda la altura disponible de la celda */
+    /* --- FIN --- */
+
+    transition: background-color 0.3s, transform 0.2s; 
+    
+    /* Aseguramos que si es un botón, no tenga bordes feos por defecto */
+    border: none;
+    background: none;
+    color: inherit;
+    font-family: inherit;
+}
 .kpi-item__label { font-size: var(--fs-xs); font-weight: 600; color: var(--c-on-surface-secondary); margin-bottom: var(--sp-1); text-transform: uppercase; }
 .kpi-item__value { font-size: var(--fs-base); font-weight: 800; }
 .kpi-item__comparison { font-size: var(--fs-xs); font-weight: 500; margin-top: var(--sp-1); height: 14px; }
