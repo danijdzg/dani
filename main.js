@@ -9109,12 +9109,14 @@ const handleAddConcept = async (btn) => {
 
  const handleSaveConfig = async (btn) => { 
      setButtonLoading(btn, true);
-     const newConfig = { dashboardWidgets: (db.config && db.config.dashboardWidgets) || DEFAULT_DASHBOARD_WIDGETS };
+     // Solo guardamos lo que existe, sin referencias a widgets antiguos
+     const newConfig = { ...db.config }; 
      await fbDb.collection('users').doc(currentUser.uid).set({ config: newConfig }, { merge: true });
      localStorage.setItem('skipIntro', String(newConfig.skipIntro));
      setButtonLoading(btn, false);
-     hapticFeedback('success'); showToast('Configuración guardada.'); 
- };
+     hapticFeedback('success'); 
+     showToast('Configuración guardada.'); 
+};
  
 
           const handleExportData = async (btn) => {
