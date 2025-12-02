@@ -5658,9 +5658,17 @@ const renderRecurrentsListOnPage = () => {
         .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
 
     if (upcomingRecurrents.length === 0) {
-        container.innerHTML = `<div class="empty-state" style="background: transparent; border: none; padding-top: var(--sp-2);"><p>No tienes operaciones programadas a futuro.</p></div>`;
-        return;
-    }
+    container.innerHTML = `
+        <div class="empty-state" style="background: transparent; border: none; padding: var(--sp-5) 0;">
+            <div style="font-size: 48px; margin-bottom: 10px;">📅</div>
+            <h3 style="margin-bottom: 8px;">Agenda vacía</h3>
+            <p style="max-width: 250px; margin: 0 auto; line-height: 1.5;">
+                No tienes pagos futuros programados. <br>
+                Cuando añadas un movimiento, marca la opción <strong>"Repetir"</strong>.
+            </p>
+        </div>`;
+    return;
+}
 
     container.innerHTML = upcomingRecurrents.map(r => {
         const nextDate = parseDateStringAsUTC(r.nextDate).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });

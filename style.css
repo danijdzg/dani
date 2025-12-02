@@ -638,7 +638,20 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 @keyframes highlight-field-success { 0% { background-color: color-mix(in srgb, var(--c-success) 20%, transparent); } 100% { background-color: transparent; } }
 .field-highlighted { animation: highlight-field-success 1s ease-out; }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-.skeleton { background-color: var(--c-surface-variant); background-image: linear-gradient(90deg, var(--c-surface-variant), color-mix(in srgb, var(--c-outline) 20%, var(--c-surface-variant)), var(--c-surface-variant)); background-size: 200% 100%; animation: shimmer 1.5s infinite linear; border-radius: var(--sp-2); color: transparent !important; user-select: none; }
+.skeleton { 
+    background-color: var(--c-surface-variant); 
+    /* Gradiente más suave y lento */
+    background-image: linear-gradient(90deg, 
+        rgba(255,255,255, 0), 
+        rgba(255,255,255, 0.05), 
+        rgba(255,255,255, 0)
+    ); 
+    background-size: 200% 100%; 
+    animation: shimmer 2s infinite ease-in-out; /* Más lento y orgánico */
+    border-radius: 12px; /* Más redondeado */
+    color: transparent !important; 
+    user-select: none; 
+}
 .skeleton > * { visibility: hidden; }
 .skeleton-card {
     display: flex;
@@ -708,7 +721,16 @@ body { font-family: var(--font-family); background-color: var(--c-background); c
 /* --- Estructura de la App --- */
 .app-layout { display: none; max-width: 500px; margin: 0 auto; height: 100vh; background-color: var(--c-background); flex-direction: column; opacity: 0; transition: opacity 0.5s ease-out, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.4s; }
 .app-layout--visible { display: flex; opacity: 1; }
-.app-layout__main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 44px 0 100px 0; }
+.app-layout__main { 
+    flex: 1; 
+    overflow-y: auto; 
+    -webkit-overflow-scrolling: touch; 
+    /* Aumentamos el padding superior de 44px a 64px para dar 'aire' tras el encabezado */
+    padding: 64px 0 100px 0; 
+    
+    /* Importante: Mantenemos el scroll suave */
+    will-change: transform, scroll-position;
+}
 .view { display: none; flex-direction: column; width: 100%; padding: 0 var(--sp-4); gap: var(--sp-4); }
 .view--active { display: flex; }
 
@@ -1073,7 +1095,30 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
 .filter-pill:hover { opacity: 0.8; border-color: var(--c-primary); }
 .filter-pill--active { background-color: var(--c-primary); color: var(--c-white); font-weight: 700; border-color: var(--c-primary); }
 .toast-container { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); pointer-events: none;}
-.toast { background-color: var(--c-surface); color: var(--c-white); padding: var(--sp-2) var(--sp-4); border-radius: var(--border-radius-md); box-shadow: 0 0 20px rgba(0,0,0,0.5); pointer-events: all; border: 1px solid var(--c-outline); }
+.toast { 
+    background-color: rgba(30, 30, 30, 0.95); /* Casi opaco */
+    backdrop-filter: blur(10px);
+    color: var(--c-white); 
+    padding: 12px 24px; /* Más ancho */
+    border-radius: 50px; /* Píldora perfecta */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid rgba(255,255,255,0.1);
+    
+    /* Animación de entrada más elástica */
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Icono dentro del toast (Opcional si decides añadirlo en el JS) */
+.toast::before {
+    margin-right: 8px;
+    font-family: 'Material Icons';
+    vertical-align: middle;
+}
+.toast--success::before { content: 'check_circle'; color: var(--c-success); }
+.toast--danger::before { content: 'error'; color: var(--c-danger); }
+.toast--info::before { content: 'info'; color: var(--c-info); }
 .movimiento-date-header {
     display: flex;
     justify-content: space-between;
@@ -3703,4 +3748,9 @@ input, select, textarea, .form-input, .form-select {
     border-radius: 8px;
     margin-bottom: 5px;
     list-style: none;
+}
+.kpi-grid:last-child, 
+.card:last-child,
+#movimientos-list-container {
+    padding-bottom: 20px; /* Un poco de respiro al final */
 }
