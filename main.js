@@ -1870,14 +1870,13 @@ const setupTheme = () => {
 };
 
 const cleanupObservers = () => {
+    // Solo limpiamos el observador de movimientos (scroll infinito del diario)
     if (movementsObserver) {
         movementsObserver.disconnect();
         movementsObserver = null;
     }
-    if (widgetObserver) {
-        widgetObserver.disconnect();
-        widgetObserver = null;
-    }
+    
+    // Hemos eliminado la referencia a 'widgetObserver' porque ya no existe.
 };
 const navigateTo = async (pageId, isInitial = false) => {
 	cleanupObservers(); // <--- AÑADIR ESTO AL PRINCIPIO
