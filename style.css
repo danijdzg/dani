@@ -1120,20 +1120,74 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
 .filter-pill { padding: var(--sp-1) var(--sp-3); border: 1px solid var(--c-outline); border-radius: 99px; font-size: var(--fs-xs); font-weight: 600; background-color: var(--c-surface-variant); color: var(--c-on-surface); cursor: pointer; transition: all 0.2s; }
 .filter-pill:hover { opacity: 0.8; border-color: var(--c-primary); }
 .filter-pill--active { background-color: var(--c-primary); color: var(--c-white); font-weight: 700; border-color: var(--c-primary); }
-.toast-container { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); pointer-events: none;}
-.toast { 
-    background-color: rgba(30, 30, 30, 0.95); /* Casi opaco */
-    backdrop-filter: blur(10px);
-    color: var(--c-white); 
-    padding: 12px 24px; /* Más ancho */
-    border-radius: 50px; /* Píldora perfecta */
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
-    font-weight: 600;
-    font-size: 0.9rem;
-    border: 1px solid rgba(255,255,255,0.1);
+.toast-container {
+    position: fixed;
+    bottom: 90px; /* Elevado para no tapar la barra de navegación */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 12000; /* Por encima de todo, incluso modales */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    pointer-events: none; /* Permite pulsar a través del área vacía */
+    width: 100%;
+    max-width: 400px;
+}
+
+.toast {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px; /* Espacio entre icono y texto */
     
-    /* Animación de entrada más elástica */
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* Estilo Cápsula Premium */
+    background-color: rgba(30, 32, 38, 0.95); /* Oscuro casi opaco */
+    backdrop-filter: blur(12px); /* Efecto cristal */
+    -webkit-backdrop-filter: blur(12px);
+    
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 50px; /* Bordes totalmente redondos */
+    
+    /* Sombra de elevación profunda */
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1);
+    
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    
+    pointer-events: auto; /* El toast sí se puede tocar (para cerrar, por ejemplo) */
+    
+    /* Estado inicial para animación */
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* Efecto rebote elástico */
+}
+
+/* Clase para activar la animación de entrada */
+.toast--visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* Variantes de Color para el ICONO (El fondo se mantiene oscuro elegante) */
+.toast--success .toast__icon { color: var(--c-success); }
+.toast--danger .toast__icon { color: var(--c-danger); }
+.toast--warning .toast__icon { color: var(--c-warning); }
+.toast--info .toast__icon { color: var(--c-info); }
+
+.toast__icon {
+    display: flex;
+    align-items: center;
+    font-size: 20px;
+}
+
+/* Ajuste para texto largo */
+.toast__message {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 280px;
 }
 
 /* Icono dentro del toast (Opcional si decides añadirlo en el JS) */

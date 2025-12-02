@@ -1467,34 +1467,52 @@ const enableHaptics = () => {
     document.body.removeEventListener('click', enableHaptics, { once: true });
 };
 
-// ▲▲▲ FIN DEL BLOQUE A PEGAR ▲▲▲
-
-// ▼▼▼ PÉGALA AQUÍ ▼▼▼
-const showToast = (message, type = 'info', duration = 3000) => {
+const showToast = (message, type = 'info', duration = 3500) => {
     const container = select('toast-container');
     if (!container) return;
 
+    // 1. Crear elemento
     const toast = document.createElement('div');
     toast.className = `toast toast--${type}`;
-    toast.textContent = message;
-    toast.setAttribute('role', 'alert');
     
-    requestAnimationFrame(() => {
-        toast.style.opacity = '1';
-        toast.style.transform = 'translateY(0)';
-    });
-    
+    // 2. Definir icono según el tipo
+    const icons = {
+        success: 'check_circle',
+        danger: 'error',
+        warning: 'warning',
+        info: 'info'
+    };
+    const iconName = icons[type] || 'info';
+
+    // 3. Inyectar HTML con estructura Flexbox
+    toast.innerHTML = `
+        <span class="material-icons toast__icon">${iconName}</span>
+        <span class="toast__message">${message}</span>
+    `;
+
+    // 4. Añadir al DOM
     container.appendChild(toast);
 
+    // 5. Activar animación de entrada (Next Frame)
+    requestAnimationFrame(() => {
+        toast.classList.add('toast--visible');
+        // Pequeña vibración al aparecer para feedback físico
+        if (type === 'success' || type === 'danger') hapticFeedback('light');
+    });
+
+    // 6. Programar salida
     setTimeout(() => {
+        toast.classList.remove('toast--visible');
         toast.style.opacity = '0';
-        toast.style.transform = 'translateY(10px)';
-        toast.addEventListener('transitionend', () => toast.remove());
+        toast.style.transform = 'translateY(10px) scale(0.95)';
+        
+        // Eliminar del DOM tras la transición CSS
+        toast.addEventListener('transitionend', () => {
+            if (toast.parentElement) toast.remove();
+        });
     }, duration);
 };
-// ▲▲▲ AQUÍ TERMINA LA FUNCIÓN PEGADA ▲▲▲
-// ▼▼▼ PEGA ESTE BLOQUE DE CÓDIGO JS EN TU SCRIPT ▼▼▼
-   // Variable global para guardar a nuestro "asistente"
+
 let widgetObserver = null;
 
 /**
