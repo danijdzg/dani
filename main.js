@@ -1760,7 +1760,9 @@ window.addEventListener('offline', () => {
     const loginScreen = select('login-screen');
     const pinLoginScreen = select('pin-login-screen');
     const appRoot = select('app-root');
-
+	if (localStorage.getItem('privacyMode') === 'true') {
+    document.body.classList.add('privacy-mode');
+	}
     if (loginScreen) loginScreen.classList.remove('login-view--visible');
     if (pinLoginScreen) pinLoginScreen.classList.remove('login-view--visible');
     if (appRoot) appRoot.classList.add('app-layout--visible');
@@ -8257,6 +8259,25 @@ const renderInversionesPage = async (containerId) => {
 
 // ▼▼▼ REEMPLAZA TU FUNCIÓN attachEventListeners CON ESTA VERSIÓN LIMPIA ▼▼▼
 const attachEventListeners = () => {
+	// --- LÓGICA DE MODO PRIVACIDAD ---
+    // Al hacer clic en el valor del Patrimonio Neto (KPI principal), alternamos el modo.
+    document.body.addEventListener('click', (e) => {
+        // Buscamos si el clic fue en el valor del patrimonio o en su etiqueta
+        const kpiPatrimonio = e.target.closest('#kpi-patrimonio-neto-value') || 
+                              e.target.closest('#patrimonio-total-balance');
+        
+        if (kpiPatrimonio) {
+            // Alternamos la clase en el body
+            document.body.classList.toggle('privacy-mode');
+            
+            // Feedback táctil para confirmar la acción
+            hapticFeedback('medium');
+            
+            // Opcional: Guardar la preferencia del usuario para la próxima vez
+            const isPrivacyActive = document.body.classList.contains('privacy-mode');
+            localStorage.setItem('privacyMode', isPrivacyActive);
+        }
+    });
 	// --- INICIO: LÓGICA DE PULSACIÓN PROLONGADA PARA DIARIO ---
     const diarioPage = document.getElementById('diario-page');
     if (diarioPage) {

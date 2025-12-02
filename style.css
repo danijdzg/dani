@@ -3754,3 +3754,30 @@ input, select, textarea, .form-input, .form-select {
 #movimientos-list-container {
     padding-bottom: 20px; /* Un poco de respiro al final */
 }
+/* ================================================================= */
+/* === MODO PRIVACIDAD (Blur Effect) === */
+/* ================================================================= */
+
+/* Cuando el cuerpo tiene la clase 'privacy-mode', difuminamos los datos sensibles */
+body.privacy-mode .kpi-item__value, 
+body.privacy-mode .asset-card__value, 
+body.privacy-mode .transaction-card__amount,
+body.privacy-mode .transaction-card__balance,
+body.privacy-mode .account-group__balance,
+body.privacy-mode #patrimonio-total-balance,
+body.privacy-mode .cartilla-amount,
+body.privacy-mode .cartilla-balance {
+    filter: blur(6px); /* Nivel de desenfoque */
+    user-select: none; /* Evita que se pueda seleccionar el texto */
+    cursor: default;   /* Cambia el cursor para indicar que no es texto normal */
+    transition: filter 0.3s ease; /* Transición suave al activar/desactivar */
+}
+
+/* Opcional: Permitir ver el dato al pasar el ratón o tocar (Hover/Active) */
+body.privacy-mode .kpi-item__value:hover,
+body.privacy-mode .kpi-item__value:active,
+body.privacy-mode .asset-card__value:hover,
+body.privacy-mode .asset-card__value:active {
+    filter: blur(0); /* Quita el desenfoque temporalmente */
+    cursor: pointer;
+}
