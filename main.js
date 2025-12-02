@@ -5393,6 +5393,7 @@ const resampleDataWeekly = (dailyData) => {
     return weeklyData;
 };
 
+/* EN main.js - REEMPLAZO DE updateNetWorthChart (LÓGICA CORRECTA) */
 
 const updateNetWorthChart = async (saldos) => {
     const canvasId = 'net-worth-chart';
@@ -5401,84 +5402,117 @@ const updateNetWorthChart = async (saldos) => {
     
     const chartContainer = netWorthCanvas.closest('.chart-container');
     
-    // Limpieza previa
+    // Limpieza
     const existingChart = Chart.getChart(canvasId);
     if (existingChart) existingChart.destroy();
 
     const allMovements = await fetchAllMovementsForHistory();
     const visibleAccountIds = new Set(Object.keys(saldos));
 
-    // Si no hay datos, mostramos estado vacío
+    // Si no hay datos
     if (allMovements.length === 0 && Object.keys(saldos).length === 0) {
         if (chartContainer) {
             chartContainer.classList.remove('skeleton');
-            chartContainer.innerHTML = `<div class="empty-state" style="background:transparent; border:none; padding-top: 2rem;"><p>Sin datos suficientes.</p></div>`;
+            chartContainer.innerHTML = `<div class="empty-state" style="padding:2rem 0; background:transparent; border:none;"><p>Sin datos suficientes.</p></div>`;
         }
         return;
     }
 
-    // 1. LÓGICA SIMPLIFICADA: CALCULAR PUNTOS DE CAMBIO
-    // Empezamos con el saldo ACTUAL (el de hoy) y vamos "deshaciendo" el pasado.
-    let currentBalance = Object.values(saldos).reduce((sum, s) => sum + s, 0);
+    // 1. PREPARACIÓN DE DATOS (ORDEN CRONOLÓGICO: ANTIGUO -> NUEVO)
+    // Filtramos solo movimientos que afecten a las cuentas visibles
+    const relevantMovements = allMovements.filter(m => {
+        if (m.tipo === 'traspaso') {
+            // Es relevante si entra o sale de mi vista
+            return visibleAccountIds.has(m.cuentaOrigenId) !== visibleAccountIds.has(m.cuentaDestinoId);
+        }
+        return visibleAccountIds.has(m.cuentaId);
+    }).sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordenar: Antiguo a Reciente
+
+    // 2. CALCULAR PUNTO DE PARTIDA
+    // Saldo Actual Total
+    const currentTotal = Object.values(saldos).reduce((sum, s) => sum + s, 0);
     
-    // Puntos del gráfico: [{x: fecha, y: valor}]
-    // Añadimos el punto de HOY primero
-    const dataPoints = [{ x: new Date().toISOString().split('T')[0], y: currentBalance / 100 }];
-
-    // Ordenamos movimientos del MÁS RECIENTE al MÁS ANTIGUO
-    const sortedMovements = allMovements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
-    for (const mov of sortedMovements) {
+    // Calculamos el impacto total acumulado de todos los movimientos de la historia
+    let totalHistoryImpact = 0;
+    relevantMovements.forEach(m => {
         let impact = 0;
-
-        // Calculamos si el movimiento afectó a mi patrimonio visible
-        if (mov.tipo === 'traspaso') {
-            const origenVis = visibleAccountIds.has(mov.cuentaOrigenId);
-            const destinoVis = visibleAccountIds.has(mov.cuentaDestinoId);
-            if (origenVis && !destinoVis) impact = -mov.cantidad; // Salió dinero
-            else if (!origenVis && destinoVis) impact = mov.cantidad; // Entró dinero
-        } else if (visibleAccountIds.has(mov.cuentaId)) {
-            impact = mov.cantidad;
+        if (m.tipo === 'traspaso') {
+            const origenVis = visibleAccountIds.has(m.cuentaOrigenId);
+            // Si sale (origen visible), resta. Si entra (destino visible), suma.
+            impact = origenVis ? -m.cantidad : m.cantidad;
+        } else {
+            // Gasto (negativo) o Ingreso (positivo)
+            impact = m.cantidad;
         }
+        m.calculatedImpact = impact; // Guardamos esto para el bucle siguiente
+        totalHistoryImpact += impact;
+    });
 
-        // Si hubo impacto, significa que el saldo ANTES de este movimiento era diferente.
-        // Saldo Anterior = Saldo Actual - Impacto
-        if (impact !== 0) {
-            currentBalance -= impact;
-            // Añadimos el punto histórico
-            dataPoints.push({ x: mov.fecha.split('T')[0], y: currentBalance / 100 });
-        }
+    // Saldo Inicial Teórico = Saldo Actual - Todo lo que ha pasado
+    let runningBalance = currentTotal - totalHistoryImpact;
+
+    // 3. GENERAR PUNTOS DEL GRÁFICO
+    // Empezamos con el punto inicial (antes del primer movimiento)
+    const dataPoints = [];
+    
+    // Si hay movimientos, añadimos un punto inicial un día antes del primer movimiento
+    if (relevantMovements.length > 0) {
+        const firstDate = new Date(relevantMovements[0].fecha);
+        firstDate.setDate(firstDate.getDate() - 1);
+        dataPoints.push({ x: firstDate.toISOString().split('T')[0], y: runningBalance / 100 });
+    } else {
+        // Si no hay movimientos pero hay saldo (ej. saldos iniciales), línea plana
+        const today = new Date().toISOString().split('T')[0];
+        dataPoints.push({ x: today, y: currentTotal / 100 });
     }
 
-    // Invertimos para que el gráfico vaya de izquierda (pasado) a derecha (futuro)
-    dataPoints.reverse();
+    // Recorremos la historia sumando
+    const dailyMap = new Map(); // Para agrupar movimientos del mismo día
+    
+    relevantMovements.forEach(m => {
+        runningBalance += m.calculatedImpact;
+        const dateKey = m.fecha.split('T')[0];
+        // Guardamos el saldo al final de cada día
+        dailyMap.set(dateKey, runningBalance / 100);
+    });
 
-    // 2. RENDERIZADO LIMPIO
-    if (chartContainer) {
+    // Convertimos el mapa a puntos ordenados
+    dailyMap.forEach((value, key) => {
+        dataPoints.push({ x: key, y: value });
+    });
+
+    // Aseguramos que el gráfico llegue hasta hoy
+    const todayKey = new Date().toISOString().split('T')[0];
+    if (!dailyMap.has(todayKey)) {
+        dataPoints.push({ x: todayKey, y: currentTotal / 100 });
+    }
+
+    // 4. RENDERIZADO
+    if(chartContainer) {
         chartContainer.classList.remove('skeleton');
         chartContainer.classList.add('fade-in-up');
     }
 
     const ctx = netWorthCanvas.getContext('2d');
     
-    // Gradiente suave y elegante
+    // Gradiente sutil
     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, 'rgba(0, 179, 77, 0.2)'); // Color primario muy suave
+    gradient.addColorStop(0, 'rgba(0, 179, 77, 0.15)'); // Color muy suave
     gradient.addColorStop(1, 'rgba(0, 179, 77, 0.0)');
 
     netWorthChart = new Chart(ctx, {
         type: 'line',
         data: {
             datasets: [{
-                label: 'Evolución',
+                label: 'Patrimonio',
                 data: dataPoints,
-                borderColor: '#00B34D', // Color primario sólido
-                borderWidth: 2.5,
+                borderColor: '#00B34D', // Verde principal
+                borderWidth: 2,
                 backgroundColor: gradient,
                 fill: true,
-                pointRadius: 0, // Sin puntos para una línea limpia
+                pointRadius: 0, // Línea limpia sin puntos
                 pointHoverRadius: 6,
-                tension: 0.3 // Curva suave
+                tension: 0.1 // Línea casi recta para precisión (0.4 es muy curva)
             }]
         },
         options: {
@@ -5490,15 +5524,16 @@ const updateNetWorthChart = async (saldos) => {
                     type: 'time', 
                     time: { unit: 'month', displayFormats: { month: 'MMM yy' } },
                     grid: { display: false },
-                    ticks: { maxTicksLimit: 6, color: '#888' }
+                    ticks: { maxTicksLimit: 5, color: '#888', font: { size: 10 } }
                 },
-                y: { display: false } // Sin eje Y para máxima limpieza
+                y: { display: false } // Eje Y oculto para limpieza
             },
             plugins: {
                 legend: { display: false },
                 tooltip: {
                     backgroundColor: 'rgba(0,0,0,0.8)',
                     titleColor: '#fff',
+                    bodyFont: { size: 14, weight: 'bold' },
                     callbacks: {
                         label: (ctx) => formatCurrency(ctx.raw.y * 100)
                     }
