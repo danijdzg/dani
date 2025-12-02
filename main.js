@@ -4978,17 +4978,17 @@ const renderDashboardSuperCentroOperaciones = () => {
 
                     <div class="kpi-grid" id="kpi-container" style="margin-top: var(--sp-4); margin-bottom: var(--sp-5);">
                         <button class="kpi-item" data-action="show-kpi-drilldown" data-type="ingresos">
-                            <h4 class="kpi-item__label">Ingresos</h4>
+                            <h4 class="kpi-item__label"> Ingresos</h4>
                             <strong id="kpi-ingresos-value" class="kpi-item__value text-positive skeleton" data-current-value="0">+0,00 €</strong> 
                             <div style="font-size: 0.65rem; margin-top:4px; color: var(--c-on-surface-secondary);">Entradas del periodo</div>
                         </button>
                         <button class="kpi-item" data-action="show-kpi-drilldown" data-type="gastos">
-                            <h4 class="kpi-item__label">Gastos</h4>
+                            <h4 class="kpi-item__label"> Gastos</h4>
                             <strong id="kpi-gastos-value" class="kpi-item__value text-negative skeleton" data-current-value="0">0,00 €</strong>
                             <div style="font-size: 0.65rem; margin-top:4px; color: var(--c-on-surface-secondary);">Salidas del periodo</div>
                         </button>
                         <button class="kpi-item" data-action="show-kpi-drilldown" data-type="saldoNeto">
-                            <h4 class="kpi-item__label">Flujo de Caja</h4>
+                            <h4 class="kpi-item__label"> Flujo de Caja</h4>
                             <strong id="kpi-saldo-neto-value" class="kpi-item__value skeleton" data-current-value="0">0,00 €</strong>
                             <div style="font-size: 0.65rem; margin-top:4px; color: var(--c-on-surface-secondary);">Capacidad de ahorro real</div>
                         </button>
