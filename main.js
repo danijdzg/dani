@@ -1394,26 +1394,35 @@ const calculateTotals = (movs, visibleAccountIds) => {
         return acc;
     }, { ingresos: 0, gastos: 0, saldoNeto: 0 });
 };
-// --- ACTUALIZAR EL EVENT LISTENER ---
-// Añadir un nuevo listener para el evento 'change' en los selectores de los informes
 document.body.addEventListener('change', e => {
+    // 1. Selector de Periodo (Mes/Año/Custom)
     if (e.target.classList.contains('report-period-selector')) {
-        const reportId = e.target.closest('.report-filters').dataset.reportId;
-        const customFilters = select(`custom-date-filters-${reportId}`);
-        if (customFilters) customFilters.classList.toggle('hidden', e.target.value !== 'custom');
-        
-        // Si no es personalizado, se regenera el informe inmediatamente
-        if (e.target.value !== 'custom') {
-            renderInformeDetallado(reportId);
+        const reportFilter = e.target.closest('.report-filters');
+        if (reportFilter) {
+            const reportId = reportFilter.dataset.reportId;
+            const customFilters = select(`custom-date-filters-${reportId}`);
+            if (customFilters) customFilters.classList.toggle('hidden', e.target.value !== 'custom');
+            
+            if (e.target.value !== 'custom') {
+                renderInformeDetallado(reportId);
+            }
         }
     }
-    // Añadir un listener para los inputs de fecha personalizados
+
+    // 2. Inputs de Fecha Personalizados (CORREGIDO)
     if (e.target.type === 'date' && e.target.id.startsWith('filter-fecha-')) {
-        const reportId = e.target.closest('.report-filters').dataset.reportId;
-        const startDate = select(`filter-fecha-inicio-${reportId}`).value;
-        const endDate = select(`filter-fecha-fin-${reportId}`).value;
-        if(startDate && endDate) {
-             renderInformeDetallado(reportId);
+        const reportFilter = e.target.closest('.report-filters');
+        if (reportFilter) {
+            const reportId = reportFilter.dataset.reportId;
+            
+            // Usamos el operador ?. para evitar el crash si el elemento no existe
+            const startDate = select(`filter-fecha-inicio-${reportId}`)?.value;
+            const endDate = select(`filter-fecha-fin-${reportId}`)?.value;
+
+            // Solo renderizamos si AMBAS fechas tienen valor
+            if(startDate && endDate) {
+                 renderInformeDetallado(reportId);
+            }
         }
     }
 });
@@ -4934,14 +4943,11 @@ const renderSavingsRateGauge = (canvasId, percentage) => {
         </div>`;
 };
 
-
-// ▼▼▼ REEMPLAZA TU FUNCIÓN 'renderPlanificacionPage' CON ESTA VERSIÓN YA LIMPIA ▼▼▼
-
 const renderPlanificacionPage = () => {
     const container = select(PAGE_IDS.PLANIFICAR);
     if (!container) return;
 
-    // Estructura HTML final, ahora con el nuevo acordeón para el informe personalizado
+    // Estructura HTML final
     container.innerHTML = `
         <div class="card card--no-bg accordion-wrapper">
             <details class="accordion">
@@ -4994,9 +5000,6 @@ const renderPlanificacionPage = () => {
             </details>
         </div>
         
-        <!-- ========================================================== -->
-        <!-- === INICIO: BLOQUE AÑADIDO PARA EL INFORME PERSONALIZADO === -->
-        <!-- ========================================================== -->
         <div class="card card--no-bg accordion-wrapper">
             <details class="accordion">
                 <summary>
@@ -5004,16 +5007,21 @@ const renderPlanificacionPage = () => {
                     <span class="material-icons accordion__icon">expand_more</span>
                 </summary>
                 <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
-                    ${renderDashboardInformeWidget()}
-                </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sp-3);">
+                        <h4 id="informe-widget-title" style="margin: 0; font-size: var(--fs-base); font-weight: 700; color: var(--c-on-surface);">Mi Informe</h4>
+                        <button class="btn btn--secondary" data-action="show-informe-builder" style="padding: 4px 10px; font-size: 0.75rem;">
+                            <span class="material-icons" style="font-size: 14px;">settings</span> Configurar
+                        </button>
+                    </div>
+                    <div id="informe-widget-content">
+                        <div class="skeleton" style="height: 240px; border-radius: var(--border-radius-lg);"></div>
+                    </div>
+                    </div>
             </details>
         </div>
-        <!-- ========================================================== -->
-        <!-- === FIN: BLOQUE AÑADIDO                                  === -->
-        <!-- ========================================================== -->
     `;
     
-    // El resto de la lógica de la función se mantiene igual
+    // Inicialización del selector de año para presupuestos
     const yearSelect = container.querySelector('#budget-year-selector');
     if (yearSelect) {
         const currentYear = new Date().getFullYear();
@@ -5036,9 +5044,10 @@ const renderPlanificacionPage = () => {
     renderPendingRecurrents();
     renderRecurrentsListOnPage();
 
-    // --> LLAMADA AÑADIDA: Rellenamos el widget del informe personalizado que acabamos de añadir
+    // Cargamos el contenido del informe personalizado
     renderInformeWidgetContent();
 };
+
 const renderPatrimonioPage = () => {
     const container = select(PAGE_IDS.PATRIMONIO);
     if (!container) return;
