@@ -7735,11 +7735,21 @@ const handleStart = (e) => {
         };
 
         const handleMove = (e) => {
-    const moveX = e.touches[0].clientX;
-    const moveY = e.touches[0].clientY;
-    // Si se mueve más de 10px, cancelamos
+    // CORRECCIÓN: Detectar si es táctil o ratón para obtener las coordenadas
+    const point = (e.touches && e.touches.length > 0) ? e.touches[0] : e;
+    
+    const moveX = point.clientX;
+    const moveY = point.clientY;
+
+    // Si se mueve más de 10px, cancelamos la pulsación larga
     if (Math.abs(startX - moveX) > 10 || Math.abs(startY - moveY) > 10) {
-        clearTimeout(longPressTimer);
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+        // También quitamos la clase visual si nos movemos
+        const card = e.target.closest('.transaction-card');
+        if(card) card.classList.remove('is-pressing');
     }
 };
 
