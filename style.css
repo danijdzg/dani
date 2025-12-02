@@ -3607,3 +3607,100 @@ input, select, textarea, .form-input, .form-select {
         transform: translateY(0); /* Termina en su sitio */
     }
 }
+/* ================================================================= */
+/* === ESTILOS AYUDA PREMIUM (MANUAL DEL PILOTO) === */
+/* ================================================================= */
+
+.help-hero {
+    text-align: center;
+    padding: 20px 0 30px;
+    background: linear-gradient(180deg, var(--c-surface-variant) 0%, transparent 100%);
+    border-radius: var(--border-radius-lg);
+    margin-bottom: 20px;
+}
+
+.help-hero__icon {
+    font-size: 64px;
+    color: var(--c-primary);
+    filter: drop-shadow(0 4px 10px rgba(0, 179, 77, 0.3));
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.help-section-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--c-on-surface);
+    margin: 30px 0 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--c-outline);
+    padding-bottom: 10px;
+}
+
+.help-card {
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-outline);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.help-card__icon {
+    font-size: 28px;
+    padding: 10px;
+    background-color: var(--c-surface-variant);
+    border-radius: 12px;
+    color: var(--c-primary);
+    flex-shrink: 0;
+}
+
+.help-card__content h4 {
+    margin: 0 0 6px 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--c-on-surface);
+}
+
+.help-card__content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--c-on-surface-secondary);
+    line-height: 1.5;
+}
+
+.help-pro-tip {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background-color: color-mix(in srgb, var(--c-warning) 10%, transparent);
+    border-left: 3px solid var(--c-warning);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: var(--c-on-surface);
+}
+
+.help-pro-tip strong {
+    color: var(--c-warning);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    margin-right: 5px;
+}
+
+/* Ajustes para acordeones dentro de la ayuda */
+.help-accordion summary {
+    background-color: var(--c-surface-variant);
+    border-radius: 8px;
+    margin-bottom: 5px;
+    list-style: none;
+}
