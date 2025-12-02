@@ -3944,3 +3944,9 @@ body.privacy-mode .asset-card__value:active {
     border-radius: 99px;
     transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+.status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px; /* Espacio ajustado */
+    margin-bottom: var(--sp-4);
+}
