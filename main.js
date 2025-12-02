@@ -1888,7 +1888,7 @@ const cleanupObservers = () => {
     // Hemos eliminado la referencia a 'widgetObserver' porque ya no existe.
 };
 const navigateTo = async (pageId, isInitial = false) => {
-	cleanupObservers(); // <--- AÑADIR ESTO AL PRINCIPIO
+    cleanupObservers();
     const oldView = document.querySelector('.view--active');
     const newView = select(pageId);
     const mainScroller = selectOne('.app-layout__main');
@@ -1896,7 +1896,7 @@ const navigateTo = async (pageId, isInitial = false) => {
     const menu = select('main-menu-popover');
     if (menu) menu.classList.remove('popover-menu--visible');
 
-    // 1. GUARDADO INTELIGENTE DE SCROLL
+    // 1. Guardar scroll
     if (oldView && mainScroller) {
         pageScrollPositions[oldView.id] = mainScroller.scrollTop;
     }
@@ -1910,16 +1910,17 @@ const navigateTo = async (pageId, isInitial = false) => {
         history.pushState({ page: pageId }, '', `#${pageId}`);
     }
 
-    // Gestión de Nav Inferior
+    // Nav Inferior
     const navItems = Array.from(selectAll('.bottom-nav__item'));
     const oldIndex = oldView ? navItems.findIndex(item => item.dataset.page === oldView.id) : -1;
     const newIndex = navItems.findIndex(item => item.dataset.page === newView.id);
     const isForward = newIndex > oldIndex;
 
-    // Gestión de Barra Superior (igual que antes)
+    // Barra Superior
     const actionsEl = select('top-bar-actions');
     const leftEl = select('top-bar-left-button');
     
+    // Acciones por defecto (Menú de 3 puntos)
     const standardActions = `
         <button data-action="show-main-menu" class="icon-btn"><span class="material-icons">more_vert</span></button>
     `;
@@ -1940,7 +1941,8 @@ const navigateTo = async (pageId, isInitial = false) => {
             let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar a Contabilidad ${isOffBalanceMode ? 'B' : 'A'}"> ${isOffBalanceMode ? 'B' : 'A'}</button>
             <a href="https://danijdzg.github.io/aiDANaI/dani/DaniCalc/" target="_blank" id="page-title-display" style="text-decoration: none; color: inherit; cursor: pointer;">${pageRenderers[pageId].title}</a>`;
             
-            if (pageId === PAGE_IDS.PANEL) 
+            // CORRECCIÓN: Ya NO añadimos ningún botón extra si es PANEL.
+            // Solo añadimos botones si es DIARIO.
             if (pageId === PAGE_IDS.DIARIO) {
                 leftSideHTML += `
                     <button data-action="show-diario-filters" class="icon-btn" style="margin-left: 8px;"><span class="material-icons">filter_list</span></button>
@@ -1951,11 +1953,10 @@ const navigateTo = async (pageId, isInitial = false) => {
         }
         if (actionsEl) actionsEl.innerHTML = pageRenderers[pageId].actions;
         
-        // Renderizamos la vista
         await pageRenderers[pageId].render();
     }
     
-    // Animación de Transición
+    // Animaciones y Clases
     selectAll('.bottom-nav__item').forEach(b => b.classList.toggle('bottom-nav__item--active', b.dataset.page === newView.id));
     updateThemeIcon();
     newView.classList.add('view--active'); 
@@ -1972,18 +1973,14 @@ const navigateTo = async (pageId, isInitial = false) => {
         oldView.classList.remove('view--active');
     }
 
-    // 2. RESTAURACIÓN INTELIGENTE DE SCROLL
+    // Restaurar Scroll
     if (mainScroller) {
-        // Restauramos el scroll guardado (o 0 si es la primera vez)
         const targetScroll = pageScrollPositions[pageId] || 0;
         mainScroller.scrollTop = targetScroll;
-
-        // ¡IMPORTANTE! Si es el diario, la lista virtual piensa que está en 0 si no forzamos un re-cálculo
         if (pageId === PAGE_IDS.DIARIO && diarioViewMode === 'list') {
-            // Forzamos un frame para que la lista detecte la nueva posición del scroll y pinte los elementos correctos
             requestAnimationFrame(() => {
                 mainScroller.scrollTop = targetScroll; 
-                renderVisibleItems(); // <-- Función de tu lista virtual que dibuja los elementos
+                renderVisibleItems(); 
             });
         }
     }
@@ -5396,116 +5393,117 @@ const resampleDataWeekly = (dailyData) => {
     return weeklyData;
 };
 
+
 const updateNetWorthChart = async (saldos) => {
     const canvasId = 'net-worth-chart';
     const netWorthCanvas = select(canvasId);
     if (!netWorthCanvas) return;
+    
     const chartContainer = netWorthCanvas.closest('.chart-container');
-
+    
+    // Limpieza previa
     const existingChart = Chart.getChart(canvasId);
     if (existingChart) existingChart.destroy();
-    
+
     const allMovements = await fetchAllMovementsForHistory();
-    
+    const visibleAccountIds = new Set(Object.keys(saldos));
+
+    // Si no hay datos, mostramos estado vacío
     if (allMovements.length === 0 && Object.keys(saldos).length === 0) {
-        if(chartContainer) {
+        if (chartContainer) {
             chartContainer.classList.remove('skeleton');
-            chartContainer.innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Sin datos suficientes.</p></div>`;
+            chartContainer.innerHTML = `<div class="empty-state" style="background:transparent; border:none; padding-top: 2rem;"><p>Sin datos suficientes.</p></div>`;
         }
         return;
     }
 
-    // 1. Preparamos el historial
-    const visibleAccountIds = new Set(Object.keys(saldos));
-    const currentTotal = Object.values(saldos).reduce((sum, s) => sum + s, 0);
+    // 1. LÓGICA SIMPLIFICADA: CALCULAR PUNTOS DE CAMBIO
+    // Empezamos con el saldo ACTUAL (el de hoy) y vamos "deshaciendo" el pasado.
+    let currentBalance = Object.values(saldos).reduce((sum, s) => sum + s, 0);
     
-    // Mapa de fechas con saldo final de ese día
-    const balancesByDate = new Map();
-    const todayKey = new Date().toISOString().slice(0, 10);
-    balancesByDate.set(todayKey, currentTotal);
+    // Puntos del gráfico: [{x: fecha, y: valor}]
+    // Añadimos el punto de HOY primero
+    const dataPoints = [{ x: new Date().toISOString().split('T')[0], y: currentBalance / 100 }];
 
-    let runningTotal = currentTotal;
-    
-    // Ordenamos: Reciente -> Antiguo
+    // Ordenamos movimientos del MÁS RECIENTE al MÁS ANTIGUO
     const sortedMovements = allMovements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-    
-    // Calculamos saldo hacia atrás
+
     for (const mov of sortedMovements) {
         let impact = 0;
+
+        // Calculamos si el movimiento afectó a mi patrimonio visible
         if (mov.tipo === 'traspaso') {
             const origenVis = visibleAccountIds.has(mov.cuentaOrigenId);
             const destinoVis = visibleAccountIds.has(mov.cuentaDestinoId);
-            if (origenVis && !destinoVis) impact = -mov.cantidad;
-            else if (!origenVis && destinoVis) impact = mov.cantidad;
+            if (origenVis && !destinoVis) impact = -mov.cantidad; // Salió dinero
+            else if (!origenVis && destinoVis) impact = mov.cantidad; // Entró dinero
         } else if (visibleAccountIds.has(mov.cuentaId)) {
             impact = mov.cantidad;
         }
 
-        // Saldo antes del movimiento = Saldo actual - Impacto
-        runningTotal -= impact;
-        
-        const dateKey = mov.fecha.slice(0, 10);
-        // Solo guardamos el saldo si es el último movimiento procesado de ese día (el cierre del día)
-        if (!balancesByDate.has(dateKey)) {
-            balancesByDate.set(dateKey, runningTotal + impact);
+        // Si hubo impacto, significa que el saldo ANTES de este movimiento era diferente.
+        // Saldo Anterior = Saldo Actual - Impacto
+        if (impact !== 0) {
+            currentBalance -= impact;
+            // Añadimos el punto histórico
+            dataPoints.push({ x: mov.fecha.split('T')[0], y: currentBalance / 100 });
         }
     }
 
-    // 2. RELLENO DE HUECOS (Gap Filling) - Para una línea suave
-    const sortedDates = Array.from(balancesByDate.keys()).sort();
-    if (sortedDates.length === 0) return;
+    // Invertimos para que el gráfico vaya de izquierda (pasado) a derecha (futuro)
+    dataPoints.reverse();
 
-    const startDate = new Date(sortedDates[0]);
-    const endDate = new Date(sortedDates[sortedDates.length - 1]);
-    const fullHistoryLabels = [];
-    const fullHistoryData = [];
-    
-    let lastBalance = balancesByDate.get(sortedDates[0]);
-
-    // Recorremos día a día desde el inicio hasta hoy
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-        const isoDate = d.toISOString().slice(0, 10);
-        fullHistoryLabels.push(isoDate);
-        
-        if (balancesByDate.has(isoDate)) {
-            lastBalance = balancesByDate.get(isoDate);
-        }
-        fullHistoryData.push(lastBalance / 100);
-    }
-
-    // 3. Renderizado
-    if(chartContainer) {
+    // 2. RENDERIZADO LIMPIO
+    if (chartContainer) {
         chartContainer.classList.remove('skeleton');
         chartContainer.classList.add('fade-in-up');
     }
 
     const ctx = netWorthCanvas.getContext('2d');
+    
+    // Gradiente suave y elegante
     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, 'rgba(0, 229, 255, 0.4)');
-    gradient.addColorStop(1, 'rgba(0, 229, 255, 0.0)');
+    gradient.addColorStop(0, 'rgba(0, 179, 77, 0.2)'); // Color primario muy suave
+    gradient.addColorStop(1, 'rgba(0, 179, 77, 0.0)');
 
     netWorthChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: fullHistoryLabels,
             datasets: [{
-                label: 'Patrimonio',
-                data: fullHistoryData,
-                fill: true,
+                label: 'Evolución',
+                data: dataPoints,
+                borderColor: '#00B34D', // Color primario sólido
+                borderWidth: 2.5,
                 backgroundColor: gradient,
-                borderColor: '#00E5FF',
-                borderWidth: 2,
-                pointRadius: 0,
-                pointHoverRadius: 4,
-                tension: 0.3
+                fill: true,
+                pointRadius: 0, // Sin puntos para una línea limpia
+                pointHoverRadius: 6,
+                tension: 0.3 // Curva suave
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            scales: { x: { display: false }, y: { display: false } },
-            plugins: { legend: { display: false } }
+            scales: {
+                x: { 
+                    type: 'time', 
+                    time: { unit: 'month', displayFormats: { month: 'MMM yy' } },
+                    grid: { display: false },
+                    ticks: { maxTicksLimit: 6, color: '#888' }
+                },
+                y: { display: false } // Sin eje Y para máxima limpieza
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    titleColor: '#fff',
+                    callbacks: {
+                        label: (ctx) => formatCurrency(ctx.raw.y * 100)
+                    }
+                }
+            }
         }
     });
 };
