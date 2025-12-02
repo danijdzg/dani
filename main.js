@@ -4165,32 +4165,54 @@ const renderPanelPage = async () => {
             </div>
 
             <div class="section-header">Salud Financiera</div>
-            <div class="horizontal-snap-container">
-                <div class="snap-card">
-                    <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <div><div style="font-size:0.7rem; font-weight:700; color:var(--c-on-surface-secondary); margin-bottom:2px; text-transform:uppercase;">Ahorro</div><div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size:1.5rem; font-weight:800;">0%</div></div>
-                        <div style="width: 32px; height: 32px;"><canvas id="kpi-savings-rate-chart"></canvas></div>
-                    </div>
-                    <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-top: auto;">De ingresos netos</div>
-                </div>
+            
+            <div style="display: flex; flex-direction: column; gap: var(--sp-3); padding-bottom: var(--sp-5);">
                 
-                <div class="snap-card">
-                    <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <div><div style="font-size:0.7rem; font-weight:700; color:var(--c-on-surface-secondary); margin-bottom:2px; text-transform:uppercase;">Cobertura</div><div id="health-runway-val" class="skeleton" style="font-size:1.5rem; font-weight:800; color: var(--c-success);">0 Meses</div></div>
-                        <span class="material-icons" style="font-size: 24px; color: var(--c-success); opacity: 0.2;">shield</span>
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 36px; height: 36px;"><canvas id="kpi-savings-rate-chart"></canvas></div>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Tasa de Ahorro</div>
+                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">De tus ingresos netos</div>
+                            </div>
+                        </div>
+                        <div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size: 1.4rem; font-weight: 800;">0%</div>
                     </div>
-                    <div class="mini-progress-bar"><div id="health-runway-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-success);"></div></div>
-                    <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-top: 6px;">Meta: 6 meses</div>
                 </div>
-                
-                <div class="snap-card">
-                    <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <div><div style="font-size:0.7rem; font-weight:700; color:var(--c-on-surface-secondary); margin-bottom:2px; text-transform:uppercase;">Libertad</div><div id="health-fi-val" class="skeleton" style="font-size:1.5rem; font-weight:800; color: var(--c-warning);">0.0%</div></div>
-                        <span class="material-icons" style="font-size: 24px; color: var(--c-warning); opacity: 0.2;">flag</span>
+
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="material-icons" style="font-size: 28px; color: var(--c-success); background: rgba(0, 179, 77, 0.1); padding: 6px; border-radius: 10px;">shield</span>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Cobertura</div>
+                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">Meta: 6 meses</div>
+                            </div>
+                        </div>
+                        <div id="health-runway-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: var(--c-success);">0 Meses</div>
                     </div>
-                    <div class="mini-progress-bar"><div id="health-fi-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-warning);"></div></div>
-                    <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-top: 6px;">Meta: Vivir de rentas</div>
+                    <div class="mini-progress-bar" style="height: 8px; background-color: var(--c-surface-variant); margin-top: 4px;">
+                        <div id="health-runway-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-success);"></div>
+                    </div>
                 </div>
+
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="material-icons" style="font-size: 28px; color: var(--c-warning); background: rgba(255, 214, 10, 0.1); padding: 6px; border-radius: 10px;">flag</span>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Libertad Financiera</div>
+                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">Meta: Vivir de rentas</div>
+                            </div>
+                        </div>
+                        <div id="health-fi-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: var(--c-warning);">0.0%</div>
+                    </div>
+                    <div class="mini-progress-bar" style="height: 8px; background-color: var(--c-surface-variant); margin-top: 4px;">
+                        <div id="health-fi-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-warning);"></div>
+                    </div>
+                </div>
+
             </div>
         </div>
         
