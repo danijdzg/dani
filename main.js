@@ -1724,95 +1724,94 @@ const showToast = (message, type = 'info', duration = 3500) => {
 			if (!str || typeof str !== 'string') return '';
 			return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 		};
-// === AÑADE ESTAS FUNCIONES DESPUÉS DE LA LÍNEA 200 (después de toSentenceCase) ===
-// === REEMPLAZA TODO EL BLOQUE DE FUNCIONES CON ESTO ===
-// Coloca esto en la línea 1729 donde está el error
+// === AÑADE ESTE BLOQUE COMPLETO EN UN LUGAR DONDE NO HAYA CONFLICTOS ===
+// Por ejemplo, después de la función toSentenceCase (línea ~200)
 
-// Solo define si no existen ya
-if (typeof calculateStandardDeviation === 'undefined') {
-    const calculateStandardDeviation = (returns) => {
-        if (!returns || returns.length < 2) return 0;
-        
-        const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-        const squaredDifferences = returns.map(r => Math.pow(r - mean, 2));
-        const variance = squaredDifferences.reduce((sum, sq) => sum + sq, 0) / (returns.length - 1);
-        
-        return Math.sqrt(variance);
-    };
-
-    const calculateAnnualVolatility = (monthlyReturns) => {
-        const stdDev = calculateStandardDeviation(monthlyReturns);
-        return stdDev * Math.sqrt(12);
-    };
-
-    const calculateMaxDrawdown = (values) => {
-        if (!values || values.length < 2) return 0;
-        
-        let peak = values[0];
-        let maxDrawdown = 0;
-        
-        for (let i = 1; i < values.length; i++) {
-            if (values[i] > peak) {
-                peak = values[i];
-            } else {
-                const drawdown = (peak - values[i]) / peak;
-                if (drawdown > maxDrawdown) {
-                    maxDrawdown = drawdown;
-                }
-            }
-        }
-        
-        return maxDrawdown;
-    };
-
-    const calculateSharpeRatio = (returns, riskFreeRate = 0.02) => {
-        if (!returns || returns.length < 2) return 0;
-        
-        const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-        const stdDev = calculateStandardDeviation(returns);
-        
-        if (stdDev === 0) return 0;
-        
-        return (meanReturn - riskFreeRate) / stdDev;
-    };
-
-    const calculateSortinoRatio = (returns, riskFreeRate = 0.02) => {
-        if (!returns || returns.length < 2) return 0;
-        
-        const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-        const negativeReturns = returns.filter(r => r < 0);
-        const downsideStdDev = calculateStandardDeviation(negativeReturns);
-        
-        if (downsideStdDev === 0) return 0;
-        
-        return (meanReturn - riskFreeRate) / downsideStdDev;
-    };
-
-    const calculateBeta = (portfolioReturns, marketReturns) => {
-        if (!portfolioReturns || !marketReturns || portfolioReturns.length !== marketReturns.length) return 1;
-        
-        const portfolioMean = portfolioReturns.reduce((sum, r) => sum + r, 0) / portfolioReturns.length;
-        const marketMean = marketReturns.reduce((sum, r) => sum + r, 0) / marketReturns.length;
-        
-        let covariance = 0;
-        let marketVariance = 0;
-        
-        for (let i = 0; i < portfolioReturns.length; i++) {
-            covariance += (portfolioReturns[i] - portfolioMean) * (marketReturns[i] - marketMean);
-            marketVariance += Math.pow(marketReturns[i] - marketMean, 2);
-        }
-        
-        return covariance / marketVariance;
-    };
-}
-
-const calculateAnnualVolatility = (monthlyReturns) => {
-    const stdDev = calculateStandardDeviation(monthlyReturns);
-    return stdDev * Math.sqrt(12); // Anualizar volatilidad
+// 1. Función para calcular desviación estándar
+const calculateStandardDeviation = (returns) => {
+    if (!returns || returns.length < 2) return 0;
+    
+    const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+    const squaredDifferences = returns.map(r => Math.pow(r - mean, 2));
+    const variance = squaredDifferences.reduce((sum, sq) => sum + sq, 0) / (returns.length - 1);
+    
+    return Math.sqrt(variance);
 };
 
+// 2. Función para calcular volatilidad anual
+const calculateAnnualVolatility = (monthlyReturns) => {
+    const stdDev = calculateStandardDeviation(monthlyReturns);
+    return stdDev * Math.sqrt(12);
+};
 
-// === FIN DE LAS NUEVAS FUNCIONES ===
+// 3. Función para calcular máximo drawdown
+const calculateMaxDrawdown = (values) => {
+    if (!values || values.length < 2) return 0;
+    
+    let peak = values[0];
+    let maxDrawdown = 0;
+    
+    for (let i = 1; i < values.length; i++) {
+        if (values[i] > peak) {
+            peak = values[i];
+        } else {
+            const drawdown = (peak - values[i]) / peak;
+            if (drawdown > maxDrawdown) {
+                maxDrawdown = drawdown;
+            }
+        }
+    }
+    
+    return maxDrawdown;
+};
+
+// 4. Función para calcular Sharpe Ratio
+const calculateSharpeRatio = (returns, riskFreeRate = 0.02) => {
+    if (!returns || returns.length < 2) return 0;
+    
+    const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+    const stdDev = calculateStandardDeviation(returns);
+    
+    if (stdDev === 0) return 0;
+    
+    return (meanReturn - riskFreeRate) / stdDev;
+};
+
+// 5. Función para calcular Sortino Ratio (¡LA QUE FALTA!)
+const calculateSortinoRatio = (returns, riskFreeRate = 0.02) => {
+    if (!returns || returns.length < 2) return 0;
+    
+    const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+    const negativeReturns = returns.filter(r => r < 0);
+    
+    // Si no hay retornos negativos, el downside deviation es 0
+    if (negativeReturns.length === 0) return 0;
+    
+    const downsideStdDev = calculateStandardDeviation(negativeReturns);
+    
+    if (downsideStdDev === 0) return 0;
+    
+    return (meanReturn - riskFreeRate) / downsideStdDev;
+};
+
+// 6. Función para calcular Beta (opcional)
+const calculateBeta = (portfolioReturns, marketReturns) => {
+    if (!portfolioReturns || !marketReturns || portfolioReturns.length !== marketReturns.length) return 1;
+    
+    const portfolioMean = portfolioReturns.reduce((sum, r) => sum + r, 0) / portfolioReturns.length;
+    const marketMean = marketReturns.reduce((sum, r) => sum + r, 0) / marketReturns.length;
+    
+    let covariance = 0;
+    let marketVariance = 0;
+    
+    for (let i = 0; i < portfolioReturns.length; i++) {
+        covariance += (portfolioReturns[i] - portfolioMean) * (marketReturns[i] - marketMean);
+        marketVariance += Math.pow(marketReturns[i] - marketMean, 2);
+    }
+    
+    return covariance / marketVariance;
+};
+
         const setButtonLoading = (btn, isLoading, text = 'Cargando...') => {
             if (!btn) return;
             if (isLoading) { if (!originalButtonTexts.has(btn)) originalButtonTexts.set(btn, btn.innerHTML); btn.setAttribute('disabled', 'true'); btn.classList.add('btn--loading'); btn.innerHTML = `<span class="spinner"></span> <span>${text}</span>`;
@@ -2688,18 +2687,30 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
     let worstMonth = 0;
     
     try {
+    // Verificar que tenemos datos para calcular
+    if (monthlyReturnValues && monthlyReturnValues.length > 1) {
         annualVolatility = calculateAnnualVolatility(monthlyReturnValues);
-        maxDrawdown = calculateMaxDrawdown(historicalValues);
         sharpeRatio = calculateSharpeRatio(monthlyReturnValues);
         sortinoRatio = calculateSortinoRatio(monthlyReturnValues);
         
         // Encontrar mejor y peor mes
-        bestMonth = monthlyReturnValues.length > 0 ? Math.max(...monthlyReturnValues) : 0;
-        worstMonth = monthlyReturnValues.length > 0 ? Math.min(...monthlyReturnValues) : 0;
-    } catch (error) {
-        console.warn("Error calculando métricas de riesgo:", error);
-        // Si hay error, dejamos las métricas en 0
+        bestMonth = Math.max(...monthlyReturnValues);
+        worstMonth = Math.min(...monthlyReturnValues);
     }
+    
+    if (historicalValues && historicalValues.length > 1) {
+        maxDrawdown = calculateMaxDrawdown(historicalValues);
+    }
+} catch (error) {
+    console.warn("Error calculando métricas de riesgo:", error);
+    // Si hay error, dejamos las métricas en 0
+    annualVolatility = 0;
+    maxDrawdown = 0;
+    sharpeRatio = 0;
+    sortinoRatio = 0;
+    bestMonth = 0;
+    worstMonth = 0;
+}
 
     // 5. CÁLCULOS EXISTENTES
     const pnlAbsoluto = totalValorActual - totalCapitalInvertido_para_PNL;
@@ -11345,3 +11356,33 @@ if ('serviceWorker' in navigator) {
       });
   });
  }
+ // Añade esto al final del archivo main.js para verificar
+console.log('=== VERIFICACIÓN DE FUNCIONES ===');
+console.log('calculateStandardDeviation:', typeof calculateStandardDeviation);
+console.log('calculateAnnualVolatility:', typeof calculateAnnualVolatility);
+console.log('calculateMaxDrawdown:', typeof calculateMaxDrawdown);
+console.log('calculateSharpeRatio:', typeof calculateSharpeRatio);
+console.log('calculateSortinoRatio:', typeof calculateSortinoRatio);
+console.log('calculateBeta:', typeof calculateBeta);
+console.log('=== FIN DE VERIFICACIÓN ===');
+
+// Añade ESTA SOLA FUNCIÓN en cualquier parte de tu archivo (por ejemplo, al final)
+
+const calculateSortinoRatio = (returns, riskFreeRate = 0.02) => {
+    if (!returns || returns.length < 2) return 0;
+    
+    const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+    const negativeReturns = returns.filter(r => r < 0);
+    
+    if (negativeReturns.length === 0) return 0;
+    
+    // Calcular desviación estándar de los retornos negativos
+    const negativeMean = negativeReturns.reduce((sum, r) => sum + r, 0) / negativeReturns.length;
+    const squaredDifferences = negativeReturns.map(r => Math.pow(r - negativeMean, 2));
+    const downsideVariance = squaredDifferences.reduce((sum, sq) => sum + sq, 0) / (negativeReturns.length - 1);
+    const downsideStdDev = Math.sqrt(downsideVariance);
+    
+    if (downsideStdDev === 0) return 0;
+    
+    return (meanReturn - riskFreeRate) / downsideStdDev;
+};
