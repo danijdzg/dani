@@ -340,74 +340,51 @@ const THEMES = {
     'sunset-groove': { name: 'Brisa Alpina', icon: 'light_mode' }
 };
 
+// ▼▼▼ REEMPLAZAR TU FUNCIÓN updateAnalisisWidgets CON ESTA VERSIÓN SIMPLIFICADA ▼▼▼
 const updateAnalisisWidgets = async () => {
     try {
+        // Renderiza y calcula Colchón de Emergencia e Independencia Financiera
         const saldos = await getSaldos();
         const patrimonioNeto = Object.values(saldos).reduce((sum, s) => sum + s, 0);
         const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
         const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
-        
-        // Actualizar Colchón de Emergencia en el panel
-        const runwayEl = select('health-runway-val');
-        const runwayProgress = select('health-runway-progress-bar');
-        const efPercentage = select('emergency-fund-percentage');
-        
-        if (runwayEl) {
-            const meses = isFinite(efData.mesesCobertura) ? efData.mesesCobertura.toFixed(1) : '∞';
-            runwayEl.textContent = `${meses} Meses`;
-            runwayEl.style.color = efData.mesesCobertura >= 6 ? 'var(--c-success)' : 
-                                  efData.mesesCobertura >= 3 ? 'var(--c-warning)' : 'var(--c-danger)';
-        }
-        
-        if (runwayProgress) {
-            const progress = Math.min((efData.mesesCobertura / 6) * 100, 100);
-            runwayProgress.style.width = `${progress}%`;
-        }
-        
-        if (efPercentage) {
-            const percentage = Math.min((efData.mesesCobertura / 6) * 100, 100);
-            efPercentage.textContent = `${percentage.toFixed(0)}%`;
-        }
-        
-        // Actualizar Libertad Financiera en el panel
-        const fiValEl = select('health-fi-val');
-        const fiProgress = select('health-fi-progress-bar');
-        
-        if (fiValEl) {
-            fiValEl.textContent = `${fiData.progresoFI.toFixed(1)}%`;
-            fiValEl.style.color = fiData.progresoFI >= 100 ? 'var(--c-success)' : 
-                                fiData.progresoFI >= 50 ? 'var(--c-warning)' : 'var(--c-primary)';
-        }
-        
-        if (fiProgress) {
-            fiProgress.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
-        }
-        
-        // Actualizar Inversiones en el panel
-        const inversionTotalEl = select('kpi-inversion-total');
-        const inversionPnlEl = select('kpi-inversion-pnl');
-        const inversionPctEl = select('kpi-inversion-pct');
-        
-        if (inversionTotalEl || inversionPnlEl || inversionPctEl) {
-            const perfData = await calculatePortfolioPerformance();
-            
-            if (inversionTotalEl) {
-                inversionTotalEl.textContent = formatCurrency(perfData.valorActual);
-            }
-            
-            if (inversionPnlEl) {
-                const pnlClass = perfData.pnlAbsoluto >= 0 ? 'var(--c-success)' : 'var(--c-danger)';
-                inversionPnlEl.textContent = `${perfData.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(perfData.pnlAbsoluto)}`;
-                inversionPnlEl.style.color = pnlClass;
-            }
-            
-            if (inversionPctEl) {
-                const pctClass = perfData.pnlPorcentual >= 0 ? 'var(--c-success)' : 'var(--c-danger)';
-                inversionPctEl.textContent = `${perfData.pnlPorcentual >= 0 ? '+' : ''}${perfData.pnlPorcentual.toFixed(2)}%`;
-                inversionPctEl.style.color = pctClass;
+
+        // Colchón de Emergencia
+        const efContainer = document.querySelector('[data-widget-type="emergency-fund"]');
+        if (efContainer) {
+            efContainer.innerHTML = renderDashboardEmergencyFund(); // Dibuja el esqueleto
+            const efWidget = efContainer.querySelector('#emergency-fund-widget');
+            efWidget.querySelector('.card__content').classList.remove('skeleton'); 
+            const monthsValueEl = efWidget.querySelector('#kpi-ef-months-value'); 
+            const progressEl = efWidget.querySelector('#kpi-ef-progress'); 
+            const textEl = efWidget.querySelector('#kpi-ef-text');
+            if (monthsValueEl && progressEl && textEl) { 
+                monthsValueEl.textContent = isFinite(efData.mesesCobertura) ? efData.mesesCobertura.toFixed(1) : '∞'; 
+                progressEl.value = Math.min(efData.mesesCobertura, 6); 
+                let textClass = 'text-danger'; 
+                if (efData.mesesCobertura >= 6) textClass = 'text-positive'; 
+                else if (efData.mesesCobertura >= 3) textClass = 'text-warning'; 
+                monthsValueEl.className = `kpi-item__value ${textClass}`; 
+                textEl.innerHTML = `Tu dinero líquido cubre <strong>${isFinite(efData.mesesCobertura) ? efData.mesesCobertura.toFixed(1) : 'todos tus'}</strong> meses de gastos.`; 
             }
         }
         
+        // Independencia Financiera
+        const fiContainer = document.querySelector('[data-widget-type="fi-progress"]');
+        if(fiContainer) {
+            fiContainer.innerHTML = renderDashboardFIProgress(); // Dibuja el esqueleto
+            const fiWidget = fiContainer.querySelector('#fi-progress-widget');
+            fiWidget.querySelector('.card__content').classList.remove('skeleton'); 
+            const percentageValueEl = fiWidget.querySelector('#kpi-fi-percentage-value'); 
+            const progressEl = fiWidget.querySelector('#kpi-fi-progress'); 
+            const textEl = fiWidget.querySelector('#kpi-fi-text'); 
+            if (percentageValueEl && progressEl && textEl) { 
+                percentageValueEl.textContent = `${fiData.progresoFI.toFixed(1)}%`; 
+                progressEl.value = fiData.progresoFI; 
+                textEl.innerHTML = `Objetivo: <strong>${formatCurrency(fiData.objetivoFI)}</strong> (basado en un gasto anual de ${formatCurrency(fiData.gastoAnualEstimado)})`; 
+            }
+        }
+
     } catch (error) {
         console.error("Error al actualizar los widgets de análisis:", error);
     }
@@ -2009,15 +1986,8 @@ const navigateTo = async (pageId, isInitial = false) => {
     }
 
     if (pageId === PAGE_IDS.PANEL) {
-    setTimeout(async () => {
-        try {
-            await scheduleDashboardUpdate();
-            attachPanelEventListeners(); // Añadir los event listeners
-        } catch (error) {
-            console.error("Error actualizando panel en navigateTo:", error);
-        }
-    }, 100);
-}
+        scheduleDashboardUpdate();
+    }
 };
 
 const getPendingRecurrents = () => {
@@ -4120,993 +4090,142 @@ const renderPanelPage = async () => {
     const userName = currentUser ? (currentUser.displayName || currentUser.email.split('@')[0]) : 'Piloto';
 
     container.innerHTML = `
-        <!-- HEADER STICKY MEJORADO -->
-        <div class="panel-header" style="
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: linear-gradient(135deg, var(--c-background) 0%, color-mix(in srgb, var(--c-background) 95%, transparent) 100%);
-            backdrop-filter: blur(20px);
-            padding: var(--sp-4) var(--sp-4) var(--sp-2);
-            border-bottom: 1px solid var(--c-outline);
-            margin-bottom: var(--sp-2);
-        ">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sp-2);">
-                <div>
-                    <p style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 2px;">
-                        ${greeting},
-                    </p>
-                    <h2 style="
-                        font-size: 1.5rem;
-                        font-weight: 800;
-                        margin: 0;
-                        color: var(--c-on-surface);
-                        text-transform: capitalize;
-                        line-height: 1.2;
-                    ">${userName}</h2>
+        <div style="padding: 0 var(--sp-2) var(--sp-4);">
+            
+            <div style="margin-bottom: var(--sp-3); padding: 0 4px;">
+                <p style="font-size: 0.85rem; color: var(--c-on-surface-secondary); margin-bottom: 2px;">${greeting},</p>
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--c-on-surface); text-transform: capitalize;">${userName}</h2>
+            </div>
+
+            <div class="hero-card" style="padding: 25px 20px; text-align: center; margin-bottom: var(--sp-3); min-height: auto; border: 1px solid var(--c-primary); box-shadow: 0 4px 20px rgba(0, 179, 77, 0.15);">
+                <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 1.5px; margin-bottom: 4px;">Patrimonio Total</div>
+                <div id="kpi-patrimonio-neto-value" class="hero-value kpi-resaltado-azul skeleton" data-current-value="0" style="font-size: 2.6rem; margin-bottom: 0;">0,00 €</div>
+            </div>
+
+            <div class="status-grid" style="gap: 8px; margin-bottom: var(--sp-4);">
+                
+                <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
+                    <div class="status-label" style="margin-bottom: 4px;">
+                        <span class="material-icons" style="font-size: 16px; color: var(--c-info);">account_balance_wallet</span> Liquidez
+                    </div>
+                    <div id="kpi-liquidez-value" class="status-value skeleton" style="font-size: 1.1rem;">0,00 €</div>
                 </div>
-                <button class="icon-btn" data-action="toggle-privacy-mode" style="
-                    width: 44px;
-                    height: 44px;
-                    border-radius: 12px;
-                    background: var(--c-surface-variant);
-                ">
-                    <span class="material-icons">visibility</span>
-                </button>
+
+                <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
+                    <div class="status-label" style="margin-bottom: 4px;">
+                        <span class="material-icons" style="font-size: 16px; color: #BF5AF2;">auto_graph</span> Inversiones
+                    </div>
+                    <div id="kpi-inversion-total" class="status-value skeleton" style="font-size: 1.1rem;">0,00 €</div>
+                </div>
+
+                <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
+                    <div class="status-label" style="margin-bottom: 4px;">
+                         Ganancia
+                    </div>
+                    <div id="kpi-inversion-pnl" class="status-value skeleton" style="font-size: 1.1rem;">+0,00 €</div>
+                </div>
+
+                <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
+                    <div class="status-label" style="margin-bottom: 4px;">
+                         Rentabilidad
+                    </div>
+                    <div id="kpi-inversion-pct" class="status-value skeleton" style="font-size: 1.1rem;">0.00%</div>
+                </div>
+            </div>
+
+            <div class="report-filters fade-in-up" style="background-color: var(--c-surface); padding: 6px 8px; border-radius: 12px; border: 1px solid var(--c-outline); display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-3);">
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--c-on-surface-secondary); margin-left: 8px;">Periodo de análisis</span>
+                <select id="filter-periodo" class="form-select report-period-selector" style="font-size: 0.75rem; padding: 4px 24px 4px 10px; height: 32px; width: auto; background-color: var(--c-surface-variant); border: none; border-radius: 8px;">
+                    <option value="mes-actual">Este Mes</option>
+                    <option value="año-actual">Este Año</option>
+                    <option value="custom">Personalizado</option>
+                </select>
             </div>
             
-            <!-- SELECTOR RÁPIDO DE PERIODO -->
-            <div class="period-selector-tabs" style="
-                display: flex;
-                gap: 4px;
-                overflow-x: auto;
-                padding-bottom: 8px;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-            ">
-                <button class="period-tab active" data-period="mes-actual" style="
-                    flex-shrink: 0;
-                    padding: 8px 16px;
-                    background: var(--c-primary);
-                    color: white;
-                    border-radius: 20px;
-                    border: none;
-                    font-size: 0.75rem;
-                    font-weight: 600;
-                ">Este Mes</button>
-                <button class="period-tab" data-period="año-actual" style="
-                    flex-shrink: 0;
-                    padding: 8px 16px;
-                    background: var(--c-surface-variant);
-                    color: var(--c-on-surface);
-                    border-radius: 20px;
-                    border: none;
-                    font-size: 0.75rem;
-                    font-weight: 500;
-                ">Este Año</button>
-                <button class="period-tab" data-period="ultimo-año" style="
-                    flex-shrink: 0;
-                    padding: 8px 16px;
-                    background: var(--c-surface-variant);
-                    color: var(--c-on-surface);
-                    border-radius: 20px;
-                    border: none;
-                    font-size: 0.75rem;
-                    font-weight: 500;
-                ">12 Meses</button>
+            <div id="custom-date-filters" class="form-grid hidden" style="grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: var(--sp-3);">
+                <input type="date" id="filter-fecha-inicio" class="form-input" style="font-size: 0.8rem; padding: 8px;">
+                <input type="date" id="filter-fecha-fin" class="form-input" style="font-size: 0.8rem; padding: 8px;">
             </div>
-        </div>
 
-        <!-- SCROLL HORIZONTAL DE KPIS PRINCIPALES -->
-        <div class="main-kpi-scroller" style="
-            display: flex;
-            overflow-x: auto;
-            gap: 12px;
-            padding: 0 var(--sp-4) var(--sp-3);
-            margin-bottom: var(--sp-3);
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-        ">
-            <!-- KPI 1: PATRIMONIO -->
-            <div class="kpi-card" style="
-                flex: 0 0 auto;
-                width: 280px;
-                background: linear-gradient(135deg, var(--c-primary) 0%, #00A3FF 100%);
-                border-radius: 24px;
-                padding: 20px;
-                color: white;
-                box-shadow: 0 8px 32px rgba(0, 179, 77, 0.2);
-            ">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+            <div class="card fade-in-up" style="padding: 16px; border-radius: 20px; margin-bottom: var(--sp-4); border: 1px solid var(--c-outline);">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
                     <div>
-                        <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 4px;">Patrimonio Total</div>
-                        <div id="kpi-patrimonio-neto-value" class="hero-value" style="
-                            font-size: 2.5rem;
-                            font-weight: 800;
-                            line-height: 1;
-                            letter-spacing: -0.5px;
-                        ">0,00 €</div>
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Ingresos</div>
+                        <div id="kpi-ingresos-value" class="text-positive skeleton" style="font-size: 1rem; font-weight: 800;">+0 €</div>
                     </div>
-                    <button class="icon-btn" data-action="view-net-worth-chart" style="
-                        width: 36px;
-                        height: 36px;
-                        background: rgba(255, 255, 255, 0.2);
-                        border-radius: 12px;
-                    ">
-                        <span class="material-icons" style="font-size: 20px; color: white;">trending_up</span>
-                    </button>
-                </div>
-                <div style="font-size: 0.75rem; opacity: 0.8;">
-                    <span id="kpi-patrimonio-change" style="
-                        background: rgba(255, 255, 255, 0.2);
-                        padding: 2px 8px;
-                        border-radius: 12px;
-                        margin-right: 8px;
-                    ">+0,0%</span>
-                    vs mes anterior
-                </div>
-            </div>
-
-            <!-- KPI 2: LIQUIDEZ -->
-            <div class="kpi-card" style="
-                flex: 0 0 auto;
-                width: 280px;
-                background: linear-gradient(135deg, #4ECDC4 0%, #00C6B8 100%);
-                border-radius: 24px;
-                padding: 20px;
-                color: white;
-                box-shadow: 0 8px 32px rgba(78, 205, 196, 0.2);
-            ">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                    <div style="border-left: 1px solid var(--c-outline); border-right: 1px solid var(--c-outline);">
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Gastos</div>
+                        <div id="kpi-gastos-value" class="text-negative skeleton" style="font-size: 1rem; font-weight: 800;">-0 €</div>
+                    </div>
                     <div>
-                        <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 4px;">Liquidez Disponible</div>
-                        <div id="kpi-liquidez-value" style="
-                            font-size: 2.5rem;
-                            font-weight: 800;
-                            line-height: 1;
-                            letter-spacing: -0.5px;
-                        ">0,00 €</div>
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Neto</div>
+                        <div id="kpi-saldo-neto-value" class="skeleton" style="font-size: 1rem; font-weight: 800;">0 €</div>
                     </div>
-                    <div style="
-                        width: 36px;
-                        height: 36px;
-                        background: rgba(255, 255, 255, 0.2);
-                        border-radius: 12px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    ">
-                        <span class="material-icons" style="font-size: 20px; color: white;">account_balance_wallet</span>
-                    </div>
-                </div>
-                <div style="font-size: 0.75rem; opacity: 0.8;">
-                    <span style="
-                        background: rgba(255, 255, 255, 0.2);
-                        padding: 2px 8px;
-                        border-radius: 12px;
-                        margin-right: 8px;
-                    ">${Math.floor(Math.random() * 10) + 1} cuentas</span>
-                    disponibles
                 </div>
             </div>
-        </div>
 
-        <!-- SECCIÓN: INGRESOS VS GASTOS (CON GRÁFICO MINI) -->
-        <div class="card" style="
-            margin: 0 var(--sp-4) var(--sp-4);
-            border-radius: 24px;
-            background: var(--c-surface);
-            border: 1px solid var(--c-outline);
-            overflow: hidden;
-        ">
-            <div style="padding: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <h3 style="font-size: 1rem; font-weight: 700; margin: 0; color: var(--c-on-surface);">
-                        Flujo de Caja
-                    </h3>
-                    <button class="btn-text" data-action="view-cashflow-details" style="
-                        font-size: 0.75rem;
-                        color: var(--c-primary);
-                        padding: 4px 8px;
-                        background: none;
-                        border: none;
-                        font-weight: 600;
-                    ">
-                        Ver detalles
-                    </button>
-                </div>
-                
-                <!-- MINI GRÁFICO DE BARRAS -->
-                <div style="display: flex; align-items: flex-end; gap: 4px; height: 80px; margin-bottom: 20px;">
-                    <div style="flex: 1; text-align: center;">
-                        <div style="
-                            height: var(--ingresos-height, 40px);
-                            background: linear-gradient(to top, var(--c-success), #00D68F);
-                            border-radius: 4px 4px 0 0;
-                            margin-bottom: 4px;
-                        "></div>
-                        <div style="font-size: 0.625rem; color: var(--c-on-surface-secondary);">Ingresos</div>
-                    </div>
-                    <div style="flex: 1; text-align: center;">
-                        <div style="
-                            height: var(--gastos-height, 30px);
-                            background: linear-gradient(to top, var(--c-danger), #FF708D);
-                            border-radius: 4px 4px 0 0;
-                            margin-bottom: 4px;
-                        "></div>
-                        <div style="font-size: 0.625rem; color: var(--c-on-surface-secondary);">Gastos</div>
-                    </div>
-                    <div style="flex: 1; text-align: center;">
-                        <div style="
-                            height: var(--neto-height, 10px);
-                            background: linear-gradient(to top, var(--c-primary), #00A3FF);
-                            border-radius: 4px 4px 0 0;
-                            margin-bottom: 4px;
-                        "></div>
-                        <div style="font-size: 0.625rem; color: var(--c-on-surface-secondary);">Neto</div>
-                    </div>
-                </div>
-                
-                <!-- KPIS DE FLUJO -->
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-                    <div style="text-align: center;">
-                        <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 4px;">Ingresos</div>
-                        <div id="kpi-ingresos-value" style="
-                            font-size: 1.125rem;
-                            font-weight: 800;
-                            color: var(--c-success);
-                        ">+0 €</div>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 4px;">Gastos</div>
-                        <div id="kpi-gastos-value" style="
-                            font-size: 1.125rem;
-                            font-weight: 800;
-                            color: var(--c-danger);
-                        ">-0 €</div>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 4px;">Neto</div>
-                        <div id="kpi-saldo-neto-value" style="
-                            font-size: 1.125rem;
-                            font-weight: 800;
-                            color: var(--c-primary);
-                        ">0 €</div>
-                    </div>
-                </div>
-            </div>
+            <div class="section-header">Salud Financiera</div>
             
-            <!-- TASA DE AHORRO -->
-            <div style="
-                padding: 16px 20px;
-                background: var(--c-surface-variant);
-                border-top: 1px solid var(--c-outline);
-            ">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-size: 0.875rem; font-weight: 600; color: var(--c-on-surface);">
-                            Tasa de Ahorro
+            <div style="display: flex; flex-direction: column; gap: var(--sp-3); padding-bottom: var(--sp-5);">
+                
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 36px; height: 36px;"><canvas id="kpi-savings-rate-chart"></canvas></div>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Tasa de Ahorro</div>
+                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">De tus ingresos netos</div>
+                            </div>
                         </div>
-                        <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">
-                            De tus ingresos netos
-                        </div>
+                        <div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size: 1.4rem; font-weight: 800;">0%</div>
                     </div>
-                    <div id="kpi-tasa-ahorro-value" style="
-                        font-size: 1.5rem;
-                        font-weight: 800;
-                        color: var(--c-success);
-                    ">0%</div>
                 </div>
-                <div style="
-                    height: 6px;
-                    background: var(--c-outline);
-                    border-radius: 3px;
-                    margin-top: 8px;
-                    overflow: hidden;
-                ">
-                    <div id="tasa-ahorro-progress" style="
-                        height: 100%;
-                        background: linear-gradient(90deg, var(--c-success), #00D68F);
-                        width: 0%;
-                        border-radius: 3px;
-                        transition: width 0.5s ease;
-                    "></div>
+
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="material-icons" style="font-size: 28px; color: var(--c-success); background: rgba(0, 179, 77, 0.1); padding: 6px; border-radius: 10px;">shield</span>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Cobertura</div>
+                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">Meta: 6 meses</div>
+                            </div>
+                        </div>
+                        <div id="health-runway-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: var(--c-success);">0 Meses</div>
+                    </div>
+                    <div class="mini-progress-bar" style="height: 8px; background-color: var(--c-surface-variant); margin-top: 4px;">
+                        <div id="health-runway-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-success);"></div>
+                    </div>
                 </div>
+
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="material-icons" style="font-size: 28px; color: var(--c-warning); background: rgba(255, 214, 10, 0.1); padding: 6px; border-radius: 10px;">flag</span>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Libertad Financiera</div>
+                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">Meta: Vivir de rentas</div>
+                            </div>
+                        </div>
+                        <div id="health-fi-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: var(--c-warning);">0.0%</div>
+                    </div>
+                    <div class="mini-progress-bar" style="height: 8px; background-color: var(--c-surface-variant); margin-top: 4px;">
+                        <div id="health-fi-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-warning);"></div>
+                    </div>
+                </div>
+
             </div>
         </div>
-
-        <!-- GRID DE SALUD FINANCIERA (2x2) -->
-        <div style="
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            padding: 0 var(--sp-4) var(--sp-4);
-        ">
-            <!-- TARJETA 1: COLCHÓN DE EMERGENCIA -->
-            <div class="health-card" style="
-                background: var(--c-surface);
-                border: 1px solid var(--c-outline);
-                border-radius: 20px;
-                padding: 16px;
-                grid-column: span 2;
-            ">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                    <div style="
-                        width: 40px;
-                        height: 40px;
-                        background: linear-gradient(135deg, var(--c-success), #00D68F);
-                        border-radius: 12px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    ">
-                        <span class="material-icons" style="color: white; font-size: 20px;">shield</span>
-                    </div>
-                    <div style="flex: 1;">
-                        <div style="font-size: 0.875rem; font-weight: 600; color: var(--c-on-surface);">
-                            Colchón de Emergencia
-                        </div>
-                        <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">
-                            Meta: 6 meses de gastos
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <div id="health-runway-val" style="
-                        font-size: 1.5rem;
-                        font-weight: 800;
-                        color: var(--c-success);
-                    ">0 Meses</div>
-                    <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">
-                        <span id="emergency-fund-percentage">0%</span> completado
-                    </div>
-                </div>
-                
-                <div style="
-                    height: 8px;
-                    background: var(--c-surface-variant);
-                    border-radius: 4px;
-                    overflow: hidden;
-                    margin-bottom: 8px;
-                ">
-                    <div id="health-runway-progress-bar" style="
-                        height: 100%;
-                        background: linear-gradient(90deg, var(--c-success), #00D68F);
-                        width: 0%;
-                        border-radius: 4px;
-                        transition: width 0.5s ease;
-                    "></div>
-                </div>
-                
-                <div style="
-                    display: flex;
-                    justify-content: space-between;
-                    font-size: 0.6875rem;
-                    color: var(--c-on-surface-secondary);
-                ">
-                    <span>0 meses</span>
-                    <span>6 meses</span>
-                </div>
-            </div>
-
-            <!-- TARJETA 2: LIBERTAD FINANCIERA -->
-            <div class="health-card" style="
-                background: var(--c-surface);
-                border: 1px solid var(--c-outline);
-                border-radius: 20px;
-                padding: 16px;
-            ">
-                <div style="margin-bottom: 8px;">
-                    <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 2px;">
-                        Libertad Financiera
-                    </div>
-                    <div id="health-fi-val" style="
-                        font-size: 1.25rem;
-                        font-weight: 800;
-                        color: var(--c-warning);
-                    ">0.0%</div>
-                </div>
-                
-                <div style="
-                    height: 6px;
-                    background: var(--c-surface-variant);
-                    border-radius: 3px;
-                    overflow: hidden;
-                    margin-bottom: 4px;
-                ">
-                    <div id="health-fi-progress-bar" style="
-                        height: 100%;
-                        background: linear-gradient(90deg, var(--c-warning), #FFAA00);
-                        width: 0%;
-                        border-radius: 3px;
-                        transition: width 0.5s ease;
-                    "></div>
-                </div>
-                
-                <div style="font-size: 0.625rem; color: var(--c-on-surface-secondary);">
-                    Meta: Vivir de rentas
-                </div>
-            </div>
-
-            <!-- TARJETA 3: INVERSIONES -->
-            <div class="health-card" style="
-                background: var(--c-surface);
-                border: 1px solid var(--c-outline);
-                border-radius: 20px;
-                padding: 16px;
-            ">
-                <div style="margin-bottom: 8px;">
-                    <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 2px;">
-                        Inversiones
-                    </div>
-                    <div id="kpi-inversion-total" style="
-                        font-size: 1.25rem;
-                        font-weight: 800;
-                        color: #BF5AF2;
-                    ">0,00 €</div>
-                </div>
-                
-                <div style="display: flex; gap: 4px;">
-                    <div style="
-                        flex: 1;
-                        text-align: center;
-                        padding: 4px;
-                        background: rgba(191, 90, 242, 0.1);
-                        border-radius: 6px;
-                    ">
-                        <div style="font-size: 0.625rem; color: var(--c-on-surface-secondary);">Ganancia</div>
-                        <div id="kpi-inversion-pnl" style="
-                            font-size: 0.75rem;
-                            font-weight: 700;
-                            color: var(--c-success);
-                        ">+0,00 €</div>
-                    </div>
-                    <div style="
-                        flex: 1;
-                        text-align: center;
-                        padding: 4px;
-                        background: rgba(191, 90, 242, 0.1);
-                        border-radius: 6px;
-                    ">
-                        <div style="font-size: 0.625rem; color: var(--c-on-surface-secondary);">Rentabilidad</div>
-                        <div id="kpi-inversion-pct" style="
-                            font-size: 0.75rem;
-                            font-weight: 700;
-                            color: var(--c-success);
-                        ">0.00%</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ACCIONES RÁPIDAS -->
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
-    <button class="quick-action" data-action="add-income" style="...">
-        <div style="...">
-            <span class="material-icons" style="...">call_received</span>
-        </div>
-        <div style="...">Ingreso</div>
-    </button>
-    
-    <button class="quick-action" data-action="add-expense" style="...">
-        <div style="...">
-            <span class="material-icons" style="...">call_made</span>
-        </div>
-        <div style="...">Gasto</div>
-    </button>
-    
-    <button class="quick-action" data-action="add-transfer" style="...">
-        <div style="...">
-            <span class="material-icons" style="...">swap_horiz</span>
-        </div>
-        <div style="...">Traspaso</div>
-    </button>
-    
-    <button class="quick-action" data-action="add-recurrent" style="...">
-        <div style="...">
-            <span class="material-icons" style="...">repeat</span>
-        </div>
-        <div style="...">Recurrente</div>
-    </button>
-</div>
-
-        <!-- BOTÓN FLOTANTE FAB -->
-        <button class="fab" data-action="quick-add-menu" style="
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, var(--c-primary), #00A3FF);
-            border: none;
-            border-radius: 50%;
-            color: white;
-            box-shadow: 0 8px 24px rgba(0, 179, 77, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        ">
-            <span class="material-icons" style="font-size: 24px;">add</span>
-        </button>
+        
+        <div id="concepto-totals-list" style="display:none;"></div>
+        <canvas id="conceptos-chart" style="display:none;"></canvas>
+        <div id="net-worth-chart-container" style="display:none;"><canvas id="net-worth-chart"></canvas></div>
     `;
     
-    setTimeout(async () => {
-    try {
-        await scheduleDashboardUpdate();
-        if (typeof initPanelInteractions === 'function') {
-            initPanelInteractions();
-        }
-    } catch (error) {
-        console.error("Error inicializando panel:", error);
-    }
-}, 100);
+    populateAllDropdowns();
+    await Promise.all([loadPresupuestos(), loadInversiones()]);
+    scheduleDashboardUpdate(); 
 };
 
-// Añade después de tu función renderPanelPage
-
-// 1. INTERACCIONES CON PERIODO SELECTOR
-const setupPeriodSelector = () => {
-    const tabs = document.querySelectorAll('.period-tab');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', async (e) => {
-            e.preventDefault();
-            hapticFeedback('light');
-            
-            // Actualizar estado visual
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            
-            // Actualizar selector principal (si existe)
-            const mainSelector = select('filter-periodo');
-            if (mainSelector) {
-                mainSelector.value = tab.dataset.period;
-            }
-            
-            // Forzar actualización del dashboard
-            await scheduleDashboardUpdate(true);
-            
-            // Animación de confirmación
-            tab.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                tab.style.transform = 'scale(1)';
-            }, 150);
-        });
-    });
-};
-
-// 2. GESTOS DE SWIPE EN SCROLL HORIZONTAL
-const setupHorizontalScroll = () => {
-    const scroller = document.querySelector('.main-kpi-scroller');
-    if (!scroller) return;
-    
-    let isDown = false;
-    let startX;
-    let scrollLeft;
-    
-    scroller.addEventListener('mousedown', (e) => {
-        isDown = true;
-        startX = e.pageX - scroller.offsetLeft;
-        scrollLeft = scroller.scrollLeft;
-        scroller.style.cursor = 'grabbing';
-    });
-    
-    scroller.addEventListener('mouseleave', () => {
-        isDown = false;
-        scroller.style.cursor = 'grab';
-    });
-    
-    scroller.addEventListener('mouseup', () => {
-        isDown = false;
-        scroller.style.cursor = 'grab';
-    });
-    
-    scroller.addEventListener('mousemove', (e) => {
-        if (!isDown) return;
-        e.preventDefault();
-        const x = e.pageX - scroller.offsetLeft;
-        const walk = (x - startX) * 2;
-        scroller.scrollLeft = scrollLeft - walk;
-    });
-    
-    // Versión táctil
-    scroller.addEventListener('touchstart', (e) => {
-        startX = e.touches[0].pageX - scroller.offsetLeft;
-        scrollLeft = scroller.scrollLeft;
-    });
-    
-    scroller.addEventListener('touchmove', (e) => {
-        if (!startX) return;
-        const x = e.touches[0].pageX - scroller.offsetLeft;
-        const walk = (x - startX) * 2;
-        scroller.scrollLeft = scrollLeft - walk;
-    });
-};
-
-// 3. ANIMACIÓN DE MINI-GRÁFICO
-const updateMiniChart = (ingresos, gastos, neto) => {
-    try {
-        // Solo ejecutar si estamos en el panel
-        const panelPage = select(PAGE_IDS.PANEL);
-        if (!panelPage || !panelPage.classList.contains('view--active')) return;
-        
-        const max = Math.max(Math.abs(ingresos), Math.abs(gastos), Math.abs(neto)) || 1;
-        
-        // Calcular alturas relativas (máximo 80px)
-        const ingresosHeight = (Math.abs(ingresos) / max) * 80;
-        const gastosHeight = (Math.abs(gastos) / max) * 80;
-        const netoHeight = (Math.abs(neto) / max) * 80;
-        
-        // Aplicar con animación
-        document.documentElement.style.setProperty('--ingresos-height', `${ingresosHeight}px`);
-        document.documentElement.style.setProperty('--gastos-height', `${gastosHeight}px`);
-        document.documentElement.style.setProperty('--neto-height', `${netoHeight}px`);
-        
-    } catch (error) {
-        console.error("Error en updateMiniChart:", error);
-    }
-};
-
-// 4. MODO PRIVACIDAD (OCULTAR IMPORTES)
-const setupPrivacyMode = () => {
-    const toggleBtn = document.querySelector('[data-action="toggle-privacy-mode"]');
-    if (!toggleBtn) return;
-    
-    toggleBtn.addEventListener('click', () => {
-        const isActive = document.body.classList.toggle('privacy-mode');
-        localStorage.setItem('privacyMode', isActive);
-        
-        // Cambiar icono
-        const icon = toggleBtn.querySelector('.material-icons');
-        icon.textContent = isActive ? 'visibility_off' : 'visibility';
-        
-        // Feedback háptico
-        hapticFeedback('medium');
-        
-        // Actualizar todos los valores visibles
-        updatePrivacyMode(isActive);
-    });
-};
-
-const updatePrivacyMode = (enabled) => {
-    const elements = document.querySelectorAll('[data-privacy]');
-    elements.forEach(el => {
-        if (enabled) {
-            el.dataset.original = el.textContent;
-            el.textContent = '•••••';
-        } else {
-            el.textContent = el.dataset.original || '0,00 €';
-        }
-    });
-};
-
-// 5. QUICK ACTIONS
-const setupQuickActions = () => {
-    const actions = document.querySelectorAll('.quick-action');
-    actions.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const action = btn.dataset.action;
-            hapticFeedback('light');
-            
-            switch(action) {
-                case 'add-income':
-                    // Abrir formulario de ingreso preconfigurado
-                    showMovementForm('income');
-                    break;
-                case 'add-expense':
-                    showMovementForm('expense');
-                    break;
-                case 'add-transfer':
-                    showMovementForm('transfer');
-                    break;
-                case 'view-reports':
-                    navigateTo(PAGE_IDS.PLANIFICAR);
-                    break;
-            }
-            
-            // Animación de confirmación
-            btn.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                btn.style.transform = 'scale(1)';
-            }, 150);
-        });
-    });
-};
-
-// 6. FAB CON MENÚ DESPLEGABLE
-const setupFAB = () => {
-    const fab = document.querySelector('.fab');
-    if (!fab) return;
-    
-    let isMenuOpen = false;
-    const menuHTML = `
-        <div class="fab-menu" style="
-            position: absolute;
-            bottom: 70px;
-            right: 0;
-            background: var(--c-surface);
-            border: 1px solid var(--c-outline);
-            border-radius: 20px;
-            padding: 8px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-            min-width: 160px;
-        ">
-            <button class="fab-menu-item" data-action="add-income" style="
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 12px;
-                background: none;
-                border: none;
-                color: var(--c-on-surface);
-                font-size: 0.875rem;
-                font-weight: 500;
-                border-radius: 12px;
-                text-align: left;
-            ">
-                <div style="
-                    width: 32px;
-                    height: 32px;
-                    background: linear-gradient(135deg, var(--c-success), #00D68F);
-                    border-radius: 8px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                ">
-                    <span class="material-icons" style="color: white; font-size: 18px;">call_received</span>
-                </div>
-                Nuevo Ingreso
-            </button>
-            <button class="fab-menu-item" data-action="add-expense" style="
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 12px;
-                background: none;
-                border: none;
-                color: var(--c-on-surface);
-                font-size: 0.875rem;
-                font-weight: 500;
-                border-radius: 12px;
-                text-align: left;
-            ">
-                <div style="
-                    width: 32px;
-                    height: 32px;
-                    background: linear-gradient(135deg, var(--c-danger), #FF708D);
-                    border-radius: 8px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                ">
-                    <span class="material-icons" style="color: white; font-size: 18px;">call_made</span>
-                </div>
-                Nuevo Gasto
-            </button>
-            <button class="fab-menu-item" data-action="add-transfer" style="
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 12px;
-                background: none;
-                border: none;
-                color: var(--c-on-surface);
-                font-size: 0.875rem;
-                font-weight: 500;
-                border-radius: 12px;
-                text-align: left;
-            ">
-                <div style="
-                    width: 32px;
-                    height: 32px;
-                    background: linear-gradient(135deg, var(--c-info), #00A3FF);
-                    border-radius: 8px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                ">
-                    <span class="material-icons" style="color: white; font-size: 18px;">swap_horiz</span>
-                </div>
-                Nuevo Traspaso
-            </button>
-        </div>
-    `;
-    
-    fab.insertAdjacentHTML('afterend', menuHTML);
-    const menu = fab.nextElementSibling;
-    
-    fab.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        isMenuOpen = !isMenuOpen;
-        
-        if (isMenuOpen) {
-            menu.style.display = 'flex';
-            fab.style.transform = 'rotate(45deg)';
-            hapticFeedback('medium');
-            
-            // Cerrar al hacer clic fuera
-            setTimeout(() => {
-                document.addEventListener('click', closeMenu);
-            }, 10);
-        } else {
-            closeMenu();
-        }
-    });
-    
-    const closeMenu = () => {
-        menu.style.display = 'none';
-        fab.style.transform = 'rotate(0deg)';
-        document.removeEventListener('click', closeMenu);
-        isMenuOpen = false;
-    };
-    
-    // Delegación de eventos para los items del menú
-    menu.addEventListener('click', (e) => {
-        const item = e.target.closest('.fab-menu-item');
-        if (!item) return;
-        
-        const action = item.dataset.action;
-        closeMenu();
-        
-        switch(action) {
-            case 'add-income':
-                showMovementForm('income');
-                break;
-            case 'add-expense':
-                showMovementForm('expense');
-                break;
-            case 'add-transfer':
-                showMovementForm('transfer');
-                break;
-        }
-    });
-};
-
-// 7. FUNCIÓN PARA MOSTRAR FORMULARIO PRE-CONFIGURADO
-const showMovementForm = (type) => {
-    // Ir a la página de diario
-    navigateTo(PAGE_IDS.DIARIO);
-    
-    // Pequeño delay para que cargue la página
-    setTimeout(() => {
-        // Mostrar formulario de movimiento
-        const addBtn = document.querySelector('[data-action="show-movimiento-form"]');
-        if (addBtn) addBtn.click();
-        
-        // Pre-configurar según tipo
-        setTimeout(() => {
-            switch(type) {
-                case 'income':
-                    // Seleccionar concepto de ingreso por defecto
-                    const incomeConcepts = db.conceptos.filter(c => 
-                        c.nombre.toLowerCase().includes('ingreso') || 
-                        c.nombre.toLowerCase().includes('sueldo')
-                    );
-                    if (incomeConcepts.length > 0) {
-                        const conceptoSelect = select('movimiento-concepto');
-                        if (conceptoSelect) {
-                            conceptoSelect.value = incomeConcepts[0].id;
-                            conceptoSelect.dispatchEvent(new Event('change'));
-                        }
-                    }
-                    break;
-                    
-                case 'expense':
-                    // Seleccionar concepto de gasto por defecto
-                    const expenseConcepts = db.conceptos.filter(c => 
-                        !c.nombre.toLowerCase().includes('ingreso') && 
-                        !c.nombre.toLowerCase().includes('sueldo')
-                    );
-                    if (expenseConcepts.length > 0) {
-                        const conceptoSelect = select('movimiento-concepto');
-                        if (conceptoSelect) {
-                            conceptoSelect.value = expenseConcepts[0].id;
-                            conceptoSelect.dispatchEvent(new Event('change'));
-                        }
-                    }
-                    break;
-                    
-                case 'transfer':
-                    // Cambiar a pestaña de traspaso
-                    const transferTab = document.querySelector('[data-action="toggle-traspaso"]');
-                    if (transferTab) transferTab.click();
-                    break;
-            }
-        }, 300);
-    }, 100);
-};
-
-
-// 10. INICIALIZAR TODO AL CARGAR EL PANEL
-const initPanelInteractions = () => {
-    setupPeriodSelector();
-    setupHorizontalScroll();
-    setupPrivacyMode();
-    setupQuickActions();
-    setupFAB();
-    
-    // Añadir atributos de privacidad a elementos sensibles
-    document.querySelectorAll('#kpi-patrimonio-neto-value, #kpi-liquidez-value, #kpi-ingresos-value, #kpi-gastos-value, #kpi-saldo-neto-value')
-        .forEach(el => el.dataset.privacy = true);
-};
-
-// Detectar gestos específicos de móvil
-const setupMobileGestures = () => {
-    const panel = select(PAGE_IDS.PANEL);
-    if (!panel) return;
-    
-    let startY;
-    let isScrolling;
-    
-    panel.addEventListener('touchstart', (e) => {
-        startY = e.touches[0].clientY;
-        isScrolling = true;
-    }, { passive: true });
-    
-    panel.addEventListener('touchmove', (e) => {
-        if (!isScrolling) return;
-        
-        const currentY = e.touches[0].clientY;
-        const diff = startY - currentY;
-        
-        // Pull to refresh (solo en la parte superior)
-        if (diff > 50 && panel.scrollTop === 0) {
-            // Mostrar indicador de actualización
-            showRefreshIndicator();
-            isScrolling = false;
-        }
-    }, { passive: true });
-    
-    panel.addEventListener('touchend', () => {
-        isScrolling = false;
-    });
-};
-
-const showRefreshIndicator = () => {
-    hapticFeedback('light');
-    
-    // Crear indicador visual
-    const indicator = document.createElement('div');
-    indicator.innerHTML = `
-        <div style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: var(--c-surface);
-            border-bottom: 1px solid var(--c-outline);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1001;
-            transform: translateY(-100%);
-            animation: slideDown 0.3s ease forwards;
-        ">
-            <span class="spinner" style="margin-right: 12px;"></span>
-            <span style="font-size: 0.875rem; color: var(--c-on-surface);">
-                Actualizando datos...
-            </span>
-        </div>
-    `;
-    
-    document.body.appendChild(indicator);
-    
-    // Forzar actualización
-    scheduleDashboardUpdate(true).then(() => {
-        setTimeout(() => {
-            indicator.remove();
-            showToast('Datos actualizados', 'success');
-        }, 1000);
-    });
-};
  const showEstrategiaTab = (tabName) => {
     // 1. Gestionar el estado activo de los botones de las pestañas
     const tabButton = document.querySelector(`.tab-item[data-tab="${tabName}"]`);
@@ -6473,491 +5592,20 @@ const updateNetWorthChart = async (saldos) => {
     });
 };
 
-const scheduleDashboardUpdate = async (force = false) => {
-    if (dashboardUpdateDebounceTimer) {
-        clearTimeout(dashboardUpdateDebounceTimer);
+const scheduleDashboardUpdate = () => {
+    // El jefe de obra solo trabaja si la página "Inicio" está abierta.
+    const activePage = document.querySelector('.view--active');
+    if (!activePage || activePage.id !== PAGE_IDS.PANEL) {
+        return;
     }
-
-    return new Promise((resolve) => {
-        dashboardUpdateDebounceTimer = setTimeout(async () => {
-            try {
-                if (!currentUser) {
-                    console.warn("scheduleDashboardUpdate: No hay usuario autenticado.");
-                    resolve();
-                    return;
-                }
-
-                // Asegurarnos de que tenemos los datos necesarios
-                if (!db.cuentas || db.cuentas.length === 0) {
-                    console.warn("scheduleDashboardUpdate: Datos de cuentas no cargados.");
-                    resolve();
-                    return;
-                }
-
-                // 1. OBTENER LOS DATOS PRINCIPALES
-                const saldos = await getSaldos();
-                const visibleAccounts = getVisibleAccounts();
-                const liquidAccounts = getLiquidAccounts();
-                
-                // 2. CALCULAR PATRIMONIO NETO
-                const patrimonioNeto = visibleAccounts.reduce((sum, cuenta) => {
-                    return sum + (saldos[cuenta.id] || 0);
-                }, 0);
-                
-                // 3. CALCULAR LIQUIDEZ
-                const liquidezTotal = liquidAccounts.reduce((sum, cuenta) => {
-                    return sum + (saldos[cuenta.id] || 0);
-                }, 0);
-                
-                // 4. OBTENER MOVIMIENTOS PARA EL PERIODO ACTUAL
-                const { current: currentMovs } = await getFilteredMovements(false);
-                const visibleAccountIds = new Set(visibleAccounts.map(c => c.id));
-                
-                // 5. CALCULAR INGRESOS, GASTOS Y NETO
-                let ingresos = 0;
-                let gastos = 0;
-                let saldoNeto = 0;
-                
-                currentMovs.forEach(mov => {
-                    const amount = calculateMovementAmount(mov, visibleAccountIds);
-                    if (amount > 0) {
-                        ingresos += amount;
-                    } else if (amount < 0) {
-                        gastos += amount;
-                    }
-                    saldoNeto += amount;
-                });
-                
-                // Convertir a valores positivos para display
-                const gastosAbsoluto = Math.abs(gastos);
-                
-                // 6. CALCULAR TASA DE AHORRO
-                const tasaAhorro = ingresos > 0 ? 
-                    ((ingresos + gastos) / ingresos) * 100 : 0;
-                
-                // 7. CALCULAR COLCHÓN DE EMERGENCIA
-                const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
-                
-                // 8. CALCULAR INDEPENDENCIA FINANCIERA
-                const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
-                
-                // 9. CALCULAR RENDIMIENTO DE INVERSIONES
-                let inversionTotal = 0;
-                let inversionPnl = 0;
-                let inversionPct = 0;
-                
-                const investmentAccounts = visibleAccounts.filter(c => c.esInversion);
-                if (investmentAccounts.length > 0 && dataLoaded.inversiones) {
-                    const perf = await calculatePortfolioPerformance();
-                    inversionTotal = perf.valorActual;
-                    inversionPnl = perf.pnlAbsoluto;
-                    inversionPct = perf.pnlPorcentual;
-                }
-                
-                // 10. ACTUALIZAR LA UI (SOLO SI ESTAMOS EN EL PANEL)
-                const panelPage = select(PAGE_IDS.PANEL);
-                if (panelPage && panelPage.classList.contains('view--active')) {
-                    
-                    // A. PATRIMONIO NETO
-                    const patrimonioEl = select('kpi-patrimonio-neto-value');
-                    if (patrimonioEl) {
-                        animateCountUp(patrimonioEl, patrimonioNeto, 700, true);
-                    }
-                    
-                    // B. LIQUIDEZ
-                    const liquidezEl = select('kpi-liquidez-value');
-                    if (liquidezEl) {
-                        animateCountUp(liquidezEl, liquidezTotal, 700, true);
-                    }
-                    
-                    // C. INGRESOS
-                    const ingresosEl = select('kpi-ingresos-value');
-                    if (ingresosEl) {
-                        ingresosEl.textContent = `+${formatCurrency(ingresos).replace('€', '').trim()}`;
-                        ingresosEl.classList.remove('skeleton');
-                    }
-                    
-                    // D. GASTOS
-                    const gastosEl = select('kpi-gastos-value');
-                    if (gastosEl) {
-                        gastosEl.textContent = `-${formatCurrency(gastosAbsoluto).replace('€', '').trim()}`;
-                        gastosEl.classList.remove('skeleton');
-                    }
-                    
-                    // E. SALDO NETO
-                    const netoEl = select('kpi-saldo-neto-value');
-                    if (netoEl) {
-                        const netoClass = saldoNeto >= 0 ? 'text-positive' : 'text-negative';
-                        netoEl.textContent = `${saldoNeto >= 0 ? '+' : ''}${formatCurrency(saldoNeto).replace('€', '').trim()}`;
-                        netoEl.className = netoClass;
-                        netoEl.classList.remove('skeleton');
-                    }
-                    
-                    // F. TASA DE AHORRO
-                    const tasaEl = select('kpi-tasa-ahorro-value');
-                    const tasaProgressEl = select('tasa-ahorro-progress');
-                    if (tasaEl) {
-                        tasaEl.textContent = `${Math.max(0, tasaAhorro).toFixed(0)}%`;
-                        tasaEl.classList.remove('skeleton');
-                    }
-                    if (tasaProgressEl) {
-                        tasaProgressEl.style.width = `${Math.min(100, Math.max(0, tasaAhorro))}%`;
-                    }
-                    
-                    // G. COLCHÓN DE EMERGENCIA
-                    const runwayValEl = select('health-runway-val');
-                    const runwayProgressEl = select('health-runway-progress-bar');
-                    const emergencyPercentageEl = select('emergency-fund-percentage');
-                    
-                    if (runwayValEl) {
-                        const meses = efData.mesesCobertura;
-                        runwayValEl.textContent = `${isFinite(meses) ? meses.toFixed(1) : '∞'} Meses`;
-                        runwayValEl.classList.remove('skeleton');
-                        
-                        if (runwayValEl) {
-                            const color = meses >= 6 ? 'var(--c-success)' : 
-                                        meses >= 3 ? 'var(--c-warning)' : 'var(--c-danger)';
-                            runwayValEl.style.color = color;
-                        }
-                    }
-                    
-                    if (runwayProgressEl) {
-                        const percentage = Math.min(100, (efData.mesesCobertura / 6) * 100);
-                        runwayProgressEl.style.width = `${percentage}%`;
-                        runwayProgressEl.style.background = `linear-gradient(90deg, var(--c-success), #00D68F)`;
-                    }
-                    
-                    if (emergencyPercentageEl) {
-                        const percentage = Math.min(100, (efData.mesesCobertura / 6) * 100);
-                        emergencyPercentageEl.textContent = `${percentage.toFixed(0)}%`;
-                    }
-                    
-                    // H. LIBERTAD FINANCIERA
-                    const fiValEl = select('health-fi-val');
-                    const fiProgressEl = select('health-fi-progress-bar');
-                    
-                    if (fiValEl) {
-                        fiValEl.textContent = `${fiData.progresoFI.toFixed(1)}%`;
-                        fiValEl.classList.remove('skeleton');
-                    }
-                    
-                    if (fiProgressEl) {
-                        fiProgressEl.style.width = `${Math.min(100, fiData.progresoFI)}%`;
-                    }
-                    
-                    // I. INVERSIONES
-                    const inversionTotalEl = select('kpi-inversion-total');
-                    const inversionPnlEl = select('kpi-inversion-pnl');
-                    const inversionPctEl = select('kpi-inversion-pct');
-                    
-                    if (inversionTotalEl) {
-                        animateCountUp(inversionTotalEl, inversionTotal, 700, true);
-                    }
-                    
-                    if (inversionPnlEl) {
-                        const pnlClass = inversionPnl >= 0 ? 'text-positive' : 'text-negative';
-                        inversionPnlEl.textContent = `${inversionPnl >= 0 ? '+' : ''}${formatCurrency(inversionPnl).replace('€', '').trim()}`;
-                        inversionPnlEl.className = pnlClass;
-                        inversionPnlEl.classList.remove('skeleton');
-                    }
-                    
-                    if (inversionPctEl) {
-                        const pctClass = inversionPct >= 0 ? 'text-positive' : 'text-negative';
-                        inversionPctEl.textContent = `${inversionPct >= 0 ? '+' : ''}${inversionPct.toFixed(2)}%`;
-                        inversionPctEl.className = pctClass;
-                        inversionPctEl.classList.remove('skeleton');
-                    }
-                    
-                    // J. MINI-GRÁFICO DE FLUJO DE CAJA
-                    if (typeof updateMiniChart === 'function') {
-                        updateMiniChart(ingresos, gastos, saldoNeto);
-                    }
-                    
-                    // K. CAMBIO PATRIMONIAL
-                    if (typeof updatePatrimonioChange === 'function') {
-                        updatePatrimonioChange();
-                    }
-                    
-                    // Remover skeletons de todos los elementos restantes
-                    selectAll('.skeleton').forEach(el => {
-                        if (el.id.includes('kpi-') || el.id.includes('health-')) {
-                            el.classList.remove('skeleton');
-                        }
-                    });
-                    
-                }
-                
-                // 11. ACTUALIZAR WIDGETS DE ANÁLISIS
-                await updateAnalisisWidgets();
-                
-                resolve();
-                
-            } catch (error) {
-                console.error("Error en scheduleDashboardUpdate:", error);
-                showToast("Error al actualizar el panel.", "danger");
-                resolve();
-            }
-        }, force ? 0 : 300);
-    });
+      
+    clearTimeout(dashboardUpdateDebounceTimer);
+        
+    dashboardUpdateDebounceTimer = setTimeout(updateDashboardData, 50);
 };
 
-// Función para calcular movimientos en un período específico
-const getMovementsForPeriod = async (startDate, endDate) => {
-    if (!currentUser) return { saldoNeto: 0 };
-    
-    try {
-        const snapshot = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos')
-            .where('fecha', '>=', startDate.toISOString())
-            .where('fecha', '<=', endDate.toISOString())
-            .get();
-        
-        const movements = snapshot.docs.map(doc => doc.data());
-        const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
-        
-        let saldoNeto = 0;
-        movements.forEach(mov => {
-            saldoNeto += calculateMovementAmount(mov, visibleAccountIds);
-        });
-        
-        return { saldoNeto };
-    } catch (error) {
-        console.error("Error obteniendo movimientos del período:", error);
-        return { saldoNeto: 0 };
-    }
-};
+/* EN main.js - REEMPLAZO DE updateDashboardData (SIN GRÁFICO DE PATRIMONIO, CON KPI DE INVERSIÓN) */
 
-const updatePatrimonioChange = async () => {
-    try {
-        const changeElement = select('kpi-patrimonio-change');
-        if (!changeElement) return;
-        
-        // Solo calcular si hay datos
-        const visibleAccounts = getVisibleAccounts();
-        if (!visibleAccounts || visibleAccounts.length === 0) {
-            changeElement.textContent = '+0,0%';
-            changeElement.style.background = 'rgba(0, 179, 77, 0.2)';
-            changeElement.style.color = 'var(--c-success)';
-            return;
-        }
-        
-        const saldos = await getSaldos();
-        const currentTotal = visibleAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
-        
-        // Si el total es 0, no hay cambio
-        if (currentTotal === 0) {
-            changeElement.textContent = '+0,0%';
-            changeElement.style.background = 'rgba(0, 179, 77, 0.2)';
-            changeElement.style.color = 'var(--c-success)';
-            return;
-        }
-        
-        // Calcular total del mes anterior
-        const now = new Date();
-        const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
-        
-        try {
-            const movements = await getMovementsForPeriod(firstDayThisMonth, lastDayLastMonth);
-            const lastMonthTotal = currentTotal - movements.saldoNeto;
-            
-            // Calcular porcentaje de cambio
-            let change = 0;
-            if (lastMonthTotal !== 0) {
-                change = ((currentTotal - lastMonthTotal) / Math.abs(lastMonthTotal)) * 100;
-            }
-            
-            // Formatear y mostrar
-            const sign = change >= 0 ? '+' : '';
-            const displayValue = Math.abs(change) < 0.1 ? '0,0' : Math.abs(change).toFixed(1);
-            
-            changeElement.textContent = `${sign}${displayValue}%`;
-            
-            // Estilos según sea positivo o negativo
-            if (change >= 0) {
-                changeElement.style.background = 'rgba(0, 179, 77, 0.2)';
-                changeElement.style.color = 'var(--c-success)';
-            } else {
-                changeElement.style.background = 'rgba(255, 59, 48, 0.2)';
-                changeElement.style.color = 'var(--c-danger)';
-            }
-            
-        } catch (periodError) {
-            console.warn("No se pudo calcular el cambio patrimonial:", periodError);
-            changeElement.textContent = '+0,0%';
-            changeElement.style.background = 'rgba(0, 179, 77, 0.2)';
-            changeElement.style.color = 'var(--c-success)';
-        }
-        
-    } catch (error) {
-        console.error("Error en updatePatrimonioChange:", error);
-        // Fallback seguro
-        const changeElement = select('kpi-patrimonio-change');
-        if (changeElement) {
-            changeElement.textContent = '+0,0%';
-            changeElement.style.background = 'rgba(0, 179, 77, 0.2)';
-            changeElement.style.color = 'var(--c-success)';
-        }
-    }
-};
-
-const updateDashboardKPIs = async () => {
-    try {
-        // 1. Obtener datos actualizados
-        const saldos = await getSaldos();
-        const visibleAccounts = getVisibleAccounts();
-        const { current: currentMovs } = await getFilteredMovements(false);
-        
-        // 2. Calcular Patrimonio Neto
-        const patrimonioNeto = Object.values(saldos).reduce((sum, s) => sum + s, 0);
-        
-        // 3. Calcular Liquidez (cuentas líquidas)
-        const cuentasLiquidas = getLiquidAccounts();
-        const liquidezTotal = cuentasLiquidas.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
-        
-        // 4. Calcular Ingresos, Gastos y Neto
-        const visibleAccountIds = new Set(visibleAccounts.map(c => c.id));
-        const { ingresos, gastos, saldoNeto } = calculateTotals(currentMovs, visibleAccountIds);
-        
-        // 5. Calcular Tasa de Ahorro
-        const tasaAhorro = ingresos > 0 ? ((saldoNeto / ingresos) * 100) : 0;
-        
-        // 6. Actualizar UI del Panel
-        updatePanelUI({
-            patrimonioNeto,
-            liquidezTotal,
-            ingresos,
-            gastos,
-            saldoNeto,
-            tasaAhorro,
-            cuentasLiquidasCount: cuentasLiquidas.length
-        });
-        
-        // 7. Actualizar widgets de análisis
-        await updateAnalisisWidgets();
-        
-    } catch (error) {
-        console.error("Error actualizando KPIs del dashboard:", error);
-    }
-};
-
-const updatePanelUI = (data) => {
-    // Actualizar Patrimonio
-    const patrimonioEl = select('kpi-patrimonio-neto-value');
-    if (patrimonioEl) patrimonioEl.textContent = formatCurrency(data.patrimonioNeto);
-    
-    // Actualizar Liquidez
-    const liquidezEl = select('kpi-liquidez-value');
-    if (liquidezEl) liquidezEl.textContent = formatCurrency(data.liquidezTotal);
-    
-    // Actualizar Ingresos
-    const ingresosEl = select('kpi-ingresos-value');
-    if (ingresosEl) ingresosEl.textContent = `+${formatCurrency(data.ingresos).replace('€', '€')}`;
-    if (ingresosEl) ingresosEl.style.color = 'var(--c-success)';
-    
-    // Actualizar Gastos
-    const gastosEl = select('kpi-gastos-value');
-    if (gastosEl) gastosEl.textContent = `${formatCurrency(data.gastos).replace('€', '€')}`;
-    if (gastosEl) gastosEl.style.color = 'var(--c-danger)';
-    
-    // Actualizar Neto
-    const netoEl = select('kpi-saldo-neto-value');
-    if (netoEl) {
-        netoEl.textContent = `${data.saldoNeto >= 0 ? '+' : ''}${formatCurrency(data.saldoNeto).replace('€', '€')}`;
-        netoEl.style.color = data.saldoNeto >= 0 ? 'var(--c-success)' : 'var(--c-danger)';
-    }
-    
-    // Actualizar Tasa de Ahorro
-    const tasaAhorroEl = select('kpi-tasa-ahorro-value');
-    const tasaAhorroProgress = select('tasa-ahorro-progress');
-    if (tasaAhorroEl) {
-        tasaAhorroEl.textContent = `${data.tasaAhorro.toFixed(1)}%`;
-        tasaAhorroEl.style.color = data.tasaAhorro >= 20 ? 'var(--c-success)' : 
-                                  data.tasaAhorro >= 0 ? 'var(--c-warning)' : 'var(--c-danger)';
-    }
-    if (tasaAhorroProgress) {
-        tasaAhorroProgress.style.width = `${Math.min(data.tasaAhorro, 100)}%`;
-    }
-    
-    // Actualizar mini gráfico de barras
-    const maxVal = Math.max(data.ingresos, Math.abs(data.gastos), Math.abs(data.saldoNeto));
-    if (maxVal > 0) {
-        const ingresosHeight = (data.ingresos / maxVal) * 60;
-        const gastosHeight = (Math.abs(data.gastos) / maxVal) * 60;
-        const netoHeight = (Math.abs(data.saldoNeto) / maxVal) * 60;
-        
-        document.documentElement.style.setProperty('--ingresos-height', `${ingresosHeight}px`);
-        document.documentElement.style.setProperty('--gastos-height', `${gastosHeight}px`);
-        document.documentElement.style.setProperty('--neto-height', `${netoHeight}px`);
-    }
-};
-const attachPanelEventListeners = () => {
-    // Selectores de periodo
-    document.addEventListener('click', (e) => {
-        if (e.target.closest('.period-tab')) {
-            const periodTab = e.target.closest('.period-tab');
-            const period = periodTab.dataset.period;
-            
-            // Actualizar UI de tabs
-            document.querySelectorAll('.period-tab').forEach(tab => {
-                tab.classList.remove('active');
-                tab.style.background = 'var(--c-surface-variant)';
-                tab.style.color = 'var(--c-on-surface)';
-            });
-            
-            periodTab.classList.add('active');
-            periodTab.style.background = 'var(--c-primary)';
-            periodTab.style.color = 'white';
-            
-            // Actualizar filtro global
-            const filterPeriodo = select('filter-periodo');
-            if (filterPeriodo) {
-                filterPeriodo.value = period;
-            }
-            
-            // Actualizar dashboard
-            scheduleDashboardUpdate();
-            hapticFeedback('light');
-        }
-        
-        // Botones de acciones rápidas
-        if (e.target.closest('[data-action="add-income"]')) {
-            showMovementModal('income');
-        }
-        
-        if (e.target.closest('[data-action="add-expense"]')) {
-            showMovementModal('expense');
-        }
-        
-        if (e.target.closest('[data-action="view-net-worth-chart"]')) {
-            handleViewNetWorthChart();
-        }
-        
-        if (e.target.closest('[data-action="view-cashflow-details"]')) {
-            handleViewCashflowDetails();
-        }
-        
-        if (e.target.closest('[data-action="toggle-privacy-mode"]')) {
-            handleTogglePrivacyMode();
-        }
-    });
-};
-
-// Añade esta función para alternar modo privacidad
-const handleTogglePrivacyMode = () => {
-    const isPrivacyMode = document.body.classList.contains('privacy-mode');
-    
-    if (isPrivacyMode) {
-        document.body.classList.remove('privacy-mode');
-        localStorage.setItem('privacyMode', 'false');
-        showToast('Modo privacidad desactivado');
-    } else {
-        document.body.classList.add('privacy-mode');
-        localStorage.setItem('privacyMode', 'true');
-        showToast('Modo privacidad activado');
-    }
-    
-    hapticFeedback('light');
-};
 const updateDashboardData = async () => {
     const activePage = document.querySelector('.view--active');
     if (!activePage || activePage.id !== PAGE_IDS.PANEL) return;
