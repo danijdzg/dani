@@ -2285,7 +2285,33 @@ const getAllSaldos = () => {
             });
             return saldos;
         };
-		
+	// Validar datos del portafolio - AÑADIR DESPUÉS DE getSaldos()
+const validatePortfolioData = () => {
+    const errors = [];
+    const warnings = [];
+    
+    // Verificar cuentas de inversión sin valoraciones
+    const investmentAccounts = getVisibleAccounts().filter(c => c.esInversion);
+    
+    investmentAccounts.forEach(account => {
+        const valoraciones = (db.inversiones_historial || [])
+            .filter(v => v.cuentaId === account.id);
+        
+        if (valoraciones.length === 0) {
+            errors.push(`"${account.nombre}" no tiene valoraciones registradas`);
+        } else {
+            // Verificar fecha de última valoración
+            const lastValuation = new Date(valoraciones[0].fecha);
+            const daysSinceValuation = (new Date() - lastValuation) / (1000 * 60 * 60 * 24);
+            
+            if (daysSinceValuation > 30) {
+                warnings.push(`"${account.nombre}" no se valora desde hace ${Math.floor(daysSinceValuation)} días`);
+            }
+        }
+    });
+    
+    return { errors, warnings };
+};	
 	const fetchAllMovementsForHistory = async () => {
     if (!currentUser) return [];
     try {
@@ -2416,7 +2442,56 @@ const getFilteredMovements = async (forComparison = false) => {
     }
     return 0; // Si no converge, devuelve 0 en lugar de colgarse
 };
-		
+const calculateEnhancedIRR = (cashflows) => {
+    if (cashflows.length < 2) return 0;
+    
+    // Ordenar por fecha
+    const sortedCashflows = [...cashflows].sort((a, b) => a.date.getTime() - b.date.getTime());
+    
+    // Convertir a días desde el primer cashflow
+    const firstDate = sortedCashflows[0].date;
+    const cashflowDays = sortedCashflows.map(cf => ({
+        amount: cf.amount,
+        days: (cf.date.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24)
+    }));
+    
+    // Función NPV para TIR diaria
+    const npv = (dailyRate) => {
+        let total = 0;
+        for (const cf of cashflowDays) {
+            total += cf.amount / Math.pow(1 + dailyRate, cf.days);
+        }
+        return total;
+    };
+    
+    // Método de Newton-Raphson mejorado
+    let guess = 0.0001; // Tasa diaria inicial
+    let lastGuess = 0;
+    let iterations = 0;
+    const maxIterations = 100;
+    const tolerance = 1e-9;
+    
+    while (iterations < maxIterations) {
+        const npvValue = npv(guess);
+        const derivative = (npv(guess * 1.0001) - npvValue) / (guess * 0.0001);
+        
+        if (Math.abs(derivative) < 1e-12) break;
+        
+        lastGuess = guess;
+        guess = guess - npvValue / derivative;
+        
+        if (Math.abs(guess - lastGuess) < tolerance) break;
+        if (Math.abs(guess) > 1) break; // Evitar valores extremos
+        
+        iterations++;
+    }
+    
+    // Convertir tasa diaria a anual
+    const annualIRR = Math.pow(1 + guess, 365.25) - 1;
+    
+    // Limitar valores absurdos
+    return Math.abs(annualIRR) > 10 ? 0 : annualIRR;
+};		
 const calculatePortfolioPerformance = async (cuentaId = null) => {
     if (!dataLoaded.inversiones) await loadInversiones();
     
@@ -2509,84 +2584,6 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
         tir,
         daysActive
     };
-};
-// Nueva función TIR mejorada y precisa
-const calculateEnhancedIRR = (cashflows) => {
-    if (cashflows.length < 2) return 0;
-    
-    // Ordenar por fecha
-    const sortedCashflows = [...cashflows].sort((a, b) => a.date.getTime() - b.date.getTime());
-    
-    // Convertir a días desde el primer cashflow
-    const firstDate = sortedCashflows[0].date;
-    const cashflowDays = sortedCashflows.map(cf => ({
-        amount: cf.amount,
-        days: (cf.date.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24)
-    }));
-    
-    // Función NPV para TIR diaria
-    const npv = (dailyRate) => {
-        let total = 0;
-        for (const cf of cashflowDays) {
-            total += cf.amount / Math.pow(1 + dailyRate, cf.days);
-        }
-        return total;
-    };
-    
-    // Método de Newton-Raphson mejorado
-    let guess = 0.0001; // Tasa diaria inicial
-    let lastGuess = 0;
-    let iterations = 0;
-    const maxIterations = 100;
-    const tolerance = 1e-9;
-    
-    while (iterations < maxIterations) {
-        const npvValue = npv(guess);
-        const derivative = (npv(guess * 1.0001) - npvValue) / (guess * 0.0001);
-        
-        if (Math.abs(derivative) < 1e-12) break;
-        
-        lastGuess = guess;
-        guess = guess - npvValue / derivative;
-        
-        if (Math.abs(guess - lastGuess) < tolerance) break;
-        if (Math.abs(guess) > 1) break; // Evitar valores extremos
-        
-        iterations++;
-    }
-    
-    // Convertir tasa diaria a anual
-    const annualIRR = Math.pow(1 + guess, 365.25) - 1;
-    
-    // Limitar valores absurdos
-    return Math.abs(annualIRR) > 10 ? 0 : annualIRR;
-};
-// Validar datos del portafolio
-const validatePortfolioData = () => {
-    const errors = [];
-    const warnings = [];
-    
-    // Verificar cuentas de inversión sin valoraciones
-    const investmentAccounts = getVisibleAccounts().filter(c => c.esInversion);
-    
-    investmentAccounts.forEach(account => {
-        const valoraciones = (db.inversiones_historial || [])
-            .filter(v => v.cuentaId === account.id);
-        
-        if (valoraciones.length === 0) {
-            errors.push(`"${account.nombre}" no tiene valoraciones registradas`);
-        } else {
-            // Verificar fecha de última valoración
-            const lastValuation = new Date(valoraciones[0].fecha);
-            const daysSinceValuation = (new Date() - lastValuation) / (1000 * 60 * 60 * 24);
-            
-            if (daysSinceValuation > 30) {
-                warnings.push(`"${account.nombre}" no se valora desde hace ${Math.floor(daysSinceValuation)} días`);
-            }
-        }
-    });
-    
-    return { errors, warnings };
 };
 
     const recalculateAndApplyRunningBalances = (movements, allAccountsDb) => {
@@ -5597,136 +5594,34 @@ const renderPatrimonioPage = async () => {
     const container = select(PAGE_IDS.PATRIMONIO);
     if (!container) return;
 
-    // Cargar datos primero
-    await loadInversiones();
-    
     container.innerHTML = `
         <div style="padding: 0 var(--sp-2) var(--sp-4);">
             
-            <!-- Encabezado del Portafolio -->
-            <div class="card" style="
-                background: var(--c-surface);
-                padding: 16px;
-                border-radius: 16px;
-                margin-bottom: var(--sp-3);
-                border: 1px solid var(--c-outline);
-                text-align: center;
-            ">
-                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px;">
-                    <span class="material-icons" style="font-size: 24px; color: var(--c-warning);">trending_up</span>
-                    <h2 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--c-on-surface);">
-                        Portafolio de Inversiones
-                    </h2>
-                </div>
-                
-                <!-- Validación rápida -->
-                <div id="portfolio-validation-alert" style="
-                    background: var(--c-surface-variant);
-                    padding: 8px 12px;
-                    border-radius: 10px;
-                    margin-bottom: 12px;
-                    font-size: 0.8rem;
-                    text-align: left;
-                    display: none;
-                ">
-                    <span class="material-icons" style="font-size: 16px; vertical-align: middle;">info</span>
-                    <span id="portfolio-validation-text"></span>
-                </div>
+            <!-- Encabezado simple -->
+            <div style="text-align: center; margin-bottom: var(--sp-4);">
+                <h2 style="margin: 0; color: var(--c-on-surface);">
+                    <span class="material-icons" style="vertical-align: middle; color: var(--c-warning);">trending_up</span>
+                    Portafolio
+                </h2>
             </div>
 
-            <!-- Pestañas de navegación -->
-            <div class="tabs-container" style="margin-bottom: var(--sp-3);">
-                <div class="tabs" style="
-                    display: flex; 
-                    border-bottom: 2px solid var(--c-outline);
-                    overflow-x: auto;
-                    -webkit-overflow-scrolling: touch;
-                ">
-                    <button class="tab-button active" data-tab="resumen" style="
-                        flex: 1;
-                        padding: 12px 8px;
-                        border: none;
-                        background: transparent;
-                        font-weight: 600;
-                        font-size: 0.85rem;
-                        color: var(--c-on-surface-secondary);
-                        white-space: nowrap;
-                        border-bottom: 3px solid transparent;
-                    ">
-                        <span class="material-icons" style="font-size: 18px; margin-right: 6px; vertical-align: middle;">dashboard</span>
-                        Resumen
-                    </button>
-                    <button class="tab-button" data-tab="activos" style="
-                        flex: 1;
-                        padding: 12px 8px;
-                        border: none;
-                        background: transparent;
-                        font-weight: 600;
-                        font-size: 0.85rem;
-                        color: var(--c-on-surface-secondary);
-                        white-space: nowrap;
-                        border-bottom: 3px solid transparent;
-                    ">
-                        <span class="material-icons" style="font-size: 18px; margin-right: 6px; vertical-align: middle;">pie_chart</span>
-                        Activos
-                    </button>
-                    <button class="tab-button" data-tab="rendimiento" style="
-                        flex: 1;
-                        padding: 12px 8px;
-                        border: none;
-                        background: transparent;
-                        font-weight: 600;
-                        font-size: 0.85rem;
-                        color: var(--c-on-surface-secondary);
-                        white-space: nowrap;
-                        border-bottom: 3px solid transparent;
-                    ">
-                        <span class="material-icons" style="font-size: 18px; margin-right: 6px; vertical-align: middle;">show_chart</span>
-                        Rendimiento
-                    </button>
-                </div>
-                
-                <!-- Contenido de pestañas -->
-                <div id="tab-resumen" class="tab-content" style="display: block; padding-top: 16px;">
-                    <!-- Se cargará dinámicamente -->
-                    <div style="text-align: center; padding: 40px 20px;">
-                        <span class="spinner"></span>
-                        <p style="margin-top: 12px; color: var(--c-on-surface-secondary);">Cargando resumen...</p>
-                    </div>
-                </div>
-                
-                <div id="tab-activos" class="tab-content" style="display: none; padding-top: 16px;">
-                    <div style="text-align: center; padding: 40px 20px;">
-                        <span class="spinner"></span>
-                        <p style="margin-top: 12px; color: var(--c-on-surface-secondary);">Cargando activos...</p>
-                    </div>
-                </div>
-                
-                <div id="tab-rendimiento" class="tab-content" style="display: none; padding-top: 16px;">
-                    <div style="text-align: center; padding: 40px 20px;">
-                        <span class="spinner"></span>
-                        <p style="margin-top: 12px; color: var(--c-on-surface-secondary);">Cargando rendimiento...</p>
-                    </div>
-                </div>
+            <!-- Botones de acción -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: var(--sp-3);">
+                <button class="btn btn--secondary" data-action="show-portfolio-resumen">
+                    <span class="material-icons" style="vertical-align: middle;">dashboard</span>
+                    Resumen
+                </button>
+                <button class="btn btn--secondary" data-action="validate-portfolio">
+                    <span class="material-icons" style="vertical-align: middle;">verified</span>
+                    Validar
+                </button>
             </div>
 
-            <!-- Acciones rápidas -->
-            <div class="card" style="padding: 12px; margin-top: var(--sp-3);">
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
-                    <button class="btn btn--secondary" data-action="update-asset-value" style="
-                        padding: 10px;
-                        font-size: 0.85rem;
-                    ">
-                        <span class="material-icons" style="font-size: 16px; vertical-align: middle;">assessment</span>
-                        Valorar Activo
-                    </button>
-                    <button class="btn btn--secondary" data-action="validate-portfolio" style="
-                        padding: 10px;
-                        font-size: 0.85rem;
-                    ">
-                        <span class="material-icons" style="font-size: 16px; vertical-align: middle;">verified</span>
-                        Validar Datos
-                    </button>
+            <!-- Contenedor para el contenido -->
+            <div id="portfolio-content-container">
+                <div style="text-align: center; padding: 40px 20px;">
+                    <span class="spinner"></span>
+                    <p style="margin-top: 12px; color: var(--c-on-surface-secondary);">Cargando portafolio...</p>
                 </div>
             </div>
 
@@ -5734,12 +5629,161 @@ const renderPatrimonioPage = async () => {
     `;
     
     // Cargar contenido inicial
-    setTimeout(() => loadPortfolioTab('resumen'), 100);
+    setTimeout(() => showPortfolioResumen(), 100);
+};
+const showPortfolioResumen = async () => {
+    const container = select('portfolio-content-container');
+    if (!container) return;
     
-    // Configurar eventos
-    setupPortfolioTabs();
+    try {
+        const performance = await calculatePortfolioPerformance();
+        
+        container.innerHTML = `
+            <div style="display: grid; gap: var(--sp-3);">
+                
+                <!-- KPIs principales -->
+                <div class="card">
+                    <div class="card__content" style="text-align: center;">
+                        <div style="font-size: 0.9rem; color: var(--c-on-surface-secondary); margin-bottom: 8px; font-weight: 600;">
+                            VALORACIÓN ACTUAL
+                        </div>
+                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--c-on-surface); margin-bottom: 16px;">
+                            ${formatCurrency(performance.valorActual)}
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">Invertido</div>
+                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--c-on-surface);">
+                                    ${formatCurrency(performance.capitalInvertido)}
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">Días</div>
+                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--c-on-surface);">
+                                    ${Math.floor(performance.daysActive)}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- P&L -->
+                        <div style="
+                            background: ${performance.pnlAbsoluto >= 0 ? 
+                                'rgba(0, 179, 77, 0.1)' : 
+                                'rgba(255, 59, 48, 0.1)'};
+                            padding: 16px;
+                            border-radius: 12px;
+                            border: 2px solid ${performance.pnlAbsoluto >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};
+                        ">
+                            <div style="font-size: 0.85rem; color: var(--c-on-surface-secondary); margin-bottom: 8px; font-weight: 600;">
+                                GANANCIA / PÉRDIDA
+                            </div>
+                            <div style="font-size: 1.4rem; font-weight: 800; 
+                                color: ${performance.pnlAbsoluto >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};">
+                                ${performance.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(performance.pnlAbsoluto)}
+                                <div style="font-size: 1rem; margin-top: 4px;">
+                                    (${performance.pnlPorcentual.toFixed(1)}%)
+                                </div>
+                            </div>
+                            
+                            <div style="font-size: 0.85rem; color: var(--c-on-surface-secondary); margin-top: 12px; font-weight: 600;">
+                                TIR ANUAL
+                            </div>
+                            <div style="font-size: 1.2rem; font-weight: 800; 
+                                color: ${performance.tir >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};">
+                                ${(performance.tir * 100).toFixed(2)}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Activos -->
+                <div class="card">
+                    <div class="card__header">
+                        <h3 style="margin: 0; font-size: 1rem; font-weight: 700;">
+                            <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">list</span>
+                            Tus Activos
+                        </h3>
+                    </div>
+                    <div class="card__content" id="portfolio-assets-list">
+                        <div style="text-align: center; padding: 20px;">
+                            <span class="spinner"></span>
+                            <p style="margin-top: 8px; color: var(--c-on-surface-secondary);">Cargando activos...</p>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        `;
+        
+        // Cargar activos
+        setTimeout(() => loadPortfolioAssets(), 100);
+        
+    } catch (error) {
+        console.error('Error cargando resumen:', error);
+        container.innerHTML = `
+            <div class="empty-state">
+                <span class="material-icons">error</span>
+                <p>Error al cargar el portafolio</p>
+                <button class="btn btn--secondary" onclick="showPortfolioResumen()">Reintentar</button>
+            </div>
+        `;
+    }
 };
 
+const loadPortfolioAssets = async () => {
+    const container = select('portfolio-assets-list');
+    if (!container) return;
+    
+    const investmentAccounts = getVisibleAccounts().filter(c => c.esInversion);
+    
+    if (investmentAccounts.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="background: transparent; border: none;">
+                <p>No hay activos de inversión</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let assetsHTML = '';
+    
+    for (const cuenta of investmentAccounts) {
+        const performance = await calculatePortfolioPerformance(cuenta.id);
+        
+        assetsHTML += `
+            <div style="
+                padding: 12px;
+                border-radius: 10px;
+                background: var(--c-surface-variant);
+                margin-bottom: 8px;
+                border: 1px solid var(--c-outline);
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div style="font-weight: 700;">${cuenta.nombre}</div>
+                    <div style="font-weight: 800; color: var(--c-on-surface);">
+                        ${formatCurrency(performance.valorActual)}
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85rem;">
+                    <div>
+                        <div style="color: var(--c-on-surface-secondary);">Invertido</div>
+                        <div>${formatCurrency(performance.capitalInvertido)}</div>
+                    </div>
+                    <div>
+                        <div style="color: var(--c-on-surface-secondary);">P&L</div>
+                        <div style="color: ${performance.pnlAbsoluto >= 0 ? 'var(--c-success)' : 'var(--c-danger)'}; font-weight: 700;">
+                            ${formatCurrency(performance.pnlAbsoluto)} (${performance.pnlPorcentual.toFixed(1)}%)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = assetsHTML;
+};
 const renderEstrategiaPage = () => {
     const container = select(PAGE_IDS.ESTRATEGIA);
     if (!container) return;
@@ -8461,11 +8505,25 @@ const renderInversionesPage = async (containerId) => {
 const attachEventListeners = () => {
 	// --- LÓGICA DE MODO PRIVACIDAD ---
     // Al hacer clic en el valor del Patrimonio Neto (KPI principal), alternamos el modo.
-    document.body.addEventListener('click', (e) => {
-	if (action === 'validate-portfolio') {
-    handleValidatePortfolio();
-    return;
-}
+document.body.addEventListener('click', (e) => {
+    // AÑADE ESTO AL PRINCIPIO de la función:
+    const action = e.target.dataset.action || 
+                   e.target.closest('[data-action]')?.dataset.action;
+    
+    if (!action) return;
+    
+    // Manejar acciones del portafolio
+    if (action === 'show-portfolio-resumen') {
+        e.preventDefault();
+        showPortfolioResumen();
+        return;
+    }
+    
+    if (action === 'validate-portfolio') {
+        e.preventDefault();
+        handleValidatePortfolio();
+        return;
+    }
 
 // Para mostrar detalles de P&L (mejorado)
 if (action === 'show-pnl-breakdown') {
