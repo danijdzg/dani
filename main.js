@@ -3922,51 +3922,6 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         }
     }, 100);
 };
-const exportRiskReport = async () => {
-    const portfolioPerformance = await calculatePortfolioPerformance();
-    
-    const report = {
-        fecha: new Date().toISOString(),
-        portfolio: {
-            valorMercado: portfolioPerformance.valorActual,
-            capitalInvertido: portfolioPerformance.capitalInvertido,
-            gananciaPerdida: portfolioPerformance.pnlAbsoluto,
-            rentabilidad: portfolioPerformance.pnlPorcentual,
-            tir: portfolioPerformance.irr
-        },
-        analisisRiesgo: {
-            volatilidadAnual: portfolioPerformance.annualVolatility,
-            maxDrawdown: portfolioPerformance.maxDrawdown,
-            sharpeRatio: portfolioPerformance.sharpeRatio,
-            sortinoRatio: portfolioPerformance.sortinoRatio,
-            mejorMes: portfolioPerformance.bestMonth,
-            peorMes: portfolioPerformance.worstMonth
-        },
-        interpretacion: {
-            nivelRiesgo: portfolioPerformance.annualVolatility > 0.15 ? 'Alto' : 
-                        portfolioPerformance.annualVolatility > 0.08 ? 'Moderado' : 'Bajo',
-            calidadRetorno: portfolioPerformance.sharpeRatio > 1 ? 'Buena' : 
-                           portfolioPerformance.sharpeRatio > 0 ? 'Neutral' : 'Pobre',
-            resiliencia: portfolioPerformance.maxDrawdown > 0.2 ? 'Baja' : 
-                        portfolioPerformance.maxDrawdown > 0.1 ? 'Moderada' : 'Alta'
-        }
-    };
-    
-    // Crear y descargar JSON
-    const dataStr = JSON.stringify(report, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `reporte-riesgo-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    showToast('Reporte de riesgo exportado', 'success');
-};
 
 const handleShowPnlBreakdown = async (accountId) => {
     const cuenta = db.cuentas.find(c => c.id === accountId);
