@@ -5077,34 +5077,6 @@ const showMovementForm = (type) => {
 };
 
 
-// 9. FUNCIÓN PARA CALCULAR CAMBIO PATRIMONIAL
-const updatePatrimonioChange = async () => {
-    const visibleAccounts = getVisibleAccounts();
-    const currentTotal = visibleAccounts.reduce((sum, c) => sum + (c.saldo || 0), 0);
-    
-    // Obtener total del mes anterior
-    const now = new Date();
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
-    
-    const movements = await getMovementsForPeriod(lastMonth, endLastMonth);
-    const lastMonthTotal = currentTotal - movements.saldoNeto;
-    
-    // Calcular porcentaje de cambio
-    const change = lastMonthTotal !== 0 ? 
-        ((currentTotal - lastMonthTotal) / Math.abs(lastMonthTotal)) * 100 : 0;
-    
-    const changeElement = select('kpi-patrimonio-change');
-    if (changeElement) {
-        const sign = change >= 0 ? '+' : '';
-        changeElement.textContent = `${sign}${change.toFixed(1)}%`;
-        changeElement.style.background = change >= 0 ? 
-            'rgba(0, 179, 77, 0.2)' : 'rgba(255, 59, 48, 0.2)';
-        changeElement.style.color = change >= 0 ? 
-            'var(--c-success)' : 'var(--c-danger)';
-    }
-};
-
 // 10. INICIALIZAR TODO AL CARGAR EL PANEL
 const initPanelInteractions = () => {
     setupPeriodSelector();
@@ -6807,19 +6779,77 @@ const getMovementsForPeriod = async (startDate, endDate) => {
     }
 };
 
-// Función de actualización de cambio patrimonial (si no existe)
 const updatePatrimonioChange = async () => {
     try {
         const changeElement = select('kpi-patrimonio-change');
         if (!changeElement) return;
         
-        // Por ahora, ponemos un valor por defecto
-        // Puedes implementar la lógica completa después
-        changeElement.textContent = '+0,0%';
-        changeElement.style.background = 'rgba(0, 179, 77, 0.2)';
-        changeElement.style.color = 'var(--c-success)';
+        // Solo calcular si hay datos
+        const visibleAccounts = getVisibleAccounts();
+        if (!visibleAccounts || visibleAccounts.length === 0) {
+            changeElement.textContent = '+0,0%';
+            changeElement.style.background = 'rgba(0, 179, 77, 0.2)';
+            changeElement.style.color = 'var(--c-success)';
+            return;
+        }
+        
+        const saldos = await getSaldos();
+        const currentTotal = visibleAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
+        
+        // Si el total es 0, no hay cambio
+        if (currentTotal === 0) {
+            changeElement.textContent = '+0,0%';
+            changeElement.style.background = 'rgba(0, 179, 77, 0.2)';
+            changeElement.style.color = 'var(--c-success)';
+            return;
+        }
+        
+        // Calcular total del mes anterior
+        const now = new Date();
+        const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        
+        try {
+            const movements = await getMovementsForPeriod(firstDayThisMonth, lastDayLastMonth);
+            const lastMonthTotal = currentTotal - movements.saldoNeto;
+            
+            // Calcular porcentaje de cambio
+            let change = 0;
+            if (lastMonthTotal !== 0) {
+                change = ((currentTotal - lastMonthTotal) / Math.abs(lastMonthTotal)) * 100;
+            }
+            
+            // Formatear y mostrar
+            const sign = change >= 0 ? '+' : '';
+            const displayValue = Math.abs(change) < 0.1 ? '0,0' : Math.abs(change).toFixed(1);
+            
+            changeElement.textContent = `${sign}${displayValue}%`;
+            
+            // Estilos según sea positivo o negativo
+            if (change >= 0) {
+                changeElement.style.background = 'rgba(0, 179, 77, 0.2)';
+                changeElement.style.color = 'var(--c-success)';
+            } else {
+                changeElement.style.background = 'rgba(255, 59, 48, 0.2)';
+                changeElement.style.color = 'var(--c-danger)';
+            }
+            
+        } catch (periodError) {
+            console.warn("No se pudo calcular el cambio patrimonial:", periodError);
+            changeElement.textContent = '+0,0%';
+            changeElement.style.background = 'rgba(0, 179, 77, 0.2)';
+            changeElement.style.color = 'var(--c-success)';
+        }
+        
     } catch (error) {
         console.error("Error en updatePatrimonioChange:", error);
+        // Fallback seguro
+        const changeElement = select('kpi-patrimonio-change');
+        if (changeElement) {
+            changeElement.textContent = '+0,0%';
+            changeElement.style.background = 'rgba(0, 179, 77, 0.2)';
+            changeElement.style.color = 'var(--c-success)';
+        }
     }
 };
 const updateDashboardData = async () => {
