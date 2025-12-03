@@ -33,18 +33,6 @@ export const calculateMaxDrawdown = (values) => {
     
     return maxDrawdown;
 };
-
-export const calculateSharpeRatio = (returns, riskFreeRate = 0.02) => {
-    if (!returns || returns.length < 2) return 0;
-    
-    const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-    const stdDev = calculateStandardDeviation(returns);
-    
-    if (stdDev === 0) return 0;
-    
-    return (meanReturn - riskFreeRate) / stdDev;
-};
-
 export const calculateSortinoRatio = (returns, riskFreeRate = 0.02) => {
     if (!returns || returns.length < 2) return 0;
     
@@ -55,6 +43,16 @@ export const calculateSortinoRatio = (returns, riskFreeRate = 0.02) => {
     if (downsideStdDev === 0) return 0;
     
     return (meanReturn - riskFreeRate) / downsideStdDev;
+};
+export const calculateSharpeRatio = (returns, riskFreeRate = 0.02) => {
+    if (!returns || returns.length < 2) return 0;
+    
+    const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+    const stdDev = calculateStandardDeviation(returns);
+    
+    if (stdDev === 0) return 0;
+    
+    return (meanReturn - riskFreeRate) / stdDev;
 };
 
 export const calculateBeta = (portfolioReturns, marketReturns) => {

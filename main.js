@@ -11338,24 +11338,3 @@ console.log('calculateSharpeRatio:', typeof calculateSharpeRatio);
 console.log('calculateSortinoRatio:', typeof calculateSortinoRatio);
 console.log('calculateBeta:', typeof calculateBeta);
 console.log('=== FIN DE VERIFICACIÓN ===');
-
-// Añade ESTA SOLA FUNCIÓN en cualquier parte de tu archivo (por ejemplo, al final)
-
-const calculateSortinoRatio = (returns, riskFreeRate = 0.02) => {
-    if (!returns || returns.length < 2) return 0;
-    
-    const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-    const negativeReturns = returns.filter(r => r < 0);
-    
-    if (negativeReturns.length === 0) return 0;
-    
-    // Calcular desviación estándar de los retornos negativos
-    const negativeMean = negativeReturns.reduce((sum, r) => sum + r, 0) / negativeReturns.length;
-    const squaredDifferences = negativeReturns.map(r => Math.pow(r - negativeMean, 2));
-    const downsideVariance = squaredDifferences.reduce((sum, sq) => sum + sq, 0) / (negativeReturns.length - 1);
-    const downsideStdDev = Math.sqrt(downsideVariance);
-    
-    if (downsideStdDev === 0) return 0;
-    
-    return (meanReturn - riskFreeRate) / downsideStdDev;
-};
