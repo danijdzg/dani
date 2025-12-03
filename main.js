@@ -4318,6 +4318,7 @@ const renderPanelPage = async () => {
                 margin-bottom: var(--sp-4);
                 border: 1px solid var(--c-outline);
                 text-align: center;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             ">
                 <!-- Patrimonio Total -->
                 <div style="margin-bottom: 16px;">
@@ -4333,14 +4334,18 @@ const renderPanelPage = async () => {
                 <!-- Desglose: Liquidez + Capital Aportado -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div style="text-align: center;">
-                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom: 4px;">LIQUIDEZ</div>
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom: 4px; font-weight: 600;">
+                            LIQUIDEZ
+                        </div>
                         <div id="kpi-liquidez-value" class="skeleton" 
                              style="font-size: 1rem; font-weight: 700; color: var(--c-on-surface);">
                             0,00 €
                         </div>
                     </div>
                     <div style="text-align: center;">
-                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom: 4px;">INVERTIDO</div>
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom: 4px; font-weight: 600;">
+                            INVERTIDO
+                        </div>
                         <div id="kpi-inversion-total" class="skeleton" 
                              style="font-size: 1rem; font-weight: 700; color: var(--c-on-surface);">
                             0,00 €
@@ -4356,6 +4361,7 @@ const renderPanelPage = async () => {
                 margin-bottom: var(--sp-3);
                 border: 1px solid var(--c-outline);
                 background: var(--c-surface);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             ">
                 <!-- Título de la sección -->
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
@@ -4396,6 +4402,7 @@ const renderPanelPage = async () => {
                 margin-bottom: var(--sp-3);
                 border: 1px solid var(--c-outline);
                 background-color: var(--c-surface);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             ">
                 <div style="display: flex; align-items: center; justify-content: space-between;">
                     <div style="display: flex; align-items: center; gap: 10px;">
@@ -4419,8 +4426,202 @@ const renderPanelPage = async () => {
                 </div>
             </div>
             
-            <!-- ... resto del código (flujo de caja, tasa de ahorro, etc.) ... -->
+            <!-- Filtros personalizados -->
+            <div id="custom-date-filters" class="form-grid hidden" style="
+                grid-template-columns: 1fr 1fr; 
+                gap: 10px; 
+                margin-bottom: var(--sp-3);
+                background: var(--c-surface);
+                padding: 14px;
+                border-radius: 16px;
+                border: 1px solid var(--c-outline);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            ">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 6px; font-weight: 600;">Desde</label>
+                    <input type="date" id="filter-fecha-inicio" class="form-input" style="width: 100%; padding: 8px; border-radius: 10px; font-size: 0.85rem; border: 1px solid var(--c-outline);">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 6px; font-weight: 600;">Hasta</label>
+                    <input type="date" id="filter-fecha-fin" class="form-input" style="width: 100%; padding: 8px; border-radius: 10px; font-size: 0.85rem; border: 1px solid var(--c-outline);">
+                </div>
+            </div>
+
+            <!-- Flujo de caja en tarjeta -->
+            <div class="card fade-in-up" style="
+                padding: 16px;
+                border-radius: 16px;
+                margin-bottom: var(--sp-3);
+                border: 1px solid var(--c-outline);
+                background: var(--c-surface);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            ">
+                <!-- Título -->
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                    <span class="material-icons" style="font-size: 20px; color: var(--c-primary);">account_balance</span>
+                    <div style="font-size: 0.9rem; font-weight: 700; color: var(--c-on-surface);">Flujo de Caja del Periodo</div>
+                </div>
+                
+                <!-- Métricas -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                    <!-- Ingresos -->
+                    <div style="text-align: center; padding: 12px 8px; background: var(--c-surface-variant); border-radius: 12px;">
+                        <div style="margin-bottom: 8px;">
+                            <span class="material-icons" style="font-size: 16px; color: var(--c-success); vertical-align: middle;">arrow_upward</span>
+                        </div>
+                        <div id="kpi-ingresos-value" class="text-positive skeleton" 
+                             style="font-size: 1.1rem; font-weight: 800; line-height: 1.2;">
+                            +0 €
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-top: 4px; font-weight: 600;">
+                            INGRESOS
+                        </div>
+                    </div>
+                    
+                    <!-- Gastos -->
+                    <div style="text-align: center; padding: 12px 8px; background: var(--c-surface-variant); border-radius: 12px;">
+                        <div style="margin-bottom: 8px;">
+                            <span class="material-icons" style="font-size: 16px; color: var(--c-danger); vertical-align: middle;">arrow_downward</span>
+                        </div>
+                        <div id="kpi-gastos-value" class="text-negative skeleton" 
+                             style="font-size: 1.1rem; font-weight: 800; line-height: 1.2;">
+                            -0 €
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-top: 4px; font-weight: 600;">
+                            GASTOS
+                        </div>
+                    </div>
+                    
+                    <!-- Neto -->
+                    <div style="text-align: center; padding: 12px 8px; background: var(--c-surface-variant); border-radius: 12px;">
+                        <div style="margin-bottom: 8px;">
+                            <span class="material-icons" style="font-size: 16px; color: var(--c-primary); vertical-align: middle;">balance</span>
+                        </div>
+                        <div id="kpi-saldo-neto-value" class="skeleton" 
+                             style="font-size: 1.1rem; font-weight: 800; line-height: 1.2; color: var(--c-primary);">
+                            0 €
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-top: 4px; font-weight: 600;">
+                            NETO
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasa de Ahorro en tarjeta -->
+            <div class="card fade-in-up" style="
+                padding: 16px;
+                border-radius: 16px;
+                margin-bottom: var(--sp-3);
+                border: 1px solid var(--c-outline);
+                background: var(--c-surface);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            ">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="material-icons" style="font-size: 20px; color: #BF5AF2;">savings</span>
+                        <div>
+                            <div style="font-size: 0.9rem; font-weight: 700; color: var(--c-on-surface);">Tasa de Ahorro</div>
+                            <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">% de ingresos netos</div>
+                        </div>
+                    </div>
+                    <div id="kpi-tasa-ahorro-value" class="skeleton" style="
+                        font-size: 1.5rem;
+                        font-weight: 800;
+                        color: #BF5AF2;
+                    ">0%</div>
+                </div>
+                <div style="position: relative; height: 6px; background-color: var(--c-surface-variant); border-radius: 3px; overflow: hidden;">
+                    <div id="tasa-ahorro-progress" style="
+                        height: 100%;
+                        width: 0%;
+                        background: linear-gradient(90deg, #BF5AF2, #9B30F2);
+                        border-radius: 3px;
+                        transition: width 0.8s ease;
+                    "></div>
+                </div>
+            </div>
+
+            <!-- Salud Financiera en tarjeta -->
+            <div class="card fade-in-up" style="
+                padding: 16px;
+                border-radius: 16px;
+                margin-bottom: var(--sp-4);
+                border: 1px solid var(--c-outline);
+                background: var(--c-surface);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            ">
+                <!-- Título -->
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                    <span class="material-icons" style="font-size: 20px; color: var(--c-info);">health_and_safety</span>
+                    <div style="font-size: 0.9rem; font-weight: 700; color: var(--c-on-surface);">Salud Financiera</div>
+                </div>
+                
+                <!-- Métricas -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    
+                    <!-- Cobertura -->
+                    <div style="padding: 14px; border-radius: 12px; border: 1px solid rgba(0, 179, 77, 0.3); background: var(--c-surface);">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span class="material-icons" style="font-size: 18px; color: var(--c-success);">shield</span>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Cobertura</div>
+                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">6 meses meta</div>
+                            </div>
+                        </div>
+                        <div id="health-runway-val" class="skeleton" style="
+                            font-size: 1.4rem;
+                            font-weight: 800;
+                            color: var(--c-success);
+                            text-align: center;
+                            margin: 6px 0;
+                        ">0 Meses</div>
+                        <div style="height: 6px; background-color: rgba(0, 179, 77, 0.2); border-radius: 3px; overflow: hidden;">
+                            <div id="health-runway-progress-bar" style="
+                                width: 0%;
+                                height: 100%;
+                                background: var(--c-success);
+                                border-radius: 3px;
+                                transition: width 0.8s ease;
+                            "></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Libertad Financiera -->
+                    <div style="padding: 14px; border-radius: 12px; border: 1px solid rgba(255, 214, 10, 0.3); background: var(--c-surface);">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span class="material-icons" style="font-size: 18px; color: var(--c-warning);">flag</span>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Libertad</div>
+                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">Vivir de rentas</div>
+                            </div>
+                        </div>
+                        <div id="health-fi-val" class="skeleton" style="
+                            font-size: 1.4rem;
+                            font-weight: 800;
+                            color: var(--c-warning);
+                            text-align: center;
+                            margin: 6px 0;
+                        ">0.0%</div>
+                        <div style="height: 6px; background-color: rgba(255, 214, 10, 0.2); border-radius: 3px; overflow: hidden;">
+                            <div id="health-fi-progress-bar" style="
+                                width: 0%;
+                                height: 100%;
+                                background: var(--c-warning);
+                                border-radius: 3px;
+                                transition: width 0.8s ease;
+                            "></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
+        
+        <!-- Elementos ocultos para funcionalidad -->
+        <div id="concepto-totals-list" style="display:none;"></div>
+        <canvas id="conceptos-chart" style="display:none;"></canvas>
+        <div id="net-worth-chart-container" style="display:none;"><canvas id="net-worth-chart"></canvas></div>
     `;
     
     populateAllDropdowns();
