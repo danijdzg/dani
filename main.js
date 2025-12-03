@@ -2317,44 +2317,50 @@ const getValorMercadoInversiones = async () => {
     return valorMercadoTotal;
 };
  const forcePanelRecalculation = async () => {
-    if (!select(PAGE_IDS.PANEL)?.classList.contains('view--active')) return;
+    const panelPage = select(PAGE_IDS.PANEL);
+    if (!panelPage?.classList.contains('view--active')) return;
     
-    // Limpiar skeletons
-    const skeletons = select(PAGE_IDS.PANEL).querySelectorAll('.skeleton');
-    skeletons.forEach(s => s.classList.remove('skeleton'));
+    console.log("Forzando recálculo del panel para contabilidad", isOffBalanceMode ? "B" : "A");
     
-    // Recalcular todo
+    // 1. Limpiar skeletons (quitar efecto de carga)
+    const skeletons = panelPage.querySelectorAll('.skeleton');
+    skeletons.forEach(s => {
+        s.classList.remove('skeleton');
+        s.style.backgroundImage = 'none';
+    });
+    
+    // 2. Forzar recálculo de todos los widgets
     await scheduleDashboardUpdate();
-};  
-const handleToggleLedger = () => {
-    isOffBalanceMode = !isOffBalanceMode;
     
-    // Actualizar UI del botón
-    const btn = select('ledger-toggle-btn');
-    if (btn) {
-        btn.textContent = isOffBalanceMode ? 'B' : 'A';
-        btn.title = `Cambiar a Contabilidad ${isOffBalanceMode ? 'A' : 'B'}`;
+    // 3. Recalcular específicamente los KPIs del panel
+    try {
+        // Calcular patrimonio neto con las cuentas visibles
+        const saldos = await getSaldos();
+        const patrimonioNeto = Object.values(saldos).reduce((sum, s) => sum + s, 0);
+        
+        // Calcular valor de mercado de inversiones
+        const valorMercadoInversiones = await getValorMercadoInversiones();
+        
+        // Calcular liquidez
+        const cuentasLiquidas = getLiquidAccounts();
+        const liquidezTotal = cuentasLiquidas.reduce((sum, c) => sum + (c.saldo || 0), 0);
+        
+        // Actualizar UI directamente
+        const patrimonioEl = select('kpi-patrimonio-neto-value');
+        const liquidezEl = select('kpi-liquidez-value');
+        const inversionEl = select('kpi-inversion-total');
+        
+        if (patrimonioEl) {
+            patrimonioEl.textContent = formatCurrency(patrimonioNeto);
+            patrimonioEl.dataset.currentValue = String(patrimonioNeto / 100);
+        }
+        if (liquidezEl) liquidezEl.textContent = formatCurrency(liquidezTotal);
+        if (inversionEl) inversionEl.textContent = formatCurrency(valorMercadoInversiones);
+        
+    } catch (error) {
+        console.error("Error en forcePanelRecalculation:", error);
     }
-    
-    // ← AÑADIR ESTAS LÍNEAS CRÍTICAS:
-    // 1. Forzar recálculo del panel
-    if (select(PAGE_IDS.PANEL)?.classList.contains('view--active')) {
-        forcePanelRecalculation();
-    }
-    
-    // 2. Re-renderizar páginas activas que dependen de la contabilidad
-    const activePage = document.querySelector('.view--active');
-    if (activePage) {
-        if (activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
-        if (activePage.id === PAGE_IDS.PATRIMONIO) renderPatrimonioPage();
-    }
-    
-    // 3. Actualizar dropdowns
-    populateAllDropdowns();
-    
-    hapticFeedback('medium');
-    showToast(`Cambiado a Contabilidad ${isOffBalanceMode ? 'B' : 'A'}`, 'info');
-};     
+};   
 const getFilteredMovements = async (forComparison = false) => {
     // 1. OBTENER FECHAS DEL FILTRO (esto no cambia)
     const filterPeriodo = select('filter-periodo');
@@ -8755,6 +8761,47 @@ const handleStart = (e) => {
             'toggle-ledger': async () => {
                 hapticFeedback('medium');
                 isOffBalanceMode = !isOffBalanceMode;
+				const handleToggleLedger = () => {
+    isOffBalanceMode = !isOffBalanceMode;
+    
+    // Actualizar UI del botón
+    const btn = select('ledger-toggle-btn');
+    if (btn) {
+        btn.textContent = isOffBalanceMode ? 'B' : 'A';
+        btn.title = `Cambiar a Contabilidad ${isOffBalanceMode ? 'A' : 'B'}`;
+    }
+    
+    // ← AÑADE ESTO DESPUÉS de cambiar isOffBalanceMode:
+    
+    // 1. Limpiar cachés que dependen de la contabilidad
+    runningBalancesCache = null;
+    allDiarioMovementsCache = [];
+    
+    // 2. Forzar recálculo INMEDIATO del panel si está activo
+    if (select(PAGE_IDS.PANEL)?.classList.contains('view--active')) {
+        // Pequeño delay para asegurar que el cambio se ha procesado
+        setTimeout(() => {
+            forcePanelRecalculation();
+        }, 100);
+    }
+    
+    // 3. Re-renderizar páginas activas
+    const activePage = document.querySelector('.view--active');
+    if (activePage) {
+        if (activePage.id === PAGE_IDS.DIARIO) {
+            setTimeout(() => renderDiarioPage(), 150);
+        }
+        if (activePage.id === PAGE_IDS.PATRIMONIO) {
+            setTimeout(() => renderPatrimonioPage(), 150);
+        }
+    }
+    
+    // 4. Actualizar dropdowns
+    setTimeout(() => populateAllDropdowns(), 200);
+    
+    hapticFeedback('medium');
+    showToast(`Cambiado a Contabilidad ${isOffBalanceMode ? 'B (Oculta)' : 'A (Principal)'}`, 'info');
+};
                 document.body.dataset.ledgerMode = isOffBalanceMode ? 'B' : 'A';
                 showToast(`Mostrando Contabilidad ${isOffBalanceMode ? 'B' : 'A'}.`, 'info');
                 const activePageEl = document.querySelector('.view--active');
