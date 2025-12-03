@@ -3400,7 +3400,9 @@ const renderPortfolioMainContent = async (targetContainerId) => {
     const container = select(targetContainerId);
     if (!container) return;
 
-    // Se mantiene la lógica existente para obtener los activos y sus datos
+    container.innerHTML = `<div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>`;
+
+    // 1. OBTENER DATOS BÁSICOS (UNA SOLA VEZ)
     const investmentAccounts = getVisibleAccounts().filter((c) => c.esInversion);
     const CHART_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
 
@@ -3414,20 +3416,11 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                     <span>Gestionar Activos</span>
                 </button>
             </div>`;
-			// Añade esto cerca del botón "Gestionar Activos"
-`
-<div class="card card--no-bg" style="padding:0; margin-top: var(--sp-4); display: flex; gap: var(--sp-2);">
-    <button class="btn btn--secondary btn--full" data-action="manage-investment-accounts">
-        <span class="material-icons" style="font-size: 16px;">checklist</span>
-        Gestionar Activos
-    </button>
-    <button class="btn btn--primary btn--full" data-action="export-risk-report">
-        <span class="material-icons" style="font-size: 16px;">download</span>
-        Exportar Reporte
-    </button>
-</div>`
         return;
     }
+
+    // 2. CALCULAR RENDIMIENTO (UNA SOLA VEZ)
+    const portfolioTotalPerformance = await calculatePortfolioPerformance(); // ¡SOLO UNA DECLARACIÓN!
 
     const performanceData = await Promise.all(
         investmentAccounts.map(async (cuenta) => {
@@ -3435,10 +3428,13 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             return { ...cuenta, ...performance };
         })
     );
-	const portfolioTotalPerformance = await calculatePortfolioPerformance();
+
+    // 3. FILTRADO POR TIPO
     const allInvestmentTypes = [...new Set(performanceData.map(asset => toSentenceCase(asset.tipo || 'S/T')))].sort();
     const colorMap = {};
-    allInvestmentTypes.forEach((label, index) => { colorMap[label] = CHART_COLORS[index % CHART_COLORS.length]; });
+    allInvestmentTypes.forEach((label, index) => { 
+        colorMap[label] = CHART_COLORS[index % CHART_COLORS.length]; 
+    });
 
     const pillsHTML = allInvestmentTypes.map(t => {
         const isActive = !deselectedInvestmentTypesFilter.has(t);
@@ -3449,57 +3445,14 @@ const renderPortfolioMainContent = async (targetContainerId) => {
 
     const displayAssetsData = performanceData.filter(asset => !deselectedInvestmentTypesFilter.has(toSentenceCase(asset.tipo || 'S/T')));
 
+    // 4. CALCULAR TOTALES
     const portfolioTotalValorado = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.valorActual, 0);
     const portfolioTotalInvertido = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.capitalInvertido, 0);
     const rentabilidadTotalAbsoluta = portfolioTotalValorado - portfolioTotalInvertido;
     const rentabilidadTotalPorcentual = portfolioTotalInvertido !== 0 ? (rentabilidadTotalAbsoluta / portfolioTotalInvertido) * 100 : 0;
     const rentabilidadClass = rentabilidadTotalAbsoluta >= 0 ? 'text-positive' : 'text-negative';
 
-    // =========================================================================
-    // === ▼▼▼ INICIO: NUEVO CÓDIGO AÑADIDO PARA EL SUMARIO FINAL ▼▼▼ =========
-    // =========================================================================
-    
-    // 1. Calculamos el rendimiento TOTAL de todo el portafolio filtrado.
-    const portfolioTotalPerformance = await calculatePortfolioPerformance();
-
-    // 2. Preparamos las variables para el HTML.
-    const totalPnlAbsoluto = portfolioTotalPerformance.pnlAbsoluto;
-    const totalPnlPorcentual = portfolioTotalPerformance.pnlPorcentual;
-    const totalIrr = portfolioTotalPerformance.irr;
-
-    const totalPnlClass = totalPnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
-    const totalIrrClass = totalIrr >= 0 ? 'text-positive' : 'text-negative';
-
-    // 3. Creamos el bloque HTML para la nueva tarjeta de sumario.
-    const summaryCardHtml = `
-        <div class="portfolio-summary-card">
-            <h3 class="portfolio-summary-card__title">
-                <span class="material-icons">military_tech</span>
-                Sumario Total del Portafolio
-            </h3>
-            <div class="portfolio-summary-card__grid">
-                <div class="summary-kpi">
-                    <div class="summary-kpi__label">P&L Total</div>
-                    <div class="summary-kpi__value ${totalPnlClass}">
-                        ${formatCurrency(totalPnlAbsoluto)}
-                        <div style="font-size: 0.6em; font-weight: 600;">(${totalPnlPorcentual.toFixed(1)}%)</div>
-                    </div>
-                </div>
-                <div class="summary-kpi">
-                    <div class="summary-kpi__label">TIR Total Anualizada</div>
-                    <div class="summary-kpi__value ${totalIrrClass}">
-                        ${(totalIrr * 100).toFixed(2)}%
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // =========================================================================
-    // === ▲▲▲ FIN: NUEVO CÓDIGO AÑADIDO PARA EL SUMARIO FINAL ▲▲▲ ===========
-    // =========================================================================
-
-
+    // 5. HTML PRINCIPAL
     container.innerHTML = `
         <div class="card" style="margin-bottom: var(--sp-4);">
             <div class="card__content" style="display: flex; justify-content: space-around; text-align: center; padding: var(--sp-3);">
@@ -3542,7 +3495,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                             <span class="material-icons">waves</span>
                         </div>
                         <div class="risk-metric__value">
-                            ${(portfolioTotalPerformance.annualVolatility * 100).toFixed(1)}%
+                            ${portfolioTotalPerformance.annualVolatility ? (portfolioTotalPerformance.annualVolatility * 100).toFixed(1) : '0.0'}%
                         </div>
                         <div class="risk-metric__label">Volatilidad Anual</div>
                         <div class="risk-metric__description">
@@ -3556,7 +3509,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                             <span class="material-icons">trending_down</span>
                         </div>
                         <div class="risk-metric__value">
-                            ${(portfolioTotalPerformance.maxDrawdown * 100).toFixed(1)}%
+                            ${portfolioTotalPerformance.maxDrawdown ? (portfolioTotalPerformance.maxDrawdown * 100).toFixed(1) : '0.0'}%
                         </div>
                         <div class="risk-metric__label">Máxima Pérdida</div>
                         <div class="risk-metric__description">
@@ -3569,7 +3522,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                             <span class="material-icons">speed</span>
                         </div>
                         <div class="risk-metric__value">
-                            ${portfolioTotalPerformance.sharpeRatio.toFixed(2)}
+                            ${portfolioTotalPerformance.sharpeRatio ? portfolioTotalPerformance.sharpeRatio.toFixed(2) : '0.00'}
                         </div>
                         <div class="risk-metric__label">Sharpe Ratio</div>
                         <div class="risk-metric__description">
@@ -3583,7 +3536,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                             <span class="material-icons">arrow_downward</span>
                         </div>
                         <div class="risk-metric__value">
-                            ${portfolioTotalPerformance.sortinoRatio.toFixed(2)}
+                            ${portfolioTotalPerformance.sortinoRatio ? portfolioTotalPerformance.sortinoRatio.toFixed(2) : '0.00'}
                         </div>
                         <div class="risk-metric__label">Sortino Ratio</div>
                         <div class="risk-metric__description">
@@ -3607,12 +3560,12 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                     </div>
                 </div>
                 
-                <!-- Gráfico de drawdown (full width) -->
+                <!-- Gráfico de drawdown -->
                 <div class="chart-container" style="height: 200px; margin-top: var(--sp-3);">
                     <canvas id="drawdown-chart"></canvas>
                 </div>
                 
-                <!-- Explicación de métricas -->
+                <!-- Explicación -->
                 <div class="risk-explanation" style="
                     background: var(--c-surface-variant);
                     padding: var(--sp-3);
@@ -3631,35 +3584,63 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             </div>
         </details>
         
-        <!-- SECCIÓN EXISTENTE DE ASIGNACIÓN -->
+        <!-- SECCIÓN DE ASIGNACIÓN -->
         <details class="accordion" style="margin-bottom: var(--sp-4);">
-            <summary><h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">pie_chart</span>Asignación y Filtros</h3><span class="material-icons accordion__icon">expand_more</span></summary>
+            <summary>
+                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                    <span class="material-icons">pie_chart</span>
+                    Asignación y Filtros
+                </h3>
+                <span class="material-icons accordion__icon">expand_more</span>
+            </summary>
             <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
                 <div class="filter-pills" style="margin-bottom: var(--sp-2);">${pillsHTML}</div>
-                <div class="chart-container" style="height: 250px; margin-bottom: 0;"><canvas id="asset-allocation-chart"></canvas></div>
+                <div class="chart-container" style="height: 250px; margin-bottom: 0;">
+                    <canvas id="asset-allocation-chart"></canvas>
+                </div>
             </div>
         </details>
         
         <div id="investment-assets-list"></div>
         
-        ${summaryCardHtml}
+        <!-- Sumario Final -->
+        <div class="portfolio-summary-card">
+            <h3 class="portfolio-summary-card__title">
+                <span class="material-icons">military_tech</span>
+                Sumario Total del Portafolio
+            </h3>
+            <div class="portfolio-summary-card__grid">
+                <div class="summary-kpi">
+                    <div class="summary-kpi__label">P&L Total</div>
+                    <div class="summary-kpi__value ${portfolioTotalPerformance.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative'}">
+                        ${formatCurrency(portfolioTotalPerformance.pnlAbsoluto)}
+                        <div style="font-size: 0.6em; font-weight: 600;">(${portfolioTotalPerformance.pnlPorcentual.toFixed(1)}%)</div>
+                    </div>
+                </div>
+                <div class="summary-kpi">
+                    <div class="summary-kpi__label">TIR Total Anualizada</div>
+                    <div class="summary-kpi__value ${portfolioTotalPerformance.irr >= 0 ? 'text-positive' : 'text-negative'}">
+                        ${!isNaN(portfolioTotalPerformance.irr) ? (portfolioTotalPerformance.irr * 100).toFixed(2) : '0.00'}%
+                    </div>
+                </div>
+            </div>
+        </div>
         
-        <div class="card card--no-bg" style="padding:0; margin-top: var(--sp-4);">
-            <button class="btn btn--secondary btn--full" data-action="manage-investment-accounts"><span class="material-icons" style="font-size: 16px;">checklist</span>Gestionar Activos</button>
+        <!-- Botones de acción -->
+        <div class="card card--no-bg" style="padding:0; margin-top: var(--sp-4); display: flex; gap: var(--sp-2);">
+            <button class="btn btn--secondary btn--full" data-action="manage-investment-accounts">
+                <span class="material-icons" style="font-size: 16px;">checklist</span>
+                Gestionar Activos
+            </button>
+            <button class="btn btn--primary btn--full" data-action="export-risk-report">
+                <span class="material-icons" style="font-size: 16px;">download</span>
+                Exportar Reporte
+            </button>
         </div>`;
     
+    // 6. RENDERIZAR GRÁFICOS
     setTimeout(() => {
-		/ Gráfico de análisis de riesgo
-        if (portfolioTotalPerformance.monthlyReturns.length > 0) {
-            renderRiskAnalysisChart('risk-analysis-chart', portfolioTotalPerformance);
-            renderReturnsDistributionChart('returns-distribution-chart', portfolioTotalPerformance.monthlyReturns);
-        }
-        
-        // Gráfico de drawdown si hay datos históricos
-        if (portfolioTotalPerformance.historicalData && 
-            portfolioTotalPerformance.historicalData.length > 1) {
-            renderDrawdownChart('drawdown-chart', portfolioTotalPerformance.historicalData);
-        }
+        // Gráfico de asignación de activos
         const chartCtx = select('asset-allocation-chart')?.getContext('2d');
         if (chartCtx) {
             if (assetAllocationChart) assetAllocationChart.destroy();
@@ -3667,8 +3648,13 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             const treeData = [];
             displayAssetsData.forEach(asset => {
                 const valor = asset[keyToSum] / 100;
-                if (valor > 0) treeData.push({ tipo: toSentenceCase(asset.tipo || 'S/T'), nombre: asset.nombre, valor: valor });
+                if (valor > 0) treeData.push({ 
+                    tipo: toSentenceCase(asset.tipo || 'S/T'), 
+                    nombre: asset.nombre, 
+                    valor: valor 
+                });
             });
+            
             if (treeData.length > 0) {
                 assetAllocationChart = new Chart(chartCtx, {
                     type: 'treemap',
@@ -3681,16 +3667,54 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                             borderWidth: 1.5,
                             borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'),
                             backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'),
-                            labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) }
+                            labels: { 
+                                display: true, 
+                                color: '#FFFFFF', 
+                                font: { size: 11, weight: '600' }, 
+                                align: 'center', 
+                                position: 'middle', 
+                                formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) 
+                            }
                         }]
                     },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false } } }
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        plugins: { 
+                            legend: { display: false }, 
+                            tooltip: { 
+                                callbacks: { 
+                                    label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` 
+                                } 
+                            }, 
+                            datalabels: { display: false } 
+                        } 
+                    }
                 });
-            } else {
-                select('asset-allocation-chart').closest('.chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con valor para mostrar.</p></div>`;
             }
         }
         
+        // Gráficos de riesgo (solo si hay datos)
+        if (portfolioTotalPerformance.monthlyReturns && 
+            portfolioTotalPerformance.monthlyReturns.length > 0) {
+            try {
+                renderRiskAnalysisChart('risk-analysis-chart', portfolioTotalPerformance);
+                renderReturnsDistributionChart('returns-distribution-chart', portfolioTotalPerformance.monthlyReturns);
+            } catch (error) {
+                console.warn('No se pudieron renderizar gráficos de riesgo:', error);
+            }
+        }
+        
+        if (portfolioTotalPerformance.historicalData && 
+            portfolioTotalPerformance.historicalData.length > 1) {
+            try {
+                renderDrawdownChart('drawdown-chart', portfolioTotalPerformance.historicalData);
+            } catch (error) {
+                console.warn('No se pudo renderizar gráfico de drawdown:', error);
+            }
+        }
+        
+        // Lista de activos
         const listContainer = select('investment-assets-list');
         if (listContainer) {
             const listHtml = displayAssetsData
@@ -3700,24 +3724,19 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                     const pnlClassText = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
                     const tirClassPill = cuenta.irr >= 0 ? 'is-positive' : 'is-negative';
 
-                    // ▼▼▼ ¡NUEVA LÓGICA AQUÍ! ▼▼▼
-                    // 1. Buscamos la última valoración para esta cuenta específica.
                     const ultimaValoracion = (db.inversiones_historial || [])
                         .filter(v => v.cuentaId === cuenta.id)
                         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
 
-                    // 2. Preparamos el texto a mostrar.
                     let fechaUltimaValoracionHTML = '<small class="asset-card__last-valuation-date">Sin valorar</small>';
                     if (ultimaValoracion) {
                         const fecha = new Date(ultimaValoracion.fecha + 'T12:00:00Z');
                         const fechaFormateada = fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
                         fechaUltimaValoracionHTML = `<small class="asset-card__last-valuation-date">Val. ${fechaFormateada}</small>`;
                     }
-                    // ▲▲▲ FIN DE LA NUEVA LÓGICA ▲▲▲
 
                     return `
                     <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
-                        
                         <div class="asset-card__details">
                             <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
                             <div class="asset-card__allocation">
@@ -3727,10 +3746,8 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                                 ${cuenta.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(cuenta.pnlAbsoluto)}
                             </div>
                         </div>
-
                         <div class="asset-card__figures">
                             <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
-                            
                             <div style="display: flex; gap: var(--sp-2); align-items: center; justify-content: flex-end;">
                                 <button 
                                     class="asset-card__pnl-pill ${pnlClassPill}" 
@@ -3749,8 +3766,6 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                                     TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
                                 </button>
                             </div>
-                            
-                            <!-- ▼▼▼ HTML MODIFICADO AQUÍ ▼▼▼ -->
                             <div class="asset-card__valuation-area">
                                 ${fechaUltimaValoracionHTML}
                                 <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}">
@@ -3758,14 +3773,11 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                                     Valorar
                                 </button>
                             </div>
-                            <!-- ▲▲▲ FIN DEL HTML MODIFICADO ▲▲▲ -->
-
                         </div>
                     </div>`;
                 }).join('');
 
             listContainer.innerHTML = listHtml ? `<div class="card fade-in-up"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
-            
             applyInvestmentItemInteractions(listContainer);
         }
     }, 100);
