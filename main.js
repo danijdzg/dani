@@ -4090,142 +4090,1081 @@ const renderPanelPage = async () => {
     const userName = currentUser ? (currentUser.displayName || currentUser.email.split('@')[0]) : 'Piloto';
 
     container.innerHTML = `
-        <div style="padding: 0 var(--sp-2) var(--sp-4);">
-            
-            <div style="margin-bottom: var(--sp-3); padding: 0 4px;">
-                <p style="font-size: 0.85rem; color: var(--c-on-surface-secondary); margin-bottom: 2px;">${greeting},</p>
-                <h2 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--c-on-surface); text-transform: capitalize;">${userName}</h2>
-            </div>
-
-            <div class="hero-card" style="padding: 25px 20px; text-align: center; margin-bottom: var(--sp-3); min-height: auto; border: 1px solid var(--c-primary); box-shadow: 0 4px 20px rgba(0, 179, 77, 0.15);">
-                <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 1.5px; margin-bottom: 4px;">Patrimonio Total</div>
-                <div id="kpi-patrimonio-neto-value" class="hero-value kpi-resaltado-azul skeleton" data-current-value="0" style="font-size: 2.6rem; margin-bottom: 0;">0,00 €</div>
-            </div>
-
-            <div class="status-grid" style="gap: 8px; margin-bottom: var(--sp-4);">
-                
-                <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
-                    <div class="status-label" style="margin-bottom: 4px;">
-                        <span class="material-icons" style="font-size: 16px; color: var(--c-info);">account_balance_wallet</span> Liquidez
-                    </div>
-                    <div id="kpi-liquidez-value" class="status-value skeleton" style="font-size: 1.1rem;">0,00 €</div>
+        <!-- HEADER STICKY MEJORADO -->
+        <div class="panel-header" style="
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(135deg, var(--c-background) 0%, color-mix(in srgb, var(--c-background) 95%, transparent) 100%);
+            backdrop-filter: blur(20px);
+            padding: var(--sp-4) var(--sp-4) var(--sp-2);
+            border-bottom: 1px solid var(--c-outline);
+            margin-bottom: var(--sp-2);
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sp-2);">
+                <div>
+                    <p style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 2px;">
+                        ${greeting},
+                    </p>
+                    <h2 style="
+                        font-size: 1.5rem;
+                        font-weight: 800;
+                        margin: 0;
+                        color: var(--c-on-surface);
+                        text-transform: capitalize;
+                        line-height: 1.2;
+                    ">${userName}</h2>
                 </div>
-
-                <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
-                    <div class="status-label" style="margin-bottom: 4px;">
-                        <span class="material-icons" style="font-size: 16px; color: #BF5AF2;">auto_graph</span> Inversiones
-                    </div>
-                    <div id="kpi-inversion-total" class="status-value skeleton" style="font-size: 1.1rem;">0,00 €</div>
-                </div>
-
-                <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
-                    <div class="status-label" style="margin-bottom: 4px;">
-                         Ganancia
-                    </div>
-                    <div id="kpi-inversion-pnl" class="status-value skeleton" style="font-size: 1.1rem;">+0,00 €</div>
-                </div>
-
-                <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
-                    <div class="status-label" style="margin-bottom: 4px;">
-                         Rentabilidad
-                    </div>
-                    <div id="kpi-inversion-pct" class="status-value skeleton" style="font-size: 1.1rem;">0.00%</div>
-                </div>
-            </div>
-
-            <div class="report-filters fade-in-up" style="background-color: var(--c-surface); padding: 6px 8px; border-radius: 12px; border: 1px solid var(--c-outline); display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-3);">
-                <span style="font-size: 0.75rem; font-weight: 600; color: var(--c-on-surface-secondary); margin-left: 8px;">Periodo de análisis</span>
-                <select id="filter-periodo" class="form-select report-period-selector" style="font-size: 0.75rem; padding: 4px 24px 4px 10px; height: 32px; width: auto; background-color: var(--c-surface-variant); border: none; border-radius: 8px;">
-                    <option value="mes-actual">Este Mes</option>
-                    <option value="año-actual">Este Año</option>
-                    <option value="custom">Personalizado</option>
-                </select>
+                <button class="icon-btn" data-action="toggle-privacy-mode" style="
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 12px;
+                    background: var(--c-surface-variant);
+                ">
+                    <span class="material-icons">visibility</span>
+                </button>
             </div>
             
-            <div id="custom-date-filters" class="form-grid hidden" style="grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: var(--sp-3);">
-                <input type="date" id="filter-fecha-inicio" class="form-input" style="font-size: 0.8rem; padding: 8px;">
-                <input type="date" id="filter-fecha-fin" class="form-input" style="font-size: 0.8rem; padding: 8px;">
-            </div>
-
-            <div class="card fade-in-up" style="padding: 16px; border-radius: 20px; margin-bottom: var(--sp-4); border: 1px solid var(--c-outline);">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
-                    <div>
-                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Ingresos</div>
-                        <div id="kpi-ingresos-value" class="text-positive skeleton" style="font-size: 1rem; font-weight: 800;">+0 €</div>
-                    </div>
-                    <div style="border-left: 1px solid var(--c-outline); border-right: 1px solid var(--c-outline);">
-                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Gastos</div>
-                        <div id="kpi-gastos-value" class="text-negative skeleton" style="font-size: 1rem; font-weight: 800;">-0 €</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Neto</div>
-                        <div id="kpi-saldo-neto-value" class="skeleton" style="font-size: 1rem; font-weight: 800;">0 €</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section-header">Salud Financiera</div>
-            
-            <div style="display: flex; flex-direction: column; gap: var(--sp-3); padding-bottom: var(--sp-5);">
-                
-                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 36px; height: 36px;"><canvas id="kpi-savings-rate-chart"></canvas></div>
-                            <div>
-                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Tasa de Ahorro</div>
-                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">De tus ingresos netos</div>
-                            </div>
-                        </div>
-                        <div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size: 1.4rem; font-weight: 800;">0%</div>
-                    </div>
-                </div>
-
-                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="material-icons" style="font-size: 28px; color: var(--c-success); background: rgba(0, 179, 77, 0.1); padding: 6px; border-radius: 10px;">shield</span>
-                            <div>
-                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Cobertura</div>
-                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">Meta: 6 meses</div>
-                            </div>
-                        </div>
-                        <div id="health-runway-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: var(--c-success);">0 Meses</div>
-                    </div>
-                    <div class="mini-progress-bar" style="height: 8px; background-color: var(--c-surface-variant); margin-top: 4px;">
-                        <div id="health-runway-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-success);"></div>
-                    </div>
-                </div>
-
-                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="material-icons" style="font-size: 28px; color: var(--c-warning); background: rgba(255, 214, 10, 0.1); padding: 6px; border-radius: 10px;">flag</span>
-                            <div>
-                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Libertad Financiera</div>
-                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">Meta: Vivir de rentas</div>
-                            </div>
-                        </div>
-                        <div id="health-fi-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: var(--c-warning);">0.0%</div>
-                    </div>
-                    <div class="mini-progress-bar" style="height: 8px; background-color: var(--c-surface-variant); margin-top: 4px;">
-                        <div id="health-fi-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-warning);"></div>
-                    </div>
-                </div>
-
+            <!-- SELECTOR RÁPIDO DE PERIODO -->
+            <div class="period-selector-tabs" style="
+                display: flex;
+                gap: 4px;
+                overflow-x: auto;
+                padding-bottom: 8px;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            ">
+                <button class="period-tab active" data-period="mes-actual" style="
+                    flex-shrink: 0;
+                    padding: 8px 16px;
+                    background: var(--c-primary);
+                    color: white;
+                    border-radius: 20px;
+                    border: none;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                ">Este Mes</button>
+                <button class="period-tab" data-period="año-actual" style="
+                    flex-shrink: 0;
+                    padding: 8px 16px;
+                    background: var(--c-surface-variant);
+                    color: var(--c-on-surface);
+                    border-radius: 20px;
+                    border: none;
+                    font-size: 0.75rem;
+                    font-weight: 500;
+                ">Este Año</button>
+                <button class="period-tab" data-period="ultimo-año" style="
+                    flex-shrink: 0;
+                    padding: 8px 16px;
+                    background: var(--c-surface-variant);
+                    color: var(--c-on-surface);
+                    border-radius: 20px;
+                    border: none;
+                    font-size: 0.75rem;
+                    font-weight: 500;
+                ">12 Meses</button>
             </div>
         </div>
-        
-        <div id="concepto-totals-list" style="display:none;"></div>
-        <canvas id="conceptos-chart" style="display:none;"></canvas>
-        <div id="net-worth-chart-container" style="display:none;"><canvas id="net-worth-chart"></canvas></div>
+
+        <!-- SCROLL HORIZONTAL DE KPIS PRINCIPALES -->
+        <div class="main-kpi-scroller" style="
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            padding: 0 var(--sp-4) var(--sp-3);
+            margin-bottom: var(--sp-3);
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        ">
+            <!-- KPI 1: PATRIMONIO -->
+            <div class="kpi-card" style="
+                flex: 0 0 auto;
+                width: 280px;
+                background: linear-gradient(135deg, var(--c-primary) 0%, #00A3FF 100%);
+                border-radius: 24px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 8px 32px rgba(0, 179, 77, 0.2);
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                    <div>
+                        <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 4px;">Patrimonio Total</div>
+                        <div id="kpi-patrimonio-neto-value" class="hero-value" style="
+                            font-size: 2.5rem;
+                            font-weight: 800;
+                            line-height: 1;
+                            letter-spacing: -0.5px;
+                        ">0,00 €</div>
+                    </div>
+                    <button class="icon-btn" data-action="view-net-worth-chart" style="
+                        width: 36px;
+                        height: 36px;
+                        background: rgba(255, 255, 255, 0.2);
+                        border-radius: 12px;
+                    ">
+                        <span class="material-icons" style="font-size: 20px; color: white;">trending_up</span>
+                    </button>
+                </div>
+                <div style="font-size: 0.75rem; opacity: 0.8;">
+                    <span id="kpi-patrimonio-change" style="
+                        background: rgba(255, 255, 255, 0.2);
+                        padding: 2px 8px;
+                        border-radius: 12px;
+                        margin-right: 8px;
+                    ">+0,0%</span>
+                    vs mes anterior
+                </div>
+            </div>
+
+            <!-- KPI 2: LIQUIDEZ -->
+            <div class="kpi-card" style="
+                flex: 0 0 auto;
+                width: 280px;
+                background: linear-gradient(135deg, #4ECDC4 0%, #00C6B8 100%);
+                border-radius: 24px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 8px 32px rgba(78, 205, 196, 0.2);
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                    <div>
+                        <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 4px;">Liquidez Disponible</div>
+                        <div id="kpi-liquidez-value" style="
+                            font-size: 2.5rem;
+                            font-weight: 800;
+                            line-height: 1;
+                            letter-spacing: -0.5px;
+                        ">0,00 €</div>
+                    </div>
+                    <div style="
+                        width: 36px;
+                        height: 36px;
+                        background: rgba(255, 255, 255, 0.2);
+                        border-radius: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">
+                        <span class="material-icons" style="font-size: 20px; color: white;">account_balance_wallet</span>
+                    </div>
+                </div>
+                <div style="font-size: 0.75rem; opacity: 0.8;">
+                    <span style="
+                        background: rgba(255, 255, 255, 0.2);
+                        padding: 2px 8px;
+                        border-radius: 12px;
+                        margin-right: 8px;
+                    ">${Math.floor(Math.random() * 10) + 1} cuentas</span>
+                    disponibles
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN: INGRESOS VS GASTOS (CON GRÁFICO MINI) -->
+        <div class="card" style="
+            margin: 0 var(--sp-4) var(--sp-4);
+            border-radius: 24px;
+            background: var(--c-surface);
+            border: 1px solid var(--c-outline);
+            overflow: hidden;
+        ">
+            <div style="padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="font-size: 1rem; font-weight: 700; margin: 0; color: var(--c-on-surface);">
+                        Flujo de Caja
+                    </h3>
+                    <button class="btn-text" data-action="view-cashflow-details" style="
+                        font-size: 0.75rem;
+                        color: var(--c-primary);
+                        padding: 4px 8px;
+                        background: none;
+                        border: none;
+                        font-weight: 600;
+                    ">
+                        Ver detalles
+                    </button>
+                </div>
+                
+                <!-- MINI GRÁFICO DE BARRAS -->
+                <div style="display: flex; align-items: flex-end; gap: 4px; height: 80px; margin-bottom: 20px;">
+                    <div style="flex: 1; text-align: center;">
+                        <div style="
+                            height: var(--ingresos-height, 40px);
+                            background: linear-gradient(to top, var(--c-success), #00D68F);
+                            border-radius: 4px 4px 0 0;
+                            margin-bottom: 4px;
+                        "></div>
+                        <div style="font-size: 0.625rem; color: var(--c-on-surface-secondary);">Ingresos</div>
+                    </div>
+                    <div style="flex: 1; text-align: center;">
+                        <div style="
+                            height: var(--gastos-height, 30px);
+                            background: linear-gradient(to top, var(--c-danger), #FF708D);
+                            border-radius: 4px 4px 0 0;
+                            margin-bottom: 4px;
+                        "></div>
+                        <div style="font-size: 0.625rem; color: var(--c-on-surface-secondary);">Gastos</div>
+                    </div>
+                    <div style="flex: 1; text-align: center;">
+                        <div style="
+                            height: var(--neto-height, 10px);
+                            background: linear-gradient(to top, var(--c-primary), #00A3FF);
+                            border-radius: 4px 4px 0 0;
+                            margin-bottom: 4px;
+                        "></div>
+                        <div style="font-size: 0.625rem; color: var(--c-on-surface-secondary);">Neto</div>
+                    </div>
+                </div>
+                
+                <!-- KPIS DE FLUJO -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 4px;">Ingresos</div>
+                        <div id="kpi-ingresos-value" style="
+                            font-size: 1.125rem;
+                            font-weight: 800;
+                            color: var(--c-success);
+                        ">+0 €</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 4px;">Gastos</div>
+                        <div id="kpi-gastos-value" style="
+                            font-size: 1.125rem;
+                            font-weight: 800;
+                            color: var(--c-danger);
+                        ">-0 €</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 4px;">Neto</div>
+                        <div id="kpi-saldo-neto-value" style="
+                            font-size: 1.125rem;
+                            font-weight: 800;
+                            color: var(--c-primary);
+                        ">0 €</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TASA DE AHORRO -->
+            <div style="
+                padding: 16px 20px;
+                background: var(--c-surface-variant);
+                border-top: 1px solid var(--c-outline);
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.875rem; font-weight: 600; color: var(--c-on-surface);">
+                            Tasa de Ahorro
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">
+                            De tus ingresos netos
+                        </div>
+                    </div>
+                    <div id="kpi-tasa-ahorro-value" style="
+                        font-size: 1.5rem;
+                        font-weight: 800;
+                        color: var(--c-success);
+                    ">0%</div>
+                </div>
+                <div style="
+                    height: 6px;
+                    background: var(--c-outline);
+                    border-radius: 3px;
+                    margin-top: 8px;
+                    overflow: hidden;
+                ">
+                    <div id="tasa-ahorro-progress" style="
+                        height: 100%;
+                        background: linear-gradient(90deg, var(--c-success), #00D68F);
+                        width: 0%;
+                        border-radius: 3px;
+                        transition: width 0.5s ease;
+                    "></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GRID DE SALUD FINANCIERA (2x2) -->
+        <div style="
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 0 var(--sp-4) var(--sp-4);
+        ">
+            <!-- TARJETA 1: COLCHÓN DE EMERGENCIA -->
+            <div class="health-card" style="
+                background: var(--c-surface);
+                border: 1px solid var(--c-outline);
+                border-radius: 20px;
+                padding: 16px;
+                grid-column: span 2;
+            ">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="
+                        width: 40px;
+                        height: 40px;
+                        background: linear-gradient(135deg, var(--c-success), #00D68F);
+                        border-radius: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">
+                        <span class="material-icons" style="color: white; font-size: 20px;">shield</span>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.875rem; font-weight: 600; color: var(--c-on-surface);">
+                            Colchón de Emergencia
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">
+                            Meta: 6 meses de gastos
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div id="health-runway-val" style="
+                        font-size: 1.5rem;
+                        font-weight: 800;
+                        color: var(--c-success);
+                    ">0 Meses</div>
+                    <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">
+                        <span id="emergency-fund-percentage">0%</span> completado
+                    </div>
+                </div>
+                
+                <div style="
+                    height: 8px;
+                    background: var(--c-surface-variant);
+                    border-radius: 4px;
+                    overflow: hidden;
+                    margin-bottom: 8px;
+                ">
+                    <div id="health-runway-progress-bar" style="
+                        height: 100%;
+                        background: linear-gradient(90deg, var(--c-success), #00D68F);
+                        width: 0%;
+                        border-radius: 4px;
+                        transition: width 0.5s ease;
+                    "></div>
+                </div>
+                
+                <div style="
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 0.6875rem;
+                    color: var(--c-on-surface-secondary);
+                ">
+                    <span>0 meses</span>
+                    <span>6 meses</span>
+                </div>
+            </div>
+
+            <!-- TARJETA 2: LIBERTAD FINANCIERA -->
+            <div class="health-card" style="
+                background: var(--c-surface);
+                border: 1px solid var(--c-outline);
+                border-radius: 20px;
+                padding: 16px;
+            ">
+                <div style="margin-bottom: 8px;">
+                    <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 2px;">
+                        Libertad Financiera
+                    </div>
+                    <div id="health-fi-val" style="
+                        font-size: 1.25rem;
+                        font-weight: 800;
+                        color: var(--c-warning);
+                    ">0.0%</div>
+                </div>
+                
+                <div style="
+                    height: 6px;
+                    background: var(--c-surface-variant);
+                    border-radius: 3px;
+                    overflow: hidden;
+                    margin-bottom: 4px;
+                ">
+                    <div id="health-fi-progress-bar" style="
+                        height: 100%;
+                        background: linear-gradient(90deg, var(--c-warning), #FFAA00);
+                        width: 0%;
+                        border-radius: 3px;
+                        transition: width 0.5s ease;
+                    "></div>
+                </div>
+                
+                <div style="font-size: 0.625rem; color: var(--c-on-surface-secondary);">
+                    Meta: Vivir de rentas
+                </div>
+            </div>
+
+            <!-- TARJETA 3: INVERSIONES -->
+            <div class="health-card" style="
+                background: var(--c-surface);
+                border: 1px solid var(--c-outline);
+                border-radius: 20px;
+                padding: 16px;
+            ">
+                <div style="margin-bottom: 8px;">
+                    <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 2px;">
+                        Inversiones
+                    </div>
+                    <div id="kpi-inversion-total" style="
+                        font-size: 1.25rem;
+                        font-weight: 800;
+                        color: #BF5AF2;
+                    ">0,00 €</div>
+                </div>
+                
+                <div style="display: flex; gap: 4px;">
+                    <div style="
+                        flex: 1;
+                        text-align: center;
+                        padding: 4px;
+                        background: rgba(191, 90, 242, 0.1);
+                        border-radius: 6px;
+                    ">
+                        <div style="font-size: 0.625rem; color: var(--c-on-surface-secondary);">Ganancia</div>
+                        <div id="kpi-inversion-pnl" style="
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: var(--c-success);
+                        ">+0,00 €</div>
+                    </div>
+                    <div style="
+                        flex: 1;
+                        text-align: center;
+                        padding: 4px;
+                        background: rgba(191, 90, 242, 0.1);
+                        border-radius: 6px;
+                    ">
+                        <div style="font-size: 0.625rem; color: var(--c-on-surface-secondary);">Rentabilidad</div>
+                        <div id="kpi-inversion-pct" style="
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: var(--c-success);
+                        ">0.00%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACCIONES RÁPIDAS -->
+        <div style="padding: 0 var(--sp-4) var(--sp-8);">
+            <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--c-on-surface-secondary); margin-bottom: 12px;">
+                Acciones Rápidas
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                <button class="quick-action" data-action="add-income" style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    padding: 12px 8px;
+                    background: var(--c-surface);
+                    border: 1px solid var(--c-outline);
+                    border-radius: 16px;
+                    color: var(--c-on-surface);
+                ">
+                    <div style="
+                        width: 40px;
+                        height: 40px;
+                        background: linear-gradient(135deg, var(--c-success), #00D68F);
+                        border-radius: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-bottom: 8px;
+                    ">
+                        <span class="material-icons" style="color: white; font-size: 20px;">call_received</span>
+                    </div>
+                    <div style="font-size: 0.6875rem; font-weight: 600;">Ingreso</div>
+                </button>
+                
+                <button class="quick-action" data-action="add-expense" style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    padding: 12px 8px;
+                    background: var(--c-surface);
+                    border: 1px solid var(--c-outline);
+                    border-radius: 16px;
+                    color: var(--c-on-surface);
+                ">
+                    <div style="
+                        width: 40px;
+                        height: 40px;
+                        background: linear-gradient(135deg, var(--c-danger), #FF708D);
+                        border-radius: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-bottom: 8px;
+                    ">
+                        <span class="material-icons" style="color: white; font-size: 20px;">call_made</span>
+                    </div>
+                    <div style="font-size: 0.6875rem; font-weight: 600;">Gasto</div>
+                </button>
+                
+                <button class="quick-action" data-action="add-transfer" style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    padding: 12px 8px;
+                    background: var(--c-surface);
+                    border: 1px solid var(--c-outline);
+                    border-radius: 16px;
+                    color: var(--c-on-surface);
+                ">
+                    <div style="
+                        width: 40px;
+                        height: 40px;
+                        background: linear-gradient(135deg, var(--c-info), #00A3FF);
+                        border-radius: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-bottom: 8px;
+                    ">
+                        <span class="material-icons" style="color: white; font-size: 20px;">swap_horiz</span>
+                    </div>
+                    <div style="font-size: 0.6875rem; font-weight: 600;">Traspaso</div>
+                </button>
+                
+                <button class="quick-action" data-action="view-reports" style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    padding: 12px 8px;
+                    background: var(--c-surface);
+                    border: 1px solid var(--c-outline);
+                    border-radius: 16px;
+                    color: var(--c-on-surface);
+                ">
+                    <div style="
+                        width: 40px;
+                        height: 40px;
+                        background: linear-gradient(135deg, #BF5AF2, #D6A2FF);
+                        border-radius: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-bottom: 8px;
+                    ">
+                        <span class="material-icons" style="color: white; font-size: 20px;">assessment</span>
+                    </div>
+                    <div style="font-size: 0.6875rem; font-weight: 600;">Informes</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- BOTÓN FLOTANTE FAB -->
+        <button class="fab" data-action="quick-add-menu" style="
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--c-primary), #00A3FF);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            box-shadow: 0 8px 24px rgba(0, 179, 77, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        ">
+            <span class="material-icons" style="font-size: 24px;">add</span>
+        </button>
     `;
     
-    populateAllDropdowns();
-    await Promise.all([loadPresupuestos(), loadInversiones()]);
-    scheduleDashboardUpdate(); 
+    await scheduleDashboardUpdate();
+	setTimeout(initPanelInteractions, 100);
 };
 
+// Añade después de tu función renderPanelPage
+
+// 1. INTERACCIONES CON PERIODO SELECTOR
+const setupPeriodSelector = () => {
+    const tabs = document.querySelectorAll('.period-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', async (e) => {
+            e.preventDefault();
+            hapticFeedback('light');
+            
+            // Actualizar estado visual
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            // Actualizar selector principal (si existe)
+            const mainSelector = select('filter-periodo');
+            if (mainSelector) {
+                mainSelector.value = tab.dataset.period;
+            }
+            
+            // Forzar actualización del dashboard
+            await scheduleDashboardUpdate(true);
+            
+            // Animación de confirmación
+            tab.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                tab.style.transform = 'scale(1)';
+            }, 150);
+        });
+    });
+};
+
+// 2. GESTOS DE SWIPE EN SCROLL HORIZONTAL
+const setupHorizontalScroll = () => {
+    const scroller = document.querySelector('.main-kpi-scroller');
+    if (!scroller) return;
+    
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+    
+    scroller.addEventListener('mousedown', (e) => {
+        isDown = true;
+        startX = e.pageX - scroller.offsetLeft;
+        scrollLeft = scroller.scrollLeft;
+        scroller.style.cursor = 'grabbing';
+    });
+    
+    scroller.addEventListener('mouseleave', () => {
+        isDown = false;
+        scroller.style.cursor = 'grab';
+    });
+    
+    scroller.addEventListener('mouseup', () => {
+        isDown = false;
+        scroller.style.cursor = 'grab';
+    });
+    
+    scroller.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - scroller.offsetLeft;
+        const walk = (x - startX) * 2;
+        scroller.scrollLeft = scrollLeft - walk;
+    });
+    
+    // Versión táctil
+    scroller.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].pageX - scroller.offsetLeft;
+        scrollLeft = scroller.scrollLeft;
+    });
+    
+    scroller.addEventListener('touchmove', (e) => {
+        if (!startX) return;
+        const x = e.touches[0].pageX - scroller.offsetLeft;
+        const walk = (x - startX) * 2;
+        scroller.scrollLeft = scrollLeft - walk;
+    });
+};
+
+// 3. ANIMACIÓN DE MINI-GRÁFICO
+const updateMiniChart = (ingresos, gastos, neto) => {
+    const max = Math.max(Math.abs(ingresos), Math.abs(gastos), Math.abs(neto));
+    
+    // Calcular alturas relativas (máximo 80px)
+    const ingresosHeight = (Math.abs(ingresos) / max) * 80;
+    const gastosHeight = (Math.abs(gastos) / max) * 80;
+    const netoHeight = (Math.abs(neto) / max) * 80;
+    
+    // Aplicar con animación
+    document.documentElement.style.setProperty('--ingresos-height', `${ingresosHeight}px`);
+    document.documentElement.style.setProperty('--gastos-height', `${gastosHeight}px`);
+    document.documentElement.style.setProperty('--neto-height', `${netoHeight}px`);
+};
+
+// 4. MODO PRIVACIDAD (OCULTAR IMPORTES)
+const setupPrivacyMode = () => {
+    const toggleBtn = document.querySelector('[data-action="toggle-privacy-mode"]');
+    if (!toggleBtn) return;
+    
+    toggleBtn.addEventListener('click', () => {
+        const isActive = document.body.classList.toggle('privacy-mode');
+        localStorage.setItem('privacyMode', isActive);
+        
+        // Cambiar icono
+        const icon = toggleBtn.querySelector('.material-icons');
+        icon.textContent = isActive ? 'visibility_off' : 'visibility';
+        
+        // Feedback háptico
+        hapticFeedback('medium');
+        
+        // Actualizar todos los valores visibles
+        updatePrivacyMode(isActive);
+    });
+};
+
+const updatePrivacyMode = (enabled) => {
+    const elements = document.querySelectorAll('[data-privacy]');
+    elements.forEach(el => {
+        if (enabled) {
+            el.dataset.original = el.textContent;
+            el.textContent = '•••••';
+        } else {
+            el.textContent = el.dataset.original || '0,00 €';
+        }
+    });
+};
+
+// 5. QUICK ACTIONS
+const setupQuickActions = () => {
+    const actions = document.querySelectorAll('.quick-action');
+    actions.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const action = btn.dataset.action;
+            hapticFeedback('light');
+            
+            switch(action) {
+                case 'add-income':
+                    // Abrir formulario de ingreso preconfigurado
+                    showMovementForm('income');
+                    break;
+                case 'add-expense':
+                    showMovementForm('expense');
+                    break;
+                case 'add-transfer':
+                    showMovementForm('transfer');
+                    break;
+                case 'view-reports':
+                    navigateTo(PAGE_IDS.PLANIFICAR);
+                    break;
+            }
+            
+            // Animación de confirmación
+            btn.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                btn.style.transform = 'scale(1)';
+            }, 150);
+        });
+    });
+};
+
+// 6. FAB CON MENÚ DESPLEGABLE
+const setupFAB = () => {
+    const fab = document.querySelector('.fab');
+    if (!fab) return;
+    
+    let isMenuOpen = false;
+    const menuHTML = `
+        <div class="fab-menu" style="
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: var(--c-surface);
+            border: 1px solid var(--c-outline);
+            border-radius: 20px;
+            padding: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 160px;
+        ">
+            <button class="fab-menu-item" data-action="add-income" style="
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px;
+                background: none;
+                border: none;
+                color: var(--c-on-surface);
+                font-size: 0.875rem;
+                font-weight: 500;
+                border-radius: 12px;
+                text-align: left;
+            ">
+                <div style="
+                    width: 32px;
+                    height: 32px;
+                    background: linear-gradient(135deg, var(--c-success), #00D68F);
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">
+                    <span class="material-icons" style="color: white; font-size: 18px;">call_received</span>
+                </div>
+                Nuevo Ingreso
+            </button>
+            <button class="fab-menu-item" data-action="add-expense" style="
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px;
+                background: none;
+                border: none;
+                color: var(--c-on-surface);
+                font-size: 0.875rem;
+                font-weight: 500;
+                border-radius: 12px;
+                text-align: left;
+            ">
+                <div style="
+                    width: 32px;
+                    height: 32px;
+                    background: linear-gradient(135deg, var(--c-danger), #FF708D);
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">
+                    <span class="material-icons" style="color: white; font-size: 18px;">call_made</span>
+                </div>
+                Nuevo Gasto
+            </button>
+            <button class="fab-menu-item" data-action="add-transfer" style="
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px;
+                background: none;
+                border: none;
+                color: var(--c-on-surface);
+                font-size: 0.875rem;
+                font-weight: 500;
+                border-radius: 12px;
+                text-align: left;
+            ">
+                <div style="
+                    width: 32px;
+                    height: 32px;
+                    background: linear-gradient(135deg, var(--c-info), #00A3FF);
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">
+                    <span class="material-icons" style="color: white; font-size: 18px;">swap_horiz</span>
+                </div>
+                Nuevo Traspaso
+            </button>
+        </div>
+    `;
+    
+    fab.insertAdjacentHTML('afterend', menuHTML);
+    const menu = fab.nextElementSibling;
+    
+    fab.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        isMenuOpen = !isMenuOpen;
+        
+        if (isMenuOpen) {
+            menu.style.display = 'flex';
+            fab.style.transform = 'rotate(45deg)';
+            hapticFeedback('medium');
+            
+            // Cerrar al hacer clic fuera
+            setTimeout(() => {
+                document.addEventListener('click', closeMenu);
+            }, 10);
+        } else {
+            closeMenu();
+        }
+    });
+    
+    const closeMenu = () => {
+        menu.style.display = 'none';
+        fab.style.transform = 'rotate(0deg)';
+        document.removeEventListener('click', closeMenu);
+        isMenuOpen = false;
+    };
+    
+    // Delegación de eventos para los items del menú
+    menu.addEventListener('click', (e) => {
+        const item = e.target.closest('.fab-menu-item');
+        if (!item) return;
+        
+        const action = item.dataset.action;
+        closeMenu();
+        
+        switch(action) {
+            case 'add-income':
+                showMovementForm('income');
+                break;
+            case 'add-expense':
+                showMovementForm('expense');
+                break;
+            case 'add-transfer':
+                showMovementForm('transfer');
+                break;
+        }
+    });
+};
+
+// 7. FUNCIÓN PARA MOSTRAR FORMULARIO PRE-CONFIGURADO
+const showMovementForm = (type) => {
+    // Ir a la página de diario
+    navigateTo(PAGE_IDS.DIARIO);
+    
+    // Pequeño delay para que cargue la página
+    setTimeout(() => {
+        // Mostrar formulario de movimiento
+        const addBtn = document.querySelector('[data-action="show-movimiento-form"]');
+        if (addBtn) addBtn.click();
+        
+        // Pre-configurar según tipo
+        setTimeout(() => {
+            switch(type) {
+                case 'income':
+                    // Seleccionar concepto de ingreso por defecto
+                    const incomeConcepts = db.conceptos.filter(c => 
+                        c.nombre.toLowerCase().includes('ingreso') || 
+                        c.nombre.toLowerCase().includes('sueldo')
+                    );
+                    if (incomeConcepts.length > 0) {
+                        const conceptoSelect = select('movimiento-concepto');
+                        if (conceptoSelect) {
+                            conceptoSelect.value = incomeConcepts[0].id;
+                            conceptoSelect.dispatchEvent(new Event('change'));
+                        }
+                    }
+                    break;
+                    
+                case 'expense':
+                    // Seleccionar concepto de gasto por defecto
+                    const expenseConcepts = db.conceptos.filter(c => 
+                        !c.nombre.toLowerCase().includes('ingreso') && 
+                        !c.nombre.toLowerCase().includes('sueldo')
+                    );
+                    if (expenseConcepts.length > 0) {
+                        const conceptoSelect = select('movimiento-concepto');
+                        if (conceptoSelect) {
+                            conceptoSelect.value = expenseConcepts[0].id;
+                            conceptoSelect.dispatchEvent(new Event('change'));
+                        }
+                    }
+                    break;
+                    
+                case 'transfer':
+                    // Cambiar a pestaña de traspaso
+                    const transferTab = document.querySelector('[data-action="toggle-traspaso"]');
+                    if (transferTab) transferTab.click();
+                    break;
+            }
+        }, 300);
+    }, 100);
+};
+
+
+// 9. FUNCIÓN PARA CALCULAR CAMBIO PATRIMONIAL
+const updatePatrimonioChange = async () => {
+    const visibleAccounts = getVisibleAccounts();
+    const currentTotal = visibleAccounts.reduce((sum, c) => sum + (c.saldo || 0), 0);
+    
+    // Obtener total del mes anterior
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    
+    const movements = await getMovementsForPeriod(lastMonth, endLastMonth);
+    const lastMonthTotal = currentTotal - movements.saldoNeto;
+    
+    // Calcular porcentaje de cambio
+    const change = lastMonthTotal !== 0 ? 
+        ((currentTotal - lastMonthTotal) / Math.abs(lastMonthTotal)) * 100 : 0;
+    
+    const changeElement = select('kpi-patrimonio-change');
+    if (changeElement) {
+        const sign = change >= 0 ? '+' : '';
+        changeElement.textContent = `${sign}${change.toFixed(1)}%`;
+        changeElement.style.background = change >= 0 ? 
+            'rgba(0, 179, 77, 0.2)' : 'rgba(255, 59, 48, 0.2)';
+        changeElement.style.color = change >= 0 ? 
+            'var(--c-success)' : 'var(--c-danger)';
+    }
+};
+
+// 10. INICIALIZAR TODO AL CARGAR EL PANEL
+const initPanelInteractions = () => {
+    setupPeriodSelector();
+    setupHorizontalScroll();
+    setupPrivacyMode();
+    setupQuickActions();
+    setupFAB();
+    
+    // Añadir atributos de privacidad a elementos sensibles
+    document.querySelectorAll('#kpi-patrimonio-neto-value, #kpi-liquidez-value, #kpi-ingresos-value, #kpi-gastos-value, #kpi-saldo-neto-value')
+        .forEach(el => el.dataset.privacy = true);
+};
+
+// Detectar gestos específicos de móvil
+const setupMobileGestures = () => {
+    const panel = select(PAGE_IDS.PANEL);
+    if (!panel) return;
+    
+    let startY;
+    let isScrolling;
+    
+    panel.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].clientY;
+        isScrolling = true;
+    }, { passive: true });
+    
+    panel.addEventListener('touchmove', (e) => {
+        if (!isScrolling) return;
+        
+        const currentY = e.touches[0].clientY;
+        const diff = startY - currentY;
+        
+        // Pull to refresh (solo en la parte superior)
+        if (diff > 50 && panel.scrollTop === 0) {
+            // Mostrar indicador de actualización
+            showRefreshIndicator();
+            isScrolling = false;
+        }
+    }, { passive: true });
+    
+    panel.addEventListener('touchend', () => {
+        isScrolling = false;
+    });
+};
+
+const showRefreshIndicator = () => {
+    hapticFeedback('light');
+    
+    // Crear indicador visual
+    const indicator = document.createElement('div');
+    indicator.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--c-surface);
+            border-bottom: 1px solid var(--c-outline);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            transform: translateY(-100%);
+            animation: slideDown 0.3s ease forwards;
+        ">
+            <span class="spinner" style="margin-right: 12px;"></span>
+            <span style="font-size: 0.875rem; color: var(--c-on-surface);">
+                Actualizando datos...
+            </span>
+        </div>
+    `;
+    
+    document.body.appendChild(indicator);
+    
+    // Forzar actualización
+    scheduleDashboardUpdate(true).then(() => {
+        setTimeout(() => {
+            indicator.remove();
+            showToast('Datos actualizados', 'success');
+        }, 1000);
+    });
+};
  const showEstrategiaTab = (tabName) => {
     // 1. Gestionar el estado activo de los botones de las pestañas
     const tabButton = document.querySelector(`.tab-item[data-tab="${tabName}"]`);
@@ -5592,7 +6531,7 @@ const updateNetWorthChart = async (saldos) => {
     });
 };
 
-const scheduleDashboardUpdate = () => {
+const scheduleDashboardUpdate = async (force = false) => {
     // El jefe de obra solo trabaja si la página "Inicio" está abierta.
     const activePage = document.querySelector('.view--active');
     if (!activePage || activePage.id !== PAGE_IDS.PANEL) {
@@ -5602,9 +6541,19 @@ const scheduleDashboardUpdate = () => {
     clearTimeout(dashboardUpdateDebounceTimer);
         
     dashboardUpdateDebounceTimer = setTimeout(updateDashboardData, 50);
+	 updateMiniChart(ingresos, gastos, saldoNeto);
+    
+    // También actualizar porcentaje de colchón de emergencia
+    const emergencyPercentage = (efData.mesesCobertura / 6) * 100;
+    const emergencyElement = select('emergency-fund-percentage');
+    if (emergencyElement) {
+        emergencyElement.textContent = `${Math.min(100, emergencyPercentage).toFixed(0)}%`;
+    }
+    
+    // Actualizar cambio patrimonial
+    await updatePatrimonioChange();
 };
 
-/* EN main.js - REEMPLAZO DE updateDashboardData (SIN GRÁFICO DE PATRIMONIO, CON KPI DE INVERSIÓN) */
 
 const updateDashboardData = async () => {
     const activePage = document.querySelector('.view--active');
