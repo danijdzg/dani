@@ -1,10 +1,6 @@
 
 import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
-import { 
-  calculateStandardDeviation, 
-  calculateMaxDrawdown,
-  calculateSharpeRatio 
-} from './calculations.js';
+
 const setupEnhancedFormNavigation = () => {
     const inputs = [
         { id: 'movimiento-cantidad', next: 'movimiento-concepto' },
@@ -1724,66 +1720,6 @@ const showToast = (message, type = 'info', duration = 3500) => {
 			if (!str || typeof str !== 'string') return '';
 			return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 		};
-// === AÑADE ESTE BLOQUE COMPLETO EN UN LUGAR DONDE NO HAYA CONFLICTOS ===
-// Por ejemplo, después de la función toSentenceCase (línea ~200)
-
-// 1. Función para calcular desviación estándar
-// === CÓDIGO CORREGIDO - VERIFICA SI LAS FUNCIONES YA EXISTEN ===
-
-// Solo define las funciones si no existen ya
-if (typeof calculateStandardDeviation === 'undefined') {
-    window.calculateStandardDeviation = function(returns) {
-        if (!returns || returns.length < 2) return 0;
-        
-        const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-        const squaredDifferences = returns.map(r => Math.pow(r - mean, 2));
-        const variance = squaredDifferences.reduce((sum, sq) => sum + sq, 0) / (returns.length - 1);
-        
-        return Math.sqrt(variance);
-    };
-}
-
-if (typeof calculateAnnualVolatility === 'undefined') {
-    window.calculateAnnualVolatility = function(monthlyReturns) {
-        const stdDev = calculateStandardDeviation(monthlyReturns);
-        return stdDev * Math.sqrt(12);
-    };
-}
-
-if (typeof calculateMaxDrawdown === 'undefined') {
-    window.calculateMaxDrawdown = function(values) {
-        if (!values || values.length < 2) return 0;
-        
-        let peak = values[0];
-        let maxDrawdown = 0;
-        
-        for (let i = 1; i < values.length; i++) {
-            if (values[i] > peak) {
-                peak = values[i];
-            } else {
-                const drawdown = (peak - values[i]) / peak;
-                if (drawdown > maxDrawdown) {
-                    maxDrawdown = drawdown;
-                }
-            }
-        }
-        
-        return maxDrawdown;
-    };
-}
-
-if (typeof calculateSharpeRatio === 'undefined') {
-    window.calculateSharpeRatio = function(returns, riskFreeRate = 0.02) {
-        if (!returns || returns.length < 2) return 0;
-        
-        const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-        const stdDev = calculateStandardDeviation(returns);
-        
-        if (stdDev === 0) return 0;
-        
-        return (meanReturn - riskFreeRate) / stdDev;
-    };
-}
 
         const setButtonLoading = (btn, isLoading, text = 'Cargando...') => {
             if (!btn) return;
@@ -2528,7 +2464,7 @@ const getFilteredMovements = async (forComparison = false) => {
 };
 		
 const calculatePortfolioPerformance = async (cuentaId = null) => {
-    // 1. OBTENER DATOS
+    // ... (Inicio de la función idéntico: carga de movimientos y cuentas) ...
     const allMovements = (typeof allDiarioMovementsCache !== 'undefined' && allDiarioMovementsCache.length > 0) 
         ? allDiarioMovementsCache 
         : await fetchAllMovementsForHistory();
@@ -2539,67 +2475,20 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
     const investmentAccounts = cuentaId ? allInvestmentAccounts.filter(c => c.id === cuentaId) : allInvestmentAccounts;
     
     if (investmentAccounts.length === 0) {
-        return { 
-            valorActual: 0, 
-            capitalInvertido: 0, 
-            pnlAbsoluto: 0, 
-            pnlPorcentual: 0, 
-            irr: 0, 
-            daysActive: 0,
-            // NUEVAS MÉTRICAS:
-            monthlyReturns: [],
-            annualVolatility: 0,
-            maxDrawdown: 0,
-            sharpeRatio: 0,
-            sortinoRatio: 0,
-            bestMonth: 0,
-            worstMonth: 0,
-            historicalData: []
-        };
+        return { valorActual: 0, capitalInvertido: 0, pnlAbsoluto: 0, pnlPorcentual: 0, irr: 0, daysActive: 0 };
     }
     
-    // 2. CÁLCULOS BÁSICOS
     let totalValorActual = 0;
     let totalCapitalInvertido_para_PNL = 0;
     let allIrrCashflows = [];
-    let firstMovementDate = new Date();
-    
-    // 3. NUEVO: Recolectar datos históricos para análisis
-    const historicalData = [];
-    const monthlyReturns = {};
-    
+    let firstMovementDate = new Date(); // Para calcular antigüedad
+
     for (const cuenta of investmentAccounts) {
+        // ... (Lógica de P&L y Filtrado de Movimientos idéntica a la anterior) ...
         const valoraciones = (db.inversiones_historial || [])
             .filter(v => v.cuentaId === cuenta.id)
-            .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-        
-        // Recolectar datos históricos para cálculo de métricas
-        valoraciones.forEach((valoracion, index) => {
-            if (index > 0) {
-                const prevValue = valoraciones[index - 1].valor;
-                const currentValue = valoracion.valor;
-                const returnPct = (currentValue - prevValue) / prevValue;
-                
-                historicalData.push({
-                    fecha: valoracion.fecha,
-                    valor: valoracion.valor,
-                    return: returnPct
-                });
-                
-                // Agrupar por meses para calcular returns mensuales
-                const date = new Date(valoracion.fecha);
-                const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-                
-                if (!monthlyReturns[monthKey]) {
-                    monthlyReturns[monthKey] = { total: 0, count: 0 };
-                }
-                monthlyReturns[monthKey].total += returnPct;
-                monthlyReturns[monthKey].count++;
-            }
-        });
-        
-        // Resto del código existente...
-        const valorActual = valoraciones.length > 0 ? valoraciones[valoraciones.length - 1].valor : 0;
+            .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+        const valorActual = valoraciones.length > 0 ? valoraciones[0].valor : 0;
         const capitalInvertido_para_PNL = cuenta.saldo || 0;
         
         totalValorActual += valorActual;
@@ -2610,7 +2499,7 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
             (m.tipo === 'traspaso' && (m.cuentaDestinoId === cuenta.id || m.cuentaOrigenId === cuenta.id))
         );
 
-        // Detectar fecha del primer movimiento
+        // Detectar fecha del primer movimiento para antigüedad
         if (accountMovements.length > 0) {
             const firstInAcc = accountMovements.reduce((oldest, current) => 
                 new Date(current.fecha) < new Date(oldest.fecha) ? current : oldest
@@ -2619,7 +2508,7 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
             if (mDate < firstMovementDate) firstMovementDate = mDate;
         }
 
-        // IRR cashflows (existente)
+        // ... (Lógica de conversión a Cashflows idéntica) ...
         const irrCashflows = accountMovements
             .map(mov => {
                 let effectOnAccount = 0;
@@ -2642,363 +2531,22 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
         allIrrCashflows.push(...irrCashflows);
     }
 
-    // 4. CÁLCULO DE LAS NUEVAS MÉTRICAS
-    // Preparar array de returns mensuales
-    const monthlyReturnValues = Object.values(monthlyReturns)
-        .map(m => m.total / (m.count || 1))
-        .filter(r => !isNaN(r));
-    
-    // Preparar array de valores históricos para drawdown
-    const historicalValues = historicalData.map(d => d.valor).filter(v => v > 0);
-    
-    // Calcular métricas de riesgo (con protección contra errores)
-    let annualVolatility = 0;
-    let maxDrawdown = 0;
-    let sharpeRatio = 0;
-    let sortinoRatio = 0;
-    let bestMonth = 0;
-    let worstMonth = 0;
-    
-    try {
-    // Verificar que tenemos datos para calcular
-    if (monthlyReturnValues && monthlyReturnValues.length > 1) {
-        annualVolatility = calculateAnnualVolatility(monthlyReturnValues);
-        sharpeRatio = calculateSharpeRatio(monthlyReturnValues);
-        sortinoRatio = calculateSortinoRatio(monthlyReturnValues);
-        
-        // Encontrar mejor y peor mes
-        bestMonth = Math.max(...monthlyReturnValues);
-        worstMonth = Math.min(...monthlyReturnValues);
-    }
-    
-    if (historicalValues && historicalValues.length > 1) {
-        maxDrawdown = calculateMaxDrawdown(historicalValues);
-    }
-} catch (error) {
-    console.warn("Error calculando métricas de riesgo:", error);
-    // Si hay error, dejamos las métricas en 0
-    annualVolatility = 0;
-    maxDrawdown = 0;
-    sharpeRatio = 0;
-    sortinoRatio = 0;
-    bestMonth = 0;
-    worstMonth = 0;
-}
-
-    // 5. CÁLCULOS EXISTENTES
     const pnlAbsoluto = totalValorActual - totalCapitalInvertido_para_PNL;
     const pnlPorcentual = totalCapitalInvertido_para_PNL !== 0 ? (pnlAbsoluto / totalCapitalInvertido_para_PNL) * 100 : 0;
     const irr = calculateIRR(allIrrCashflows);
+
+    // NUEVO: Calculamos días activos
     const daysActive = (new Date() - firstMovementDate) / (1000 * 60 * 60 * 24);
 
-    // 6. RETORNAR RESULTADO COMPLETO
     return { 
         valorActual: totalValorActual, 
         capitalInvertido: totalCapitalInvertido_para_PNL,
         pnlAbsoluto, 
         pnlPorcentual, 
         irr,
-        daysActive,
-        // NUEVAS MÉTRICAS:
-        monthlyReturns: monthlyReturnValues,
-        annualVolatility,
-        maxDrawdown,
-        sharpeRatio,
-        sortinoRatio,
-        bestMonth,
-        worstMonth,
-        historicalData // Para gráficos
+        daysActive // Retornamos la antigüedad
     };
 };
-// === AÑADE ESTAS FUNCIONES PARA GRÁFICOS ===
-
-const renderRiskAnalysisChart = (canvasId, performanceData) => {
-    const canvas = select(canvasId);
-    if (!canvas) return null;
-    
-    const ctx = canvas.getContext('2d');
-    
-    // Destruir gráfico existente
-    const existingChart = Chart.getChart(canvasId);
-    if (existingChart) existingChart.destroy();
-    
-    const data = {
-        labels: ['Volatilidad', 'Max Drawdown', 'Sharpe Ratio', 'Sortino Ratio'],
-        datasets: [{
-            label: 'Métricas de Riesgo',
-            data: [
-                (performanceData.annualVolatility || 0) * 100,
-                (performanceData.maxDrawdown || 0) * 100,
-                performanceData.sharpeRatio || 0,
-                performanceData.sortinoRatio || 0
-            ],
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.7)',
-                'rgba(54, 162, 235, 0.7)',
-                'rgba(255, 206, 86, 0.7)',
-                'rgba(75, 192, 192, 0.7)'
-            ],
-            borderColor: [
-                'rgb(255, 99, 132)',
-                'rgb(54, 162, 235)',
-                'rgb(255, 206, 86)',
-                'rgb(75, 192, 192)'
-            ],
-            borderWidth: 2
-        }]
-    };
-    
-    const config = {
-        type: 'bar',
-        data: data,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const value = context.raw;
-                            const index = context.dataIndex;
-                            
-                            switch(index) {
-                                case 0: return `Volatilidad Anual: ${value.toFixed(2)}%`;
-                                case 1: return `Máxima Pérdida: ${value.toFixed(2)}%`;
-                                case 2: return `Sharpe Ratio: ${value.toFixed(2)}`;
-                                case 3: return `Sortino Ratio: ${value.toFixed(2)}`;
-                                default: return `${value}`;
-                            }
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return value.toFixed(2);
-                        }
-                    }
-                }
-            }
-        }
-    };
-    
-    return new Chart(ctx, config);
-};
-
-const renderReturnsDistributionChart = (canvasId, monthlyReturns) => {
-    const canvas = select(canvasId);
-    if (!canvas || !monthlyReturns || monthlyReturns.length === 0) return null;
-    
-    const ctx = canvas.getContext('2d');
-    
-    // Destruir gráfico existente
-    const existingChart = Chart.getChart(canvasId);
-    if (existingChart) existingChart.destroy();
-    
-    // Crear bins para el histograma
-    const returnsInPercent = monthlyReturns.map(r => r * 100);
-    const minReturn = Math.min(...returnsInPercent);
-    const maxReturn = Math.max(...returnsInPercent);
-    const range = maxReturn - minReturn;
-    
-    // Si no hay rango, mostrar gráfico vacío
-    if (range === 0) return null;
-    
-    const binSize = Math.max(1, range / 10);
-    const bins = Array(10).fill(0);
-    
-    returnsInPercent.forEach(returnPct => {
-        const binIndex = Math.min(9, Math.max(0, Math.floor((returnPct - minReturn) / binSize)));
-        bins[binIndex]++;
-    });
-    
-    const labels = bins.map((_, i) => {
-        const start = minReturn + (i * binSize);
-        const end = start + binSize;
-        return `${start.toFixed(1)}%`;
-    });
-    
-    const data = {
-        labels: labels,
-        datasets: [{
-            label: 'Frecuencia de Retornos',
-            data: bins,
-            backgroundColor: 'rgba(54, 162, 235, 0.7)',
-            borderColor: 'rgb(54, 162, 235)',
-            borderWidth: 1
-        }]
-    };
-    
-    const config = {
-        type: 'bar',
-        data: data,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        title: function(tooltipItems) {
-                            return tooltipItems[0].label;
-                        },
-                        label: function(context) {
-                            const count = context.raw;
-                            const percentage = monthlyReturns.length > 0 ? 
-                                (count / monthlyReturns.length * 100).toFixed(1) : '0.0';
-                            return `${count} meses (${percentage}%)`;
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Frecuencia'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Retorno Mensual'
-                    }
-                }
-            }
-        }
-    };
-    
-    return new Chart(ctx, config);
-};
-
-const renderDrawdownChart = (canvasId, historicalData) => {
-    const canvas = select(canvasId);
-    if (!canvas || !historicalData || historicalData.length < 2) return null;
-    
-    const ctx = canvas.getContext('2d');
-    
-    // Destruir gráfico existente
-    const existingChart = Chart.getChart(canvasId);
-    if (existingChart) existingChart.destroy();
-    
-    // Calcular drawdown para cada punto
-    const sortedData = historicalData.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-    let peak = sortedData[0]?.valor || 0;
-    const drawdowns = [];
-    const dates = [];
-    
-    sortedData.forEach(point => {
-        if (point.valor > peak) {
-            peak = point.valor;
-        }
-        const drawdown = ((peak - point.valor) / peak) * 100;
-        drawdowns.push(drawdown);
-        dates.push(new Date(point.fecha));
-    });
-    
-    const data = {
-        labels: dates,
-        datasets: [{
-            label: 'Drawdown (%)',
-            data: drawdowns,
-            fill: true,
-            backgroundColor: 'rgba(255, 99, 132, 0.3)',
-            borderColor: 'rgb(255, 99, 132)',
-            tension: 0.1
-        }]
-    };
-    
-    const config = {
-        type: 'line',
-        data: data,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `Drawdown: ${context.raw.toFixed(1)}%`;
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    reverse: true,
-                    ticks: {
-                        callback: function(value) {
-                            return value + '%';
-                        }
-                    },
-                    title: {
-                        display: true,
-                        text: 'Drawdown (%)'
-                    }
-                },
-                x: {
-                    type: 'time',
-                    time: {
-                        unit: 'month'
-                    }
-                }
-            }
-        }
-    };
-    
-    return new Chart(ctx, config);
-};
-
-const exportRiskReport = async () => {
-    try {
-        const portfolioPerformance = await calculatePortfolioPerformance();
-        
-        const report = {
-            fecha: new Date().toISOString(),
-            portfolio: {
-                valorMercado: portfolioPerformance.valorActual,
-                capitalInvertido: portfolioPerformance.capitalInvertido,
-                gananciaPerdida: portfolioPerformance.pnlAbsoluto,
-                rentabilidad: portfolioPerformance.pnlPorcentual.toFixed(2) + '%',
-                tir: (portfolioPerformance.irr * 100).toFixed(2) + '%'
-            },
-            analisisRiesgo: {
-                volatilidadAnual: (portfolioPerformance.annualVolatility * 100).toFixed(2) + '%',
-                maxDrawdown: (portfolioPerformance.maxDrawdown * 100).toFixed(2) + '%',
-                sharpeRatio: portfolioPerformance.sharpeRatio.toFixed(2),
-                sortinoRatio: portfolioPerformance.sortinoRatio.toFixed(2),
-                mejorMes: (portfolioPerformance.bestMonth * 100).toFixed(2) + '%',
-                peorMes: (portfolioPerformance.worstMonth * 100).toFixed(2) + '%'
-            }
-        };
-        
-        // Crear y descargar JSON
-        const dataStr = JSON.stringify(report, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `reporte-riesgo-${new Date().toISOString().slice(0, 10)}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        showToast('Reporte de riesgo exportado', 'success');
-    } catch (error) {
-        console.error("Error exportando reporte:", error);
-        showToast('Error al exportar reporte', 'danger');
-    }
-};
-
-// === FIN DE LAS FUNCIONES DE GRÁFICOS ===
 
     const recalculateAndApplyRunningBalances = (movements, allAccountsDb) => {
     // 1. Agrupamos los movimientos por cada cuenta afectada.
@@ -3524,9 +3072,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
     const container = select(targetContainerId);
     if (!container) return;
 
-    container.innerHTML = `<div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>`;
-
-    // 1. OBTENER DATOS BÁSICOS (UNA SOLA VEZ)
+    // Se mantiene la lógica existente para obtener los activos y sus datos
     const investmentAccounts = getVisibleAccounts().filter((c) => c.esInversion);
     const CHART_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
 
@@ -3543,9 +3089,6 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         return;
     }
 
-    // 2. CALCULAR RENDIMIENTO (UNA SOLA VEZ)
-    const portfolioTotalPerformance = await calculatePortfolioPerformance(); // ¡SOLO UNA DECLARACIÓN!
-
     const performanceData = await Promise.all(
         investmentAccounts.map(async (cuenta) => {
             const performance = await calculatePortfolioPerformance(cuenta.id);
@@ -3553,12 +3096,9 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         })
     );
 
-    // 3. FILTRADO POR TIPO
     const allInvestmentTypes = [...new Set(performanceData.map(asset => toSentenceCase(asset.tipo || 'S/T')))].sort();
     const colorMap = {};
-    allInvestmentTypes.forEach((label, index) => { 
-        colorMap[label] = CHART_COLORS[index % CHART_COLORS.length]; 
-    });
+    allInvestmentTypes.forEach((label, index) => { colorMap[label] = CHART_COLORS[index % CHART_COLORS.length]; });
 
     const pillsHTML = allInvestmentTypes.map(t => {
         const isActive = !deselectedInvestmentTypesFilter.has(t);
@@ -3569,14 +3109,57 @@ const renderPortfolioMainContent = async (targetContainerId) => {
 
     const displayAssetsData = performanceData.filter(asset => !deselectedInvestmentTypesFilter.has(toSentenceCase(asset.tipo || 'S/T')));
 
-    // 4. CALCULAR TOTALES
     const portfolioTotalValorado = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.valorActual, 0);
     const portfolioTotalInvertido = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.capitalInvertido, 0);
     const rentabilidadTotalAbsoluta = portfolioTotalValorado - portfolioTotalInvertido;
     const rentabilidadTotalPorcentual = portfolioTotalInvertido !== 0 ? (rentabilidadTotalAbsoluta / portfolioTotalInvertido) * 100 : 0;
     const rentabilidadClass = rentabilidadTotalAbsoluta >= 0 ? 'text-positive' : 'text-negative';
 
-    // 5. HTML PRINCIPAL
+    // =========================================================================
+    // === ▼▼▼ INICIO: NUEVO CÓDIGO AÑADIDO PARA EL SUMARIO FINAL ▼▼▼ =========
+    // =========================================================================
+    
+    // 1. Calculamos el rendimiento TOTAL de todo el portafolio filtrado.
+    const portfolioTotalPerformance = await calculatePortfolioPerformance();
+
+    // 2. Preparamos las variables para el HTML.
+    const totalPnlAbsoluto = portfolioTotalPerformance.pnlAbsoluto;
+    const totalPnlPorcentual = portfolioTotalPerformance.pnlPorcentual;
+    const totalIrr = portfolioTotalPerformance.irr;
+
+    const totalPnlClass = totalPnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
+    const totalIrrClass = totalIrr >= 0 ? 'text-positive' : 'text-negative';
+
+    // 3. Creamos el bloque HTML para la nueva tarjeta de sumario.
+    const summaryCardHtml = `
+        <div class="portfolio-summary-card">
+            <h3 class="portfolio-summary-card__title">
+                <span class="material-icons">military_tech</span>
+                Sumario Total del Portafolio
+            </h3>
+            <div class="portfolio-summary-card__grid">
+                <div class="summary-kpi">
+                    <div class="summary-kpi__label">P&L Total</div>
+                    <div class="summary-kpi__value ${totalPnlClass}">
+                        ${formatCurrency(totalPnlAbsoluto)}
+                        <div style="font-size: 0.6em; font-weight: 600;">(${totalPnlPorcentual.toFixed(1)}%)</div>
+                    </div>
+                </div>
+                <div class="summary-kpi">
+                    <div class="summary-kpi__label">TIR Total Anualizada</div>
+                    <div class="summary-kpi__value ${totalIrrClass}">
+                        ${(totalIrr * 100).toFixed(2)}%
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // =========================================================================
+    // === ▲▲▲ FIN: NUEVO CÓDIGO AÑADIDO PARA EL SUMARIO FINAL ▲▲▲ ===========
+    // =========================================================================
+
+
     container.innerHTML = `
         <div class="card" style="margin-bottom: var(--sp-4);">
             <div class="card__content" style="display: flex; justify-content: space-around; text-align: center; padding: var(--sp-3);">
@@ -3595,176 +3178,22 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                 </div>
             </div>
         </div>
-        
-        <!-- NUEVA SECCIÓN: ANÁLISIS DE RIESGO -->
         <details class="accordion" open style="margin-bottom: var(--sp-4);">
-            <summary>
-                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
-                    <span class="material-icons">security</span>
-                    Análisis de Riesgo del Portafolio
-                </h3>
-                <span class="material-icons accordion__icon">expand_more</span>
-            </summary>
-            <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
-                
-                <!-- Tarjetas de métricas de riesgo -->
-                <div class="risk-metrics-grid" style="
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                    gap: var(--sp-3);
-                    margin-bottom: var(--sp-4);
-                ">
-                    <div class="risk-metric-card ${portfolioTotalPerformance.annualVolatility > 0.15 ? 'risk-high' : 'risk-low'}">
-                        <div class="risk-metric__icon">
-                            <span class="material-icons">waves</span>
-                        </div>
-                        <div class="risk-metric__value">
-                            ${portfolioTotalPerformance.annualVolatility ? (portfolioTotalPerformance.annualVolatility * 100).toFixed(1) : '0.0'}%
-                        </div>
-                        <div class="risk-metric__label">Volatilidad Anual</div>
-                        <div class="risk-metric__description">
-                            ${portfolioTotalPerformance.annualVolatility > 0.15 ? 'Alta' : 
-                              portfolioTotalPerformance.annualVolatility > 0.08 ? 'Moderada' : 'Baja'}
-                        </div>
-                    </div>
-                    
-                    <div class="risk-metric-card ${portfolioTotalPerformance.maxDrawdown > 0.2 ? 'risk-high' : 'risk-low'}">
-                        <div class="risk-metric__icon">
-                            <span class="material-icons">trending_down</span>
-                        </div>
-                        <div class="risk-metric__value">
-                            ${portfolioTotalPerformance.maxDrawdown ? (portfolioTotalPerformance.maxDrawdown * 100).toFixed(1) : '0.0'}%
-                        </div>
-                        <div class="risk-metric__label">Máxima Pérdida</div>
-                        <div class="risk-metric__description">
-                            Pérdida máxima histórica
-                        </div>
-                    </div>
-                    
-                    <div class="risk-metric-card ${portfolioTotalPerformance.sharpeRatio > 1 ? 'risk-good' : 'risk-neutral'}">
-                        <div class="risk-metric__icon">
-                            <span class="material-icons">speed</span>
-                        </div>
-                        <div class="risk-metric__value">
-                            ${portfolioTotalPerformance.sharpeRatio ? portfolioTotalPerformance.sharpeRatio.toFixed(2) : '0.00'}
-                        </div>
-                        <div class="risk-metric__label">Sharpe Ratio</div>
-                        <div class="risk-metric__description">
-                            ${portfolioTotalPerformance.sharpeRatio > 1 ? 'Bueno' : 
-                              portfolioTotalPerformance.sharpeRatio > 0 ? 'Neutral' : 'Pobre'}
-                        </div>
-                    </div>
-                    
-                    <div class="risk-metric-card ${portfolioTotalPerformance.sortinoRatio > 1 ? 'risk-good' : 'risk-neutral'}">
-                        <div class="risk-metric__icon">
-                            <span class="material-icons">arrow_downward</span>
-                        </div>
-                        <div class="risk-metric__value">
-                            ${portfolioTotalPerformance.sortinoRatio ? portfolioTotalPerformance.sortinoRatio.toFixed(2) : '0.00'}
-                        </div>
-                        <div class="risk-metric__label">Sortino Ratio</div>
-                        <div class="risk-metric__description">
-                            Riesgo vs retorno ajustado
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Gráficos de riesgo -->
-                <div class="chart-grid" style="
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                    gap: var(--sp-3);
-                    margin-bottom: var(--sp-3);
-                ">
-                    <div class="chart-container" style="height: 250px;">
-                        <canvas id="risk-analysis-chart"></canvas>
-                    </div>
-                    <div class="chart-container" style="height: 250px;">
-                        <canvas id="returns-distribution-chart"></canvas>
-                    </div>
-                </div>
-                
-                <!-- Gráfico de drawdown -->
-                <div class="chart-container" style="height: 200px; margin-top: var(--sp-3);">
-                    <canvas id="drawdown-chart"></canvas>
-                </div>
-                
-                <!-- Explicación -->
-                <div class="risk-explanation" style="
-                    background: var(--c-surface-variant);
-                    padding: var(--sp-3);
-                    border-radius: var(--border-radius-md);
-                    margin-top: var(--sp-3);
-                    font-size: var(--fs-sm);
-                ">
-                    <h4 style="margin-bottom: var(--sp-2);">📊 ¿Qué significan estas métricas?</h4>
-                    <ul style="margin: 0; padding-left: var(--sp-4);">
-                        <li><strong>Volatilidad Anual</strong>: Variabilidad típica de los retornos. Mayor = más riesgo.</li>
-                        <li><strong>Máxima Pérdida (Drawdown)</strong>: Mayor caída desde un pico histórico.</li>
-                        <li><strong>Sharpe Ratio</strong>: Retorno por unidad de riesgo. >1 = bueno.</li>
-                        <li><strong>Sortino Ratio</strong>: Similar a Sharpe pero solo penaliza pérdidas.</li>
-                    </ul>
-                </div>
-            </div>
-        </details>
-        
-        <!-- SECCIÓN DE ASIGNACIÓN -->
-        <details class="accordion" style="margin-bottom: var(--sp-4);">
-            <summary>
-                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
-                    <span class="material-icons">pie_chart</span>
-                    Asignación y Filtros
-                </h3>
-                <span class="material-icons accordion__icon">expand_more</span>
-            </summary>
+            <summary><h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">pie_chart</span>Asignación y Filtros</h3><span class="material-icons accordion__icon">expand_more</span></summary>
             <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
                 <div class="filter-pills" style="margin-bottom: var(--sp-2);">${pillsHTML}</div>
-                <div class="chart-container" style="height: 250px; margin-bottom: 0;">
-                    <canvas id="asset-allocation-chart"></canvas>
-                </div>
+                <div class="chart-container" style="height: 250px; margin-bottom: 0;"><canvas id="asset-allocation-chart"></canvas></div>
             </div>
         </details>
-        
         <div id="investment-assets-list"></div>
+
+        ${summaryCardHtml} <!-- <-- INYECTAMOS LA NUEVA TARJETA AQUÍ -->
         
-        <!-- Sumario Final -->
-        <div class="portfolio-summary-card">
-            <h3 class="portfolio-summary-card__title">
-                <span class="material-icons">military_tech</span>
-                Sumario Total del Portafolio
-            </h3>
-            <div class="portfolio-summary-card__grid">
-                <div class="summary-kpi">
-                    <div class="summary-kpi__label">P&L Total</div>
-                    <div class="summary-kpi__value ${portfolioTotalPerformance.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative'}">
-                        ${formatCurrency(portfolioTotalPerformance.pnlAbsoluto)}
-                        <div style="font-size: 0.6em; font-weight: 600;">(${portfolioTotalPerformance.pnlPorcentual.toFixed(1)}%)</div>
-                    </div>
-                </div>
-                <div class="summary-kpi">
-                    <div class="summary-kpi__label">TIR Total Anualizada</div>
-                    <div class="summary-kpi__value ${portfolioTotalPerformance.irr >= 0 ? 'text-positive' : 'text-negative'}">
-                        ${!isNaN(portfolioTotalPerformance.irr) ? (portfolioTotalPerformance.irr * 100).toFixed(2) : '0.00'}%
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Botones de acción -->
-        <div class="card card--no-bg" style="padding:0; margin-top: var(--sp-4); display: flex; gap: var(--sp-2);">
-            <button class="btn btn--secondary btn--full" data-action="manage-investment-accounts">
-                <span class="material-icons" style="font-size: 16px;">checklist</span>
-                Gestionar Activos
-            </button>
-            <button class="btn btn--primary btn--full" data-action="export-risk-report">
-                <span class="material-icons" style="font-size: 16px;">download</span>
-                Exportar Reporte
-            </button>
+        <div class="card card--no-bg" style="padding:0; margin-top: var(--sp-4);">
+            <button class="btn btn--secondary btn--full" data-action="manage-investment-accounts"><span class="material-icons" style="font-size: 16px;">checklist</span>Gestionar Activos</button>
         </div>`;
     
-    // 6. RENDERIZAR GRÁFICOS
     setTimeout(() => {
-        // Gráfico de asignación de activos
         const chartCtx = select('asset-allocation-chart')?.getContext('2d');
         if (chartCtx) {
             if (assetAllocationChart) assetAllocationChart.destroy();
@@ -3772,13 +3201,8 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             const treeData = [];
             displayAssetsData.forEach(asset => {
                 const valor = asset[keyToSum] / 100;
-                if (valor > 0) treeData.push({ 
-                    tipo: toSentenceCase(asset.tipo || 'S/T'), 
-                    nombre: asset.nombre, 
-                    valor: valor 
-                });
+                if (valor > 0) treeData.push({ tipo: toSentenceCase(asset.tipo || 'S/T'), nombre: asset.nombre, valor: valor });
             });
-            
             if (treeData.length > 0) {
                 assetAllocationChart = new Chart(chartCtx, {
                     type: 'treemap',
@@ -3791,54 +3215,16 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                             borderWidth: 1.5,
                             borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'),
                             backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'),
-                            labels: { 
-                                display: true, 
-                                color: '#FFFFFF', 
-                                font: { size: 11, weight: '600' }, 
-                                align: 'center', 
-                                position: 'middle', 
-                                formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) 
-                            }
+                            labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) }
                         }]
                     },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        plugins: { 
-                            legend: { display: false }, 
-                            tooltip: { 
-                                callbacks: { 
-                                    label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` 
-                                } 
-                            }, 
-                            datalabels: { display: false } 
-                        } 
-                    }
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false } } }
                 });
+            } else {
+                select('asset-allocation-chart').closest('.chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con valor para mostrar.</p></div>`;
             }
         }
         
-        // Gráficos de riesgo (solo si hay datos)
-        if (portfolioTotalPerformance.monthlyReturns && 
-            portfolioTotalPerformance.monthlyReturns.length > 0) {
-            try {
-                renderRiskAnalysisChart('risk-analysis-chart', portfolioTotalPerformance);
-                renderReturnsDistributionChart('returns-distribution-chart', portfolioTotalPerformance.monthlyReturns);
-            } catch (error) {
-                console.warn('No se pudieron renderizar gráficos de riesgo:', error);
-            }
-        }
-        
-        if (portfolioTotalPerformance.historicalData && 
-            portfolioTotalPerformance.historicalData.length > 1) {
-            try {
-                renderDrawdownChart('drawdown-chart', portfolioTotalPerformance.historicalData);
-            } catch (error) {
-                console.warn('No se pudo renderizar gráfico de drawdown:', error);
-            }
-        }
-        
-        // Lista de activos
         const listContainer = select('investment-assets-list');
         if (listContainer) {
             const listHtml = displayAssetsData
@@ -3848,19 +3234,24 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                     const pnlClassText = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
                     const tirClassPill = cuenta.irr >= 0 ? 'is-positive' : 'is-negative';
 
+                    // ▼▼▼ ¡NUEVA LÓGICA AQUÍ! ▼▼▼
+                    // 1. Buscamos la última valoración para esta cuenta específica.
                     const ultimaValoracion = (db.inversiones_historial || [])
                         .filter(v => v.cuentaId === cuenta.id)
                         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
 
+                    // 2. Preparamos el texto a mostrar.
                     let fechaUltimaValoracionHTML = '<small class="asset-card__last-valuation-date">Sin valorar</small>';
                     if (ultimaValoracion) {
                         const fecha = new Date(ultimaValoracion.fecha + 'T12:00:00Z');
                         const fechaFormateada = fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
                         fechaUltimaValoracionHTML = `<small class="asset-card__last-valuation-date">Val. ${fechaFormateada}</small>`;
                     }
+                    // ▲▲▲ FIN DE LA NUEVA LÓGICA ▲▲▲
 
                     return `
                     <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
+                        
                         <div class="asset-card__details">
                             <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
                             <div class="asset-card__allocation">
@@ -3870,8 +3261,10 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                                 ${cuenta.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(cuenta.pnlAbsoluto)}
                             </div>
                         </div>
+
                         <div class="asset-card__figures">
                             <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
+                            
                             <div style="display: flex; gap: var(--sp-2); align-items: center; justify-content: flex-end;">
                                 <button 
                                     class="asset-card__pnl-pill ${pnlClassPill}" 
@@ -3890,6 +3283,8 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                                     TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
                                 </button>
                             </div>
+                            
+                            <!-- ▼▼▼ HTML MODIFICADO AQUÍ ▼▼▼ -->
                             <div class="asset-card__valuation-area">
                                 ${fechaUltimaValoracionHTML}
                                 <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}">
@@ -3897,15 +3292,19 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                                     Valorar
                                 </button>
                             </div>
+                            <!-- ▲▲▲ FIN DEL HTML MODIFICADO ▲▲▲ -->
+
                         </div>
                     </div>`;
                 }).join('');
 
             listContainer.innerHTML = listHtml ? `<div class="card fade-in-up"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
+            
             applyInvestmentItemInteractions(listContainer);
         }
-    }, 100);
+    }, 50);
 };
+
 
 const handleShowPnlBreakdown = async (accountId) => {
     const cuenta = db.cuentas.find(c => c.id === accountId);
@@ -9011,15 +8410,6 @@ const renderInversionesPage = async (containerId) => {
 
 // ▼▼▼ REEMPLAZA TU FUNCIÓN attachEventListeners CON ESTA VERSIÓN LIMPIA ▼▼▼
 const attachEventListeners = () => {
-	document.addEventListener('click', (e) => {
-    // ... otros event listeners existentes ...
-    
-    // Nuevo event listener para exportar reporte
-    if (e.target.closest('[data-action="export-risk-report"]')) {
-        e.preventDefault();
-        exportRiskReport();
-    }
-});
 	// --- LÓGICA DE MODO PRIVACIDAD ---
     // Al hacer clic en el valor del Patrimonio Neto (KPI principal), alternamos el modo.
     document.body.addEventListener('click', (e) => {
@@ -11329,12 +10719,3 @@ if ('serviceWorker' in navigator) {
       });
   });
  }
- // Añade esto al final del archivo main.js para verificar
-console.log('=== VERIFICACIÓN DE FUNCIONES ===');
-console.log('calculateStandardDeviation:', typeof calculateStandardDeviation);
-console.log('calculateAnnualVolatility:', typeof calculateAnnualVolatility);
-console.log('calculateMaxDrawdown:', typeof calculateMaxDrawdown);
-console.log('calculateSharpeRatio:', typeof calculateSharpeRatio);
-console.log('calculateSortinoRatio:', typeof calculateSortinoRatio);
-console.log('calculateBeta:', typeof calculateBeta);
-console.log('=== FIN DE VERIFICACIÓN ===');
