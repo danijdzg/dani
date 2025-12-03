@@ -6799,15 +6799,6 @@ const updatePatrimonioChange = async () => {
         }
     }
 };
-const scheduleDashboardUpdate = () => {
-    if (dashboardUpdateDebounceTimer) {
-        clearTimeout(dashboardUpdateDebounceTimer);
-    }
-    
-    dashboardUpdateDebounceTimer = setTimeout(async () => {
-        await updateDashboardKPIs();
-    }, 300);
-};
 
 const updateDashboardKPIs = async () => {
     try {
