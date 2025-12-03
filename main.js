@@ -1,3 +1,61 @@
+// Añade este código temporal para depurar
+const testKeyboardNav = () => {
+    console.log('Probando navegación por teclado:');
+    
+    // Simular flujo completo
+    const cantidad = select('movimiento-cantidad');
+    const concepto = select('movimiento-concepto');
+    const descripcion = select('movimiento-descripcion');
+    
+    if (cantidad && concepto && descripcion) {
+        console.log('✓ Campos encontrados');
+        
+        // Probar Enter en cantidad
+        cantidad.focus();
+        cantidad.value = '100';
+        const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
+        cantidad.dispatchEvent(enterEvent);
+        
+        setTimeout(() => {
+            console.log('Después de Enter en cantidad:', 
+                        document.activeElement?.id || 'Ningún elemento activo');
+        }, 100);
+    }
+};
+
+// Ejecutar después de cargar la página
+setTimeout(testKeyboardNav, 2000);
+// Verificar que se muestran errores
+const testValidation = () => {
+    const cantidadInput = select('movimiento-cantidad');
+    if (cantidadInput) {
+        // Probar valor inválido
+        cantidadInput.value = 'abc';
+        cantidadInput.dispatchEvent(new Event('input'));
+        
+        setTimeout(() => {
+            const errorEl = document.querySelector('.form-error');
+            console.log('Error mostrado:', errorEl?.textContent || 'No hay error');
+        }, 500);
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
 
 const setupEnhancedFormNavigation = () => {
@@ -4306,60 +4364,47 @@ const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    const hour = new Date().getHours();
-    let greeting = 'Buenas noches';
-    let greetingIcon = 'nights_stay';
-    if (hour >= 5 && hour < 12) {
-        greeting = 'Buenos días';
-        greetingIcon = 'wb_sunny';
-    } else if (hour >= 12 && hour < 21) {
-        greeting = 'Buenas tardes';
-        greetingIcon = 'partly_cloudy_day';
-    }
-    const userName = currentUser ? (currentUser.displayName || currentUser.email.split('@')[0]) : 'Piloto';
-
     container.innerHTML = `
         <div style="padding: 0 var(--sp-2) var(--sp-4);">
             
-            <!-- Header limpio y minimalista -->
+            <!-- Patrimonio Total - Versión compacta -->
             <div class="hero-card" style="
                 background: var(--c-surface);
-                padding: 20px 16px;
-                border-radius: 20px;
+                padding: 16px;
+                border-radius: 16px;
                 margin-bottom: var(--sp-4);
                 border: 1px solid var(--c-outline);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                text-align: center;
             ">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="material-icons" style="font-size: 20px; color: var(--c-primary);">${greetingIcon}</span>
-                        <div>
-                            <div style="font-size: 0.9rem; color: var(--c-on-surface-secondary);">${greeting}</div>
-                            <div style="font-size: 1rem; font-weight: 700; color: var(--c-on-surface);">${userName}</div>
-                        </div>
+                <!-- Patrimonio Total -->
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 0.8rem; color: var(--c-on-surface-secondary); font-weight: 600; letter-spacing: 0.5px; margin-bottom: 6px;">
+                        PATRIMONIO TOTAL
                     </div>
-                    <div style="font-size: 0.75rem; color: var(--c-on-surface-tertiary);">
-                        ${new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                    <div id="kpi-patrimonio-neto-value" class="hero-value skeleton" data-current-value="0" 
+                         style="font-size: 2.2rem; font-weight: 800; margin: 0; line-height: 1; color: var(--c-on-surface);">
+                        0,00 €
                     </div>
-                </div>
-                
-                <!-- Patrimonio Total - Grande y limpio -->
-                <div style="text-align: center; margin-bottom: 24px;">
-                    <div style="font-size: 0.8rem; color: var(--c-on-surface-secondary); font-weight: 600; letter-spacing: 0.5px; margin-bottom: 6px;">PATRIMONIO TOTAL</div>
-                    <div id="kpi-patrimonio-neto-value" class="hero-value skeleton" data-current-value="0" style="font-size: 2.8rem; font-weight: 800; margin: 0; line-height: 1; color: var(--c-on-surface);">0,00 €</div>
                 </div>
                 
                 <!-- Desglose: Liquidez + Capital Aportado -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: var(--c-surface-variant); padding: 16px; border-radius: 16px; margin-bottom: 16px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div style="text-align: center;">
                         <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom: 4px;">LIQUIDEZ</div>
-                        <div id="kpi-liquidez-value" class="skeleton" style="font-size: 1.1rem; font-weight: 700; color: var(--c-on-surface);">0,00 €</div>
+                        <div id="kpi-liquidez-value" class="skeleton" 
+                             style="font-size: 1rem; font-weight: 700; color: var(--c-on-surface);">
+                            0,00 €
+                        </div>
                     </div>
                     <div style="text-align: center;">
                         <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom: 4px;">INVERTIDO</div>
-                        <div id="kpi-inversion-total" class="skeleton" style="font-size: 1.1rem; font-weight: 700; color: var(--c-on-surface);">0,00 €</div>
+                        <div id="kpi-inversion-total" class="skeleton" 
+                             style="font-size: 1rem; font-weight: 700; color: var(--c-on-surface);">
+                            0,00 €
+                        </div>
                     </div>
                 </div>
+            </div>
                 
                 <!-- Inversiones: Ganancia/Pérdida y TIR -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
