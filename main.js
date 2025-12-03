@@ -5752,6 +5752,15 @@ const updateNetWorthChart = async (saldos) => {
     });
 };
 
+const getLiquidityAccounts = () => {
+    const visibleAccounts = getVisibleAccounts();
+    return visibleAccounts.filter((c) => {
+        const tipo = (c.tipo || '').trim().toUpperCase();
+        // Incluir BANCOS, EFECTIVO y TARJETA
+        return ['BANCO', 'EFECTIVO', 'TARJETA'].includes(tipo);
+    });
+};
+
 // Busca y reemplaza la función scheduleDashboardUpdate() con esta versión actualizada
 const scheduleDashboardUpdate = () => {
     if (dashboardUpdateDebounceTimer) {
@@ -5763,13 +5772,13 @@ const scheduleDashboardUpdate = () => {
             // Obtener datos necesarios
             const saldos = await getSaldos();
             const visibleAccounts = getVisibleAccounts();
-            const liquidAccounts = getLiquidAccounts();
-            const investmentAccounts = visibleAccounts.filter(c => c.esInversion);
             
-            // 1. CALCULAR LIQUIDEZ (suma de cuentas líquidas)
+            // 1. CALCULAR LIQUIDEZ (solo Bancos + Efectivo)
+            const liquidityAccounts = getLiquidityAccounts(); // ← Usar la nueva función
             const liquidezTotal = liquidityAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
             
             // 2. CALCULAR CAPITAL APORTADO (saldo de cuentas de inversión)
+            const investmentAccounts = visibleAccounts.filter(c => c.esInversion);
             const capitalAportadoTotal = investmentAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
             
             // 3. CALCULAR PATRIMONIO TOTAL = Liquidez + Capital Aportado
