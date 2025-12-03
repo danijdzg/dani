@@ -1725,16 +1725,86 @@ const showToast = (message, type = 'info', duration = 3500) => {
 			return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 		};
 // === AÑADE ESTAS FUNCIONES DESPUÉS DE LA LÍNEA 200 (después de toSentenceCase) ===
+// === REEMPLAZA TODO EL BLOQUE DE FUNCIONES CON ESTO ===
+// Coloca esto en la línea 1729 donde está el error
 
-const calculateStandardDeviation = (returns) => {
-    if (!returns || returns.length < 2) return 0;
-    
-    const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-    const squaredDifferences = returns.map(r => Math.pow(r - mean, 2));
-    const variance = squaredDifferences.reduce((sum, sq) => sum + sq, 0) / (returns.length - 1);
-    
-    return Math.sqrt(variance);
-};
+// Solo define si no existen ya
+if (typeof calculateStandardDeviation === 'undefined') {
+    const calculateStandardDeviation = (returns) => {
+        if (!returns || returns.length < 2) return 0;
+        
+        const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+        const squaredDifferences = returns.map(r => Math.pow(r - mean, 2));
+        const variance = squaredDifferences.reduce((sum, sq) => sum + sq, 0) / (returns.length - 1);
+        
+        return Math.sqrt(variance);
+    };
+
+    const calculateAnnualVolatility = (monthlyReturns) => {
+        const stdDev = calculateStandardDeviation(monthlyReturns);
+        return stdDev * Math.sqrt(12);
+    };
+
+    const calculateMaxDrawdown = (values) => {
+        if (!values || values.length < 2) return 0;
+        
+        let peak = values[0];
+        let maxDrawdown = 0;
+        
+        for (let i = 1; i < values.length; i++) {
+            if (values[i] > peak) {
+                peak = values[i];
+            } else {
+                const drawdown = (peak - values[i]) / peak;
+                if (drawdown > maxDrawdown) {
+                    maxDrawdown = drawdown;
+                }
+            }
+        }
+        
+        return maxDrawdown;
+    };
+
+    const calculateSharpeRatio = (returns, riskFreeRate = 0.02) => {
+        if (!returns || returns.length < 2) return 0;
+        
+        const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+        const stdDev = calculateStandardDeviation(returns);
+        
+        if (stdDev === 0) return 0;
+        
+        return (meanReturn - riskFreeRate) / stdDev;
+    };
+
+    const calculateSortinoRatio = (returns, riskFreeRate = 0.02) => {
+        if (!returns || returns.length < 2) return 0;
+        
+        const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+        const negativeReturns = returns.filter(r => r < 0);
+        const downsideStdDev = calculateStandardDeviation(negativeReturns);
+        
+        if (downsideStdDev === 0) return 0;
+        
+        return (meanReturn - riskFreeRate) / downsideStdDev;
+    };
+
+    const calculateBeta = (portfolioReturns, marketReturns) => {
+        if (!portfolioReturns || !marketReturns || portfolioReturns.length !== marketReturns.length) return 1;
+        
+        const portfolioMean = portfolioReturns.reduce((sum, r) => sum + r, 0) / portfolioReturns.length;
+        const marketMean = marketReturns.reduce((sum, r) => sum + r, 0) / marketReturns.length;
+        
+        let covariance = 0;
+        let marketVariance = 0;
+        
+        for (let i = 0; i < portfolioReturns.length; i++) {
+            covariance += (portfolioReturns[i] - portfolioMean) * (marketReturns[i] - marketMean);
+            marketVariance += Math.pow(marketReturns[i] - marketMean, 2);
+        }
+        
+        return covariance / marketVariance;
+    };
+}
 
 const calculateAnnualVolatility = (monthlyReturns) => {
     const stdDev = calculateStandardDeviation(monthlyReturns);
