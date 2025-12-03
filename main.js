@@ -2285,33 +2285,7 @@ const getAllSaldos = () => {
             });
             return saldos;
         };
-	// Validar datos del portafolio - AÑADIR DESPUÉS DE getSaldos()
-const validatePortfolioData = () => {
-    const errors = [];
-    const warnings = [];
-    
-    // Verificar cuentas de inversión sin valoraciones
-    const investmentAccounts = getVisibleAccounts().filter(c => c.esInversion);
-    
-    investmentAccounts.forEach(account => {
-        const valoraciones = (db.inversiones_historial || [])
-            .filter(v => v.cuentaId === account.id);
-        
-        if (valoraciones.length === 0) {
-            errors.push(`"${account.nombre}" no tiene valoraciones registradas`);
-        } else {
-            // Verificar fecha de última valoración
-            const lastValuation = new Date(valoraciones[0].fecha);
-            const daysSinceValuation = (new Date() - lastValuation) / (1000 * 60 * 60 * 24);
-            
-            if (daysSinceValuation > 30) {
-                warnings.push(`"${account.nombre}" no se valora desde hace ${Math.floor(daysSinceValuation)} días`);
-            }
-        }
-    });
-    
-    return { errors, warnings };
-};	
+		
 	const fetchAllMovementsForHistory = async () => {
     if (!currentUser) return [];
     try {
@@ -2442,147 +2416,89 @@ const getFilteredMovements = async (forComparison = false) => {
     }
     return 0; // Si no converge, devuelve 0 en lugar de colgarse
 };
-const calculateEnhancedIRR = (cashflows) => {
-    if (cashflows.length < 2) return 0;
-    
-    // Ordenar por fecha
-    const sortedCashflows = [...cashflows].sort((a, b) => a.date.getTime() - b.date.getTime());
-    
-    // Convertir a días desde el primer cashflow
-    const firstDate = sortedCashflows[0].date;
-    const cashflowDays = sortedCashflows.map(cf => ({
-        amount: cf.amount,
-        days: (cf.date.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24)
-    }));
-    
-    // Función NPV para TIR diaria
-    const npv = (dailyRate) => {
-        let total = 0;
-        for (const cf of cashflowDays) {
-            total += cf.amount / Math.pow(1 + dailyRate, cf.days);
-        }
-        return total;
-    };
-    
-    // Método de Newton-Raphson mejorado
-    let guess = 0.0001; // Tasa diaria inicial
-    let lastGuess = 0;
-    let iterations = 0;
-    const maxIterations = 100;
-    const tolerance = 1e-9;
-    
-    while (iterations < maxIterations) {
-        const npvValue = npv(guess);
-        const derivative = (npv(guess * 1.0001) - npvValue) / (guess * 0.0001);
-        
-        if (Math.abs(derivative) < 1e-12) break;
-        
-        lastGuess = guess;
-        guess = guess - npvValue / derivative;
-        
-        if (Math.abs(guess - lastGuess) < tolerance) break;
-        if (Math.abs(guess) > 1) break; // Evitar valores extremos
-        
-        iterations++;
-    }
-    
-    // Convertir tasa diaria a anual
-    const annualIRR = Math.pow(1 + guess, 365.25) - 1;
-    
-    // Limitar valores absurdos
-    return Math.abs(annualIRR) > 10 ? 0 : annualIRR;
-};		
+		
 const calculatePortfolioPerformance = async (cuentaId = null) => {
-    if (!dataLoaded.inversiones) await loadInversiones();
+    // ... (Inicio de la función idéntico: carga de movimientos y cuentas) ...
+    const allMovements = (typeof allDiarioMovementsCache !== 'undefined' && allDiarioMovementsCache.length > 0) 
+        ? allDiarioMovementsCache 
+        : await fetchAllMovementsForHistory();
     
-    const allMovements = await fetchAllMovementsForHistory();
-    const investmentAccounts = cuentaId 
-        ? getVisibleAccounts().filter(c => c.id === cuentaId && c.esInversion)
-        : getVisibleAccounts().filter(c => c.esInversion);
+    if (!dataLoaded.inversiones) await loadInversiones();
+
+    const allInvestmentAccounts = getVisibleAccounts().filter(c => c.esInversion);
+    const investmentAccounts = cuentaId ? allInvestmentAccounts.filter(c => c.id === cuentaId) : allInvestmentAccounts;
     
     if (investmentAccounts.length === 0) {
-        return { 
-            valorActual: 0, 
-            capitalInvertido: 0, 
-            pnlAbsoluto: 0, 
-            pnlPorcentual: 0, 
-            tir: 0, 
-            daysActive: 0
-        };
+        return { valorActual: 0, capitalInvertido: 0, pnlAbsoluto: 0, pnlPorcentual: 0, irr: 0, daysActive: 0 };
     }
     
     let totalValorActual = 0;
-    let totalCashflows = [];
-    let firstDate = new Date();
-    
+    let totalCapitalInvertido_para_PNL = 0;
+    let allIrrCashflows = [];
+    let firstMovementDate = new Date(); // Para calcular antigüedad
+
     for (const cuenta of investmentAccounts) {
-        // Obtener última valoración
+        // ... (Lógica de P&L y Filtrado de Movimientos idéntica a la anterior) ...
         const valoraciones = (db.inversiones_historial || [])
             .filter(v => v.cuentaId === cuenta.id)
-            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+        const valorActual = valoraciones.length > 0 ? valoraciones[0].valor : 0;
+        const capitalInvertido_para_PNL = cuenta.saldo || 0;
         
-        if (valoraciones.length > 0) {
-            totalValorActual += valoraciones[0].valor;
-        }
-        
-        // Obtener cashflows REALES de esta cuenta
+        totalValorActual += valorActual;
+        totalCapitalInvertido_para_PNL += capitalInvertido_para_PNL;
+
         const accountMovements = allMovements.filter(m => 
             (m.tipo === 'movimiento' && m.cuentaId === cuenta.id) ||
             (m.tipo === 'traspaso' && (m.cuentaDestinoId === cuenta.id || m.cuentaOrigenId === cuenta.id))
         );
-        
-        // Procesar cada movimiento
-        accountMovements.forEach(mov => {
-            let amount = 0;
-            let date = new Date(mov.fecha);
-            
-            if (mov.tipo === 'movimiento') {
-                amount = -mov.cantidad; // Negativo = inversión, Positivo = retiro
-            } else if (mov.tipo === 'traspaso') {
-                if (mov.cuentaDestinoId === cuenta.id) {
-                    amount = -mov.cantidad; // Dinero entra (inversión)
-                } else if (mov.cuentaOrigenId === cuenta.id) {
-                    amount = mov.cantidad; // Dinero sale (retiro)
-                }
-            }
-            
-            if (amount !== 0) {
-                totalCashflows.push({ amount, date });
-                if (date < firstDate) firstDate = date;
-            }
-        });
-        
-        // Añadir valoración final como cashflow positivo
-        if (valoraciones.length > 0) {
-            totalCashflows.push({ 
-                amount: valoraciones[0].valor, 
-                date: new Date(valoraciones[0].fecha) 
-            });
+
+        // Detectar fecha del primer movimiento para antigüedad
+        if (accountMovements.length > 0) {
+            const firstInAcc = accountMovements.reduce((oldest, current) => 
+                new Date(current.fecha) < new Date(oldest.fecha) ? current : oldest
+            );
+            const mDate = new Date(firstInAcc.fecha);
+            if (mDate < firstMovementDate) firstMovementDate = mDate;
         }
+
+        // ... (Lógica de conversión a Cashflows idéntica) ...
+        const irrCashflows = accountMovements
+            .map(mov => {
+                let effectOnAccount = 0;
+                if (mov.tipo === 'movimiento') effectOnAccount = mov.cantidad;
+                else if (mov.tipo === 'traspaso') {
+                    if (mov.cuentaDestinoId === cuenta.id) effectOnAccount = mov.cantidad;
+                    else if (mov.cuentaOrigenId === cuenta.id) effectOnAccount = -mov.cantidad;
+                }
+                
+                if (effectOnAccount !== 0) {
+                    return { amount: -effectOnAccount, date: new Date(mov.fecha) };
+                }
+                return null;
+            })
+            .filter(cf => cf !== null);
+
+        if (valorActual !== 0) {
+            irrCashflows.push({ amount: valorActual, date: new Date() });
+        }
+        allIrrCashflows.push(...irrCashflows);
     }
-    
-    // CORRECCIÓN CRÍTICA: Calcular capital invertido REAL (suma de inversiones)
-    const capitalInvertido = Math.abs(totalCashflows
-        .filter(cf => cf.amount < 0)
-        .reduce((sum, cf) => sum + cf.amount, 0));
-    
-    // Calcular P&L CORRECTO
-    const pnlAbsoluto = totalValorActual - capitalInvertido;
-    const pnlPorcentual = capitalInvertido > 0 ? (pnlAbsoluto / capitalInvertido) * 100 : 0;
-    
-    // Calcular TIR mejorada
-    const tir = calculateEnhancedIRR(totalCashflows);
-    
-    // Días activos
-    const daysActive = Math.max(1, (new Date() - firstDate) / (1000 * 60 * 60 * 24));
-    
+
+    const pnlAbsoluto = totalValorActual - totalCapitalInvertido_para_PNL;
+    const pnlPorcentual = totalCapitalInvertido_para_PNL !== 0 ? (pnlAbsoluto / totalCapitalInvertido_para_PNL) * 100 : 0;
+    const irr = calculateIRR(allIrrCashflows);
+
+    // NUEVO: Calculamos días activos
+    const daysActive = (new Date() - firstMovementDate) / (1000 * 60 * 60 * 24);
+
     return { 
         valorActual: totalValorActual, 
-        capitalInvertido, 
+        capitalInvertido: totalCapitalInvertido_para_PNL,
         pnlAbsoluto, 
         pnlPorcentual, 
-        tir,
-        daysActive
+        irr,
+        daysActive // Retornamos la antigüedad
     };
 };
 
@@ -5590,200 +5506,143 @@ const renderPlanificacionPage = () => {
     renderInformeWidgetContent();
 };
 
-const renderPatrimonioPage = async () => {
+const renderPatrimonioPage = () => {
     const container = select(PAGE_IDS.PATRIMONIO);
     if (!container) return;
 
+    // Estructura HTML
     container.innerHTML = `
-        <div style="padding: 0 var(--sp-2) var(--sp-4);">
-            
-            <!-- Encabezado simple -->
-            <div style="text-align: center; margin-bottom: var(--sp-4);">
-                <h2 style="margin: 0; color: var(--c-on-surface);">
-                    <span class="material-icons" style="vertical-align: middle; color: var(--c-warning);">trending_up</span>
-                    Portafolio
-                </h2>
+        <details class="accordion" style="margin-bottom: var(--sp-4);">
+            <summary>
+                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                    <span class="material-icons">account_balance</span>
+                    Visión General
+                </h3>
+                <span class="material-icons accordion__icon">expand_more</span>
+            </summary>
+            <div class="accordion__content" id="patrimonio-overview-container" style="padding: 0 var(--sp-2);">
+                <div class="skeleton" style="height: 400px; border-radius: var(--border-radius-lg);"></div>
             </div>
+        </details>
 
-            <!-- Botones de acción -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: var(--sp-3);">
-                <button class="btn btn--secondary" data-action="show-portfolio-resumen">
-                    <span class="material-icons" style="vertical-align: middle;">dashboard</span>
-                    Resumen
-                </button>
-                <button class="btn btn--secondary" data-action="validate-portfolio">
-                    <span class="material-icons" style="vertical-align: middle;">verified</span>
-                    Validar
-                </button>
-            </div>
-
-            <!-- Contenedor para el contenido -->
-            <div id="portfolio-content-container">
-                <div style="text-align: center; padding: 40px 20px;">
-                    <span class="spinner"></span>
-                    <p style="margin-top: 12px; color: var(--c-on-surface-secondary);">Cargando portafolio...</p>
+        <details id="acordeon-portafolio" class="accordion" style="margin-bottom: var(--sp-4);">
+            <summary>
+                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                    <span class="material-icons">rocket_launch</span>
+                    Portafolio de Inversión
+                </h3>
+                <span class="material-icons accordion__icon">expand_more</span>
+            </summary>
+            <div class="accordion__content" style="padding: 0 var(--sp-2);">
+                <div id="portfolio-evolution-container">
+                     <div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"></div>
+                </div>
+                <div id="portfolio-main-content" style="margin-top: var(--sp-4);">
+                    <div class="skeleton" style="height: 300px; border-radius: var(--border-radius-lg);"></div>
                 </div>
             </div>
-
+        </details>
+        
+        <div class="card card--no-bg accordion-wrapper">
+            <details id="acordeon-extracto_cuenta" class="accordion informe-acordeon">
+                <summary id="summary-extracto-trigger" style="user-select: none; -webkit-user-select: none;"> 
+                    <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                        <span class="material-icons">wysiwyg</span>
+                        <span>Extracto de Cuenta</span>
+                    </h3>
+                    <span class="material-icons accordion__icon">expand_more</span>
+                </summary>
+                <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
+                    <div id="informe-content-extracto_cuenta">
+                         <div id="informe-cuenta-wrapper">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta:</label>
+                                
+                                <div style="display: flex; gap: 8px; align-items: stretch; width: 100%;">
+                                    <div class="input-wrapper" style="flex-grow: 1; min-width: 0;">
+                                        <select id="informe-cuenta-select" class="form-select"></select>
+                                    </div>
+                                    <button id="btn-extracto-todo" class="btn btn--secondary" style="flex-shrink: 0; min-width: auto; padding: 0 16px; font-weight: 700; white-space: nowrap;" title="Ver todo ordenado por fecha">
+                                        TODO
+                                    </button>
+                                </div>
+                                </div>
+                        </div>
+                        <div id="informe-resultado-container" style="margin-top: var(--sp-4);">
+                            <div class="empty-state" style="background:transparent; padding:var(--sp-2); border:none;">
+                                <p style="font-size:0.85rem;">
+                                    Selecciona una cuenta o pulsa <strong>TODO</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </details>
         </div>
     `;
-    
-    // Cargar contenido inicial
-    setTimeout(() => showPortfolioResumen(), 100);
-};
-const showPortfolioResumen = async () => {
-    const container = select('portfolio-content-container');
-    if (!container) return;
-    
-    try {
-        const performance = await calculatePortfolioPerformance();
+
+    setTimeout(async () => {
+        // Carga Visión General
+        await renderPatrimonioOverviewWidget('patrimonio-overview-container');
         
-        container.innerHTML = `
-            <div style="display: grid; gap: var(--sp-3);">
+        // --- LÓGICA DEL BOTÓN "TODO" REFORZADA ---
+        const btnTodo = select('btn-extracto-todo');
+        if (btnTodo) {
+            // Eliminamos listeners previos clonando el nodo (truco de seguridad)
+            const newBtn = btnTodo.cloneNode(true);
+            btnTodo.parentNode.replaceChild(newBtn, btnTodo);
+            
+            newBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation(); // Evitar que cierre el acordeón
+                e.target.blur();
                 
-                <!-- KPIs principales -->
-                <div class="card">
-                    <div class="card__content" style="text-align: center;">
-                        <div style="font-size: 0.9rem; color: var(--c-on-surface-secondary); margin-bottom: 8px; font-weight: 600;">
-                            VALORACIÓN ACTUAL
-                        </div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--c-on-surface); margin-bottom: 16px;">
-                            ${formatCurrency(performance.valorActual)}
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-                            <div>
-                                <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">Invertido</div>
-                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--c-on-surface);">
-                                    ${formatCurrency(performance.capitalInvertido)}
-                                </div>
-                            </div>
-                            <div>
-                                <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">Días</div>
-                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--c-on-surface);">
-                                    ${Math.floor(performance.daysActive)}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- P&L -->
-                        <div style="
-                            background: ${performance.pnlAbsoluto >= 0 ? 
-                                'rgba(0, 179, 77, 0.1)' : 
-                                'rgba(255, 59, 48, 0.1)'};
-                            padding: 16px;
-                            border-radius: 12px;
-                            border: 2px solid ${performance.pnlAbsoluto >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};
-                        ">
-                            <div style="font-size: 0.85rem; color: var(--c-on-surface-secondary); margin-bottom: 8px; font-weight: 600;">
-                                GANANCIA / PÉRDIDA
-                            </div>
-                            <div style="font-size: 1.4rem; font-weight: 800; 
-                                color: ${performance.pnlAbsoluto >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};">
-                                ${performance.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(performance.pnlAbsoluto)}
-                                <div style="font-size: 1rem; margin-top: 4px;">
-                                    (${performance.pnlPorcentual.toFixed(1)}%)
-                                </div>
-                            </div>
-                            
-                            <div style="font-size: 0.85rem; color: var(--c-on-surface-secondary); margin-top: 12px; font-weight: 600;">
-                                TIR ANUAL
-                            </div>
-                            <div style="font-size: 1.2rem; font-weight: 800; 
-                                color: ${performance.tir >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};">
-                                ${(performance.tir * 100).toFixed(2)}%
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Activos -->
-                <div class="card">
-                    <div class="card__header">
-                        <h3 style="margin: 0; font-size: 1rem; font-weight: 700;">
-                            <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">list</span>
-                            Tus Activos
-                        </h3>
-                    </div>
-                    <div class="card__content" id="portfolio-assets-list">
-                        <div style="text-align: center; padding: 20px;">
-                            <span class="spinner"></span>
-                            <p style="margin-top: 8px; color: var(--c-on-surface-secondary);">Cargando activos...</p>
-                        </div>
-                    </div>
-                </div>
-                
-            </div>
-        `;
+                // Aseguramos que la función existe antes de llamarla
+                if (typeof handleGenerateGlobalExtract === 'function') {
+                    handleGenerateGlobalExtract(e.target);
+                } else {
+                    console.error("La función handleGenerateGlobalExtract no está definida.");
+                    showToast("Error interno: función no encontrada.", "danger");
+                }
+            });
+        }
+        // ------------------------------
+
+        // Lógica Selector Individual
+        const selectCuenta = select('informe-cuenta-select');
+        if (selectCuenta) {
+            const populate = (el, data) => {
+                let opts = '<option value="">Seleccionar cuenta...</option>';
+                [...data].sort((a,b) => a.nombre.localeCompare(b.nombre))
+                         .forEach(i => opts += `<option value="${i.id}">${i.nombre}</option>`);
+                el.innerHTML = opts;
+            };
+            populate(selectCuenta, getVisibleAccounts());
+            createCustomSelect(selectCuenta);
+
+            selectCuenta.addEventListener('change', () => {
+                handleGenerateInformeCuenta(null, null);
+            });
+        }
+
+        // Lógica Portafolio
+        const acordeonPortafolio = select('acordeon-portafolio');
+        if (acordeonPortafolio) {
+            const loadPortfolioData = async () => {
+                await renderPortfolioEvolutionChart('portfolio-evolution-container');
+                await renderPortfolioMainContent('portfolio-main-content');
+            };
+            acordeonPortafolio.addEventListener('toggle', async () => {
+                if (acordeonPortafolio.open && !acordeonPortafolio.dataset.loaded) {
+                    await loadPortfolioData();
+                    acordeonPortafolio.dataset.loaded = "true"; 
+                }
+            });
+        }
         
-        // Cargar activos
-        setTimeout(() => loadPortfolioAssets(), 100);
-        
-    } catch (error) {
-        console.error('Error cargando resumen:', error);
-        container.innerHTML = `
-            <div class="empty-state">
-                <span class="material-icons">error</span>
-                <p>Error al cargar el portafolio</p>
-                <button class="btn btn--secondary" onclick="showPortfolioResumen()">Reintentar</button>
-            </div>
-        `;
-    }
+    }, 50);
 };
 
-const loadPortfolioAssets = async () => {
-    const container = select('portfolio-assets-list');
-    if (!container) return;
-    
-    const investmentAccounts = getVisibleAccounts().filter(c => c.esInversion);
-    
-    if (investmentAccounts.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state" style="background: transparent; border: none;">
-                <p>No hay activos de inversión</p>
-            </div>
-        `;
-        return;
-    }
-    
-    let assetsHTML = '';
-    
-    for (const cuenta of investmentAccounts) {
-        const performance = await calculatePortfolioPerformance(cuenta.id);
-        
-        assetsHTML += `
-            <div style="
-                padding: 12px;
-                border-radius: 10px;
-                background: var(--c-surface-variant);
-                margin-bottom: 8px;
-                border: 1px solid var(--c-outline);
-            ">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <div style="font-weight: 700;">${cuenta.nombre}</div>
-                    <div style="font-weight: 800; color: var(--c-on-surface);">
-                        ${formatCurrency(performance.valorActual)}
-                    </div>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85rem;">
-                    <div>
-                        <div style="color: var(--c-on-surface-secondary);">Invertido</div>
-                        <div>${formatCurrency(performance.capitalInvertido)}</div>
-                    </div>
-                    <div>
-                        <div style="color: var(--c-on-surface-secondary);">P&L</div>
-                        <div style="color: ${performance.pnlAbsoluto >= 0 ? 'var(--c-success)' : 'var(--c-danger)'}; font-weight: 700;">
-                            ${formatCurrency(performance.pnlAbsoluto)} (${performance.pnlPorcentual.toFixed(1)}%)
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    
-    container.innerHTML = assetsHTML;
-};
 const renderEstrategiaPage = () => {
     const container = select(PAGE_IDS.ESTRATEGIA);
     if (!container) return;
@@ -8505,39 +8364,7 @@ const renderInversionesPage = async (containerId) => {
 const attachEventListeners = () => {
 	// --- LÓGICA DE MODO PRIVACIDAD ---
     // Al hacer clic en el valor del Patrimonio Neto (KPI principal), alternamos el modo.
-document.body.addEventListener('click', (e) => {
-    // AÑADE ESTO AL PRINCIPIO de la función:
-    const action = e.target.dataset.action || 
-                   e.target.closest('[data-action]')?.dataset.action;
-    
-    if (!action) return;
-    
-    // Manejar acciones del portafolio
-    if (action === 'show-portfolio-resumen') {
-        e.preventDefault();
-        showPortfolioResumen();
-        return;
-    }
-    
-    if (action === 'validate-portfolio') {
-        e.preventDefault();
-        handleValidatePortfolio();
-        return;
-    }
-
-// Para mostrar detalles de P&L (mejorado)
-if (action === 'show-pnl-breakdown') {
-    const accountId = e.target.closest('[data-id]')?.dataset.id;
-    if (accountId) handleShowPnlBreakdown(accountId);
-    return;
-}
-
-// Para mostrar detalles de TIR (mejorado)
-if (action === 'show-irr-breakdown') {
-    const accountId = e.target.closest('[data-id]')?.dataset.id;
-    if (accountId) handleShowIrrBreakdown(accountId);
-    return;
-}	
+    document.body.addEventListener('click', (e) => {
         // Buscamos si el clic fue en el valor del patrimonio o en su etiqueta
         const kpiPatrimonio = e.target.closest('#kpi-patrimonio-neto-value') || 
                               e.target.closest('#patrimonio-total-balance');
@@ -10809,601 +10636,3 @@ if ('serviceWorker' in navigator) {
       });
   });
  }
- 
-// =================================================================
-// === FUNCIONES PARA EL PORTAFOLIO MEJORADO ===
-// =================================================================
-
-const setupPortfolioTabs = () => {
-    const tabButtons = document.querySelectorAll('.tab-button[data-tab]');
-    
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const tabId = button.dataset.tab;
-            
-            // Actualizar botones activos
-            tabButtons.forEach(btn => {
-                btn.style.color = 'var(--c-on-surface-secondary)';
-                btn.style.borderBottomColor = 'transparent';
-            });
-            
-            button.style.color = 'var(--c-primary)';
-            button.style.borderBottomColor = 'var(--c-primary)';
-            
-            // Mostrar contenido activo
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.style.display = 'none';
-            });
-            
-            const activeContent = select(`tab-${tabId}`);
-            if (activeContent) {
-                activeContent.style.display = 'block';
-                loadPortfolioTab(tabId);
-            }
-            
-            hapticFeedback('light');
-        });
-    });
-};
-
-const loadPortfolioTab = async (tabId) => {
-    const contentContainer = select(`tab-${tabId}`);
-    if (!contentContainer) return;
-    
-    try {
-        switch (tabId) {
-            case 'resumen':
-                await renderPortfolioResumen(contentContainer);
-                break;
-            case 'activos':
-                await renderPortfolioActivos(contentContainer);
-                break;
-            case 'rendimiento':
-                await renderPortfolioRendimiento(contentContainer);
-                break;
-        }
-    } catch (error) {
-        console.error(`Error cargando pestaña ${tabId}:`, error);
-        contentContainer.innerHTML = `
-            <div class="empty-state">
-                <span class="material-icons">error</span>
-                <p>Error al cargar los datos</p>
-            </div>
-        `;
-    }
-};
-
-const renderPortfolioResumen = async (container) => {
-    const performance = await calculatePortfolioPerformance();
-    const { errors, warnings } = validatePortfolioData();
-    
-    // Mostrar alertas si hay
-    const alertContainer = select('portfolio-validation-alert');
-    const alertText = select('portfolio-validation-text');
-    
-    if (errors.length > 0) {
-        if (alertContainer && alertText) {
-            alertContainer.style.display = 'block';
-            alertContainer.style.background = 'var(--c-danger)';
-            alertContainer.style.color = 'white';
-            alertText.textContent = `${errors.length} error(es) crítico(s) encontrado(s)`;
-        }
-    } else if (warnings.length > 0) {
-        if (alertContainer && alertText) {
-            alertContainer.style.display = 'block';
-            alertContainer.style.background = 'var(--c-warning)';
-            alertContainer.style.color = 'var(--c-black)';
-            alertText.textContent = `${warnings.length} advertencia(s)`;
-        }
-    }
-    
-    const html = `
-        <div style="display: grid; gap: var(--sp-3);">
-            
-            <!-- KPIs principales -->
-            <div class="card">
-                <div class="card__content">
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px;">
-                        <div style="text-align: center;">
-                            <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 4px; font-weight: 600;">
-                                VALOR ACTUAL
-                            </div>
-                            <div style="font-size: 1.2rem; font-weight: 800; color: var(--c-on-surface);">
-                                ${formatCurrency(performance.valorActual)}
-                            </div>
-                        </div>
-                        
-                        <div style="text-align: center;">
-                            <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 4px; font-weight: 600;">
-                                CAPITAL INVERTIDO
-                            </div>
-                            <div style="font-size: 1.2rem; font-weight: 800; color: var(--c-on-surface);">
-                                ${formatCurrency(performance.capitalInvertido)}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- P&L destacado -->
-                    <div style="
-                        background: ${performance.pnlAbsoluto >= 0 ? 
-                            'linear-gradient(135deg, rgba(0, 179, 77, 0.1), transparent)' : 
-                            'linear-gradient(135deg, rgba(255, 59, 48, 0.1), transparent)'};
-                        padding: 16px;
-                        border-radius: 12px;
-                        text-align: center;
-                        border: 1px solid ${performance.pnlAbsoluto >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};
-                    ">
-                        <div style="font-size: 0.85rem; color: var(--c-on-surface-secondary); margin-bottom: 8px; font-weight: 600;">
-                            GANANCIA / PÉRDIDA TOTAL
-                        </div>
-                        <div style="display: flex; align-items: baseline; justify-content: center; gap: 8px; margin-bottom: 8px;">
-                            <div style="font-size: 1.6rem; font-weight: 800; 
-                                color: ${performance.pnlAbsoluto >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};">
-                                ${performance.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(performance.pnlAbsoluto)}
-                            </div>
-                            <div style="font-size: 1.1rem; font-weight: 700; 
-                                color: ${performance.pnlAbsoluto >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};">
-                                (${performance.pnlPorcentual.toFixed(1)}%)
-                            </div>
-                        </div>
-                        
-                        <div style="font-size: 0.85rem; color: var(--c-on-surface-secondary); margin-top: 12px; font-weight: 600;">
-                            TASA INTERNA DE RETORNO (TIR)
-                        </div>
-                        <div style="font-size: 1.4rem; font-weight: 800; 
-                            color: ${performance.tir >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};">
-                            ${(performance.tir * 100).toFixed(2)}% anual
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Estadísticas rápidas -->
-            <div class="card">
-                <div class="card__header">
-                    <h3 style="margin: 0; font-size: 1rem; font-weight: 700;">
-                        <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">insights</span>
-                        Estadísticas
-                    </h3>
-                </div>
-                <div class="card__content">
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-                        <div style="text-align: center;">
-                            <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">Días Activo</div>
-                            <div style="font-size: 1.1rem; font-weight: 800; color: var(--c-on-surface);">
-                                ${Math.floor(performance.daysActive)}
-                            </div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">Rent. Diaria</div>
-                            <div style="font-size: 1.1rem; font-weight: 800; 
-                                color: ${performance.tir >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};">
-                                ${(Math.pow(1 + performance.tir, 1/365.25) - 1 * 100).toFixed(3)}%
-                            </div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">Rent. Mensual</div>
-                            <div style="font-size: 1.1rem; font-weight: 800; 
-                                color: ${performance.tir >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};">
-                                ${(Math.pow(1 + performance.tir, 1/12) - 1 * 100).toFixed(2)}%
-                            </div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">Valoración</div>
-                            <div style="font-size: 1.1rem; font-weight: 800; color: var(--c-on-surface);">
-                                ${new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Distribución por tipo -->
-            <div class="card">
-                <div class="card__header">
-                    <h3 style="margin: 0; font-size: 1rem; font-weight: 700;">
-                        <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">category</span>
-                        Distribución por Tipo
-                    </h3>
-                </div>
-                <div class="card__content">
-                    <div id="asset-distribution-content">
-                        <div style="text-align: center; padding: 20px;">
-                            <span class="spinner"></span>
-                            <p style="margin-top: 8px; color: var(--c-on-surface-secondary);">Calculando distribución...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-        </div>
-    `;
-    
-    container.innerHTML = html;
-    
-    // Cargar distribución de manera asíncrona
-    setTimeout(() => renderAssetDistribution(), 100);
-};
-
-const renderAssetDistribution = async () => {
-    const container = select('asset-distribution-content');
-    if (!container) return;
-    
-    const investmentAccounts = getVisibleAccounts().filter(c => c.esInversion);
-    const valorTotal = await getValorMercadoInversiones();
-    
-    const distribution = {};
-    
-    for (const cuenta of investmentAccounts) {
-        const valoraciones = (db.inversiones_historial || [])
-            .filter(v => v.cuentaId === cuenta.id)
-            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-        
-        const valorActual = valoraciones.length > 0 ? valoraciones[0].valor : 0;
-        const tipo = toSentenceCase(cuenta.tipo || 'Sin Tipo');
-        
-        if (!distribution[tipo]) {
-            distribution[tipo] = 0;
-        }
-        
-        distribution[tipo] += valorActual;
-    }
-    
-    if (valorTotal === 0) {
-        container.innerHTML = `
-            <div class="empty-state" style="background: transparent; border: none; padding: 20px 0;">
-                <p>No hay activos con valor para mostrar</p>
-            </div>
-        `;
-        return;
-    }
-    
-    const distributionArray = Object.entries(distribution)
-        .map(([tipo, valor]) => ({
-            tipo,
-            valor,
-            porcentaje: ((valor / valorTotal) * 100).toFixed(1)
-        }))
-        .sort((a, b) => b.valor - a.valor);
-    
-    const colors = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4'];
-    
-    container.innerHTML = `
-        <div style="max-height: 300px; overflow-y: auto; padding-right: 8px;">
-            ${distributionArray.map((item, index) => `
-                <div style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 10px 0;
-                    border-bottom: 1px solid var(--c-outline);
-                ">
-                    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                        <div style="
-                            width: 12px;
-                            height: 12px;
-                            background: ${colors[index % colors.length]};
-                            border-radius: 50%;
-                        "></div>
-                        <div>
-                            <div style="font-weight: 600; font-size: 0.9rem;">${item.tipo}</div>
-                            <div style="font-size: 0.8rem; color: var(--c-on-surface-secondary);">
-                                ${formatCurrency(item.valor)}
-                            </div>
-                        </div>
-                    </div>
-                    <div style="font-weight: 800; font-size: 1rem; color: var(--c-primary);">
-                        ${item.porcentaje}%
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-        
-        ${distributionArray.length > 0 ? `
-            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--c-outline);">
-                <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-                    <span style="font-weight: 600;">Total valorado:</span>
-                    <span style="font-weight: 800;">${formatCurrency(valorTotal)}</span>
-                </div>
-            </div>
-        ` : ''}
-    `;
-};
-
-const renderPortfolioActivos = async (container) => {
-    // Reutilizar la función existente pero mejorada
-    await renderPortfolioMainContent('portfolio-main-content');
-    
-    // Mover el contenido al contenedor de la pestaña
-    const assetsContent = select('portfolio-main-content');
-    if (assetsContent && container) {
-        container.innerHTML = assetsContent.innerHTML;
-        applyInvestmentItemInteractions(container);
-    }
-};
-
-const renderPortfolioRendimiento = async (container) => {
-    const performance = await calculatePortfolioPerformance();
-    const valuationHistory = await getHistoricalValuations();
-    
-    let chartHtml = '';
-    
-    if (valuationHistory.length >= 2) {
-        chartHtml = `
-            <div class="chart-container" style="height: 250px; margin-bottom: 20px;">
-                <canvas id="portfolio-performance-chart"></canvas>
-            </div>
-        `;
-    }
-    
-    const html = `
-        <div style="display: grid; gap: var(--sp-3);">
-            
-            <!-- Gráfico de rendimiento -->
-            ${chartHtml}
-            
-            <!-- Análisis de rendimiento -->
-            <div class="card">
-                <div class="card__header">
-                    <h3 style="margin: 0; font-size: 1rem; font-weight: 700;">
-                        <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">analytics</span>
-                        Análisis de Rendimiento
-                    </h3>
-                </div>
-                <div class="card__content">
-                    <div style="display: grid; gap: 12px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 600;">Rentabilidad vs. Depósito</span>
-                            <span style="font-weight: 800; 
-                                color: ${performance.pnlPorcentual >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};">
-                                ${performance.pnlPorcentual.toFixed(2)}%
-                            </span>
-                        </div>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 600;">TIR Anualizada</span>
-                            <span style="font-weight: 800; 
-                                color: ${performance.tir >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};">
-                                ${(performance.tir * 100).toFixed(2)}%
-                            </span>
-                        </div>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 600;">Rentabilidad Real (ajustada inflación)</span>
-                            <span style="font-weight: 800; 
-                                color: ${(performance.tir - 0.02) >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};">
-                                ${((performance.tir - 0.02) * 100).toFixed(2)}%
-                            </span>
-                        </div>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 600;">Días desde primera inversión</span>
-                            <span style="font-weight: 800; color: var(--c-on-surface);">
-                                ${Math.floor(performance.daysActive)}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Comparativas -->
-            <div class="card">
-                <div class="card__header">
-                    <h3 style="margin: 0; font-size: 1rem; font-weight: 700;">
-                        <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">compare</span>
-                        Comparativas
-                    </h3>
-                </div>
-                <div class="card__content">
-                    <div style="display: grid; gap: 10px; font-size: 0.9rem;">
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Tu TIR anual:</span>
-                            <span style="font-weight: 800; 
-                                color: ${performance.tir >= 0.07 ? 'var(--c-success)' : 
-                                        performance.tir >= 0.04 ? 'var(--c-warning)' : 
-                                        'var(--c-danger)'};">
-                                ${(performance.tir * 100).toFixed(2)}%
-                            </span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Promedio mercado (S&P 500):</span>
-                            <span style="color: var(--c-on-surface-secondary);">~7.00%</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Bonos del Estado:</span>
-                            <span style="color: var(--c-on-surface-secondary);">~3.50%</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Depósito bancario:</span>
-                            <span style="color: var(--c-on-surface-secondary);">~1.50%</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Acción recomendada -->
-            ${performance.tir < 0.04 ? `
-                <div class="card" style="border: 2px solid var(--c-warning);">
-                    <div class="card__content">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                            <span class="material-icons" style="color: var(--c-warning);">warning</span>
-                            <h4 style="margin: 0; color: var(--c-warning);">Mejora Recomendada</h4>
-                        </div>
-                        <p style="margin: 0; font-size: 0.9rem;">
-                            Tu rendimiento está por debajo del promedio del mercado. 
-                            Considera diversificar o revisar tu estrategia de inversión.
-                        </p>
-                    </div>
-                </div>
-            ` : ''}
-            
-        </div>
-    `;
-    
-    container.innerHTML = html;
-    
-    // Renderizar gráfico si hay datos
-    if (valuationHistory.length >= 2) {
-        setTimeout(() => renderPerformanceChart(valuationHistory), 100);
-    }
-};
-
-const getHistoricalValuations = async () => {
-    const investmentAccounts = getVisibleAccounts().filter(c => c.esInversion);
-    const allValuations = [];
-    
-    for (const cuenta of investmentAccounts) {
-        const valoraciones = (db.inversiones_historial || [])
-            .filter(v => v.cuentaId === cuenta.id)
-            .map(v => ({
-                fecha: v.fecha,
-                valor: v.valor,
-                cuentaId: v.cuentaId
-            }));
-        
-        allValuations.push(...valoraciones);
-    }
-    
-    // Agrupar por fecha
-    const groupedByDate = {};
-    allValuations.forEach(v => {
-        if (!groupedByDate[v.fecha]) {
-            groupedByDate[v.fecha] = 0;
-        }
-        groupedByDate[v.fecha] += v.valor;
-    });
-    
-    return Object.entries(groupedByDate)
-        .map(([fecha, valor]) => ({ fecha, valor }))
-        .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-};
-
-const renderPerformanceChart = (valuationHistory) => {
-    const canvas = select('portfolio-performance-chart');
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    // Destruir gráfico anterior si existe
-    if (window.performanceChart) {
-        window.performanceChart.destroy();
-    }
-    
-    const labels = valuationHistory.map(v => 
-        new Date(v.fecha).toLocaleDateString('es-ES', { month: 'short', year: '2-digit' })
-    );
-    
-    const data = valuationHistory.map(v => v.valor / 100);
-    
-    window.performanceChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Valor del Portafolio',
-                data: data,
-                borderColor: 'var(--c-primary)',
-                backgroundColor: 'rgba(0, 122, 255, 0.1)',
-                fill: true,
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: (context) => `Valor: ${formatCurrency(context.raw * 100)}`
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    ticks: {
-                        callback: (value) => `€${value}`
-                    }
-                },
-                x: {
-                    grid: { display: false }
-                }
-            }
-        }
-    });
-};
-
-// Función para el botón de validación
-const handleValidatePortfolio = () => {
-    const { errors, warnings } = validatePortfolioData();
-    
-    let message = '';
-    let type = 'info';
-    
-    if (errors.length > 0) {
-        message = `<strong>${errors.length} error(es) encontrado(s):</strong><br>`;
-        message += errors.map(e => `• ${e}`).join('<br>');
-        type = 'danger';
-    } else if (warnings.length > 0) {
-        message = `<strong>${warnings.length} advertencia(s):</strong><br>`;
-        message += warnings.map(w => `• ${w}`).join('<br>');
-        type = 'warning';
-    } else {
-        message = '✅ Todos los datos del portafolio son válidos';
-        type = 'success';
-    }
-    
-    showGenericModal('Validación del Portafolio', 
-        `<div style="max-height: 300px; overflow-y: auto; padding: 10px;">
-            <p>${message}</p>
-        </div>`
-    );
-}; 
-
-// Script de autoverificación (se ejecuta al cargar la página)
-setTimeout(async () => {
-    console.log('=== VERIFICACIÓN DE PORTAFOLIO MEJORADO ===');
-    
-    // 1. Verificar que las nuevas funciones existen
-    const requiredFunctions = [
-        'calculateEnhancedIRR',
-        'validatePortfolioData',
-        'setupPortfolioTabs',
-        'loadPortfolioTab'
-    ];
-    
-    requiredFunctions.forEach(funcName => {
-        if (typeof window[funcName] === 'function') {
-            console.log(`✅ ${funcName} cargada`);
-        } else {
-            console.error(`❌ ${funcName} NO encontrada`);
-        }
-    });
-    
-    // 2. Probar cálculo rápido
-    try {
-        const testResult = await calculatePortfolioPerformance();
-        console.log('📊 Prueba de cálculo exitosa:');
-        console.log('- Valor actual:', formatCurrency(testResult.valorActual));
-        console.log('- Capital invertido:', formatCurrency(testResult.capitalInvertido));
-        console.log('- P&L calculado:', formatCurrency(testResult.pnlAbsoluto));
-        
-        // Verificar consistencia básica
-        const expectedPnl = testResult.valorActual - testResult.capitalInvertido;
-        if (Math.abs(testResult.pnlAbsoluto - expectedPnl) < 1) {
-            console.log('✅ Cálculo de P&L consistente');
-        } else {
-            console.warn('⚠️ Posible error en cálculo de P&L');
-        }
-    } catch (error) {
-        console.error('❌ Error en prueba de cálculo:', error);
-    }
-    
-    // 3. Verificar estructura de la página
-    if (select(PAGE_IDS.PATRIMONIO)) {
-        console.log('✅ Página de patrimonio disponible');
-    }
-    
-    console.log('=== VERIFICACIÓN COMPLETADA ===');
-}, 3000);
