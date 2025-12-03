@@ -2035,7 +2035,14 @@ const getVisibleAccounts = () => (db.cuentas || []).filter(c => !!c.offBalance =
 /**
  * Obtiene las cuentas líquidas de la contabilidad visible actual.
  */
-const getLiquidAccounts = () => getVisibleAccounts().filter((c) => !['PROPIEDAD', 'PRÉSTAMO'].includes((c.tipo || '').trim().toUpperCase()));
+const getLiquidAccounts = () => {
+    const visibleAccounts = getVisibleAccounts();
+    return visibleAccounts.filter((c) => {
+        const tipo = (c.tipo || '').trim().toUpperCase();
+        // Incluir BANCOS, EFECTIVO y TARJETA
+        return ['BANCO', 'EFECTIVO', 'TARJETA'].includes(tipo);
+    });
+};
 
 /**
  * Obtiene los saldos de TODAS las cuentas, sin importar la contabilidad.
@@ -5760,7 +5767,7 @@ const scheduleDashboardUpdate = () => {
             const investmentAccounts = visibleAccounts.filter(c => c.esInversion);
             
             // 1. CALCULAR LIQUIDEZ (suma de cuentas líquidas)
-            const liquidezTotal = liquidAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
+            const liquidezTotal = liquidityAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
             
             // 2. CALCULAR CAPITAL APORTADO (saldo de cuentas de inversión)
             const capitalAportadoTotal = investmentAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
