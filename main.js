@@ -3054,11 +3054,6 @@ const renderPortfolioMainContent = async (targetContainerId) => {
 };
 
 
-/**
- * Muestra un modal con el desglose de la fórmula de P&L para un activo:
- * Valor de Mercado - Capital Aportado = Resultado.
- * @param {string} accountId - El ID de la cuenta de inversión a analizar.
- */
 const handleShowPnlBreakdown = async (accountId) => {
     const cuenta = db.cuentas.find(c => c.id === accountId);
     if (!cuenta) return;
@@ -4156,7 +4151,7 @@ const renderPanelPage = async () => {
                         <div id="kpi-liquidez-value" class="skeleton" style="font-size: 1.1rem; font-weight: 700; color: var(--c-on-surface);">0,00 €</div>
                     </div>
                     <div style="text-align: center;">
-                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom: 4px;">CAPITAL APORTADO</div>
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom: 4px;">INVERTIDO</div>
                         <div id="kpi-inversion-total" class="skeleton" style="font-size: 1.1rem; font-weight: 700; color: var(--c-on-surface);">0,00 €</div>
                     </div>
                 </div>
