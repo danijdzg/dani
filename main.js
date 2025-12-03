@@ -1,5 +1,210 @@
 import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
 
+const setupEnhancedFormNavigation = () => {
+    const inputs = [
+        { id: 'movimiento-cantidad', next: 'movimiento-concepto' },
+        { id: 'movimiento-descripcion', next: 'movimiento-cuenta' },
+        { id: 'movimiento-cuenta', next: 'save-movimiento-btn' }
+    ];
+    
+    inputs.forEach(({id, next}, index) => {
+        const input = select(id);
+        if (!input) return;
+        
+        input.addEventListener('keydown', (e) => {
+            // Enter para avanzar
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                
+                if (next === 'save-movimiento-btn') {
+                    select(next)?.click();
+                } else {
+                    // Para selects personalizados
+                    const wrapper = select(next)?.closest('.custom-select-wrapper');
+                    const trigger = wrapper?.querySelector('.custom-select__trigger');
+                    trigger?.focus();
+                    trigger?.click();
+                }
+            }
+            
+            // Shift+Enter para retroceder
+            if (e.key === 'Enter' && e.shiftKey && index > 0) {
+                e.preventDefault();
+                select(inputs[index-1].id)?.focus();
+            }
+            
+            // Escape para limpiar/cancelar
+            if (e.key === 'Escape') {
+                if (id === 'movimiento-cantidad') {
+                    input.value = '';
+                    handleCalculatorInput('clear');
+                }
+            }
+        });
+    });
+    
+    // Autofocus en cantidad al abrir el formulario
+    const movimientoForm = select('movimiento-form');
+    movimientoForm?.addEventListener('shown', () => {
+        setTimeout(() => select('movimiento-cantidad')?.focus(), 100);
+    });
+};
+const setupRealTimeValidation = () => {
+    const cantidadInput = select('movimiento-cantidad');
+    const cuentaSelect = select('movimiento-cuenta');
+    const errorContainer = select('movimiento-form-errors');
+    
+    if (!cantidadInput || !errorContainer) return;
+    
+    const showFieldError = (message, fieldId) => {
+        // Eliminar error previo
+        errorContainer.querySelector(`[data-field="${fieldId}"]`)?.remove();
+        
+        if (message) {
+            const errorEl = document.createElement('div');
+            errorEl.className = 'form-error';
+            errorEl.dataset.field = fieldId;
+            errorEl.textContent = message;
+            errorContainer.appendChild(errorEl);
+        }
+    };
+    
+    // Validar cantidad
+    cantidadInput.addEventListener('input', () => {
+        const value = parseCurrencyString(cantidadInput.value);
+        if (isNaN(value) || value === 0) {
+            showFieldError('El importe no es válido', 'cantidad');
+        } else {
+            showFieldError('', 'cantidad');
+        }
+    });
+    
+    // Validar cuenta
+    cuentaSelect.addEventListener('change', () => {
+        if (!cuentaSelect.value) {
+            showFieldError('Selecciona una cuenta', 'cuenta');
+        } else {
+            showFieldError('', 'cuenta');
+        }
+    });
+};
+const optimizeMobileInputExperience = () => {
+    const cantidadInput = select('movimiento-cantidad');
+    const isTouch = 'ontouchstart' in window;
+    
+    if (!isTouch || !cantidadInput) return;
+    
+    // Reducir la altura de la calculadora en móvil
+    const calculator = select('calculator-container');
+    if (calculator) {
+        calculator.style.maxHeight = '50vh';
+        calculator.style.overflowY = 'auto';
+    }
+    
+    // Mejorar el foco en móvil
+    cantidadInput.addEventListener('focus', () => {
+        setTimeout(() => {
+            cantidadInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+    });
+    
+    // Input numérico nativo para móviles como fallback
+    cantidadInput.setAttribute('inputmode', 'decimal');
+    cantidadInput.setAttribute('pattern', '[0-9,.-]*');
+};
+const setupSmartConceptSuggestions = () => {
+    const descripcionInput = select('movimiento-descripcion');
+    const conceptoSelect = select('movimiento-concepto');
+    
+    if (!descripcionInput || !conceptoSelect) return;
+    
+    // Cache de conceptos usados frecuentemente
+    const conceptUsage = new Map();
+    
+    descripcionInput.addEventListener('input', (e) => {
+        const text = e.target.value.toLowerCase();
+        if (text.length < 2) return;
+        
+        // Buscar conceptos similares en movimientos recientes
+        const recentWithSameDesc = recentMovementsCache
+            .filter(m => m.descripcion?.toLowerCase().includes(text))
+            .slice(0, 5);
+        
+        if (recentWithSameDesc.length > 0) {
+            // Encontrar concepto más usado para esta descripción
+            const conceptCounts = new Map();
+            recentWithSameDesc.forEach(m => {
+                const count = conceptCounts.get(m.conceptoId) || 0;
+                conceptCounts.set(m.conceptoId, count + 1);
+            });
+            
+            const mostUsed = [...conceptCounts.entries()].sort((a,b) => b[1]-a[1])[0];
+            if (mostUsed) {
+                // Auto-seleccionar concepto
+                conceptoSelect.value = mostUsed[0];
+                conceptoSelect.dispatchEvent(new Event('change'));
+            }
+        }
+    });
+};
+// Limpiar memoria después de añadir movimiento
+const cleanupAfterMovementSave = () => {
+    // Reset del formulario
+    select('movimiento-form')?.reset();
+    
+    // Liberar memoria de la caché de movimientos
+    if (allDiarioMovementsCache.length > 1000) {
+        allDiarioMovementsCache = allDiarioMovementsCache.slice(-500);
+    }
+    
+    // Forzar recálculo de balances si hay muchos movimientos
+    if (db.movimientos.length > 500) {
+        setTimeout(() => processMovementsForRunningBalance(db.movimientos, true), 1000);
+    }
+};
+const setupQuickAddMode = () => {
+    // Botón para añadir rápido (pantalla principal)
+    const quickAddBtn = document.createElement('button');
+    quickAddBtn.className = 'floating-action-btn';
+    quickAddBtn.innerHTML = '<span class="material-icons">add</span>';
+    quickAddBtn.title = 'Añadir movimiento rápido';
+    quickAddBtn.style.cssText = `
+        position: fixed;
+        bottom: 80px;
+        right: 16px;
+        width: 56px;
+        height: 56px;
+        border-radius: 28px;
+        background: var(--c-primary);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    
+    document.body.appendChild(quickAddBtn);
+    
+    quickAddBtn.addEventListener('click', () => {
+        // Abrir modal simplificado
+        showModal('quick-add-modal');
+        
+        // Configurar valores por defecto del día
+        const today = new Date().toISOString().split('T')[0];
+        const defaultConcept = db.conceptos.find(c => c.nombre === 'VARIOS')?.id;
+        const defaultAccount = getLiquidAccounts()[0]?.id;
+        
+        // Rellenar valores
+        if (defaultConcept) select('quick-concepto').value = defaultConcept;
+        if (defaultAccount) select('quick-cuenta').value = defaultAccount;
+        select('quick-fecha').value = today;
+        
+        // Enfocar cantidad
+        setTimeout(() => select('quick-cantidad')?.focus(), 100);
+    });
+};
 const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
     const fecha = new Date(mov.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
     let cargo = '';
