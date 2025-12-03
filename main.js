@@ -1728,15 +1728,98 @@ const showToast = (message, type = 'info', duration = 3500) => {
 // Por ejemplo, después de la función toSentenceCase (línea ~200)
 
 // 1. Función para calcular desviación estándar
-const calculateStandardDeviation = (returns) => {
-    if (!returns || returns.length < 2) return 0;
-    
-    const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-    const squaredDifferences = returns.map(r => Math.pow(r - mean, 2));
-    const variance = squaredDifferences.reduce((sum, sq) => sum + sq, 0) / (returns.length - 1);
-    
-    return Math.sqrt(variance);
-};
+// === CÓDIGO CORREGIDO - VERIFICA SI LAS FUNCIONES YA EXISTEN ===
+
+// Solo define las funciones si no existen ya
+if (typeof calculateStandardDeviation === 'undefined') {
+    window.calculateStandardDeviation = function(returns) {
+        if (!returns || returns.length < 2) return 0;
+        
+        const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+        const squaredDifferences = returns.map(r => Math.pow(r - mean, 2));
+        const variance = squaredDifferences.reduce((sum, sq) => sum + sq, 0) / (returns.length - 1);
+        
+        return Math.sqrt(variance);
+    };
+}
+
+if (typeof calculateAnnualVolatility === 'undefined') {
+    window.calculateAnnualVolatility = function(monthlyReturns) {
+        const stdDev = calculateStandardDeviation(monthlyReturns);
+        return stdDev * Math.sqrt(12);
+    };
+}
+
+if (typeof calculateMaxDrawdown === 'undefined') {
+    window.calculateMaxDrawdown = function(values) {
+        if (!values || values.length < 2) return 0;
+        
+        let peak = values[0];
+        let maxDrawdown = 0;
+        
+        for (let i = 1; i < values.length; i++) {
+            if (values[i] > peak) {
+                peak = values[i];
+            } else {
+                const drawdown = (peak - values[i]) / peak;
+                if (drawdown > maxDrawdown) {
+                    maxDrawdown = drawdown;
+                }
+            }
+        }
+        
+        return maxDrawdown;
+    };
+}
+
+if (typeof calculateSharpeRatio === 'undefined') {
+    window.calculateSharpeRatio = function(returns, riskFreeRate = 0.02) {
+        if (!returns || returns.length < 2) return 0;
+        
+        const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+        const stdDev = calculateStandardDeviation(returns);
+        
+        if (stdDev === 0) return 0;
+        
+        return (meanReturn - riskFreeRate) / stdDev;
+    };
+}
+
+if (typeof calculateSortinoRatio === 'undefined') {
+    window.calculateSortinoRatio = function(returns, riskFreeRate = 0.02) {
+        if (!returns || returns.length < 2) return 0;
+        
+        const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+        const negativeReturns = returns.filter(r => r < 0);
+        
+        if (negativeReturns.length === 0) return 0;
+        
+        const downsideStdDev = calculateStandardDeviation(negativeReturns);
+        
+        if (downsideStdDev === 0) return 0;
+        
+        return (meanReturn - riskFreeRate) / downsideStdDev;
+    };
+}
+
+if (typeof calculateBeta === 'undefined') {
+    window.calculateBeta = function(portfolioReturns, marketReturns) {
+        if (!portfolioReturns || !marketReturns || portfolioReturns.length !== marketReturns.length) return 1;
+        
+        const portfolioMean = portfolioReturns.reduce((sum, r) => sum + r, 0) / portfolioReturns.length;
+        const marketMean = marketReturns.reduce((sum, r) => sum + r, 0) / marketReturns.length;
+        
+        let covariance = 0;
+        let marketVariance = 0;
+        
+        for (let i = 0; i < portfolioReturns.length; i++) {
+            covariance += (portfolioReturns[i] - portfolioMean) * (marketReturns[i] - marketMean);
+            marketVariance += Math.pow(marketReturns[i] - marketMean, 2);
+        }
+        
+        return covariance / marketVariance;
+    };
+}
 
 // 2. Función para calcular volatilidad anual
 const calculateAnnualVolatility = (monthlyReturns) => {
