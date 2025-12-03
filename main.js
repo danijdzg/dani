@@ -1785,22 +1785,6 @@ if (typeof calculateSharpeRatio === 'undefined') {
     };
 }
 
-if (typeof calculateSortinoRatio === 'undefined') {
-    window.calculateSortinoRatio = function(returns, riskFreeRate = 0.02) {
-        if (!returns || returns.length < 2) return 0;
-        
-        const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-        const negativeReturns = returns.filter(r => r < 0);
-        
-        if (negativeReturns.length === 0) return 0;
-        
-        const downsideStdDev = calculateStandardDeviation(negativeReturns);
-        
-        if (downsideStdDev === 0) return 0;
-        
-        return (meanReturn - riskFreeRate) / downsideStdDev;
-    };
-}
         const setButtonLoading = (btn, isLoading, text = 'Cargando...') => {
             if (!btn) return;
             if (isLoading) { if (!originalButtonTexts.has(btn)) originalButtonTexts.set(btn, btn.innerHTML); btn.setAttribute('disabled', 'true'); btn.classList.add('btn--loading'); btn.innerHTML = `<span class="spinner"></span> <span>${text}</span>`;
