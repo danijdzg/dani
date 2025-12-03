@@ -1724,7 +1724,84 @@ const showToast = (message, type = 'info', duration = 3500) => {
 			if (!str || typeof str !== 'string') return '';
 			return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 		};
+// === AÑADE ESTAS FUNCIONES DESPUÉS DE LA LÍNEA 200 (después de toSentenceCase) ===
 
+const calculateStandardDeviation = (returns) => {
+    if (!returns || returns.length < 2) return 0;
+    
+    const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+    const squaredDifferences = returns.map(r => Math.pow(r - mean, 2));
+    const variance = squaredDifferences.reduce((sum, sq) => sum + sq, 0) / (returns.length - 1);
+    
+    return Math.sqrt(variance);
+};
+
+const calculateAnnualVolatility = (monthlyReturns) => {
+    const stdDev = calculateStandardDeviation(monthlyReturns);
+    return stdDev * Math.sqrt(12); // Anualizar volatilidad
+};
+
+const calculateMaxDrawdown = (values) => {
+    if (!values || values.length < 2) return 0;
+    
+    let peak = values[0];
+    let maxDrawdown = 0;
+    
+    for (let i = 1; i < values.length; i++) {
+        if (values[i] > peak) {
+            peak = values[i];
+        } else {
+            const drawdown = (peak - values[i]) / peak;
+            if (drawdown > maxDrawdown) {
+                maxDrawdown = drawdown;
+            }
+        }
+    }
+    
+    return maxDrawdown;
+};
+
+const calculateSharpeRatio = (returns, riskFreeRate = 0.02) => {
+    if (!returns || returns.length < 2) return 0;
+    
+    const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+    const stdDev = calculateStandardDeviation(returns);
+    
+    if (stdDev === 0) return 0;
+    
+    return (meanReturn - riskFreeRate) / stdDev;
+};
+
+const calculateSortinoRatio = (returns, riskFreeRate = 0.02) => {
+    if (!returns || returns.length < 2) return 0;
+    
+    const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+    const negativeReturns = returns.filter(r => r < 0);
+    const downsideStdDev = calculateStandardDeviation(negativeReturns);
+    
+    if (downsideStdDev === 0) return 0;
+    
+    return (meanReturn - riskFreeRate) / downsideStdDev;
+};
+
+const calculateBeta = (portfolioReturns, marketReturns) => {
+    if (!portfolioReturns || !marketReturns || portfolioReturns.length !== marketReturns.length) return 1;
+    
+    const portfolioMean = portfolioReturns.reduce((sum, r) => sum + r, 0) / portfolioReturns.length;
+    const marketMean = marketReturns.reduce((sum, r) => sum + r, 0) / marketReturns.length;
+    
+    let covariance = 0;
+    let marketVariance = 0;
+    
+    for (let i = 0; i < portfolioReturns.length; i++) {
+        covariance += (portfolioReturns[i] - portfolioMean) * (marketReturns[i] - marketMean);
+        marketVariance += Math.pow(marketReturns[i] - marketMean, 2);
+    }
+    
+    return covariance / marketVariance;
+};
+
+// === FIN DE LAS NUEVAS FUNCIONES ===
         const setButtonLoading = (btn, isLoading, text = 'Cargando...') => {
             if (!btn) return;
             if (isLoading) { if (!originalButtonTexts.has(btn)) originalButtonTexts.set(btn, btn.innerHTML); btn.setAttribute('disabled', 'true'); btn.classList.add('btn--loading'); btn.innerHTML = `<span class="spinner"></span> <span>${text}</span>`;
@@ -2467,8 +2544,8 @@ const getFilteredMovements = async (forComparison = false) => {
     return 0; // Si no converge, devuelve 0 en lugar de colgarse
 };
 		
-const calculatePortfolioPerformance = async (cuentaId = null, period = 'MAX') => {
-    // 1. OBTENER DATOS (igual que antes)
+const calculatePortfolioPerformance = async (cuentaId = null) => {
+    // 1. OBTENER DATOS
     const allMovements = (typeof allDiarioMovementsCache !== 'undefined' && allDiarioMovementsCache.length > 0) 
         ? allDiarioMovementsCache 
         : await fetchAllMovementsForHistory();
@@ -2493,11 +2570,12 @@ const calculatePortfolioPerformance = async (cuentaId = null, period = 'MAX') =>
             sharpeRatio: 0,
             sortinoRatio: 0,
             bestMonth: 0,
-            worstMonth: 0
+            worstMonth: 0,
+            historicalData: []
         };
     }
     
-    // 2. CÁLCULOS BÁSICOS (igual que antes)
+    // 2. CÁLCULOS BÁSICOS
     let totalValorActual = 0;
     let totalCapitalInvertido_para_PNL = 0;
     let allIrrCashflows = [];
@@ -2505,7 +2583,7 @@ const calculatePortfolioPerformance = async (cuentaId = null, period = 'MAX') =>
     
     // 3. NUEVO: Recolectar datos históricos para análisis
     const historicalData = [];
-    const monthlyReturns = [];
+    const monthlyReturns = {};
     
     for (const cuenta of investmentAccounts) {
         const valoraciones = (db.inversiones_historial || [])
@@ -2584,21 +2662,33 @@ const calculatePortfolioPerformance = async (cuentaId = null, period = 'MAX') =>
     // 4. CÁLCULO DE LAS NUEVAS MÉTRICAS
     // Preparar array de returns mensuales
     const monthlyReturnValues = Object.values(monthlyReturns)
-        .map(m => m.total / m.count)
+        .map(m => m.total / (m.count || 1))
         .filter(r => !isNaN(r));
     
     // Preparar array de valores históricos para drawdown
     const historicalValues = historicalData.map(d => d.valor).filter(v => v > 0);
     
-    // Calcular métricas de riesgo
-    const annualVolatility = calculateAnnualVolatility(monthlyReturnValues);
-    const maxDrawdown = calculateMaxDrawdown(historicalValues);
-    const sharpeRatio = calculateSharpeRatio(monthlyReturnValues);
-    const sortinoRatio = calculateSortinoRatio(monthlyReturnValues);
+    // Calcular métricas de riesgo (con protección contra errores)
+    let annualVolatility = 0;
+    let maxDrawdown = 0;
+    let sharpeRatio = 0;
+    let sortinoRatio = 0;
+    let bestMonth = 0;
+    let worstMonth = 0;
     
-    // Encontrar mejor y peor mes
-    const bestMonth = monthlyReturnValues.length > 0 ? Math.max(...monthlyReturnValues) : 0;
-    const worstMonth = monthlyReturnValues.length > 0 ? Math.min(...monthlyReturnValues) : 0;
+    try {
+        annualVolatility = calculateAnnualVolatility(monthlyReturnValues);
+        maxDrawdown = calculateMaxDrawdown(historicalValues);
+        sharpeRatio = calculateSharpeRatio(monthlyReturnValues);
+        sortinoRatio = calculateSortinoRatio(monthlyReturnValues);
+        
+        // Encontrar mejor y peor mes
+        bestMonth = monthlyReturnValues.length > 0 ? Math.max(...monthlyReturnValues) : 0;
+        worstMonth = monthlyReturnValues.length > 0 ? Math.min(...monthlyReturnValues) : 0;
+    } catch (error) {
+        console.warn("Error calculando métricas de riesgo:", error);
+        // Si hay error, dejamos las métricas en 0
+    }
 
     // 5. CÁLCULOS EXISTENTES
     const pnlAbsoluto = totalValorActual - totalCapitalInvertido_para_PNL;
@@ -2625,6 +2715,8 @@ const calculatePortfolioPerformance = async (cuentaId = null, period = 'MAX') =>
         historicalData // Para gráficos
     };
 };
+// === AÑADE ESTAS FUNCIONES PARA GRÁFICOS ===
+
 const renderRiskAnalysisChart = (canvasId, performanceData) => {
     const canvas = select(canvasId);
     if (!canvas) return null;
@@ -2640,10 +2732,10 @@ const renderRiskAnalysisChart = (canvasId, performanceData) => {
         datasets: [{
             label: 'Métricas de Riesgo',
             data: [
-                performanceData.annualVolatility * 100, // Convertir a porcentaje
-                performanceData.maxDrawdown * 100,      // Convertir a porcentaje
-                performanceData.sharpeRatio,
-                performanceData.sortinoRatio
+                (performanceData.annualVolatility || 0) * 100,
+                (performanceData.maxDrawdown || 0) * 100,
+                performanceData.sharpeRatio || 0,
+                performanceData.sortinoRatio || 0
             ],
             backgroundColor: [
                 'rgba(255, 99, 132, 0.7)',
@@ -2672,23 +2764,15 @@ const renderRiskAnalysisChart = (canvasId, performanceData) => {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) label += ': ';
-                            
                             const value = context.raw;
                             const index = context.dataIndex;
                             
                             switch(index) {
-                                case 0: // Volatilidad
-                                    return `Volatilidad Anual: ${value.toFixed(2)}%`;
-                                case 1: // Max Drawdown
-                                    return `Máxima Pérdida: ${value.toFixed(2)}%`;
-                                case 2: // Sharpe
-                                    return `Sharpe Ratio: ${value.toFixed(2)}`;
-                                case 3: // Sortino
-                                    return `Sortino Ratio: ${value.toFixed(2)}`;
-                                default:
-                                    return `${label}${value}`;
+                                case 0: return `Volatilidad Anual: ${value.toFixed(2)}%`;
+                                case 1: return `Máxima Pérdida: ${value.toFixed(2)}%`;
+                                case 2: return `Sharpe Ratio: ${value.toFixed(2)}`;
+                                case 3: return `Sortino Ratio: ${value.toFixed(2)}`;
+                                default: return `${value}`;
                             }
                         }
                     }
@@ -2709,9 +2793,10 @@ const renderRiskAnalysisChart = (canvasId, performanceData) => {
     
     return new Chart(ctx, config);
 };
+
 const renderReturnsDistributionChart = (canvasId, monthlyReturns) => {
     const canvas = select(canvasId);
-    if (!canvas) return null;
+    if (!canvas || !monthlyReturns || monthlyReturns.length === 0) return null;
     
     const ctx = canvas.getContext('2d');
     
@@ -2723,9 +2808,14 @@ const renderReturnsDistributionChart = (canvasId, monthlyReturns) => {
     const returnsInPercent = monthlyReturns.map(r => r * 100);
     const minReturn = Math.min(...returnsInPercent);
     const maxReturn = Math.max(...returnsInPercent);
-    const binSize = (maxReturn - minReturn) / 10;
+    const range = maxReturn - minReturn;
     
+    // Si no hay rango, mostrar gráfico vacío
+    if (range === 0) return null;
+    
+    const binSize = Math.max(1, range / 10);
     const bins = Array(10).fill(0);
+    
     returnsInPercent.forEach(returnPct => {
         const binIndex = Math.min(9, Math.max(0, Math.floor((returnPct - minReturn) / binSize)));
         bins[binIndex]++;
@@ -2734,7 +2824,7 @@ const renderReturnsDistributionChart = (canvasId, monthlyReturns) => {
     const labels = bins.map((_, i) => {
         const start = minReturn + (i * binSize);
         const end = start + binSize;
-        return `${start.toFixed(1)}% a ${end.toFixed(1)}%`;
+        return `${start.toFixed(1)}%`;
     });
     
     const data = {
@@ -2763,7 +2853,8 @@ const renderReturnsDistributionChart = (canvasId, monthlyReturns) => {
                         },
                         label: function(context) {
                             const count = context.raw;
-                            const percentage = (count / returnsInPercent.length * 100).toFixed(1);
+                            const percentage = monthlyReturns.length > 0 ? 
+                                (count / monthlyReturns.length * 100).toFixed(1) : '0.0';
                             return `${count} meses (${percentage}%)`;
                         }
                     }
@@ -2774,17 +2865,13 @@ const renderReturnsDistributionChart = (canvasId, monthlyReturns) => {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Frecuencia (meses)'
+                        text: 'Frecuencia'
                     }
                 },
                 x: {
                     title: {
                         display: true,
-                        text: 'Rango de Retornos Mensuales'
-                    },
-                    ticks: {
-                        maxRotation: 45,
-                        minRotation: 45
+                        text: 'Retorno Mensual'
                     }
                 }
             }
@@ -2793,9 +2880,10 @@ const renderReturnsDistributionChart = (canvasId, monthlyReturns) => {
     
     return new Chart(ctx, config);
 };
+
 const renderDrawdownChart = (canvasId, historicalData) => {
     const canvas = select(canvasId);
-    if (!canvas) return null;
+    if (!canvas || !historicalData || historicalData.length < 2) return null;
     
     const ctx = canvas.getContext('2d');
     
@@ -2841,14 +2929,14 @@ const renderDrawdownChart = (canvasId, historicalData) => {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return `Drawdown: ${context.raw.toFixed(2)}%`;
+                            return `Drawdown: ${context.raw.toFixed(1)}%`;
                         }
                     }
                 }
             },
             scales: {
                 y: {
-                    reverse: true, // Drawdown se muestra como positivo hacia abajo
+                    reverse: true,
                     ticks: {
                         callback: function(value) {
                             return value + '%';
@@ -2863,10 +2951,6 @@ const renderDrawdownChart = (canvasId, historicalData) => {
                     type: 'time',
                     time: {
                         unit: 'month'
-                    },
-                    title: {
-                        display: true,
-                        text: 'Fecha'
                     }
                 }
             }
@@ -2875,6 +2959,51 @@ const renderDrawdownChart = (canvasId, historicalData) => {
     
     return new Chart(ctx, config);
 };
+
+const exportRiskReport = async () => {
+    try {
+        const portfolioPerformance = await calculatePortfolioPerformance();
+        
+        const report = {
+            fecha: new Date().toISOString(),
+            portfolio: {
+                valorMercado: portfolioPerformance.valorActual,
+                capitalInvertido: portfolioPerformance.capitalInvertido,
+                gananciaPerdida: portfolioPerformance.pnlAbsoluto,
+                rentabilidad: portfolioPerformance.pnlPorcentual.toFixed(2) + '%',
+                tir: (portfolioPerformance.irr * 100).toFixed(2) + '%'
+            },
+            analisisRiesgo: {
+                volatilidadAnual: (portfolioPerformance.annualVolatility * 100).toFixed(2) + '%',
+                maxDrawdown: (portfolioPerformance.maxDrawdown * 100).toFixed(2) + '%',
+                sharpeRatio: portfolioPerformance.sharpeRatio.toFixed(2),
+                sortinoRatio: portfolioPerformance.sortinoRatio.toFixed(2),
+                mejorMes: (portfolioPerformance.bestMonth * 100).toFixed(2) + '%',
+                peorMes: (portfolioPerformance.worstMonth * 100).toFixed(2) + '%'
+            }
+        };
+        
+        // Crear y descargar JSON
+        const dataStr = JSON.stringify(report, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `reporte-riesgo-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showToast('Reporte de riesgo exportado', 'success');
+    } catch (error) {
+        console.error("Error exportando reporte:", error);
+        showToast('Error al exportar reporte', 'danger');
+    }
+};
+
+// === FIN DE LAS FUNCIONES DE GRÁFICOS ===
 
     const recalculateAndApplyRunningBalances = (movements, allAccountsDb) => {
     // 1. Agrupamos los movimientos por cada cuenta afectada.
@@ -8933,9 +9062,11 @@ const renderInversionesPage = async (containerId) => {
 // ▼▼▼ REEMPLAZA TU FUNCIÓN attachEventListeners CON ESTA VERSIÓN LIMPIA ▼▼▼
 const attachEventListeners = () => {
 	document.addEventListener('click', (e) => {
-    // ... otros event listeners ...
+    // ... otros event listeners existentes ...
     
+    // Nuevo event listener para exportar reporte
     if (e.target.closest('[data-action="export-risk-report"]')) {
+        e.preventDefault();
         exportRiskReport();
     }
 });
