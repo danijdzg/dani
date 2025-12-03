@@ -2300,7 +2300,9 @@ const getAllSaldos = () => {
 const getValorMercadoInversiones = async () => {
     if (!dataLoaded.inversiones) await loadInversiones();
     
+    // ← CORREGIR ESTA LÍNEA
     const investmentAccounts = getVisibleAccounts().filter(c => c.esInversion);
+    
     let valorMercadoTotal = 0;
     
     for (const cuenta of investmentAccounts) {
@@ -2313,8 +2315,46 @@ const getValorMercadoInversiones = async () => {
     }
     
     return valorMercadoTotal;
-};		
-        
+};
+ const forcePanelRecalculation = async () => {
+    if (!select(PAGE_IDS.PANEL)?.classList.contains('view--active')) return;
+    
+    // Limpiar skeletons
+    const skeletons = select(PAGE_IDS.PANEL).querySelectorAll('.skeleton');
+    skeletons.forEach(s => s.classList.remove('skeleton'));
+    
+    // Recalcular todo
+    await scheduleDashboardUpdate();
+};  
+const handleToggleLedger = () => {
+    isOffBalanceMode = !isOffBalanceMode;
+    
+    // Actualizar UI del botón
+    const btn = select('ledger-toggle-btn');
+    if (btn) {
+        btn.textContent = isOffBalanceMode ? 'B' : 'A';
+        btn.title = `Cambiar a Contabilidad ${isOffBalanceMode ? 'A' : 'B'}`;
+    }
+    
+    // ← AÑADIR ESTAS LÍNEAS CRÍTICAS:
+    // 1. Forzar recálculo del panel
+    if (select(PAGE_IDS.PANEL)?.classList.contains('view--active')) {
+        forcePanelRecalculation();
+    }
+    
+    // 2. Re-renderizar páginas activas que dependen de la contabilidad
+    const activePage = document.querySelector('.view--active');
+    if (activePage) {
+        if (activePage.id === PAGE_IDS.DIARIO) renderDiarioPage();
+        if (activePage.id === PAGE_IDS.PATRIMONIO) renderPatrimonioPage();
+    }
+    
+    // 3. Actualizar dropdowns
+    populateAllDropdowns();
+    
+    hapticFeedback('medium');
+    showToast(`Cambiado a Contabilidad ${isOffBalanceMode ? 'B' : 'A'}`, 'info');
+};     
 const getFilteredMovements = async (forComparison = false) => {
     // 1. OBTENER FECHAS DEL FILTRO (esto no cambia)
     const filterPeriodo = select('filter-periodo');
