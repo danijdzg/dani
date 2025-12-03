@@ -1986,8 +1986,14 @@ const navigateTo = async (pageId, isInitial = false) => {
     }
 
     if (pageId === PAGE_IDS.PANEL) {
-        scheduleDashboardUpdate();
-    }
+    setTimeout(async () => {
+        try {
+            await scheduleDashboardUpdate();
+        } catch (error) {
+            console.error("Error actualizando panel en navigateTo:", error);
+        }
+    }, 100);
+}
 };
 
 const getPendingRecurrents = () => {
@@ -4679,8 +4685,16 @@ const renderPanelPage = async () => {
         </button>
     `;
     
-    await scheduleDashboardUpdate();
-	setTimeout(initPanelInteractions, 100);
+    setTimeout(async () => {
+    try {
+        await scheduleDashboardUpdate();
+        if (typeof initPanelInteractions === 'function') {
+            initPanelInteractions();
+        }
+    } catch (error) {
+        console.error("Error inicializando panel:", error);
+    }
+}, 100);
 };
 
 // Añade después de tu función renderPanelPage
@@ -4765,17 +4779,26 @@ const setupHorizontalScroll = () => {
 
 // 3. ANIMACIÓN DE MINI-GRÁFICO
 const updateMiniChart = (ingresos, gastos, neto) => {
-    const max = Math.max(Math.abs(ingresos), Math.abs(gastos), Math.abs(neto));
-    
-    // Calcular alturas relativas (máximo 80px)
-    const ingresosHeight = (Math.abs(ingresos) / max) * 80;
-    const gastosHeight = (Math.abs(gastos) / max) * 80;
-    const netoHeight = (Math.abs(neto) / max) * 80;
-    
-    // Aplicar con animación
-    document.documentElement.style.setProperty('--ingresos-height', `${ingresosHeight}px`);
-    document.documentElement.style.setProperty('--gastos-height', `${gastosHeight}px`);
-    document.documentElement.style.setProperty('--neto-height', `${netoHeight}px`);
+    try {
+        // Solo ejecutar si estamos en el panel
+        const panelPage = select(PAGE_IDS.PANEL);
+        if (!panelPage || !panelPage.classList.contains('view--active')) return;
+        
+        const max = Math.max(Math.abs(ingresos), Math.abs(gastos), Math.abs(neto)) || 1;
+        
+        // Calcular alturas relativas (máximo 80px)
+        const ingresosHeight = (Math.abs(ingresos) / max) * 80;
+        const gastosHeight = (Math.abs(gastos) / max) * 80;
+        const netoHeight = (Math.abs(neto) / max) * 80;
+        
+        // Aplicar con animación
+        document.documentElement.style.setProperty('--ingresos-height', `${ingresosHeight}px`);
+        document.documentElement.style.setProperty('--gastos-height', `${gastosHeight}px`);
+        document.documentElement.style.setProperty('--neto-height', `${netoHeight}px`);
+        
+    } catch (error) {
+        console.error("Error en updateMiniChart:", error);
+    }
 };
 
 // 4. MODO PRIVACIDAD (OCULTAR IMPORTES)
@@ -6532,29 +6555,273 @@ const updateNetWorthChart = async (saldos) => {
 };
 
 const scheduleDashboardUpdate = async (force = false) => {
-    // El jefe de obra solo trabaja si la página "Inicio" está abierta.
-    const activePage = document.querySelector('.view--active');
-    if (!activePage || activePage.id !== PAGE_IDS.PANEL) {
-        return;
+    if (dashboardUpdateDebounceTimer) {
+        clearTimeout(dashboardUpdateDebounceTimer);
     }
-      
-    clearTimeout(dashboardUpdateDebounceTimer);
-        
-    dashboardUpdateDebounceTimer = setTimeout(updateDashboardData, 50);
-	 updateMiniChart(ingresos, gastos, saldoNeto);
-    
-    // También actualizar porcentaje de colchón de emergencia
-    const emergencyPercentage = (efData.mesesCobertura / 6) * 100;
-    const emergencyElement = select('emergency-fund-percentage');
-    if (emergencyElement) {
-        emergencyElement.textContent = `${Math.min(100, emergencyPercentage).toFixed(0)}%`;
-    }
-    
-    // Actualizar cambio patrimonial
-    await updatePatrimonioChange();
+
+    return new Promise((resolve) => {
+        dashboardUpdateDebounceTimer = setTimeout(async () => {
+            try {
+                if (!currentUser) {
+                    console.warn("scheduleDashboardUpdate: No hay usuario autenticado.");
+                    resolve();
+                    return;
+                }
+
+                // Asegurarnos de que tenemos los datos necesarios
+                if (!db.cuentas || db.cuentas.length === 0) {
+                    console.warn("scheduleDashboardUpdate: Datos de cuentas no cargados.");
+                    resolve();
+                    return;
+                }
+
+                // 1. OBTENER LOS DATOS PRINCIPALES
+                const saldos = await getSaldos();
+                const visibleAccounts = getVisibleAccounts();
+                const liquidAccounts = getLiquidAccounts();
+                
+                // 2. CALCULAR PATRIMONIO NETO
+                const patrimonioNeto = visibleAccounts.reduce((sum, cuenta) => {
+                    return sum + (saldos[cuenta.id] || 0);
+                }, 0);
+                
+                // 3. CALCULAR LIQUIDEZ
+                const liquidezTotal = liquidAccounts.reduce((sum, cuenta) => {
+                    return sum + (saldos[cuenta.id] || 0);
+                }, 0);
+                
+                // 4. OBTENER MOVIMIENTOS PARA EL PERIODO ACTUAL
+                const { current: currentMovs } = await getFilteredMovements(false);
+                const visibleAccountIds = new Set(visibleAccounts.map(c => c.id));
+                
+                // 5. CALCULAR INGRESOS, GASTOS Y NETO
+                let ingresos = 0;
+                let gastos = 0;
+                let saldoNeto = 0;
+                
+                currentMovs.forEach(mov => {
+                    const amount = calculateMovementAmount(mov, visibleAccountIds);
+                    if (amount > 0) {
+                        ingresos += amount;
+                    } else if (amount < 0) {
+                        gastos += amount;
+                    }
+                    saldoNeto += amount;
+                });
+                
+                // Convertir a valores positivos para display
+                const gastosAbsoluto = Math.abs(gastos);
+                
+                // 6. CALCULAR TASA DE AHORRO
+                const tasaAhorro = ingresos > 0 ? 
+                    ((ingresos + gastos) / ingresos) * 100 : 0;
+                
+                // 7. CALCULAR COLCHÓN DE EMERGENCIA
+                const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
+                
+                // 8. CALCULAR INDEPENDENCIA FINANCIERA
+                const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
+                
+                // 9. CALCULAR RENDIMIENTO DE INVERSIONES
+                let inversionTotal = 0;
+                let inversionPnl = 0;
+                let inversionPct = 0;
+                
+                const investmentAccounts = visibleAccounts.filter(c => c.esInversion);
+                if (investmentAccounts.length > 0 && dataLoaded.inversiones) {
+                    const perf = await calculatePortfolioPerformance();
+                    inversionTotal = perf.valorActual;
+                    inversionPnl = perf.pnlAbsoluto;
+                    inversionPct = perf.pnlPorcentual;
+                }
+                
+                // 10. ACTUALIZAR LA UI (SOLO SI ESTAMOS EN EL PANEL)
+                const panelPage = select(PAGE_IDS.PANEL);
+                if (panelPage && panelPage.classList.contains('view--active')) {
+                    
+                    // A. PATRIMONIO NETO
+                    const patrimonioEl = select('kpi-patrimonio-neto-value');
+                    if (patrimonioEl) {
+                        animateCountUp(patrimonioEl, patrimonioNeto, 700, true);
+                    }
+                    
+                    // B. LIQUIDEZ
+                    const liquidezEl = select('kpi-liquidez-value');
+                    if (liquidezEl) {
+                        animateCountUp(liquidezEl, liquidezTotal, 700, true);
+                    }
+                    
+                    // C. INGRESOS
+                    const ingresosEl = select('kpi-ingresos-value');
+                    if (ingresosEl) {
+                        ingresosEl.textContent = `+${formatCurrency(ingresos).replace('€', '').trim()}`;
+                        ingresosEl.classList.remove('skeleton');
+                    }
+                    
+                    // D. GASTOS
+                    const gastosEl = select('kpi-gastos-value');
+                    if (gastosEl) {
+                        gastosEl.textContent = `-${formatCurrency(gastosAbsoluto).replace('€', '').trim()}`;
+                        gastosEl.classList.remove('skeleton');
+                    }
+                    
+                    // E. SALDO NETO
+                    const netoEl = select('kpi-saldo-neto-value');
+                    if (netoEl) {
+                        const netoClass = saldoNeto >= 0 ? 'text-positive' : 'text-negative';
+                        netoEl.textContent = `${saldoNeto >= 0 ? '+' : ''}${formatCurrency(saldoNeto).replace('€', '').trim()}`;
+                        netoEl.className = netoClass;
+                        netoEl.classList.remove('skeleton');
+                    }
+                    
+                    // F. TASA DE AHORRO
+                    const tasaEl = select('kpi-tasa-ahorro-value');
+                    const tasaProgressEl = select('tasa-ahorro-progress');
+                    if (tasaEl) {
+                        tasaEl.textContent = `${Math.max(0, tasaAhorro).toFixed(0)}%`;
+                        tasaEl.classList.remove('skeleton');
+                    }
+                    if (tasaProgressEl) {
+                        tasaProgressEl.style.width = `${Math.min(100, Math.max(0, tasaAhorro))}%`;
+                    }
+                    
+                    // G. COLCHÓN DE EMERGENCIA
+                    const runwayValEl = select('health-runway-val');
+                    const runwayProgressEl = select('health-runway-progress-bar');
+                    const emergencyPercentageEl = select('emergency-fund-percentage');
+                    
+                    if (runwayValEl) {
+                        const meses = efData.mesesCobertura;
+                        runwayValEl.textContent = `${isFinite(meses) ? meses.toFixed(1) : '∞'} Meses`;
+                        runwayValEl.classList.remove('skeleton');
+                        
+                        if (runwayValEl) {
+                            const color = meses >= 6 ? 'var(--c-success)' : 
+                                        meses >= 3 ? 'var(--c-warning)' : 'var(--c-danger)';
+                            runwayValEl.style.color = color;
+                        }
+                    }
+                    
+                    if (runwayProgressEl) {
+                        const percentage = Math.min(100, (efData.mesesCobertura / 6) * 100);
+                        runwayProgressEl.style.width = `${percentage}%`;
+                        runwayProgressEl.style.background = `linear-gradient(90deg, var(--c-success), #00D68F)`;
+                    }
+                    
+                    if (emergencyPercentageEl) {
+                        const percentage = Math.min(100, (efData.mesesCobertura / 6) * 100);
+                        emergencyPercentageEl.textContent = `${percentage.toFixed(0)}%`;
+                    }
+                    
+                    // H. LIBERTAD FINANCIERA
+                    const fiValEl = select('health-fi-val');
+                    const fiProgressEl = select('health-fi-progress-bar');
+                    
+                    if (fiValEl) {
+                        fiValEl.textContent = `${fiData.progresoFI.toFixed(1)}%`;
+                        fiValEl.classList.remove('skeleton');
+                    }
+                    
+                    if (fiProgressEl) {
+                        fiProgressEl.style.width = `${Math.min(100, fiData.progresoFI)}%`;
+                    }
+                    
+                    // I. INVERSIONES
+                    const inversionTotalEl = select('kpi-inversion-total');
+                    const inversionPnlEl = select('kpi-inversion-pnl');
+                    const inversionPctEl = select('kpi-inversion-pct');
+                    
+                    if (inversionTotalEl) {
+                        animateCountUp(inversionTotalEl, inversionTotal, 700, true);
+                    }
+                    
+                    if (inversionPnlEl) {
+                        const pnlClass = inversionPnl >= 0 ? 'text-positive' : 'text-negative';
+                        inversionPnlEl.textContent = `${inversionPnl >= 0 ? '+' : ''}${formatCurrency(inversionPnl).replace('€', '').trim()}`;
+                        inversionPnlEl.className = pnlClass;
+                        inversionPnlEl.classList.remove('skeleton');
+                    }
+                    
+                    if (inversionPctEl) {
+                        const pctClass = inversionPct >= 0 ? 'text-positive' : 'text-negative';
+                        inversionPctEl.textContent = `${inversionPct >= 0 ? '+' : ''}${inversionPct.toFixed(2)}%`;
+                        inversionPctEl.className = pctClass;
+                        inversionPctEl.classList.remove('skeleton');
+                    }
+                    
+                    // J. MINI-GRÁFICO DE FLUJO DE CAJA
+                    if (typeof updateMiniChart === 'function') {
+                        updateMiniChart(ingresos, gastos, saldoNeto);
+                    }
+                    
+                    // K. CAMBIO PATRIMONIAL
+                    if (typeof updatePatrimonioChange === 'function') {
+                        updatePatrimonioChange();
+                    }
+                    
+                    // Remover skeletons de todos los elementos restantes
+                    selectAll('.skeleton').forEach(el => {
+                        if (el.id.includes('kpi-') || el.id.includes('health-')) {
+                            el.classList.remove('skeleton');
+                        }
+                    });
+                    
+                }
+                
+                // 11. ACTUALIZAR WIDGETS DE ANÁLISIS
+                await updateAnalisisWidgets();
+                
+                resolve();
+                
+            } catch (error) {
+                console.error("Error en scheduleDashboardUpdate:", error);
+                showToast("Error al actualizar el panel.", "danger");
+                resolve();
+            }
+        }, force ? 0 : 300);
+    });
 };
 
+// Función para calcular movimientos en un período específico
+const getMovementsForPeriod = async (startDate, endDate) => {
+    if (!currentUser) return { saldoNeto: 0 };
+    
+    try {
+        const snapshot = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos')
+            .where('fecha', '>=', startDate.toISOString())
+            .where('fecha', '<=', endDate.toISOString())
+            .get();
+        
+        const movements = snapshot.docs.map(doc => doc.data());
+        const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+        
+        let saldoNeto = 0;
+        movements.forEach(mov => {
+            saldoNeto += calculateMovementAmount(mov, visibleAccountIds);
+        });
+        
+        return { saldoNeto };
+    } catch (error) {
+        console.error("Error obteniendo movimientos del período:", error);
+        return { saldoNeto: 0 };
+    }
+};
 
+// Función de actualización de cambio patrimonial (si no existe)
+const updatePatrimonioChange = async () => {
+    try {
+        const changeElement = select('kpi-patrimonio-change');
+        if (!changeElement) return;
+        
+        // Por ahora, ponemos un valor por defecto
+        // Puedes implementar la lógica completa después
+        changeElement.textContent = '+0,0%';
+        changeElement.style.background = 'rgba(0, 179, 77, 0.2)';
+        changeElement.style.color = 'var(--c-success)';
+    } catch (error) {
+        console.error("Error en updatePatrimonioChange:", error);
+    }
+};
 const updateDashboardData = async () => {
     const activePage = document.querySelector('.view--active');
     if (!activePage || activePage.id !== PAGE_IDS.PANEL) return;
