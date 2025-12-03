@@ -6062,16 +6062,17 @@ const scheduleDashboardUpdate = () => {
             const saldos = await getSaldos();
             const visibleAccounts = getVisibleAccounts();
             
-            // 1. CALCULAR LIQUIDEZ (solo Bancos + Efectivo)
-            const liquidityAccounts = getLiquidityAccounts(); // ← Usar la nueva función
-            const liquidezTotal = liquidityAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
-            
-            // 2. CALCULAR CAPITAL APORTADO (saldo de cuentas de inversión)
+            // --- CORRECCIÓN AQUÍ ---
+            // 1. CALCULAR PATRIMONIO TOTAL REAL (Suma de TODAS las cuentas visibles, sin importar el tipo)
+            const patrimonioTotal = visibleAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
+
+            // 2. CALCULAR CAPITAL APORTADO (Solo cuentas marcadas como inversión)
             const investmentAccounts = visibleAccounts.filter(c => c.esInversion);
             const capitalAportadoTotal = investmentAccounts.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
             
-            // 3. CALCULAR PATRIMONIO TOTAL = Liquidez + Capital Aportado
-            const patrimonioTotal = liquidezTotal + capitalAportadoTotal;
+            // 3. CALCULAR LIQUIDEZ (El resto: Patrimonio Total - Inversiones)
+            // Esto asegura que ninguna cuenta "rara" (ej. "Caja B") se quede fuera de la suma.
+            const liquidezTotal = patrimonioTotal - capitalAportadoTotal;
             
             // 4. CALCULAR VALOR DE MERCADO y P&L de inversiones
             let valorMercadoTotal = 0;
@@ -6101,6 +6102,7 @@ const scheduleDashboardUpdate = () => {
             const patrimonioEl = select('kpi-patrimonio-neto-value');
             if (patrimonioEl) {
                 patrimonioEl.classList.remove('skeleton');
+                // IMPORTANTE: Ahora usamos el patrimonioTotal calculado correctamente arriba
                 animateCountUp(patrimonioEl, patrimonioTotal, 800, true);
             }
             
