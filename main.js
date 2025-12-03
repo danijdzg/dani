@@ -8760,58 +8760,52 @@ const handleStart = (e) => {
             'import-csv': showCsvImportWizard,
             'toggle-ledger': async () => {
                 hapticFeedback('medium');
+                
+                // 1. Cambiar el estado global
                 isOffBalanceMode = !isOffBalanceMode;
-				const handleToggleLedger = () => {
-    isOffBalanceMode = !isOffBalanceMode;
-    
-    // Actualizar UI del botón
-    const btn = select('ledger-toggle-btn');
-    if (btn) {
-        btn.textContent = isOffBalanceMode ? 'B' : 'A';
-        btn.title = `Cambiar a Contabilidad ${isOffBalanceMode ? 'A' : 'B'}`;
-    }
-    
-    // ← AÑADE ESTO DESPUÉS de cambiar isOffBalanceMode:
-    
-    // 1. Limpiar cachés que dependen de la contabilidad
-    runningBalancesCache = null;
-    allDiarioMovementsCache = [];
-    
-    // 2. Forzar recálculo INMEDIATO del panel si está activo
-    if (select(PAGE_IDS.PANEL)?.classList.contains('view--active')) {
-        // Pequeño delay para asegurar que el cambio se ha procesado
-        setTimeout(() => {
-            forcePanelRecalculation();
-        }, 100);
-    }
-    
-    // 3. Re-renderizar páginas activas
-    const activePage = document.querySelector('.view--active');
-    if (activePage) {
-        if (activePage.id === PAGE_IDS.DIARIO) {
-            setTimeout(() => renderDiarioPage(), 150);
-        }
-        if (activePage.id === PAGE_IDS.PATRIMONIO) {
-            setTimeout(() => renderPatrimonioPage(), 150);
-        }
-    }
-    
-    // 4. Actualizar dropdowns
-    setTimeout(() => populateAllDropdowns(), 200);
-    
-    hapticFeedback('medium');
-    showToast(`Cambiado a Contabilidad ${isOffBalanceMode ? 'B (Oculta)' : 'A (Principal)'}`, 'info');
-};
+                
+                // 2. LIMPIEZA CRÍTICA DE CACHÉS (Esto es lo que fallaba)
+                // Si no borramos esto, los cálculos usan datos de la contabilidad anterior
+                runningBalancesCache = null;
+                allDiarioMovementsCache = []; 
+                
+                // 3. Actualizar UI Visual (Botón y Tema)
                 document.body.dataset.ledgerMode = isOffBalanceMode ? 'B' : 'A';
-                showToast(`Mostrando Contabilidad ${isOffBalanceMode ? 'B' : 'A'}.`, 'info');
-                const activePageEl = document.querySelector('.view--active');
                 const ledgerBtn = select('ledger-toggle-btn');
-                if (ledgerBtn) ledgerBtn.textContent = isOffBalanceMode ? 'B' : 'A';
+                if (ledgerBtn) {
+                    ledgerBtn.textContent = isOffBalanceMode ? 'B' : 'A';
+                    ledgerBtn.title = `Cambiar a Contabilidad ${isOffBalanceMode ? 'A' : 'B'}`;
+                }
+                
+                showToast(`Mostrando Contabilidad ${isOffBalanceMode ? 'B (Oculta)' : 'A (Principal)'}.`, 'info');
+
+                // 4. Actualizar los selectores (Dropdowns) para formularios
+                populateAllDropdowns();
+
+                // 5. Refrescar la página activa con los nuevos datos
+                const activePageEl = document.querySelector('.view--active');
                 if (activePageEl) {
-                    if (activePageEl.id === PAGE_IDS.PANEL) scheduleDashboardUpdate();
-                    else if (activePageEl.id === PAGE_IDS.DIARIO) updateVirtualListUI();
-                    else if (activePageEl.id === PAGE_IDS.INVERSIONES) await renderInversionesView();
-                    else if (activePageEl.id === PAGE_IDS.PLANIFICAR) await renderPlanificacionPage();
+                    if (activePageEl.id === PAGE_IDS.PANEL) {
+                        // En el Panel, forzamos la actualización de todos los widgets
+                        scheduleDashboardUpdate();
+                    } 
+                    else if (activePageEl.id === PAGE_IDS.DIARIO) {
+                        // En el Diario, reiniciamos la lista por completo
+                        db.movimientos = [];
+                        lastVisibleMovementDoc = null;
+                        allMovementsLoaded = false;
+                        // Limpiamos visualmente primero
+                        const listContent = select('virtual-list-content');
+                        if(listContent) listContent.innerHTML = '';
+                        // Recargamos datos
+                        await loadMoreMovements(true);
+                    }
+                    else if (activePageEl.id === PAGE_IDS.PATRIMONIO) {
+                        renderPatrimonioPage();
+                    }
+                    else if (activePageEl.id === PAGE_IDS.PLANIFICAR) {
+                        renderPlanificacionPage();
+                    }
                 }
             },
             'toggle-off-balance': async () => { const checkbox = target.closest('input[type="checkbox"]'); if (!checkbox) return; hapticFeedback('light'); await saveDoc('cuentas', checkbox.dataset.id, { offBalance: checkbox.checked }); },
