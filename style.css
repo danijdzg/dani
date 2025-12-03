@@ -3950,3 +3950,110 @@ body.privacy-mode .asset-card__value:active {
     gap: 8px; /* Espacio ajustado */
     margin-bottom: var(--sp-4);
 }
+/* Estilos para tarjetas de métricas de riesgo */
+.risk-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.risk-metric-card {
+    background: var(--c-surface);
+    border-radius: var(--border-radius-lg);
+    padding: 1.25rem;
+    text-align: center;
+    border: 2px solid var(--c-outline);
+    transition: all 0.3s ease;
+}
+
+.risk-metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.risk-metric-card.risk-high {
+    border-color: var(--c-danger);
+    background: linear-gradient(135deg, rgba(255, 76, 81, 0.1), transparent);
+}
+
+.risk-metric-card.risk-low {
+    border-color: var(--c-success);
+    background: linear-gradient(135deg, rgba(76, 217, 100, 0.1), transparent);
+}
+
+.risk-metric-card.risk-good {
+    border-color: var(--c-warning);
+    background: linear-gradient(135deg, rgba(255, 204, 0, 0.1), transparent);
+}
+
+.risk-metric-card.risk-neutral {
+    border-color: var(--c-outline);
+}
+
+.risk-metric__icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+    color: var(--c-primary);
+}
+
+.risk-metric__value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.risk-metric__label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--c-on-surface-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.risk-metric__description {
+    font-size: 0.75rem;
+    color: var(--c-on-surface-tertiary);
+}
+
+/* Estilos para la explicación de riesgo */
+.risk-explanation {
+    background: var(--c-surface-variant);
+    padding: 1.5rem;
+    border-radius: var(--border-radius-md);
+    margin-top: 1.5rem;
+}
+
+.risk-explanation h4 {
+    color: var(--c-primary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.risk-explanation ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.risk-explanation li {
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+/* Grid de gráficos */
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.chart-container {
+    position: relative;
+    background: var(--c-surface);
+    border-radius: var(--border-radius-lg);
+    padding: 1rem;
+    border: 1px solid var(--c-outline);
+}

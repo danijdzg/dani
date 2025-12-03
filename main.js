@@ -1,6 +1,10 @@
 
 import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
-
+import { 
+  calculateStandardDeviation, 
+  calculateMaxDrawdown,
+  calculateSharpeRatio 
+} from './calculations.js';
 const setupEnhancedFormNavigation = () => {
     const inputs = [
         { id: 'movimiento-cantidad', next: 'movimiento-concepto' },
@@ -2463,8 +2467,8 @@ const getFilteredMovements = async (forComparison = false) => {
     return 0; // Si no converge, devuelve 0 en lugar de colgarse
 };
 		
-const calculatePortfolioPerformance = async (cuentaId = null) => {
-    // ... (Inicio de la función idéntico: carga de movimientos y cuentas) ...
+const calculatePortfolioPerformance = async (cuentaId = null, period = 'MAX') => {
+    // 1. OBTENER DATOS (igual que antes)
     const allMovements = (typeof allDiarioMovementsCache !== 'undefined' && allDiarioMovementsCache.length > 0) 
         ? allDiarioMovementsCache 
         : await fetchAllMovementsForHistory();
@@ -2475,20 +2479,66 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
     const investmentAccounts = cuentaId ? allInvestmentAccounts.filter(c => c.id === cuentaId) : allInvestmentAccounts;
     
     if (investmentAccounts.length === 0) {
-        return { valorActual: 0, capitalInvertido: 0, pnlAbsoluto: 0, pnlPorcentual: 0, irr: 0, daysActive: 0 };
+        return { 
+            valorActual: 0, 
+            capitalInvertido: 0, 
+            pnlAbsoluto: 0, 
+            pnlPorcentual: 0, 
+            irr: 0, 
+            daysActive: 0,
+            // NUEVAS MÉTRICAS:
+            monthlyReturns: [],
+            annualVolatility: 0,
+            maxDrawdown: 0,
+            sharpeRatio: 0,
+            sortinoRatio: 0,
+            bestMonth: 0,
+            worstMonth: 0
+        };
     }
     
+    // 2. CÁLCULOS BÁSICOS (igual que antes)
     let totalValorActual = 0;
     let totalCapitalInvertido_para_PNL = 0;
     let allIrrCashflows = [];
-    let firstMovementDate = new Date(); // Para calcular antigüedad
-
+    let firstMovementDate = new Date();
+    
+    // 3. NUEVO: Recolectar datos históricos para análisis
+    const historicalData = [];
+    const monthlyReturns = [];
+    
     for (const cuenta of investmentAccounts) {
-        // ... (Lógica de P&L y Filtrado de Movimientos idéntica a la anterior) ...
         const valoraciones = (db.inversiones_historial || [])
             .filter(v => v.cuentaId === cuenta.id)
-            .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-        const valorActual = valoraciones.length > 0 ? valoraciones[0].valor : 0;
+            .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+        
+        // Recolectar datos históricos para cálculo de métricas
+        valoraciones.forEach((valoracion, index) => {
+            if (index > 0) {
+                const prevValue = valoraciones[index - 1].valor;
+                const currentValue = valoracion.valor;
+                const returnPct = (currentValue - prevValue) / prevValue;
+                
+                historicalData.push({
+                    fecha: valoracion.fecha,
+                    valor: valoracion.valor,
+                    return: returnPct
+                });
+                
+                // Agrupar por meses para calcular returns mensuales
+                const date = new Date(valoracion.fecha);
+                const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+                
+                if (!monthlyReturns[monthKey]) {
+                    monthlyReturns[monthKey] = { total: 0, count: 0 };
+                }
+                monthlyReturns[monthKey].total += returnPct;
+                monthlyReturns[monthKey].count++;
+            }
+        });
+        
+        // Resto del código existente...
+        const valorActual = valoraciones.length > 0 ? valoraciones[valoraciones.length - 1].valor : 0;
         const capitalInvertido_para_PNL = cuenta.saldo || 0;
         
         totalValorActual += valorActual;
@@ -2499,7 +2549,7 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
             (m.tipo === 'traspaso' && (m.cuentaDestinoId === cuenta.id || m.cuentaOrigenId === cuenta.id))
         );
 
-        // Detectar fecha del primer movimiento para antigüedad
+        // Detectar fecha del primer movimiento
         if (accountMovements.length > 0) {
             const firstInAcc = accountMovements.reduce((oldest, current) => 
                 new Date(current.fecha) < new Date(oldest.fecha) ? current : oldest
@@ -2508,7 +2558,7 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
             if (mDate < firstMovementDate) firstMovementDate = mDate;
         }
 
-        // ... (Lógica de conversión a Cashflows idéntica) ...
+        // IRR cashflows (existente)
         const irrCashflows = accountMovements
             .map(mov => {
                 let effectOnAccount = 0;
@@ -2531,21 +2581,299 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
         allIrrCashflows.push(...irrCashflows);
     }
 
+    // 4. CÁLCULO DE LAS NUEVAS MÉTRICAS
+    // Preparar array de returns mensuales
+    const monthlyReturnValues = Object.values(monthlyReturns)
+        .map(m => m.total / m.count)
+        .filter(r => !isNaN(r));
+    
+    // Preparar array de valores históricos para drawdown
+    const historicalValues = historicalData.map(d => d.valor).filter(v => v > 0);
+    
+    // Calcular métricas de riesgo
+    const annualVolatility = calculateAnnualVolatility(monthlyReturnValues);
+    const maxDrawdown = calculateMaxDrawdown(historicalValues);
+    const sharpeRatio = calculateSharpeRatio(monthlyReturnValues);
+    const sortinoRatio = calculateSortinoRatio(monthlyReturnValues);
+    
+    // Encontrar mejor y peor mes
+    const bestMonth = monthlyReturnValues.length > 0 ? Math.max(...monthlyReturnValues) : 0;
+    const worstMonth = monthlyReturnValues.length > 0 ? Math.min(...monthlyReturnValues) : 0;
+
+    // 5. CÁLCULOS EXISTENTES
     const pnlAbsoluto = totalValorActual - totalCapitalInvertido_para_PNL;
     const pnlPorcentual = totalCapitalInvertido_para_PNL !== 0 ? (pnlAbsoluto / totalCapitalInvertido_para_PNL) * 100 : 0;
     const irr = calculateIRR(allIrrCashflows);
-
-    // NUEVO: Calculamos días activos
     const daysActive = (new Date() - firstMovementDate) / (1000 * 60 * 60 * 24);
 
+    // 6. RETORNAR RESULTADO COMPLETO
     return { 
         valorActual: totalValorActual, 
         capitalInvertido: totalCapitalInvertido_para_PNL,
         pnlAbsoluto, 
         pnlPorcentual, 
         irr,
-        daysActive // Retornamos la antigüedad
+        daysActive,
+        // NUEVAS MÉTRICAS:
+        monthlyReturns: monthlyReturnValues,
+        annualVolatility,
+        maxDrawdown,
+        sharpeRatio,
+        sortinoRatio,
+        bestMonth,
+        worstMonth,
+        historicalData // Para gráficos
     };
+};
+const renderRiskAnalysisChart = (canvasId, performanceData) => {
+    const canvas = select(canvasId);
+    if (!canvas) return null;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Destruir gráfico existente
+    const existingChart = Chart.getChart(canvasId);
+    if (existingChart) existingChart.destroy();
+    
+    const data = {
+        labels: ['Volatilidad', 'Max Drawdown', 'Sharpe Ratio', 'Sortino Ratio'],
+        datasets: [{
+            label: 'Métricas de Riesgo',
+            data: [
+                performanceData.annualVolatility * 100, // Convertir a porcentaje
+                performanceData.maxDrawdown * 100,      // Convertir a porcentaje
+                performanceData.sharpeRatio,
+                performanceData.sortinoRatio
+            ],
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)'
+            ],
+            borderColor: [
+                'rgb(255, 99, 132)',
+                'rgb(54, 162, 235)',
+                'rgb(255, 206, 86)',
+                'rgb(75, 192, 192)'
+            ],
+            borderWidth: 2
+        }]
+    };
+    
+    const config = {
+        type: 'bar',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) label += ': ';
+                            
+                            const value = context.raw;
+                            const index = context.dataIndex;
+                            
+                            switch(index) {
+                                case 0: // Volatilidad
+                                    return `Volatilidad Anual: ${value.toFixed(2)}%`;
+                                case 1: // Max Drawdown
+                                    return `Máxima Pérdida: ${value.toFixed(2)}%`;
+                                case 2: // Sharpe
+                                    return `Sharpe Ratio: ${value.toFixed(2)}`;
+                                case 3: // Sortino
+                                    return `Sortino Ratio: ${value.toFixed(2)}`;
+                                default:
+                                    return `${label}${value}`;
+                            }
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    };
+    
+    return new Chart(ctx, config);
+};
+const renderReturnsDistributionChart = (canvasId, monthlyReturns) => {
+    const canvas = select(canvasId);
+    if (!canvas) return null;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Destruir gráfico existente
+    const existingChart = Chart.getChart(canvasId);
+    if (existingChart) existingChart.destroy();
+    
+    // Crear bins para el histograma
+    const returnsInPercent = monthlyReturns.map(r => r * 100);
+    const minReturn = Math.min(...returnsInPercent);
+    const maxReturn = Math.max(...returnsInPercent);
+    const binSize = (maxReturn - minReturn) / 10;
+    
+    const bins = Array(10).fill(0);
+    returnsInPercent.forEach(returnPct => {
+        const binIndex = Math.min(9, Math.max(0, Math.floor((returnPct - minReturn) / binSize)));
+        bins[binIndex]++;
+    });
+    
+    const labels = bins.map((_, i) => {
+        const start = minReturn + (i * binSize);
+        const end = start + binSize;
+        return `${start.toFixed(1)}% a ${end.toFixed(1)}%`;
+    });
+    
+    const data = {
+        labels: labels,
+        datasets: [{
+            label: 'Frecuencia de Retornos',
+            data: bins,
+            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+            borderColor: 'rgb(54, 162, 235)',
+            borderWidth: 1
+        }]
+    };
+    
+    const config = {
+        type: 'bar',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            return tooltipItems[0].label;
+                        },
+                        label: function(context) {
+                            const count = context.raw;
+                            const percentage = (count / returnsInPercent.length * 100).toFixed(1);
+                            return `${count} meses (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Frecuencia (meses)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Rango de Retornos Mensuales'
+                    },
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            }
+        }
+    };
+    
+    return new Chart(ctx, config);
+};
+const renderDrawdownChart = (canvasId, historicalData) => {
+    const canvas = select(canvasId);
+    if (!canvas) return null;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Destruir gráfico existente
+    const existingChart = Chart.getChart(canvasId);
+    if (existingChart) existingChart.destroy();
+    
+    // Calcular drawdown para cada punto
+    const sortedData = historicalData.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    let peak = sortedData[0]?.valor || 0;
+    const drawdowns = [];
+    const dates = [];
+    
+    sortedData.forEach(point => {
+        if (point.valor > peak) {
+            peak = point.valor;
+        }
+        const drawdown = ((peak - point.valor) / peak) * 100;
+        drawdowns.push(drawdown);
+        dates.push(new Date(point.fecha));
+    });
+    
+    const data = {
+        labels: dates,
+        datasets: [{
+            label: 'Drawdown (%)',
+            data: drawdowns,
+            fill: true,
+            backgroundColor: 'rgba(255, 99, 132, 0.3)',
+            borderColor: 'rgb(255, 99, 132)',
+            tension: 0.1
+        }]
+    };
+    
+    const config = {
+        type: 'line',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Drawdown: ${context.raw.toFixed(2)}%`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    reverse: true, // Drawdown se muestra como positivo hacia abajo
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Drawdown (%)'
+                    }
+                },
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'month'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Fecha'
+                    }
+                }
+            }
+        }
+    };
+    
+    return new Chart(ctx, config);
 };
 
     const recalculateAndApplyRunningBalances = (movements, allAccountsDb) => {
@@ -3086,6 +3414,18 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                     <span>Gestionar Activos</span>
                 </button>
             </div>`;
+			// Añade esto cerca del botón "Gestionar Activos"
+`
+<div class="card card--no-bg" style="padding:0; margin-top: var(--sp-4); display: flex; gap: var(--sp-2);">
+    <button class="btn btn--secondary btn--full" data-action="manage-investment-accounts">
+        <span class="material-icons" style="font-size: 16px;">checklist</span>
+        Gestionar Activos
+    </button>
+    <button class="btn btn--primary btn--full" data-action="export-risk-report">
+        <span class="material-icons" style="font-size: 16px;">download</span>
+        Exportar Reporte
+    </button>
+</div>`
         return;
     }
 
@@ -3095,7 +3435,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             return { ...cuenta, ...performance };
         })
     );
-
+	const portfolioTotalPerformance = await calculatePortfolioPerformance();
     const allInvestmentTypes = [...new Set(performanceData.map(asset => toSentenceCase(asset.tipo || 'S/T')))].sort();
     const colorMap = {};
     allInvestmentTypes.forEach((label, index) => { colorMap[label] = CHART_COLORS[index % CHART_COLORS.length]; });
@@ -3178,22 +3518,148 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                 </div>
             </div>
         </div>
+        
+        <!-- NUEVA SECCIÓN: ANÁLISIS DE RIESGO -->
         <details class="accordion" open style="margin-bottom: var(--sp-4);">
+            <summary>
+                <h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);">
+                    <span class="material-icons">security</span>
+                    Análisis de Riesgo del Portafolio
+                </h3>
+                <span class="material-icons accordion__icon">expand_more</span>
+            </summary>
+            <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
+                
+                <!-- Tarjetas de métricas de riesgo -->
+                <div class="risk-metrics-grid" style="
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                    gap: var(--sp-3);
+                    margin-bottom: var(--sp-4);
+                ">
+                    <div class="risk-metric-card ${portfolioTotalPerformance.annualVolatility > 0.15 ? 'risk-high' : 'risk-low'}">
+                        <div class="risk-metric__icon">
+                            <span class="material-icons">waves</span>
+                        </div>
+                        <div class="risk-metric__value">
+                            ${(portfolioTotalPerformance.annualVolatility * 100).toFixed(1)}%
+                        </div>
+                        <div class="risk-metric__label">Volatilidad Anual</div>
+                        <div class="risk-metric__description">
+                            ${portfolioTotalPerformance.annualVolatility > 0.15 ? 'Alta' : 
+                              portfolioTotalPerformance.annualVolatility > 0.08 ? 'Moderada' : 'Baja'}
+                        </div>
+                    </div>
+                    
+                    <div class="risk-metric-card ${portfolioTotalPerformance.maxDrawdown > 0.2 ? 'risk-high' : 'risk-low'}">
+                        <div class="risk-metric__icon">
+                            <span class="material-icons">trending_down</span>
+                        </div>
+                        <div class="risk-metric__value">
+                            ${(portfolioTotalPerformance.maxDrawdown * 100).toFixed(1)}%
+                        </div>
+                        <div class="risk-metric__label">Máxima Pérdida</div>
+                        <div class="risk-metric__description">
+                            Pérdida máxima histórica
+                        </div>
+                    </div>
+                    
+                    <div class="risk-metric-card ${portfolioTotalPerformance.sharpeRatio > 1 ? 'risk-good' : 'risk-neutral'}">
+                        <div class="risk-metric__icon">
+                            <span class="material-icons">speed</span>
+                        </div>
+                        <div class="risk-metric__value">
+                            ${portfolioTotalPerformance.sharpeRatio.toFixed(2)}
+                        </div>
+                        <div class="risk-metric__label">Sharpe Ratio</div>
+                        <div class="risk-metric__description">
+                            ${portfolioTotalPerformance.sharpeRatio > 1 ? 'Bueno' : 
+                              portfolioTotalPerformance.sharpeRatio > 0 ? 'Neutral' : 'Pobre'}
+                        </div>
+                    </div>
+                    
+                    <div class="risk-metric-card ${portfolioTotalPerformance.sortinoRatio > 1 ? 'risk-good' : 'risk-neutral'}">
+                        <div class="risk-metric__icon">
+                            <span class="material-icons">arrow_downward</span>
+                        </div>
+                        <div class="risk-metric__value">
+                            ${portfolioTotalPerformance.sortinoRatio.toFixed(2)}
+                        </div>
+                        <div class="risk-metric__label">Sortino Ratio</div>
+                        <div class="risk-metric__description">
+                            Riesgo vs retorno ajustado
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gráficos de riesgo -->
+                <div class="chart-grid" style="
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                    gap: var(--sp-3);
+                    margin-bottom: var(--sp-3);
+                ">
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="risk-analysis-chart"></canvas>
+                    </div>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="returns-distribution-chart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Gráfico de drawdown (full width) -->
+                <div class="chart-container" style="height: 200px; margin-top: var(--sp-3);">
+                    <canvas id="drawdown-chart"></canvas>
+                </div>
+                
+                <!-- Explicación de métricas -->
+                <div class="risk-explanation" style="
+                    background: var(--c-surface-variant);
+                    padding: var(--sp-3);
+                    border-radius: var(--border-radius-md);
+                    margin-top: var(--sp-3);
+                    font-size: var(--fs-sm);
+                ">
+                    <h4 style="margin-bottom: var(--sp-2);">📊 ¿Qué significan estas métricas?</h4>
+                    <ul style="margin: 0; padding-left: var(--sp-4);">
+                        <li><strong>Volatilidad Anual</strong>: Variabilidad típica de los retornos. Mayor = más riesgo.</li>
+                        <li><strong>Máxima Pérdida (Drawdown)</strong>: Mayor caída desde un pico histórico.</li>
+                        <li><strong>Sharpe Ratio</strong>: Retorno por unidad de riesgo. >1 = bueno.</li>
+                        <li><strong>Sortino Ratio</strong>: Similar a Sharpe pero solo penaliza pérdidas.</li>
+                    </ul>
+                </div>
+            </div>
+        </details>
+        
+        <!-- SECCIÓN EXISTENTE DE ASIGNACIÓN -->
+        <details class="accordion" style="margin-bottom: var(--sp-4);">
             <summary><h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">pie_chart</span>Asignación y Filtros</h3><span class="material-icons accordion__icon">expand_more</span></summary>
             <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
                 <div class="filter-pills" style="margin-bottom: var(--sp-2);">${pillsHTML}</div>
                 <div class="chart-container" style="height: 250px; margin-bottom: 0;"><canvas id="asset-allocation-chart"></canvas></div>
             </div>
         </details>
+        
         <div id="investment-assets-list"></div>
-
-        ${summaryCardHtml} <!-- <-- INYECTAMOS LA NUEVA TARJETA AQUÍ -->
+        
+        ${summaryCardHtml}
         
         <div class="card card--no-bg" style="padding:0; margin-top: var(--sp-4);">
             <button class="btn btn--secondary btn--full" data-action="manage-investment-accounts"><span class="material-icons" style="font-size: 16px;">checklist</span>Gestionar Activos</button>
         </div>`;
     
     setTimeout(() => {
+		/ Gráfico de análisis de riesgo
+        if (portfolioTotalPerformance.monthlyReturns.length > 0) {
+            renderRiskAnalysisChart('risk-analysis-chart', portfolioTotalPerformance);
+            renderReturnsDistributionChart('returns-distribution-chart', portfolioTotalPerformance.monthlyReturns);
+        }
+        
+        // Gráfico de drawdown si hay datos históricos
+        if (portfolioTotalPerformance.historicalData && 
+            portfolioTotalPerformance.historicalData.length > 1) {
+            renderDrawdownChart('drawdown-chart', portfolioTotalPerformance.historicalData);
+        }
         const chartCtx = select('asset-allocation-chart')?.getContext('2d');
         if (chartCtx) {
             if (assetAllocationChart) assetAllocationChart.destroy();
@@ -3302,9 +3768,53 @@ const renderPortfolioMainContent = async (targetContainerId) => {
             
             applyInvestmentItemInteractions(listContainer);
         }
-    }, 50);
+    }, 100);
 };
-
+const exportRiskReport = async () => {
+    const portfolioPerformance = await calculatePortfolioPerformance();
+    
+    const report = {
+        fecha: new Date().toISOString(),
+        portfolio: {
+            valorMercado: portfolioPerformance.valorActual,
+            capitalInvertido: portfolioPerformance.capitalInvertido,
+            gananciaPerdida: portfolioPerformance.pnlAbsoluto,
+            rentabilidad: portfolioPerformance.pnlPorcentual,
+            tir: portfolioPerformance.irr
+        },
+        analisisRiesgo: {
+            volatilidadAnual: portfolioPerformance.annualVolatility,
+            maxDrawdown: portfolioPerformance.maxDrawdown,
+            sharpeRatio: portfolioPerformance.sharpeRatio,
+            sortinoRatio: portfolioPerformance.sortinoRatio,
+            mejorMes: portfolioPerformance.bestMonth,
+            peorMes: portfolioPerformance.worstMonth
+        },
+        interpretacion: {
+            nivelRiesgo: portfolioPerformance.annualVolatility > 0.15 ? 'Alto' : 
+                        portfolioPerformance.annualVolatility > 0.08 ? 'Moderado' : 'Bajo',
+            calidadRetorno: portfolioPerformance.sharpeRatio > 1 ? 'Buena' : 
+                           portfolioPerformance.sharpeRatio > 0 ? 'Neutral' : 'Pobre',
+            resiliencia: portfolioPerformance.maxDrawdown > 0.2 ? 'Baja' : 
+                        portfolioPerformance.maxDrawdown > 0.1 ? 'Moderada' : 'Alta'
+        }
+    };
+    
+    // Crear y descargar JSON
+    const dataStr = JSON.stringify(report, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `reporte-riesgo-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    showToast('Reporte de riesgo exportado', 'success');
+};
 
 const handleShowPnlBreakdown = async (accountId) => {
     const cuenta = db.cuentas.find(c => c.id === accountId);
@@ -8410,6 +8920,13 @@ const renderInversionesPage = async (containerId) => {
 
 // ▼▼▼ REEMPLAZA TU FUNCIÓN attachEventListeners CON ESTA VERSIÓN LIMPIA ▼▼▼
 const attachEventListeners = () => {
+	document.addEventListener('click', (e) => {
+    // ... otros event listeners ...
+    
+    if (e.target.closest('[data-action="export-risk-report"]')) {
+        exportRiskReport();
+    }
+});
 	// --- LÓGICA DE MODO PRIVACIDAD ---
     // Al hacer clic en el valor del Patrimonio Neto (KPI principal), alternamos el modo.
     document.body.addEventListener('click', (e) => {
