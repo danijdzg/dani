@@ -340,51 +340,74 @@ const THEMES = {
     'sunset-groove': { name: 'Brisa Alpina', icon: 'light_mode' }
 };
 
-// ▼▼▼ REEMPLAZAR TU FUNCIÓN updateAnalisisWidgets CON ESTA VERSIÓN SIMPLIFICADA ▼▼▼
 const updateAnalisisWidgets = async () => {
     try {
-        // Renderiza y calcula Colchón de Emergencia e Independencia Financiera
         const saldos = await getSaldos();
         const patrimonioNeto = Object.values(saldos).reduce((sum, s) => sum + s, 0);
         const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
         const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
-
-        // Colchón de Emergencia
-        const efContainer = document.querySelector('[data-widget-type="emergency-fund"]');
-        if (efContainer) {
-            efContainer.innerHTML = renderDashboardEmergencyFund(); // Dibuja el esqueleto
-            const efWidget = efContainer.querySelector('#emergency-fund-widget');
-            efWidget.querySelector('.card__content').classList.remove('skeleton'); 
-            const monthsValueEl = efWidget.querySelector('#kpi-ef-months-value'); 
-            const progressEl = efWidget.querySelector('#kpi-ef-progress'); 
-            const textEl = efWidget.querySelector('#kpi-ef-text');
-            if (monthsValueEl && progressEl && textEl) { 
-                monthsValueEl.textContent = isFinite(efData.mesesCobertura) ? efData.mesesCobertura.toFixed(1) : '∞'; 
-                progressEl.value = Math.min(efData.mesesCobertura, 6); 
-                let textClass = 'text-danger'; 
-                if (efData.mesesCobertura >= 6) textClass = 'text-positive'; 
-                else if (efData.mesesCobertura >= 3) textClass = 'text-warning'; 
-                monthsValueEl.className = `kpi-item__value ${textClass}`; 
-                textEl.innerHTML = `Tu dinero líquido cubre <strong>${isFinite(efData.mesesCobertura) ? efData.mesesCobertura.toFixed(1) : 'todos tus'}</strong> meses de gastos.`; 
+        
+        // Actualizar Colchón de Emergencia en el panel
+        const runwayEl = select('health-runway-val');
+        const runwayProgress = select('health-runway-progress-bar');
+        const efPercentage = select('emergency-fund-percentage');
+        
+        if (runwayEl) {
+            const meses = isFinite(efData.mesesCobertura) ? efData.mesesCobertura.toFixed(1) : '∞';
+            runwayEl.textContent = `${meses} Meses`;
+            runwayEl.style.color = efData.mesesCobertura >= 6 ? 'var(--c-success)' : 
+                                  efData.mesesCobertura >= 3 ? 'var(--c-warning)' : 'var(--c-danger)';
+        }
+        
+        if (runwayProgress) {
+            const progress = Math.min((efData.mesesCobertura / 6) * 100, 100);
+            runwayProgress.style.width = `${progress}%`;
+        }
+        
+        if (efPercentage) {
+            const percentage = Math.min((efData.mesesCobertura / 6) * 100, 100);
+            efPercentage.textContent = `${percentage.toFixed(0)}%`;
+        }
+        
+        // Actualizar Libertad Financiera en el panel
+        const fiValEl = select('health-fi-val');
+        const fiProgress = select('health-fi-progress-bar');
+        
+        if (fiValEl) {
+            fiValEl.textContent = `${fiData.progresoFI.toFixed(1)}%`;
+            fiValEl.style.color = fiData.progresoFI >= 100 ? 'var(--c-success)' : 
+                                fiData.progresoFI >= 50 ? 'var(--c-warning)' : 'var(--c-primary)';
+        }
+        
+        if (fiProgress) {
+            fiProgress.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
+        }
+        
+        // Actualizar Inversiones en el panel
+        const inversionTotalEl = select('kpi-inversion-total');
+        const inversionPnlEl = select('kpi-inversion-pnl');
+        const inversionPctEl = select('kpi-inversion-pct');
+        
+        if (inversionTotalEl || inversionPnlEl || inversionPctEl) {
+            const perfData = await calculatePortfolioPerformance();
+            
+            if (inversionTotalEl) {
+                inversionTotalEl.textContent = formatCurrency(perfData.valorActual);
+            }
+            
+            if (inversionPnlEl) {
+                const pnlClass = perfData.pnlAbsoluto >= 0 ? 'var(--c-success)' : 'var(--c-danger)';
+                inversionPnlEl.textContent = `${perfData.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(perfData.pnlAbsoluto)}`;
+                inversionPnlEl.style.color = pnlClass;
+            }
+            
+            if (inversionPctEl) {
+                const pctClass = perfData.pnlPorcentual >= 0 ? 'var(--c-success)' : 'var(--c-danger)';
+                inversionPctEl.textContent = `${perfData.pnlPorcentual >= 0 ? '+' : ''}${perfData.pnlPorcentual.toFixed(2)}%`;
+                inversionPctEl.style.color = pctClass;
             }
         }
         
-        // Independencia Financiera
-        const fiContainer = document.querySelector('[data-widget-type="fi-progress"]');
-        if(fiContainer) {
-            fiContainer.innerHTML = renderDashboardFIProgress(); // Dibuja el esqueleto
-            const fiWidget = fiContainer.querySelector('#fi-progress-widget');
-            fiWidget.querySelector('.card__content').classList.remove('skeleton'); 
-            const percentageValueEl = fiWidget.querySelector('#kpi-fi-percentage-value'); 
-            const progressEl = fiWidget.querySelector('#kpi-fi-progress'); 
-            const textEl = fiWidget.querySelector('#kpi-fi-text'); 
-            if (percentageValueEl && progressEl && textEl) { 
-                percentageValueEl.textContent = `${fiData.progresoFI.toFixed(1)}%`; 
-                progressEl.value = fiData.progresoFI; 
-                textEl.innerHTML = `Objetivo: <strong>${formatCurrency(fiData.objetivoFI)}</strong> (basado en un gasto anual de ${formatCurrency(fiData.gastoAnualEstimado)})`; 
-            }
-        }
-
     } catch (error) {
         console.error("Error al actualizar los widgets de análisis:", error);
     }
@@ -1989,6 +2012,7 @@ const navigateTo = async (pageId, isInitial = false) => {
     setTimeout(async () => {
         try {
             await scheduleDashboardUpdate();
+            attachPanelEventListeners(); // Añadir los event listeners
         } catch (error) {
             console.error("Error actualizando panel en navigateTo:", error);
         }
@@ -4557,112 +4581,35 @@ const renderPanelPage = async () => {
         </div>
 
         <!-- ACCIONES RÁPIDAS -->
-        <div style="padding: 0 var(--sp-4) var(--sp-8);">
-            <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--c-on-surface-secondary); margin-bottom: 12px;">
-                Acciones Rápidas
-            </h3>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
-                <button class="quick-action" data-action="add-income" style="
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    padding: 12px 8px;
-                    background: var(--c-surface);
-                    border: 1px solid var(--c-outline);
-                    border-radius: 16px;
-                    color: var(--c-on-surface);
-                ">
-                    <div style="
-                        width: 40px;
-                        height: 40px;
-                        background: linear-gradient(135deg, var(--c-success), #00D68F);
-                        border-radius: 12px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        margin-bottom: 8px;
-                    ">
-                        <span class="material-icons" style="color: white; font-size: 20px;">call_received</span>
-                    </div>
-                    <div style="font-size: 0.6875rem; font-weight: 600;">Ingreso</div>
-                </button>
-                
-                <button class="quick-action" data-action="add-expense" style="
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    padding: 12px 8px;
-                    background: var(--c-surface);
-                    border: 1px solid var(--c-outline);
-                    border-radius: 16px;
-                    color: var(--c-on-surface);
-                ">
-                    <div style="
-                        width: 40px;
-                        height: 40px;
-                        background: linear-gradient(135deg, var(--c-danger), #FF708D);
-                        border-radius: 12px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        margin-bottom: 8px;
-                    ">
-                        <span class="material-icons" style="color: white; font-size: 20px;">call_made</span>
-                    </div>
-                    <div style="font-size: 0.6875rem; font-weight: 600;">Gasto</div>
-                </button>
-                
-                <button class="quick-action" data-action="add-transfer" style="
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    padding: 12px 8px;
-                    background: var(--c-surface);
-                    border: 1px solid var(--c-outline);
-                    border-radius: 16px;
-                    color: var(--c-on-surface);
-                ">
-                    <div style="
-                        width: 40px;
-                        height: 40px;
-                        background: linear-gradient(135deg, var(--c-info), #00A3FF);
-                        border-radius: 12px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        margin-bottom: 8px;
-                    ">
-                        <span class="material-icons" style="color: white; font-size: 20px;">swap_horiz</span>
-                    </div>
-                    <div style="font-size: 0.6875rem; font-weight: 600;">Traspaso</div>
-                </button>
-                
-                <button class="quick-action" data-action="view-reports" style="
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    padding: 12px 8px;
-                    background: var(--c-surface);
-                    border: 1px solid var(--c-outline);
-                    border-radius: 16px;
-                    color: var(--c-on-surface);
-                ">
-                    <div style="
-                        width: 40px;
-                        height: 40px;
-                        background: linear-gradient(135deg, #BF5AF2, #D6A2FF);
-                        border-radius: 12px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        margin-bottom: 8px;
-                    ">
-                        <span class="material-icons" style="color: white; font-size: 20px;">assessment</span>
-                    </div>
-                    <div style="font-size: 0.6875rem; font-weight: 600;">Informes</div>
-                </button>
-            </div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+    <button class="quick-action" data-action="add-income" style="...">
+        <div style="...">
+            <span class="material-icons" style="...">call_received</span>
         </div>
+        <div style="...">Ingreso</div>
+    </button>
+    
+    <button class="quick-action" data-action="add-expense" style="...">
+        <div style="...">
+            <span class="material-icons" style="...">call_made</span>
+        </div>
+        <div style="...">Gasto</div>
+    </button>
+    
+    <button class="quick-action" data-action="add-transfer" style="...">
+        <div style="...">
+            <span class="material-icons" style="...">swap_horiz</span>
+        </div>
+        <div style="...">Traspaso</div>
+    </button>
+    
+    <button class="quick-action" data-action="add-recurrent" style="...">
+        <div style="...">
+            <span class="material-icons" style="...">repeat</span>
+        </div>
+        <div style="...">Recurrente</div>
+    </button>
+</div>
 
         <!-- BOTÓN FLOTANTE FAB -->
         <button class="fab" data-action="quick-add-menu" style="
@@ -6851,6 +6798,174 @@ const updatePatrimonioChange = async () => {
             changeElement.style.color = 'var(--c-success)';
         }
     }
+};
+const scheduleDashboardUpdate = () => {
+    if (dashboardUpdateDebounceTimer) {
+        clearTimeout(dashboardUpdateDebounceTimer);
+    }
+    
+    dashboardUpdateDebounceTimer = setTimeout(async () => {
+        await updateDashboardKPIs();
+    }, 300);
+};
+
+const updateDashboardKPIs = async () => {
+    try {
+        // 1. Obtener datos actualizados
+        const saldos = await getSaldos();
+        const visibleAccounts = getVisibleAccounts();
+        const { current: currentMovs } = await getFilteredMovements(false);
+        
+        // 2. Calcular Patrimonio Neto
+        const patrimonioNeto = Object.values(saldos).reduce((sum, s) => sum + s, 0);
+        
+        // 3. Calcular Liquidez (cuentas líquidas)
+        const cuentasLiquidas = getLiquidAccounts();
+        const liquidezTotal = cuentasLiquidas.reduce((sum, c) => sum + (saldos[c.id] || 0), 0);
+        
+        // 4. Calcular Ingresos, Gastos y Neto
+        const visibleAccountIds = new Set(visibleAccounts.map(c => c.id));
+        const { ingresos, gastos, saldoNeto } = calculateTotals(currentMovs, visibleAccountIds);
+        
+        // 5. Calcular Tasa de Ahorro
+        const tasaAhorro = ingresos > 0 ? ((saldoNeto / ingresos) * 100) : 0;
+        
+        // 6. Actualizar UI del Panel
+        updatePanelUI({
+            patrimonioNeto,
+            liquidezTotal,
+            ingresos,
+            gastos,
+            saldoNeto,
+            tasaAhorro,
+            cuentasLiquidasCount: cuentasLiquidas.length
+        });
+        
+        // 7. Actualizar widgets de análisis
+        await updateAnalisisWidgets();
+        
+    } catch (error) {
+        console.error("Error actualizando KPIs del dashboard:", error);
+    }
+};
+
+const updatePanelUI = (data) => {
+    // Actualizar Patrimonio
+    const patrimonioEl = select('kpi-patrimonio-neto-value');
+    if (patrimonioEl) patrimonioEl.textContent = formatCurrency(data.patrimonioNeto);
+    
+    // Actualizar Liquidez
+    const liquidezEl = select('kpi-liquidez-value');
+    if (liquidezEl) liquidezEl.textContent = formatCurrency(data.liquidezTotal);
+    
+    // Actualizar Ingresos
+    const ingresosEl = select('kpi-ingresos-value');
+    if (ingresosEl) ingresosEl.textContent = `+${formatCurrency(data.ingresos).replace('€', '€')}`;
+    if (ingresosEl) ingresosEl.style.color = 'var(--c-success)';
+    
+    // Actualizar Gastos
+    const gastosEl = select('kpi-gastos-value');
+    if (gastosEl) gastosEl.textContent = `${formatCurrency(data.gastos).replace('€', '€')}`;
+    if (gastosEl) gastosEl.style.color = 'var(--c-danger)';
+    
+    // Actualizar Neto
+    const netoEl = select('kpi-saldo-neto-value');
+    if (netoEl) {
+        netoEl.textContent = `${data.saldoNeto >= 0 ? '+' : ''}${formatCurrency(data.saldoNeto).replace('€', '€')}`;
+        netoEl.style.color = data.saldoNeto >= 0 ? 'var(--c-success)' : 'var(--c-danger)';
+    }
+    
+    // Actualizar Tasa de Ahorro
+    const tasaAhorroEl = select('kpi-tasa-ahorro-value');
+    const tasaAhorroProgress = select('tasa-ahorro-progress');
+    if (tasaAhorroEl) {
+        tasaAhorroEl.textContent = `${data.tasaAhorro.toFixed(1)}%`;
+        tasaAhorroEl.style.color = data.tasaAhorro >= 20 ? 'var(--c-success)' : 
+                                  data.tasaAhorro >= 0 ? 'var(--c-warning)' : 'var(--c-danger)';
+    }
+    if (tasaAhorroProgress) {
+        tasaAhorroProgress.style.width = `${Math.min(data.tasaAhorro, 100)}%`;
+    }
+    
+    // Actualizar mini gráfico de barras
+    const maxVal = Math.max(data.ingresos, Math.abs(data.gastos), Math.abs(data.saldoNeto));
+    if (maxVal > 0) {
+        const ingresosHeight = (data.ingresos / maxVal) * 60;
+        const gastosHeight = (Math.abs(data.gastos) / maxVal) * 60;
+        const netoHeight = (Math.abs(data.saldoNeto) / maxVal) * 60;
+        
+        document.documentElement.style.setProperty('--ingresos-height', `${ingresosHeight}px`);
+        document.documentElement.style.setProperty('--gastos-height', `${gastosHeight}px`);
+        document.documentElement.style.setProperty('--neto-height', `${netoHeight}px`);
+    }
+};
+const attachPanelEventListeners = () => {
+    // Selectores de periodo
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.period-tab')) {
+            const periodTab = e.target.closest('.period-tab');
+            const period = periodTab.dataset.period;
+            
+            // Actualizar UI de tabs
+            document.querySelectorAll('.period-tab').forEach(tab => {
+                tab.classList.remove('active');
+                tab.style.background = 'var(--c-surface-variant)';
+                tab.style.color = 'var(--c-on-surface)';
+            });
+            
+            periodTab.classList.add('active');
+            periodTab.style.background = 'var(--c-primary)';
+            periodTab.style.color = 'white';
+            
+            // Actualizar filtro global
+            const filterPeriodo = select('filter-periodo');
+            if (filterPeriodo) {
+                filterPeriodo.value = period;
+            }
+            
+            // Actualizar dashboard
+            scheduleDashboardUpdate();
+            hapticFeedback('light');
+        }
+        
+        // Botones de acciones rápidas
+        if (e.target.closest('[data-action="add-income"]')) {
+            showMovementModal('income');
+        }
+        
+        if (e.target.closest('[data-action="add-expense"]')) {
+            showMovementModal('expense');
+        }
+        
+        if (e.target.closest('[data-action="view-net-worth-chart"]')) {
+            handleViewNetWorthChart();
+        }
+        
+        if (e.target.closest('[data-action="view-cashflow-details"]')) {
+            handleViewCashflowDetails();
+        }
+        
+        if (e.target.closest('[data-action="toggle-privacy-mode"]')) {
+            handleTogglePrivacyMode();
+        }
+    });
+};
+
+// Añade esta función para alternar modo privacidad
+const handleTogglePrivacyMode = () => {
+    const isPrivacyMode = document.body.classList.contains('privacy-mode');
+    
+    if (isPrivacyMode) {
+        document.body.classList.remove('privacy-mode');
+        localStorage.setItem('privacyMode', 'false');
+        showToast('Modo privacidad desactivado');
+    } else {
+        document.body.classList.add('privacy-mode');
+        localStorage.setItem('privacyMode', 'true');
+        showToast('Modo privacidad activado');
+    }
+    
+    hapticFeedback('light');
 };
 const updateDashboardData = async () => {
     const activePage = document.querySelector('.view--active');
