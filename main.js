@@ -4477,30 +4477,30 @@ const renderPanelPage = async () => {
                 <div class="cockpit-mini-card">
                     <div class="mini-icon" style="color:#BF5AF2;">Tasa de Ahorro</div>
                     <div class="mini-content">
-                        <div class="cockpit-label-tiny" style="display:flex; align-items:center;">AHORRO <button class="help-btn" data-action="show-kpi-help" data-kpi="tasa_ahorro" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
-                        <div id="kpi-tasa-ahorro-value" class="mini-val">0%</div>
+                        <div class="cockpit-label-tiny" style="display:flex; align-items:center;">AHORRO (%)<button class="help-btn" data-action="show-kpi-help" data-kpi="tasa_ahorro" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
+                        <div id="kpi-tasa-ahorro-value" class="mini-val" style="color:#BF5AF2;">0%</div>
                     </div>
                     <div class="micro-bar"><div id="tasa-ahorro-progress" class="micro-fill" style="background:#BF5AF2;"></div></div>
                 </div>
 
                 <div class="cockpit-mini-card">
-                    <div class="mini-icon text-info">Colchón emergencia</div>
+                    <div class="mini-icon text-warning">Colchón de Emergencia</div>
                     <div class="mini-content">
                         <div class="cockpit-label-tiny" style="display:flex; align-items:center;">COBERTURA (meses)<button class="help-btn" data-action="show-kpi-help" data-kpi="cobertura" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
-                        <div id="health-runway-val" class="mini-val">0M</div>
+                        <div id="health-runway-val" class="mini-val text-warning">0M</div>
                     </div>
                     <div class="micro-bar">
-                        <div id="health-runway-progress" class="micro-fill" style="width: 0%; background: var(--c-info);"></div>
+                        <div id="health-runway-progress" class="micro-fill" style="width: 0%; background: var(--c-warning);"></div>
                     </div>
                 </div>
 
                 <div class="cockpit-mini-card">
-                    <div class="mini-icon text-warning">Libertad Financiera</div>
+                    <div class="mini-icon text-positive">Libertad Financiera</div>
                     <div class="mini-content">
-                        <div class="cockpit-label-tiny" style="display:flex; align-items:center;">LIBERTAD <button class="help-btn" data-action="show-kpi-help" data-kpi="libertad" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
-                        <div id="health-fi-val" class="mini-val">0%</div>
+                        <div class="cockpit-label-tiny" style="display:flex; align-items:center;">LIBERTAD (años)<button class="help-btn" data-action="show-kpi-help" data-kpi="libertad" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
+                        <div id="health-fi-val" class="mini-val text-positive">0%</div>
                     </div>
-                    <div class="micro-bar"><div id="health-fi-progress-bar" class="micro-fill" style="background:var(--c-warning);"></div></div>
+                    <div class="micro-bar"><div id="health-fi-progress-bar" class="micro-fill" style="background:var(--c-success);"></div></div>
                 </div>
             </div>
         </div>
@@ -5973,33 +5973,29 @@ const scheduleDashboardUpdate = () => {
                 kpiTir.className = tir >= 0 ? 'text-positive cockpit-val-med' : 'text-negative cockpit-val-med';
             }
 
-            // D. Footer Salud
+            // D. Footer Salud (Actualizado con Colores Fijos)
+            
+            // Ahorro
             const elAhorro = select('kpi-tasa-ahorro-value');
             if(elAhorro) {
                 elAhorro.textContent = `${tasaAhorro.toFixed(0)}%`;
                 select('tasa-ahorro-progress').style.width = `${Math.min(tasaAhorro, 100)}%`;
             }
 
-            // --- LÓGICA DE COBERTURA ACTUALIZADA (Máx 6 Meses) ---
+            // Cobertura (Texto Amarillo Fijo, Barra Dinámica)
             const elRunway = select('health-runway-val');
             const barRunway = select('health-runway-progress');
-            
             if(elRunway && barRunway) {
                 const meses = efData.mesesCobertura;
-                
-                // 1. Texto: Mostramos el número real (o infinito)
                 elRunway.textContent = isFinite(meses) ? (meses >= 100 ? '∞' : meses.toFixed(1)) : '∞';
                 
-                // 2. Gráfico: Calculamos el % basado en la meta de 6 meses
+                // Calculamos porcentaje sobre 6 meses máximo
                 let percentage = 0;
                 if (isFinite(meses)) {
-                    // Si tienes 3 meses -> 50%. Si tienes 6 o más -> 100%
                     percentage = Math.min((meses / 6) * 100, 100);
                 } else {
-                    percentage = 100; // Si es infinito, barra llena
+                    percentage = 100;
                 }
-                
-                // Aplicamos el ancho
                 barRunway.style.width = `${percentage}%`;
                 
                 // 3. Color Semántico (Semáforo)
@@ -6015,10 +6011,13 @@ const scheduleDashboardUpdate = () => {
                 }
             }
 
+            // Libertad (Texto y Barra Verde Fijo)
             const elFi = select('health-fi-val');
-            if(elFi) {
+            const barFi = select('health-fi-progress-bar');
+            if(elFi && barFi) {
                 elFi.textContent = `${fiData.progresoFI.toFixed(1)}%`;
-                select('health-fi-progress-bar').style.width = `${Math.min(fiData.progresoFI, 100)}%`;
+                barFi.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
+                barFi.style.backgroundColor = 'var(--c-success)'; // Verde fijo
             }
 
         } catch (error) {
