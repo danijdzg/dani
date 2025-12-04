@@ -4475,7 +4475,7 @@ const renderPanelPage = async () => {
 
             <div class="cockpit-footer-grid">
                 <div class="cockpit-mini-card">
-                    <div class="mini-icon" style="color:#BF5AF2;">savings</div>
+                    <div class="mini-icon" style="color:#BF5AF2;">Tasa de Ahorro</div>
                     <div class="mini-content">
                         <div class="cockpit-label-tiny" style="display:flex; align-items:center;">AHORRO <button class="help-btn" data-action="show-kpi-help" data-kpi="tasa_ahorro" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
                         <div id="kpi-tasa-ahorro-value" class="mini-val">0%</div>
@@ -4484,15 +4484,18 @@ const renderPanelPage = async () => {
                 </div>
 
                 <div class="cockpit-mini-card">
-                    <div class="mini-icon text-info">shield</div>
+                    <div class="mini-icon text-info">Colchón emergencia</div>
                     <div class="mini-content">
-                        <div class="cockpit-label-tiny" style="display:flex; align-items:center;">COBERTURA <button class="help-btn" data-action="show-kpi-help" data-kpi="cobertura" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
+                        <div class="cockpit-label-tiny" style="display:flex; align-items:center;">COBERTURA (meses)<button class="help-btn" data-action="show-kpi-help" data-kpi="cobertura" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
                         <div id="health-runway-val" class="mini-val">0M</div>
+                    </div>
+                    <div class="micro-bar">
+                        <div id="health-runway-progress" class="micro-fill" style="width: 0%; background: var(--c-info);"></div>
                     </div>
                 </div>
 
                 <div class="cockpit-mini-card">
-                    <div class="mini-icon text-warning">flag</div>
+                    <div class="mini-icon text-warning">Libertad Financiera</div>
                     <div class="mini-content">
                         <div class="cockpit-label-tiny" style="display:flex; align-items:center;">LIBERTAD <button class="help-btn" data-action="show-kpi-help" data-kpi="libertad" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
                         <div id="health-fi-val" class="mini-val">0%</div>
@@ -5977,11 +5980,39 @@ const scheduleDashboardUpdate = () => {
                 select('tasa-ahorro-progress').style.width = `${Math.min(tasaAhorro, 100)}%`;
             }
 
+            // --- LÓGICA DE COBERTURA ACTUALIZADA (Máx 6 Meses) ---
             const elRunway = select('health-runway-val');
-            if(elRunway) {
+            const barRunway = select('health-runway-progress');
+            
+            if(elRunway && barRunway) {
                 const meses = efData.mesesCobertura;
+                
+                // 1. Texto: Mostramos el número real (o infinito)
                 elRunway.textContent = isFinite(meses) ? (meses >= 100 ? '∞' : meses.toFixed(1)) : '∞';
-                // No necesitamos barra aquí por espacio, solo número grande
+                
+                // 2. Gráfico: Calculamos el % basado en la meta de 6 meses
+                let percentage = 0;
+                if (isFinite(meses)) {
+                    // Si tienes 3 meses -> 50%. Si tienes 6 o más -> 100%
+                    percentage = Math.min((meses / 6) * 100, 100);
+                } else {
+                    percentage = 100; // Si es infinito, barra llena
+                }
+                
+                // Aplicamos el ancho
+                barRunway.style.width = `${percentage}%`;
+                
+                // 3. Color Semántico (Semáforo)
+                // < 3 meses: Rojo (Peligro)
+                // 3 - 5.9 meses: Amarillo (Precaución)
+                // >= 6 meses: Verde (Objetivo Cumplido)
+                if (meses >= 6) {
+                    barRunway.style.backgroundColor = 'var(--c-success)';
+                } else if (meses >= 3) {
+                    barRunway.style.backgroundColor = 'var(--c-warning)';
+                } else {
+                    barRunway.style.backgroundColor = 'var(--c-danger)';
+                }
             }
 
             const elFi = select('health-fi-val');
