@@ -4353,21 +4353,37 @@ const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // ESTRUCTURA BENTO GRID (Cockpit)
+    // ESTRUCTURA BENTO GRID (Cockpit) v2 - Con soporte de Fechas
     container.innerHTML = `
         <div class="dashboard-cockpit">
             
             <div class="cockpit-header">
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <span class="material-icons" style="color:var(--c-warning); font-size:18px;">bolt</span>
-                    <span style="font-weight:700; font-size:0.9rem;">Visión Global</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="header-icon-box"><span class="material-icons">bolt</span></div>
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:800; font-size:0.9rem; line-height:1;">Visión Global</span>
+                        <span style="font-size:0.65rem; color:var(--c-on-surface-tertiary); font-weight:600;">ESTADO FINANCIERO</span>
+                    </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:4px;">
+                
+                <div class="cockpit-period-wrapper">
                     <select id="filter-periodo" class="cockpit-filter-select">
                         <option value="mes-actual">Este Mes</option>
                         <option value="año-actual">Este Año</option>
-                    </select>
-                    <span class="material-icons" style="font-size:16px; color:var(--c-on-surface-tertiary);">expand_more</span>
+                        <option value="custom">Personalizado</option> </select>
+                    <span class="material-icons chevron">expand_more</span>
+                </div>
+            </div>
+
+            <div id="custom-date-filters" class="cockpit-date-bar hidden">
+                <div class="date-input-group">
+                    <span class="material-icons">calendar_today</span>
+                    <input type="date" id="filter-fecha-inicio" title="Desde">
+                </div>
+                <span class="date-separator">➜</span>
+                <div class="date-input-group">
+                    <span class="material-icons">event</span>
+                    <input type="date" id="filter-fecha-fin" title="Hasta">
                 </div>
             </div>
 
@@ -4376,75 +4392,92 @@ const renderPanelPage = async () => {
                 <div id="kpi-patrimonio-neto-value" class="hero-val-big skeleton" data-current-value="0">0,00 €</div>
                 
                 <div class="sub-metric-row">
-                    <span>Liq: <span id="kpi-liquidez-value" class="text-info">0€</span></span>
-                    <span style="opacity:0.3">|</span>
-                    <span>Inv: <span id="kpi-inversion-total" class="text-warning">0€</span></span>
+                    <div class="sub-metric-pill">
+                        <span class="dot" style="background:var(--c-info);"></span>
+                        Liq: <span id="kpi-liquidez-value">0€</span>
+                    </div>
+                    <div class="sub-metric-pill">
+                        <span class="dot" style="background:var(--c-warning);"></span>
+                        Inv: <span id="kpi-inversion-total">0€</span>
+                    </div>
                 </div>
             </div>
 
             <div class="cockpit-mid-grid">
                 
                 <div class="cockpit-card">
-                    <div class="cockpit-label"><span class="material-icons" style="font-size:12px; vertical-align:middle;">account_balance</span> FLUJO</div>
-                    <div style="width:100%; margin-top:auto; display:flex; flex-direction:column; gap:8px;">
-                        <div>
-                            <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
-                                <span class="text-positive">Ingresos</span>
-                                <span id="kpi-ingresos-value" style="font-weight:700;">0€</span>
+                    <div class="cockpit-card-header">
+                        <span class="material-icons text-primary">account_balance</span>
+                        <span class="cockpit-label">FLUJO DE CAJA</span>
+                    </div>
+                    
+                    <div class="flow-bars-container">
+                        <div class="flow-row">
+                            <div class="flow-info">
+                                <span>Ingresos</span>
+                                <span id="kpi-ingresos-value" class="text-positive">0€</span>
                             </div>
-                            <div class="mini-bar-track"><div id="bar-ingresos" class="mini-bar-fill" style="width:0%; background:var(--c-success);"></div></div>
+                            <div class="mini-bar-track"><div id="bar-ingresos" class="mini-bar-fill success"></div></div>
                         </div>
-                        <div>
-                            <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
-                                <span class="text-negative">Gastos</span>
-                                <span id="kpi-gastos-value" style="font-weight:700;">0€</span>
+                        <div class="flow-row">
+                            <div class="flow-info">
+                                <span>Gastos</span>
+                                <span id="kpi-gastos-value" class="text-negative">0€</span>
                             </div>
-                            <div class="mini-bar-track"><div id="bar-gastos" class="mini-bar-fill" style="width:0%; background:var(--c-danger);"></div></div>
+                            <div class="mini-bar-track"><div id="bar-gastos" class="mini-bar-fill danger"></div></div>
                         </div>
-                        <div style="text-align:right; border-top:1px solid var(--c-outline); padding-top:4px;">
-                            <span style="font-size:0.7rem; color:var(--c-on-surface-secondary);">NETO: </span>
-                            <span id="kpi-saldo-neto-value" class="cockpit-val-small">0€</span>
-                        </div>
+                    </div>
+                    
+                    <div class="cockpit-neto-footer">
+                        <span>NETO</span>
+                        <span id="kpi-saldo-neto-value" class="cockpit-val-small">0€</span>
                     </div>
                 </div>
 
                 <div class="cockpit-card">
-                    <div class="cockpit-label"><span class="material-icons" style="font-size:12px; vertical-align:middle;">trending_up</span> RENDIMIENTO</div>
+                    <div class="cockpit-card-header">
+                        <span class="material-icons text-warning">rocket_launch</span>
+                        <span class="cockpit-label">INVERSIONES</span>
+                    </div>
                     
-                    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-                        <div id="kpi-inversion-pct" class="cockpit-val-med skeleton">0%</div>
-                        <div class="cockpit-label" style="font-size:0.65rem;">TIR GLOBAL</div>
+                    <div class="investment-stat-main">
+                        <div id="kpi-inversion-pct" class="cockpit-val-xl skeleton">0%</div>
+                        <div class="cockpit-label-tiny">RENTABILIDAD (TIR)</div>
                     </div>
 
-                    <div style="width:100%; text-align:center; background:var(--c-surface-variant); border-radius:8px; padding:4px;">
-                        <div class="cockpit-label" style="font-size:0.65rem;">P&L TOTAL</div>
-                        <div id="kpi-inversion-pnl" class="cockpit-val-small skeleton">0€</div>
+                    <div class="pnl-pill-container">
+                        <div class="cockpit-label-tiny">GANANCIA TOTAL</div>
+                        <div id="kpi-inversion-pnl" class="pnl-value skeleton">0€</div>
                     </div>
                 </div>
             </div>
 
             <div class="cockpit-footer-grid">
-                <div class="cockpit-card" style="padding:6px;">
-                    <div class="cockpit-label">AHORRO</div>
-                    <div id="kpi-tasa-ahorro-value" class="cockpit-val-med" style="color:#BF5AF2;">0%</div>
-                    <div class="mini-bar-track" style="width:80%;"><div id="tasa-ahorro-progress" class="mini-bar-fill" style="background:#BF5AF2;"></div></div>
+                <div class="cockpit-mini-card">
+                    <div class="mini-icon" style="color:#BF5AF2;">savings</div>
+                    <div class="mini-content">
+                        <div class="cockpit-label-tiny">AHORRO</div>
+                        <div id="kpi-tasa-ahorro-value" class="mini-val">0%</div>
+                    </div>
+                    <div class="micro-bar"><div id="tasa-ahorro-progress" class="micro-fill" style="background:#BF5AF2;"></div></div>
                 </div>
 
-                <div class="cockpit-card" style="padding:6px;">
-                    <div class="cockpit-label">COBERTURA</div>
-                    <div id="health-runway-val" class="cockpit-val-med text-info">0M</div>
-                    <div class="cockpit-label" style="font-size:0.6rem;">Meses</div>
+                <div class="cockpit-mini-card">
+                    <div class="mini-icon text-info">shield</div>
+                    <div class="mini-content">
+                        <div class="cockpit-label-tiny">COBERTURA</div>
+                        <div id="health-runway-val" class="mini-val">0M</div>
+                    </div>
                 </div>
 
-                <div class="cockpit-card" style="padding:6px;">
-                    <div class="cockpit-label">LIBERTAD</div>
-                    <div id="health-fi-val" class="cockpit-val-med text-warning">0%</div>
-                    <div class="mini-bar-track" style="width:80%;"><div id="health-fi-progress-bar" class="mini-bar-fill" style="background:var(--c-warning);"></div></div>
+                <div class="cockpit-mini-card">
+                    <div class="mini-icon text-warning">flag</div>
+                    <div class="mini-content">
+                        <div class="cockpit-label-tiny">LIBERTAD</div>
+                        <div id="health-fi-val" class="mini-val">0%</div>
+                    </div>
+                    <div class="micro-bar"><div id="health-fi-progress-bar" class="micro-fill" style="background:var(--c-warning);"></div></div>
                 </div>
-            </div>
-            
-            <div id="custom-date-filters" class="hidden">
-                 <input type="date" id="filter-fecha-inicio"><input type="date" id="filter-fecha-fin">
             </div>
         </div>
     `;

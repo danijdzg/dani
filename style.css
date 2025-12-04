@@ -3951,148 +3951,248 @@ body.privacy-mode .asset-card__value:active {
     margin-bottom: var(--sp-4);
 }
 /* =============================================================== */
-/* === PANEL COCKPIT (SIN SCROLL - DISEÑO BENTO GRID) === */
+/* === PANEL COCKPIT PRO (Responsive & Custom Dates) === */
 /* =============================================================== */
 
-/* Contenedor principal que ocupa el 100% del espacio disponible */
+/* Layout Principal (Sin Scroll) */
 .dashboard-cockpit {
     display: flex;
     flex-direction: column;
     height: 100%;
     max-height: 100%;
-    padding: var(--sp-2) var(--sp-2) 80px var(--sp-2); /* 80px abajo para la nav bar */
-    gap: var(--sp-2);
-    overflow: hidden; /* ¡Clave! Prohíbe el scroll */
-}
-
-/* Fila Superior: Filtros y Totales (Compacto) */
-.cockpit-header {
-    flex: 0 0 auto; /* Altura fija según contenido */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: var(--c-surface);
-    border: 1px solid var(--c-outline);
-    border-radius: 16px;
-    padding: 8px 12px;
-}
-
-/* Zona Hero: Patrimonio (La tarjeta más importante) */
-.cockpit-hero {
-    flex: 0 0 auto; /* No estirar demasiado */
-    background: linear-gradient(135deg, rgba(0, 179, 77, 0.15) 0%, var(--c-surface) 100%);
-    border: 1px solid var(--c-primary);
-    box-shadow: 0 0 15px rgba(0, 179, 77, 0.1);
-    border-radius: 20px;
-    padding: 10px 16px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    position: relative;
+    /* Ajuste fino del padding inferior para no chocar con la nav bar */
+    padding: var(--sp-2) var(--sp-2) 85px var(--sp-2);
+    gap: 10px;
     overflow: hidden;
 }
 
-/* Rejilla Central: 2 Columnas (Flujo y Rendimiento) */
-.cockpit-mid-grid {
-    flex: 1; /* Ocupa el espacio sobrante */
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--sp-2);
-    min-height: 0; /* Permite encogerse si hace falta */
+/* --- 1. Header Estilizado --- */
+.cockpit-header {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--c-surface);
+    border: 1px solid var(--c-outline);
+    border-radius: 18px;
+    padding: 8px 12px;
+    box-shadow: var(--shadow-sm);
 }
 
-/* Tarjetas Genéricas del Cockpit */
+.header-icon-box {
+    width: 32px; height: 32px;
+    background: var(--c-surface-variant);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--c-warning);
+}
+
+/* Selector de Periodo */
+.cockpit-period-wrapper {
+    position: relative;
+    background: var(--c-surface-variant);
+    border-radius: 12px;
+    padding: 6px 10px;
+    display: flex; align-items: center; gap: 4px;
+    border: 1px solid var(--c-outline);
+}
+
+.cockpit-filter-select {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--c-on-surface);
+    font-weight: 700;
+    font-size: 0.8rem;
+    padding-right: 4px;
+    text-align: right;
+}
+.cockpit-period-wrapper .chevron { font-size: 16px; color: var(--c-on-surface-tertiary); }
+
+/* --- 1.5. BARRA DE FECHAS PERSONALIZADA --- */
+.cockpit-date-bar {
+    flex: 0 0 auto; /* Altura automática */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--c-surface);
+    border: 1px solid var(--c-primary); /* Borde de color para destacar */
+    border-radius: 14px;
+    padding: 6px 12px;
+    gap: 8px;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.date-input-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+.date-input-group .material-icons { font-size: 16px; color: var(--c-primary); }
+
+.cockpit-date-bar input[type="date"] {
+    background: transparent;
+    border: none;
+    color: var(--c-on-surface);
+    font-family: var(--font-family);
+    font-weight: 600;
+    font-size: 0.8rem;
+    width: 100%;
+    padding: 0;
+}
+/* Icono de calendario nativo invertir color en dark mode */
+.cockpit-date-bar input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) opacity(0.6);
+    transform: scale(0.8);
+}
+
+.date-separator { font-size: 0.8rem; color: var(--c-on-surface-tertiary); }
+
+/* --- 2. HERO: Patrimonio --- */
+.cockpit-hero {
+    flex: 0 0 auto;
+    background: linear-gradient(180deg, rgba(0, 179, 77, 0.1) 0%, var(--c-surface) 100%);
+    border: 1px solid var(--c-outline);
+    border-radius: 24px;
+    padding: 15px;
+    text-align: center;
+    display: flex; flex-direction: column; justify-content: center;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.hero-val-big {
+    /* Fuente fluida: Se adapta al alto de la pantalla */
+    font-size: clamp(2rem, 5vh, 3.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin: 5px 0 10px 0;
+    letter-spacing: -1px;
+    /* Efecto de degradado en texto */
+    background: linear-gradient(to bottom right, #fff, #aab);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+/* Fallback para el texto si el fondo es claro */
+body[data-theme="sunset-groove"] .hero-val-big {
+    background: linear-gradient(to bottom right, #111, #555);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.sub-metric-row { display: flex; justify-content: center; gap: 12px; }
+.sub-metric-pill {
+    background: var(--c-surface-variant);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+    color: var(--c-on-surface-secondary);
+}
+.sub-metric-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+.sub-metric-pill span[id] { color: var(--c-on-surface); font-weight: 700; }
+
+/* --- 3. MID GRID: Tarjetas Centrales --- */
+.cockpit-mid-grid {
+    flex: 1; /* Ocupa el espacio restante */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    min-height: 0; /* Permite comprimirse */
+}
+
 .cockpit-card {
     background: var(--c-surface);
     border: 1px solid var(--c-outline);
-    border-radius: 16px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
+    border-radius: 20px;
+    padding: 12px;
+    display: flex; flex-direction: column;
     position: relative;
 }
 
-/* Fila Inferior: Métricas de Salud (3 columnas) */
+.cockpit-card-header {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 8px;
+    opacity: 0.9;
+}
+.cockpit-card-header .material-icons { font-size: 16px; }
+
+/* Estilos Flujo */
+.flow-bars-container {
+    display: flex; flex-direction: column; gap: 8px;
+    flex: 1; justify-content: center;
+}
+.flow-row { display: flex; flex-direction: column; gap: 2px; }
+.flow-info { display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 600; }
+.mini-bar-track { width: 100%; height: 5px; background: var(--c-surface-variant); border-radius: 3px; overflow: hidden; }
+.mini-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+.mini-bar-fill.success { background: var(--c-success); }
+.mini-bar-fill.danger { background: var(--c-danger); }
+
+.cockpit-neto-footer {
+    margin-top: auto; padding-top: 8px;
+    border-top: 1px dashed var(--c-outline);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.75rem; font-weight: 700; color: var(--c-on-surface-secondary);
+}
+.cockpit-val-small { font-size: 0.95rem; font-weight: 800; color: var(--c-on-surface); }
+
+/* Estilos Inversión */
+.investment-stat-main {
+    flex: 1; display: flex; flex-direction: column; 
+    align-items: center; justify-content: center;
+    text-align: center;
+}
+.cockpit-val-xl { font-size: clamp(1.4rem, 4vh, 2rem); font-weight: 800; line-height: 1; }
+.pnl-pill-container {
+    background: var(--c-surface-variant);
+    border-radius: 12px;
+    padding: 6px;
+    text-align: center;
+}
+.pnl-value { font-weight: 700; font-size: 0.9rem; }
+.cockpit-label-tiny { font-size: 0.6rem; font-weight: 700; color: var(--c-on-surface-tertiary); letter-spacing: 0.5px; margin-top: 4px; }
+
+/* --- 4. FOOTER GRID: Mini Tarjetas --- */
 .cockpit-footer-grid {
     flex: 0 0 auto;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: var(--sp-2);
-    height: 85px; /* Altura fija compacta */
+    gap: 10px;
+    height: 75px; /* Altura muy controlada */
 }
 
-/* --- Micro-Componentes --- */
-
-/* Selector de fecha invisible (estilo botón) */
-.cockpit-filter-select {
-    background: transparent;
-    border: none;
-    color: var(--c-primary);
-    font-weight: 700;
-    font-size: 0.85rem;
-    text-align: right;
-    cursor: pointer;
-}
-
-/* Textos adaptables */
-.hero-val-big {
-    font-size: clamp(2rem, 5vh, 3rem); /* Se adapta a la altura */
-    font-weight: 800;
-    line-height: 1;
-    margin: 4px 0;
-    letter-spacing: -1px;
-}
-
-.sub-metric-row {
-    display: flex;
-    gap: 12px;
-    font-size: 0.75rem;
-    color: var(--c-on-surface-secondary);
-    font-weight: 600;
-}
-
-.cockpit-label {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    color: var(--c-on-surface-secondary);
-    font-weight: 700;
-    margin-bottom: 2px;
-    text-align: center;
-}
-
-.cockpit-val-med {
-    font-size: clamp(1rem, 2.5vh, 1.4rem);
-    font-weight: 800;
-    line-height: 1.1;
-}
-
-.cockpit-val-small {
-    font-size: 0.9rem;
-    font-weight: 700;
-}
-
-/* Barras de progreso mini */
-.mini-bar-track {
-    width: 100%;
-    height: 4px;
-    background: var(--c-surface-variant);
-    border-radius: 2px;
-    margin-top: 4px;
+.cockpit-mini-card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-outline);
+    border-radius: 16px;
+    padding: 8px;
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+    position: relative;
     overflow: hidden;
 }
-.mini-bar-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 1s ease;
-}
 
-/* Ajustes para pantallas muy pequeñas (iPhone SE) */
-@media (max-height: 670px) {
-    .dashboard-cockpit { gap: 6px; padding-bottom: 70px; }
-    .hero-val-big { font-size: 2.2rem; }
-    .cockpit-footer-grid { height: 70px; }
+.mini-icon { position: absolute; top: 6px; right: 6px; font-size: 16px; opacity: 0.8; }
+.mini-content { margin-top: auto; z-index: 2; }
+.mini-val { font-size: 1rem; font-weight: 800; line-height: 1.1; }
+.micro-bar {
+    height: 3px; width: 100%; background: var(--c-surface-variant);
+    border-radius: 2px; margin-top: 4px; overflow: hidden;
+}
+.micro-fill { height: 100%; transition: width 1s ease; }
+
+/* Media Queries para pantallas extremas */
+@media (max-height: 700px) {
+    .dashboard-cockpit { padding-bottom: 75px; gap: 6px; }
+    .hero-val-big { font-size: 2.2rem; margin: 4px 0; }
+    .cockpit-footer-grid { height: 65px; }
+    .cockpit-header { padding: 4px 12px; }
 }
