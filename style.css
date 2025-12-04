@@ -149,6 +149,42 @@
         flex: 1; text-align: center; font-size: 0.9em;
     }
 }
+/* ================================================================= */
+/* === CORRECCIÓN: COLORES DINÁMICOS DEL IMPORTE (style.css) === */
+/* ================================================================= */
+
+/* Transición suave para el cambio de color */
+#movimiento-cantidad-form-group .input-wrapper,
+#movimiento-cantidad {
+    transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+/* GASTO: Rojo */
+#movimiento-cantidad-form-group.is-gasto .input-wrapper {
+    border-color: var(--c-danger) !important;
+    background-color: color-mix(in srgb, var(--c-danger) 5%, var(--c-surface)) !important;
+}
+#movimiento-cantidad-form-group.is-gasto #movimiento-cantidad {
+    color: var(--c-danger) !important;
+}
+
+/* INGRESO: Verde */
+#movimiento-cantidad-form-group.is-ingreso .input-wrapper {
+    border-color: var(--c-success) !important;
+    background-color: color-mix(in srgb, var(--c-success) 5%, var(--c-surface)) !important;
+}
+#movimiento-cantidad-form-group.is-ingreso #movimiento-cantidad {
+    color: var(--c-success) !important;
+}
+
+/* TRASPASO: Morado (Info) */
+#movimiento-cantidad-form-group.is-traspaso .input-wrapper {
+    border-color: var(--c-info) !important;
+    background-color: color-mix(in srgb, var(--c-info) 5%, var(--c-surface)) !important;
+}
+#movimiento-cantidad-form-group.is-traspaso #movimiento-cantidad {
+    color: var(--c-info) !important;
+}
 /* =============================================================== */
 /* === FIN: SOLUCIÓN DEFINITIVA PARA EXTRACTO DE CUENTA (CSS) v2.0 === */
 /* =============================================================== */
