@@ -570,7 +570,6 @@ const updateAnalisisWidgets = async () => {
         // Colchón de Emergencia
         const efContainer = document.querySelector('[data-widget-type="emergency-fund"]');
         if (efContainer) {
-            efContainer.innerHTML = renderDashboardEmergencyFund(); // Dibuja el esqueleto
             const efWidget = efContainer.querySelector('#emergency-fund-widget');
             efWidget.querySelector('.card__content').classList.remove('skeleton'); 
             const monthsValueEl = efWidget.querySelector('#kpi-ef-months-value'); 
@@ -590,7 +589,6 @@ const updateAnalisisWidgets = async () => {
         // Independencia Financiera
         const fiContainer = document.querySelector('[data-widget-type="fi-progress"]');
         if(fiContainer) {
-            fiContainer.innerHTML = renderDashboardFIProgress(); // Dibuja el esqueleto
             const fiWidget = fiContainer.querySelector('#fi-progress-widget');
             fiWidget.querySelector('.card__content').classList.remove('skeleton'); 
             const percentageValueEl = fiWidget.querySelector('#kpi-fi-percentage-value'); 
@@ -1223,8 +1221,7 @@ async function loadCoreData(uid) {
     if (dataLoaded.presupuestos || !currentUser) return Promise.resolve();
     
     return new Promise((resolve, reject) => {
-        console.log("Lazy loading: Cargando presupuestos (y esperando)...");
-        
+              
         let firstLoad = true;
         const unsub = fbDb.collection('users').doc(currentUser.uid).collection('presupuestos').onSnapshot(snapshot => {
             db.presupuestos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1249,9 +1246,7 @@ async function loadCoreData(uid) {
 
         async function loadInversiones() {
     if (dataLoaded.inversiones || !currentUser) return Promise.resolve();
-
-    console.log("Lazy loading: Cargando datos de inversión (y esperando)...");
-
+    
     const coleccionesInversion = ['inversiones_historial', 'inversion_cashflows'];
     
     const promises = coleccionesInversion.map(collectionName => {
@@ -2102,8 +2097,6 @@ const cleanupObservers = () => {
         movementsObserver.disconnect();
         movementsObserver = null;
     }
-    
-    // Hemos eliminado la referencia a 'widgetObserver' porque ya no existe.
 };
 const navigateTo = async (pageId, isInitial = false) => {
     cleanupObservers();
@@ -6509,20 +6502,6 @@ const generateInformeData = async (config) => {
 };
         
 
-/** Función auxiliar que calcula dónde se debe insertar el elemento que se arrastra. */
-const getDragAfterElement = (container, y) => {
-    const draggableElements = [...container.querySelectorAll('.widget-config-item:not(.dragging)')];
-    return draggableElements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-        if (offset < 0 && offset > closest.offset) {
-            return { offset: offset, element: child };
-        } else {
-            return closest;
-        }
-    }, { offset: Number.NEGATIVE_INFINITY }).element;
-};
-
 		let suggestionDebounceTimer = null;
 
 // =================================================================
@@ -10547,8 +10526,6 @@ const validateMovementForm = () => {
     return isValid;
 };
  
-const longPressState = { timer: null, isLongPress: false };
-
 
 // --- REGISTRO DEL SERVICE WORKER ---
 // Comprobamos si el navegador soporta Service Workers
