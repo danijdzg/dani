@@ -4063,3 +4063,6 @@ body.privacy-mode .asset-card__value:active {
     display: none;
     content: none;
 }
+/* style.css */
+.text-positive { color: var(--c-success) !important; }
+.text-negative { color: var(--c-danger) !important; }
