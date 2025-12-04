@@ -65,7 +65,9 @@
     <div id="pin-login-screen" class="login-view">
         <div class="starry-background"></div>
         <div class="login-view__card">
-            <alt="Logo" class="login-view__logo">
+            <div class="login-view__logo" style="display: flex; align-items: center; justify-content: center; width: 90px; height: 90px; background: var(--c-surface-variant); border-radius: 24px; margin: 0 auto 1rem auto; box-shadow: 0 0 25px rgba(0, 179, 77, 0.2);">
+    <span class="material-icons" style="font-size: 48px; color: var(--c-primary);">lock</span>
+</div>
             <h2 class="login-view__title">Acceso Rápido</h2>
             <p class="login-view__tagline">Introduce tu PIN de 4 dígitos.</p>
             <form id="pin-form">
@@ -166,8 +168,6 @@
                     </div>
                     <span class="form-error" id="movimiento-cantidad-error"></span>
                 </div>
-
-                <div id="quick-access-chips"></div>
 
                 <div class="dense-form-grid">
                     
