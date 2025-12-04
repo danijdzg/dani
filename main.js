@@ -4353,119 +4353,100 @@ const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // --- ESTRUCTURA BENTO GRID (100% ALTURA, SIN SCROLL) ---
+    // ESTRUCTURA BENTO GRID (100% VIEWPORT HEIGHT - SIN SCROLL)
     container.innerHTML = `
         <div style="
             display: flex; 
             flex-direction: column; 
-            height: 100%; 
-            padding: 0 var(--sp-2) var(--sp-4); 
-            gap: 10px; 
-            overflow: hidden;
+            height: calc(100vh - 140px); /* Restamos cabecera y nav inferior */
+            max-height: 100%;
+            padding: 0 var(--sp-2) 4px var(--sp-2); 
+            gap: 8px; 
+            overflow: hidden; /* Evita scroll accidental */
         ">
             
             <div class="hero-card" style="
-                flex: 0 0 auto; /* Altura automática según contenido */
-                padding: 16px;
-                border-radius: 20px;
+                flex: 0 0 auto; 
+                padding: 12px;
+                border-radius: 16px;
                 margin: 0;
-                background: linear-gradient(135deg, var(--c-surface) 0%, color-mix(in srgb, var(--c-primary) 10%, var(--c-surface)) 100%);
+                background: linear-gradient(135deg, var(--c-surface) 0%, color-mix(in srgb, var(--c-primary) 8%, var(--c-surface)) 100%);
                 border: 1px solid var(--c-outline);
-                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
                 text-align: center;
             ">
-                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px;">
-                    Patrimonio Neto
+                <div style="font-size: 0.65rem; color: var(--c-on-surface-secondary); font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
+                    PATRIMONIO NETO
                 </div>
                 <div id="kpi-patrimonio-neto-value" class="hero-value skeleton" data-current-value="0" 
-                     style="font-size: 2.4rem; font-weight: 900; line-height: 1; color: var(--c-on-surface); margin: 0;">
+                     style="font-size: 2rem; font-weight: 900; line-height: 1.1; color: var(--c-on-surface); margin: 2px 0;">
                     0 €
                 </div>
-                
-                <div style="display: flex; justify-content: center; gap: 8px; margin-top: 12px;">
-                    <div style="background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 99px; font-size: 0.7rem; display: flex; align-items: center; gap: 4px;">
-                        <span class="material-icons" style="font-size: 12px; color: var(--c-info);">account_balance_wallet</span>
-                        <span style="color: var(--c-on-surface-secondary);">Líquido:</span>
-                        <strong id="kpi-liquidez-value" style="color: var(--c-white);">0 €</strong>
+                <div style="display: flex; justify-content: center; gap: 8px; margin-top: 4px; font-size: 0.7rem;">
+                    <div style="background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 99px;">
+                        <span style="color:var(--c-on-surface-secondary)">Líquido:</span> <strong id="kpi-liquidez-value" style="color: var(--c-white);">0 €</strong>
                     </div>
-                    <div style="background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 99px; font-size: 0.7rem; display: flex; align-items: center; gap: 4px;">
-                        <span class="material-icons" style="font-size: 12px; color: var(--c-warning);">trending_up</span>
-                        <span style="color: var(--c-on-surface-secondary);">Inv:</span>
-                        <strong id="kpi-inversion-total" style="color: var(--c-white);">0 €</strong>
+                    <div style="background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 99px;">
+                        <span style="color:var(--c-on-surface-secondary)">Inv:</span> <strong id="kpi-inversion-total" style="color: var(--c-white);">0 €</strong>
                     </div>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex: 0 0 auto;">
-                
-                <div style="position: relative; background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 14px; display: flex; align-items: center; padding: 0 12px; height: 44px;">
-                    <span class="material-icons" style="font-size: 18px; color: var(--c-primary); margin-right: 8px;">calendar_today</span>
-                    <select id="filter-periodo" class="form-select report-period-selector" style="
-                        border: none; background: transparent; padding: 0; font-size: 0.8rem; font-weight: 600; color: var(--c-on-surface); width: 100%; height: 100%;
-                    ">
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 8px; flex: 0 0 40px;">
+                <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 12px; padding: 0 8px; display:flex; align-items:center;">
+                    <span class="material-icons" style="font-size: 16px; color: var(--c-primary); margin-right: 4px;">calendar_today</span>
+                    <select id="filter-periodo" class="form-select report-period-selector" style="border: none; background: transparent; padding: 0; font-size: 0.75rem; font-weight: 600; width: 100%; height: 100%; color: var(--c-on-surface);">
                         <option value="mes-actual">Este Mes</option>
                         <option value="año-actual">Este Año</option>
+                        <option value="custom">📅 Personalizado...</option>
                     </select>
                 </div>
-
-                <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 14px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; height: 44px;">
-                    <span style="font-size: 0.7rem; font-weight: 600; color: var(--c-on-surface-secondary);">P&L Inv.</span>
-                    <div style="text-align: right; line-height: 1;">
-                        <div id="kpi-inversion-pnl" class="skeleton" style="font-size: 0.85rem; font-weight: 700;">0 €</div>
-                        <div id="kpi-inversion-pct" class="skeleton" style="font-size: 0.65rem; opacity: 0.8;">0%</div>
-                    </div>
+                <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 12px; padding: 0 10px; display:flex; align-items:center; justify-content:space-between;">
+                    <span style="font-size: 0.65rem; font-weight: 600; color: var(--c-on-surface-secondary);">P&L Inv.</span>
+                    <div id="kpi-inversion-pnl" class="skeleton" style="font-size: 0.75rem; font-weight: 800;">0 €</div>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; gap: 10px; flex: 1; min-height: 0;">
-                
-                <div class="card" style="grid-column: 1 / -1; margin: 0; padding: 12px; display: flex; align-items: center; justify-content: space-between; border-radius: 16px; background: var(--c-surface); border: 1px solid var(--c-outline);">
-                    <div style="text-align: center; flex: 1;">
-                        <div style="font-size: 0.65rem; color: var(--c-on-surface-secondary); font-weight: 600; margin-bottom: 2px;">INGRESOS</div>
-                        <div id="kpi-ingresos-value" class="text-positive skeleton" style="font-size: 1rem; font-weight: 800;">+0 €</div>
-                    </div>
-                    <div style="width: 1px; height: 24px; background: var(--c-outline);"></div>
-                    <div style="text-align: center; flex: 1;">
-                        <div style="font-size: 0.65rem; color: var(--c-on-surface-secondary); font-weight: 600; margin-bottom: 2px;">GASTOS</div>
-                        <div id="kpi-gastos-value" class="text-negative skeleton" style="font-size: 1rem; font-weight: 800;">-0 €</div>
-                    </div>
-                    <div style="width: 1px; height: 24px; background: var(--c-outline);"></div>
-                    <div style="text-align: center; flex: 1;">
-                        <div style="font-size: 0.65rem; color: var(--c-on-surface-secondary); font-weight: 600; margin-bottom: 2px;">NETO</div>
-                        <div id="kpi-saldo-neto-value" class="skeleton" style="font-size: 1rem; font-weight: 800; color: var(--c-primary);">0 €</div>
-                    </div>
+            <div class="card" style="flex: 0 0 auto; margin: 0; padding: 10px; border-radius: 14px; background: var(--c-surface); border: 1px solid var(--c-outline); display: flex; align-items: center;">
+                <div style="text-align: center; flex: 1;">
+                    <div style="font-size: 0.6rem; color: var(--c-on-surface-secondary); font-weight: 600;">INGRESOS</div>
+                    <div id="kpi-ingresos-value" class="text-positive skeleton" style="font-size: 0.9rem; font-weight: 800;">+0 €</div>
                 </div>
+                <div style="width: 1px; height: 20px; background: var(--c-outline);"></div>
+                <div style="text-align: center; flex: 1;">
+                    <div style="font-size: 0.6rem; color: var(--c-on-surface-secondary); font-weight: 600;">GASTOS</div>
+                    <div id="kpi-gastos-value" class="text-negative skeleton" style="font-size: 0.9rem; font-weight: 800;">-0 €</div>
+                </div>
+                <div style="width: 1px; height: 20px; background: var(--c-outline);"></div>
+                <div style="text-align: center; flex: 1;">
+                    <div style="font-size: 0.6rem; color: var(--c-on-surface-secondary); font-weight: 600;">NETO</div>
+                    <div id="kpi-saldo-neto-value" class="skeleton" style="font-size: 0.9rem; font-weight: 800; color: var(--c-primary);">0 €</div>
+                </div>
+            </div>
 
-                <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 16px; padding: 12px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <div style="position: absolute; top: 10px; left: 12px; font-size: 0.7rem; font-weight: 700; color: #BF5AF2;">AHORRO</div>
-                    <div style="position: relative; width: 60px; height: 60px; margin-top: 10px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: 1; min-height: 0;">
+                <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 14px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <div style="font-size: 0.7rem; font-weight: 700; color: #BF5AF2; margin-bottom: 4px;">AHORRO</div>
+                    <div style="position: relative; width: 50px; height: 50px;">
                         <canvas id="kpi-savings-rate-chart"></canvas>
-                        <div id="kpi-tasa-ahorro-value" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.85rem; font-weight: 800; color: var(--c-on-surface);">0%</div>
+                        <div id="kpi-tasa-ahorro-value" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.8rem; font-weight: 800;">0%</div>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-rows: 1fr 1fr; gap: 10px;">
-                    
-                    <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 16px; padding: 10px 14px; display: flex; flex-direction: column; justify-content: center;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                            <span style="font-size: 0.7rem; font-weight: 700; color: var(--c-success);">COBERTURA</span>
-                            <span id="health-runway-val" class="skeleton" style="font-size: 0.9rem; font-weight: 800;">0 Mes</span>
+                <div style="display: grid; grid-template-rows: 1fr 1fr; gap: 8px;">
+                    <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 14px; padding: 8px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                            <span style="font-size: 0.65rem; font-weight: 600; color: var(--c-success);">COBERTURA</span>
+                            <span id="health-runway-val" class="skeleton" style="font-size: 0.8rem; font-weight: 800;">0 Meses</span>
                         </div>
-                        <div style="height: 6px; background: var(--c-surface-variant); border-radius: 3px; overflow: hidden;">
-                            <div id="health-runway-progress-bar" style="width: 0%; height: 100%; background: var(--c-success); transition: width 1s;"></div>
-                        </div>
+                        <div style="height: 4px; background: var(--c-surface-variant); border-radius: 2px; overflow: hidden;"><div id="health-runway-progress-bar" style="width: 0%; height: 100%; background: var(--c-success);"></div></div>
                     </div>
-
-                    <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 16px; padding: 10px 14px; display: flex; flex-direction: column; justify-content: center;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                            <span style="font-size: 0.7rem; font-weight: 700; color: var(--c-warning);">LIBERTAD</span>
-                            <span id="health-fi-val" class="skeleton" style="font-size: 0.9rem; font-weight: 800;">0%</span>
+                    <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 14px; padding: 8px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                            <span style="font-size: 0.65rem; font-weight: 600; color: var(--c-warning);">LIBERTAD</span>
+                            <span id="health-fi-val" class="skeleton" style="font-size: 0.8rem; font-weight: 800;">0%</span>
                         </div>
-                        <div style="height: 6px; background: var(--c-surface-variant); border-radius: 3px; overflow: hidden;">
-                            <div id="health-fi-progress-bar" style="width: 0%; height: 100%; background: var(--c-warning); transition: width 1s;"></div>
-                        </div>
+                        <div style="height: 4px; background: var(--c-surface-variant); border-radius: 2px; overflow: hidden;"><div id="health-fi-progress-bar" style="width: 0%; height: 100%; background: var(--c-warning);"></div></div>
                     </div>
-
                 </div>
             </div>
 
@@ -4473,6 +4454,7 @@ const renderPanelPage = async () => {
                 <input type="date" id="filter-fecha-inicio">
                 <input type="date" id="filter-fecha-fin">
                 <div id="custom-date-filters"></div>
+                <div id="kpi-inversion-pct" class="hidden"></div>
             </div>
         </div>
     `;
@@ -6028,13 +6010,21 @@ const updateDashboardData = async () => {
         const { current } = await getFilteredMovements(true);
         const saldos = await getSaldos();
         
-        // 2. DATOS PATRIMONIALES (ESTADO)
+        // 2. DATOS PATRIMONIALES
         const visibleAccounts = getVisibleAccounts();
         const visibleAccountIds = new Set(Object.keys(saldos));
         
-        // Calcular Totales del Periodo
+        // Identificar concepto "Inicial" para excluirlo de los KPIs de flujo
+        const conceptoInicial = db.conceptos.find(c => c.nombre.toLowerCase().includes('inicial'));
+        const conceptoInicialId = conceptoInicial ? conceptoInicial.id : null;
+
+        // Calcular Totales (Excluyendo Saldo Inicial para no falsear Ingresos)
         let ingresos = 0, gastos = 0, saldoNeto = 0;
+        
         current.forEach(m => {
+            // CORRECCIÓN: Si es saldo inicial, lo ignoramos para el flujo de caja
+            if (m.conceptoId === conceptoInicialId) return;
+
             const amount = calculateMovementAmount(m, visibleAccountIds);
             if (amount > 0) ingresos += amount;
             else gastos += amount;
@@ -8731,20 +8721,50 @@ const handleStart = (e) => {
     
     // 9. Cambios en filtros y selects
     document.addEventListener('change', e => {
-        const target = e.target;
-        if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
-            const panelPage = select('panel-page');
-            if (!panelPage || !panelPage.classList.contains('view--active')) return;
-            if (target.id === 'filter-periodo') {
-                const customDateFilters = select('custom-date-filters');
-                if (customDateFilters) customDateFilters.classList.toggle('hidden', target.value !== 'custom');
-                if (target.value !== 'custom') { hapticFeedback('light'); scheduleDashboardUpdate(); }
-            }
-            if (target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
-                const s = select('filter-fecha-inicio'), en = select('filter-fecha-fin');
-                if (s && en && s.value && en.value) { hapticFeedback('light'); scheduleDashboardUpdate(); }
-            }
+    const target = e.target;
+    
+    // 1. GESTIÓN DEL SELECTOR DE PERIODO DEL PANEL
+    if (target.id === 'filter-periodo') {
+        if (target.value === 'custom') {
+            // Abrimos modal para elegir fechas sin romper el diseño
+            const today = new Date().toISOString().split('T')[0];
+            const html = `
+                <div class="form-group">
+                    <label class="form-label">Fecha Inicio</label>
+                    <input type="date" id="modal-fecha-inicio" class="form-input" value="${today}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fecha Fin</label>
+                    <input type="date" id="modal-fecha-fin" class="form-input" value="${today}">
+                </div>
+                <button id="apply-custom-dates-btn" class="btn btn--primary btn--full">Aplicar Filtro</button>
+            `;
+            showGenericModal('Seleccionar Periodo', html);
+            
+            // Lógica del botón dentro del modal
+            setTimeout(() => {
+                const btn = document.getElementById('apply-custom-dates-btn');
+                btn.onclick = () => {
+                    const start = document.getElementById('modal-fecha-inicio').value;
+                    const end = document.getElementById('modal-fecha-fin').value;
+                    if (start && end) {
+                        // Pasamos los valores a los inputs ocultos del panel
+                        select('filter-fecha-inicio').value = start;
+                        select('filter-fecha-fin').value = end;
+                        hapticFeedback('medium');
+                        scheduleDashboardUpdate();
+                        hideModal('generic-modal');
+                    } else {
+                        showToast('Selecciona ambas fechas.', 'warning');
+                    }
+                };
+            }, 50);
+        } else {
+            // Si es Mes o Año, actualizamos directamente
+            hapticFeedback('light');
+            scheduleDashboardUpdate();
         }
+    }
         // Lógica opciones recurrentes
         if (target.id === 'movimiento-recurrente') {
             select('recurrent-options').classList.toggle('hidden', !target.checked);
