@@ -1061,26 +1061,31 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     transition: all 0.2s ease-in-out;
 }
 
-/* Estilo del input cuando es INGRESO */
+/* 1. INGRESO (Verde) */
 #movimiento-cantidad-form-group.is-ingreso #movimiento-cantidad {
-    border-color: var(--c-success);
-    color: var(--c-success);
+    border-color: var(--c-success) !important;
+    color: var(--c-success) !important;
+    -webkit-text-fill-color: var(--c-success) !important; /* Crucial para móviles */
 }
 
-/* Estilo del input cuando es GASTO */
+/* 2. GASTO (Rojo) */
 #movimiento-cantidad-form-group.is-gasto #movimiento-cantidad {
-    border-color: var(--c-danger);
-    color: var(--c-danger);
+    border-color: var(--c-danger) !important;
+    color: var(--c-danger) !important;
+    -webkit-text-fill-color: var(--c-danger) !important;
 }
 
-/* Quitamos el fondo de color del input para un look más limpio */
-#movimiento-cantidad-form-group.is-ingreso #movimiento-cantidad:focus,
-#movimiento-cantidad-form-group.is-gasto #movimiento-cantidad:focus {
-     background-color: var(--c-surface-variant);
+/* 3. TRASPASO (Morado/Info) */
+#movimiento-cantidad-form-group.is-traspaso #movimiento-cantidad {
+    border-color: var(--c-info) !important;
+    color: var(--c-info) !important;
+    -webkit-text-fill-color: var(--c-info) !important;
 }
 
+/* Quitamos el fondo de color del input al enfocar para un look más limpio */
 #movimiento-cantidad-form-group.is-ingreso #movimiento-cantidad:focus,
-#movimiento-cantidad-form-group.is-gasto #movimiento-cantidad:focus {
+#movimiento-cantidad-form-group.is-gasto #movimiento-cantidad:focus,
+#movimiento-cantidad-form-group.is-traspaso #movimiento-cantidad:focus {
      background-color: var(--c-surface);
 }
 
