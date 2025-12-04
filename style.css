@@ -3950,3 +3950,149 @@ body.privacy-mode .asset-card__value:active {
     gap: 8px; /* Espacio ajustado */
     margin-bottom: var(--sp-4);
 }
+/* =============================================================== */
+/* === PANEL COCKPIT (SIN SCROLL - DISEÑO BENTO GRID) === */
+/* =============================================================== */
+
+/* Contenedor principal que ocupa el 100% del espacio disponible */
+.dashboard-cockpit {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
+    padding: var(--sp-2) var(--sp-2) 80px var(--sp-2); /* 80px abajo para la nav bar */
+    gap: var(--sp-2);
+    overflow: hidden; /* ¡Clave! Prohíbe el scroll */
+}
+
+/* Fila Superior: Filtros y Totales (Compacto) */
+.cockpit-header {
+    flex: 0 0 auto; /* Altura fija según contenido */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--c-surface);
+    border: 1px solid var(--c-outline);
+    border-radius: 16px;
+    padding: 8px 12px;
+}
+
+/* Zona Hero: Patrimonio (La tarjeta más importante) */
+.cockpit-hero {
+    flex: 0 0 auto; /* No estirar demasiado */
+    background: linear-gradient(135deg, rgba(0, 179, 77, 0.15) 0%, var(--c-surface) 100%);
+    border: 1px solid var(--c-primary);
+    box-shadow: 0 0 15px rgba(0, 179, 77, 0.1);
+    border-radius: 20px;
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Rejilla Central: 2 Columnas (Flujo y Rendimiento) */
+.cockpit-mid-grid {
+    flex: 1; /* Ocupa el espacio sobrante */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-2);
+    min-height: 0; /* Permite encogerse si hace falta */
+}
+
+/* Tarjetas Genéricas del Cockpit */
+.cockpit-card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-outline);
+    border-radius: 16px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+/* Fila Inferior: Métricas de Salud (3 columnas) */
+.cockpit-footer-grid {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--sp-2);
+    height: 85px; /* Altura fija compacta */
+}
+
+/* --- Micro-Componentes --- */
+
+/* Selector de fecha invisible (estilo botón) */
+.cockpit-filter-select {
+    background: transparent;
+    border: none;
+    color: var(--c-primary);
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-align: right;
+    cursor: pointer;
+}
+
+/* Textos adaptables */
+.hero-val-big {
+    font-size: clamp(2rem, 5vh, 3rem); /* Se adapta a la altura */
+    font-weight: 800;
+    line-height: 1;
+    margin: 4px 0;
+    letter-spacing: -1px;
+}
+
+.sub-metric-row {
+    display: flex;
+    gap: 12px;
+    font-size: 0.75rem;
+    color: var(--c-on-surface-secondary);
+    font-weight: 600;
+}
+
+.cockpit-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--c-on-surface-secondary);
+    font-weight: 700;
+    margin-bottom: 2px;
+    text-align: center;
+}
+
+.cockpit-val-med {
+    font-size: clamp(1rem, 2.5vh, 1.4rem);
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.cockpit-val-small {
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+/* Barras de progreso mini */
+.mini-bar-track {
+    width: 100%;
+    height: 4px;
+    background: var(--c-surface-variant);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+}
+.mini-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+}
+
+/* Ajustes para pantallas muy pequeñas (iPhone SE) */
+@media (max-height: 670px) {
+    .dashboard-cockpit { gap: 6px; padding-bottom: 70px; }
+    .hero-val-big { font-size: 2.2rem; }
+    .cockpit-footer-grid { height: 70px; }
+}
