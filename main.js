@@ -4353,112 +4353,321 @@ const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // ESTRUCTURA BENTO GRID (100% ALTURA - SIN SCROLL)
     container.innerHTML = `
-        <div style="
-            display: flex; 
-            flex-direction: column; 
-            height: calc(100vh - 140px);
-            max-height: 100%;
-            padding: 0 var(--sp-2) 4px var(--sp-2); 
-            gap: 8px; 
-            overflow: hidden; 
-        ">
+        <div style="padding: 0 var(--sp-2) var(--sp-4);">
             
+            <!-- Patrimonio Total - Versión compacta -->
             <div class="hero-card" style="
-                flex: 0 0 auto; 
-                padding: 12px;
+                background: var(--c-surface);
+                padding: 16px;
                 border-radius: 16px;
-                margin: 0;
-                background: linear-gradient(135deg, var(--c-surface) 0%, color-mix(in srgb, var(--c-primary) 8%, var(--c-surface)) 100%);
+                margin-bottom: var(--sp-4);
                 border: 1px solid var(--c-outline);
                 text-align: center;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             ">
-                <div style="font-size: 0.65rem; color: var(--c-on-surface-secondary); font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
-                    PATRIMONIO NETO
-                </div>
-                <div id="kpi-patrimonio-neto-value" class="hero-value skeleton" data-current-value="0" 
-                     style="font-size: 2rem; font-weight: 900; line-height: 1.1; color: var(--c-on-surface); margin: 2px 0;">
-                    0 €
-                </div>
-                <div style="display: flex; justify-content: center; gap: 8px; margin-top: 4px; font-size: 0.7rem;">
-                    <div style="background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 99px;">
-                        <span style="color:var(--c-on-surface-secondary)">Líquido:</span> <strong id="kpi-liquidez-value" style="color: var(--c-white);">0 €</strong>
+                <!-- Patrimonio Total -->
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 0.8rem; color: var(--c-on-surface-secondary); font-weight: 600; letter-spacing: 0.5px; margin-bottom: 6px;">
+                        PATRIMONIO TOTAL
                     </div>
-                    <div style="background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 99px;">
-                        <span style="color:var(--c-on-surface-secondary)">Inv:</span> <strong id="kpi-inversion-total" style="color: var(--c-white);">0 €</strong>
+                    <div id="kpi-patrimonio-neto-value" class="hero-value skeleton" data-current-value="0" 
+                         style="font-size: 2.2rem; font-weight: 800; margin: 0; line-height: 1; color: var(--c-on-surface);">
+                        0,00 €
+                    </div>
+                </div>
+                
+                <!-- Desglose: Liquidez + Capital Aportado -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom: 4px; font-weight: 600;">
+                            LIQUIDEZ
+                        </div>
+                        <div id="kpi-liquidez-value" class="skeleton" 
+                             style="font-size: 1rem; font-weight: 700; color: var(--c-on-surface);">
+                            0,00 €
+                        </div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom: 4px; font-weight: 600;">
+                            INVERTIDO
+                        </div>
+                        <div id="kpi-inversion-total" class="skeleton" 
+                             style="font-size: 1rem; font-weight: 700; color: var(--c-on-surface);">
+                            0,00 €
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 8px; flex: 0 0 40px;">
+            <!-- Inversiones en tarjeta -->
+            <div class="card fade-in-up" style="
+                padding: 16px;
+                border-radius: 16px;
+                margin-bottom: var(--sp-3);
+                border: 1px solid var(--c-outline);
+                background: var(--c-surface);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            ">
+                <!-- Título de la sección -->
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                    <span class="material-icons" style="font-size: 20px; color: var(--c-warning);">trending_up</span>
+                    <div style="font-size: 0.9rem; font-weight: 700; color: var(--c-on-surface);">Rendimiento de Inversiones</div>
+                </div>
                 
-                <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 12px; padding: 0 8px; display:flex; align-items:center;">
-                    <span class="material-icons" style="font-size: 16px; color: var(--c-primary); margin-right: 4px;">calendar_today</span>
-                    <select id="filter-periodo" class="form-select report-period-selector" style="border: none; background: transparent; padding: 0; font-size: 0.75rem; font-weight: 600; width: 100%; height: 100%; color: var(--c-on-surface);">
+                <!-- Métricas -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <!-- Ganancia/Pérdida -->
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 6px; font-weight: 600;">
+                            GANANCIA/PÉRDIDA
+                        </div>
+                        <div id="kpi-inversion-pnl" class="skeleton" 
+                             style="font-size: 1.2rem; font-weight: 800; line-height: 1.2;">
+                            0,00 €
+                        </div>
+                    </div>
+                    
+                    <!-- TIR -->
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 6px; font-weight: 600;">
+                            RENDIMIENTO (TIR)
+                        </div>
+                        <div id="kpi-inversion-pct" class="skeleton" 
+                             style="font-size: 1.2rem; font-weight: 800; line-height: 1.2;">
+                            0.00%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selector de periodo compacto -->
+            <div class="card fade-in-up" style="
+                padding: 12px 16px;
+                border-radius: 16px;
+                margin-bottom: var(--sp-3);
+                border: 1px solid var(--c-outline);
+                background-color: var(--c-surface);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            ">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="material-icons" style="font-size: 18px; color: var(--c-primary);">calendar_month</span>
+                        <span style="font-size: 0.85rem; font-weight: 600; color: var(--c-on-surface);">Periodo</span>
+                    </div>
+                    <select id="filter-periodo" class="form-select report-period-selector" style="
+                        font-size: 0.8rem;
+                        padding: 6px 28px 6px 12px;
+                        height: 34px;
+                        min-width: 130px;
+                        background-color: var(--c-surface-variant);
+                        border: 1px solid var(--c-outline);
+                        border-radius: 10px;
+                        font-weight: 500;
+                    ">
                         <option value="mes-actual">Este Mes</option>
                         <option value="año-actual">Este Año</option>
-                        <option value="custom">📅 Personalizado...</option>
+                        <option value="custom">Personalizado</option>
                     </select>
                 </div>
-
-                <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 12px; padding: 0 10px; display:flex; align-items:center; justify-content:space-between;">
-                    <span style="font-size: 0.65rem; font-weight: 600; color: var(--c-on-surface-secondary);">P&L Inv.</span>
-                    <div id="kpi-inversion-combined" class="skeleton" style="font-size: 0.75rem; font-weight: 800; white-space: nowrap;">0 € (0%)</div>
+            </div>
+            
+            <!-- Filtros personalizados -->
+            <div id="custom-date-filters" class="form-grid hidden" style="
+                grid-template-columns: 1fr 1fr; 
+                gap: 10px; 
+                margin-bottom: var(--sp-3);
+                background: var(--c-surface);
+                padding: 14px;
+                border-radius: 16px;
+                border: 1px solid var(--c-outline);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            ">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 6px; font-weight: 600;">Desde</label>
+                    <input type="date" id="filter-fecha-inicio" class="form-input" style="width: 100%; padding: 8px; border-radius: 10px; font-size: 0.85rem; border: 1px solid var(--c-outline);">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; color: var(--c-on-surface-secondary); margin-bottom: 6px; font-weight: 600;">Hasta</label>
+                    <input type="date" id="filter-fecha-fin" class="form-input" style="width: 100%; padding: 8px; border-radius: 10px; font-size: 0.85rem; border: 1px solid var(--c-outline);">
                 </div>
             </div>
 
-            <div class="card" style="flex: 0 0 auto; margin: 0; padding: 10px; border-radius: 14px; background: var(--c-surface); border: 1px solid var(--c-outline); display: flex; align-items: center;">
-                <div style="text-align: center; flex: 1;">
-                    <div style="font-size: 0.6rem; color: var(--c-on-surface-secondary); font-weight: 600;">INGRESOS</div>
-                    <div id="kpi-ingresos-value" class="text-positive skeleton" style="font-size: 0.9rem; font-weight: 800;">+0 €</div>
+            <!-- Flujo de caja en tarjeta -->
+            <div class="card fade-in-up" style="
+                padding: 16px;
+                border-radius: 16px;
+                margin-bottom: var(--sp-3);
+                border: 1px solid var(--c-outline);
+                background: var(--c-surface);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            ">
+                <!-- Título -->
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                    <span class="material-icons" style="font-size: 20px; color: var(--c-primary);">account_balance</span>
+                    <div style="font-size: 0.9rem; font-weight: 700; color: var(--c-on-surface);">Flujo de Caja del Periodo</div>
                 </div>
-                <div style="width: 1px; height: 20px; background: var(--c-outline);"></div>
-                <div style="text-align: center; flex: 1;">
-                    <div style="font-size: 0.6rem; color: var(--c-on-surface-secondary); font-weight: 600;">GASTOS</div>
-                    <div id="kpi-gastos-value" class="text-negative skeleton" style="font-size: 0.9rem; font-weight: 800;">-0 €</div>
-                </div>
-                <div style="width: 1px; height: 20px; background: var(--c-outline);"></div>
-                <div style="text-align: center; flex: 1;">
-                    <div style="font-size: 0.6rem; color: var(--c-on-surface-secondary); font-weight: 600;">NETO</div>
-                    <div id="kpi-saldo-neto-value" class="skeleton" style="font-size: 0.9rem; font-weight: 800; color: var(--c-primary);">0 €</div>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: 1; min-height: 0;">
-                <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 14px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <div style="font-size: 0.7rem; font-weight: 700; color: #BF5AF2; margin-bottom: 4px;">AHORRO</div>
-                    <div style="position: relative; width: 50px; height: 50px;">
-                        <canvas id="kpi-savings-rate-chart"></canvas>
-                        <div id="kpi-tasa-ahorro-value" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.8rem; font-weight: 800;">0%</div>
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-rows: 1fr 1fr; gap: 8px;">
-                    <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 14px; padding: 8px; display: flex; flex-direction: column; justify-content: center;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                            <span style="font-size: 0.65rem; font-weight: 600; color: var(--c-success);">COBERTURA</span>
-                            <span id="health-runway-val" class="skeleton" style="font-size: 0.8rem; font-weight: 800;">0 m</span>
+                
+                <!-- Métricas -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                    <!-- Ingresos -->
+                    <div style="text-align: center; padding: 12px 8px; background: var(--c-surface-variant); border-radius: 12px;">
+                        <div style="margin-bottom: 8px;">
+                            <span class="material-icons" style="font-size: 16px; color: var(--c-success); vertical-align: middle;">arrow_upward</span>
                         </div>
-                        <div style="height: 4px; background: var(--c-surface-variant); border-radius: 2px; overflow: hidden;"><div id="health-runway-progress-bar" style="width: 0%; height: 100%; background: var(--c-success);"></div></div>
-                    </div>
-                    <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 14px; padding: 8px; display: flex; flex-direction: column; justify-content: center;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                            <span style="font-size: 0.65rem; font-weight: 600; color: var(--c-warning);">LIBERTAD</span>
-                            <span id="health-fi-val" class="skeleton" style="font-size: 0.8rem; font-weight: 800;">0%</span>
+                        <div id="kpi-ingresos-value" class="text-positive skeleton" 
+                             style="font-size: 1.1rem; font-weight: 800; line-height: 1.2;">
+                            +0 €
                         </div>
-                        <div style="height: 4px; background: var(--c-surface-variant); border-radius: 2px; overflow: hidden;"><div id="health-fi-progress-bar" style="width: 0%; height: 100%; background: var(--c-warning);"></div></div>
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-top: 4px; font-weight: 600;">
+                            INGRESOS
+                        </div>
+                    </div>
+                    
+                    <!-- Gastos -->
+                    <div style="text-align: center; padding: 12px 8px; background: var(--c-surface-variant); border-radius: 12px;">
+                        <div style="margin-bottom: 8px;">
+                            <span class="material-icons" style="font-size: 16px; color: var(--c-danger); vertical-align: middle;">arrow_downward</span>
+                        </div>
+                        <div id="kpi-gastos-value" class="text-negative skeleton" 
+                             style="font-size: 1.1rem; font-weight: 800; line-height: 1.2;">
+                            -0 €
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-top: 4px; font-weight: 600;">
+                            GASTOS
+                        </div>
+                    </div>
+                    
+                    <!-- Neto -->
+                    <div style="text-align: center; padding: 12px 8px; background: var(--c-surface-variant); border-radius: 12px;">
+                        <div style="margin-bottom: 8px;">
+                            <span class="material-icons" style="font-size: 16px; color: var(--c-primary); vertical-align: middle;">balance</span>
+                        </div>
+                        <div id="kpi-saldo-neto-value" class="skeleton" 
+                             style="font-size: 1.1rem; font-weight: 800; line-height: 1.2; color: var(--c-primary);">
+                            0 €
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-top: 4px; font-weight: 600;">
+                            NETO
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="hidden">
-                <input type="date" id="filter-fecha-inicio">
-                <input type="date" id="filter-fecha-fin">
-                <div id="custom-date-filters"></div>
+            <!-- Tasa de Ahorro en tarjeta -->
+            <div class="card fade-in-up" style="
+                padding: 16px;
+                border-radius: 16px;
+                margin-bottom: var(--sp-3);
+                border: 1px solid var(--c-outline);
+                background: var(--c-surface);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            ">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="material-icons" style="font-size: 20px; color: #BF5AF2;">savings</span>
+                        <div>
+                            <div style="font-size: 0.9rem; font-weight: 700; color: var(--c-on-surface);">Tasa de Ahorro</div>
+                            <div style="font-size: 0.75rem; color: var(--c-on-surface-secondary);">% de ingresos netos</div>
+                        </div>
+                    </div>
+                    <div id="kpi-tasa-ahorro-value" class="skeleton" style="
+                        font-size: 1.5rem;
+                        font-weight: 800;
+                        color: #BF5AF2;
+                    ">0%</div>
+                </div>
+                <div style="position: relative; height: 6px; background-color: var(--c-surface-variant); border-radius: 3px; overflow: hidden;">
+                    <div id="tasa-ahorro-progress" style="
+                        height: 100%;
+                        width: 0%;
+                        background: linear-gradient(90deg, #BF5AF2, #9B30F2);
+                        border-radius: 3px;
+                        transition: width 0.8s ease;
+                    "></div>
+                </div>
             </div>
+
+            <!-- Salud Financiera en tarjeta -->
+            <div class="card fade-in-up" style="
+                padding: 16px;
+                border-radius: 16px;
+                margin-bottom: var(--sp-4);
+                border: 1px solid var(--c-outline);
+                background: var(--c-surface);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            ">
+                <!-- Título -->
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                    <span class="material-icons" style="font-size: 20px; color: var(--c-info);">health_and_safety</span>
+                    <div style="font-size: 0.9rem; font-weight: 700; color: var(--c-on-surface);">Salud Financiera</div>
+                </div>
+                
+                <!-- Métricas -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    
+                    <!-- Cobertura -->
+                    <div style="padding: 14px; border-radius: 12px; border: 1px solid rgba(0, 179, 77, 0.3); background: var(--c-surface);">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span class="material-icons" style="font-size: 18px; color: var(--c-success);">shield</span>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Cobertura</div>
+                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">6 meses meta</div>
+                            </div>
+                        </div>
+                        <div id="health-runway-val" class="skeleton" style="
+                            font-size: 1.4rem;
+                            font-weight: 800;
+                            color: var(--c-success);
+                            text-align: center;
+                            margin: 6px 0;
+                        ">0 Meses</div>
+                        <div style="height: 6px; background-color: rgba(0, 179, 77, 0.2); border-radius: 3px; overflow: hidden;">
+                            <div id="health-runway-progress-bar" style="
+                                width: 0%;
+                                height: 100%;
+                                background: var(--c-success);
+                                border-radius: 3px;
+                                transition: width 0.8s ease;
+                            "></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Libertad Financiera -->
+                    <div style="padding: 14px; border-radius: 12px; border: 1px solid rgba(255, 214, 10, 0.3); background: var(--c-surface);">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span class="material-icons" style="font-size: 18px; color: var(--c-warning);">flag</span>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Libertad</div>
+                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">Vivir de rentas</div>
+                            </div>
+                        </div>
+                        <div id="health-fi-val" class="skeleton" style="
+                            font-size: 1.4rem;
+                            font-weight: 800;
+                            color: var(--c-warning);
+                            text-align: center;
+                            margin: 6px 0;
+                        ">0.0%</div>
+                        <div style="height: 6px; background-color: rgba(255, 214, 10, 0.2); border-radius: 3px; overflow: hidden;">
+                            <div id="health-fi-progress-bar" style="
+                                width: 0%;
+                                height: 100%;
+                                background: var(--c-warning);
+                                border-radius: 3px;
+                                transition: width 0.8s ease;
+                            "></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
+        
+        <!-- Elementos ocultos para funcionalidad -->
+        <div id="concepto-totals-list" style="display:none;"></div>
+        <canvas id="conceptos-chart" style="display:none;"></canvas>
+        <div id="net-worth-chart-container" style="display:none;"><canvas id="net-worth-chart"></canvas></div>
     `;
     
     populateAllDropdowns();
@@ -6008,128 +6217,106 @@ const updateDashboardData = async () => {
     isDashboardRendering = true;
 
     try {
-        // --- 1. OBTENCIÓN DE DATOS ---
-        const { current } = await getFilteredMovements(false);
+        // 1. DATOS DEL PERIODO (FLUIDO)
+        const { current } = await getFilteredMovements(true);
         const saldos = await getSaldos();
-        const portfolioPerf = await calculatePortfolioPerformance(); 
-
+        
+        // 2. DATOS PATRIMONIALES (ESTADO)
         const visibleAccounts = getVisibleAccounts();
         const visibleAccountIds = new Set(Object.keys(saldos));
         
-        // --- 2. CÁLCULO DE FLUJO DE CAJA ---
-        let ingresos = 0;
-        let gastos = 0;
-        
-        // Buscamos el ID del concepto 'Saldo Inicial' para excluirlo si existe
-        const conceptoInicial = db.conceptos.find(c => c.nombre.toLowerCase().includes('inicial'));
-        const conceptoInicialId = conceptoInicial ? conceptoInicial.id : null;
-
+        // Calcular Totales del Periodo
+        let ingresos = 0, gastos = 0, saldoNeto = 0;
         current.forEach(m => {
-            // Ignorar Saldo Inicial para no falsear ingresos
-            if (m.conceptoId === conceptoInicialId) return;
-
             const amount = calculateMovementAmount(m, visibleAccountIds);
-            
-            // Lógica simple: Si entra es ingreso, si sale es gasto.
-            if (amount > 0) {
-                ingresos += amount;
-            } else if (amount < 0) {
-                gastos += amount; // Se mantiene negativo
-            }
+            if (amount > 0) ingresos += amount;
+            else gastos += amount;
+            saldoNeto += amount;
         });
+        const tasaAhorroActual = ingresos > 0 ? (saldoNeto / ingresos) * 100 : (saldoNeto < 0 ? -100 : 0);
 
-        const saldoNeto = ingresos + gastos;
-
-        // --- 3. CÁLCULO TASA DE AHORRO (Simplificado) ---
-        let tasaAhorroActual = 0;
-        
-        if (ingresos > 0) {
-            // Ejemplo: Gané 2000, Gasté -1500. Neto = 500.
-            // Ahorro = (500 / 2000) * 100 = 25%
-            tasaAhorroActual = (saldoNeto / ingresos) * 100;
-        } else if (gastos < 0) {
-            // Gasté pero no ingresé nada -> Ahorro negativo (-100%)
-            tasaAhorroActual = -100;
-        }
-        // Si no hubo ingresos ni gastos, se queda en 0.
-
-        // --- 4. CÁLCULO DE PATRIMONIO ---
+        // Calcular Estado Actual
         let totalLiquidez = 0;
         let patrimonioNeto = 0;
 
         visibleAccounts.forEach(c => {
             const saldo = saldos[c.id] || 0;
             patrimonioNeto += saldo;
-            const tipo = (c.tipo || '').toUpperCase();
-            if (!c.esInversion && !['PRÉSTAMO', 'TARJETA DE CRÉDITO'].includes(tipo)) {
+            if (!c.esInversion && !['PRÉSTAMO', 'TARJETA DE CRÉDITO'].includes((c.tipo || '').toUpperCase())) {
                 totalLiquidez += saldo;
             }
         });
+
+        // Calcular Inversiones
+        const portfolioPerf = await calculatePortfolioPerformance(); 
 
         // Calcular Salud Financiera
         const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
         const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
 
-        // --- 5. ACTUALIZACIÓN UI ---
+        // --- ACTUALIZACIÓN UI ---
 
-        // Patrimonio y Píldoras
+        // 1. Patrimonio
         const kpiPatrimonio = select('kpi-patrimonio-neto-value');
         if (kpiPatrimonio) {
             kpiPatrimonio.classList.remove('skeleton');
             animateCountUp(kpiPatrimonio, patrimonioNeto);
         }
+
+        // 2. Grid de Activos
         const kpiLiquidez = select('kpi-liquidez-value');
-        if (kpiLiquidez) kpiLiquidez.textContent = formatCurrency(totalLiquidez);
-        const kpiInvTotal = select('kpi-inversion-total');
-        if (kpiInvTotal) kpiInvTotal.textContent = formatCurrency(portfolioPerf.valorActual);
+        if (kpiLiquidez) { kpiLiquidez.classList.remove('skeleton'); animateCountUp(kpiLiquidez, totalLiquidez); }
         
-        // P&L Inversión Combinado: "+500€ (+5.2%)"
-        const kpiInvCombined = select('kpi-inversion-combined');
-        if (kpiInvCombined) {
-            kpiInvCombined.classList.remove('skeleton');
+        const kpiInvTotal = select('kpi-inversion-total');
+        if (kpiInvTotal) { kpiInvTotal.classList.remove('skeleton'); animateCountUp(kpiInvTotal, portfolioPerf.valorActual); }
+        
+        const kpiInvPnl = select('kpi-inversion-pnl');
+        if (kpiInvPnl) {
+            kpiInvPnl.classList.remove('skeleton');
             const pnl = portfolioPerf.pnlAbsoluto;
-            const pct = portfolioPerf.pnlPorcentual;
             const sign = pnl >= 0 ? '+' : '';
-            const colorClass = pnl >= 0 ? 'text-positive' : 'text-negative';
-            
-            kpiInvCombined.textContent = `${sign}${formatCurrency(pnl)} (${pct.toFixed(1)}%)`;
-            kpiInvCombined.className = colorClass; // Aplica verde o rojo a todo el texto
+            kpiInvPnl.textContent = `${sign}${formatCurrency(pnl)}`;
+            kpiInvPnl.className = `status-value ${pnl >= 0 ? 'text-positive' : 'text-negative'}`;
+            kpiInvPnl.style.fontSize = "1.1rem"; // Ajuste visual
+        }
+        
+        const kpiInvPct = select('kpi-inversion-pct');
+        if (kpiInvPct) {
+            kpiInvPct.classList.remove('skeleton');
+            const pct = portfolioPerf.pnlPorcentual;
+            const sign = pct >= 0 ? '+' : '';
+            kpiInvPct.textContent = `${sign}${pct.toFixed(2)}%`;
+            kpiInvPct.className = `status-value ${pct >= 0 ? 'text-positive' : 'text-negative'}`;
+            kpiInvPct.style.fontSize = "1.1rem";
         }
 
-        // Flujo de Caja
+        // 3. Flujo
         const elIng = select('kpi-ingresos-value');
         const elGas = select('kpi-gastos-value');
         const elNet = select('kpi-saldo-neto-value');
         if (elIng) {
             [elIng, elGas, elNet].forEach(el => el.classList.remove('skeleton'));
-            elIng.textContent = `+${formatCurrency(ingresos)}`;
-            elGas.textContent = formatCurrency(gastos);
-            elNet.textContent = formatCurrency(saldoNeto);
-            elNet.style.color = saldoNeto >= 0 ? 'var(--c-primary)' : 'var(--c-danger)';
+            animateCountUp(elIng, ingresos);
+            animateCountUp(elGas, gastos);
+            animateCountUp(elNet, saldoNeto);
+            elNet.className = saldoNeto >= 0 ? 'text-positive' : 'text-negative';
         }
 
-        // Tasa de Ahorro
+        // 4. Salud (Carrusel)
         const kpiAhorro = select('kpi-tasa-ahorro-value');
         if (kpiAhorro) {
             kpiAhorro.classList.remove('skeleton');
             kpiAhorro.textContent = `${tasaAhorroActual.toFixed(0)}%`;
-            
-            let colorTasa = 'var(--c-on-surface)';
-            if (tasaAhorroActual >= 20) colorTasa = '#30D158'; // Verde
-            else if (tasaAhorroActual < 0) colorTasa = '#FF3B30'; // Rojo
-            else colorTasa = '#BF5AF2'; // Morado
-            
-            kpiAhorro.style.color = colorTasa;
+            kpiAhorro.className = tasaAhorroActual >= 0 ? 'text-positive' : 'text-negative';
             renderSavingsRateGauge('kpi-savings-rate-chart', tasaAhorroActual);
         }
         
-        // Salud Financiera
         const kpiRunway = select('health-runway-val');
         const barRunway = select('health-runway-progress-bar');
         if (kpiRunway) {
             kpiRunway.classList.remove('skeleton');
             const meses = isFinite(efData.mesesCobertura) ? efData.mesesCobertura : 99;
-            kpiRunway.textContent = isFinite(efData.mesesCobertura) ? `${efData.mesesCobertura.toFixed(1)} m` : '∞';
+            kpiRunway.textContent = isFinite(efData.mesesCobertura) ? `${efData.mesesCobertura.toFixed(1)} Meses` : '∞';
             if (barRunway) {
                 const pct = Math.min((meses / 6) * 100, 100);
                 barRunway.style.width = `${pct}%`;
@@ -6142,7 +6329,10 @@ const updateDashboardData = async () => {
         if (kpiFi) {
             kpiFi.classList.remove('skeleton');
             kpiFi.textContent = `${fiData.progresoFI.toFixed(1)}%`;
-            if (barFi) barFi.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
+            if (barFi) {
+                barFi.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
+                barFi.style.backgroundColor = fiData.progresoFI >= 100 ? 'var(--c-success)' : 'var(--c-warning)';
+            }
         }
 
     } catch (error) {
@@ -8734,50 +8924,20 @@ const handleStart = (e) => {
     
     // 9. Cambios en filtros y selects
     document.addEventListener('change', e => {
-    const target = e.target;
-    
-    // 1. GESTIÓN DEL SELECTOR DE PERIODO DEL PANEL
-    if (target.id === 'filter-periodo') {
-        if (target.value === 'custom') {
-            // Abrimos modal para elegir fechas sin romper el diseño
-            const today = new Date().toISOString().split('T')[0];
-            const html = `
-                <div class="form-group">
-                    <label class="form-label">Fecha Inicio</label>
-                    <input type="date" id="modal-fecha-inicio" class="form-input" value="${today}">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Fecha Fin</label>
-                    <input type="date" id="modal-fecha-fin" class="form-input" value="${today}">
-                </div>
-                <button id="apply-custom-dates-btn" class="btn btn--primary btn--full">Aplicar Filtro</button>
-            `;
-            showGenericModal('Seleccionar Periodo', html);
-            
-            // Lógica del botón dentro del modal
-            setTimeout(() => {
-                const btn = document.getElementById('apply-custom-dates-btn');
-                btn.onclick = () => {
-                    const start = document.getElementById('modal-fecha-inicio').value;
-                    const end = document.getElementById('modal-fecha-fin').value;
-                    if (start && end) {
-                        // Pasamos los valores a los inputs ocultos del panel
-                        select('filter-fecha-inicio').value = start;
-                        select('filter-fecha-fin').value = end;
-                        hapticFeedback('medium');
-                        scheduleDashboardUpdate();
-                        hideModal('generic-modal');
-                    } else {
-                        showToast('Selecciona ambas fechas.', 'warning');
-                    }
-                };
-            }, 50);
-        } else {
-            // Si es Mes o Año, actualizamos directamente
-            hapticFeedback('light');
-            scheduleDashboardUpdate();
+        const target = e.target;
+        if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
+            const panelPage = select('panel-page');
+            if (!panelPage || !panelPage.classList.contains('view--active')) return;
+            if (target.id === 'filter-periodo') {
+                const customDateFilters = select('custom-date-filters');
+                if (customDateFilters) customDateFilters.classList.toggle('hidden', target.value !== 'custom');
+                if (target.value !== 'custom') { hapticFeedback('light'); scheduleDashboardUpdate(); }
+            }
+            if (target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
+                const s = select('filter-fecha-inicio'), en = select('filter-fecha-fin');
+                if (s && en && s.value && en.value) { hapticFeedback('light'); scheduleDashboardUpdate(); }
+            }
         }
-    }
         // Lógica opciones recurrentes
         if (target.id === 'movimiento-recurrente') {
             select('recurrent-options').classList.toggle('hidden', !target.checked);
@@ -9490,16 +9650,9 @@ const handleSaveMovement = async (form, btn) => {
             setTimeout(() => updateLocalDataAndRefreshUI(), 50);
         }
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Limpieza final y Navegación
-        if (!isSaveAndNew) {
-            hideModal('movimiento-modal');
-            // Forzamos la navegación a la pestaña Diario
-            navigateTo(PAGE_IDS.DIARIO); 
-        }
-        else {
-            startMovementForm();
-        }
+        // Limpieza final
+        if (!isSaveAndNew) hideModal('movimiento-modal');
+        else startMovementForm();
 
     } catch (error) {
         console.error("Error al guardar:", error);
