@@ -991,25 +991,6 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
 .transaction-card__transfer-row .material-icons { font-size: 11px; vertical-align: middle; margin-right: var(--sp-1); }
 .transaction-card__transfer-row > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* Acciones de Swipe */
-.swipe-container { position: relative; overflow: hidden; }
-.swipe-container .transaction-card { position: relative; z-index: 2; background-color: var(--c-background); transition: transform 0.3s ease-out; }
-.swipe-actions-container { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; z-index: 1; }
-.swipe-actions-container.left { left: 0; }
-.swipe-actions-container.right { right: 0; }
-.swipe-action-btn { width: 75px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--c-white); border: none; cursor: pointer; font-size: var(--fs-xs); font-weight: 600; gap: 4px; }
-.swipe-action-btn .material-icons {
-    font-size: 20px;
-    transform: scale(0.5); /* Empieza a la mitad de su tamaño */
-    opacity: 0;            /* Empieza totalmente transparente */
-    transition: transform 0.2s ease-out, opacity 0.2s ease-out; /* Transición suave */
-}
-.swipe-actions-container--visible .swipe-action-btn .material-icons {
-    transform: scale(1); /* Vuelve a su tamaño normal */
-    opacity: 1;            /* Se vuelve totalmente opaco */
-}
-.swipe-action-btn.duplicate { background-color: #FF9500; } /* Naranja Neón */
-.swipe-action-btn.delete { background-color: var(--c-danger); }
 
 /* Acordeón */
 .accordion { margin-bottom: 0; background-color: var(--c-surface); overflow: hidden; }
@@ -1920,54 +1901,6 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     visibility: hidden;
 }
 
-/* === FIN: Estilos para la Fila de Resumen del Extracto === */
-
-/* === INICIO: Estilos para Nuevo Botón de Navegación Central === */
-.bottom-nav {
-    /* Damos espacio para que el botón central sobresalga */
-    align-items: flex-end; 
-}
-
-#bottom-nav-add-btn {
-    width: 56px;
-    height: 56px;
-    background-color: var(--c-primary);
-    color: var(--c-white);
-    border: none;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
-    /* LA CLAVE: Lo empujamos hacia arriba para que "flote" sobre la isla */
-    margin-bottom: 35px; 
-    
-    /* Sombra fuerte para separarlo visualmente */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-    
-    /* Borde del color del fondo para crear efecto de "recorte" visual (opcional) */
-    border: 4px solid var(--c-background); 
-    
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* Efecto rebote */
-}
-
-#bottom-nav-add-btn:hover {
-    transform: scale(1.1) rotate(90deg); /* Pequeño giro al pasar el ratón */
-    background-color: var(--c-primary-hover);
-}
-
-#bottom-nav-add-btn:active {
-    transform: scale(0.9);
-}
-}
-
-#bottom-nav-add-btn .material-icons {
-    font-size: 28px;
-    font-weight: 700;
-}
-/* === FIN: Estilos para Nuevo Botón de Navegación Central === */
-
 
 /* === INICIO: Corrección de Contraste y Estilo para Opciones de Ajustes === */
 /*
@@ -2333,24 +2266,6 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     padding-right: var(--sp-3);
 }
 
-/* === FIN: ESTILOS PARA FORMULARIO DE ALTA DENSIDAD === */
-
-/* EN style.css, AÑADE ESTE BLOQUE COMPLETO */
-
-/* --- INICIO: Estilos para el Dropdown Personalizado --- */
-
-/* 7. Dropdown Personalizado (La magia visual) */
-.custom-select-wrapper { position: relative; width: 100%; }
-.custom-select__trigger { position: relative; width: 100%; padding: 22px 12px 6px 12px; border-radius: var(--border-radius-md); background: transparent; color: var(--c-on-surface); font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: none; /* Quitamos el borde porque ya lo tiene el .input-wrapper */ }
-.custom-select-wrapper.is-open .input-wrapper { border-color: var(--c-primary); box-shadow: var(--c-border-glow); } /* El brillo se aplica al contenedor */
-.custom-select__trigger::after { content: ''; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--c-on-surface-secondary); transition: transform 0.2s ease-in-out; }
-.custom-select-wrapper.is-open .custom-select__trigger::after { transform: translateY(-50%) rotate(180deg); }
-.custom-select__options { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background-color: var(--c-surface); border: 1px solid var(--c-outline); border-radius: var(--border-radius-md); box-shadow: var(--shadow-md); z-index: 1070; max-height: 200px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; }
-.custom-select-wrapper.is-open .custom-select__options { opacity: 1; visibility: visible; transform: translateY(0); }
-.custom-select__option { padding: var(--sp-2) var(--sp-3); color: var(--c-on-surface-secondary); font-weight: 500; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
-.custom-select__option:hover { background-color: var(--c-surface-variant); color: var(--c-on-surface); }
-.custom-select__option.is-selected { background-color: var(--c-primary); color: var(--c-white); font-weight: 600; }
-.custom-select-wrapper .form-select-hidden { position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
 /* 8. Media Query para pantallas ultra pequeñas */
 @media (max-width: 380px) {
