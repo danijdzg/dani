@@ -4468,7 +4468,7 @@ const renderPanelPage = async () => {
 
             <div class="cockpit-footer-grid">
                 <div class="cockpit-mini-card">
-                    <div class="mini-icon" style="color:#BF5AF2;">Tasa de Ahorro</div>
+                    <div class="mini-icon" style="color:#BF5AF2;"></div>
                     <div class="mini-content">
                         <div class="cockpit-label-tiny" style="display:flex; align-items:center;">AHORRO (%)<button class="help-btn" data-action="show-kpi-help" data-kpi="tasa_ahorro" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
                         <div id="kpi-tasa-ahorro-value" class="mini-val" style="color:#BF5AF2;">0%</div>
@@ -4477,7 +4477,7 @@ const renderPanelPage = async () => {
                 </div>
 
                 <div class="cockpit-mini-card">
-                    <div class="mini-icon text-warning">Colchón de Emergencia</div>
+                    <div class="mini-icon text-warning"></div>
                     <div class="mini-content">
                         <div class="cockpit-label-tiny" style="display:flex; align-items:center;">COBERTURA (meses)<button class="help-btn" data-action="show-kpi-help" data-kpi="cobertura" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
                         <div id="health-runway-val" class="mini-val text-warning">0M</div>
@@ -4488,7 +4488,7 @@ const renderPanelPage = async () => {
                 </div>
 
                 <div class="cockpit-mini-card">
-                    <div class="mini-icon text-positive">Libertad Financiera</div>
+                    <div class="mini-icon text-positive"></div>
                     <div class="mini-content">
                         <div class="cockpit-label-tiny" style="display:flex; align-items:center;">LIBERTAD (años)<button class="help-btn" data-action="show-kpi-help" data-kpi="libertad" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
                         <div id="health-fi-val" class="mini-val text-positive">0%</div>
