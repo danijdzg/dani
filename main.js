@@ -4466,7 +4466,7 @@ const renderPanelPage = async () => {
 
                     <div class="pnl-pill-container">
                         <div class="cockpit-label-tiny" style="display:flex; align-items:center; justify-content:center;">
-                            GANANCIA <button class="help-btn" data-action="show-kpi-help" data-kpi="pnl" style="margin-left:4px; width:14px; height:14px; font-size:9px;">?</button>
+                            GANANCIA/PÉRDIDA<button class="help-btn" data-action="show-kpi-help" data-kpi="pnl" style="margin-left:4px; width:14px; height:14px; font-size:9px;">?</button>
                         </div>
                         <div id="kpi-inversion-pnl" class="pnl-value skeleton">0€</div>
                     </div>
@@ -5962,15 +5962,33 @@ const scheduleDashboardUpdate = () => {
             const kpiPnl = select('kpi-inversion-pnl');
             if (kpiPnl) {
                 kpiPnl.classList.remove('skeleton');
-                kpiPnl.textContent = (pnlTotal >= 0 ? '+' : '') + formatCurrency(pnlTotal);
-                kpiPnl.className = pnlTotal >= 0 ? 'text-positive cockpit-val-small' : 'text-negative cockpit-val-small';
+                
+                // Formateamos con signo + si es positivo
+                const sign = pnlTotal >= 0 ? '+' : '';
+                kpiPnl.textContent = `${sign}${formatCurrency(pnlTotal)}`;
+                
+                // LÓGICA DE COLOR P&L CORREGIDA:
+                // Usamos 'pnl-value' para mantener el tamaño de letra y añadimos el color
+                if (pnlTotal >= 0) {
+                    kpiPnl.className = 'pnl-value text-positive'; // Verde
+                } else {
+                    kpiPnl.className = 'pnl-value text-negative'; // Rojo
+                }
             }
+
             const kpiTir = select('kpi-inversion-pct');
             if (kpiTir) {
                 kpiTir.classList.remove('skeleton');
-                const tir = portfolioPerf.pnlPorcentual || 0; // Usamos PnL % simple para consistencia rápida, o irr si prefieres
-                kpiTir.textContent = `${tir.toFixed(1)}%`;
-                kpiTir.className = tir >= 0 ? 'text-positive cockpit-val-med' : 'text-negative cockpit-val-med';
+                const tir = portfolioPerf.pnlPorcentual || 0;
+                const signTir = tir >= 0 ? '+' : '';
+                kpiTir.textContent = `${signTir}${tir.toFixed(1)}%`;
+                
+                // Aplicamos también color a la TIR para coherencia visual
+                if (tir >= 0) {
+                    kpiTir.className = 'cockpit-val-xl text-positive';
+                } else {
+                    kpiTir.className = 'cockpit-val-xl text-negative';
+                }
             }
 
             // D. Footer Salud (Actualizado con Colores Fijos)
