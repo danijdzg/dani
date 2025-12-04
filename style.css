@@ -4019,3 +4019,47 @@ body.privacy-mode .asset-card__value:active {
 .material-icons {
     color: var(--c-primary);
 }
+/* --- FAB (Floating Action Button) MEJORADO --- */
+.fab {
+    position: fixed;
+    bottom: calc(var(--nav-height) + var(--sp-4));
+    right: var(--sp-3);
+    width: 60px; /* Un poco más grande y vistoso */
+    height: 60px;
+    /* Fondo degradado vibrante en lugar de color plano */
+    background: linear-gradient(135deg, var(--c-primary) 0%, color-mix(in srgb, var(--c-primary) 70%, white) 100%);
+    border-radius: 50%;
+    color: var(--c-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Sombra con color (Glow effect) */
+    box-shadow: 0 8px 25px -6px color-mix(in srgb, var(--c-primary) 60%, transparent);
+    cursor: pointer;
+    z-index: 100;
+    /* Transición elástica "bouncy" */
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background 0.3s ease;
+    border: none;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Efecto al pasar el ratón (crece y brilla más) */
+.fab:hover {
+    transform: scale(1.1) rotate(90deg); /* Gira ligeramente al crecer */
+    box-shadow: 0 12px 30px -8px color-mix(in srgb, var(--c-primary) 70%, transparent);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--c-primary) 90%, white) 0%, color-mix(in srgb, var(--c-primary) 60%, white) 100%);
+}
+
+/* Efecto al pulsar (se encoge) */
+.fab:active {
+    transform: scale(0.95) rotate(90deg);
+    box-shadow: 0 4px 15px -4px color-mix(in srgb, var(--c-primary) 80%, transparent);
+}
+
+/* IMPORTANTE: Eliminamos los pseudo-elementos antiguos que dibujaban el '+' */
+.fab::before,
+.fab::after {
+    display: none;
+    content: none;
+}
