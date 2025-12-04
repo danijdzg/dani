@@ -4353,16 +4353,16 @@ const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // ESTRUCTURA BENTO GRID (100% VIEWPORT HEIGHT - SIN SCROLL)
+    // ESTRUCTURA BENTO GRID (100% ALTURA - SIN SCROLL)
     container.innerHTML = `
         <div style="
             display: flex; 
             flex-direction: column; 
-            height: calc(100vh - 140px); /* Restamos cabecera y nav inferior */
+            height: calc(100vh - 140px);
             max-height: 100%;
             padding: 0 var(--sp-2) 4px var(--sp-2); 
             gap: 8px; 
-            overflow: hidden; /* Evita scroll accidental */
+            overflow: hidden; 
         ">
             
             <div class="hero-card" style="
@@ -4373,6 +4373,7 @@ const renderPanelPage = async () => {
                 background: linear-gradient(135deg, var(--c-surface) 0%, color-mix(in srgb, var(--c-primary) 8%, var(--c-surface)) 100%);
                 border: 1px solid var(--c-outline);
                 text-align: center;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             ">
                 <div style="font-size: 0.65rem; color: var(--c-on-surface-secondary); font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
                     PATRIMONIO NETO
@@ -4391,7 +4392,8 @@ const renderPanelPage = async () => {
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 8px; flex: 0 0 40px;">
+            <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 8px; flex: 0 0 40px;">
+                
                 <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 12px; padding: 0 8px; display:flex; align-items:center;">
                     <span class="material-icons" style="font-size: 16px; color: var(--c-primary); margin-right: 4px;">calendar_today</span>
                     <select id="filter-periodo" class="form-select report-period-selector" style="border: none; background: transparent; padding: 0; font-size: 0.75rem; font-weight: 600; width: 100%; height: 100%; color: var(--c-on-surface);">
@@ -4400,9 +4402,10 @@ const renderPanelPage = async () => {
                         <option value="custom">📅 Personalizado...</option>
                     </select>
                 </div>
+
                 <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 12px; padding: 0 10px; display:flex; align-items:center; justify-content:space-between;">
                     <span style="font-size: 0.65rem; font-weight: 600; color: var(--c-on-surface-secondary);">P&L Inv.</span>
-                    <div id="kpi-inversion-pnl" class="skeleton" style="font-size: 0.75rem; font-weight: 800;">0 €</div>
+                    <div id="kpi-inversion-combined" class="skeleton" style="font-size: 0.75rem; font-weight: 800; white-space: nowrap;">0 € (0%)</div>
                 </div>
             </div>
 
@@ -4436,7 +4439,7 @@ const renderPanelPage = async () => {
                     <div style="background: var(--c-surface); border: 1px solid var(--c-outline); border-radius: 14px; padding: 8px; display: flex; flex-direction: column; justify-content: center;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
                             <span style="font-size: 0.65rem; font-weight: 600; color: var(--c-success);">COBERTURA</span>
-                            <span id="health-runway-val" class="skeleton" style="font-size: 0.8rem; font-weight: 800;">0 Meses</span>
+                            <span id="health-runway-val" class="skeleton" style="font-size: 0.8rem; font-weight: 800;">0 m</span>
                         </div>
                         <div style="height: 4px; background: var(--c-surface-variant); border-radius: 2px; overflow: hidden;"><div id="health-runway-progress-bar" style="width: 0%; height: 100%; background: var(--c-success);"></div></div>
                     </div>
@@ -4454,7 +4457,6 @@ const renderPanelPage = async () => {
                 <input type="date" id="filter-fecha-inicio">
                 <input type="date" id="filter-fecha-fin">
                 <div id="custom-date-filters"></div>
-                <div id="kpi-inversion-pct" class="hidden"></div>
             </div>
         </div>
     `;
@@ -6006,131 +6008,122 @@ const updateDashboardData = async () => {
     isDashboardRendering = true;
 
     try {
-        // 1. DATOS DEL PERIODO (FLUIDO)
-        // Pedimos false para obtener solo el periodo actual, sin comparar
-        const { current } = await getFilteredMovements(false); 
+        // --- 1. OBTENCIÓN DE DATOS ---
+        const { current } = await getFilteredMovements(false);
         const saldos = await getSaldos();
-        
-        // 2. DATOS PATRIMONIALES
+        const portfolioPerf = await calculatePortfolioPerformance(); 
+
         const visibleAccounts = getVisibleAccounts();
         const visibleAccountIds = new Set(Object.keys(saldos));
         
-        // --- CÁLCULO DE FLUJO DE CAJA Y TASA DE AHORRO ---
+        // --- 2. CÁLCULO DE FLUJO DE CAJA ---
         let ingresos = 0;
         let gastos = 0;
-        let saldoNeto = 0;
         
+        // Buscamos el ID del concepto 'Saldo Inicial' para excluirlo si existe
+        const conceptoInicial = db.conceptos.find(c => c.nombre.toLowerCase().includes('inicial'));
+        const conceptoInicialId = conceptoInicial ? conceptoInicial.id : null;
+
         current.forEach(m => {
-            // A. Obtener el nombre del concepto para filtrar "Iniciales"
-            const concepto = db.conceptos.find(c => c.id === m.conceptoId);
-            const nombreConcepto = concepto ? concepto.nombre.toLowerCase() : '';
+            // Ignorar Saldo Inicial para no falsear ingresos
+            if (m.conceptoId === conceptoInicialId) return;
 
-            // B. Si es "Saldo Inicial", "Apertura", etc., lo ignoramos para el flujo de caja
-            if (nombreConcepto.includes('inicial') || nombreConcepto.includes('apertura') || nombreConcepto.includes('saldo anterior')) {
-                return; 
-            }
-
-            // C. Calcular impacto (Ingreso o Gasto real en cuentas visibles)
             const amount = calculateMovementAmount(m, visibleAccountIds);
             
-            // D. Acumular
+            // Lógica simple: Si entra es ingreso, si sale es gasto.
             if (amount > 0) {
                 ingresos += amount;
-            } else {
-                gastos += amount; // gastos es negativo aquí
+            } else if (amount < 0) {
+                gastos += amount; // Se mantiene negativo
             }
-            saldoNeto += amount;
         });
 
-        // E. Cálculo Tasa de Ahorro (Ingresos Netos / Ingresos Totales)
-        let tasaAhorroActual = 0;
-        if (ingresos > 0) {
-            // (Neto / Ingresos) * 100. 
-            // Ejemplo: Gané 1000, Gasté 800. Neto = 200. Tasa = 200/1000 = 20%
-            tasaAhorroActual = (saldoNeto / ingresos) * 100;
-        } else if (saldoNeto < 0) {
-            // Si no hay ingresos pero hay gastos, el ahorro es negativo (estás quemando ahorros)
-            tasaAhorroActual = -100; 
-        }
+        const saldoNeto = ingresos + gastos;
 
-        // --- CÁLCULO DE PATRIMONIO (ESTADO) ---
+        // --- 3. CÁLCULO TASA DE AHORRO (Simplificado) ---
+        let tasaAhorroActual = 0;
+        
+        if (ingresos > 0) {
+            // Ejemplo: Gané 2000, Gasté -1500. Neto = 500.
+            // Ahorro = (500 / 2000) * 100 = 25%
+            tasaAhorroActual = (saldoNeto / ingresos) * 100;
+        } else if (gastos < 0) {
+            // Gasté pero no ingresé nada -> Ahorro negativo (-100%)
+            tasaAhorroActual = -100;
+        }
+        // Si no hubo ingresos ni gastos, se queda en 0.
+
+        // --- 4. CÁLCULO DE PATRIMONIO ---
         let totalLiquidez = 0;
         let patrimonioNeto = 0;
 
         visibleAccounts.forEach(c => {
             const saldo = saldos[c.id] || 0;
             patrimonioNeto += saldo;
-            if (!c.esInversion && !['PRÉSTAMO', 'TARJETA DE CRÉDITO'].includes((c.tipo || '').toUpperCase())) {
+            const tipo = (c.tipo || '').toUpperCase();
+            if (!c.esInversion && !['PRÉSTAMO', 'TARJETA DE CRÉDITO'].includes(tipo)) {
                 totalLiquidez += saldo;
             }
         });
-
-        // Calcular Inversiones
-        const portfolioPerf = await calculatePortfolioPerformance(); 
 
         // Calcular Salud Financiera
         const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
         const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
 
-        // --- ACTUALIZACIÓN UI (BENTO GRID) ---
+        // --- 5. ACTUALIZACIÓN UI ---
 
-        // 1. Patrimonio
+        // Patrimonio y Píldoras
         const kpiPatrimonio = select('kpi-patrimonio-neto-value');
         if (kpiPatrimonio) {
             kpiPatrimonio.classList.remove('skeleton');
             animateCountUp(kpiPatrimonio, patrimonioNeto);
         }
-
-        // 2. Mini Datos (Líquido e Inversión)
         const kpiLiquidez = select('kpi-liquidez-value');
-        if (kpiLiquidez) { 
-            kpiLiquidez.textContent = formatCurrency(totalLiquidez);
-        }
-        
+        if (kpiLiquidez) kpiLiquidez.textContent = formatCurrency(totalLiquidez);
         const kpiInvTotal = select('kpi-inversion-total');
-        if (kpiInvTotal) { 
-            kpiInvTotal.textContent = formatCurrency(portfolioPerf.valorActual);
-        }
+        if (kpiInvTotal) kpiInvTotal.textContent = formatCurrency(portfolioPerf.valorActual);
         
-        // 3. Mini Info Inversión (P&L)
-        const kpiInvPnl = select('kpi-inversion-pnl');
-        if (kpiInvPnl) {
-            kpiInvPnl.classList.remove('skeleton');
+        // P&L Inversión Combinado: "+500€ (+5.2%)"
+        const kpiInvCombined = select('kpi-inversion-combined');
+        if (kpiInvCombined) {
+            kpiInvCombined.classList.remove('skeleton');
             const pnl = portfolioPerf.pnlAbsoluto;
-            kpiInvPnl.textContent = (pnl >= 0 ? '+' : '') + formatCurrency(pnl);
-            kpiInvPnl.className = pnl >= 0 ? 'text-positive' : 'text-negative';
+            const pct = portfolioPerf.pnlPorcentual;
+            const sign = pnl >= 0 ? '+' : '';
+            const colorClass = pnl >= 0 ? 'text-positive' : 'text-negative';
+            
+            kpiInvCombined.textContent = `${sign}${formatCurrency(pnl)} (${pct.toFixed(1)}%)`;
+            kpiInvCombined.className = colorClass; // Aplica verde o rojo a todo el texto
         }
 
-        // 4. Flujo de Caja
+        // Flujo de Caja
         const elIng = select('kpi-ingresos-value');
         const elGas = select('kpi-gastos-value');
         const elNet = select('kpi-saldo-neto-value');
-        
         if (elIng) {
             [elIng, elGas, elNet].forEach(el => el.classList.remove('skeleton'));
-            
             elIng.textContent = `+${formatCurrency(ingresos)}`;
-            elGas.textContent = formatCurrency(gastos); // Ya es negativo, saldrá con el menos
+            elGas.textContent = formatCurrency(gastos);
             elNet.textContent = formatCurrency(saldoNeto);
             elNet.style.color = saldoNeto >= 0 ? 'var(--c-primary)' : 'var(--c-danger)';
         }
 
-        // 5. Tasa de Ahorro
+        // Tasa de Ahorro
         const kpiAhorro = select('kpi-tasa-ahorro-value');
         if (kpiAhorro) {
             kpiAhorro.classList.remove('skeleton');
             kpiAhorro.textContent = `${tasaAhorroActual.toFixed(0)}%`;
-            // Color dinámico para la tasa
+            
             let colorTasa = 'var(--c-on-surface)';
-            if (tasaAhorroActual >= 20) colorTasa = '#30D158'; // Verde brillante
+            if (tasaAhorroActual >= 20) colorTasa = '#30D158'; // Verde
             else if (tasaAhorroActual < 0) colorTasa = '#FF3B30'; // Rojo
-            else colorTasa = '#BF5AF2'; // Morado por defecto
+            else colorTasa = '#BF5AF2'; // Morado
             
             kpiAhorro.style.color = colorTasa;
             renderSavingsRateGauge('kpi-savings-rate-chart', tasaAhorroActual);
         }
         
-        // 6. Salud Financiera
+        // Salud Financiera
         const kpiRunway = select('health-runway-val');
         const barRunway = select('health-runway-progress-bar');
         if (kpiRunway) {
@@ -6149,9 +6142,7 @@ const updateDashboardData = async () => {
         if (kpiFi) {
             kpiFi.classList.remove('skeleton');
             kpiFi.textContent = `${fiData.progresoFI.toFixed(1)}%`;
-            if (barFi) {
-                barFi.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
-            }
+            if (barFi) barFi.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
         }
 
     } catch (error) {
