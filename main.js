@@ -1,6 +1,18 @@
 
 import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
-
+const KPI_EXPLANATIONS = {
+    'patrimonio': { title: 'Patrimonio Neto', text: 'Es el valor real de tu riqueza hoy.<br><br><strong>Fórmula:</strong><br>(Dinero en Bancos + Inversiones + Propiedades) - (Deudas de Tarjetas + Préstamos pendientes).' },
+    'liquidez': { title: 'Liquidez', text: 'Dinero disponible para gastar inmediatamente.<br><br>Suma de todas las cuentas tipo <strong>Banco</strong> y <strong>Efectivo</strong>.' },
+    'invertido': { title: 'Capital Invertido', text: 'Dinero total que has sacado de tu bolsillo para poner en cuentas de Inversión. No incluye lo que has ganado o perdido después.' },
+    'ingresos': { title: 'Ingresos del Periodo', text: 'Dinero nuevo que ha entrado en tus cuentas en las fechas seleccionadas.<br><br>No cuenta traspasos entre tus propias cuentas.' },
+    'gastos': { title: 'Gastos del Periodo', text: 'Dinero que ha salido de tus cuentas en las fechas seleccionadas hacia terceros (compras, facturas, etc.).' },
+    'neto': { title: 'Flujo Neto (Ahorro)', text: 'La diferencia real entre lo que ganaste y lo que gastaste.<br><br><strong>Ingresos - Gastos</strong><br>Si es positivo, tu riqueza ha aumentado.' },
+    'rentabilidad': { title: 'Rentabilidad (TIR)', text: 'Tasa Interna de Retorno. Es la métrica más precisa: calcula cuánto rinde tu dinero anualmente teniendo en cuenta <em>cuándo</em> lo invertiste.' },
+    'pnl': { title: 'Ganancia/Pérdida (P&L)', text: 'Profit & Loss (Ganancias y Pérdidas).<br><br><strong>Valor de Mercado Actual - Capital Invertido</strong><br>Es el dinero "gratis" que has ganado (o perdido) con tus inversiones.' },
+    'tasa_ahorro': { title: 'Tasa de Ahorro', text: 'Porcentaje de tus ingresos que has logrado conservar.<br><br><strong>(Ahorro Neto / Ingresos) × 100</strong>.' },
+    'cobertura': { title: 'Cobertura (Runway)', text: 'Si hoy dejaras de tener ingresos, ¿cuántos meses podrías vivir con tu liquidez actual?<br><br>Basado en tu gasto medio mensual de los últimos 3 meses.' },
+    'libertad': { title: 'Independencia Financiera', text: 'Tu progreso hacia la libertad total.<br><br>Calculado sobre la "Regla del 4%": Necesitas acumular 25 veces tus gastos anuales para vivir de las rentas.' }
+};
 const setupEnhancedFormNavigation = () => {
     const inputs = [
         { id: 'movimiento-cantidad', next: 'movimiento-concepto' },
@@ -4353,7 +4365,7 @@ const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // ESTRUCTURA BENTO GRID (Cockpit) v2 - Con soporte de Fechas
+    // ESTRUCTURA BENTO GRID (Cockpit) v3 - Con Ayuda Interactiva y Drilldown
     container.innerHTML = `
         <div class="dashboard-cockpit">
             
@@ -4370,7 +4382,8 @@ const renderPanelPage = async () => {
                     <select id="filter-periodo" class="cockpit-filter-select">
                         <option value="mes-actual">Este Mes</option>
                         <option value="año-actual">Este Año</option>
-                        <option value="custom">Personalizado</option> </select>
+                        <option value="custom">Personalizado</option>
+                    </select>
                     <span class="material-icons chevron">expand_more</span>
                 </div>
             </div>
@@ -4388,17 +4401,21 @@ const renderPanelPage = async () => {
             </div>
 
             <div class="cockpit-hero">
-                <div class="cockpit-label" style="opacity:0.8;">PATRIMONIO NETO</div>
+                <div class="cockpit-label" style="opacity:0.8; display:flex; align-items:center; justify-content:center;">
+                    PATRIMONIO NETO <button class="help-btn" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
+                </div>
                 <div id="kpi-patrimonio-neto-value" class="hero-val-big skeleton" data-current-value="0">0,00 €</div>
                 
                 <div class="sub-metric-row">
                     <div class="sub-metric-pill">
                         <span class="dot" style="background:var(--c-info);"></span>
                         Liq: <span id="kpi-liquidez-value">0€</span>
+                        <button class="help-btn" data-action="show-kpi-help" data-kpi="liquidez" style="width:14px; height:14px; font-size:9px; margin-left:4px;">?</button>
                     </div>
                     <div class="sub-metric-pill">
                         <span class="dot" style="background:var(--c-warning);"></span>
                         Inv: <span id="kpi-inversion-total">0€</span>
+                        <button class="help-btn" data-action="show-kpi-help" data-kpi="invertido" style="width:14px; height:14px; font-size:9px; margin-left:4px;">?</button>
                     </div>
                 </div>
             </div>
@@ -4412,24 +4429,24 @@ const renderPanelPage = async () => {
                     </div>
                     
                     <div class="flow-bars-container">
-                        <div class="flow-row">
+                        <div class="flow-row clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
                             <div class="flow-info">
-                                <span>Ingresos</span>
+                                <span style="display:flex; align-items:center;">Ingresos <button class="help-btn" data-action="show-kpi-help" data-kpi="ingresos" style="margin-left:4px; width:14px; height:14px; font-size:9px;">?</button></span>
                                 <span id="kpi-ingresos-value" class="text-positive">0€</span>
                             </div>
                             <div class="mini-bar-track"><div id="bar-ingresos" class="mini-bar-fill success"></div></div>
                         </div>
-                        <div class="flow-row">
+                        <div class="flow-row clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
                             <div class="flow-info">
-                                <span>Gastos</span>
+                                <span style="display:flex; align-items:center;">Gastos <button class="help-btn" data-action="show-kpi-help" data-kpi="gastos" style="margin-left:4px; width:14px; height:14px; font-size:9px;">?</button></span>
                                 <span id="kpi-gastos-value" class="text-negative">0€</span>
                             </div>
                             <div class="mini-bar-track"><div id="bar-gastos" class="mini-bar-fill danger"></div></div>
                         </div>
                     </div>
                     
-                    <div class="cockpit-neto-footer">
-                        <span>NETO</span>
+                    <div class="cockpit-neto-footer clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
+                        <span style="display:flex; align-items:center;">NETO <button class="help-btn" data-action="show-kpi-help" data-kpi="neto" style="margin-left:4px; width:14px; height:14px; font-size:9px;">?</button></span>
                         <span id="kpi-saldo-neto-value" class="cockpit-val-small">0€</span>
                     </div>
                 </div>
@@ -4442,11 +4459,15 @@ const renderPanelPage = async () => {
                     
                     <div class="investment-stat-main">
                         <div id="kpi-inversion-pct" class="cockpit-val-xl skeleton">0%</div>
-                        <div class="cockpit-label-tiny">RENTABILIDAD (TIR)</div>
+                        <div class="cockpit-label-tiny" style="display:flex; align-items:center; justify-content:center;">
+                            RENTABILIDAD (TIR) <button class="help-btn" data-action="show-kpi-help" data-kpi="rentabilidad" style="margin-left:4px; width:14px; height:14px; font-size:9px;">?</button>
+                        </div>
                     </div>
 
                     <div class="pnl-pill-container">
-                        <div class="cockpit-label-tiny">GANANCIA TOTAL</div>
+                        <div class="cockpit-label-tiny" style="display:flex; align-items:center; justify-content:center;">
+                            GANANCIA <button class="help-btn" data-action="show-kpi-help" data-kpi="pnl" style="margin-left:4px; width:14px; height:14px; font-size:9px;">?</button>
+                        </div>
                         <div id="kpi-inversion-pnl" class="pnl-value skeleton">0€</div>
                     </div>
                 </div>
@@ -4456,7 +4477,7 @@ const renderPanelPage = async () => {
                 <div class="cockpit-mini-card">
                     <div class="mini-icon" style="color:#BF5AF2;">savings</div>
                     <div class="mini-content">
-                        <div class="cockpit-label-tiny">AHORRO</div>
+                        <div class="cockpit-label-tiny" style="display:flex; align-items:center;">AHORRO <button class="help-btn" data-action="show-kpi-help" data-kpi="tasa_ahorro" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
                         <div id="kpi-tasa-ahorro-value" class="mini-val">0%</div>
                     </div>
                     <div class="micro-bar"><div id="tasa-ahorro-progress" class="micro-fill" style="background:#BF5AF2;"></div></div>
@@ -4465,7 +4486,7 @@ const renderPanelPage = async () => {
                 <div class="cockpit-mini-card">
                     <div class="mini-icon text-info">shield</div>
                     <div class="mini-content">
-                        <div class="cockpit-label-tiny">COBERTURA</div>
+                        <div class="cockpit-label-tiny" style="display:flex; align-items:center;">COBERTURA <button class="help-btn" data-action="show-kpi-help" data-kpi="cobertura" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
                         <div id="health-runway-val" class="mini-val">0M</div>
                     </div>
                 </div>
@@ -4473,7 +4494,7 @@ const renderPanelPage = async () => {
                 <div class="cockpit-mini-card">
                     <div class="mini-icon text-warning">flag</div>
                     <div class="mini-content">
-                        <div class="cockpit-label-tiny">LIBERTAD</div>
+                        <div class="cockpit-label-tiny" style="display:flex; align-items:center;">LIBERTAD <button class="help-btn" data-action="show-kpi-help" data-kpi="libertad" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
                         <div id="health-fi-val" class="mini-val">0%</div>
                     </div>
                     <div class="micro-bar"><div id="health-fi-progress-bar" class="micro-fill" style="background:var(--c-warning);"></div></div>
@@ -8472,6 +8493,16 @@ const handleStart = (e) => {
             'clear-diario-filters': clearDiarioFilters,
             'toggle-amount-type': () => { /* Ya no se usa botón toggle, pero se mantiene por compatibilidad */ },
             'show-kpi-drilldown': () => handleKpiDrilldown(actionTarget),
+			'show-kpi-help': (e) => {
+    // Detenemos propagación para que no active otros clics debajo
+    e.stopPropagation(); 
+    const kpiKey = actionTarget.dataset.kpi;
+    const info = KPI_EXPLANATIONS[kpiKey];
+    if (info) {
+        hapticFeedback('light');
+        showGenericModal(info.title, `<p class="form-label" style="font-size:1rem; line-height:1.6; color:var(--c-on-surface);">${info.text}</p>`);
+    }
+},
             'edit-movement-from-modal': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; hideModal('generic-modal'); startMovementForm(movementId, false); },
             'edit-movement-from-list': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; startMovementForm(movementId, false); },
             'edit-recurrente': () => { hideModal('generic-modal'); startMovementForm(id, true); },

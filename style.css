@@ -4196,3 +4196,52 @@ body[data-theme="sunset-groove"] .hero-val-big {
     .cockpit-footer-grid { height: 65px; }
     .cockpit-header { padding: 4px 12px; }
 }
+/* --- Corrección Selector Modo Oscuro --- */
+.cockpit-filter-select {
+    color: var(--c-on-surface) !important; /* Fuerza color visible */
+    background-color: transparent;
+}
+/* Asegura que el desplegable tenga fondo oscuro y texto claro */
+.cockpit-filter-select option {
+    background-color: var(--c-surface); 
+    color: var(--c-on-surface);
+}
+
+/* --- Botones de Ayuda (?) --- */
+.help-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: color-mix(in srgb, var(--c-on-surface) 10%, transparent);
+    color: var(--c-on-surface-secondary);
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 6px;
+    cursor: pointer;
+    vertical-align: middle;
+    border: none;
+    transition: all 0.2s;
+}
+.help-btn:hover {
+    background-color: var(--c-primary);
+    color: var(--c-white);
+    transform: scale(1.1);
+}
+
+/* --- Elementos Clicables (Drilldown) --- */
+.clickable-kpi {
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+    padding: 2px 4px;
+    margin: -2px -4px; /* Compensar el padding para no mover el layout */
+}
+.clickable-kpi:hover {
+    background-color: color-mix(in srgb, var(--c-on-surface) 5%, transparent);
+}
+.clickable-kpi:active {
+    transform: scale(0.98);
+}
