@@ -150,40 +150,51 @@
     }
 }
 /* ================================================================= */
-/* === CORRECCIÓN: COLORES DINÁMICOS DEL IMPORTE (style.css) === */
+/* === CORRECCIÓN DEFINITIVA: COLOR DEL IMPORTE === */
 /* ================================================================= */
 
-/* Transición suave para el cambio de color */
+/* 1. Definimos la transición para que el cambio de color sea suave */
 #movimiento-cantidad-form-group .input-wrapper,
 #movimiento-cantidad {
-    transition: color 0.3s ease, border-color 0.3s ease;
+    transition: color 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
 }
 
-/* GASTO: Rojo */
+/* 2. GASTO (Rojo) */
 #movimiento-cantidad-form-group.is-gasto .input-wrapper {
     border-color: var(--c-danger) !important;
-    background-color: color-mix(in srgb, var(--c-danger) 5%, var(--c-surface)) !important;
+    background-color: color-mix(in srgb, var(--c-danger) 8%, var(--c-surface)) !important;
 }
 #movimiento-cantidad-form-group.is-gasto #movimiento-cantidad {
     color: var(--c-danger) !important;
+    -webkit-text-fill-color: var(--c-danger) !important; /* Fix para iOS */
 }
 
-/* INGRESO: Verde */
+/* 3. INGRESO (Verde) */
 #movimiento-cantidad-form-group.is-ingreso .input-wrapper {
     border-color: var(--c-success) !important;
-    background-color: color-mix(in srgb, var(--c-success) 5%, var(--c-surface)) !important;
+    background-color: color-mix(in srgb, var(--c-success) 8%, var(--c-surface)) !important;
 }
 #movimiento-cantidad-form-group.is-ingreso #movimiento-cantidad {
     color: var(--c-success) !important;
+    -webkit-text-fill-color: var(--c-success) !important;
 }
 
-/* TRASPASO: Morado (Info) */
+/* 4. TRASPASO (Morado) */
 #movimiento-cantidad-form-group.is-traspaso .input-wrapper {
     border-color: var(--c-info) !important;
-    background-color: color-mix(in srgb, var(--c-info) 5%, var(--c-surface)) !important;
+    background-color: color-mix(in srgb, var(--c-info) 8%, var(--c-surface)) !important;
 }
 #movimiento-cantidad-form-group.is-traspaso #movimiento-cantidad {
     color: var(--c-info) !important;
+    -webkit-text-fill-color: var(--c-info) !important;
+}
+
+/* Aseguramos que el input sea gigante y centrado */
+#movimiento-cantidad {
+    font-size: 1.8rem !important;
+    font-weight: 800;
+    text-align: center;
+    background: transparent !important;
 }
 /* =============================================================== */
 /* === FIN: SOLUCIÓN DEFINITIVA PARA EXTRACTO DE CUENTA (CSS) v2.0 === */
