@@ -9440,9 +9440,16 @@ const handleSaveMovement = async (form, btn) => {
             setTimeout(() => updateLocalDataAndRefreshUI(), 50);
         }
 
-        // Limpieza final
-        if (!isSaveAndNew) hideModal('movimiento-modal');
-        else startMovementForm();
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Limpieza final y Navegación
+        if (!isSaveAndNew) {
+            hideModal('movimiento-modal');
+            // Forzamos la navegación a la pestaña Diario
+            navigateTo(PAGE_IDS.DIARIO); 
+        }
+        else {
+            startMovementForm();
+        }
 
     } catch (error) {
         console.error("Error al guardar:", error);
