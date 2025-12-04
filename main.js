@@ -6007,32 +6007,53 @@ const updateDashboardData = async () => {
 
     try {
         // 1. DATOS DEL PERIODO (FLUIDO)
-        const { current } = await getFilteredMovements(true);
+        // Pedimos false para obtener solo el periodo actual, sin comparar
+        const { current } = await getFilteredMovements(false); 
         const saldos = await getSaldos();
         
         // 2. DATOS PATRIMONIALES
         const visibleAccounts = getVisibleAccounts();
         const visibleAccountIds = new Set(Object.keys(saldos));
         
-        // Identificar concepto "Inicial" para excluirlo de los KPIs de flujo
-        const conceptoInicial = db.conceptos.find(c => c.nombre.toLowerCase().includes('inicial'));
-        const conceptoInicialId = conceptoInicial ? conceptoInicial.id : null;
-
-        // Calcular Totales (Excluyendo Saldo Inicial para no falsear Ingresos)
-        let ingresos = 0, gastos = 0, saldoNeto = 0;
+        // --- CÁLCULO DE FLUJO DE CAJA Y TASA DE AHORRO ---
+        let ingresos = 0;
+        let gastos = 0;
+        let saldoNeto = 0;
         
         current.forEach(m => {
-            // CORRECCIÓN: Si es saldo inicial, lo ignoramos para el flujo de caja
-            if (m.conceptoId === conceptoInicialId) return;
+            // A. Obtener el nombre del concepto para filtrar "Iniciales"
+            const concepto = db.conceptos.find(c => c.id === m.conceptoId);
+            const nombreConcepto = concepto ? concepto.nombre.toLowerCase() : '';
 
+            // B. Si es "Saldo Inicial", "Apertura", etc., lo ignoramos para el flujo de caja
+            if (nombreConcepto.includes('inicial') || nombreConcepto.includes('apertura') || nombreConcepto.includes('saldo anterior')) {
+                return; 
+            }
+
+            // C. Calcular impacto (Ingreso o Gasto real en cuentas visibles)
             const amount = calculateMovementAmount(m, visibleAccountIds);
-            if (amount > 0) ingresos += amount;
-            else gastos += amount;
+            
+            // D. Acumular
+            if (amount > 0) {
+                ingresos += amount;
+            } else {
+                gastos += amount; // gastos es negativo aquí
+            }
             saldoNeto += amount;
         });
-        const tasaAhorroActual = ingresos > 0 ? (saldoNeto / ingresos) * 100 : (saldoNeto < 0 ? -100 : 0);
 
-        // Calcular Estado Actual
+        // E. Cálculo Tasa de Ahorro (Ingresos Netos / Ingresos Totales)
+        let tasaAhorroActual = 0;
+        if (ingresos > 0) {
+            // (Neto / Ingresos) * 100. 
+            // Ejemplo: Gané 1000, Gasté 800. Neto = 200. Tasa = 200/1000 = 20%
+            tasaAhorroActual = (saldoNeto / ingresos) * 100;
+        } else if (saldoNeto < 0) {
+            // Si no hay ingresos pero hay gastos, el ahorro es negativo (estás quemando ahorros)
+            tasaAhorroActual = -100; 
+        }
+
+        // --- CÁLCULO DE PATRIMONIO (ESTADO) ---
         let totalLiquidez = 0;
         let patrimonioNeto = 0;
 
@@ -6051,7 +6072,7 @@ const updateDashboardData = async () => {
         const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
         const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
 
-        // --- ACTUALIZACIÓN UI ---
+        // --- ACTUALIZACIÓN UI (BENTO GRID) ---
 
         // 1. Patrimonio
         const kpiPatrimonio = select('kpi-patrimonio-neto-value');
@@ -6060,60 +6081,62 @@ const updateDashboardData = async () => {
             animateCountUp(kpiPatrimonio, patrimonioNeto);
         }
 
-        // 2. Grid de Activos
+        // 2. Mini Datos (Líquido e Inversión)
         const kpiLiquidez = select('kpi-liquidez-value');
-        if (kpiLiquidez) { kpiLiquidez.classList.remove('skeleton'); animateCountUp(kpiLiquidez, totalLiquidez); }
+        if (kpiLiquidez) { 
+            kpiLiquidez.textContent = formatCurrency(totalLiquidez);
+        }
         
         const kpiInvTotal = select('kpi-inversion-total');
-        if (kpiInvTotal) { kpiInvTotal.classList.remove('skeleton'); animateCountUp(kpiInvTotal, portfolioPerf.valorActual); }
+        if (kpiInvTotal) { 
+            kpiInvTotal.textContent = formatCurrency(portfolioPerf.valorActual);
+        }
         
+        // 3. Mini Info Inversión (P&L)
         const kpiInvPnl = select('kpi-inversion-pnl');
         if (kpiInvPnl) {
             kpiInvPnl.classList.remove('skeleton');
             const pnl = portfolioPerf.pnlAbsoluto;
-            const sign = pnl >= 0 ? '+' : '';
-            kpiInvPnl.textContent = `${sign}${formatCurrency(pnl)}`;
-            kpiInvPnl.className = `status-value ${pnl >= 0 ? 'text-positive' : 'text-negative'}`;
-            kpiInvPnl.style.fontSize = "1.1rem"; // Ajuste visual
-        }
-        
-        const kpiInvPct = select('kpi-inversion-pct');
-        if (kpiInvPct) {
-            kpiInvPct.classList.remove('skeleton');
-            const pct = portfolioPerf.pnlPorcentual;
-            const sign = pct >= 0 ? '+' : '';
-            kpiInvPct.textContent = `${sign}${pct.toFixed(2)}%`;
-            kpiInvPct.className = `status-value ${pct >= 0 ? 'text-positive' : 'text-negative'}`;
-            kpiInvPct.style.fontSize = "1.1rem";
+            kpiInvPnl.textContent = (pnl >= 0 ? '+' : '') + formatCurrency(pnl);
+            kpiInvPnl.className = pnl >= 0 ? 'text-positive' : 'text-negative';
         }
 
-        // 3. Flujo
+        // 4. Flujo de Caja
         const elIng = select('kpi-ingresos-value');
         const elGas = select('kpi-gastos-value');
         const elNet = select('kpi-saldo-neto-value');
+        
         if (elIng) {
             [elIng, elGas, elNet].forEach(el => el.classList.remove('skeleton'));
-            animateCountUp(elIng, ingresos);
-            animateCountUp(elGas, gastos);
-            animateCountUp(elNet, saldoNeto);
-            elNet.className = saldoNeto >= 0 ? 'text-positive' : 'text-negative';
+            
+            elIng.textContent = `+${formatCurrency(ingresos)}`;
+            elGas.textContent = formatCurrency(gastos); // Ya es negativo, saldrá con el menos
+            elNet.textContent = formatCurrency(saldoNeto);
+            elNet.style.color = saldoNeto >= 0 ? 'var(--c-primary)' : 'var(--c-danger)';
         }
 
-        // 4. Salud (Carrusel)
+        // 5. Tasa de Ahorro
         const kpiAhorro = select('kpi-tasa-ahorro-value');
         if (kpiAhorro) {
             kpiAhorro.classList.remove('skeleton');
             kpiAhorro.textContent = `${tasaAhorroActual.toFixed(0)}%`;
-            kpiAhorro.className = tasaAhorroActual >= 0 ? 'text-positive' : 'text-negative';
+            // Color dinámico para la tasa
+            let colorTasa = 'var(--c-on-surface)';
+            if (tasaAhorroActual >= 20) colorTasa = '#30D158'; // Verde brillante
+            else if (tasaAhorroActual < 0) colorTasa = '#FF3B30'; // Rojo
+            else colorTasa = '#BF5AF2'; // Morado por defecto
+            
+            kpiAhorro.style.color = colorTasa;
             renderSavingsRateGauge('kpi-savings-rate-chart', tasaAhorroActual);
         }
         
+        // 6. Salud Financiera
         const kpiRunway = select('health-runway-val');
         const barRunway = select('health-runway-progress-bar');
         if (kpiRunway) {
             kpiRunway.classList.remove('skeleton');
             const meses = isFinite(efData.mesesCobertura) ? efData.mesesCobertura : 99;
-            kpiRunway.textContent = isFinite(efData.mesesCobertura) ? `${efData.mesesCobertura.toFixed(1)} Meses` : '∞';
+            kpiRunway.textContent = isFinite(efData.mesesCobertura) ? `${efData.mesesCobertura.toFixed(1)} m` : '∞';
             if (barRunway) {
                 const pct = Math.min((meses / 6) * 100, 100);
                 barRunway.style.width = `${pct}%`;
@@ -6128,7 +6151,6 @@ const updateDashboardData = async () => {
             kpiFi.textContent = `${fiData.progresoFI.toFixed(1)}%`;
             if (barFi) {
                 barFi.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
-                barFi.style.backgroundColor = fiData.progresoFI >= 100 ? 'var(--c-success)' : 'var(--c-warning)';
             }
         }
 

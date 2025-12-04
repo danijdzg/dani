@@ -3997,3 +3997,25 @@ body.privacy-mode .asset-card__value:active {
     gap: 8px; /* Espacio ajustado */
     margin-bottom: var(--sp-4);
 }
+/* =============================================================== */
+/* === CORRECCIÓN: SELECTOR DE PERIODO (MODO OSCURO) === */
+/* =============================================================== */
+
+/* Estilo del Select (Botón principal) */
+#filter-periodo {
+    color: var(--c-on-surface) !important; /* Texto claro */
+    background-color: transparent !important;
+    opacity: 1 !important;
+}
+
+/* Estilo de las Opciones (El menú desplegable) */
+#filter-periodo option {
+    background-color: var(--c-surface); /* Fondo oscuro del tema */
+    color: var(--c-on-surface); /* Texto blanco/claro */
+    padding: 10px;
+}
+
+/* Forzar color del icono del calendario */
+.material-icons {
+    color: var(--c-primary);
+}
