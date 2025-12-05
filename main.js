@@ -7369,95 +7369,178 @@ const handleSaveValoracion = async (form, btn) => {
     }
 };
 
-/* EN main.js - REEMPLAZO DE showHelpModal (ESTILO NARRATIVO AMIGABLE) */
-
 const showHelpModal = () => {
     const titleEl = select('help-modal-title');
     const bodyEl = select('help-modal-body');
 
-    if (titleEl) titleEl.innerHTML = '<span class="material-icons" style="color:var(--c-primary); vertical-align:bottom; margin-right:8px;">auto_stories</span> El Cuento de tus Cuentas';
+    if (titleEl) titleEl.innerHTML = 'Centro de Documentación';
 
     if (bodyEl) {
         bodyEl.innerHTML = `
-            <div style="text-align: center; padding-bottom: 20px;">
-                <p style="font-size: 1.1rem; color: var(--c-on-surface); line-height: 1.6;">
-                    ¡Hola! 👋 Imagina que esta aplicación es una libreta mágica que vive en tu bolsillo. <br>
-                    No necesitas ser un experto en bancos para usarla. <br><strong>Aquí te cuento la historia de cómo funciona:</strong>
-                </p>
-            </div>
-
-            <div class="help-card">
-                <div class="help-card__icon" style="background: #e3f2fd; color: #1976d2;"><span class="material-icons">menu_book</span></div>
-                <div class="help-card__content">
-                    <h4>Capítulo 1: El Diario</h4>
-                    <p>Imagina que cada vez que compras el pan o cobras la nómina, lo apuntas en una hoja. Eso es el <strong>Diario</strong>.</p>
-                    <p style="margin-top:8px;">
-                        Simplemente pulsa el botón gigante <strong>+</strong> y dile a la app: 
-                        <em>"He gastado 20€ en Comida"</em>. ¡Y listo! La app lo recuerda para siempre.
-                    </p>
-                </div>
-            </div>
-
-            <div class="help-card">
-                <div class="help-card__icon" style="background: #e8f5e9; color: #2e7d32;"><span class="material-icons">speed</span></div>
-                <div class="help-card__content">
-                    <h4>Capítulo 2: El Tablero de Mando (Panel)</h4>
-                    <p>Si el Diario es tu libreta, el <strong>Panel</strong> es tu espejo mágico. Te responde a tres preguntas clave:</p>
-                    <ul style="margin-top:8px; padding-left:15px;">
-                        <li><strong>¿Cuánto tengo?</strong> (Patrimonio Total)</li>
-                        <li><strong>¿Tengo dinero suelto?</strong> (Liquidez)</li>
-                        <li><strong>¿Me he pasado este mes?</strong> (Flujo de Caja)</li>
-                    </ul>
-                    <p style="margin-top:8px; font-style:italic; font-size:0.85rem;">
-                        💡 Si ves algo que no entiendes (como "Cobertura" o "Rentabilidad"), verás un pequeño botón <strong>?</strong> al lado. Púlsalo y te lo explicaré al oído.
-                    </p>
-                </div>
-            </div>
-
-            <div class="help-card">
-                <div class="help-card__icon" style="background: #f3e5f5; color: #7b1fa2;"><span class="material-icons">inventory_2</span></div>
-                <div class="help-card__content">
-                    <h4>Capítulo 3: Las Dos Cajas (A y B)</h4>
-                    <p>A veces tenemos dinero en el banco y otro dinero "en el calcetín".</p>
-                    <p style="margin-top:6px;">
-                        Arriba a la izquierda verás un botón que dice <strong>A</strong> o <strong>B</strong>. 
-                        Es como un interruptor de luz. Si pulsas, cambias de habitación. Lo que apuntas en la Caja A no se ve en la Caja B, y viceversa. ¡Perfecto para separar cuentas!
-                    </p>
-                </div>
-            </div>
-
-            <div class="help-card">
-                <div class="help-card__icon" style="background: #fff3e0; color: #ef6c00;"><span class="material-icons">hourglass_empty</span></div>
-                <div class="help-card__content">
-                    <h4>Capítulo 4: El Futuro (Planificar)</h4>
-                    <p>¿Tienes gastos que se repiten como Netflix o el alquiler? No los apuntes cada mes.</p>
-                    <p style="margin-top:6px;">
-                        Ve a la pestaña <strong>Planificar</strong> y dímelo una vez. Yo me encargaré de crear ese gasto automáticamente el día que toque. Es como tener un secretario personal.
-                    </p>
-                </div>
-            </div>
-
-            <div class="help-card">
-                <div class="help-card__icon" style="background: #ffebee; color: #c62828;"><span class="material-icons">calculate</span></div>
-                <div class="help-card__content">
-                    <h4>Truco Final: La Calculadora Mágica</h4>
-                    <p>Cuando vayas a poner una cantidad, no necesitas hacer cuentas mentales.</p>
-                    <p style="margin-top:6px;">
-                        Si tocas el cuadro del importe, aparecerá un teclado numérico. Puedes escribir <code>10 + 5</code> y darle a OK, y yo guardaré <strong>15€</strong>. ¡Úsala para dividir la cuenta de una cena!
-                    </p>
-                </div>
-            </div>
-
-            <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: var(--c-surface-variant); border-radius: 16px; border: 1px dashed var(--c-primary);">
-                <p style="margin-bottom: 10px; font-weight: 600;">¿Todo listo para empezar tu historia?</p>
-                <button class="btn btn--primary" data-action="close-modal" style="min-width: 200px;">
-                    ¡Vamos allá! 🚀
+            <div class="help-tabs">
+                <button class="help-tab-btn active" onclick="switchHelpTab('piloto')">
+                    <span class="material-icons" style="font-size: 18px;">flight</span> Guía del Piloto
                 </button>
+                <button class="help-tab-btn" onclick="switchHelpTab('experto')">
+                    <span class="material-icons" style="font-size: 18px;">code</span> Manual Técnico
+                </button>
+            </div>
+
+            <div id="help-pane-piloto" class="help-content-pane active">
+                <div class="help-hero">
+                    <span class="material-icons help-hero__icon">smart_toy</span>
+                    <h2 style="margin: 10px 0 5px;">Hola, soy aiDANaI</h2>
+                    <p style="color: var(--c-on-surface-secondary); max-width: 80%; margin: 0 auto;">
+                        Tu asistente financiero personal. Simple, rápido y privado.
+                    </p>
+                </div>
+
+                <div class="help-section-title">
+                    <span class="material-icons text-primary">school</span> Conceptos Básicos
+                </div>
+
+                <div class="help-card">
+                    <div class="help-card__icon"><span class="material-icons">swap_horiz</span></div>
+                    <div class="help-card__content">
+                        <h4>El Multiverso (Modo A / B)</h4>
+                        <p>Tienes dos contabilidades separadas. Usa el botón superior izquierdo para cambiar de dimensión. Lo que pasa en la B, se queda en la B.</p>
+                    </div>
+                </div>
+
+                <div class="help-section-title">
+                    <span class="material-icons text-info">map</span> Tour Rápido
+                </div>
+
+                <details class="accordion help-accordion">
+                    <summary>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span class="material-icons text-primary">dashboard</span> <strong>Panel de Control</strong>
+                        </div>
+                        <span class="material-icons accordion__icon">expand_more</span>
+                    </summary>
+                    <div class="accordion__content">
+                        <p>Tu salud financiera en un vistazo. Pulsa en <strong>"Patrimonio Total"</strong> para activar el <strong>Modo Privacidad</strong> (borroso) si estás en público.</p>
+                    </div>
+                </details>
+
+                <details class="accordion help-accordion" style="margin-top: 8px;">
+                    <summary>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span class="material-icons text-success">account_balance</span> <strong>Inversiones</strong>
+                        </div>
+                        <span class="material-icons accordion__icon">expand_more</span>
+                    </summary>
+                    <div class="accordion__content">
+                        <p>Gestiona tus activos. Pulsa en las etiquetas de <strong>P&L</strong> o <strong>Rentabilidad</strong> de cada tarjeta para ver el desglose matemático exacto.</p>
+                    </div>
+                </details>
+                
+                <div class="help-card" style="margin-top: 20px; border-color: var(--c-primary);">
+                    <div class="help-card__content" style="text-align: center;">
+                        <h4>💡 ¿Necesitas más potencia?</h4>
+                        <p>Si eres un usuario avanzado, cambia a la pestaña <strong>"Manual Técnico"</strong> arriba para ver las entrañas del sistema.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="help-pane-experto" class="help-content-pane">
+                
+                <div class="help-section-title" style="margin-top:0;">
+                    <span class="material-icons text-warning">architecture</span> Arquitectura del Sistema
+                </div>
+                <p style="font-size: 0.9rem; margin-bottom: 15px;">Esta aplicación sigue una arquitectura <strong>Local-First PWA</strong>. Los datos residen primariamente en tu dispositivo y se sincronizan asíncronamente con Firebase Firestore.</p>
+                
+                <div class="tech-spec-grid">
+                    <div class="tech-spec-item">
+                        <span class="tech-spec-label">Persistencia</span>
+                        IndexedDB (Offline) + Firestore (Cloud)
+                    </div>
+                    <div class="tech-spec-item">
+                        <span class="tech-spec-label">Rendering</span>
+                        Vanilla JS + Virtual DOM (Listas)
+                    </div>
+                    <div class="tech-spec-item">
+                        <span class="tech-spec-label">Seguridad</span>
+                        Hash SHA-256 local para PIN
+                    </div>
+                    <div class="tech-spec-item">
+                        <span class="tech-spec-label">Cálculo</span>
+                        Newton-Raphson para TIR (XIRR)
+                    </div>
+                </div>
+
+                <details class="accordion help-accordion">
+                    <summary><strong>1. Especificaciones de Importación (CSV)</strong> <span class="material-icons accordion__icon">expand_more</span></summary>
+                    <div class="accordion__content">
+                        <p>El motor de importación acepta archivos CSV con codificación UTF-8 y delimitador <code>;</code>.</p>
+                        <div class="code-block">FECHA;CUENTA;CONCEPTO;IMPORTE;DESCRIPCIÓN
+01/01/2024;Banco Uno;Nómina;1500,00;Enero
+05/01/2024;Efectivo;Ocio;-50,50;Cena</div>
+                        <ul>
+                            <li><strong>Detección de Tipos:</strong> Si el nombre de la cuenta contiene "Tarjeta", "Inversión", etc., se auto-configura el tipo.</li>
+                            <li><strong>Traspasos Automáticos:</strong> El sistema busca parejas de movimientos (mismo importe +/- y fecha similar) y los fusiona en un solo movimiento de tipo 'Traspaso'.</li>
+                            <li><strong>Formato Numérico:</strong> Soporta <code>1.000,00</code> (ES) y <code>1,000.00</code> (US).</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details class="accordion help-accordion" style="margin-top: 8px;">
+                    <summary><strong>2. Fórmulas Financieras (Inversión)</strong> <span class="material-icons accordion__icon">expand_more</span></summary>
+                    <div class="accordion__content">
+                        <p>El cálculo de rentabilidad no es una media simple. Utilizamos <strong>Money-Weighted Return (MWRR)</strong>.</p>
+                        <ul>
+                            <li><strong>P&L (Profit & Loss):</strong> <code>Valor Mercado Actual - Σ(Aportaciones Netas)</code>. Es el valor monetario absoluto generado.</li>
+                            <li><strong>TIR (Tasa Interna de Retorno):</strong> Resolvemos la ecuación del VAN (Valor Actual Neto) igualado a cero para encontrar la tasa de descuento interna.
+                            <div class="code-block">0 = Σ (Flujo_i / (1 + r)^((d_i - d_0)/365))</div>
+                            Esto penaliza o premia el <em>timing</em> de tus aportaciones.</li>
+                            <li><strong>Nota:</strong> Para activos con antigüedad < 1 año, se muestra el retorno simple para evitar anualizaciones astronómicas engañosas.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details class="accordion help-accordion" style="margin-top: 8px;">
+                    <summary><strong>3. Estructura de Datos (JSON Backup)</strong> <span class="material-icons accordion__icon">expand_more</span></summary>
+                    <div class="accordion__content">
+                        <p>Al exportar un backup, obtienes un JSON plano con todas las colecciones. Puedes editarlo manualmente y reimportarlo.</p>
+                        <ul>
+                            <li><code>cuentas</code>: Contiene el flag <code>offBalance: true</code> para cuentas de la Contabilidad B.</li>
+                            <li><code>movimientos</code>: Vincula <code>cuentaId</code> y <code>conceptoId</code>. Los traspasos usan <code>cuentaOrigenId</code> y <code>cuentaDestinoId</code>.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <div class="help-card" style="margin-top: 20px; background-color: #1e1e1e; border-color: #333;">
+                    <div class="help-card__content">
+                        <h4 style="color: #fff;">⌨️ Atajos de Teclado (Power User)</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                            <div style="color: #aaa;"><code style="color: #fff; background: #333; padding: 2px 6px; border-radius: 4px;">Ctrl</code> + <code style="color: #fff; background: #333; padding: 2px 6px; border-radius: 4px;">K</code></div>
+                            <div style="color: #ccc;">Búsqueda Global Instantánea</div>
+                            <div style="color: #aaa;"><code style="color: #fff; background: #333; padding: 2px 6px; border-radius: 4px;">Esc</code></div>
+                            <div style="color: #ccc;">Cerrar Modales / Calculadora</div>
+                            <div style="color: #aaa;"><code style="color: #fff; background: #333; padding: 2px 6px; border-radius: 4px;">Enter</code></div>
+                            <div style="color: #ccc;">Siguiente campo (Formularios)</div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         `;
     }
 
     showModal('help-modal');
+};
+
+// Función global para cambiar de pestaña (necesaria porque está en el onclick del HTML string)
+window.switchHelpTab = (tabName) => {
+    // 1. Actualizar botones
+    document.querySelectorAll('.help-tab-btn').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.querySelector(`.help-tab-btn[onclick="switchHelpTab('${tabName}')"]`);
+    if(activeBtn) activeBtn.classList.add('active');
+
+    // 2. Actualizar contenido
+    document.querySelectorAll('.help-content-pane').forEach(pane => pane.classList.remove('active'));
+    const activePane = document.getElementById(`help-pane-${tabName}`);
+    if(activePane) activePane.classList.add('active');
 };
 	const updateThemeIcon = () => {
     const themeBtn = select('theme-toggle-btn');
