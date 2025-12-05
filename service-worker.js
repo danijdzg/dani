@@ -5,6 +5,7 @@ const CACHE_NAME = 'DaniCtas-v3.1';
 const URLS_TO_CACHE = [
   '.',
   'index.html',
+  'calculadora.html',
   'style.css',
   'main.js',
   'manifest.json',

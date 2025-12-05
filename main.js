@@ -2150,7 +2150,7 @@ const navigateTo = async (pageId, isInitial = false) => {
     if (pageRenderers[pageId]) { 
         if (leftEl) {
             let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar a Contabilidad ${isOffBalanceMode ? 'B' : 'A'}"> ${isOffBalanceMode ? 'B' : 'A'}</button>
-            <a href="https://danijdzg.github.io/aiDANaI/dani/DaniCalc/" target="_blank" id="page-title-display" style="text-decoration: none; color: inherit; cursor: pointer;">${pageRenderers[pageId].title}</a>`;
+            <a href="calculadora.html" target="_blank" id="page-title-display" style="text-decoration: none; color: inherit; cursor: pointer;">${pageRenderers[pageId].title}</a>`;
             
             // CORRECCIÓN: Ya NO añadimos ningún botón extra si es PANEL.
             // Solo añadimos botones si es DIARIO.
@@ -8499,7 +8499,7 @@ const handleStart = (e) => {
         if (menu) menu.classList.remove('popover-menu--visible');
         
         // Abre la calculadora en una nueva pestaña (mismo enlace que el título)
-        window.open('https://danijdzg.github.io/aiDANaI/dani/DaniCalc/', '_blank');
+        window.open('calculadora.html', '_blank');
     },
             'show-main-add-sheet': () => showModal('main-add-sheet'),
             'show-pnl-breakdown': () => handleShowPnlBreakdown(actionTarget.dataset.id),

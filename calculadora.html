@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    
+    <style>html, body { background-color: #000000; }</style>
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="aiDANaI Fusion Edition">
+    <title>aiDANaI Calc</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Lexend:wght@300;400;500;700&family=Poppins:wght@400;500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+   <style>
+    /* === ESTILOS VISUALES (BASE INDEX.HTML) === */
+    :root { 
+        --safe-top: env(safe-area-inset-top);
+        --safe-bottom: env(safe-area-inset-bottom);
+        --header-height: 60px; 
+        
+        --neon-red: #ff0033; 
+        --neon-cyan: #00f2ff;
+        --neon-lime: #ccff00;
+        --neon-yellow: #ffff00;
+        
+        --crypto-up: #00ff9d;
+        --crypto-down: #ff0033;
+
+        --bg-body: #000000;
+        --chassis-bg: #050505;
+        --chassis-border: 1px solid #222;
+        --screen-bg: #000000;
+        --screen-inset: inset 0 0 30px rgba(0,0,0,1);
+        --screen-border: 1px solid rgba(255, 0, 51, 0.2);
+        --screen-glow: 0 0 20px rgba(255, 0, 51, 0.05);
+        --primary-text: #ffffff;
+        --secondary-text: #888;
+        --clock-text: var(--neon-yellow);
+        --clock-glow: 0 0 15px rgba(255, 255, 0, 0.7);
+        
+        --history-op-color: #00f2ff;
+        --history-res-color: #39ff14;
+        --history-glow: 0 0 8px rgba(0, 242, 255, 0.3);
+        
+        --btn-bg: linear-gradient(160deg, #333333 0%, #000000 100%);
+        --btn-border: 1px solid rgba(255,255,255,0.08);
+        --btn-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 6px 0 #000000, 0 8px 20px rgba(0,0,0,0.8);
+        --btn-shadow-active: inset 0 10px 20px rgba(0,0,0,1), 0 0 0 #000000;
+        --btn-text: #dddddd;
+        
+        --accent-blue-text: var(--neon-cyan);
+        --accent-red-text: var(--neon-red);
+        --accent-green-bg: linear-gradient(180deg, #ccff00 0%, #4caf50 100%);
+        --text-glow-blue: 0 0 15px rgba(0, 242, 255, 0.7);
+        --text-glow-red: 0 0 15px rgba(255, 0, 51, 0.7);
+        
+        --card-bg: rgba(20, 20, 20, 0.85);
+        --card-border: 1px solid rgba(255,255,255,0.1);
+        --card-hover: rgba(30, 30, 30, 0.95);
+        --edit-highlight: rgba(255, 0, 51, 0.15);
+    }
+
+    body { 
+        overscroll-behavior: none; touch-action: none; 
+        background: var(--bg-body);
+        height: 100dvh; width: 100vw; 
+        font-family: 'Poppins', sans-serif; overflow: hidden; 
+    } 
+    
+    #history-list, .crypto-content { overscroll-behavior: contain; touch-action: pan-y; }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; outline: none; }
+    button, .card, li { touch-action: manipulation; cursor: pointer; }
+
+    .tabular-nums { font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+    
+    /* MANTENEMOS TU ESTILO DE DECIMALES PEQUEÑOS */
+    .small-decimal { font-size: 0.6em; vertical-align: top; margin-top: 0.3em; opacity: 0.9; margin-left: 1px; font-weight: 500; display: inline-block;}
+
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    @keyframes superFlash { 
+        0% { background-color: rgba(255, 255, 255, 0); } 
+        10% { background-color: rgba(255, 255, 255, 0.2); } 
+        100% { background-color: rgba(255, 255, 255, 0); } 
+    }
+    .super-flash-active { animation: superFlash 0.3s ease-out; }
+
+    @keyframes popScale { 0% { transform: scale(1); } 50% { transform: scale(1.1); color: var(--neon-lime); text-shadow: 0 0 20px var(--neon-lime); } 100% { transform: scale(1); } }
+    .pop-active { animation: popScale 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+    @keyframes particleExplosion { 
+        0% { opacity: 1; transform: translate(0,0) scale(1); } 
+        100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); } 
+    }
+    
+    @keyframes glowPulseBorder { 0% { border-color: rgba(255,255,255,0.1); } 50% { border-color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); } 100% { border-color: rgba(255,255,255,0.1); } }
+    .glow-border { animation: glowPulseBorder 3s infinite; }
+
+    .view-container { width: 100%; height: 100%; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+    
+    .view { 
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+        display: flex; flex-direction: column; 
+        opacity: 0; pointer-events: none; transform: scale(0.98); 
+        transition: opacity 0.25s ease, transform 0.25s ease; 
+        will-change: transform, opacity;
+    }
+    .view.active { opacity: 1; pointer-events: auto; transform: scale(1); z-index: 10; }
+    
+    .optimized-bg {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;
+        background-color: #000000;
+        background-image: 
+            radial-gradient(circle at 50% 0%, #1a0505 0%, #000000 70%),
+            linear-gradient(rgba(255, 0, 51, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 0, 51, 0.05) 1px, transparent 1px);
+        background-size: 100% 100%, 30px 30px, 30px 30px;
+    }
+
+    .particles-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; overflow: hidden; }
+    .particle { position: absolute; pointer-events: none; z-index: 1000; border-radius: 50%; }
+
+    .app-header { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: max(var(--safe-top), 10px) 15px 5px; z-index: 20; gap: 10px; height: calc(var(--header-height) + var(--safe-top)); width: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+    
+    .embedded-ui { background: var(--card-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 16px; display: flex; align-items: center; justify-content: center; border: var(--card-border); transition: all 0.2s; flex-shrink: 0; position: relative; }
+
+    .icon-btn { width: 44px; height: 44px; cursor: pointer; color: var(--secondary-text); padding: 10px; position: relative; overflow: hidden; }
+    .icon-btn:active { transform: scale(0.9); }
+    
+    .icon-swap svg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); transition: opacity 0.3s, transform 0.3s; }
+    .icon-swap .hidden { opacity: 0; transform: translate(-50%, -40%); pointer-events: none; }
+    .icon-swap .shown { opacity: 1; transform: translate(-50%, -50%); }
+
+    #btn-mute { color: var(--neon-cyan) !important; }
+    #btn-go-crypto { color: var(--crypto-up) !important; }
+    #btn-go-calc { color: #ff00ff !important; }
+
+    .app-title { font-family: 'Lexend', sans-serif; font-weight: 800; font-size: 1.2rem; color: #ff0033 !important; text-shadow: 0 0 10px rgba(255, 0, 51, 0.8); flex-grow: 1; text-align: center; text-decoration: none; display: flex; justify-content: center; align-items: center; height: 44px; letter-spacing: 2px; }
+    #clock, #clock-crypto { font-family: 'Fira Code', monospace; font-weight: 700; font-size: 0.8rem; color: var(--clock-text); text-shadow: var(--clock-glow); padding: 0 12px; min-width: 80px; text-align: center; height: 44px; }
+
+    .upper-section { flex: 1 1 40%; display: flex; flex-direction: column; padding: 15px 20px; min-height: 0; justify-content: flex-end; position: relative; }
+    
+    .display-lens { width: 100%; flex: 1; background: var(--screen-bg); box-shadow: var(--screen-inset), var(--screen-glow); border: var(--screen-border); border-radius: 24px; display: flex; flex-direction: column; padding: 20px; position: relative; overflow: hidden; backdrop-filter: blur(5px); }
+    
+    #history-list { flex: 1; overflow-y: auto; padding: 5px; display: flex; flex-direction: column-reverse; list-style: none; gap: 8px; mask-image: linear-gradient(to top, black 85%, transparent 100%); scrollbar-width: none; }
+    #history-list li { text-align: right; cursor: pointer; opacity: 0.8; font-family: 'Inter', sans-serif; font-size: 1.1rem; color: var(--history-op-color); text-shadow: var(--history-glow); padding: 6px 10px; border-radius: 8px; transition: all 0.2s; }
+    #history-list li:hover { opacity: 1; background: var(--edit-highlight); }
+    #history-list b { color: var(--history-res-color); font-weight: 700; margin-left: 8px; }
+    
+    .display-area { flex-shrink: 0; text-align: right; padding-top: 10px; display: flex; flex-direction: column; justify-content: flex-end; min-height: 90px; z-index: 2; width: 100%; overflow: hidden; }
+    #secondary-display { font-family: 'Fira Code', monospace; color: var(--accent-blue-text); text-shadow: var(--text-glow-blue); min-height: 1.5rem; font-size: 1.1rem; opacity: 0; transition: opacity 0.2s; white-space: nowrap; margin-bottom: 5px; }
+    #secondary-display.visible { opacity: 1; }
+    
+    #main-display { font-family: 'Lexend', sans-serif; color: var(--primary-text); font-size: 3.5rem; font-weight: 500; line-height: 1.1; width: 100%; text-align: right; white-space: nowrap; overflow-x: auto; scrollbar-width: none; text-shadow: 0 0 25px rgba(255,255,255,0.15); padding-bottom: 2px; transition: color 0.1s; }
+
+    .calculator-body { flex: 1 1 60%; width: 100%; background: var(--chassis-bg); border-top: var(--chassis-border); border-radius: 35px 35px 0 0; z-index: 10; padding: 25px; padding-bottom: max(25px, var(--safe-bottom)); box-shadow: 0 -20px 60px rgba(0,0,0,0.4); display: flex; flex-direction: column; justify-content: center; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+    .keypad { flex: 1; width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(5, 1fr); gap: 15px; align-items: center; justify-items: center; }
+
+    .btn { background: var(--btn-bg); color: var(--btn-text); box-shadow: var(--btn-shadow); border: var(--btn-border); font-family: 'Lexend', sans-serif; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 20px; width: 100%; height: 100%; font-size: 1.4rem; font-weight: 500; position: relative; overflow: hidden; transition: transform 0.05s, box-shadow 0.05s, background 0.1s; will-change: transform; }
+    .btn.btn-large { grid-column: span 2; border-radius: 24px; }
+    
+    .btn:active, .btn.btn-active { box-shadow: var(--btn-shadow-active); transform: translateY(6px); color: var(--primary-text); background: #222; }
+    
+    .btn[data-key="AC"], .btn[data-key="Backspace"] { color: var(--accent-red-text); text-shadow: var(--text-glow-red); font-weight: 700; }
+    .token-op, .btn[data-color="blue"] { color: var(--accent-blue-text); text-shadow: var(--text-glow-blue); font-weight: 600; font-size: 1.6rem; }
+    .btn[data-color="green"] { background: var(--accent-green-bg); color: #000; border: none; box-shadow: 0 6px 0 #33691e; }
+    .btn[data-color="green"]:active, .btn[data-color="green"].btn-active { box-shadow: 0 0 0; transform: translateY(6px); }
+
+    .crypto-content { flex: 1; padding: 10px 15px; padding-bottom: calc(var(--safe-bottom) + 10px); display: flex; flex-direction: column; overflow-y: auto; }
+    #timestamp { flex-shrink: 0; text-align: center; color: var(--secondary-text); font-size: 0.75rem; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .crypto-list { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; min-height: 0; gap: 10px; }
+
+    .card { background: var(--card-bg); border: var(--card-border); border-radius: 18px; padding: 12px 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; cursor: pointer; position: relative; overflow: hidden; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: transform 0.2s; min-height: 70px; }
+    .card:active { transform: scale(0.98); background: #222; }
+    
+    .coin-details { display: flex; align-items: center; gap: 12px; }
+    .coin-logo { width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+    
+    .coin-info h2 { font-size: 1.1rem; margin: 0; color: var(--primary-text); font-weight: 700; letter-spacing: 0.5px; }
+    
+    .change-percentage { font-size: 0.85rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+    .change-positive { color: var(--crypto-up); background: rgba(0, 255, 157, 0.1); border: 1px solid rgba(0, 255, 157, 0.2); }
+    .change-negative { color: var(--crypto-down); background: rgba(255, 0, 51, 0.1); border: 1px solid rgba(255, 0, 51, 0.2); }
+    
+    .price-eur { font-size: 1.2rem; font-weight: 700; color: var(--primary-text); text-align: right; }
+    .price-usd { font-size: 0.85rem; color: var(--secondary-text); text-align: right; margin-top: 2px; }
+
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--secondary-text); transition: 0.3s; }
+    .status-dot.online { background-color: var(--neon-cyan); box-shadow: 0 0 8px var(--neon-cyan); }
+    .status-dot.error { background-color: var(--neon-red); }
+
+    #chart-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.2s; padding: 20px; }
+    #chart-modal.visible { opacity: 1; pointer-events: auto; }
+    .modal-content { width: 100%; max-width: 500px; background: #111; border: 1px solid #333; border-radius: 30px; padding: 25px; transform: scale(0.95); transition: 0.2s; }
+    #chart-modal.visible .modal-content { transform: scale(1); }
+    .close-chart { align-self: flex-end; background: none; border: none; font-size: 2rem; color: #888; padding: 10px; line-height: 1; }
+    .chart-controls { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; background: #222; padding: 5px; border-radius: 12px; }
+    .time-btn { background: transparent; border: none; color: #888; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; }
+    .time-btn.active { background: #444; color: white; }
+    
+    .toast { position: fixed; top: 90px; left: 50%; transform: translate(-50%, -20px); background: #222; border: 1px solid #ff0033; color: white; padding: 12px 30px; border-radius: 40px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 200; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    
+    @media(min-width: 600px) {
+        body { display: flex; align-items: center; justify-content: center; background: #050505; }
+        .view-container { max-width: 420px; height: 92vh; border-radius: 45px; border: 8px solid #111; box-shadow: 0 0 0 2px #333, 0 20px 50px rgba(0,0,0,0.8); }
+        .optimized-bg { border-radius: 45px; }
+    }
+</style>
+</head>
+<body data-theme="dark">
+
+    <div class="optimized-bg"></div>
+    <div id="particles-layer" class="particles-layer"></div>
+        
+    <div class="view-container">
+        <div id="view-calculator" class="view active">
+            <header class="app-header">
+                <button class="embedded-ui icon-btn icon-swap" id="btn-mute" aria-label="Silenciar">
+                    <svg class="shown" id="icon-sound-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                    <svg class="hidden" id="icon-sound-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                </button>
+                               
+                <a href="https://danijdzg.github.io/dani/" target="_blank" class="app-title embedded-ui">aiDANaI</a>
+                
+                <div id="clock" class="embedded-ui tabular-nums">0:00:00</div>
+                
+                <button id="btn-go-crypto" class="embedded-ui icon-btn" aria-label="Ir a Crypto">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                </button>
+            </header>
+        
+            <div class="upper-section">
+                <div class="display-lens" id="display-container">
+                    <ul id="history-list"></ul>
+                    <div class="display-area">
+                        <div id="secondary-display" class="tabular-nums"></div>
+                        <div style="display:flex; flex-direction:column; justify-content:flex-end;">
+                            <div id="main-display" class="tabular-nums">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="calculator-body">
+                <div class="keypad">
+                    <button class="btn" data-key="AC">AC</button>
+                    <button class="btn" data-key="Backspace">⌫</button>
+                    <button class="btn" data-key="%" data-color="blue">%</button>
+                    <button class="btn" data-key="/" data-color="blue">÷</button>
+             
+                    <button class="btn" data-key="7">7</button>
+                    <button class="btn" data-key="8">8</button>
+                    <button class="btn" data-key="9">9</button>
+                    <button class="btn" data-key="*" data-color="blue">×</button>
+             
+                    <button class="btn" data-key="4">4</button>
+                    <button class="btn" data-key="5">5</button>
+                    <button class="btn" data-key="6">6</button>
+                    <button class="btn" data-key="-" data-color="blue">−</button>
+  
+                    <button class="btn" data-key="1">1</button>
+                    <button class="btn" data-key="2">2</button>
+                    <button class="btn" data-key="3">3</button>
+                    <button class="btn" data-key="+" data-color="blue">+</button>
+
+                    <button class="btn" data-key="0">0</button>
+                    <button class="btn" data-key=",">,</button>
+                    <button class="btn btn-large" data-key="Enter" data-color="green">=</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-crypto" class="view">
+            <header class="app-header">
+                <div style="width:44px;"></div>
+                <a href="https://danijdzg.github.io/dani/" target="_blank" class="app-title embedded-ui" style="color:#00ff9d !important;">Crypto</a>
+                <div id="clock-crypto" class="embedded-ui tabular-nums">0:00:00</div>
+                <button id="btn-go-calc" class="embedded-ui icon-btn" aria-label="Volver">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2" stroke-width="2"></rect><line x1="8" y1="6" x2="16" y2="6" stroke-width="2"></line><line x1="16" y1="14" x2="16" y2="14" stroke-width="3"></line><line x1="12" y1="14" x2="12" y2="14" stroke-width="3"></line><line x1="8" y1="14" x2="8" y2="14" stroke-width="3"></line><line x1="16" y1="18" x2="16" y2="18" stroke-width="3"></line><line x1="12" y1="18" x2="12" y2="18" stroke-width="3"></line><line x1="8" y1="18" x2="8" y2="18" stroke-width="3"></line></svg>
+                </button>
+            </header>
+            
+            <div class="crypto-content">
+                <p id="timestamp"><span class="status-dot"></span> <span id="time-text">Conectando...</span></p>
+                <div class="crypto-list">
+                    <div class="card glow-border" data-id="bitcoin" data-name="Bitcoin">
+                        <div class="coin-details">
+                            <img src="https://assets.coingecko.com/coins/images/1/large/bitcoin.png" class="coin-logo" onerror="this.style.display='none'">
+                            <div class="coin-info"><h2>Bitcoin</h2><p class="change-percentage tabular-nums" id="bitcoin-change">--</p></div>
+                        </div>
+                        <div class="price-container"><p class="price-eur tabular-nums" id="bitcoin-price-eur">--</p><p class="price-usd tabular-nums" id="bitcoin-price-usd">--</p></div>
+                    </div>
+                    <div class="card glow-border" data-id="ethereum" data-name="Ethereum">
+                        <div class="coin-details">
+                            <img src="https://assets.coingecko.com/coins/images/279/large/ethereum.png" class="coin-logo" onerror="this.style.display='none'">
+                            <div class="coin-info"><h2>Ethereum</h2><p class="change-percentage tabular-nums" id="ethereum-change">--</p></div>
+                        </div>
+                        <div class="price-container"><p class="price-eur tabular-nums" id="ethereum-price-eur">--</p><p class="price-usd tabular-nums" id="ethereum-price-usd">--</p></div>
+                    </div>
+                     <div class="card glow-border" data-id="solana" data-name="Solana">
+                        <div class="coin-details">
+                            <img src="https://assets.coingecko.com/coins/images/4128/large/solana.png" class="coin-logo" onerror="this.style.display='none'">
+                            <div class="coin-info"><h2>Solana</h2><p class="change-percentage tabular-nums" id="solana-change">--</p></div>
+                        </div>
+                        <div class="price-container"><p class="price-eur tabular-nums" id="solana-price-eur">--</p><p class="price-usd tabular-nums" id="solana-price-usd">--</p></div>
+                    </div>
+                     <div class="card glow-border" data-id="ripple" data-name="XRP">
+                        <div class="coin-details">
+                             <img src="https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png" class="coin-logo" onerror="this.style.display='none'">
+                            <div class="coin-info"><h2>XRP</h2><p class="change-percentage tabular-nums" id="ripple-change">--</p></div>
+                        </div>
+                        <div class="price-container"><p class="price-eur tabular-nums" id="ripple-price-eur">--</p><p class="price-usd tabular-nums" id="ripple-price-usd">--</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="chart-modal">
+        <div class="modal-content">
+            <button class="close-chart">&times;</button>
+            <h2 id="chart-title" style="margin-bottom:15px; color:white; text-align: center;">Moneda</h2>
+            
+            <div class="chart-controls">
+                <button class="time-btn" data-days="1">24h</button>
+                <button class="time-btn" data-days="7">7D</button>
+                <button class="time-btn active" data-days="30">30D</button>
+                <button class="time-btn" data-days="365">1A</button>
+            </div>
+
+            <div style="min-height: 250px;"><div id="chart-container"></div></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+    /**
+     * aiDANaI Fusion Edition
+     * Combina la robustez visual y lógica de index.html con el motor de audio avanzado de deepseek.html.
+     */
+    const App = {
+        expr: '',
+        fresh: true,
+        chart: null,
+        currentCoinId: null,
+        
+        // Audio Props (From Deepseek)
+        audioCtx: null,
+        audioEnabled: false,
+        
+        state: { 
+            muted: false, 
+            history: [], 
+            cryptoCache: null, 
+            lastFetchTime: 0 
+        },
+        
+        init() {
+            this.loadState();
+            this.updateMuteIcon();
+            this.fixHeight();
+            this.bindEvents();
+            this.startClocks();
+            this.renderHistory(); 
+            
+            // Inicialización de Audio Robusta (Deepseek Logic)
+            this.initAudio();
+            this.unlockAudio();
+            
+            if(this.state.cryptoCache) {
+                const now = Date.now();
+                if(now - this.state.lastFetchTime < 300000) this.renderCryptoData(this.state.cryptoCache);
+                else this.fetchPrices();
+            }
+        },
+
+        fixHeight() {
+            const setH = () => document.documentElement.style.setProperty('--doc-height', `${window.innerHeight}px`);
+            setH(); window.addEventListener('resize', setH);
+        },
+
+        // --- AUDIO ENGINE (DEEPSEEK.HTML) ---
+        initAudio() {
+            try {
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                this.audioEnabled = true;
+            } catch(e) { this.audioEnabled = false; }
+        },
+
+        unlockAudio() {
+            const unlockHandler = () => {
+                if (this.audioCtx && this.audioCtx.state === 'suspended') {
+                    this.audioCtx.resume();
+                }
+            };
+            document.addEventListener('click', unlockHandler, { once: true });
+            document.addEventListener('touchstart', unlockHandler, { once: true });
+            document.addEventListener('keydown', unlockHandler, { once: true });
+        },
+
+        playKeySound(key) {
+            if(this.state.muted || !this.audioEnabled || !this.audioCtx) return;
+            
+            let freq = 600; // Números
+            let duration = 0.1;
+            
+            if (key === 'Enter') {
+                freq = 800; // Success
+                duration = 0.15;
+            } else if (key === 'AC' || key === 'Backspace') {
+                freq = 400; // Borrar
+                duration = 0.08;
+            } else if (['+', '-', '*', '/', '%'].includes(key)) {
+                freq = 700; // Operadores
+            } else if (key === ',') {
+                freq = 550; // Coma
+            }
+            
+            this.playTone(freq, duration);
+        },
+
+        playTone(freq, duration = 0.1) {
+            if(this.state.muted || !this.audioEnabled || !this.audioCtx) return;
+            if(this.audioCtx.state === 'suspended') this.audioCtx.resume();
+            
+            try {
+                const o = this.audioCtx.createOscillator();
+                const g = this.audioCtx.createGain();
+                o.connect(g);
+                g.connect(this.audioCtx.destination);
+                
+                // Usamos onda triangular para sonido más "táctil" (tipo teclado mecánico)
+                o.type = 'triangle'; 
+                o.frequency.value = freq;
+                
+                g.gain.setValueAtTime(0.05, this.audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + duration);
+                
+                o.start();
+                o.stop(this.audioCtx.currentTime + duration);
+            } catch(e) {}
+        },
+
+        // --- GESTIÓN DE EVENTOS (INTEGRADO) ---
+        bindEvents() {
+            document.getElementById('btn-go-crypto').onclick = () => { 
+                document.getElementById('view-calculator').classList.remove('active');
+                document.getElementById('view-crypto').classList.add('active');
+                if(Date.now() - this.state.lastFetchTime > 60000) this.fetchPrices();
+            };
+            document.getElementById('btn-go-calc').onclick = () => { 
+                document.getElementById('view-crypto').classList.remove('active');
+                document.getElementById('view-calculator').classList.add('active');
+            };
+            document.getElementById('btn-mute').onclick = () => this.toggleMute();
+
+            document.querySelectorAll('.btn[data-key]').forEach(b => {
+                const key = b.dataset.key;
+                const handlePress = (e) => {
+                    if(e.cancelable) e.preventDefault();
+                    b.classList.add('btn-active');
+                    setTimeout(() => b.classList.remove('btn-active'), 80);
+                    
+                    this.playKeySound(key); // AUDIO INYECTADO
+                    this.processKey(key);
+                };
+                b.addEventListener('pointerdown', handlePress);
+            });
+
+            document.addEventListener('keydown', (e) => {
+                const keyMap = { 'Enter': 'Enter', 'Backspace': 'Backspace', 'Delete': 'AC', 'Escape': 'AC', '+': '+', '-': '-', '*': '*', '/': '/', '.': ',', ',': ',', '%': '%' };
+                if (e.key >= '0' && e.key <= '9') { 
+                    this.triggerKeyVisual(e.key); 
+                    this.playKeySound(e.key); // AUDIO INYECTADO
+                    this.processKey(e.key); 
+                    return; 
+                }
+                const mapped = keyMap[e.key];
+                if (mapped) { 
+                    e.preventDefault(); 
+                    this.triggerKeyVisual(mapped === ',' ? ',' : mapped); 
+                    this.playKeySound(mapped); // AUDIO INYECTADO
+                    this.processKey(mapped); 
+                } 
+                else if (e.key === '=') { 
+                    e.preventDefault(); 
+                    this.triggerKeyVisual('Enter'); 
+                    this.playKeySound('Enter'); // AUDIO INYECTADO
+                    this.processKey('Enter'); 
+                }
+            });
+
+            document.querySelectorAll('.card').forEach(c => {
+                c.onclick = () => this.openChart(c.dataset.id, c.dataset.name);
+            });
+            document.querySelector('.close-chart').onclick = () => document.getElementById('chart-modal').classList.remove('visible');
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    this.updateChartData(e.target.dataset.days);
+                }
+            });
+        },
+
+        triggerKeyVisual(key) {
+            const btn = document.querySelector(`.btn[data-key="${key}"]`);
+            if (btn) { btn.classList.add('btn-active'); setTimeout(() => btn.classList.remove('btn-active'), 80); }
+        },
+
+        // --- LÓGICA CORE (INDEX.HTML - SUPERIOR) ---
+        processKey(key) {
+            if(navigator.vibrate) navigator.vibrate(key === 'Enter' ? 15 : 5);
+            
+            if (key === 'AC') this.clearAll();
+            else if (key === 'Backspace') { this.expr = this.expr.toString().slice(0, -1); this.render(); }
+            else if (key === 'Enter') { this.calculate(); } 
+            else if (key === '%') { if(this.expr) { this.expr = String(eval(this.expr)/100); this.render(); } }
+            else { this.handleInput(key); }
+        },
+
+        handleInput(k) {
+            if(this.fresh) {
+                if(!"+-*/%".includes(k)) { this.expr=''; document.getElementById('secondary-display').classList.remove('visible'); }
+                this.fresh = false;
+            }
+            
+            // SMART INPUT LOGIC (INDEX.HTML)
+            const last = this.expr.slice(-1);
+            if (k === ',') k = '.';
+            
+            const isOp = "+-*/".includes(k);
+            const lastIsOp = "+-*/".includes(last);
+
+            if (isOp && lastIsOp) {
+                this.expr = this.expr.slice(0, -1) + k;
+            } 
+            else if (k === '.') {
+                const parts = this.expr.split(/[\+\-\*\/]/); 
+                if (!parts[parts.length-1].includes('.')) this.expr += k;
+            } 
+            else {
+                this.expr += k; 
+            }
+            
+            this.render();
+        },
+
+        calculate() {
+            if(!this.expr) return;
+            try {
+                let clean = this.expr.replace(/[^0-9+\-*/().]/g, '');
+                let res = new Function('return ' + clean)();
+                if(!isFinite(res) || isNaN(res)) throw new Error("Err");
+                
+                res = parseFloat(parseFloat(res).toPrecision(12)); 
+                
+                this.addToHistory(this.expr, res);
+                const prettyExpr = this.expr.replace(/\./g, ',').replace(/\*/g, '×').replace(/\//g, '÷');
+                document.getElementById('secondary-display').innerText = prettyExpr + ' =';
+                document.getElementById('secondary-display').classList.add('visible');
+                
+                this.expr = String(res); 
+                this.fresh = true;
+                this.render(true); 
+                this.triggerSuperNova(); 
+                
+            } catch(e) { this.showToast("Error"); }
+        },
+
+        // --- RENDERIZADO VISUAL (INDEX.HTML - SUPERIOR) ---
+        render(isResult = false) {
+            const d = document.getElementById('main-display');
+            if(!this.expr) { d.innerHTML = '0'; d.style.fontSize = '3.5rem'; return; }
+            
+            let html = '';
+            const parts = this.expr.split(/([+\-*/])/);
+            
+            parts.forEach(part => {
+                if ("+-*/".includes(part)) {
+                    html += `<span style="color:var(--neon-cyan)">${part.replace('*','×').replace('/','÷')}</span>`;
+                } else if (!isNaN(parseFloat(part))) {
+                    let [int, dec] = part.split('.');
+                    let formattedInt = int.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                    
+                    if (dec !== undefined) {
+                        html += `${formattedInt}<span class="small-decimal">,${dec}</span>`;
+                    } else {
+                        html += formattedInt;
+                    }
+                } else {
+                    html += part;
+                }
+            });
+
+            d.innerHTML = html;
+            this.adjustFontSize(d);
+        },
+
+        // REAL FIT-TO-WIDTH (INDEX.HTML)
+        adjustFontSize(el) {
+            const parent = el.parentElement;
+            let size = 3.5;
+            el.style.fontSize = `${size}rem`; 
+            
+            while (el.scrollWidth > parent.clientWidth && size > 1.4) {
+                size -= 0.15;
+                el.style.fontSize = `${size}rem`;
+            }
+        },
+
+        triggerSuperNova() {
+            const lens = document.getElementById('display-container');
+            lens.classList.remove('super-flash-active');
+            void lens.offsetWidth;
+            lens.classList.add('super-flash-active');
+            
+            const mainD = document.getElementById('main-display');
+            mainD.classList.remove('pop-active');
+            void mainD.offsetWidth;
+            mainD.classList.add('pop-active');
+            
+            this.createExplosionParticles();
+            
+            // El sonido de "Enter" ya lo gestiona playKeySound, 
+            // así que aquí solo nos ocupamos de lo visual.
+        },
+
+        // PARTICULAS OPTIMIZADAS (15 - INDEX.HTML)
+        createExplosionParticles() {
+            const container = document.getElementById('particles-layer');
+            const rect = document.querySelector('.btn[data-key="Enter"]').getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const frag = document.createDocumentFragment();
+
+            for(let i=0; i<15; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                const size = Math.random() * 6 + 3;
+                const angle = Math.random() * Math.PI * 2;
+                const dist = Math.random() * 150 + 50;
+                p.style.cssText = `width: ${size}px; height: ${size}px; background: ${Math.random()>0.5 ? '#ccff00' : '#fff'}; left: ${centerX}px; top: ${centerY}px; box-shadow: 0 0 10px #ccff00; --tx: ${Math.cos(angle) * dist}px; --ty: ${Math.sin(angle) * dist}px; animation: particleExplosion 0.5s ease-out forwards;`;
+                frag.appendChild(p);
+                setTimeout(() => p.remove(), 550);
+            }
+            container.appendChild(frag);
+        },
+
+        // --- UTILS & CRYPTO ---
+        addToHistory(ex, r) {
+            this.state.history.unshift({ expr: ex, res: r }); 
+            if (this.state.history.length > 20) this.state.history.pop(); 
+            this.saveState();
+            this.renderHistory(); 
+        },
+        renderHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = this.state.history.map(item => {
+                const resF = item.res.toLocaleString('es-ES', { maximumFractionDigits: 10 });
+                const exprF = item.expr.replace(/\./g, ',').replace(/\*/g,'×').replace(/\//g,'÷');
+                return `<li onclick="App.loadFromHistory('${item.res}')">${exprF} = <b>${resF}</b></li>`;
+            }).join('');
+        },
+        loadFromHistory(val) { this.expr = String(val); this.fresh = true; this.render(true); },
+        
+        // CLEAR COMPLETO (INDEX.HTML)
+        clearAll() { 
+            this.expr = ''; 
+            this.fresh = true;
+            this.state.history = []; 
+            const sec = document.getElementById('secondary-display');
+            sec.classList.remove('visible'); 
+            sec.innerText = '';              
+            this.saveState(); 
+            this.renderHistory(); 
+            this.render(); 
+        },
+
+        async fetchPrices() {
+            try {
+                const timeText = document.getElementById('time-text');
+                timeText.innerText = 'Actualizando...';
+                
+                const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,ripple&vs_currencies=eur,usd&include_24hr_change=true');
+                if(!res.ok) throw new Error();
+                const d = await res.json();
+                this.state.cryptoCache = d;
+                this.state.lastFetchTime = Date.now();
+                this.saveState();
+                this.renderCryptoData(d);
+                document.getElementById('timestamp').innerHTML = '<span class="status-dot online"></span> Actualizado: ' + new Date().toLocaleTimeString();
+            } catch(e) { 
+                document.getElementById('timestamp').innerHTML = '<span class="status-dot error"></span> Error Conexión'; 
+            }
+        },
+        renderCryptoData(d) {
+            const fmt = (v, c) => new Intl.NumberFormat('es-ES', {style:'currency', currency:c}).format(v);
+            ['bitcoin','ethereum','solana','ripple'].forEach(id => {
+                if(d[id]) {
+                    document.getElementById(`${id}-price-eur`).innerText = fmt(d[id].eur, 'EUR');
+                    document.getElementById(`${id}-price-usd`).innerText = fmt(d[id].usd, 'USD');
+                    const chg = d[id].eur_24h_change;
+                    const el = document.getElementById(`${id}-change`);
+                    el.innerText = (chg>0?'+':'') + chg.toFixed(2)+'%';
+                    el.className = `change-percentage tabular-nums ${chg>=0?'change-positive':'change-negative'}`;
+                }
+            });
+        },
+        
+        async openChart(id, name) {
+            this.currentCoinId = id;
+            document.getElementById('chart-title').innerText = name;
+            document.getElementById('chart-modal').classList.add('visible');
+            if(this.chart) { this.chart.destroy(); }
+            
+            this.chart = new ApexCharts(document.querySelector("#chart-container"), {
+                series: [],
+                chart: { type: 'area', height: 250, toolbar:{show:false}, background:'transparent', animations:{enabled:false} },
+                theme: { mode: 'dark' },
+                stroke: { curve: 'smooth', width: 2, colors:['#00f2ff'] },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.1 } },
+                dataLabels: { enabled: false },
+                xaxis: { type: 'datetime', labels: { show: false }, axisBorder:{show:false} },
+                yaxis: { show: true, labels: { style:{ colors:'#888' }, formatter: (v) => v.toLocaleString('es-ES') + '€' } },
+                grid: { borderColor: '#333', strokeDashArray: 5 },
+                tooltip: { theme: 'dark' }
+            });
+            this.chart.render();
+            this.updateChartData(30);
+        },
+        
+        async updateChartData(days) {
+            try {
+                const res = await fetch(`https://api.coingecko.com/api/v3/coins/${this.currentCoinId}/market_chart?vs_currency=eur&days=${days}`);
+                const data = await res.json();
+                this.chart.updateSeries([{ name: 'Precio', data: data.prices }]);
+            } catch(e) {}
+        },
+
+        toggleMute() { 
+            this.state.muted = !this.state.muted; 
+            this.updateMuteIcon(); 
+            this.saveState(); 
+            if(!this.state.muted) this.playTone(700, 0.1); // Feedback sonoro
+        },
+        updateMuteIcon() { 
+            const on = document.getElementById('icon-sound-on');
+            const off = document.getElementById('icon-sound-off');
+            if(this.state.muted) { on.classList.replace('shown', 'hidden'); off.classList.replace('hidden', 'shown'); } 
+            else { off.classList.replace('shown', 'hidden'); on.classList.replace('hidden', 'shown'); }
+        },
+        showToast(msg) { const t = document.getElementById('toast'); t.innerText=msg; t.className='toast show'; setTimeout(()=>t.className='toast',2000); },
+        saveState() { localStorage.setItem('aidanaiUltimateFusion', JSON.stringify(this.state)); },
+        loadState() { try { const s = JSON.parse(localStorage.getItem('aidanaiUltimateFusion')); if(s) this.state = {...this.state, ...s}; } catch(e) {} },
+        startClocks() { setInterval(() => { const s = new Date().toLocaleTimeString(); document.querySelectorAll('#clock, #clock-crypto').forEach(e => e.innerText = s); }, 1000); }
+    };
+    
+    window.addEventListener('load', () => App.init());
+    </script>
+</body>
+</html>
