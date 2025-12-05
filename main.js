@@ -6069,15 +6069,12 @@ const updateDashboardData = async () => {
     isDashboardRendering = true;
 
     try {
-        // 1. DATOS DEL PERIODO (FLUIDO)
         const { current } = await getFilteredMovements(true);
         const saldos = await getSaldos();
-        
-        // 2. DATOS PATRIMONIALES (ESTADO)
         const visibleAccounts = getVisibleAccounts();
         const visibleAccountIds = new Set(Object.keys(saldos));
         
-        // Calcular Totales del Periodo
+        // Totales Periodo
         let ingresos = 0, gastos = 0, saldoNeto = 0;
         current.forEach(m => {
             const amount = calculateMovementAmount(m, visibleAccountIds);
@@ -6087,10 +6084,9 @@ const updateDashboardData = async () => {
         });
         const tasaAhorroActual = ingresos > 0 ? (saldoNeto / ingresos) * 100 : (saldoNeto < 0 ? -100 : 0);
 
-        // Calcular Estado Actual
+        // Situación Patrimonial
         let totalLiquidez = 0;
         let patrimonioNeto = 0;
-
         visibleAccounts.forEach(c => {
             const saldo = saldos[c.id] || 0;
             patrimonioNeto += saldo;
@@ -6099,10 +6095,9 @@ const updateDashboardData = async () => {
             }
         });
 
-        // Calcular Inversiones
         const portfolioPerf = await calculatePortfolioPerformance(); 
-
-        // Calcular Salud Financiera
+        
+        // Salud Financiera
         const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
         const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
 
@@ -6115,7 +6110,7 @@ const updateDashboardData = async () => {
             animateCountUp(kpiPatrimonio, patrimonioNeto);
         }
 
-        // 2. Grid de Activos
+        // 2. Grid Activos
         const kpiLiquidez = select('kpi-liquidez-value');
         if (kpiLiquidez) { kpiLiquidez.classList.remove('skeleton'); animateCountUp(kpiLiquidez, totalLiquidez); }
         
@@ -6129,7 +6124,7 @@ const updateDashboardData = async () => {
             const sign = pnl >= 0 ? '+' : '';
             kpiInvPnl.textContent = `${sign}${formatCurrency(pnl)}`;
             kpiInvPnl.className = `status-value ${pnl >= 0 ? 'text-positive' : 'text-negative'}`;
-            kpiInvPnl.style.fontSize = "1.1rem"; // Ajuste visual
+            kpiInvPnl.style.fontSize = "1.1rem";
         }
         
         const kpiInvPct = select('kpi-inversion-pct');
@@ -6142,60 +6137,46 @@ const updateDashboardData = async () => {
             kpiInvPct.style.fontSize = "1.1rem";
         }
 
-        // 3. Flujo
+        // 3. Flujo Periodo
         const elIng = select('kpi-ingresos-value');
-        const elGas = select('kpi-gastos-value');
-        const elNet = select('kpi-saldo-neto-value');
-        
         if (elIng) {
-            [elIng, elGas, elNet].forEach(el => el.classList.remove('skeleton'));
+            [elIng, select('kpi-gastos-value'), select('kpi-saldo-neto-value')].forEach(el => el.classList.remove('skeleton'));
             animateCountUp(elIng, ingresos);
-            animateCountUp(elGas, gastos);
-            animateCountUp(elNet, saldoNeto);
-            elNet.className = saldoNeto >= 0 ? 'text-positive' : 'text-negative';
-            
-            // Lógica de barras visuales
-            const maxVal = Math.max(ingresos, Math.abs(gastos)) || 1; // Evitar div por 0
-            const pctIng = (ingresos / maxVal) * 100;
-            const pctGas = (Math.abs(gastos) / maxVal) * 100;
-            
-            const barIng = select('bar-ingresos');
-            const barGas = select('bar-gastos');
-            if(barIng) barIng.style.width = `${pctIng}%`;
-            if(barGas) barGas.style.width = `${pctGas}%`;
+            animateCountUp(select('kpi-gastos-value'), gastos);
+            animateCountUp(select('kpi-saldo-neto-value'), saldoNeto);
+            select('kpi-saldo-neto-value').className = `status-value ${saldoNeto >= 0 ? 'text-positive' : 'text-negative'}`;
         }
 
-        // 4. Salud (Carrusel)
+        // 4. Salud Financiera (Actualización de Barras)
+        
+        // A. Ahorro (Barra Azul)
         const kpiAhorro = select('kpi-tasa-ahorro-value');
-        if (kpiAhorro) {
+        const barAhorro = select('tasa-ahorro-progress-bar');
+        if (kpiAhorro && barAhorro) {
             kpiAhorro.classList.remove('skeleton');
             kpiAhorro.textContent = `${tasaAhorroActual.toFixed(0)}%`;
-            kpiAhorro.className = tasaAhorroActual >= 0 ? 'text-positive' : 'text-negative';
-            renderSavingsRateGauge('kpi-savings-rate-chart', tasaAhorroActual);
+            // El ancho se limita entre 0 y 100
+            barAhorro.style.width = `${Math.max(0, Math.min(tasaAhorroActual, 100))}%`;
         }
         
+        // B. Cobertura (Barra Amarilla)
         const kpiRunway = select('health-runway-val');
         const barRunway = select('health-runway-progress-bar');
-        if (kpiRunway) {
+        if (kpiRunway && barRunway) {
             kpiRunway.classList.remove('skeleton');
-            const meses = isFinite(efData.mesesCobertura) ? efData.mesesCobertura : 99;
-            kpiRunway.textContent = isFinite(efData.mesesCobertura) ? `${efData.mesesCobertura.toFixed(1)} Meses` : '∞';
-            if (barRunway) {
-                const pct = Math.min((meses / 6) * 100, 100);
-                barRunway.style.width = `${pct}%`;
-                barRunway.style.backgroundColor = meses >= 6 ? 'var(--c-success)' : (meses >= 3 ? 'var(--c-warning)' : 'var(--c-danger)');
-            }
+            const meses = efData.mesesCobertura;
+            kpiRunway.textContent = isFinite(meses) ? (meses >= 100 ? '∞' : meses.toFixed(1)) : '∞';
+            const pct = isFinite(meses) ? Math.min((meses / 6) * 100, 100) : 100;
+            barRunway.style.width = `${pct}%`;
         }
         
+        // C. Libertad (Barra Verde)
         const kpiFi = select('health-fi-val');
         const barFi = select('health-fi-progress-bar');
-        if (kpiFi) {
+        if (kpiFi && barFi) {
             kpiFi.classList.remove('skeleton');
             kpiFi.textContent = `${fiData.progresoFI.toFixed(1)}%`;
-            if (barFi) {
-                barFi.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
-                barFi.style.backgroundColor = fiData.progresoFI >= 100 ? 'var(--c-success)' : 'var(--c-warning)';
-            }
+            barFi.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
         }
 
     } catch (error) {
