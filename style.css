@@ -4452,37 +4452,3 @@ body[data-theme="sunset-groove"] .hero-val-big {
 .help-content-pane.active {
     display: block;
 }
-
-/* Estilos específicos para la sección Experta */
-.tech-spec-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-.tech-spec-item {
-    background: var(--c-surface);
-    border: 1px solid var(--c-outline);
-    padding: 10px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-}
-.tech-spec-label {
-    display: block;
-    color: var(--c-on-surface-tertiary);
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-.code-block {
-    background-color: #1e1e1e;
-    color: #d4d4d4;
-    padding: 12px;
-    border-radius: 8px;
-    font-family: monospace;
-    font-size: 0.8rem;
-    overflow-x: auto;
-    border: 1px solid #333;
-    margin: 10px 0;
-}

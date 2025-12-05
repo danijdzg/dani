@@ -6088,13 +6088,12 @@ const updateDashboardData = async () => {
     isDashboardRendering = true;
 
     try {
-        // 1. OBTENER DATOS
         const { current } = await getFilteredMovements(true);
         const saldos = await getSaldos();
         const visibleAccounts = getVisibleAccounts();
         const visibleAccountIds = new Set(Object.keys(saldos));
         
-        // 2. CALCULAR TOTALES DEL PERIODO
+        // Totales Periodo
         let ingresos = 0, gastos = 0, saldoNeto = 0;
         current.forEach(m => {
             const amount = calculateMovementAmount(m, visibleAccountIds);
@@ -6102,14 +6101,11 @@ const updateDashboardData = async () => {
             else gastos += amount;
             saldoNeto += amount;
         });
-
-        // Cálculo de Tasa de Ahorro
         const tasaAhorroActual = ingresos > 0 ? (saldoNeto / ingresos) * 100 : (saldoNeto < 0 ? -100 : 0);
-        
-        // 3. CALCULAR SITUACIÓN PATRIMONIAL
+
+        // Situación Patrimonial
         let totalLiquidez = 0;
         let patrimonioNeto = 0;
-
         visibleAccounts.forEach(c => {
             const saldo = saldos[c.id] || 0;
             patrimonioNeto += saldo;
@@ -6119,6 +6115,8 @@ const updateDashboardData = async () => {
         });
 
         const portfolioPerf = await calculatePortfolioPerformance(); 
+        
+        // Salud Financiera
         const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
         const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
 
@@ -6160,50 +6158,55 @@ const updateDashboardData = async () => {
 
         // 3. Flujo Periodo
         const elIng = select('kpi-ingresos-value');
-        const elGas = select('kpi-gastos-value');
-        const elNet = select('kpi-saldo-neto-value');
         if (elIng) {
-            [elIng, elGas, elNet].forEach(el => el.classList.remove('skeleton'));
+            [elIng, select('kpi-gastos-value'), select('kpi-saldo-neto-value')].forEach(el => el.classList.remove('skeleton'));
             animateCountUp(elIng, ingresos);
-            animateCountUp(elGas, gastos);
-            animateCountUp(elNet, saldoNeto);
-            elNet.className = saldoNeto >= 0 ? 'text-positive' : 'text-negative';
+            animateCountUp(select('kpi-gastos-value'), gastos);
+            animateCountUp(select('kpi-saldo-neto-value'), saldoNeto);
+            select('kpi-saldo-neto-value').className = `status-value ${saldoNeto >= 0 ? 'text-positive' : 'text-negative'}`;
         }
 
-        // 4. SALUD FINANCIERA (Barras de Progreso)
+        // 4. Salud Financiera (Actualización de Barras)
         
-        // A. AHORRO (CORREGIDO: Ahora usa barra, no gráfico circular)
+        // A. AHORRO (CORREGIDO)
         const kpiAhorro = select('kpi-tasa-ahorro-value');
-        const barAhorro = select('tasa-ahorro-progress-bar'); // Buscamos la barra por ID
+        // Buscamos la barra por su ID correcto
+        const barAhorro = select('tasa-ahorro-progress-bar'); 
         
-        if (kpiAhorro && barAhorro) {
+        if (kpiAhorro) {
             kpiAhorro.classList.remove('skeleton');
             kpiAhorro.textContent = `${tasaAhorroActual.toFixed(0)}%`;
             
-            // Calculamos el ancho: Mínimo 0%, Máximo 100%
-            const widthPct = Math.max(0, Math.min(tasaAhorroActual, 100));
-            barAhorro.style.width = `${widthPct}%`;
+            // Si existe la barra, actualizamos su ancho
+            if (barAhorro) {
+                const widthPct = Math.max(0, Math.min(tasaAhorroActual, 100));
+                barAhorro.style.width = `${widthPct}%`;
+            }
         }
         
         // B. Cobertura
         const kpiRunway = select('health-runway-val');
         const barRunway = select('health-runway-progress-bar');
-        if (kpiRunway && barRunway) {
+        if (kpiRunway) {
             kpiRunway.classList.remove('skeleton');
             const meses = efData.mesesCobertura;
             kpiRunway.textContent = isFinite(meses) ? (meses >= 100 ? '∞' : meses.toFixed(1)) : '∞';
             
-            const pct = isFinite(meses) ? Math.min((meses / 6) * 100, 100) : 100;
-            barRunway.style.width = `${pct}%`;
+            if (barRunway) {
+                const pct = isFinite(meses) ? Math.min((meses / 6) * 100, 100) : 100;
+                barRunway.style.width = `${pct}%`;
+            }
         }
         
         // C. Libertad
         const kpiFi = select('health-fi-val');
         const barFi = select('health-fi-progress-bar');
-        if (kpiFi && barFi) {
+        if (kpiFi) {
             kpiFi.classList.remove('skeleton');
             kpiFi.textContent = `${fiData.progresoFI.toFixed(1)}%`;
-            barFi.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
+            if (barFi) {
+                barFi.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
+            }
         }
 
     } catch (error) {
@@ -7373,16 +7376,16 @@ const showHelpModal = () => {
     const titleEl = select('help-modal-title');
     const bodyEl = select('help-modal-body');
 
-    if (titleEl) titleEl.innerHTML = 'Centro de Documentación';
+    if (titleEl) titleEl.innerHTML = 'Centro de Conocimiento';
 
     if (bodyEl) {
         bodyEl.innerHTML = `
             <div class="help-tabs">
                 <button class="help-tab-btn active" onclick="switchHelpTab('piloto')">
-                    <span class="material-icons" style="font-size: 18px;">flight</span> Guía del Piloto
+                    <span class="material-icons" style="font-size: 18px;">auto_stories</span> El Cuento
                 </button>
                 <button class="help-tab-btn" onclick="switchHelpTab('experto')">
-                    <span class="material-icons" style="font-size: 18px;">code</span> Manual Técnico
+                    <span class="material-icons" style="font-size: 18px;">terminal</span> Manual Técnico
                 </button>
             </div>
 
@@ -7390,139 +7393,104 @@ const showHelpModal = () => {
                 <div class="help-hero">
                     <span class="material-icons help-hero__icon">smart_toy</span>
                     <h2 style="margin: 10px 0 5px;">Hola, soy aiDANaI</h2>
-                    <p style="color: var(--c-on-surface-secondary); max-width: 80%; margin: 0 auto;">
-                        Tu asistente financiero personal. Simple, rápido y privado.
+                    <p style="color: var(--c-on-surface-secondary); max-width: 90%; margin: 0 auto;">
+                        Tu asistente financiero de bolsillo. No soy un banco, soy tu libreta mágica.
                     </p>
                 </div>
 
-                <div class="help-section-title">
-                    <span class="material-icons text-primary">school</span> Conceptos Básicos
+                <div class="help-card">
+                    <div class="help-card__icon" style="background: #e3f2fd; color: #1976d2;"><span class="material-icons">menu_book</span></div>
+                    <div class="help-card__content">
+                        <h4>Capítulo 1: El Diario</h4>
+                        <p>Imagina que cada vez que compras el pan o cobras la nómina, lo apuntas en una hoja. Eso es el <strong>Diario</strong>. Simplemente pulsa el botón <strong>+</strong> y dile a la app lo que ha pasado. Ella lo recordará por ti.</p>
+                    </div>
                 </div>
 
                 <div class="help-card">
-                    <div class="help-card__icon"><span class="material-icons">swap_horiz</span></div>
+                    <div class="help-card__icon" style="background: #e8f5e9; color: #2e7d32;"><span class="material-icons">speed</span></div>
                     <div class="help-card__content">
-                        <h4>El Multiverso (Modo A / B)</h4>
-                        <p>Tienes dos contabilidades separadas. Usa el botón superior izquierdo para cambiar de dimensión. Lo que pasa en la B, se queda en la B.</p>
+                        <h4>Capítulo 2: El Panel</h4>
+                        <p>Es tu espejo mágico. Te dice de un vistazo:</p>
+                        <ul style="margin-top:4px; padding-left:15px; font-size:0.85rem;">
+                            <li><strong>Patrimonio:</strong> Todo lo que tienes menos lo que debes.</li>
+                            <li><strong>Liquidez:</strong> El dinero que puedes gastar hoy mismo.</li>
+                            <li><strong>Salud:</strong> Barras de colores que te dicen si vas bien.</li>
+                        </ul>
                     </div>
                 </div>
 
-                <div class="help-section-title">
-                    <span class="material-icons text-info">map</span> Tour Rápido
+                <div class="help-card">
+                    <div class="help-card__icon" style="background: #f3e5f5; color: #7b1fa2;"><span class="material-icons">inventory_2</span></div>
+                    <div class="help-card__content">
+                        <h4>Capítulo 3: Las Dos Cajas (A/B)</h4>
+                        <p>A veces guardamos dinero en sitios distintos. El botón <strong>A/B</strong> (arriba izquierda) es como un interruptor de luz. Si lo pulsas, cambias de habitación. Lo que guardas en la Caja B es invisible en la Caja A.</p>
+                    </div>
                 </div>
-
-                <details class="accordion help-accordion">
-                    <summary>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <span class="material-icons text-primary">dashboard</span> <strong>Panel de Control</strong>
-                        </div>
-                        <span class="material-icons accordion__icon">expand_more</span>
-                    </summary>
-                    <div class="accordion__content">
-                        <p>Tu salud financiera en un vistazo. Pulsa en <strong>"Patrimonio Total"</strong> para activar el <strong>Modo Privacidad</strong> (borroso) si estás en público.</p>
-                    </div>
-                </details>
-
-                <details class="accordion help-accordion" style="margin-top: 8px;">
-                    <summary>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <span class="material-icons text-success">account_balance</span> <strong>Inversiones</strong>
-                        </div>
-                        <span class="material-icons accordion__icon">expand_more</span>
-                    </summary>
-                    <div class="accordion__content">
-                        <p>Gestiona tus activos. Pulsa en las etiquetas de <strong>P&L</strong> o <strong>Rentabilidad</strong> de cada tarjeta para ver el desglose matemático exacto.</p>
-                    </div>
-                </details>
                 
-                <div class="help-card" style="margin-top: 20px; border-color: var(--c-primary);">
-                    <div class="help-card__content" style="text-align: center;">
-                        <h4>💡 ¿Necesitas más potencia?</h4>
-                        <p>Si eres un usuario avanzado, cambia a la pestaña <strong>"Manual Técnico"</strong> arriba para ver las entrañas del sistema.</p>
+                <div class="help-card">
+                    <div class="help-card__icon" style="background: #fff3e0; color: #ef6c00;"><span class="material-icons">calculate</span></div>
+                    <div class="help-card__content">
+                        <h4>Truco Final: Calculadora</h4>
+                        <p>¿Cena con amigos? Al poner el importe, puedes escribir <code>20 + 15 / 2</code> y la app calculará el resultado antes de guardarlo. ¡Sin salir de la pantalla!</p>
                     </div>
                 </div>
             </div>
 
             <div id="help-pane-experto" class="help-content-pane">
                 
-                <div class="help-section-title" style="margin-top:0;">
-                    <span class="material-icons text-warning">architecture</span> Arquitectura del Sistema
-                </div>
-                <p style="font-size: 0.9rem; margin-bottom: 15px;">Esta aplicación sigue una arquitectura <strong>Local-First PWA</strong>. Los datos residen primariamente en tu dispositivo y se sincronizan asíncronamente con Firebase Firestore.</p>
-                
-                <div class="tech-spec-grid">
-                    <div class="tech-spec-item">
-                        <span class="tech-spec-label">Persistencia</span>
-                        IndexedDB (Offline) + Firestore (Cloud)
-                    </div>
-                    <div class="tech-spec-item">
-                        <span class="tech-spec-label">Rendering</span>
-                        Vanilla JS + Virtual DOM (Listas)
-                    </div>
-                    <div class="tech-spec-item">
-                        <span class="tech-spec-label">Seguridad</span>
-                        Hash SHA-256 local para PIN
-                    </div>
-                    <div class="tech-spec-item">
-                        <span class="tech-spec-label">Cálculo</span>
-                        Newton-Raphson para TIR (XIRR)
-                    </div>
-                </div>
+                <p class="form-label" style="margin-bottom:15px;">Documentación técnica de las capacidades avanzadas de DaniCtas.</p>
 
                 <details class="accordion help-accordion">
-                    <summary><strong>1. Especificaciones de Importación (CSV)</strong> <span class="material-icons accordion__icon">expand_more</span></summary>
+                    <summary><strong>1. Arquitectura de Datos (PWA)</strong> <span class="material-icons accordion__icon">expand_more</span></summary>
                     <div class="accordion__content">
-                        <p>El motor de importación acepta archivos CSV con codificación UTF-8 y delimitador <code>;</code>.</p>
-                        <div class="code-block">FECHA;CUENTA;CONCEPTO;IMPORTE;DESCRIPCIÓN
-01/01/2024;Banco Uno;Nómina;1500,00;Enero
-05/01/2024;Efectivo;Ocio;-50,50;Cena</div>
+                        <p><strong>Local-First:</strong> La app utiliza <code>IndexedDB</code> para almacenar todos los datos en el dispositivo. Funciona 100% offline.</p>
+                        <p><strong>Sincronización:</strong> Cuando hay red, los cambios se replican asíncronamente a <strong>Firebase Firestore</strong>. El sistema de autenticación mantiene los datos encriptados y aislados por UID de usuario.</p>
+                    </div>
+                </details>
+
+                <details class="accordion help-accordion" style="margin-top: 8px;">
+                    <summary><strong>2. Motor de Inversiones (MWRR & P&L)</strong> <span class="material-icons accordion__icon">expand_more</span></summary>
+                    <div class="accordion__content">
+                        <p>El cálculo de rendimiento no es una simple resta. Utilizamos algoritmos financieros profesionales:</p>
                         <ul>
-                            <li><strong>Detección de Tipos:</strong> Si el nombre de la cuenta contiene "Tarjeta", "Inversión", etc., se auto-configura el tipo.</li>
-                            <li><strong>Traspasos Automáticos:</strong> El sistema busca parejas de movimientos (mismo importe +/- y fecha similar) y los fusiona en un solo movimiento de tipo 'Traspaso'.</li>
-                            <li><strong>Formato Numérico:</strong> Soporta <code>1.000,00</code> (ES) y <code>1,000.00</code> (US).</li>
+                            <li><strong>P&L (Profit & Loss):</strong> Se calcula como <code>Valor Mercado - Capital Aportado Neto</code>. Las aportaciones suman capital, las retiradas restan capital, pero la ganancia se mantiene en el valor de mercado.</li>
+                            <li><strong>TIR (XIRR):</strong> Utilizamos el método de Newton-Raphson para resolver la Tasa Interna de Retorno anualizada basada en los flujos de caja irregulares (aportaciones/retiradas) y sus fechas exactas.</li>
                         </ul>
                     </div>
                 </details>
 
                 <details class="accordion help-accordion" style="margin-top: 8px;">
-                    <summary><strong>2. Fórmulas Financieras (Inversión)</strong> <span class="material-icons accordion__icon">expand_more</span></summary>
+                    <summary><strong>3. Sistema de Importación CSV</strong> <span class="material-icons accordion__icon">expand_more</span></summary>
                     <div class="accordion__content">
-                        <p>El cálculo de rentabilidad no es una media simple. Utilizamos <strong>Money-Weighted Return (MWRR)</strong>.</p>
+                        <p>El importador inteligente analiza archivos bancarios y realiza las siguientes operaciones:</p>
                         <ul>
-                            <li><strong>P&L (Profit & Loss):</strong> <code>Valor Mercado Actual - Σ(Aportaciones Netas)</code>. Es el valor monetario absoluto generado.</li>
-                            <li><strong>TIR (Tasa Interna de Retorno):</strong> Resolvemos la ecuación del VAN (Valor Actual Neto) igualado a cero para encontrar la tasa de descuento interna.
-                            <div class="code-block">0 = Σ (Flujo_i / (1 + r)^((d_i - d_0)/365))</div>
-                            Esto penaliza o premia el <em>timing</em> de tus aportaciones.</li>
-                            <li><strong>Nota:</strong> Para activos con antigüedad < 1 año, se muestra el retorno simple para evitar anualizaciones astronómicas engañosas.</li>
+                            <li><strong>Detección de Tipos:</strong> Infiere si una cuenta es de Inversión o Tarjeta basándose en palabras clave en el nombre.</li>
+                            <li><strong>Algoritmo de Traspasos:</strong> Busca movimientos con el mismo importe (uno positivo, uno negativo) en la misma fecha y los fusiona automáticamente en un único movimiento de tipo "Traspaso" entre cuentas.</li>
+                            <li><strong>Formato:</strong> <code>FECHA;CUENTA;CONCEPTO;IMPORTE;DESCRIPCIÓN</code>.</li>
                         </ul>
                     </div>
                 </details>
-
+                
                 <details class="accordion help-accordion" style="margin-top: 8px;">
-                    <summary><strong>3. Estructura de Datos (JSON Backup)</strong> <span class="material-icons accordion__icon">expand_more</span></summary>
+                    <summary><strong>4. Lógica de Planificación (Recurrentes)</strong> <span class="material-icons accordion__icon">expand_more</span></summary>
                     <div class="accordion__content">
-                        <p>Al exportar un backup, obtienes un JSON plano con todas las colecciones. Puedes editarlo manualmente y reimportarlo.</p>
+                        <p>El sistema de recurrentes no crea movimientos "fantasma".</p>
                         <ul>
-                            <li><code>cuentas</code>: Contiene el flag <code>offBalance: true</code> para cuentas de la Contabilidad B.</li>
-                            <li><code>movimientos</code>: Vincula <code>cuentaId</code> y <code>conceptoId</code>. Los traspasos usan <code>cuentaOrigenId</code> y <code>cuentaDestinoId</code>.</li>
+                            <li><strong>Proyección:</strong> Calcula las fechas futuras basándose en la frecuencia (mensual, semanal, anual).</li>
+                            <li><strong>Ejecución:</strong> Cuando confirmas un recurrente pendiente, se crea un movimiento real en la colección <code>movimientos</code> y se avanza el puntero <code>nextDate</code> del recurrente. Esto mantiene el historial limpio y real.</li>
                         </ul>
                     </div>
                 </details>
 
-                <div class="help-card" style="margin-top: 20px; background-color: #1e1e1e; border-color: #333;">
-                    <div class="help-card__content">
-                        <h4 style="color: #fff;">⌨️ Atajos de Teclado (Power User)</h4>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-                            <div style="color: #aaa;"><code style="color: #fff; background: #333; padding: 2px 6px; border-radius: 4px;">Ctrl</code> + <code style="color: #fff; background: #333; padding: 2px 6px; border-radius: 4px;">K</code></div>
-                            <div style="color: #ccc;">Búsqueda Global Instantánea</div>
-                            <div style="color: #aaa;"><code style="color: #fff; background: #333; padding: 2px 6px; border-radius: 4px;">Esc</code></div>
-                            <div style="color: #ccc;">Cerrar Modales / Calculadora</div>
-                            <div style="color: #aaa;"><code style="color: #fff; background: #333; padding: 2px 6px; border-radius: 4px;">Enter</code></div>
-                            <div style="color: #ccc;">Siguiente campo (Formularios)</div>
-                        </div>
+                <div style="margin-top: 20px; padding: 15px; background: #1e1e1e; border-radius: 12px; border: 1px solid #333;">
+                    <h4 style="color: #fff; margin-top: 0;">⌨️ Power User Shortcuts</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-family: monospace; font-size: 0.8rem; color: #aaa;">
+                        <div>Ctrl + K</div><div>Buscador Global</div>
+                        <div>Esc</div><div>Cerrar Modales</div>
+                        <div>Enter</div><div>Siguiente Campo</div>
+                        <div>Long Press</div><div>Menú Contextual (Tarjetas)</div>
                     </div>
                 </div>
-
             </div>
         `;
     }
@@ -7530,17 +7498,16 @@ const showHelpModal = () => {
     showModal('help-modal');
 };
 
-// Función global para cambiar de pestaña (necesaria porque está en el onclick del HTML string)
+// Función global para el cambio de pestañas (necesaria para el onclick en el HTML string)
 window.switchHelpTab = (tabName) => {
-    // 1. Actualizar botones
     document.querySelectorAll('.help-tab-btn').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.querySelector(`.help-tab-btn[onclick="switchHelpTab('${tabName}')"]`);
-    if(activeBtn) activeBtn.classList.add('active');
-
-    // 2. Actualizar contenido
     document.querySelectorAll('.help-content-pane').forEach(pane => pane.classList.remove('active'));
-    const activePane = document.getElementById(`help-pane-${tabName}`);
-    if(activePane) activePane.classList.add('active');
+    
+    const btn = document.querySelector(`.help-tab-btn[onclick="switchHelpTab('${tabName}')"]`);
+    const pane = document.getElementById(`help-pane-${tabName}`);
+    
+    if (btn) btn.classList.add('active');
+    if (pane) pane.classList.add('active');
 };
 	const updateThemeIcon = () => {
     const themeBtn = select('theme-toggle-btn');
