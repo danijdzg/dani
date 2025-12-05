@@ -3008,46 +3008,80 @@ const renderBudgetTracking = async () => {
     let listHtml = '';
 
     if (incomeDetails.length > 0) {
-        listHtml += `<h4 style="margin-top: var(--sp-5);">Metas de Ingresos</h4>`;
+        listHtml += `<h4 style="margin-top: var(--sp-5); margin-bottom: var(--sp-2);">Metas de Ingresos</h4>`;
         listHtml += incomeDetails.sort((a, b) => (a.projected / (a.limit || 1)) - (b.projected / (b.limit || 1))).map(b => {
             const concepto = db.conceptos.find(c => c.id === b.conceptoId);
             const conceptoNombre = (concepto && concepto.nombre) || 'Concepto no encontrado';
+            
+            // --- HTML MEJORADO CON CLASES RESPONSIVAS ---
             return `
-            <div class="card" style="margin-bottom: var(--sp-3);"><div class="card__content" style="padding: var(--sp-3);">
-                <div style="display: grid; grid-template-columns: 80px 1fr; gap: var(--sp-4); align-items: center;">
-                    <div style="position: relative; width: 80px; height: 55px;"><canvas id="gauge-chart-${b.id}"></canvas><div style="position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); text-align: center; font-weight: 800; font-size: var(--fs-lg);">${b.pacePercentage.toFixed(0)}<span style="font-size: 0.7em;">%</span></div></div>
-                    <div>
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--sp-2);"><h4 style="font-size: var(--fs-base); font-weight: 700;">${conceptoNombre}</h4><span class="${b.status.color}" style="font-weight: 600; font-size: var(--fs-xs); display:flex; align-items:center; gap: 4px;">
-    <span class="material-icons" style="font-size: 14px;">${b.status.icon}</span>
-    <span>${b.status.text}</span>
-    <button class="icon-btn" data-action="show-help-topic" data-topic="pace" style="width: 18px; height: 18px; margin-left: 2px;">
-        <span class="material-icons" style="font-size: 14px;">help_outline</span>
-    </button>
-</span>
-                        <div style="font-size: var(--fs-sm);"><strong>Ingresado:</strong> ${formatCurrency(b.actual)} de ${formatCurrency(b.limit)}</div>
-                        <div style="font-size: var(--fs-sm); font-weight: 600;"><strong>Proyección:</strong> <span class="${b.projected >= b.limit ? 'text-positive' : 'text-danger'}">${formatCurrency(b.projected)}</span></div>
+            <div class="card" style="margin-bottom: var(--sp-3);">
+                <div class="card__content" style="padding: var(--sp-3);">
+                    <div class="budget-card-grid">
+                        <div class="budget-chart-wrapper">
+                            <canvas id="gauge-chart-${b.id}"></canvas>
+                            <div style="position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); text-align: center; font-weight: 800; font-size: var(--fs-lg); line-height:1;">
+                                ${b.pacePercentage.toFixed(0)}<span style="font-size: 0.6em;">%</span>
+                            </div>
+                        </div>
+                        <div class="budget-info-wrapper">
+                            <div class="budget-header-row">
+                                <h4 class="budget-title">${escapeHTML(conceptoNombre)}</h4>
+                                <span class="${b.status.color} budget-status-badge">
+                                    <span class="material-icons" style="font-size: 14px;">${b.status.icon}</span>
+                                    <span>${b.status.text}</span>
+                                </span>
+                            </div>
+                            <div class="budget-text-line">
+                                <strong>Ingresado:</strong> ${formatCurrency(b.actual)} / ${formatCurrency(b.limit)}
+                            </div>
+                            <div class="budget-text-line" style="font-weight: 600;">
+                                <strong>Proyección:</strong> 
+                                <span class="${b.projected >= b.limit ? 'text-positive' : 'text-danger'}">${formatCurrency(b.projected)}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div></div>`;
+            </div>`;
         }).join('');
     }
     
     if (expenseDetails.length > 0) {
-        listHtml += `<h4 style="margin-top: var(--sp-5);">Límites de Gasto</h4>`;
+        listHtml += `<h4 style="margin-top: var(--sp-5); margin-bottom: var(--sp-2);">Límites de Gasto</h4>`;
         listHtml += expenseDetails.sort((a, b) => (b.projected / (b.limit || 1)) - (a.projected / (a.limit || 1))).map(b => {
             const concepto = db.conceptos.find(c => c.id === b.conceptoId);
             const conceptoNombre = (concepto && concepto.nombre) || 'Concepto no encontrado';
+            
+            // --- HTML MEJORADO CON CLASES RESPONSIVAS ---
             return `
-            <div class="card" style="margin-bottom: var(--sp-3);"><div class="card__content" style="padding: var(--sp-3);">
-                <div style="display: grid; grid-template-columns: 80px 1fr; gap: var(--sp-4); align-items: center;">
-                    <div style="position: relative; width: 80px; height: 55px;"><canvas id="gauge-chart-${b.id}"></canvas><div style="position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); text-align: center; font-weight: 800; font-size: var(--fs-lg);">${b.pacePercentage.toFixed(0)}<span style="font-size: 0.7em;">%</span></div></div>
-                    <div>
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--sp-2);"><h4 style="font-size: var(--fs-base); font-weight: 700;">${conceptoNombre}</h4><span class="${b.status.color}" style="font-weight: 600; font-size: var(--fs-xs); display:flex; align-items:center; gap: 4px;"><span class="material-icons" style="font-size: 14px;">${b.status.icon}</span> ${b.status.text}</span></div>
-                        <div style="font-size: var(--fs-sm);"><strong>Gastado:</strong> ${formatCurrency(b.actual)} de ${formatCurrency(b.limit)}</div>
-                        <div style="font-size: var(--fs-sm); font-weight: 600;"><strong>Proyección:</strong> <span class="${b.projected > b.limit ? 'text-danger' : 'text-positive'}">${formatCurrency(b.projected)}</span></div>
+            <div class="card" style="margin-bottom: var(--sp-3);">
+                <div class="card__content" style="padding: var(--sp-3);">
+                    <div class="budget-card-grid">
+                        <div class="budget-chart-wrapper">
+                            <canvas id="gauge-chart-${b.id}"></canvas>
+                            <div style="position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); text-align: center; font-weight: 800; font-size: var(--fs-lg); line-height:1;">
+                                ${b.pacePercentage.toFixed(0)}<span style="font-size: 0.6em;">%</span>
+                            </div>
+                        </div>
+                        <div class="budget-info-wrapper">
+                            <div class="budget-header-row">
+                                <h4 class="budget-title">${escapeHTML(conceptoNombre)}</h4>
+                                <span class="${b.status.color} budget-status-badge">
+                                    <span class="material-icons" style="font-size: 14px;">${b.status.icon}</span> 
+                                    <span>${b.status.text}</span>
+                                </span>
+                            </div>
+                            <div class="budget-text-line">
+                                <strong>Gastado:</strong> ${formatCurrency(b.actual)} / ${formatCurrency(b.limit)}
+                            </div>
+                            <div class="budget-text-line" style="font-weight: 600;">
+                                <strong>Proyección:</strong> 
+                                <span class="${b.projected > b.limit ? 'text-danger' : 'text-positive'}">${formatCurrency(b.projected)}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div></div>`;
+            </div>`;
         }).join('');
     }
     

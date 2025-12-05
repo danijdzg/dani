@@ -4291,3 +4291,86 @@ body[data-theme="sunset-groove"] .hero-val-big {
         display: none; /* Lo ocultamos en esta vista compacta horizontal o lo integramos */
     }
 }
+/* ================================================================= */
+/* === MEJORA RESPONSIVA TARJETAS DE PRESUPUESTO (Anti-Recorte) === */
+/* ================================================================= */
+
+.budget-card-grid {
+    display: grid;
+    grid-template-columns: 80px 1fr; /* Diseño original: Gráfico | Texto */
+    gap: var(--sp-3);
+    align-items: center;
+}
+
+.budget-chart-wrapper {
+    position: relative;
+    width: 80px;
+    height: 55px;
+    flex-shrink: 0; /* Evita que el gráfico se aplaste */
+}
+
+.budget-info-wrapper {
+    min-width: 0; /* CRÍTICO: Permite que el texto se ajuste dentro del grid sin desbordar */
+    width: 100%;
+}
+
+.budget-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Alineado arriba para que si el título es largo no rompa el badge */
+    margin-bottom: var(--sp-2);
+    gap: 8px;
+    flex-wrap: wrap; /* Permite que el badge baje si no cabe */
+}
+
+.budget-title {
+    font-size: var(--fs-base);
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0;
+    word-break: break-word; /* Evita que palabras largas corten */
+}
+
+.budget-status-badge {
+    font-weight: 600;
+    font-size: var(--fs-xs);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    background-color: var(--c-surface-variant);
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+.budget-text-line {
+    font-size: var(--fs-sm);
+    line-height: 1.4;
+    margin-bottom: 2px;
+}
+
+/* --- ADAPTACIÓN PARA MÓVILES PEQUEÑOS (<380px) --- */
+@media (max-width: 380px) {
+    .budget-card-grid {
+        /* Cambiamos a diseño vertical para dar todo el ancho al texto */
+        grid-template-columns: 1fr; 
+        text-align: center;
+        gap: var(--sp-2);
+    }
+
+    .budget-chart-wrapper {
+        margin: 0 auto; /* Centramos el gráfico */
+    }
+
+    .budget-header-row {
+        justify-content: center; /* Centramos título y badge */
+        text-align: center;
+    }
+    
+    .budget-info-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+}
