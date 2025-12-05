@@ -4245,3 +4245,49 @@ body[data-theme="sunset-groove"] .hero-val-big {
     transform: scale(0.98);
     transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+/* ================================================================= */
+/* === MEJORA VISUAL PORTAFOLIO (Grid Responsivo) === */
+/* ================================================================= */
+
+.portfolio-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr; /* PC: 3 columnas en línea */
+    gap: var(--sp-3);
+    align-items: center;
+    text-align: center;
+}
+
+/* Diseño para Móviles */
+@media (max-width: 600px) {
+    .portfolio-stats-grid {
+        grid-template-columns: 1fr 1fr; /* Móvil: 2 columnas */
+        gap: var(--sp-2);
+    }
+    
+    /* El tercer elemento (Ganancia/Pérdida) baja y ocupa todo el ancho */
+    .portfolio-stats-grid > div:last-child {
+        grid-column: 1 / -1; /* Ocupar todas las columnas */
+        background-color: var(--c-surface-variant); /* Fondo sutil para destacar */
+        border-radius: 12px;
+        padding: 12px;
+        margin-top: 4px;
+        border: 1px solid var(--c-outline);
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* Ajuste específico para que el título y valor estén en línea en la tarjeta destacada */
+    .portfolio-stats-grid > div:last-child h4 {
+        margin-bottom: 0;
+        text-align: left;
+    }
+    .portfolio-stats-grid > div:last-child .kpi-item__value {
+        text-align: right;
+    }
+    /* Ocultar el porcentaje pequeño si ya se muestra grande o ajustarlo */
+    .portfolio-stats-grid > div:last-child .kpi-item__comparison {
+        display: none; /* Lo ocultamos en esta vista compacta horizontal o lo integramos */
+    }
+}
