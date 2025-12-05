@@ -4387,14 +4387,22 @@ async function calculateHistoricalIrrForGroup(accountIds) {
             const userEmailEl = select('config-user-email'); 
             if (userEmailEl && currentUser) userEmailEl.textContent = currentUser.email;  			
         };
-
-/* EN main.js - REEMPLAZO DE renderPanelPage */
+/* EN main.js - FUNCIÓN renderPanelPage CORREGIDA Y COMPLETA */
 
 const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // Colores
+    // --- CORRECCIÓN DEL ERROR: Definir las variables antes de usarlas ---
+    const hour = new Date().getHours();
+    let greeting = 'Buenas noches';
+    if (hour >= 5 && hour < 12) greeting = 'Buenos días';
+    else if (hour >= 12 && hour < 21) greeting = 'Buenas tardes';
+    
+    const userName = currentUser ? (currentUser.displayName || currentUser.email.split('@')[0]) : 'Piloto';
+    // -------------------------------------------------------------------
+
+    // Colores personalizados para las tarjetas
     const COLOR_AHORRO = '#00E5FF'; 
     const COLOR_COBERTURA = '#FFD60A'; 
     const COLOR_LIBERTAD = '#39FF14'; 
@@ -4449,7 +4457,7 @@ const renderPanelPage = async () => {
             </div>
 
             <div class="report-filters fade-in-up" style="background-color: var(--c-surface); padding: 6px 8px; border-radius: 12px; border: 1px solid var(--c-outline); display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-3);">
-                <span style="font-size: 0.75rem; font-weight: 600; color: var(--c-on-surface-secondary); margin-left: 8px;">Periodo</span>
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--c-on-surface-secondary); margin-left: 8px;">Periodo de análisis</span>
                 <select id="filter-periodo" class="form-select report-period-selector" style="font-size: 0.75rem; padding: 4px 24px 4px 10px; height: 32px; width: auto; background-color: var(--c-surface-variant); border: none; border-radius: 8px;">
                     <option value="mes-actual">Este Mes</option>
                     <option value="año-actual">Este Año</option>
