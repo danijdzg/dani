@@ -5923,6 +5923,12 @@ const scheduleDashboardUpdate = () => {
     if (dashboardUpdateDebounceTimer) clearTimeout(dashboardUpdateDebounceTimer);
     
     dashboardUpdateDebounceTimer = setTimeout(async () => {
+        const activePage = document.querySelector('.view--active');
+        if (!activePage || activePage.id !== PAGE_IDS.PANEL) return;
+
+        if (isDashboardRendering) return;
+        isDashboardRendering = true;
+
         try {
             const saldos = await getSaldos();
             const visibleAccounts = getVisibleAccounts();
@@ -5948,7 +5954,7 @@ const scheduleDashboardUpdate = () => {
             }
             const portfolioPerf = await calculatePortfolioPerformance();
             
-            // 3. Cálculos de Flujo (Movimientos)
+            // 3. Cálculos de Flujo
             const { current: currentMovs } = await getFilteredMovements(false);
             const visibleAccountIds = new Set(visibleAccounts.map(c => c.id));
             const { ingresos, gastos, saldoNeto } = calculateTotals(currentMovs, visibleAccountIds);
@@ -5958,55 +5964,29 @@ const scheduleDashboardUpdate = () => {
             const fiData = calculateFinancialIndependence(patrimonioTotal, efData.gastoMensualPromedio);
             const tasaAhorro = (ingresos > 0 && saldoNeto > 0) ? (saldoNeto / ingresos) * 100 : 0;
 
-            // --- ACTUALIZACIÓN UI (Mapeo al nuevo diseño) ---
+            // --- ACTUALIZACIÓN UI ---
 
-            // A. Hero Section
+            // A. Hero (Patrimonio)
             const kpiPatrimonio = select('kpi-patrimonio-neto-value');
             if (kpiPatrimonio) {
                 kpiPatrimonio.classList.remove('skeleton');
                 animateCountUp(kpiPatrimonio, patrimonioTotal);
             }
+            
+            // B. Grid de Activos
             const kpiLiq = select('kpi-liquidez-value');
-            if(kpiLiq) kpiLiq.textContent = formatCurrency(liquidezTotal);
+            if(kpiLiq) { kpiLiq.classList.remove('skeleton'); animateCountUp(kpiLiq, liquidezTotal); }
             
             const kpiInvTotal = select('kpi-inversion-total');
-            if(kpiInvTotal) kpiInvTotal.textContent = formatCurrency(capitalAportadoTotal);
+            if(kpiInvTotal) { kpiInvTotal.classList.remove('skeleton'); animateCountUp(kpiInvTotal, capitalAportadoTotal); }
 
-            // B. Tarjeta Flujo (Barras visuales)
-            const elIng = select('kpi-ingresos-value');
-            if (elIng) {
-                elIng.textContent = `+${formatCurrency(ingresos)}`;
-                select('kpi-gastos-value').textContent = `-${formatCurrency(Math.abs(gastos))}`;
-                
-                const elNet = select('kpi-saldo-neto-value');
-                elNet.textContent = formatCurrency(saldoNeto);
-                elNet.style.color = saldoNeto >= 0 ? 'var(--c-success)' : 'var(--c-danger)';
-
-                // Lógica de barras relativas (Visualización Pro)
-                const maxFlow = Math.max(ingresos, Math.abs(gastos)) || 1;
-                const pctIng = Math.round((ingresos / maxFlow) * 100);
-                const pctGas = Math.round((Math.abs(gastos) / maxFlow) * 100);
-                
-                select('bar-ingresos').style.width = `${pctIng}%`;
-                select('bar-gastos').style.width = `${pctGas}%`;
-            }
-
-            // C. Tarjeta Inversión
+            // C. Tarjeta Inversión (P&L y Rentabilidad)
             const kpiPnl = select('kpi-inversion-pnl');
             if (kpiPnl) {
                 kpiPnl.classList.remove('skeleton');
-                
-                // Formateamos con signo + si es positivo
                 const sign = pnlTotal >= 0 ? '+' : '';
                 kpiPnl.textContent = `${sign}${formatCurrency(pnlTotal)}`;
-                
-                // LÓGICA DE COLOR P&L CORREGIDA:
-                // Usamos 'pnl-value' para mantener el tamaño de letra y añadimos el color
-                if (pnlTotal >= 0) {
-                    kpiPnl.className = 'pnl-value text-positive'; // Verde
-                } else {
-                    kpiPnl.className = 'pnl-value text-negative'; // Rojo
-                }
+                kpiPnl.className = `status-value ${pnlTotal >= 0 ? 'text-positive' : 'text-negative'}`;
             }
 
             const kpiTir = select('kpi-inversion-pct');
@@ -6015,64 +5995,69 @@ const scheduleDashboardUpdate = () => {
                 const tir = portfolioPerf.pnlPorcentual || 0;
                 const signTir = tir >= 0 ? '+' : '';
                 kpiTir.textContent = `${signTir}${tir.toFixed(1)}%`;
-                
-                // Aplicamos también color a la TIR para coherencia visual
-                if (tir >= 0) {
-                    kpiTir.className = 'cockpit-val-xl text-positive';
-                } else {
-                    kpiTir.className = 'cockpit-val-xl text-negative';
-                }
+                kpiTir.className = `status-value ${tir >= 0 ? 'text-positive' : 'text-negative'}`;
             }
 
-            // D. Footer Salud (Actualizado con Colores Fijos)
+            // D. Flujo del Periodo (Solo Texto, SIN barras que causaban error)
+            const elIng = select('kpi-ingresos-value');
+            if (elIng) {
+                [select('kpi-ingresos-value'), select('kpi-gastos-value'), select('kpi-saldo-neto-value')].forEach(el => el?.classList.remove('skeleton'));
+                
+                select('kpi-ingresos-value').textContent = `+${formatCurrency(ingresos)}`;
+                select('kpi-gastos-value').textContent = `-${formatCurrency(Math.abs(gastos))}`;
+                
+                const elNet = select('kpi-saldo-neto-value');
+                elNet.textContent = formatCurrency(saldoNeto);
+                elNet.className = `status-value ${saldoNeto >= 0 ? 'text-positive' : 'text-negative'}`;
+            }
+
+            // E. Salud Financiera (Carrusel)
             
             // Ahorro
             const elAhorro = select('kpi-tasa-ahorro-value');
             if(elAhorro) {
+                elAhorro.classList.remove('skeleton');
                 elAhorro.textContent = `${tasaAhorro.toFixed(0)}%`;
-                select('tasa-ahorro-progress').style.width = `${Math.min(tasaAhorro, 100)}%`;
+                elAhorro.className = tasaAhorro >= 0 ? 'text-positive' : 'text-negative';
+                renderSavingsRateGauge('kpi-savings-rate-chart', tasaAhorro);
             }
 
-            // Cobertura (Texto Amarillo Fijo, Barra Dinámica)
+            // Cobertura
             const elRunway = select('health-runway-val');
-            const barRunway = select('health-runway-progress');
-            if(elRunway && barRunway) {
+            // CORRECCIÓN ID: Antes buscaba 'health-runway-progress', ahora el correcto 'health-runway-progress-bar'
+            const barRunway = select('health-runway-progress-bar'); 
+            
+            if(elRunway) {
+                elRunway.classList.remove('skeleton');
                 const meses = efData.mesesCobertura;
                 elRunway.textContent = isFinite(meses) ? (meses >= 100 ? '∞' : meses.toFixed(1)) : '∞';
                 
-                // Calculamos porcentaje sobre 6 meses máximo
-                let percentage = 0;
-                if (isFinite(meses)) {
-                    percentage = Math.min((meses / 6) * 100, 100);
-                } else {
-                    percentage = 100;
-                }
-                barRunway.style.width = `${percentage}%`;
-                
-                // 3. Color Semántico (Semáforo)
-                // < 3 meses: Rojo (Peligro)
-                // 3 - 5.9 meses: Amarillo (Precaución)
-                // >= 6 meses: Verde (Objetivo Cumplido)
-                if (meses >= 6) {
-                    barRunway.style.backgroundColor = 'var(--c-success)';
-                } else if (meses >= 3) {
-                    barRunway.style.backgroundColor = 'var(--c-warning)';
-                } else {
-                    barRunway.style.backgroundColor = 'var(--c-danger)';
+                if (barRunway) {
+                    let percentage = isFinite(meses) ? Math.min((meses / 6) * 100, 100) : 100;
+                    barRunway.style.width = `${percentage}%`;
+                    
+                    if (meses >= 6) barRunway.style.backgroundColor = 'var(--c-success)';
+                    else if (meses >= 3) barRunway.style.backgroundColor = 'var(--c-warning)';
+                    else barRunway.style.backgroundColor = 'var(--c-danger)';
                 }
             }
 
-            // Libertad (Texto y Barra Verde Fijo)
+            // Libertad
             const elFi = select('health-fi-val');
             const barFi = select('health-fi-progress-bar');
-            if(elFi && barFi) {
+            if(elFi) {
+                elFi.classList.remove('skeleton');
                 elFi.textContent = `${fiData.progresoFI.toFixed(1)}%`;
-                barFi.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
-                barFi.style.backgroundColor = 'var(--c-success)'; // Verde fijo
+                if (barFi) {
+                    barFi.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
+                    barFi.style.backgroundColor = 'var(--c-success)';
+                }
             }
 
         } catch (error) {
             console.error("Error actualizando cockpit:", error);
+        } finally {
+            isDashboardRendering = false;
         }
     }, 300);
 };
