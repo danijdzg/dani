@@ -6085,7 +6085,13 @@ const scheduleDashboardUpdate = () => {
 const updateDashboardData = async () => {
     const activePage = document.querySelector('.view--active');
     if (!activePage || activePage.id !== PAGE_IDS.PANEL) return;
-
+	
+	const hour = new Date().getHours();
+    let greeting = 'Buenas noches';
+    if (hour >= 5 && hour < 12) greeting = 'Buenos días';
+    else if (hour >= 12 && hour < 21) greeting = 'Buenas tardes';
+    const userName = currentUser ? (currentUser.displayName || currentUser.email.split('@')[0]) : 'Piloto';
+	
     if (isDashboardRendering) return;
     isDashboardRendering = true;
 
