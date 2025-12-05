@@ -4452,3 +4452,122 @@ body[data-theme="sunset-groove"] .hero-val-big {
 .help-content-pane.active {
     display: block;
 }
+/* ================================================================= */
+/* === PANEL EJECUTIVO COMPACTO (Sin Gráficos) === */
+/* ================================================================= */
+
+/* Contenedor principal */
+.dashboard-executive {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    padding-bottom: 100px;
+}
+
+/* Cabecera con Filtros (Limpia) */
+.dashboard-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: var(--sp-2);
+}
+
+/* Tarjeta de Datos Genérica */
+.info-card {
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-outline);
+    border-radius: 16px;
+    padding: 20px;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Títulos de las tarjetas con Botón de Ayuda integrado */
+.info-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--c-outline);
+    padding-bottom: 10px;
+}
+
+.info-card__title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--c-on-surface-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* KPI Principal (Número Grande) */
+.big-kpi-display {
+    text-align: center;
+    padding: 10px 0;
+}
+.big-kpi-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -1px;
+}
+.big-kpi-label {
+    font-size: 0.8rem;
+    color: var(--c-on-surface-secondary);
+    margin-top: 5px;
+}
+
+/* Filas de Métricas (Lista de datos) */
+.metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--c-outline);
+}
+.metric-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.metric-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--c-on-surface);
+}
+
+.metric-value {
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: right;
+}
+.metric-subtext {
+    font-size: 0.7rem;
+    color: var(--c-on-surface-tertiary);
+    display: block;
+}
+
+/* Grid para tarjetas pequeñas */
+.executive-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-3);
+}
+
+@media (max-width: 400px) {
+    .executive-grid {
+        grid-template-columns: 1fr; /* Una columna en móviles muy estrechos */
+    }
+}
+
+/* Ajustes de color semántico */
+.val-pos { color: var(--c-success); }
+.val-neg { color: var(--c-danger); }
+.val-neu { color: var(--c-info); }
+.val-warn { color: var(--c-warning); }
