@@ -6088,12 +6088,13 @@ const updateDashboardData = async () => {
     isDashboardRendering = true;
 
     try {
+        // 1. OBTENER DATOS
         const { current } = await getFilteredMovements(true);
         const saldos = await getSaldos();
         const visibleAccounts = getVisibleAccounts();
         const visibleAccountIds = new Set(Object.keys(saldos));
         
-        // Totales Periodo
+        // 2. CALCULAR TOTALES DEL PERIODO
         let ingresos = 0, gastos = 0, saldoNeto = 0;
         current.forEach(m => {
             const amount = calculateMovementAmount(m, visibleAccountIds);
@@ -6101,11 +6102,14 @@ const updateDashboardData = async () => {
             else gastos += amount;
             saldoNeto += amount;
         });
-        const tasaAhorroActual = ingresos > 0 ? (saldoNeto / ingresos) * 100 : (saldoNeto < 0 ? -100 : 0);
 
-        // Situación Patrimonial
+        // Cálculo de Tasa de Ahorro
+        const tasaAhorroActual = ingresos > 0 ? (saldoNeto / ingresos) * 100 : (saldoNeto < 0 ? -100 : 0);
+        
+        // 3. CALCULAR SITUACIÓN PATRIMONIAL
         let totalLiquidez = 0;
         let patrimonioNeto = 0;
+
         visibleAccounts.forEach(c => {
             const saldo = saldos[c.id] || 0;
             patrimonioNeto += saldo;
@@ -6115,8 +6119,6 @@ const updateDashboardData = async () => {
         });
 
         const portfolioPerf = await calculatePortfolioPerformance(); 
-        
-        // Salud Financiera
         const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
         const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
 
@@ -6158,38 +6160,44 @@ const updateDashboardData = async () => {
 
         // 3. Flujo Periodo
         const elIng = select('kpi-ingresos-value');
+        const elGas = select('kpi-gastos-value');
+        const elNet = select('kpi-saldo-neto-value');
         if (elIng) {
-            [elIng, select('kpi-gastos-value'), select('kpi-saldo-neto-value')].forEach(el => el.classList.remove('skeleton'));
+            [elIng, elGas, elNet].forEach(el => el.classList.remove('skeleton'));
             animateCountUp(elIng, ingresos);
-            animateCountUp(select('kpi-gastos-value'), gastos);
-            animateCountUp(select('kpi-saldo-neto-value'), saldoNeto);
-            select('kpi-saldo-neto-value').className = `status-value ${saldoNeto >= 0 ? 'text-positive' : 'text-negative'}`;
+            animateCountUp(elGas, gastos);
+            animateCountUp(elNet, saldoNeto);
+            elNet.className = saldoNeto >= 0 ? 'text-positive' : 'text-negative';
         }
 
-        // 4. Salud Financiera (Actualización de Barras)
+        // 4. SALUD FINANCIERA (Barras de Progreso)
         
-        // A. Ahorro (Barra Azul)
+        // A. AHORRO (CORREGIDO: Ahora usa barra, no gráfico circular)
         const kpiAhorro = select('kpi-tasa-ahorro-value');
-        const barAhorro = select('tasa-ahorro-progress-bar');
+        const barAhorro = select('tasa-ahorro-progress-bar'); // Buscamos la barra por ID
+        
         if (kpiAhorro && barAhorro) {
             kpiAhorro.classList.remove('skeleton');
             kpiAhorro.textContent = `${tasaAhorroActual.toFixed(0)}%`;
-            // El ancho se limita entre 0 y 100
-            barAhorro.style.width = `${Math.max(0, Math.min(tasaAhorroActual, 100))}%`;
+            
+            // Calculamos el ancho: Mínimo 0%, Máximo 100%
+            const widthPct = Math.max(0, Math.min(tasaAhorroActual, 100));
+            barAhorro.style.width = `${widthPct}%`;
         }
         
-        // B. Cobertura (Barra Amarilla)
+        // B. Cobertura
         const kpiRunway = select('health-runway-val');
         const barRunway = select('health-runway-progress-bar');
         if (kpiRunway && barRunway) {
             kpiRunway.classList.remove('skeleton');
             const meses = efData.mesesCobertura;
             kpiRunway.textContent = isFinite(meses) ? (meses >= 100 ? '∞' : meses.toFixed(1)) : '∞';
+            
             const pct = isFinite(meses) ? Math.min((meses / 6) * 100, 100) : 100;
             barRunway.style.width = `${pct}%`;
         }
         
-        // C. Libertad (Barra Verde)
+        // C. Libertad
         const kpiFi = select('health-fi-val');
         const barFi = select('health-fi-progress-bar');
         if (kpiFi && barFi) {
