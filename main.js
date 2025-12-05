@@ -4398,11 +4398,6 @@ const renderPanelPage = async () => {
     else if (hour >= 12 && hour < 21) greeting = 'Buenas tardes';
     const userName = currentUser ? (currentUser.displayName || currentUser.email.split('@')[0]) : 'Piloto';
 
-    // Colores personalizados solicitados
-    const COLOR_AHORRO = '#00E5FF'; // Azul Claro Brillante
-    const COLOR_COBERTURA = '#FFD60A'; // Amarillo
-    const COLOR_LIBERTAD = '#39FF14'; // Verde
-
     container.innerHTML = `
         <div style="padding: 0 var(--sp-2) var(--sp-4);">
             
@@ -4412,29 +4407,42 @@ const renderPanelPage = async () => {
             </div>
 
             <div class="hero-card" style="padding: 25px 20px; text-align: center; margin-bottom: var(--sp-3); min-height: auto; border: 1px solid var(--c-primary); box-shadow: 0 4px 20px rgba(0, 179, 77, 0.15);">
-                <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 1.5px; margin-bottom: 4px;">Patrimonio Total</div>
+                <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 1.5px; margin-bottom: 4px; display:flex; justify-content:center; align-items:center;">
+                    Patrimonio Total 
+                    <button class="help-btn" data-action="show-kpi-help" data-kpi="patrimonio" style="margin-left:6px;">?</button>
+                </div>
                 <div id="kpi-patrimonio-neto-value" class="hero-value kpi-resaltado-azul skeleton" data-current-value="0" style="font-size: 2.6rem; margin-bottom: 0;">0,00 €</div>
             </div>
 
             <div class="status-grid" style="gap: 8px; margin-bottom: var(--sp-4);">
+                
                 <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
                     <div class="status-label" style="margin-bottom: 4px;">
                         <span class="material-icons" style="font-size: 16px; color: var(--c-info);">account_balance_wallet</span> Liquidez
+                        <button class="help-btn" data-action="show-kpi-help" data-kpi="liquidez">?</button>
                     </div>
                     <div id="kpi-liquidez-value" class="status-value skeleton" style="font-size: 1.1rem;">0,00 €</div>
                 </div>
+
                 <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
                     <div class="status-label" style="margin-bottom: 4px;">
                         <span class="material-icons" style="font-size: 16px; color: #BF5AF2;">auto_graph</span> Inversiones
+                        <button class="help-btn" data-action="show-kpi-help" data-kpi="invertido">?</button>
                     </div>
                     <div id="kpi-inversion-total" class="status-value skeleton" style="font-size: 1.1rem;">0,00 €</div>
                 </div>
+
                 <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
-                    <div class="status-label" style="margin-bottom: 4px;">Ganancia</div>
+                    <div class="status-label" style="margin-bottom: 4px;">
+                         Ganancia <button class="help-btn" data-action="show-kpi-help" data-kpi="pnl">?</button>
+                    </div>
                     <div id="kpi-inversion-pnl" class="status-value skeleton" style="font-size: 1.1rem;">+0,00 €</div>
                 </div>
+
                 <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
-                    <div class="status-label" style="margin-bottom: 4px;">Rentabilidad</div>
+                    <div class="status-label" style="margin-bottom: 4px;">
+                         Rentabilidad <button class="help-btn" data-action="show-kpi-help" data-kpi="rentabilidad">?</button>
+                    </div>
                     <div id="kpi-inversion-pct" class="status-value skeleton" style="font-size: 1.1rem;">0.00%</div>
                 </div>
             </div>
@@ -4456,15 +4464,21 @@ const renderPanelPage = async () => {
             <div class="card fade-in-up" style="padding: 16px; border-radius: 20px; margin-bottom: var(--sp-4); border: 1px solid var(--c-outline);">
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
                     <div>
-                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Ingresos</div>
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
+                            Ingresos <button class="help-btn" data-action="show-kpi-help" data-kpi="ingresos" style="width:12px; height:12px; font-size:9px;">?</button>
+                        </div>
                         <div id="kpi-ingresos-value" class="text-positive skeleton" style="font-size: 1rem; font-weight: 800;">+0 €</div>
                     </div>
                     <div style="border-left: 1px solid var(--c-outline); border-right: 1px solid var(--c-outline);">
-                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Gastos</div>
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
+                            Gastos <button class="help-btn" data-action="show-kpi-help" data-kpi="gastos" style="width:12px; height:12px; font-size:9px;">?</button>
+                        </div>
                         <div id="kpi-gastos-value" class="text-negative skeleton" style="font-size: 1rem; font-weight: 800;">-0 €</div>
                     </div>
                     <div>
-                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Neto</div>
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
+                            Neto <button class="help-btn" data-action="show-kpi-help" data-kpi="neto" style="width:12px; height:12px; font-size:9px;">?</button>
+                        </div>
                         <div id="kpi-saldo-neto-value" class="skeleton" style="font-size: 1rem; font-weight: 800;">0 €</div>
                     </div>
                 </div>
@@ -4474,54 +4488,59 @@ const renderPanelPage = async () => {
             
             <div style="display: flex; flex-direction: column; gap: var(--sp-3); padding-bottom: var(--sp-5);">
                 
-                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid ${COLOR_AHORRO}; box-shadow: 0 0 10px ${COLOR_AHORRO}20;">
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid #00E5FF; box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="material-icons" style="font-size: 28px; color: ${COLOR_AHORRO}; background: ${COLOR_AHORRO}15; padding: 6px; border-radius: 10px;">savings</span>
+                            <span class="material-icons" style="font-size: 28px; color: #00E5FF; background: rgba(0, 229, 255, 0.1); padding: 6px; border-radius: 10px;">savings</span>
                             <div>
-                                <div style="font-size: 0.8rem; font-weight: 700; color: ${COLOR_AHORRO};">Ahorro</div>
-                                <div style="font-size: 0.7rem; color: ${COLOR_AHORRO}; opacity: 0.8;">De tus ingresos netos</div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: #00E5FF;">
+                                    Ahorro <button class="help-btn" data-action="show-kpi-help" data-kpi="tasa_ahorro" style="color:#00E5FF;">?</button>
+                                </div>
+                                <div style="font-size: 0.7rem; color: #00E5FF; opacity: 0.8;">De tus ingresos netos</div>
                             </div>
                         </div>
-                        <div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: ${COLOR_AHORRO};">0%</div>
+                        <div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: #00E5FF;">0%</div>
                     </div>
-                    <div class="mini-progress-bar" style="height: 8px; background-color: ${COLOR_AHORRO}30; margin-top: 4px;">
-                        <div id="tasa-ahorro-progress-bar" class="mini-progress-value" style="width: 0%; background-color: ${COLOR_AHORRO};"></div>
+                    <div class="mini-progress-bar" style="height: 8px; background-color: rgba(0, 229, 255, 0.2); margin-top: 4px;">
+                        <div id="tasa-ahorro-progress-bar" class="mini-progress-value" style="width: 0%; background-color: #00E5FF;"></div>
                     </div>
                 </div>
 
-                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid ${COLOR_COBERTURA}; box-shadow: 0 0 10px ${COLOR_COBERTURA}20;">
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid #FFD60A; box-shadow: 0 0 10px rgba(255, 214, 10, 0.1);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="material-icons" style="font-size: 28px; color: ${COLOR_COBERTURA}; background: ${COLOR_COBERTURA}15; padding: 6px; border-radius: 10px;">shield</span>
+                            <span class="material-icons" style="font-size: 28px; color: #FFD60A; background: rgba(255, 214, 10, 0.1); padding: 6px; border-radius: 10px;">shield</span>
                             <div>
-                                <div style="font-size: 0.8rem; font-weight: 700; color: ${COLOR_COBERTURA};">Cobertura</div>
-                                <div style="font-size: 0.7rem; color: ${COLOR_COBERTURA}; opacity: 0.8;">Meta: 6 meses</div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: #FFD60A;">
+                                    Cobertura <button class="help-btn" data-action="show-kpi-help" data-kpi="cobertura" style="color:#FFD60A;">?</button>
+                                </div>
+                                <div style="font-size: 0.7rem; color: #FFD60A; opacity: 0.8;">Meta: 6 meses</div>
                             </div>
                         </div>
-                        <div id="health-runway-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: ${COLOR_COBERTURA};">0 Meses</div>
+                        <div id="health-runway-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: #FFD60A;">0 Meses</div>
                     </div>
-                    <div class="mini-progress-bar" style="height: 8px; background-color: ${COLOR_COBERTURA}30; margin-top: 4px;">
-                        <div id="health-runway-progress-bar" class="mini-progress-value" style="width: 0%; background-color: ${COLOR_COBERTURA};"></div>
+                    <div class="mini-progress-bar" style="height: 8px; background-color: rgba(255, 214, 10, 0.2); margin-top: 4px;">
+                        <div id="health-runway-progress-bar" class="mini-progress-value" style="width: 0%; background-color: #FFD60A;"></div>
                     </div>
                 </div>
 
-                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid ${COLOR_LIBERTAD}; box-shadow: 0 0 10px ${COLOR_LIBERTAD}20;">
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid #39FF14; box-shadow: 0 0 10px rgba(57, 255, 20, 0.1);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="material-icons" style="font-size: 28px; color: ${COLOR_LIBERTAD}; background: ${COLOR_LIBERTAD}15; padding: 6px; border-radius: 10px;">flag</span>
+                            <span class="material-icons" style="font-size: 28px; color: #39FF14; background: rgba(57, 255, 20, 0.1); padding: 6px; border-radius: 10px;">flag</span>
                             <div>
-                                <div style="font-size: 0.8rem; font-weight: 700; color: ${COLOR_LIBERTAD};">Libertad</div>
-                                <div style="font-size: 0.7rem; color: ${COLOR_LIBERTAD}; opacity: 0.8;">Meta: Vivir de rentas</div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: #39FF14;">
+                                    Libertad <button class="help-btn" data-action="show-kpi-help" data-kpi="libertad" style="color:#39FF14;">?</button>
+                                </div>
+                                <div style="font-size: 0.7rem; color: #39FF14; opacity: 0.8;">Meta: Vivir de rentas</div>
                             </div>
                         </div>
-                        <div id="health-fi-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: ${COLOR_LIBERTAD};">0.0%</div>
+                        <div id="health-fi-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: #39FF14;">0.0%</div>
                     </div>
-                    <div class="mini-progress-bar" style="height: 8px; background-color: ${COLOR_LIBERTAD}30; margin-top: 4px;">
-                        <div id="health-fi-progress-bar" class="mini-progress-value" style="width: 0%; background-color: ${COLOR_LIBERTAD};"></div>
+                    <div class="mini-progress-bar" style="height: 8px; background-color: rgba(57, 255, 20, 0.2); margin-top: 4px;">
+                        <div id="health-fi-progress-bar" class="mini-progress-value" style="width: 0%; background-color: #39FF14;"></div>
                     </div>
                 </div>
-
             </div>
         </div>
         
