@@ -10243,7 +10243,6 @@ const applyInvestmentItemInteractions = (containerElement) => {
     const investmentItems = containerElement.querySelectorAll('[data-action="view-account-details"]');
 
     investmentItems.forEach(item => {
-        // Evitamos duplicar listeners si ya se aplicaron
         if (item.dataset.longPressApplied) return;
         item.dataset.longPressApplied = 'true';
 
@@ -10252,8 +10251,8 @@ const applyInvestmentItemInteractions = (containerElement) => {
         let longPressTriggered = false;
 
         const startHandler = (e) => {
-            // Detección segura de coordenadas (Táctil o Ratón)
-            const point = (e.touches && e.touches.length > 0) ? e.touches[0] : e;
+            // Soporte híbrido Touch/Mouse
+            const point = (e.type.includes('touch') && e.touches && e.touches.length > 0) ? e.touches[0] : e;
             
             startX = point.clientX;
             startY = point.clientY;
@@ -10270,9 +10269,10 @@ const applyInvestmentItemInteractions = (containerElement) => {
         const moveHandler = (e) => {
             if (!longPressTimer) return;
             
-            // CORRECCIÓN DEL ERROR AQUÍ:
-            const point = (e.touches && e.touches.length > 0) ? e.touches[0] : e;
+            // CORRECCIÓN DEL ERROR: Verificamos tipo de evento antes de buscar touches
+            const point = (e.type.includes('touch') && e.touches && e.touches.length > 0) ? e.touches[0] : e;
             
+            // Si el dedo se mueve más de 10px, cancelamos la pulsación larga (es un scroll)
             if (Math.abs(point.clientX - startX) > 10 || Math.abs(point.clientY - startY) > 10) {
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
@@ -10287,12 +10287,12 @@ const applyInvestmentItemInteractions = (containerElement) => {
             }
         };
         
-        // Listeners Táctiles
+        // Eventos Táctiles
         item.addEventListener('touchstart', startHandler, { passive: true });
         item.addEventListener('touchmove', moveHandler, { passive: true });
         item.addEventListener('touchend', endHandler);
         
-        // Listeners Ratón
+        // Eventos Ratón (PC)
         item.addEventListener('mousedown', startHandler);
         item.addEventListener('mousemove', moveHandler);
         item.addEventListener('mouseup', endHandler);
