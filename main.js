@@ -4389,6 +4389,8 @@ async function calculateHistoricalIrrForGroup(accountIds) {
         };
 		
 
+/* EN main.js - REEMPLAZO DE renderPanelPage CON BOTONES DE AYUDA */
+
 const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
@@ -4408,7 +4410,10 @@ const renderPanelPage = async () => {
             </div>
 
             <div class="hero-card" style="padding: 25px 20px; text-align: center; margin-bottom: var(--sp-3); min-height: auto; border: 1px solid var(--c-primary); box-shadow: 0 4px 20px rgba(0, 179, 77, 0.15);">
-                <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 1.5px; margin-bottom: 4px;">Patrimonio Total</div>
+                <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 1.5px; margin-bottom: 4px; display:flex; justify-content:center; align-items:center;">
+                    Patrimonio Total 
+                    <button class="help-btn" data-action="show-kpi-help" data-kpi="patrimonio" style="margin-left:6px;">?</button>
+                </div>
                 <div id="kpi-patrimonio-neto-value" class="hero-value kpi-resaltado-azul skeleton" data-current-value="0" style="font-size: 2.6rem; margin-bottom: 0;">0,00 €</div>
             </div>
 
@@ -4417,6 +4422,7 @@ const renderPanelPage = async () => {
                 <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
                     <div class="status-label" style="margin-bottom: 4px;">
                         <span class="material-icons" style="font-size: 16px; color: var(--c-info);">account_balance_wallet</span> Liquidez
+                        <button class="help-btn" data-action="show-kpi-help" data-kpi="liquidez">?</button>
                     </div>
                     <div id="kpi-liquidez-value" class="status-value skeleton" style="font-size: 1.1rem;">0,00 €</div>
                 </div>
@@ -4424,20 +4430,21 @@ const renderPanelPage = async () => {
                 <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
                     <div class="status-label" style="margin-bottom: 4px;">
                         <span class="material-icons" style="font-size: 16px; color: #BF5AF2;">auto_graph</span> Inversiones
+                        <button class="help-btn" data-action="show-kpi-help" data-kpi="invertido">?</button>
                     </div>
                     <div id="kpi-inversion-total" class="status-value skeleton" style="font-size: 1.1rem;">0,00 €</div>
                 </div>
 
                 <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
                     <div class="status-label" style="margin-bottom: 4px;">
-                         Ganancia
+                         Ganancia <button class="help-btn" data-action="show-kpi-help" data-kpi="pnl">?</button>
                     </div>
                     <div id="kpi-inversion-pnl" class="status-value skeleton" style="font-size: 1.1rem;">+0,00 €</div>
                 </div>
 
                 <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
                     <div class="status-label" style="margin-bottom: 4px;">
-                         Rentabilidad
+                         Rentabilidad <button class="help-btn" data-action="show-kpi-help" data-kpi="rentabilidad">?</button>
                     </div>
                     <div id="kpi-inversion-pct" class="status-value skeleton" style="font-size: 1.1rem;">0.00%</div>
                 </div>
@@ -4460,69 +4467,68 @@ const renderPanelPage = async () => {
             <div class="card fade-in-up" style="padding: 16px; border-radius: 20px; margin-bottom: var(--sp-4); border: 1px solid var(--c-outline);">
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
                     <div>
-                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Ingresos</div>
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
+                            Ingresos <button class="help-btn" data-action="show-kpi-help" data-kpi="ingresos" style="width:12px; height:12px; font-size:9px;">?</button>
+                        </div>
                         <div id="kpi-ingresos-value" class="text-positive skeleton" style="font-size: 1rem; font-weight: 800;">+0 €</div>
                     </div>
                     <div style="border-left: 1px solid var(--c-outline); border-right: 1px solid var(--c-outline);">
-                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Gastos</div>
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
+                            Gastos <button class="help-btn" data-action="show-kpi-help" data-kpi="gastos" style="width:12px; height:12px; font-size:9px;">?</button>
+                        </div>
                         <div id="kpi-gastos-value" class="text-negative skeleton" style="font-size: 1rem; font-weight: 800;">-0 €</div>
                     </div>
                     <div>
-                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Neto</div>
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
+                            Neto <button class="help-btn" data-action="show-kpi-help" data-kpi="neto" style="width:12px; height:12px; font-size:9px;">?</button>
+                        </div>
                         <div id="kpi-saldo-neto-value" class="skeleton" style="font-size: 1rem; font-weight: 800;">0 €</div>
                     </div>
                 </div>
             </div>
 
             <div class="section-header">Salud Financiera</div>
-            
-            <div style="display: flex; flex-direction: column; gap: var(--sp-3); padding-bottom: var(--sp-5);">
+            <div class="horizontal-snap-container">
+                <div class="snap-card">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <div>
+                            <div style="font-size:0.7rem; font-weight:700; color:var(--c-on-surface-secondary); margin-bottom:2px; text-transform:uppercase;">
+                                Ahorro <button class="help-btn" data-action="show-kpi-help" data-kpi="tasa_ahorro" style="width:14px; height:14px; font-size:9px;">?</button>
+                            </div>
+                            <div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size:1.5rem; font-weight:800;">0%</div>
+                        </div>
+                        <div style="width: 32px; height: 32px;"><canvas id="kpi-savings-rate-chart"></canvas></div>
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-top: auto;">De ingresos netos</div>
+                </div>
                 
-                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 36px; height: 36px;"><canvas id="kpi-savings-rate-chart"></canvas></div>
-                            <div>
-                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Tasa de Ahorro</div>
-                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">De tus ingresos netos</div>
+                <div class="snap-card">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <div>
+                            <div style="font-size:0.7rem; font-weight:700; color:var(--c-on-surface-secondary); margin-bottom:2px; text-transform:uppercase;">
+                                Cobertura <button class="help-btn" data-action="show-kpi-help" data-kpi="cobertura" style="width:14px; height:14px; font-size:9px;">?</button>
                             </div>
+                            <div id="health-runway-val" class="skeleton" style="font-size:1.5rem; font-weight:800; color: var(--c-success);">0 Meses</div>
                         </div>
-                        <div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size: 1.4rem; font-weight: 800;">0%</div>
+                        <span class="material-icons" style="font-size: 24px; color: var(--c-success); opacity: 0.2;">shield</span>
                     </div>
+                    <div class="mini-progress-bar"><div id="health-runway-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-success);"></div></div>
+                    <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-top: 6px;">Meta: 6 meses</div>
                 </div>
-
-                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="material-icons" style="font-size: 28px; color: var(--c-success); background: rgba(0, 179, 77, 0.1); padding: 6px; border-radius: 10px;">shield</span>
-                            <div>
-                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Cobertura</div>
-                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">Meta: 6 meses</div>
+                
+                <div class="snap-card">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <div>
+                            <div style="font-size:0.7rem; font-weight:700; color:var(--c-on-surface-secondary); margin-bottom:2px; text-transform:uppercase;">
+                                Libertad <button class="help-btn" data-action="show-kpi-help" data-kpi="libertad" style="width:14px; height:14px; font-size:9px;">?</button>
                             </div>
+                            <div id="health-fi-val" class="skeleton" style="font-size:1.5rem; font-weight:800; color: var(--c-warning);">0.0%</div>
                         </div>
-                        <div id="health-runway-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: var(--c-success);">0 Meses</div>
+                        <span class="material-icons" style="font-size: 24px; color: var(--c-warning); opacity: 0.2;">flag</span>
                     </div>
-                    <div class="mini-progress-bar" style="height: 8px; background-color: var(--c-surface-variant); margin-top: 4px;">
-                        <div id="health-runway-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-success);"></div>
-                    </div>
+                    <div class="mini-progress-bar"><div id="health-fi-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-warning);"></div></div>
+                    <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-top: 6px;">Meta: Vivir de rentas</div>
                 </div>
-
-                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="material-icons" style="font-size: 28px; color: var(--c-warning); background: rgba(255, 214, 10, 0.1); padding: 6px; border-radius: 10px;">flag</span>
-                            <div>
-                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Libertad Financiera</div>
-                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">Meta: Vivir de rentas</div>
-                            </div>
-                        </div>
-                        <div id="health-fi-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: var(--c-warning);">0.0%</div>
-                    </div>
-                    <div class="mini-progress-bar" style="height: 8px; background-color: var(--c-surface-variant); margin-top: 4px;">
-                        <div id="health-fi-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-warning);"></div>
-                    </div>
-                </div>
-
             </div>
         </div>
         
@@ -7362,162 +7368,89 @@ const handleSaveValoracion = async (form, btn) => {
     }
 };
 
+/* EN main.js - REEMPLAZO DE showHelpModal (ESTILO NARRATIVO AMIGABLE) */
+
 const showHelpModal = () => {
     const titleEl = select('help-modal-title');
     const bodyEl = select('help-modal-body');
 
-    if (titleEl) {
-        // Título limpio, dejamos el protagonismo al contenido
-        titleEl.innerHTML = 'Centro de Conocimiento';
-    }
+    if (titleEl) titleEl.innerHTML = '<span class="material-icons" style="color:var(--c-primary); vertical-align:bottom; margin-right:8px;">auto_stories</span> El Cuento de tus Cuentas';
 
     if (bodyEl) {
         bodyEl.innerHTML = `
-            <div class="help-hero">
-                <span class="material-icons help-hero__icon">smart_toy</span>
-                <h2 style="margin: 10px 0 5px;">Hola, soy aiDANaI</h2>
-                <p style="color: var(--c-on-surface-secondary); max-width: 80%; margin: 0 auto;">
-                    Tu asistente financiero personal. No soy un banco, soy tu herramienta para dominar tu dinero.
+            <div style="text-align: center; padding-bottom: 20px;">
+                <p style="font-size: 1.1rem; color: var(--c-on-surface); line-height: 1.6;">
+                    ¡Hola! 👋 Imagina que esta aplicación es una libreta mágica que vive en tu bolsillo. <br>
+                    No necesitas ser un experto en bancos para usarla. <br><strong>Aquí te cuento la historia de cómo funciona:</strong>
                 </p>
             </div>
 
-            <div class="help-section-title">
-                <span class="material-icons text-primary">school</span> Conceptos Básicos
+            <div class="help-card">
+                <div class="help-card__icon" style="background: #e3f2fd; color: #1976d2;"><span class="material-icons">menu_book</span></div>
+                <div class="help-card__content">
+                    <h4>Capítulo 1: El Diario</h4>
+                    <p>Imagina que cada vez que compras el pan o cobras la nómina, lo apuntas en una hoja. Eso es el <strong>Diario</strong>.</p>
+                    <p style="margin-top:8px;">
+                        Simplemente pulsa el botón gigante <strong>+</strong> y dile a la app: 
+                        <em>"He gastado 20€ en Comida"</em>. ¡Y listo! La app lo recuerda para siempre.
+                    </p>
+                </div>
             </div>
 
             <div class="help-card">
-                <div class="help-card__icon"><span class="material-icons">swap_horiz</span></div>
+                <div class="help-card__icon" style="background: #e8f5e9; color: #2e7d32;"><span class="material-icons">speed</span></div>
                 <div class="help-card__content">
-                    <h4>El Multiverso (Modo A / B)</h4>
-                    <p>Tienes dos contabilidades separadas que nunca se mezclan.</p>
-                    <ul style="margin-top: 8px; padding-left: 20px; font-size: 0.85rem; color: var(--c-on-surface-secondary);">
-                        <li><strong>🅰️ Modo A:</strong> Tu vida oficial. Banco, nómina, luz, agua.</li>
-                        <li><strong>🅱️ Modo B:</strong> Tu "caja B", ahorros secretos o hucha de efectivo.</li>
+                    <h4>Capítulo 2: El Tablero de Mando (Panel)</h4>
+                    <p>Si el Diario es tu libreta, el <strong>Panel</strong> es tu espejo mágico. Te responde a tres preguntas clave:</p>
+                    <ul style="margin-top:8px; padding-left:15px;">
+                        <li><strong>¿Cuánto tengo?</strong> (Patrimonio Total)</li>
+                        <li><strong>¿Tengo dinero suelto?</strong> (Liquidez)</li>
+                        <li><strong>¿Me he pasado este mes?</strong> (Flujo de Caja)</li>
                     </ul>
-                    <div class="help-pro-tip">
-                        <strong>Truco:</strong> Pulsa el botón "A" o "B" arriba a la izquierda para cambiar de dimensión al instante.
-                    </div>
+                    <p style="margin-top:8px; font-style:italic; font-size:0.85rem;">
+                        💡 Si ves algo que no entiendes (como "Cobertura" o "Rentabilidad"), verás un pequeño botón <strong>?</strong> al lado. Púlsalo y te lo explicaré al oído.
+                    </p>
                 </div>
             </div>
 
             <div class="help-card">
-                <div class="help-card__icon"><span class="material-icons">wifi_off</span></div>
+                <div class="help-card__icon" style="background: #f3e5f5; color: #7b1fa2;"><span class="material-icons">inventory_2</span></div>
                 <div class="help-card__content">
-                    <h4>Tecnología 100% Offline</h4>
-                    <p>Esta app vive en tu dispositivo. Si se va internet, <strong>sigue funcionando</strong>. Puedes añadir gastos en un avión o en un búnker. Cuando vuelva la conexión, yo me encargo de sincronizar todo.</p>
-                </div>
-            </div>
-
-            <div class="help-section-title">
-                <span class="material-icons text-info">map</span> Tour por la App
-            </div>
-
-            <details class="accordion help-accordion">
-                <summary>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span class="material-icons text-primary">dashboard</span> 
-                        <strong>1. Panel de Control</strong>
-                    </div>
-                    <span class="material-icons accordion__icon">expand_more</span>
-                </summary>
-                <div class="accordion__content">
-                    <p>Tu cabina de mando. Aquí ves la salud de tus finanzas de un vistazo.</p>
-                    <ul style="margin-top:8px;">
-                        <li><strong>¿Cuánto tengo?:</strong> Tu patrimonio neto real (lo que tienes menos lo que debes).</li>
-                        <li><strong>Velocidad de Ahorro:</strong> El porcentaje de tus ingresos que logras retener.</li>
-                    </ul>
-                    <div class="help-pro-tip">
-                        <strong>Privacidad:</strong> ¿Estás en el metro? Pulsa sobre el dato de "Mi Riqueza Total" para <strong>difuminar</strong> todos los números de la pantalla. Pulsa otra vez para verlos.
-                    </div>
-                </div>
-            </details>
-
-            <details class="accordion help-accordion" style="margin-top: 8px;">
-                <summary>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span class="material-icons text-warning">receipt_long</span> 
-                        <strong>2. Diario (Tus Movimientos)</strong>
-                    </div>
-                    <span class="material-icons accordion__icon">expand_more</span>
-                </summary>
-                <div class="accordion__content">
-                    <p>El historial infinito de todo lo que ha pasado. Puedes hacer scroll hasta el inicio de los tiempos.</p>
-                    <div class="help-pro-tip">
-                        <strong>Gesto Pro:</strong> ¿Te equivocaste? <strong>Mantén pulsado</strong> cualquier movimiento para editarlo, borrarlo o duplicarlo.
-                    </div>
-                    <div class="help-pro-tip">
-                        <strong>Filtros:</strong> Pulsa el embudo <span class="material-icons" style="font-size:12px">filter_list</span> para buscar "Esa cena de hace 3 meses".
-                    </div>
-                </div>
-            </details>
-
-            <details class="accordion help-accordion" style="margin-top: 8px;">
-                <summary>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span class="material-icons text-success">account_balance</span> 
-                        <strong>3. Patrimonio (Inversiones)</strong>
-                    </div>
-                    <span class="material-icons accordion__icon">expand_more</span>
-                </summary>
-                <div class="accordion__content">
-                    <p>Aquí gestionas lo que te hace rico: Fondos, Acciones, Cripto o tu Casa.</p>
-                    <p>Te calculo automáticamente:</p>
-                    <ul>
-                        <li><strong>P&L (Ganancia/Pérdida):</strong> Cuánto dinero has ganado en euros.</li>
-                        <li><strong>TIR (Rentabilidad Real):</strong> La métrica de los profesionales. Tiene en cuenta <em>cuándo</em> metiste el dinero.</li>
-                    </ul>
-                    <div class="help-pro-tip">
-                        <strong>Extracto Global:</strong> En el apartado "Extracto de Cuenta", mantén pulsado el título para generar un <strong>Libro Mayor</strong> con todos tus movimientos ordenados por fecha.
-                    </div>
-                </div>
-            </details>
-
-            <details class="accordion help-accordion" style="margin-top: 8px;">
-                <summary>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span class="material-icons text-info">edit_calendar</span> 
-                        <strong>4. Planificar</strong>
-                    </div>
-                    <span class="material-icons accordion__icon">expand_more</span>
-                </summary>
-                <div class="accordion__content">
-                    <p>El lugar para mirar al futuro.</p>
-                    <ul>
-                        <li><strong>Recurrentes:</strong> Netflix, alquiler, gimnasio. Configúralos una vez y olvídate. La app te avisará o los creará solos.</li>
-                        <li><strong>Presupuestos:</strong> Ponte límites (ej. "Solo 200€ en Restaurantes"). Verás velocímetros que te dicen si vas muy rápido gastando.</li>
-                    </ul>
-                </div>
-            </details>
-
-            <div class="help-section-title">
-                <span class="material-icons text-warning">lightbulb</span> Secretos de Experto
-            </div>
-
-            <div class="help-card">
-                <div class="help-card__content">
-                    <h4><span class="material-icons" style="font-size:16px; vertical-align:text-bottom;">calculate</span> Calculadora Invisible</h4>
-                    <p>Nunca calcules fuera de la app. Al añadir un gasto, el teclado ES una calculadora. Escribe <code>25 + 10 / 2</code> y pulsa OK. Se guardará el resultado (30€).</p>
+                    <h4>Capítulo 3: Las Dos Cajas (A y B)</h4>
+                    <p>A veces tenemos dinero en el banco y otro dinero "en el calcetín".</p>
+                    <p style="margin-top:6px;">
+                        Arriba a la izquierda verás un botón que dice <strong>A</strong> o <strong>B</strong>. 
+                        Es como un interruptor de luz. Si pulsas, cambias de habitación. Lo que apuntas en la Caja A no se ve en la Caja B, y viceversa. ¡Perfecto para separar cuentas!
+                    </p>
                 </div>
             </div>
 
             <div class="help-card">
+                <div class="help-card__icon" style="background: #fff3e0; color: #ef6c00;"><span class="material-icons">hourglass_empty</span></div>
                 <div class="help-card__content">
-                    <h4><span class="material-icons" style="font-size:16px; vertical-align:text-bottom;">search</span> El Buscador Universal</h4>
-                    <p>Pulsa la lupa o usa <code>Ctrl + K</code> en el teclado. Escribe "Mercadona" o "35,50". Buscaré en todas tus cuentas, años y conceptos al instante.</p>
+                    <h4>Capítulo 4: El Futuro (Planificar)</h4>
+                    <p>¿Tienes gastos que se repiten como Netflix o el alquiler? No los apuntes cada mes.</p>
+                    <p style="margin-top:6px;">
+                        Ve a la pestaña <strong>Planificar</strong> y dímelo una vez. Yo me encargaré de crear ese gasto automáticamente el día que toque. Es como tener un secretario personal.
+                    </p>
                 </div>
             </div>
 
             <div class="help-card">
+                <div class="help-card__icon" style="background: #ffebee; color: #c62828;"><span class="material-icons">calculate</span></div>
                 <div class="help-card__content">
-                    <h4><span class="material-icons" style="font-size:16px; vertical-align:text-bottom;">cloud_upload</span> Migración fácil</h4>
-                    <p>¿Vienes de Excel? Ve a Ajustes > Importar CSV. Simplemente arrastra tu archivo y yo ordenaré todo.</p>
+                    <h4>Truco Final: La Calculadora Mágica</h4>
+                    <p>Cuando vayas a poner una cantidad, no necesitas hacer cuentas mentales.</p>
+                    <p style="margin-top:6px;">
+                        Si tocas el cuadro del importe, aparecerá un teclado numérico. Puedes escribir <code>10 + 5</code> y darle a OK, y yo guardaré <strong>15€</strong>. ¡Úsala para dividir la cuenta de una cena!
+                    </p>
                 </div>
             </div>
 
-            <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: var(--c-surface); border-radius: 16px; border: 1px dashed var(--c-primary);">
-                <p style="margin-bottom: 10px; font-weight: 600;">¿Listo para tomar el control?</p>
+            <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: var(--c-surface-variant); border-radius: 16px; border: 1px dashed var(--c-primary);">
+                <p style="margin-bottom: 10px; font-weight: 600;">¿Todo listo para empezar tu historia?</p>
                 <button class="btn btn--primary" data-action="close-modal" style="min-width: 200px;">
-                    ¡Entendido, vamos allá! 🚀
+                    ¡Vamos allá! 🚀
                 </button>
             </div>
         `;
@@ -8557,15 +8490,14 @@ const handleStart = (e) => {
             'toggle-amount-type': () => { /* Ya no se usa botón toggle, pero se mantiene por compatibilidad */ },
             'show-kpi-drilldown': () => handleKpiDrilldown(actionTarget),
 			'show-kpi-help': (e) => {
-    // Detenemos propagación para que no active otros clics debajo
-    e.stopPropagation(); 
-    const kpiKey = actionTarget.dataset.kpi;
-    const info = KPI_EXPLANATIONS[kpiKey];
-    if (info) {
-        hapticFeedback('light');
-        showGenericModal(info.title, `<p class="form-label" style="font-size:1rem; line-height:1.6; color:var(--c-on-surface);">${info.text}</p>`);
-    }
-},
+				e.stopPropagation(); 
+				const kpiKey = actionTarget.dataset.kpi;
+				const info = KPI_EXPLANATIONS[kpiKey];
+				if (info) {
+				hapticFeedback('light');
+				showGenericModal(info.title, `<p class="form-label" style="font-size:1rem; line-height:1.6; color:var(--c-on-surface);">${info.text}</p>`);
+				}
+				},
             'edit-movement-from-modal': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; hideModal('generic-modal'); startMovementForm(movementId, false); },
             'edit-movement-from-list': (e) => { const movementId = e.target.closest('[data-id]').dataset.id; startMovementForm(movementId, false); },
             'edit-recurrente': () => { hideModal('generic-modal'); startMovementForm(id, true); },
