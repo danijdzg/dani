@@ -4388,154 +4388,152 @@ async function calculateHistoricalIrrForGroup(accountIds) {
             if (userEmailEl && currentUser) userEmailEl.textContent = currentUser.email;  			
         };
 		
+
 const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // ESTRUCTURA BENTO GRID (Cockpit) v3 - Con Ayuda Interactiva y Drilldown
+    const hour = new Date().getHours();
+    let greeting = 'Buenas noches';
+    if (hour >= 5 && hour < 12) greeting = 'Buenos días';
+    else if (hour >= 12 && hour < 21) greeting = 'Buenas tardes';
+    const userName = currentUser ? (currentUser.displayName || currentUser.email.split('@')[0]) : 'Piloto';
+
     container.innerHTML = `
-        <div class="dashboard-cockpit">
+        <div style="padding: 0 var(--sp-2) var(--sp-4);">
             
-            <div class="cockpit-header">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <div class="header-icon-box"><span class="material-icons">bolt</span></div>
-                    <div style="display:flex; flex-direction:column;">
-                        <span style="font-weight:800; font-size:0.9rem; line-height:1;">Visión Global</span>
-                        <span style="font-size:0.65rem; color:var(--c-on-surface-tertiary); font-weight:600;">ESTADO FINANCIERO</span>
-                    </div>
-                </div>
+            <div style="margin-bottom: var(--sp-3); padding: 0 4px;">
+                <p style="font-size: 0.85rem; color: var(--c-on-surface-secondary); margin-bottom: 2px;">${greeting},</p>
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--c-on-surface); text-transform: capitalize;">${userName}</h2>
+            </div>
+
+            <div class="hero-card" style="padding: 25px 20px; text-align: center; margin-bottom: var(--sp-3); min-height: auto; border: 1px solid var(--c-primary); box-shadow: 0 4px 20px rgba(0, 179, 77, 0.15);">
+                <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 1.5px; margin-bottom: 4px;">Patrimonio Total</div>
+                <div id="kpi-patrimonio-neto-value" class="hero-value kpi-resaltado-azul skeleton" data-current-value="0" style="font-size: 2.6rem; margin-bottom: 0;">0,00 €</div>
+            </div>
+
+            <div class="status-grid" style="gap: 8px; margin-bottom: var(--sp-4);">
                 
-                <div class="cockpit-period-wrapper">
-                    <select id="filter-periodo" class="cockpit-filter-select">
-                        <option value="mes-actual">Este Mes</option>
-                        <option value="año-actual">Este Año</option>
-                        <option value="custom">Personalizado</option>
-                    </select>
-                    <span class="material-icons chevron">expand_more</span>
+                <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
+                    <div class="status-label" style="margin-bottom: 4px;">
+                        <span class="material-icons" style="font-size: 16px; color: var(--c-info);">account_balance_wallet</span> Liquidez
+                    </div>
+                    <div id="kpi-liquidez-value" class="status-value skeleton" style="font-size: 1.1rem;">0,00 €</div>
+                </div>
+
+                <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
+                    <div class="status-label" style="margin-bottom: 4px;">
+                        <span class="material-icons" style="font-size: 16px; color: #BF5AF2;">auto_graph</span> Inversiones
+                    </div>
+                    <div id="kpi-inversion-total" class="status-value skeleton" style="font-size: 1.1rem;">0,00 €</div>
+                </div>
+
+                <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
+                    <div class="status-label" style="margin-bottom: 4px;">
+                         Ganancia
+                    </div>
+                    <div id="kpi-inversion-pnl" class="status-value skeleton" style="font-size: 1.1rem;">+0,00 €</div>
+                </div>
+
+                <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
+                    <div class="status-label" style="margin-bottom: 4px;">
+                         Rentabilidad
+                    </div>
+                    <div id="kpi-inversion-pct" class="status-value skeleton" style="font-size: 1.1rem;">0.00%</div>
                 </div>
             </div>
 
-            <div id="custom-date-filters" class="cockpit-date-bar hidden">
-                <div class="date-input-group">
-                    <span class="material-icons">calendar_today</span>
-                    <input type="date" id="filter-fecha-inicio" title="Desde">
-                </div>
-                <span class="date-separator">➜</span>
-                <div class="date-input-group">
-                    <span class="material-icons">event</span>
-                    <input type="date" id="filter-fecha-fin" title="Hasta">
+            <div class="report-filters fade-in-up" style="background-color: var(--c-surface); padding: 6px 8px; border-radius: 12px; border: 1px solid var(--c-outline); display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-3);">
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--c-on-surface-secondary); margin-left: 8px;">Periodo de análisis</span>
+                <select id="filter-periodo" class="form-select report-period-selector" style="font-size: 0.75rem; padding: 4px 24px 4px 10px; height: 32px; width: auto; background-color: var(--c-surface-variant); border: none; border-radius: 8px;">
+                    <option value="mes-actual">Este Mes</option>
+                    <option value="año-actual">Este Año</option>
+                    <option value="custom">Personalizado</option>
+                </select>
+            </div>
+            
+            <div id="custom-date-filters" class="form-grid hidden" style="grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: var(--sp-3);">
+                <input type="date" id="filter-fecha-inicio" class="form-input" style="font-size: 0.8rem; padding: 8px;">
+                <input type="date" id="filter-fecha-fin" class="form-input" style="font-size: 0.8rem; padding: 8px;">
+            </div>
+
+            <div class="card fade-in-up" style="padding: 16px; border-radius: 20px; margin-bottom: var(--sp-4); border: 1px solid var(--c-outline);">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
+                    <div>
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Ingresos</div>
+                        <div id="kpi-ingresos-value" class="text-positive skeleton" style="font-size: 1rem; font-weight: 800;">+0 €</div>
+                    </div>
+                    <div style="border-left: 1px solid var(--c-outline); border-right: 1px solid var(--c-outline);">
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Gastos</div>
+                        <div id="kpi-gastos-value" class="text-negative skeleton" style="font-size: 1rem; font-weight: 800;">-0 €</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">Neto</div>
+                        <div id="kpi-saldo-neto-value" class="skeleton" style="font-size: 1rem; font-weight: 800;">0 €</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="cockpit-hero">
-                <div class="cockpit-label" style="opacity:0.8; display:flex; align-items:center; justify-content:center;">
-                    PATRIMONIO NETO <button class="help-btn" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
-                </div>
-                <div id="kpi-patrimonio-neto-value" class="hero-val-big skeleton" data-current-value="0">0,00 €</div>
+            <div class="section-header">Salud Financiera</div>
+            
+            <div style="display: flex; flex-direction: column; gap: var(--sp-3); padding-bottom: var(--sp-5);">
                 
-                <div class="sub-metric-row">
-                    <div class="sub-metric-pill">
-                        <span class="dot" style="background:var(--c-info);"></span>
-                        Liq: <span id="kpi-liquidez-value">0€</span>
-                        <button class="help-btn" data-action="show-kpi-help" data-kpi="liquidez" style="width:14px; height:14px; font-size:9px; margin-left:4px;">?</button>
-                    </div>
-                    <div class="sub-metric-pill">
-                        <span class="dot" style="background:var(--c-warning);"></span>
-                        Inv: <span id="kpi-inversion-total">0€</span>
-                        <button class="help-btn" data-action="show-kpi-help" data-kpi="invertido" style="width:14px; height:14px; font-size:9px; margin-left:4px;">?</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="cockpit-mid-grid">
-                
-                <div class="cockpit-card">
-                    <div class="cockpit-card-header">
-                        <span class="material-icons text-primary">account_balance</span>
-                        <span class="cockpit-label">FLUJO DE CAJA</span>
-                    </div>
-                    
-                    <div class="flow-bars-container">
-                        <div class="flow-row clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
-                            <div class="flow-info">
-                                <span style="display:flex; align-items:center;">Ingresos <button class="help-btn" data-action="show-kpi-help" data-kpi="ingresos" style="margin-left:4px; width:14px; height:14px; font-size:9px;">?</button></span>
-                                <span id="kpi-ingresos-value" class="text-positive">0€</span>
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 36px; height: 36px;"><canvas id="kpi-savings-rate-chart"></canvas></div>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Tasa de Ahorro</div>
+                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">De tus ingresos netos</div>
                             </div>
-                            <div class="mini-bar-track"><div id="bar-ingresos" class="mini-bar-fill success"></div></div>
                         </div>
-                        <div class="flow-row clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
-                            <div class="flow-info">
-                                <span style="display:flex; align-items:center;">Gastos <button class="help-btn" data-action="show-kpi-help" data-kpi="gastos" style="margin-left:4px; width:14px; height:14px; font-size:9px;">?</button></span>
-                                <span id="kpi-gastos-value" class="text-negative">0€</span>
+                        <div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size: 1.4rem; font-weight: 800;">0%</div>
+                    </div>
+                </div>
+
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="material-icons" style="font-size: 28px; color: var(--c-success); background: rgba(0, 179, 77, 0.1); padding: 6px; border-radius: 10px;">shield</span>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Cobertura</div>
+                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">Meta: 6 meses</div>
                             </div>
-                            <div class="mini-bar-track"><div id="bar-gastos" class="mini-bar-fill danger"></div></div>
                         </div>
+                        <div id="health-runway-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: var(--c-success);">0 Meses</div>
                     </div>
-                    
-                    <div class="cockpit-neto-footer clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
-                        <span style="display:flex; align-items:center;">NETO <button class="help-btn" data-action="show-kpi-help" data-kpi="neto" style="margin-left:4px; width:14px; height:14px; font-size:9px;">?</button></span>
-                        <span id="kpi-saldo-neto-value" class="cockpit-val-small">0€</span>
+                    <div class="mini-progress-bar" style="height: 8px; background-color: var(--c-surface-variant); margin-top: 4px;">
+                        <div id="health-runway-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-success);"></div>
                     </div>
                 </div>
 
-                <div class="cockpit-card">
-                    <div class="cockpit-card-header">
-                        <span class="material-icons text-warning">rocket_launch</span>
-                        <span class="cockpit-label">INVERSIONES</span>
-                    </div>
-                    
-                    <div class="investment-stat-main">
-                        <div id="kpi-inversion-pct" class="cockpit-val-xl skeleton">0%</div>
-                        <div class="cockpit-label-tiny" style="display:flex; align-items:center; justify-content:center;">
-                            RENTABILIDAD (TIR) <button class="help-btn" data-action="show-kpi-help" data-kpi="rentabilidad" style="margin-left:4px; width:14px; height:14px; font-size:9px;">?</button>
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid var(--c-outline);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="material-icons" style="font-size: 28px; color: var(--c-warning); background: rgba(255, 214, 10, 0.1); padding: 6px; border-radius: 10px;">flag</span>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface);">Libertad Financiera</div>
+                                <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">Meta: Vivir de rentas</div>
+                            </div>
                         </div>
+                        <div id="health-fi-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: var(--c-warning);">0.0%</div>
                     </div>
-
-                    <div class="pnl-pill-container">
-                        <div class="cockpit-label-tiny" style="display:flex; align-items:center; justify-content:center;">
-                            GANANCIA/PÉRDIDA<button class="help-btn" data-action="show-kpi-help" data-kpi="pnl" style="margin-left:4px; width:14px; height:14px; font-size:9px;">?</button>
-                        </div>
-                        <div id="kpi-inversion-pnl" class="pnl-value skeleton">0€</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="cockpit-footer-grid">
-                <div class="cockpit-mini-card">
-                    <div class="mini-icon" style="color:#BF5AF2;"></div>
-                    <div class="mini-content">
-                        <div class="cockpit-label-tiny" style="display:flex; align-items:center;">AHORRO (%)<button class="help-btn" data-action="show-kpi-help" data-kpi="tasa_ahorro" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
-                        <div id="kpi-tasa-ahorro-value" class="mini-val" style="color:#BF5AF2;">0%</div>
-                    </div>
-                    <div class="micro-bar"><div id="tasa-ahorro-progress" class="micro-fill" style="background:#BF5AF2;"></div></div>
-                </div>
-
-                <div class="cockpit-mini-card">
-                    <div class="mini-icon text-warning"></div>
-                    <div class="mini-content">
-                        <div class="cockpit-label-tiny" style="display:flex; align-items:center;">COBERTURA (meses)<button class="help-btn" data-action="show-kpi-help" data-kpi="cobertura" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
-                        <div id="health-runway-val" class="mini-val text-warning">0M</div>
-                    </div>
-                    <div class="micro-bar">
-                        <div id="health-runway-progress" class="micro-fill" style="width: 0%; background: var(--c-warning);"></div>
+                    <div class="mini-progress-bar" style="height: 8px; background-color: var(--c-surface-variant); margin-top: 4px;">
+                        <div id="health-fi-progress-bar" class="mini-progress-value" style="width: 0%; background-color: var(--c-warning);"></div>
                     </div>
                 </div>
 
-                <div class="cockpit-mini-card">
-                    <div class="mini-icon text-positive"></div>
-                    <div class="mini-content">
-                        <div class="cockpit-label-tiny" style="display:flex; align-items:center;">LIBERTAD (años)<button class="help-btn" data-action="show-kpi-help" data-kpi="libertad" style="width:12px; height:12px; font-size:8px; margin-left:3px;">?</button></div>
-                        <div id="health-fi-val" class="mini-val text-positive">0%</div>
-                    </div>
-                    <div class="micro-bar"><div id="health-fi-progress-bar" class="micro-fill" style="background:var(--c-success);"></div></div>
-                </div>
             </div>
         </div>
+        
+        <div id="concepto-totals-list" style="display:none;"></div>
+        <canvas id="conceptos-chart" style="display:none;"></canvas>
+        <div id="net-worth-chart-container" style="display:none;"><canvas id="net-worth-chart"></canvas></div>
     `;
     
     populateAllDropdowns();
     await Promise.all([loadPresupuestos(), loadInversiones()]);
-    scheduleDashboardUpdate();
+    scheduleDashboardUpdate(); 
 };
 
  const showEstrategiaTab = (tabName) => {
@@ -4585,62 +4583,70 @@ const renderPanelPage = async () => {
 const TransactionCardComponent = (m, dbData) => {
     const { cuentas, conceptos } = dbData;
     const highlightClass = (m.id === newMovementIdToHighlight) ? 'list-item-animate' : '';
+    const formattedDate = new Date(m.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }); // Fecha más corta y limpia
 
-    const formattedDate = new Date(m.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    let cardContentHTML = '';
+    let avatarHTML = '';
+    let title = '';
+    let subtitle = '';
+    let amountClass = '';
+    let amountSign = '';
+
+    // --- Lógica de Avatar Inteligente ---
+    const extractEmoji = (str) => {
+        if (!str) return null;
+        const match = str.match(/(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
+        return match ? match[0] : null;
+    };
 
     if (m.tipo === 'traspaso') {
-        const origen = cuentas.find(c => c.id === m.cuentaOrigenId);
-        const destino = cuentas.find(c => c.id === m.cuentaDestinoId);
+        const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || '?';
+        const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || '?';
         
-        cardContentHTML = `
-            <div class="transaction-card__indicator transaction-card__indicator--transfer"></div>
-            <div class="transaction-card__content">
-                <div class="transaction-card__details">
-                    <div class="transaction-card__concept">${escapeHTML(m.descripcion) || 'Traspaso'}</div>
-                    <div class="transaction-card__description">${formattedDate}</div>
-                    <div class="transaction-card__transfer-details">
-                        <div class="transaction-card__transfer-row">
-                            <span><span class="material-icons">arrow_upward</span> ${(origen?.nombre) || '?'}</span>
-                            <span class="transaction-card__balance">${formatCurrency(m.runningBalanceOrigen)}</span>
-                        </div>
-                        <div class="transaction-card__transfer-row">
-                            <span><span class="material-icons">arrow_downward</span> ${(destino?.nombre) || '?'}</span>
-                            <span class="transaction-card__balance">${formatCurrency(m.runningBalanceDestino)}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="transaction-card__figures">
-                    <div class="transaction-card__amount text-info">${formatCurrency(m.cantidad)}</div>
-                </div>
-            </div>`;
+        // Icono de Traspaso
+        avatarHTML = `<div class="transaction-avatar avatar--transfer"><span class="material-icons">swap_horiz</span></div>`;
+        title = 'Traspaso';
+        subtitle = `${origen} ➔ ${destino}`;
+        amountClass = 'text-info';
     } else {
+        const concepto = conceptos.find(c => c.id === m.conceptoId);
         const cuenta = cuentas.find(c => c.id === m.cuentaId);
-        const concept = conceptos.find(c => c.id === m.conceptoId);
-        const amountClass = m.cantidad >= 0 ? 'text-positive' : 'text-negative';
+        const conceptoNombre = concepto ? toSentenceCase(concepto.nombre) : 'S/C';
         
-        const indicatorClass = m.cantidad >= 0 ? 'transaction-card__indicator--income' : 'transaction-card__indicator--expense';
+        // 1. Intentamos sacar el emoji del concepto
+        const emoji = extractEmoji(conceptoNombre);
         
-        cardContentHTML = `
-            <div class="transaction-card__indicator ${indicatorClass}"></div>
-            <div class="transaction-card__content">
-                <div class="transaction-card__details">
-                    <div class="transaction-card__row-1">${toSentenceCase(concept?.nombre || 'S/C')}</div>
-                    <div class="transaction-card__row-2">${formattedDate} • ${escapeHTML(m.descripcion)}</div>
-                </div>
-                <div class="transaction-card__figures">
-                    <div class="transaction-card__amount ${amountClass}">${formatCurrency(m.cantidad)}</div>
-                    <div class="transaction-card__balance">${formatCurrency(m.runningBalance)}</div>
-                    <div class="transaction-card__row-2" style="text-align: right;">${escapeHTML(cuenta?.nombre || 'S/C')}</div>
-                </div>
-            </div>`;
+        // 2. Si no hay emoji, usamos la inicial
+        const content = emoji || conceptoNombre.charAt(0).toUpperCase();
+        
+        // 3. Determinamos color
+        const typeClass = m.cantidad >= 0 ? 'avatar--income' : 'avatar--expense';
+        
+        avatarHTML = `<div class="transaction-avatar ${typeClass}">${content}</div>`;
+        
+        // Limpiamos el nombre del concepto para no repetir el emoji en el texto
+        title = emoji ? conceptoNombre.replace(emoji, '').trim() : conceptoNombre;
+        subtitle = `${formattedDate} • ${escapeHTML(m.descripcion || cuenta?.nombre || '')}`;
+        
+        amountClass = m.cantidad >= 0 ? 'text-positive' : 'text-negative';
+        amountSign = m.cantidad > 0 ? '+' : '';
     }
-    
-    // CAMBIO AQUÍ: Eliminado 'data-action="edit-movement-from-list"' del div .transaction-card
+
     return `
     <div class="list-item-animate"> 
-        <div class="transaction-card ${highlightClass}" data-id="${m.id}">
-            ${cardContentHTML}
+        <div class="transaction-card ${highlightClass}" data-id="${m.id}" style="padding-left: var(--sp-2); padding-right: var(--sp-2);">
+            
+            ${avatarHTML}
+
+            <div class="transaction-card__content">
+                <div class="transaction-card__details">
+                    <div class="transaction-card__row-1" style="font-size: 1rem; font-weight: 600;">${title}</div>
+                    <div class="transaction-card__row-2" style="opacity: 0.7;">${subtitle}</div>
+                </div>
+                <div class="transaction-card__figures">
+                    <div class="transaction-card__amount ${amountClass}" style="font-size: 1rem;">${amountSign}${formatCurrency(m.cantidad)}</div>
+                    <div class="transaction-card__balance" style="font-size: 0.75rem; opacity: 0.6;">${formatCurrency(m.runningBalance)}</div>
+                </div>
+            </div>
         </div>
     </div>`;
 };
@@ -6156,12 +6162,23 @@ const updateDashboardData = async () => {
         const elIng = select('kpi-ingresos-value');
         const elGas = select('kpi-gastos-value');
         const elNet = select('kpi-saldo-neto-value');
+        
         if (elIng) {
             [elIng, elGas, elNet].forEach(el => el.classList.remove('skeleton'));
             animateCountUp(elIng, ingresos);
             animateCountUp(elGas, gastos);
             animateCountUp(elNet, saldoNeto);
             elNet.className = saldoNeto >= 0 ? 'text-positive' : 'text-negative';
+            
+            // Lógica de barras visuales
+            const maxVal = Math.max(ingresos, Math.abs(gastos)) || 1; // Evitar div por 0
+            const pctIng = (ingresos / maxVal) * 100;
+            const pctGas = (Math.abs(gastos) / maxVal) * 100;
+            
+            const barIng = select('bar-ingresos');
+            const barGas = select('bar-gastos');
+            if(barIng) barIng.style.width = `${pctIng}%`;
+            if(barGas) barGas.style.width = `${pctGas}%`;
         }
 
         // 4. Salud (Carrusel)

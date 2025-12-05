@@ -4374,3 +4374,36 @@ body[data-theme="sunset-groove"] .hero-val-big {
         gap: 4px;
     }
 }
+/* ================================================================= */
+/* === SMART AVATARS (Diseño tipo Apple Wallet / Revolut) === */
+/* ================================================================= */
+
+/* Eliminamos el indicador antiguo de barra lateral */
+.transaction-card__indicator { display: none; }
+
+/* Nuevo contenedor para el Avatar */
+.transaction-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%; /* Círculo perfecto */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px; /* Tamaño del emoji */
+    font-weight: 700;
+    margin-right: 12px;
+    flex-shrink: 0;
+    border: 1px solid var(--c-outline);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Colores de fondo según el tipo (suaves) */
+.avatar--income { background-color: color-mix(in srgb, var(--c-success) 15%, var(--c-surface)); color: var(--c-success); }
+.avatar--expense { background-color: color-mix(in srgb, var(--c-danger) 10%, var(--c-surface)); color: var(--c-danger); }
+.avatar--transfer { background-color: color-mix(in srgb, var(--c-info) 15%, var(--c-surface)); color: var(--c-info); }
+
+/* Ajuste de la tarjeta para centrar el contenido con el avatar */
+.transaction-card {
+    padding: 12px 0; /* Más aire vertical */
+    align-items: center; /* Centrado vertical perfecto */
+}
