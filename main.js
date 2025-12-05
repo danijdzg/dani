@@ -4387,32 +4387,30 @@ async function calculateHistoricalIrrForGroup(accountIds) {
             const userEmailEl = select('config-user-email'); 
             if (userEmailEl && currentUser) userEmailEl.textContent = currentUser.email;  			
         };
-/* EN main.js - FUNCIÓN renderPanelPage CORREGIDA Y COMPLETA */
+/* EN main.js - REEMPLAZO DE renderPanelPage (SIN SALUDO, SIN GRÁFICOS DE SALUD, CON DRILLDOWN) */
 
 const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // --- CORRECCIÓN DEL ERROR: Definir las variables antes de usarlas ---
-    const hour = new Date().getHours();
-    let greeting = 'Buenas noches';
-    if (hour >= 5 && hour < 12) greeting = 'Buenos días';
-    else if (hour >= 12 && hour < 21) greeting = 'Buenas tardes';
-    
-    const userName = currentUser ? (currentUser.displayName || currentUser.email.split('@')[0]) : 'Piloto';
-    // -------------------------------------------------------------------
-
-    // Colores personalizados para las tarjetas
-    const COLOR_AHORRO = '#00E5FF'; 
-    const COLOR_COBERTURA = '#FFD60A'; 
-    const COLOR_LIBERTAD = '#39FF14'; 
+    // (Eliminado código del saludo)
 
     container.innerHTML = `
         <div style="padding: 0 var(--sp-2) var(--sp-4);">
             
-            <div style="margin-bottom: var(--sp-3); padding: 0 4px;">
-                <p style="font-size: 0.85rem; color: var(--c-on-surface-secondary); margin-bottom: 2px;">${greeting},</p>
-                <h2 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--c-on-surface); text-transform: capitalize;">${userName}</h2>
+            <div style="display: flex; justify-content: flex-end; margin-bottom: var(--sp-3); margin-top: var(--sp-3);">
+                <div class="report-filters" style="margin: 0;">
+                    <select id="filter-periodo" class="form-select report-period-selector" style="font-size: 0.8rem; padding: 6px 12px; height: auto; width: auto; background-color: var(--c-surface-variant); border: none; border-radius: 99px;">
+                        <option value="mes-actual">Este Mes</option>
+                        <option value="año-actual">Este Año</option>
+                        <option value="custom">Personalizado</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="custom-date-filters" class="form-grid hidden" style="grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: var(--sp-4);">
+                <input type="date" id="filter-fecha-inicio" class="form-input" style="font-size: 0.8rem; padding: 8px;">
+                <input type="date" id="filter-fecha-fin" class="form-input" style="font-size: 0.8rem; padding: 8px;">
             </div>
 
             <div class="hero-card" style="padding: 25px 20px; text-align: center; margin-bottom: var(--sp-3); min-height: auto; border: 1px solid var(--c-primary); box-shadow: 0 4px 20px rgba(0, 179, 77, 0.15);">
@@ -4456,40 +4454,30 @@ const renderPanelPage = async () => {
                 </div>
             </div>
 
-            <div class="report-filters fade-in-up" style="background-color: var(--c-surface); padding: 6px 8px; border-radius: 12px; border: 1px solid var(--c-outline); display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-3);">
-                <span style="font-size: 0.75rem; font-weight: 600; color: var(--c-on-surface-secondary); margin-left: 8px;">Periodo de análisis</span>
-                <select id="filter-periodo" class="form-select report-period-selector" style="font-size: 0.75rem; padding: 4px 24px 4px 10px; height: 32px; width: auto; background-color: var(--c-surface-variant); border: none; border-radius: 8px;">
-                    <option value="mes-actual">Este Mes</option>
-                    <option value="año-actual">Este Año</option>
-                    <option value="custom">Personalizado</option>
-                </select>
-            </div>
-            
-            <div id="custom-date-filters" class="form-grid hidden" style="grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: var(--sp-3);">
-                <input type="date" id="filter-fecha-inicio" class="form-input" style="font-size: 0.8rem; padding: 8px;">
-                <input type="date" id="filter-fecha-fin" class="form-input" style="font-size: 0.8rem; padding: 8px;">
-            </div>
-
             <div class="card fade-in-up" style="padding: 16px; border-radius: 20px; margin-bottom: var(--sp-4); border: 1px solid var(--c-outline);">
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
-                    <div>
+                    
+                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos" style="cursor: pointer;">
                         <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
                             Ingresos <button class="help-btn" data-action="show-kpi-help" data-kpi="ingresos" style="width:12px; height:12px; font-size:9px;">?</button>
                         </div>
                         <div id="kpi-ingresos-value" class="text-positive skeleton" style="font-size: 1rem; font-weight: 800;">+0 €</div>
                     </div>
-                    <div style="border-left: 1px solid var(--c-outline); border-right: 1px solid var(--c-outline);">
+
+                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos" style="cursor: pointer; border-left: 1px solid var(--c-outline); border-right: 1px solid var(--c-outline);">
                         <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
                             Gastos <button class="help-btn" data-action="show-kpi-help" data-kpi="gastos" style="width:12px; height:12px; font-size:9px;">?</button>
                         </div>
                         <div id="kpi-gastos-value" class="text-negative skeleton" style="font-size: 1rem; font-weight: 800;">-0 €</div>
                     </div>
-                    <div>
+
+                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto" style="cursor: pointer;">
                         <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
                             Neto <button class="help-btn" data-action="show-kpi-help" data-kpi="neto" style="width:12px; height:12px; font-size:9px;">?</button>
                         </div>
                         <div id="kpi-saldo-neto-value" class="skeleton" style="font-size: 1rem; font-weight: 800;">0 €</div>
                     </div>
+
                 </div>
             </div>
 
@@ -4497,57 +4485,48 @@ const renderPanelPage = async () => {
             
             <div style="display: flex; flex-direction: column; gap: var(--sp-3); padding-bottom: var(--sp-5);">
                 
-                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid ${COLOR_AHORRO}; box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid #00E5FF; box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="material-icons" style="font-size: 28px; color: ${COLOR_AHORRO}; background: rgba(0, 229, 255, 0.1); padding: 6px; border-radius: 10px;">savings</span>
+                            <span class="material-icons" style="font-size: 28px; color: #00E5FF; background: rgba(0, 229, 255, 0.1); padding: 6px; border-radius: 10px;">savings</span>
                             <div>
-                                <div style="font-size: 0.8rem; font-weight: 700; color: ${COLOR_AHORRO};">
-                                    Ahorro <button class="help-btn" data-action="show-kpi-help" data-kpi="tasa_ahorro" style="color:${COLOR_AHORRO};">?</button>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: #00E5FF;">
+                                    Ahorro <button class="help-btn" data-action="show-kpi-help" data-kpi="tasa_ahorro" style="color:#00E5FF;">?</button>
                                 </div>
-                                <div style="font-size: 0.7rem; color: ${COLOR_AHORRO}; opacity: 0.8;">De tus ingresos netos</div>
+                                <div style="font-size: 0.7rem; color: #00E5FF; opacity: 0.8;">De tus ingresos netos</div>
                             </div>
                         </div>
-                        <div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: ${COLOR_AHORRO};">0%</div>
-                    </div>
-                    <div class="mini-progress-bar" style="height: 8px; background-color: rgba(0, 229, 255, 0.2); margin-top: 4px;">
-                        <div id="tasa-ahorro-progress-bar" class="mini-progress-value" style="width: 0%; background-color: ${COLOR_AHORRO};"></div>
+                        <div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: #00E5FF;">0%</div>
                     </div>
                 </div>
 
-                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid ${COLOR_COBERTURA}; box-shadow: 0 0 10px rgba(255, 214, 10, 0.1);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid #FFD60A; box-shadow: 0 0 10px rgba(255, 214, 10, 0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="material-icons" style="font-size: 28px; color: ${COLOR_COBERTURA}; background: rgba(255, 214, 10, 0.1); padding: 6px; border-radius: 10px;">shield</span>
+                            <span class="material-icons" style="font-size: 28px; color: #FFD60A; background: rgba(255, 214, 10, 0.1); padding: 6px; border-radius: 10px;">shield</span>
                             <div>
-                                <div style="font-size: 0.8rem; font-weight: 700; color: ${COLOR_COBERTURA};">
-                                    Cobertura <button class="help-btn" data-action="show-kpi-help" data-kpi="cobertura" style="color:${COLOR_COBERTURA};">?</button>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: #FFD60A;">
+                                    Cobertura <button class="help-btn" data-action="show-kpi-help" data-kpi="cobertura" style="color:#FFD60A;">?</button>
                                 </div>
-                                <div style="font-size: 0.7rem; color: ${COLOR_COBERTURA}; opacity: 0.8;">Meta: 6 meses</div>
+                                <div style="font-size: 0.7rem; color: #FFD60A; opacity: 0.8;">Meta: 6 meses</div>
                             </div>
                         </div>
-                        <div id="health-runway-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: ${COLOR_COBERTURA};">0 Meses</div>
-                    </div>
-                    <div class="mini-progress-bar" style="height: 8px; background-color: rgba(255, 214, 10, 0.2); margin-top: 4px;">
-                        <div id="health-runway-progress-bar" class="mini-progress-value" style="width: 0%; background-color: ${COLOR_COBERTURA};"></div>
+                        <div id="health-runway-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: #FFD60A;">0 Meses</div>
                     </div>
                 </div>
 
-                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid ${COLOR_LIBERTAD}; box-shadow: 0 0 10px rgba(57, 255, 20, 0.1);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid #39FF14; box-shadow: 0 0 10px rgba(57, 255, 20, 0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="material-icons" style="font-size: 28px; color: ${COLOR_LIBERTAD}; background: rgba(57, 255, 20, 0.1); padding: 6px; border-radius: 10px;">flag</span>
+                            <span class="material-icons" style="font-size: 28px; color: #39FF14; background: rgba(57, 255, 20, 0.1); padding: 6px; border-radius: 10px;">flag</span>
                             <div>
-                                <div style="font-size: 0.8rem; font-weight: 700; color: ${COLOR_LIBERTAD};">
-                                    Libertad <button class="help-btn" data-action="show-kpi-help" data-kpi="libertad" style="color:${COLOR_LIBERTAD};">?</button>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: #39FF14;">
+                                    Libertad <button class="help-btn" data-action="show-kpi-help" data-kpi="libertad" style="color:#39FF14;">?</button>
                                 </div>
-                                <div style="font-size: 0.7rem; color: ${COLOR_LIBERTAD}; opacity: 0.8;">Meta: Vivir de rentas</div>
+                                <div style="font-size: 0.7rem; color: #39FF14; opacity: 0.8;">Meta: Vivir de rentas</div>
                             </div>
                         </div>
-                        <div id="health-fi-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: ${COLOR_LIBERTAD};">0.0%</div>
-                    </div>
-                    <div class="mini-progress-bar" style="height: 8px; background-color: rgba(57, 255, 20, 0.2); margin-top: 4px;">
-                        <div id="health-fi-progress-bar" class="mini-progress-value" style="width: 0%; background-color: ${COLOR_LIBERTAD};"></div>
+                        <div id="health-fi-val" class="skeleton" style="font-size: 1.4rem; font-weight: 800; color: #39FF14;">0.0%</div>
                     </div>
                 </div>
             </div>
@@ -6090,16 +6069,12 @@ const scheduleDashboardUpdate = () => {
 };
 
 
+/* EN main.js - REEMPLAZO DE updateDashboardData */
+
 const updateDashboardData = async () => {
     const activePage = document.querySelector('.view--active');
     if (!activePage || activePage.id !== PAGE_IDS.PANEL) return;
-	
-	const hour = new Date().getHours();
-    let greeting = 'Buenas noches';
-    if (hour >= 5 && hour < 12) greeting = 'Buenos días';
-    else if (hour >= 12 && hour < 21) greeting = 'Buenas tardes';
-    const userName = currentUser ? (currentUser.displayName || currentUser.email.split('@')[0]) : 'Piloto';
-	
+
     if (isDashboardRendering) return;
     isDashboardRendering = true;
 
@@ -6109,6 +6084,7 @@ const updateDashboardData = async () => {
         const visibleAccounts = getVisibleAccounts();
         const visibleAccountIds = new Set(Object.keys(saldos));
         
+        // 1. Cálculos de Flujo
         let ingresos = 0, gastos = 0, saldoNeto = 0;
         current.forEach(m => {
             const amount = calculateMovementAmount(m, visibleAccountIds);
@@ -6118,6 +6094,7 @@ const updateDashboardData = async () => {
         });
         const tasaAhorroActual = ingresos > 0 ? (saldoNeto / ingresos) * 100 : (saldoNeto < 0 ? -100 : 0);
 
+        // 2. Cálculos de Estado
         let totalLiquidez = 0;
         let patrimonioNeto = 0;
         visibleAccounts.forEach(c => {
@@ -6128,26 +6105,29 @@ const updateDashboardData = async () => {
             }
         });
 
+        // 3. Cálculos Avanzados
         const portfolioPerf = await calculatePortfolioPerformance(); 
         const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
         const fiData = calculateFinancialIndependence(patrimonioNeto, efData.gastoMensualPromedio);
 
         // --- ACTUALIZACIÓN UI ---
 
-        // 1. Patrimonio
+        // Patrimonio
         const kpiPatrimonio = select('kpi-patrimonio-neto-value');
         if (kpiPatrimonio) {
             kpiPatrimonio.classList.remove('skeleton');
             animateCountUp(kpiPatrimonio, patrimonioNeto);
         }
 
-        // 2. Grid Activos
+        // Liquidez
         const kpiLiquidez = select('kpi-liquidez-value');
         if (kpiLiquidez) { kpiLiquidez.classList.remove('skeleton'); animateCountUp(kpiLiquidez, totalLiquidez); }
         
+        // Inversiones
         const kpiInvTotal = select('kpi-inversion-total');
         if (kpiInvTotal) { kpiInvTotal.classList.remove('skeleton'); animateCountUp(kpiInvTotal, portfolioPerf.valorActual); }
         
+        // P&L
         const kpiInvPnl = select('kpi-inversion-pnl');
         if (kpiInvPnl) {
             kpiInvPnl.classList.remove('skeleton');
@@ -6155,8 +6135,10 @@ const updateDashboardData = async () => {
             const sign = pnl >= 0 ? '+' : '';
             kpiInvPnl.textContent = `${sign}${formatCurrency(pnl)}`;
             kpiInvPnl.className = `status-value ${pnl >= 0 ? 'text-positive' : 'text-negative'}`;
+            kpiInvPnl.style.fontSize = "1.1rem";
         }
         
+        // Rentabilidad
         const kpiInvPct = select('kpi-inversion-pct');
         if (kpiInvPct) {
             kpiInvPct.classList.remove('skeleton');
@@ -6164,9 +6146,10 @@ const updateDashboardData = async () => {
             const sign = pct >= 0 ? '+' : '';
             kpiInvPct.textContent = `${sign}${pct.toFixed(2)}%`;
             kpiInvPct.className = `status-value ${pct >= 0 ? 'text-positive' : 'text-negative'}`;
+            kpiInvPct.style.fontSize = "1.1rem";
         }
 
-        // 3. Flujo Periodo
+        // Flujo del Periodo
         const elIng = select('kpi-ingresos-value');
         if (elIng) {
             [elIng, select('kpi-gastos-value'), select('kpi-saldo-neto-value')].forEach(el => el.classList.remove('skeleton'));
@@ -6176,37 +6159,28 @@ const updateDashboardData = async () => {
             select('kpi-saldo-neto-value').className = `status-value ${saldoNeto >= 0 ? 'text-positive' : 'text-negative'}`;
         }
 
-        // 4. Salud Financiera (Barras)
+        // Salud Financiera (Solo Texto)
         
-        // A. Ahorro
+        // Ahorro
         const kpiAhorro = select('kpi-tasa-ahorro-value');
-        const barAhorro = select('tasa-ahorro-progress-bar');
-        if (kpiAhorro && barAhorro) {
+        if (kpiAhorro) {
             kpiAhorro.classList.remove('skeleton');
             kpiAhorro.textContent = `${tasaAhorroActual.toFixed(0)}%`;
-            // Mantenemos el color del texto fijo en Azul (definido en HTML/CSS)
-            // El ancho se limita entre 0 y 100
-            barAhorro.style.width = `${Math.max(0, Math.min(tasaAhorroActual, 100))}%`;
         }
         
-        // B. Cobertura
+        // Cobertura
         const kpiRunway = select('health-runway-val');
-        const barRunway = select('health-runway-progress-bar');
-        if (kpiRunway && barRunway) {
+        if (kpiRunway) {
             kpiRunway.classList.remove('skeleton');
             const meses = efData.mesesCobertura;
             kpiRunway.textContent = isFinite(meses) ? (meses >= 100 ? '∞' : meses.toFixed(1)) : '∞';
-            const pct = isFinite(meses) ? Math.min((meses / 6) * 100, 100) : 100;
-            barRunway.style.width = `${pct}%`;
         }
         
-        // C. Libertad
+        // Libertad
         const kpiFi = select('health-fi-val');
-        const barFi = select('health-fi-progress-bar');
-        if (kpiFi && barFi) {
+        if (kpiFi) {
             kpiFi.classList.remove('skeleton');
             kpiFi.textContent = `${fiData.progresoFI.toFixed(1)}%`;
-            barFi.style.width = `${Math.min(fiData.progresoFI, 100)}%`;
         }
 
     } catch (error) {
