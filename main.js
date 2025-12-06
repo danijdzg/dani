@@ -8499,9 +8499,24 @@ const handleStart = (e) => {
                 }
             },
 			'open-external-calculator': () => {
-				hapticFeedback('light');
-				window.open('calculadora.html', '_blank');
-			},
+                // Cierra el menú si estaba abierto
+                const menu = document.getElementById('main-menu-popover');
+                if (menu) menu.classList.remove('popover-menu--visible');
+                
+                hapticFeedback('light');
+                
+                // Lógica de incrustación
+                const frame = document.getElementById('calculator-frame');
+                if (frame) {
+                    // Solo cargamos la fuente si está vacía para no perder el estado si se cierra y abre
+                    if (!frame.getAttribute('src')) {
+                        frame.src = 'calculadora.html';
+                    }
+                }
+                
+                // Abrimos el modal incrustado
+                showModal('calculator-iframe-modal');
+            },
             'show-main-add-sheet': () => showModal('main-add-sheet'),
             'show-pnl-breakdown': () => handleShowPnlBreakdown(actionTarget.dataset.id),
             'show-irr-breakdown': () => handleShowIrrBreakdown(actionTarget.dataset.id),

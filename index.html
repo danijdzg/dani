@@ -402,6 +402,15 @@
     </button>
 </div>
     <!-- ▲▲▲ FIN: NUEVO MENÚ DESPLEGABLE PRINCIPAL ▲▲▲ -->
+	<div id="calculator-iframe-modal" class="modal-overlay" role="dialog" aria-modal="true" style="z-index: 11000;">
+        <div class="modal" style="padding: 0; height: 95dvh; max-height: 95dvh; background-color: #000; display: flex; flex-direction: column; overflow: hidden;">
+            <button class="icon-btn" data-action="close-modal" data-modal-id="calculator-iframe-modal" style="position: absolute; top: 15px; right: 15px; z-index: 100; background: rgba(50,50,50,0.8); color: white; border: 1px solid rgba(255,255,255,0.2); width: 36px; height: 36px;">
+                <span class="material-icons">close</span>
+            </button>
+            
+            <iframe id="calculator-frame" style="width: 100%; height: 100%; border: none; flex-grow: 1;" loading="lazy"></iframe>
+        </div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
