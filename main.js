@@ -760,7 +760,7 @@ const clearDiarioFilters = async () => {
 		let deselectedInvestmentTypesFilter = new Set();
 		let selectedInvestmentTypeFilter = null;
 		let syncState = 'synced'; 
-		let isOffBalanceMode = false;
+		let currentLedger = 'A'; // Valores posibles: 'A', 'B', 'C'
         let globalSearchDebounceTimer = null;
 		let newMovementIdToHighlight = null;
 		let unsubscribeRecientesListener = null
@@ -2148,8 +2148,8 @@ const navigateTo = async (pageId, isInitial = false) => {
 
     if (pageRenderers[pageId]) { 
         if (leftEl) {
-            let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar a Contabilidad ${isOffBalanceMode ? 'B' : 'A'}"> ${isOffBalanceMode ? 'B' : 'A'}</button>
-            <span id="page-title-display" style="text-decoration: none; color: inherit; cursor: default;">${pageRenderers[pageId].title}</span>`;
+            let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Caja Actual: ${currentLedger}"> ${currentLedger}</button>
+			<span id="page-title-display" style="text-decoration: none; color: inherit; cursor: default;">${pageRenderers[pageId].title}</span>`;
             
             // CORRECCIÓN: Ya NO añadimos ningún botón extra si es PANEL.
             // Solo añadimos botones si es DIARIO.
@@ -2236,12 +2236,16 @@ const getPendingRecurrents = () => {
 // === BLOQUE DE FUNCIONES DE CUENTAS (CORREGIDO Y UNIFICADO) ===
 // =================================================================
 
-/**
- * REVISADO Y ÚNICO: Obtiene únicamente las cuentas activas para la contabilidad actual (A o B).
- * Esta es la función MÁS IMPORTANTE para el filtrado.
- */
-const getVisibleAccounts = () => (db.cuentas || []).filter(c => !!c.offBalance === isOffBalanceMode);
-
+/const getVisibleAccounts = () => {
+    return (db.cuentas || []).filter(c => {
+        // Lógica de compatibilidad:
+        // 1. Si la cuenta tiene la propiedad 'ledger', usamos eso.
+        // 2. Si no, miramos 'offBalance': true -> 'B', false -> 'A'.
+        const accountLedger = c.ledger || (c.offBalance ? 'B' : 'A');
+        const badgeColor = accountLedger === 'A' ? 'var(--c-primary)' : (accountLedger === 'B' ? 'var(--c-danger)' : 'var(--c-success)');
+        return accountLedger === currentLedger;
+    });
+};
 /**
  * Obtiene las cuentas líquidas de la contabilidad visible actual.
  */
@@ -7393,12 +7397,18 @@ const showHelpModal = () => {
                 </div>
 
                 <div class="help-card">
-                    <div class="help-card__icon" style="background: #f3e5f5; color: #7b1fa2;"><span class="material-icons">inventory_2</span></div>
-                    <div class="help-card__content">
-                        <h4>Capítulo 3: Las Dos Cajas (A/B)</h4>
-                        <p>A veces guardamos dinero en sitios distintos. El botón <strong>A/B</strong> (arriba izquierda) es como un interruptor de luz. Si lo pulsas, cambias de habitación. Lo que guardas en la Caja B es invisible en la Caja A.</p>
-                    </div>
-                </div>
+    <div class="help-card__icon" style="background: #f3e5f5; color: #7b1fa2;"><span class="material-icons">inventory_2</span></div>
+    <div class="help-card__content">
+        <h4>Capítulo 3: El Tridente (A, B y C)</h4>
+        <p>Ahora tienes tres dimensiones para organizar tu dinero.</p>
+        <ul style="margin-top:6px; padding-left:15px; font-size:0.85rem;">
+            <li><strong style="color:var(--c-primary)">Caja A (Azul):</strong> Tu economía principal y oficial.</li>
+            <li><strong style="color:var(--c-danger)">Caja B (Roja):</strong> Tus ahorros o gastos privados.</li>
+            <li><strong style="color:var(--c-success)">Caja C (Verde):</strong> Proyectos especiales, hucha conjunta o lo que tú quieras.</li>
+        </ul>
+        <p style="margin-top:6px; font-size:0.85rem;">Pulsa el botón de la esquina superior izquierda para rotar entre ellas.</p>
+    </div>
+</div>
                 
                 <div class="help-card">
                     <div class="help-card__icon" style="background: #fff3e0; color: #ef6c00;"><span class="material-icons">calculate</span></div>
@@ -7661,24 +7671,44 @@ const handleToggleTheme = () => {
                 : [...cuentasFiltradas].sort((a,b) => a.nombre.localeCompare(b.nombre)).map((c) => `
                     <div class="modal__list-item" id="cuenta-item-${c.id}">
                     <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0;"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(c.nombre)}</span><small style="color: var(--c-on-surface-secondary); font-size: var(--fs-xs);">${toSentenceCase(escapeHTML(c.tipo))}</small></div>
-                    <div style="display: flex; align-items: center; gap: var(--sp-1); flex-shrink: 0;"><div class="form-switch-group" style="gap: var(--sp-2);"><label for="offbalance-toggle-${c.id}" style="font-size: var(--fs-xs); color: var(--c-on-surface-secondary);" title="Marcar como 'Contabilidad B'">B</label><label class="form-switch"><input type="checkbox" id="offbalance-toggle-${c.id}" data-action="toggle-off-balance" data-id="${c.id}" ${c.offBalance ? 'checked' : ''}><span class="slider"></span></label></div><button class="icon-btn" data-action="edit-cuenta" data-id="${c.id}" title="Editar Cuenta"><span class="material-icons">edit_note</span></button><button class="icon-btn" data-action="delete-cuenta" data-id="${c.id}" title="Eliminar Cuenta"><span class="material-icons">delete_outline</span></button></div>
+                    <div style="display: flex; align-items: center; gap: var(--sp-1); flex-shrink: 0;"><span style="font-weight:800; color:${badgeColor}; border:1px solid ${badgeColor}; padding:2px 6px; border-radius:4px; font-size:0.7rem;">${accountLedger}</span>
                     </div>`).join('');
         };
     
         const showAccountEditForm = (id) => {
-            const itemContainer = select(`cuenta-item-${id}`);
-            const cuenta = db.cuentas.find(c => c.id === id);
-            if (!itemContainer || !cuenta) return;
-            itemContainer.innerHTML = `
-                <form class="inline-edit-form" data-id="${id}" novalidate>
-                    <div class="form-grid">
-                                                <div class="form-group" style="margin-bottom: 0;"><label class="form-label" for="edit-cuenta-nombre-${id}">Nombre</label><input type="text" id="edit-cuenta-nombre-${id}" class="form-input" value="${escapeHTML(cuenta.nombre)}" required></div>
-                        <div class="form-group" style="margin-bottom: 0;"><label class="form-label" for="edit-cuenta-tipo-${id}">Tipo</label><input type="text" id="edit-cuenta-tipo-${id}" class="form-input" list="tipos-cuenta-list" value="${escapeHTML(cuenta.tipo)}" required></div>
-                    </div>
-                    <div style="display:flex; justify-content: flex-end; gap: var(--sp-2); align-items: center; margin-top: var(--sp-2);"><button type="button" class="btn btn--secondary" data-action="cancel-edit-cuenta">Cancelar</button><button type="button" class="btn btn--primary" data-action="save-edited-cuenta" data-id="${id}">Guardar</button></div>
-                </form>`;
-            select(`edit-cuenta-nombre-${id}`).focus();
-        };
+    const itemContainer = select(`cuenta-item-${id}`);
+    const cuenta = db.cuentas.find(c => c.id === id);
+    if (!itemContainer || !cuenta) return;
+    
+    const currentAccountLedger = cuenta.ledger || (cuenta.offBalance ? 'B' : 'A');
+
+    itemContainer.innerHTML = `
+        <form class="inline-edit-form" data-id="${id}" novalidate>
+            <div class="form-grid">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="edit-cuenta-nombre-${id}">Nombre</label>
+                    <input type="text" id="edit-cuenta-nombre-${id}" class="form-input" value="${escapeHTML(cuenta.nombre)}" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="edit-cuenta-tipo-${id}">Tipo</label>
+                    <input type="text" id="edit-cuenta-tipo-${id}" class="form-input" list="tipos-cuenta-list" value="${escapeHTML(cuenta.tipo)}" required>
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: 10px;">
+                <label class="form-label">Pertenece a Caja:</label>
+                <div style="display:flex; gap:10px;">
+                    <label><input type="radio" name="edit-ledger-${id}" value="A" ${currentAccountLedger === 'A' ? 'checked' : ''}> A (Azul)</label>
+                    <label><input type="radio" name="edit-ledger-${id}" value="B" ${currentAccountLedger === 'B' ? 'checked' : ''}> B (Rojo)</label>
+                    <label><input type="radio" name="edit-ledger-${id}" value="C" ${currentAccountLedger === 'C' ? 'checked' : ''}> C (Verde)</label>
+                </div>
+            </div>
+            <div style="display:flex; justify-content: flex-end; gap: var(--sp-2); align-items: center; margin-top: var(--sp-2);">
+                <button type="button" class="btn btn--secondary" data-action="cancel-edit-cuenta">Cancelar</button>
+                <button type="button" class="btn btn--primary" data-action="save-edited-cuenta" data-id="${id}">Guardar</button>
+            </div>
+        </form>`;
+    select(`edit-cuenta-nombre-${id}`).focus();
+};
     
         const handleSaveEditedAccount = async (id, btn) => {
             const nombreInput = select(`edit-cuenta-nombre-${id}`);
@@ -7687,8 +7717,13 @@ const handleToggleTheme = () => {
             const tipo = toSentenceCase(tipoInput.value.trim());
         
             if (!nombre || !tipo) { showToast('El nombre y el tipo no pueden estar vacíos.', 'warning'); if (!nombre) nombreInput.classList.add('form-input--invalid'); if (!tipo) tipoInput.classList.add('form-input--invalid'); return; }
-            
-            await saveDoc('cuentas', id, { nombre, tipo }, btn);
+            const ledgerSelected = document.querySelector(`input[name="edit-ledger-${id}"]:checked`).value;
+            await saveDoc('cuentas', id, { 
+        nombre, 
+        tipo, 
+        ledger: ledgerSelected,
+        offBalance: ledgerSelected === 'B' 
+    }, btn);
             hapticFeedback('success');
             showToast('Cuenta actualizada.');
             renderCuentasModalList();
@@ -8588,55 +8623,47 @@ const handleStart = (e) => {
             'show-login': (e) => { e.preventDefault(); const title = select('login-title'); const mainButton = document.querySelector('#login-form button[data-action="register"]'); const secondaryAction = document.querySelector('.login-view__secondary-action'); if (mainButton.dataset.action === 'register') { title.textContent = 'Bienvenido de nuevo'; mainButton.dataset.action = 'login'; mainButton.textContent = 'Iniciar Sesión'; secondaryAction.innerHTML = `<span>¿No tienes una cuenta?</span> <a href="#" class="login-view__link" data-action="show-register">Regístrate aquí</a>`; } },
             'import-csv': showCsvImportWizard,
             'toggle-ledger': async () => {
-                hapticFeedback('medium');
-                
-                // 1. Cambiar el estado global
-                isOffBalanceMode = !isOffBalanceMode;
-                
-                // 2. LIMPIEZA CRÍTICA DE CACHÉS (Esto es lo que fallaba)
-                // Si no borramos esto, los cálculos usan datos de la contabilidad anterior
-                runningBalancesCache = null;
-                allDiarioMovementsCache = []; 
-                
-                // 3. Actualizar UI Visual (Botón y Tema)
-                document.body.dataset.ledgerMode = isOffBalanceMode ? 'B' : 'A';
-                const ledgerBtn = select('ledger-toggle-btn');
-                if (ledgerBtn) {
-                    ledgerBtn.textContent = isOffBalanceMode ? 'B' : 'A';
-                    ledgerBtn.title = `Cambiar a Contabilidad ${isOffBalanceMode ? 'A' : 'B'}`;
-                }
-                
-                showToast(`Mostrando Contabilidad ${isOffBalanceMode ? 'B (Oculta)' : 'A (Principal)'}.`, 'info');
+    hapticFeedback('medium');
+    
+    // 1. Rotación de Estado: A -> B -> C -> A
+    if (currentLedger === 'A') currentLedger = 'B';
+    else if (currentLedger === 'B') currentLedger = 'C';
+    else currentLedger = 'A';
+    
+    // 2. Limpieza de Cachés
+    runningBalancesCache = null;
+    allDiarioMovementsCache = []; 
+    
+    // 3. Actualizar UI Visual
+    document.body.dataset.ledgerMode = currentLedger;
+    
+    const ledgerBtn = select('ledger-toggle-btn');
+    if (ledgerBtn) {
+        ledgerBtn.textContent = currentLedger;
+        ledgerBtn.title = `Estás en la Caja ${currentLedger}`;
+    }
+    
+    // Mensaje informativo
+    let label = currentLedger === 'A' ? 'A (Principal)' : (currentLedger === 'B' ? 'B (Secundaria)' : 'C (Extra)');
+    showToast(`Cambiado a Caja ${label}.`, 'info');
 
-                // 4. Actualizar los selectores (Dropdowns) para formularios
-                populateAllDropdowns();
+    // 4. Actualizar datos y vistas
+    populateAllDropdowns();
 
-                // 5. Refrescar la página activa con los nuevos datos
-                const activePageEl = document.querySelector('.view--active');
-                if (activePageEl) {
-                    if (activePageEl.id === PAGE_IDS.PANEL) {
-                        // En el Panel, forzamos la actualización de todos los widgets
-                        scheduleDashboardUpdate();
-                    } 
-                    else if (activePageEl.id === PAGE_IDS.DIARIO) {
-                        // En el Diario, reiniciamos la lista por completo
-                        db.movimientos = [];
-                        lastVisibleMovementDoc = null;
-                        allMovementsLoaded = false;
-                        // Limpiamos visualmente primero
-                        const listContent = select('virtual-list-content');
-                        if(listContent) listContent.innerHTML = '';
-                        // Recargamos datos
-                        await loadMoreMovements(true);
-                    }
-                    else if (activePageEl.id === PAGE_IDS.PATRIMONIO) {
-                        renderPatrimonioPage();
-                    }
-                    else if (activePageEl.id === PAGE_IDS.PLANIFICAR) {
-                        renderPlanificacionPage();
-                    }
-                }
-            },
+    const activePageEl = document.querySelector('.view--active');
+    if (activePageEl) {
+        if (activePageEl.id === PAGE_IDS.PANEL) scheduleDashboardUpdate();
+        else if (activePageEl.id === PAGE_IDS.DIARIO) {
+            db.movimientos = [];
+            lastVisibleMovementDoc = null;
+            allMovementsLoaded = false;
+            select('virtual-list-content').innerHTML = '';
+            await loadMoreMovements(true);
+        }
+        else if (activePageEl.id === PAGE_IDS.PATRIMONIO) renderPatrimonioPage();
+        else if (activePageEl.id === PAGE_IDS.PLANIFICAR) renderPlanificacionPage();
+    }
+},
             'toggle-off-balance': async () => { const checkbox = target.closest('input[type="checkbox"]'); if (!checkbox) return; hapticFeedback('light'); await saveDoc('cuentas', checkbox.dataset.id, { offBalance: checkbox.checked }); },
             'apply-filters': () => { hapticFeedback('light'); scheduleDashboardUpdate(); },
             'delete-movement-from-modal': () => { const isRecurrent = (actionTarget.dataset.isRecurrent === 'true'); const idToDelete = select('movimiento-id').value; const message = isRecurrent ? '¿Eliminar operación recurrente?' : '¿Eliminar movimiento?'; showConfirmationModal(message, async () => { hideModal('movimiento-modal'); await deleteMovementAndAdjustBalance(idToDelete, isRecurrent); }); },
@@ -9573,13 +9600,15 @@ const handleAddConcept = async (btn) => {
     // 4. Si todo es correcto, preparamos el nuevo objeto de cuenta
     const newId = generateId();
     const newAccountData = {
-        id: newId,
-        nombre: nombre,
-        tipo: tipo,
-        saldo: 0, // Las cuentas nuevas siempre empiezan con saldo 0
-        esInversion: false, // Por defecto, una cuenta no es de inversión
-        offBalance: false // Por defecto, pertenece a la contabilidad principal 'A'
-    };
+    id: newId,
+    nombre: nombre,
+    tipo: tipo,
+    saldo: 0,
+    esInversion: false,
+    // AQUÍ EL CAMBIO: Asignamos la cuenta a la caja actual
+    ledger: currentLedger, 
+    offBalance: currentLedger === 'B' // Mantener compatibilidad hacia atrás por si acaso
+};
 
     // 5. Guardamos en la base de datos y damos feedback al usuario
     await saveDoc('cuentas', newId, newAccountData, btn);
