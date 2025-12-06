@@ -1593,9 +1593,17 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     }
     .bottom-nav__item { flex: 0 0 auto; flex-direction: row; justify-content: flex-start; width: 100%; height: auto; padding: var(--sp-2) var(--sp-3); border-radius: var(--border-radius-md); }
     .bottom-nav__item:hover { background-color: var(--c-surface-variant); }
-    body[data-ledger-mode="A"] .bottom-nav__item--active { background-color: var(--c-primary); color: var(--c-white); }
+    body[data-ledger-mode="A"] .bottom-nav__item--active { 
+        background-color: #007AFF !important; 
+        color: #FFFFFF !important; 
+    }
+    
     body[data-ledger-mode="B"] .bottom-nav__item--active { background-color: var(--c-danger); color: var(--c-white) !important; }
-    body[data-ledger-mode="A"] .bottom-nav__item--active:hover { background-color: var(--c-primary-hover); }
+    
+    /* CORRECCIÓN HOVER CAJA A: Azul más oscuro */
+    body[data-ledger-mode="A"] .bottom-nav__item--active:hover { 
+        background-color: #0056b3 !important; 
+    }
     body[data-ledger-mode="B"] .bottom-nav__item--active:hover { background-color: color-mix(in srgb, var(--c-danger) 80%, white); }
     .bottom-nav__item .material-icons { margin-right: var(--sp-3); font-size: 20px; }
     .bottom-nav__label { display: inline-block; font-size: var(--fs-sm); font-weight: 600; margin-top: 0; }
