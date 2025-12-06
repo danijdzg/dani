@@ -7642,38 +7642,107 @@ const handleToggleTheme = () => {
         };
 
         const showCuentasModal = () => { 
-            const existingAccountTypes = [...new Set((db.cuentas || []).map(c => c.tipo))].sort();
-            const datalistOptions = existingAccountTypes.map(type => `<option value="${type}"></option>`).join('');
-            const html = `
-			<div class="form-group" style="margin-bottom: var(--sp-3);">
+    // Generamos las opciones de tipo de cuenta existentes para el datalist
+    const existingAccountTypes = [...new Set((db.cuentas || []).map(c => c.tipo))].sort();
+    const datalistOptions = existingAccountTypes.map(type => `<option value="${type}"></option>`).join('');
+    
+    // HTML del Modal actualizado con selector de Caja (Radio Buttons)
+    const html = `
+    <div class="form-group" style="margin-bottom: var(--sp-3);">
         <input type="search" id="cuenta-search-input" class="form-input" placeholder="Buscar cuentas..." autocomplete="off">
     </div>
-                   <form id="add-cuenta-form" novalidate>
-                <div class="form-group"><label for="new-cuenta-nombre" class="form-label">Nombre de la Cuenta</label><input type="text" id="new-cuenta-nombre" class="form-input" placeholder="Ej: Cartera personal" required></div>
-                <div class="form-group"><label for="new-cuenta-tipo" class="form-label">Tipo de Cuenta</label><input type="text" id="new-cuenta-tipo" class="form-input" list="tipos-cuenta-list" placeholder="Ej: Banco, Cripto, Fintech..." required><datalist id="tipos-cuenta-list">${datalistOptions}</datalist></div>
-                <button type="submit" class="btn btn--primary btn--full" style="margin-top: var(--sp-3)">Añadir Cuenta</button>
-            </form>
-            <hr style="margin: var(--sp-4) 0; border-color: var(--c-outline); opacity: 0.5;"><h4 style="margin-top: var(--sp-4); margin-bottom: var(--sp-2); font-size: var(--fs-base); color: var(--c-on-surface-secondary);">Cuentas Existentes</h4><div id="cuentas-modal-list"></div>`; 
-            showGenericModal('Gestionar Cuentas', html); 
-            renderCuentasModalList(); 
-        };
     
-        const renderCuentasModalList = () => {
-            const list = select('cuentas-modal-list');
-            if (!list) return;
-            const searchQuery = select('cuenta-search-input')?.value.toLowerCase() || '';
-            const cuentasFiltradas = (db.cuentas || []).filter(c => 
-                c.nombre.toLowerCase().includes(searchQuery) || 
-                c.tipo.toLowerCase().includes(searchQuery)
-            );
-            list.innerHTML = cuentasFiltradas.length === 0 
-                ? `<p style="font-size:var(--fs-sm); color:var(--c-on-surface-secondary); text-align:center; padding: var(--sp-4) 0;">No hay cuentas.</p>` 
-                : [...cuentasFiltradas].sort((a,b) => a.nombre.localeCompare(b.nombre)).map((c) => `
-                    <div class="modal__list-item" id="cuenta-item-${c.id}">
-                    <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0;"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(c.nombre)}</span><small style="color: var(--c-on-surface-secondary); font-size: var(--fs-xs);">${toSentenceCase(escapeHTML(c.tipo))}</small></div>
-                    <div style="display: flex; align-items: center; gap: var(--sp-1); flex-shrink: 0;"><span style="font-weight:800; color:${badgeColor}; border:1px solid ${badgeColor}; padding:2px 6px; border-radius:4px; font-size:0.7rem;">${accountLedger}</span>
-                    </div>`).join('');
-        };
+    <form id="add-cuenta-form" novalidate style="background: var(--c-surface-variant); padding: 15px; border-radius: 8px; border: 1px solid var(--c-outline);">
+        <h4 style="margin-top:0; margin-bottom:10px;">Añadir Nueva Cuenta</h4>
+        
+        <div class="form-group">
+            <label for="new-cuenta-nombre" class="form-label">Nombre</label>
+            <input type="text" id="new-cuenta-nombre" class="form-input" placeholder="Ej: Cartera personal" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="new-cuenta-tipo" class="form-label">Tipo</label>
+            <input type="text" id="new-cuenta-tipo" class="form-input" list="tipos-cuenta-list" placeholder="Ej: Banco, Efectivo..." required>
+            <datalist id="tipos-cuenta-list">${datalistOptions}</datalist>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Asignar a Caja:</label>
+            <div style="display:flex; gap:15px; margin-top:5px;">
+                <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+                    <input type="radio" name="new-cuenta-ledger" value="A" checked> 
+                    <span style="font-weight:bold; color:#007bff;">A (Azul)</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+                    <input type="radio" name="new-cuenta-ledger" value="B"> 
+                    <span style="font-weight:bold; color:#dc3545;">B (Roja)</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+                    <input type="radio" name="new-cuenta-ledger" value="C"> 
+                    <span style="font-weight:bold; color:#28a745;">C (Verde)</span>
+                </label>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--full" style="margin-top: var(--sp-3)">Guardar Cuenta</button>
+    </form>
+    
+    <hr style="margin: var(--sp-4) 0; border-color: var(--c-outline); opacity: 0.5;">
+    
+    <h4 style="margin-top: var(--sp-4); margin-bottom: var(--sp-2); font-size: var(--fs-base); color: var(--c-on-surface-secondary);">Cuentas Existentes</h4>
+    <div id="cuentas-modal-list"></div>`; 
+    
+    showGenericModal('Gestionar Cuentas', html); 
+    renderCuentasModalList(); 
+};
+
+/* --- REEMPLAZAR renderCuentasModalList --- */
+const renderCuentasModalList = () => {
+    const list = select('cuentas-modal-list');
+    if (!list) return;
+    
+    const searchQuery = select('cuenta-search-input')?.value.toLowerCase() || '';
+    
+    // Filtrar cuentas
+    const cuentasFiltradas = (db.cuentas || []).filter(c => 
+        c.nombre.toLowerCase().includes(searchQuery) || 
+        c.tipo.toLowerCase().includes(searchQuery)
+    );
+
+    if (cuentasFiltradas.length === 0) {
+        list.innerHTML = `<p style="font-size:var(--fs-sm); color:var(--c-on-surface-secondary); text-align:center; padding: var(--sp-4) 0;">No se encontraron cuentas.</p>`;
+        return;
+    }
+
+    list.innerHTML = cuentasFiltradas.sort((a,b) => a.nombre.localeCompare(b.nombre)).map((c) => {
+        // Determinar Caja
+        const ledger = c.ledger || (c.offBalance ? 'B' : 'A');
+        
+        // Colores para el badge de la caja
+        let badgeColor = '#007bff'; // Azul por defecto (A)
+        if (ledger === 'B') badgeColor = '#dc3545'; // Rojo
+        if (ledger === 'C') badgeColor = '#28a745'; // Verde
+
+        return `
+            <div class="modal__list-item" id="cuenta-item-${c.id}">
+                <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0;">
+                    <span style="font-weight: 600; font-size: 1rem; color: var(--c-on-surface);">${escapeHTML(c.nombre)}</span>
+                    <div style="display:flex; gap: 8px; align-items:center;">
+                        <small style="color: var(--c-on-surface-secondary);">${toSentenceCase(escapeHTML(c.tipo))}</small>
+                        <span style="background-color: ${badgeColor}; color: white; padding: 1px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">CAJA ${ledger}</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: var(--sp-2); flex-shrink: 0;">
+                    <button class="icon-btn" data-action="edit-cuenta" data-id="${c.id}" title="Editar Cuenta">
+                        <span class="material-icons">edit</span>
+                    </button>
+                    <button class="icon-btn" data-action="delete-cuenta" data-id="${c.id}" title="Eliminar Cuenta">
+                        <span class="material-icons text-danger">delete</span>
+                    </button>
+                </div>
+            </div>`;
+    }).join('');
+};
     
         const showAccountEditForm = (id) => {
     const itemContainer = select(`cuenta-item-${id}`);
@@ -9575,56 +9644,49 @@ const handleAddConcept = async (btn) => {
     showToast('Concepto añadido.');
     (select('add-concepto-form')).reset(); 
 };
- const handleAddAccount = async (btn) => {
-    // 1. Obtenemos y limpiamos los datos de los inputs del formulario
+const handleAddAccount = async (btn) => {
     const nombreInput = select('new-cuenta-nombre');
     const tipoInput = select('new-cuenta-tipo');
+    
+    // Obtener la caja seleccionada del formulario
+    const ledgerInput = document.querySelector('input[name="new-cuenta-ledger"]:checked');
+    const ledger = ledgerInput ? ledgerInput.value : 'A'; // Por defecto A si falla algo
+
     const nombre = nombreInput.value.trim();
     const tipo = toSentenceCase(tipoInput.value.trim());
 
-    // 2. Validación de los campos
     if (!nombre || !tipo) {
-        showToast('El nombre y el tipo de la cuenta son obligatorios.', 'warning');
-        if (!nombre) nombreInput.classList.add('form-input--invalid');
-        if (!tipo) tipoInput.classList.add('form-input--invalid');
+        showToast('El nombre y el tipo son obligatorios.', 'warning');
         return;
     }
 
-    // 3. Verificamos si ya existe una cuenta con el mismo nombre (para evitar duplicados)
     if (db.cuentas.some(c => c.nombre.toLowerCase() === nombre.toLowerCase())) {
         showToast(`La cuenta "${nombre}" ya existe.`, 'danger');
-        nombreInput.classList.add('form-input--invalid');
         return;
     }
 
-    // 4. Si todo es correcto, preparamos el nuevo objeto de cuenta
     const newId = generateId();
     const newAccountData = {
-    id: newId,
-    nombre: nombre,
-    tipo: tipo,
-    saldo: 0,
-    esInversion: false,
-    // AQUÍ EL CAMBIO: Asignamos la cuenta a la caja actual
-    ledger: currentLedger, 
-    offBalance: currentLedger === 'B' // Mantener compatibilidad hacia atrás por si acaso
-};
+        id: newId,
+        nombre: nombre,
+        tipo: tipo,
+        saldo: 0,
+        esInversion: false,
+        ledger: ledger, // Guardamos explícitamente la caja seleccionada
+        offBalance: ledger === 'B', // Compatibilidad legacy
+        fechaCreacion: new Date().toISOString()
+    };
 
-    // 5. Guardamos en la base de datos y damos feedback al usuario
     await saveDoc('cuentas', newId, newAccountData, btn);
     
     hapticFeedback('success');
-    showToast('Cuenta añadida con éxito.');
+    showToast(`Cuenta creada en Caja ${ledger}.`);
     
-    // 6. Reseteamos el formulario para que se pueda añadir otra cuenta rápidamente
-    const form = select('add-cuenta-form');
-    if (form) {
-        form.reset();
-        nombreInput.focus(); // Devolvemos el foco al primer campo
-    }
-    
-    // NOTA: La lista de cuentas se actualizará automáticamente gracias al listener onSnapshot
-    // que ya tienes configurado en la función loadCoreData.
+    // Limpiar formulario y recargar lista
+    nombreInput.value = '';
+    tipoInput.value = '';
+    nombreInput.focus();
+    renderCuentasModalList();
 };
 
  const handleSaveConfig = async (btn) => { 

@@ -496,63 +496,63 @@ body[data-theme] .top-bar #page-title-display {
 }
 
 /* ================================================================= */
-/* === ESTILOS DE CONTABILIDAD (BOTÓN Y NAV INFERIOR)        === */
+/* === COLORES DE CAJAS (ENCABEZADOS Y NAVEGACIÓN) REVISADOS === */
 /* ================================================================= */
 
-/* Contabilidad A (Botón Azul) */
+/* --- CAJA A: AZUL (Encabezado y Botones Activos) --- */
+body[data-ledger-mode="A"] .top-bar {
+    background-color: #0056b3 !important; /* Azul sólido */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
 body[data-ledger-mode="A"] #ledger-toggle-btn {
-    background-color: var(--c-primary);
-    border-color: var(--c-primary);
-    color: var(--c-white);
-    box-shadow: 0 0 10px rgba(0, 122, 255, 0.5);
+    background-color: #004494; /* Azul más oscuro */
+    color: white;
 }
-body[data-ledger-mode="A"] #ledger-toggle-btn:hover {
-    background-color: var(--c-primary-hover);
-    border-color: var(--c-primary-hover);
-}
+/* Iconos de navegación en Azul */
 body[data-ledger-mode="A"] .bottom-nav__item--active {
-    color: var(--c-primary); /* El icono activo usa el color primario del tema */
+    color: #007bff !important; 
 }
 
-/* Contabilidad B (Botón Rojo) */
+/* --- CAJA B: ROJA (Encabezado y Botones Activos) --- */
+body[data-ledger-mode="B"] .top-bar {
+    background-color: #c82333 !important; /* Rojo sólido */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
 body[data-ledger-mode="B"] #ledger-toggle-btn {
-    background-color: var(--c-danger);
-    border-color: var(--c-danger);
-    color: var(--c-white);
-    box-shadow: var(--glow-red);
+    background-color: #a71d2a; /* Rojo más oscuro */
+    color: white;
 }
-body[data-ledger-mode="B"] #ledger-toggle-btn:hover {
-    background-color: color-mix(in srgb, var(--c-danger) 85%, black);
-    border-color: color-mix(in srgb, var(--c-danger) 85%, black);
-}
+/* Iconos de navegación en Rojo */
 body[data-ledger-mode="B"] .bottom-nav__item--active {
-    color: var(--c-danger) !important; /* El icono activo siempre será rojo en Cont. B */
+    color: #dc3545 !important;
 }
-/* ================================================================= */
-/* === ESTILOS PARA LA CAJA C (VERDE) === */
-/* ================================================================= */
 
-/* Encabezado Verde Oscuro (Estilo Militar/Dólar) */
+/* --- CAJA C: VERDE (Encabezado y PESTAÑAS BOTÓN) --- */
 body[data-ledger-mode="C"] .top-bar {
-    background-color: #004d00 !important; /* Verde profundo */
-    border-bottom: 1px solid var(--c-success);
+    background-color: #218838 !important; /* Verde sólido */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
 }
-
-/* Botón de cambio de caja (Verde Vibrante) */
 body[data-ledger-mode="C"] #ledger-toggle-btn {
-    background-color: var(--c-success);
-    border-color: var(--c-success);
-    color: var(--c-black); /* Texto negro para contraste con verde neón */
-    box-shadow: 0 0 12px rgba(57, 255, 20, 0.6);
-}
-body[data-ledger-mode="C"] #ledger-toggle-btn:hover {
-    background-color: #32e010;
-    border-color: #32e010;
+    background-color: #1e7e34; /* Verde más oscuro */
+    color: white;
 }
 
-/* Iconos de navegación activos en verde */
+/* --- CORRECCIÓN ESPECÍFICA PARA PESTAÑAS DE CAJA C --- */
+/* En lugar de solo cambiar el color de la fuente, cambiamos el FONDO del botón */
+body[data-ledger-mode="C"] .tab-item--active,
 body[data-ledger-mode="C"] .bottom-nav__item--active {
-    color: var(--c-success) !important;
+    background-color: #28a745 !important; /* Fondo Verde */
+    color: #ffffff !important; /* Texto Blanco */
+    border-radius: 8px; /* Bordes redondeados para parecer botón */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    /* Quitamos el borde inferior que se usa en los otros modos */
+    border-bottom: none !important; 
+}
+
+/* Ajuste pequeño para que el icono dentro del botón verde se vea blanco */
+body[data-ledger-mode="C"] .bottom-nav__item--active .material-icons,
+body[data-ledger-mode="C"] .tab-item--active .material-icons {
+    color: #ffffff !important;
 }
 /* ================================================================= */
 /* === ESTILOS BASE Y ESTRUCTURALES (COMUNES A AMBOS TEMAS)       === */
