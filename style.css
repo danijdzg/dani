@@ -1228,8 +1228,7 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     border-radius: 0; 
     border-left: none; 
     border-right: none;
-    /* Sombra suave para dar sensación de profundidad al flotar */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Sombra suave al flotar */
 }
 
 .movimiento-month-header__title {
@@ -3587,20 +3586,16 @@ body[data-theme="default"] .cartilla-container {
     cursor: pointer; /* Indica que es interactivo */
     -webkit-text-fill-color: var(--c-on-surface);
 }
-/* JERARQUÍA VISUAL ESTRICTA Y DEFINITIVA */
+/* JERARQUÍA VISUAL ESTRICTA */
 .app-layout { z-index: 1; }
 .bottom-nav, .top-bar { z-index: 100; }
 .fab-container, #bottom-nav-add-btn { z-index: 110; }
-
-/* Capas superpuestas */
 .modal-overlay { z-index: 1000; } /* Modales normales */
-.popover-menu { z-index: 1100; } /* Menú contextual */
-
-/* Elementos críticos de sistema */
-#calculator-overlay { z-index: 2000; } /* Calculadora SIEMPRE sobre modales */
+.popover-menu { z-index: 1100; } 
+#calculator-overlay { z-index: 2000; } /* Calculadora sobre modales */
 .save-animation-bubble { z-index: 2100; } 
-.toast-container { z-index: 3000; } /* Notificaciones SIEMPRE encima de todo */
-#start-overlay, #video-intro-overlay { z-index: 9999; } /* Pantallas de carga */
+.toast-container { z-index: 3000; } /* Notificaciones SIEMPRE encima */
+#start-overlay, #video-intro-overlay { z-index: 9999; }
 
 html, body {
     height: 100%;
@@ -4565,9 +4560,13 @@ body[data-theme="sunset-groove"] .hero-val-big {
         grid-template-columns: 1fr; /* Una columna en móviles muy estrechos */
     }
 }
-
 /* Ajustes de color semántico */
 .val-pos { color: var(--c-success); }
 .val-neg { color: var(--c-danger); }
 .val-neu { color: var(--c-info); }
 .val-warn { color: var(--c-warning); }
+
+.modal {
+    max-height: 90dvh; /* Se adapta a la barra de navegación del navegador */
+    min-height: 50%;   /* Evita que se aplaste demasiado */
+}

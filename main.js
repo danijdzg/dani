@@ -945,7 +945,6 @@ const updateTargetInput = (val) => {
 // --- INICIO: BLOQUE CALCULADORA REPARADO Y BLINDADO ---
 
 // Función auxiliar segura: Convierte cualquier entrada a CÉNTIMOS (entero)
-// Definida fuera para evitar errores de redeclaración
 const parseCalculatorValue = (val) => {
     if (val === null || val === undefined || val === '') return NaN;
     // Convierte a string, cambia coma por punto y multiplica por 100
@@ -958,26 +957,22 @@ const calculate = () => {
     const val1 = parseCalculatorValue(calculatorState.operand1);
     const val2 = parseCalculatorValue(calculatorState.displayValue);
     
-    // 2. Seguridad: Si no hay datos válidos, no hacemos nada
+    // 2. Seguridad
     if (isNaN(val1) || isNaN(val2) || !calculatorState.operator) return;
 
     let resultInCents = 0;
     
-    // 3. Operamos en enteros para precisión financiera perfecta
+    // 3. Operamos en enteros para precisión perfecta
     switch (calculatorState.operator) {
         case 'add': resultInCents = val1 + val2; break;
         case 'subtract': resultInCents = val1 - val2; break;
-        case 'multiply': 
-            // Al multiplicar céntimos*céntimos, dividimos por 100 para volver a escala real
-            resultInCents = Math.round((val1 * val2) / 100); 
-            break; 
+        case 'multiply': resultInCents = Math.round((val1 * val2) / 100); break; 
         case 'divide':
             if (val2 === 0) { 
                 showToast("No se puede dividir por cero.", "danger"); 
                 calculatorState.displayValue = 'Error';
                 return; 
             }
-            // Al dividir, multiplicamos por 100 antes para mantener la precisión
             resultInCents = Math.round((val1 * 100) / val2); 
             break;
     }
@@ -987,7 +982,7 @@ const calculate = () => {
     calculatorState.displayValue = result.toLocaleString('es-ES', { 
         minimumFractionDigits: 0, 
         maximumFractionDigits: 2,
-        useGrouping: false // Sin puntos de miles para facilitar edición
+        useGrouping: false 
     }); 
     
     // 5. Reset de estado
@@ -999,7 +994,7 @@ const calculate = () => {
     updateCalculatorDisplay();
 };
 
-// Mejora visual: Escala dinámica de fuente en el display para que quepan números grandes
+// Mejora visual: Escala dinámica de fuente en el display
 const updateCalculatorDisplay = () => {
     const display = select('calculator-display');
     if (!display) return;
@@ -1007,8 +1002,7 @@ const updateCalculatorDisplay = () => {
     display.textContent = value;
     
     const length = value.length;
-    if (length > 11) display.style.fontSize = '1.8rem';
-    else if (length > 9) display.style.fontSize = '2.2rem';
+    if (length > 9) display.style.fontSize = '2rem';
     else if (length > 7) display.style.fontSize = '2.5rem';
     else display.style.fontSize = '3rem';
 };
