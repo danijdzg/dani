@@ -2155,7 +2155,7 @@ const navigateTo = async (pageId, isInitial = false) => {
     if (pageRenderers[pageId]) { 
         if (leftEl) {
             let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar a Contabilidad ${isOffBalanceMode ? 'B' : 'A'}"> ${isOffBalanceMode ? 'B' : 'A'}</button>
-            <a href="calculadora.html" target="_blank" id="page-title-display" style="text-decoration: none; color: inherit; cursor: pointer;">${pageRenderers[pageId].title}</a>`;
+            <span id="page-title-display" style="text-decoration: none; color: inherit; cursor: default;">${pageRenderers[pageId].title}</span>`;
             
             // CORRECCIÓN: Ya NO añadimos ningún botón extra si es PANEL.
             // Solo añadimos botones si es DIARIO.
