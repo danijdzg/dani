@@ -2236,7 +2236,7 @@ const getPendingRecurrents = () => {
 // === BLOQUE DE FUNCIONES DE CUENTAS (CORREGIDO Y UNIFICADO) ===
 // =================================================================
 
-/const getVisibleAccounts = () => {
+const getVisibleAccounts = () => {
     return (db.cuentas || []).filter(c => {
         // Lógica de compatibilidad:
         // 1. Si la cuenta tiene la propiedad 'ledger', usamos eso.
