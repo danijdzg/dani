@@ -2133,7 +2133,12 @@ const navigateTo = async (pageId, isInitial = false) => {
     
     // Acciones por defecto (Menú de 3 puntos)
     const standardActions = `
-        <button data-action="show-main-menu" class="icon-btn"><span class="material-icons">more_vert</span></button>
+        <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
+            <span class="material-icons">calculate</span>
+        </button>
+        <button data-action="show-main-menu" class="icon-btn">
+            <span class="material-icons">more_vert</span>
+        </button>
     `;
     
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
@@ -8494,13 +8499,9 @@ const handleStart = (e) => {
                 }
             },
 			'open-external-calculator': () => {
-        // Cierra el menú primero
-        const menu = document.getElementById('main-menu-popover');
-        if (menu) menu.classList.remove('popover-menu--visible');
-        
-        // Abre la calculadora en una nueva pestaña (mismo enlace que el título)
-        window.open('calculadora.html', '_blank');
-    },
+				hapticFeedback('light');
+				window.open('calculadora.html', '_blank');
+			},
             'show-main-add-sheet': () => showModal('main-add-sheet'),
             'show-pnl-breakdown': () => handleShowPnlBreakdown(actionTarget.dataset.id),
             'show-irr-breakdown': () => handleShowIrrBreakdown(actionTarget.dataset.id),
