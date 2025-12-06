@@ -505,8 +505,10 @@ body[data-ledger-mode="A"] .top-bar {
     border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 body[data-ledger-mode="A"] #ledger-toggle-btn {
-    background-color: #004494; /* Azul más oscuro */
-    color: white;
+    background-color: #007AFF !important; /* Azul Brillante */
+    border-color: #007AFF !important;
+    color: var(--c-white);
+    box-shadow: 0 0 10px rgba(0, 122, 255, 0.5);
 }
 /* Iconos de navegación en Azul */
 body[data-ledger-mode="A"] .bottom-nav__item--active {
@@ -1403,7 +1405,10 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
 
 /* --- Estilos de Contabilidad Dual (A/B) --- */
 body[data-ledger-mode="A"] #ledger-toggle-btn { background-color: var(--c-primary); border-color: var(--c-primary); color: var(--c-white); box-shadow: var(--shadow-sm); }
-body[data-ledger-mode="A"] #ledger-toggle-btn:hover { background-color: var(--c-primary-hover); border-color: var(--c-primary-hover); box-shadow: var(--shadow-md); }
+body[data-ledger-mode="A"] #ledger-toggle-btn:hover {
+    background-color: #0056b3 !important; /* Azul más oscuro al pasar el ratón */
+    border-color: #0056b3 !important;
+}
 body[data-ledger-mode="B"] #ledger-toggle-btn { background-color: var(--c-danger); border-color: var(--c-danger); color: var(--c-white); box-shadow: var(--shadow-sm); }
 body[data-ledger-mode="B"] #ledger-toggle-btn:hover { background-color: color-mix(in srgb, var(--c-danger) 85%, black); border-color: color-mix(in srgb, var(--c-danger) 85%, black); box-shadow: var(--glow-red); }
 body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
