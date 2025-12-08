@@ -468,7 +468,6 @@ const handleGenerateGlobalExtract = async (btn = null) => {
         });
 
         // 4. ORDENAR POR FECHA (Reciente -> Antiguo)
-        // Esto es vital para calcular el saldo hacia atrás correctamente
         globalMovements.sort((a, b) => {
             const dateDiff = new Date(b.fecha) - new Date(a.fecha);
             if (dateDiff !== 0) return dateDiff;
@@ -490,8 +489,7 @@ const handleGenerateGlobalExtract = async (btn = null) => {
                 if (origenVisible && !destinoVisible) impact = -mov.cantidad; // Sale
                 else if (!origenVisible && destinoVisible) impact = mov.cantidad; // Entra
                 
-                // Ajuste visual: Sobrescribimos cantidad para que se pinte en la columna correcta (Rojo/Verde)
-                // aunque sea un traspaso interno (que será 0), para mantener la coherencia visual.
+                // Ajuste visual: Sobrescribimos cantidad para que se pinte en la columna correcta
                 mov.cantidad = impact; 
                 
             } else {
@@ -502,12 +500,13 @@ const handleGenerateGlobalExtract = async (btn = null) => {
             runningBalance -= impact;
         }
 
-        // 6. Renderizar HTML
+        // 6. Renderizar HTML (AQUÍ ESTABA EL ERROR)
+        // Hemos cambiado 'isOffBalanceMode' por 'getLedgerName(currentLedger)'
         let html = `
             <div class="cartilla-container" style="border-top: 4px solid var(--c-primary);">
                 <div class="cartilla-header-info">
                     <h4 style="color: var(--c-primary);">LIBRO MAYOR GLOBAL</h4>
-                    <p><strong>Contabilidad:</strong> ${isOffBalanceMode ? 'B (Oculta)' : 'A (Principal)'}</p>
+                    <p><strong>Contabilidad:</strong> ${getLedgerName(currentLedger)}</p>
                     <p class="cartilla-print-date">Ordenado por fecha · ${new Date().toLocaleDateString()}</p>
                 </div>
                 
