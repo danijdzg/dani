@@ -819,6 +819,16 @@ const clearDiarioFilters = async () => {
 		let selectedInvestmentTypeFilter = null;
 		let syncState = 'synced'; 
 		let currentLedger = 'A'; // Valores posibles: 'A', 'B', 'C'
+		let portfolioViewMode = 'EUR'; // 'EUR' o 'BTC'
+		let btcPriceData = { price: 0, lastUpdated: null };
+
+			// Helper para formatear BTC
+			const formatBTC = (amount) => {
+				return '₿ ' + new Intl.NumberFormat('en-US', { 
+					minimumFractionDigits: 4, 
+					maximumFractionDigits: 6 
+					}).format(amount);
+				};
         let globalSearchDebounceTimer = null;
 		let newMovementIdToHighlight = null;
 		let unsubscribeRecientesListener = null
@@ -887,7 +897,27 @@ const updateActiveOperatorButton = () => {
         if (activeBtn) activeBtn.classList.add('btn-operator--active');
     }
 };      
+const fetchBtcPrice = async () => {
+    // Evitar llamadas excesivas (cache de 60 segundos)
+    const now = Date.now();
+    if (btcPriceData.lastUpdated && (now - btcPriceData.lastUpdated < 60000)) {
+        return btcPriceData.price;
+    }
 
+    try {
+        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur');
+        const data = await response.json();
+        if (data && data.bitcoin && data.bitcoin.eur) {
+            btcPriceData.price = data.bitcoin.eur;
+            btcPriceData.lastUpdated = now;
+            return data.bitcoin.eur;
+        }
+    } catch (error) {
+        console.error("Error al obtener precio BTC:", error);
+        showToast("No se pudo actualizar el precio de BTC", "warning");
+    }
+    return btcPriceData.price || 0; // Retorna 0 o el último precio conocido si falla
+};
 const handleCalculatorInput = (key) => {
     hapticFeedback('light');
     let { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue } = calculatorState;
@@ -2210,14 +2240,22 @@ const navigateTo = async (pageId, isInitial = false) => {
     
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
     if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
+	const patrimonioActions = `
+    <button data-action="toggle-portfolio-currency" class="icon-btn" title="Cambiar moneda (EUR/BTC)">
+        <span class="material-icons" id="currency-toggle-icon">currency_bitcoin</span>
+    </button>
+    ${standardActions}
+`;
 
-    const pageRenderers = {
-        [PAGE_IDS.PANEL]: { title: 'Panel', render: renderPanelPage, actions: standardActions },
-        [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
-        [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: standardActions },
-        [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage, actions: standardActions },
-        [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
-    };
+const pageRenderers = {
+    [PAGE_IDS.PANEL]: { title: 'Panel', render: renderPanelPage, actions: standardActions },
+    [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
+    // ▼▼▼ CAMBIO AQUÍ ▼▼▼
+    [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: patrimonioActions },
+    // ▲▲▲ FIN CAMBIO ▲▲▲
+    [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage, actions: standardActions },
+    [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
+};
 
     if (pageRenderers[pageId]) { 
     if (leftEl) {
@@ -3194,7 +3232,6 @@ const renderPortfolioMainContent = async (targetContainerId) => {
     const container = select(targetContainerId);
     if (!container) return;
 
-    // Se mantiene la lógica existente para obtener los activos y sus datos
     const investmentAccounts = getVisibleAccounts().filter((c) => c.esInversion);
     const CHART_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
 
@@ -3202,15 +3239,12 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         container.innerHTML = `<div id="empty-investments" class="empty-state" style="margin-top: 0; border: none; background: transparent;">
                 <span class="material-icons">rocket_launch</span>
                 <h3>Tu Portafolio empieza aquí</h3>
-                <p>Ve a 'Ajustes' > 'Cuentas' y marca una cuenta como 'de inversión' para empezar el seguimiento.</p>
-                <button class="btn btn--primary" data-action="manage-investment-accounts" style="margin-top: var(--sp-4);">
-                    <span class="material-icons" style="font-size: 16px;">checklist</span>
-                    <span>Gestionar Activos</span>
-                </button>
+                <p>Ve a 'Ajustes' > 'Cuentas' y marca una cuenta como 'de inversión'.</p>
             </div>`;
         return;
     }
 
+    // 1. Obtener Datos
     const performanceData = await Promise.all(
         investmentAccounts.map(async (cuenta) => {
             const performance = await calculatePortfolioPerformance(cuenta.id);
@@ -3218,10 +3252,53 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         })
     );
 
+    // 2. Filtrado (igual que antes)
+    const displayAssetsData = performanceData.filter(asset => !deselectedInvestmentTypesFilter.has(toSentenceCase(asset.tipo || 'S/T')));
+
+    // 3. Cálculos Totales en EUROS
+    let portfolioTotalValorado = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.valorActual, 0);
+    let portfolioTotalInvertido = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.capitalInvertido, 0);
+    let rentabilidadTotalAbsoluta = portfolioTotalValorado - portfolioTotalInvertido;
+    const rentabilidadTotalPorcentual = portfolioTotalInvertido !== 0 ? (rentabilidadTotalAbsoluta / portfolioTotalInvertido) * 100 : 0;
+
+    // --- LÓGICA DE CONVERSIÓN A BITCOIN ---
+    let displayTotalValorado = formatCurrency(portfolioTotalValorado);
+    let displayTotalInvertido = formatCurrency(portfolioTotalInvertido);
+    let displayRentabilidadAbsoluta = formatCurrency(rentabilidadTotalAbsoluta);
+    let currencyClass = '';
+    let timestampHTML = '';
+
+    if (portfolioViewMode === 'BTC' && btcPriceData.price > 0) {
+        // Convertimos céntimos de Euro a Euros, y luego a BTC
+        const btcVal = (portfolioTotalValorado / 100) / btcPriceData.price;
+        const btcInv = (portfolioTotalInvertido / 100) / btcPriceData.price;
+        const btcPnl = (rentabilidadTotalAbsoluta / 100) / btcPriceData.price;
+
+        displayTotalValorado = formatBTC(btcVal);
+        displayTotalInvertido = formatBTC(btcInv);
+        displayRentabilidadAbsoluta = formatBTC(btcPnl);
+        
+        currencyClass = 'btc-mode-active'; // Clase CSS para poner el texto naranja/dorado
+
+        // Añadimos el timestamp de actualización
+        const timeStr = new Date(btcPriceData.lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        timestampHTML = `
+            <div class="portfolio-timestamp">
+                <div class="dot"></div>
+                <span>1 BTC = ${formatCurrency(Math.round(btcPriceData.price * 100))}</span>
+                <span style="opacity:0.6">• Actualizado ${timeStr}</span>
+            </div>
+        `;
+    }
+    // --------------------------------------
+
+    const rentabilidadClass = rentabilidadTotalAbsoluta >= 0 ? 'text-positive' : 'text-negative';
+
+    // 4. Renderizado HTML
+    // Generación de pills (filtros) igual que antes...
     const allInvestmentTypes = [...new Set(performanceData.map(asset => toSentenceCase(asset.tipo || 'S/T')))].sort();
     const colorMap = {};
     allInvestmentTypes.forEach((label, index) => { colorMap[label] = CHART_COLORS[index % CHART_COLORS.length]; });
-
     const pillsHTML = allInvestmentTypes.map(t => {
         const isActive = !deselectedInvestmentTypesFilter.has(t);
         const color = colorMap[t];
@@ -3229,77 +3306,25 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         return `<button class="filter-pill ${isActive ? 'filter-pill--active' : ''}" data-action="toggle-investment-type-filter" data-type="${t}" ${style}>${t}</button>`;
     }).join('');
 
-    const displayAssetsData = performanceData.filter(asset => !deselectedInvestmentTypesFilter.has(toSentenceCase(asset.tipo || 'S/T')));
-
-    const portfolioTotalValorado = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.valorActual, 0);
-    const portfolioTotalInvertido = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.capitalInvertido, 0);
-    const rentabilidadTotalAbsoluta = portfolioTotalValorado - portfolioTotalInvertido;
-    const rentabilidadTotalPorcentual = portfolioTotalInvertido !== 0 ? (rentabilidadTotalAbsoluta / portfolioTotalInvertido) * 100 : 0;
-    const rentabilidadClass = rentabilidadTotalAbsoluta >= 0 ? 'text-positive' : 'text-negative';
-
-    // =========================================================================
-    // === ▼▼▼ INICIO: NUEVO CÓDIGO AÑADIDO PARA EL SUMARIO FINAL ▼▼▼ =========
-    // =========================================================================
-    
-    // 1. Calculamos el rendimiento TOTAL de todo el portafolio filtrado.
-    const portfolioTotalPerformance = await calculatePortfolioPerformance();
-
-    // 2. Preparamos las variables para el HTML.
-    const totalPnlAbsoluto = portfolioTotalPerformance.pnlAbsoluto;
-    const totalPnlPorcentual = portfolioTotalPerformance.pnlPorcentual;
-    const totalIrr = portfolioTotalPerformance.irr;
-
-    const totalPnlClass = totalPnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
-    const totalIrrClass = totalIrr >= 0 ? 'text-positive' : 'text-negative';
-
-    // 3. Creamos el bloque HTML para la nueva tarjeta de sumario.
-    const summaryCardHtml = `
-        <div class="portfolio-summary-card">
-            <h3 class="portfolio-summary-card__title">
-                <span class="material-icons">military_tech</span>
-                Sumario Total del Portafolio
-            </h3>
-            <div class="portfolio-summary-card__grid">
-                <div class="summary-kpi">
-                    <div class="summary-kpi__label">P&L Total</div>
-                    <div class="summary-kpi__value ${totalPnlClass}">
-                        ${formatCurrency(totalPnlAbsoluto)}
-                        <div style="font-size: 0.6em; font-weight: 600;">(${totalPnlPorcentual.toFixed(1)}%)</div>
-                    </div>
-                </div>
-                <div class="summary-kpi">
-                    <div class="summary-kpi__label">TIR Total Anualizada</div>
-                    <div class="summary-kpi__value ${totalIrrClass}">
-                        ${(totalIrr * 100).toFixed(2)}%
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // =========================================================================
-    // === ▲▲▲ FIN: NUEVO CÓDIGO AÑADIDO PARA EL SUMARIO FINAL ▲▲▲ ===========
-    // =========================================================================
-
-
     container.innerHTML = `
-        <div class="card" style="margin-bottom: var(--sp-4);">
+        ${timestampHTML} <div class="card" style="margin-bottom: var(--sp-4);">
             <div class="card__content" style="display: flex; justify-content: space-around; text-align: center; padding: var(--sp-3);">
                 <div>
                     <h4 class="kpi-item__label">Capital Aportado</h4>
-                    <strong class="kpi-item__value" style="font-size: var(--fs-lg);">${formatCurrency(portfolioTotalInvertido)}</strong>
+                    <strong class="kpi-item__value ${currencyClass}" style="font-size: var(--fs-lg);">${displayTotalInvertido}</strong>
                 </div>
                 <div>
                     <h4 class="kpi-item__label">Valor de Mercado</h4>
-                    <strong class="kpi-item__value" style="font-size: var(--fs-lg);">${formatCurrency(portfolioTotalValorado)}</strong>
+                    <strong class="kpi-item__value ${currencyClass}" style="font-size: var(--fs-lg);">${displayTotalValorado}</strong>
                 </div>
                 <div>
                     <h4 class="kpi-item__label">Ganancia / Pérdida</h4>
-                    <strong class="kpi-item__value ${rentabilidadClass}" style="font-size: var(--fs-lg);">${formatCurrency(rentabilidadTotalAbsoluta)}</strong>
+                    <strong class="kpi-item__value ${rentabilidadClass}" style="font-size: var(--fs-lg);">${(portfolioViewMode === 'BTC' && rentabilidadTotalAbsoluta >=0) ? '+' : ''}${displayRentabilidadAbsoluta}</strong>
                     <div class="kpi-item__comparison ${rentabilidadClass}" style="font-weight: 600;">(${rentabilidadTotalPorcentual.toFixed(1)}%)</div>
                 </div>
             </div>
         </div>
+        
         <details class="accordion" open style="margin-bottom: var(--sp-4);">
             <summary><h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">pie_chart</span>Asignación y Filtros</h3><span class="material-icons accordion__icon">expand_more</span></summary>
             <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
@@ -3307,22 +3332,17 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                 <div class="chart-container" style="height: 250px; margin-bottom: 0;"><canvas id="asset-allocation-chart"></canvas></div>
             </div>
         </details>
-        <div id="investment-assets-list"></div>
-
-        ${summaryCardHtml} <!-- <-- INYECTAMOS LA NUEVA TARJETA AQUÍ -->
         
-        <div class="card card--no-bg" style="padding:0; margin-top: var(--sp-4);">
-            <button class="btn btn--secondary btn--full" data-action="manage-investment-accounts"><span class="material-icons" style="font-size: 16px;">checklist</span>Gestionar Activos</button>
-        </div>`;
+        <div id="investment-assets-list"></div>`;
     
+    // Renderizado del Treemap (siempre se basa en valor relativo, así que funciona igual con los datos base en EUR)
     setTimeout(() => {
         const chartCtx = select('asset-allocation-chart')?.getContext('2d');
         if (chartCtx) {
             if (assetAllocationChart) assetAllocationChart.destroy();
-            const keyToSum = 'valorActual';
             const treeData = [];
             displayAssetsData.forEach(asset => {
-                const valor = asset[keyToSum] / 100;
+                const valor = asset.valorActual / 100;
                 if (valor > 0) treeData.push({ tipo: toSentenceCase(asset.tipo || 'S/T'), nombre: asset.nombre, valor: valor });
             });
             if (treeData.length > 0) {
@@ -3342,11 +3362,10 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                     },
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false } } }
                 });
-            } else {
-                select('asset-allocation-chart').closest('.chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>No hay activos con valor para mostrar.</p></div>`;
             }
         }
         
+        // Renderizado de la lista de activos individuales
         const listContainer = select('investment-assets-list');
         if (listContainer) {
             const listHtml = displayAssetsData
@@ -3356,72 +3375,58 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                     const pnlClassText = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
                     const tirClassPill = cuenta.irr >= 0 ? 'is-positive' : 'is-negative';
 
-                    // ▼▼▼ ¡NUEVA LÓGICA AQUÍ! ▼▼▼
-                    // 1. Buscamos la última valoración para esta cuenta específica.
+                    // --- CONVERSIÓN INDIVIDUAL A BTC ---
+                    let itemValor = formatCurrency(cuenta.valorActual);
+                    let itemAportado = formatCurrency(cuenta.capitalInvertido);
+                    let itemPnl = formatCurrency(cuenta.pnlAbsoluto);
+                    
+                    if (portfolioViewMode === 'BTC' && btcPriceData.price > 0) {
+                        itemValor = formatBTC((cuenta.valorActual/100) / btcPriceData.price);
+                        itemAportado = formatBTC((cuenta.capitalInvertido/100) / btcPriceData.price);
+                        itemPnl = formatBTC((cuenta.pnlAbsoluto/100) / btcPriceData.price);
+                    }
+                    // -----------------------------------
+
+                    // Última valoración (Lógica existente)
                     const ultimaValoracion = (db.inversiones_historial || [])
                         .filter(v => v.cuentaId === cuenta.id)
                         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
-
-                    // 2. Preparamos el texto a mostrar.
                     let fechaUltimaValoracionHTML = '<small class="asset-card__last-valuation-date">Sin valorar</small>';
                     if (ultimaValoracion) {
                         const fecha = new Date(ultimaValoracion.fecha + 'T12:00:00Z');
-                        const fechaFormateada = fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
-                        fechaUltimaValoracionHTML = `<small class="asset-card__last-valuation-date">Val. ${fechaFormateada}</small>`;
+                        fechaUltimaValoracionHTML = `<small class="asset-card__last-valuation-date">Val. ${fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}</small>`;
                     }
-                    // ▲▲▲ FIN DE LA NUEVA LÓGICA ▲▲▲
 
                     return `
                     <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
-                        
                         <div class="asset-card__details">
                             <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
-                            <div class="asset-card__allocation">
-                                Aportado: ${formatCurrency(cuenta.capitalInvertido)}
-                            </div>
+                            <div class="asset-card__allocation">Aportado: ${itemAportado}</div>
                             <div class="asset-card__pnl-absolute ${pnlClassText}" style="font-size: var(--fs-sm); font-weight: 600;">
-                                ${cuenta.pnlAbsoluto >= 0 ? '+' : ''}${formatCurrency(cuenta.pnlAbsoluto)}
+                                ${(portfolioViewMode === 'BTC' && cuenta.pnlAbsoluto >= 0) ? '+' : ''}${cuenta.pnlAbsoluto >= 0 && portfolioViewMode !== 'BTC' ? '+' : ''}${itemPnl}
                             </div>
                         </div>
-
                         <div class="asset-card__figures">
-                            <div class="asset-card__value">${formatCurrency(cuenta.valorActual)}</div>
-                            
+                            <div class="asset-card__value ${currencyClass}">${itemValor}</div>
                             <div style="display: flex; gap: var(--sp-2); align-items: center; justify-content: flex-end;">
-                                <button 
-                                    class="asset-card__pnl-pill ${pnlClassPill}" 
-                                    style="border:none; cursor:pointer;"
-                                    data-action="show-pnl-breakdown" 
-                                    data-id="${cuenta.id}" 
-                                    title="Pulsar para ver desglose de P&L">
+                                <button class="asset-card__pnl-pill ${pnlClassPill}" style="border:none; cursor:pointer;" data-action="show-pnl-breakdown" data-id="${cuenta.id}">
                                     P&L: ${cuenta.pnlPorcentual.toFixed(1)}%
                                 </button>
-                                <button 
-                                    class="asset-card__pnl-pill ${tirClassPill}" 
-                                    style="border:none; cursor:pointer;"
-                                    data-action="show-irr-breakdown" 
-                                    data-id="${cuenta.id}" 
-                                    title="Pulsar para ver desglose de TIR">
+                                <button class="asset-card__pnl-pill ${tirClassPill}" style="border:none; cursor:pointer;" data-action="show-irr-breakdown" data-id="${cuenta.id}">
                                     TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
                                 </button>
                             </div>
-                            
-                            <!-- ▼▼▼ HTML MODIFICADO AQUÍ ▼▼▼ -->
                             <div class="asset-card__valuation-area">
                                 ${fechaUltimaValoracionHTML}
                                 <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}">
-                                    <span class="material-icons" style="font-size: 14px;">add_chart</span>
-                                    Valorar
+                                    <span class="material-icons" style="font-size: 14px;">add_chart</span> Valorar
                                 </button>
                             </div>
-                            <!-- ▲▲▲ FIN DEL HTML MODIFICADO ▲▲▲ -->
-
                         </div>
                     </div>`;
                 }).join('');
 
             listContainer.innerHTML = listHtml ? `<div class="card fade-in-up"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
-            
             applyInvestmentItemInteractions(listContainer);
         }
     }, 50);
@@ -8669,6 +8674,32 @@ const handleStart = (e) => {
         
         // Mapa de acciones
         const actions = {
+			'toggle-portfolio-currency': async () => {
+    hapticFeedback('medium');
+    const btnIcon = select('currency-toggle-icon');
+    
+    if (portfolioViewMode === 'EUR') {
+        // Cambiar a BTC
+        showToast('Obteniendo precio de Bitcoin...', 'info');
+        const price = await fetchBtcPrice();
+        if (price > 0) {
+            portfolioViewMode = 'BTC';
+            if(btnIcon) {
+                btnIcon.textContent = 'euro'; // El botón ahora muestra "volver a Euro"
+                btnIcon.classList.add('btc-mode-active');
+            }
+            renderPortfolioMainContent('portfolio-main-content');
+        }
+    } else {
+        // Volver a EUR
+        portfolioViewMode = 'EUR';
+        if(btnIcon) {
+            btnIcon.textContent = 'currency_bitcoin';
+            btnIcon.classList.remove('btc-mode-active');
+        }
+        renderPortfolioMainContent('portfolio-main-content');
+    }
+},
 			'rename-ledgers': showRenameLedgersModal,
             'swipe-show-irr-history': () => handleShowIrrHistory(type),
             'show-main-menu': () => {

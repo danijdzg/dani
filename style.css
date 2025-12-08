@@ -4619,3 +4619,28 @@ body[data-theme="sunset-groove"] .hero-val-big {
     font-weight: 700;
     letter-spacing: 0.3px;
 }
+/* --- Estilos para Modo Bitcoin y Timestamp --- */
+.btc-mode-active {
+    color: #F7931A !important; /* Color Naranja Bitcoin */
+    text-shadow: 0 0 10px rgba(247, 147, 26, 0.4);
+}
+
+.portfolio-timestamp {
+    font-size: 0.7rem;
+    color: var(--c-on-surface-tertiary);
+    text-align: center;
+    margin-top: -10px;
+    margin-bottom: var(--sp-3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+}
+
+.portfolio-timestamp .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--c-success);
+    box-shadow: 0 0 6px var(--c-success);
+}
