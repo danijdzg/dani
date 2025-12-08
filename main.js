@@ -8829,14 +8829,11 @@ const handleStart = (e) => {
     // 3. Actualizar UI Visual
     document.body.dataset.ledgerMode = currentLedger;
     
-    // ▼▼▼ USAMOS LA NUEVA FUNCIÓN AQUÍ ▼▼▼
-    updateLedgerButtonUI();
-    if (ledgerBtn) {
-        // AHORA USAMOS EL NOMBRE PERSONALIZADO
-        const name = getLedgerName(currentLedger);
-        ledgerBtn.textContent = name; // Muestra "Personal" en vez de "A"
-        ledgerBtn.title = `Estás en: ${name}`;
-    }
+    // ▼▼▼ AQUÍ ESTABA EL ERROR (CORREGIDO) ▼▼▼
+    // Simplemente llamamos a la función auxiliar que ya creamos.
+    // Ella se encarga de buscar el botón y cambiar el texto.
+    updateLedgerButtonUI(); 
+    // ▲▲▲ FIN DE LA CORRECCIÓN ▲▲▲
     
     // Mensaje informativo usando el nombre real
     showToast(`Cambiado a ${getLedgerName(currentLedger)}.`, 'info');
