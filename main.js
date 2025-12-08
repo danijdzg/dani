@@ -1244,6 +1244,7 @@ async function loadCoreData(uid) {
         db.config = doc.exists && doc.data().config ? doc.data().config : getInitialDb().config;
         localStorage.setItem('skipIntro', (db.config && db.config.skipIntro) || 'false');
         loadConfig();
+		updateLedgerButtonUI();
     }, error => console.error("Error escuchando la configuración del usuario: ", error));
     unsubscribeListeners.push(unsubConfig);
     
@@ -1702,6 +1703,17 @@ document.body.addEventListener('change', e => {
 	const getLedgerName = (letter) => {
     // Intenta obtener el nombre personalizado, si no existe, usa "Caja X"
     return db.config?.ledgerNames?.[letter] || `Caja ${letter}`;
+};
+const updateLedgerButtonUI = () => {
+    const btn = select('ledger-toggle-btn');
+    if (btn) {
+        // Obtenemos el nombre usando tu función helper existente
+        const name = getLedgerName(currentLedger);
+        
+        // Actualizamos el texto y el título
+        btn.textContent = name;
+        btn.title = `Estás en: ${name}`;
+    }
 };
 /* --- HELPER: Convierte HEX a RGBA para los gradientes --- */
 const hexToRgba = (hex, alpha) => {
@@ -2208,9 +2220,15 @@ const navigateTo = async (pageId, isInitial = false) => {
     };
 
     if (pageRenderers[pageId]) { 
-        if (leftEl) {
-			const ledgerName = getLedgerName(currentLedger);
-            let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Caja Actual: ${currentLedger}"> ${currentLedger}</button>
+    if (leftEl) {
+        // Usamos la función getLedgerName para obtener el texto inicial correcto
+        const currentName = getLedgerName(currentLedger);
+
+        // Generamos el botón con el nombre YA puesto
+        let leftSideHTML = `
+            <button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Estás en: ${currentName}">
+                ${currentName}
+            </button>
 			<span id="page-title-display" style="text-decoration: none; color: inherit; cursor: default;">${pageRenderers[pageId].title}</span>`;
             
             // CORRECCIÓN: Ya NO añadimos ningún botón extra si es PANEL.
@@ -8780,7 +8798,8 @@ const handleStart = (e) => {
     // 3. Actualizar UI Visual
     document.body.dataset.ledgerMode = currentLedger;
     
-    const ledgerBtn = select('ledger-toggle-btn');
+    // ▼▼▼ USAMOS LA NUEVA FUNCIÓN AQUÍ ▼▼▼
+    updateLedgerButtonUI();
     if (ledgerBtn) {
         // AHORA USAMOS EL NOMBRE PERSONALIZADO
         const name = getLedgerName(currentLedger);
