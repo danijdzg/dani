@@ -4609,3 +4609,13 @@ body[data-theme="sunset-groove"] .hero-val-big {
     max-height: 90dvh; /* Se adapta a la barra de navegación del navegador */
     min-height: 50%;   /* Evita que se aplaste demasiado */
 }
+#ledger-toggle-btn {
+    max-width: 100px; /* Limitamos el ancho */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Pone "..." si es muy largo */
+    padding: 6px 12px;
+    text-transform: capitalize;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}

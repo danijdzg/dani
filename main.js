@@ -101,6 +101,65 @@ const setupRealTimeValidation = () => {
         }
     });
 };
+const showRenameLedgersModal = () => {
+    const names = db.config.ledgerNames || { A: "Personal", B: "Ahorro", C: "Extra" };
+    
+    const html = `
+    <form id="rename-ledgers-form" novalidate>
+        <p class="form-label" style="margin-bottom: var(--sp-3);">
+            Asigna nombres familiares a tus contabilidades para identificarlas mejor.
+        </p>
+        
+        <div class="form-group">
+            <label class="form-label" style="color: var(--c-primary);">Caja A (Principal)</label>
+            <input type="text" id="input-ledger-name-A" class="form-input" value="${escapeHTML(names.A)}" placeholder="Ej: Personal" maxlength="12" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" style="color: var(--c-danger);">Caja B (Secundaria)</label>
+            <input type="text" id="input-ledger-name-B" class="form-input" value="${escapeHTML(names.B)}" placeholder="Ej: Negocio" maxlength="12" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" style="color: var(--c-success);">Caja C (Extra)</label>
+            <input type="text" id="input-ledger-name-C" class="form-input" value="${escapeHTML(names.C)}" placeholder="Ej: Hucha" maxlength="12" required>
+        </div>
+
+        <div class="modal__actions">
+            <button type="submit" class="btn btn--primary btn--full">Guardar Nombres</button>
+        </div>
+    </form>`;
+
+    showGenericModal('Personalizar Cajas', html);
+};
+
+const handleSaveLedgerNames = async (btn) => {
+    setButtonLoading(btn, true);
+    
+    const newNames = {
+        A: select('input-ledger-name-A').value.trim() || "Caja A",
+        B: select('input-ledger-name-B').value.trim() || "Caja B",
+        C: select('input-ledger-name-C').value.trim() || "Caja C"
+    };
+
+    // Actualizar local
+    if (!db.config) db.config = {};
+    db.config.ledgerNames = newNames;
+
+    // Guardar en Firebase
+    await fbDb.collection('users').doc(currentUser.uid).set({ config: db.config }, { merge: true });
+
+    // Actualizar el botón de la barra superior inmediatamente
+    const ledgerBtn = select('ledger-toggle-btn');
+    if (ledgerBtn) {
+        ledgerBtn.textContent = getLedgerName(currentLedger);
+    }
+
+    setButtonLoading(btn, false);
+    hideModal('generic-modal');
+    hapticFeedback('success');
+    showToast('Nombres actualizados correctamente.');
+};
 const optimizeMobileInputExperience = () => {
     const cantidadInput = select('movimiento-cantidad');
     const isTouch = 'ontouchstart' in window;
@@ -677,8 +736,7 @@ const getInitialDb = () => ({
         savedReports: {} // <-- AÑADIDO: para guardar la configuración de los informes
     } 
 });
-		// ▼▼▼ PEGA ESTE BLOQUE DE CÓDIGO JS ▼▼▼
-
+		// ▼▼▼ PEGA ESTE BLOQUE DE CÓDIG
 // Variable global para guardar los filtros activos
 let diarioActiveFilters = null;
 let allDiarioMovementsCache = []; // Caché para guardar TODOS los movimientos una vez cargados
@@ -1641,7 +1699,10 @@ document.body.addEventListener('change', e => {
     const number = (numInCents || 0) / 100;
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(number);
 };
-
+	const getLedgerName = (letter) => {
+    // Intenta obtener el nombre personalizado, si no existe, usa "Caja X"
+    return db.config?.ledgerNames?.[letter] || `Caja ${letter}`;
+};
 /* --- HELPER: Convierte HEX a RGBA para los gradientes --- */
 const hexToRgba = (hex, alpha) => {
     let r = 0, g = 0, b = 0;
@@ -2148,6 +2209,7 @@ const navigateTo = async (pageId, isInitial = false) => {
 
     if (pageRenderers[pageId]) { 
         if (leftEl) {
+			const ledgerName = getLedgerName(currentLedger);
             let leftSideHTML = `<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Caja Actual: ${currentLedger}"> ${currentLedger}</button>
 			<span id="page-title-display" style="text-decoration: none; color: inherit; cursor: default;">${pageRenderers[pageId].title}</span>`;
             
@@ -3982,6 +4044,7 @@ const renderAjustesPage = () => {
             
             <!-- Grupo 3: Seguridad y Cuenta -->
             <h3 class="settings-group__title">Seguridad y Cuenta</h3>
+			
             <div class="card">
                 <div class="card__content" style="padding: 0;">
                     <div class="settings-item" style="cursor: default;">
@@ -3993,6 +4056,16 @@ const renderAjustesPage = () => {
                         <span class="settings-item__label">Configurar PIN de acceso</span>
                         <span class="material-icons">chevron_right</span>
                     </button>
+					<h3 class="settings-group__title">Personalización</h3>
+<div class="card">
+    <div class="card__content" style="padding: 0;">
+        <button class="settings-item" data-action="rename-ledgers">
+            <span class="material-icons text-info">edit_square</span>
+            <span class="settings-item__label">Renombrar Cajas (A/B/C)</span>
+            <span class="material-icons">chevron_right</span>
+        </button>
+    </div>
+</div>
                     <button class="settings-item text-danger" data-action="logout">
                         <span class="material-icons">logout</span>
                         <span class="settings-item__label">Cerrar Sesión</span>
@@ -8578,6 +8651,7 @@ const handleStart = (e) => {
         
         // Mapa de acciones
         const actions = {
+			'rename-ledgers': showRenameLedgersModal,
             'swipe-show-irr-history': () => handleShowIrrHistory(type),
             'show-main-menu': () => {
                 const menu = document.getElementById('main-menu-popover');
@@ -8694,7 +8768,7 @@ const handleStart = (e) => {
             'toggle-ledger': async () => {
     hapticFeedback('medium');
     
-    // 1. Rotación de Estado: A -> B -> C -> A
+    // 1. Rotación: A -> B -> C -> A
     if (currentLedger === 'A') currentLedger = 'B';
     else if (currentLedger === 'B') currentLedger = 'C';
     else currentLedger = 'A';
@@ -8708,13 +8782,14 @@ const handleStart = (e) => {
     
     const ledgerBtn = select('ledger-toggle-btn');
     if (ledgerBtn) {
-        ledgerBtn.textContent = currentLedger;
-        ledgerBtn.title = `Estás en la Caja ${currentLedger}`;
+        // AHORA USAMOS EL NOMBRE PERSONALIZADO
+        const name = getLedgerName(currentLedger);
+        ledgerBtn.textContent = name; // Muestra "Personal" en vez de "A"
+        ledgerBtn.title = `Estás en: ${name}`;
     }
     
-    // Mensaje informativo
-    let label = currentLedger === 'A' ? 'A (Principal)' : (currentLedger === 'B' ? 'B (Secundaria)' : 'C (Extra)');
-    showToast(`Cambiado a Caja ${label}.`, 'info');
+    // Mensaje informativo usando el nombre real
+    showToast(`Cambiado a ${getLedgerName(currentLedger)}.`, 'info');
 
     // 4. Actualizar datos y vistas
     populateAllDropdowns();
@@ -8809,6 +8884,7 @@ const handleStart = (e) => {
         const target = e.target;
         const submitter = e.submitter;
         const handlers = {
+			'rename-ledgers-form': () => handleSaveLedgerNames(submitter),
             'login-form': () => { const action = submitter ? submitter.dataset.action : 'login'; if (action === 'login') handleLogin(submitter); else handleRegister(submitter); },
             'pin-form': handlePinSubmit,
             'form-movimiento': () => handleSaveMovement(target, submitter),
