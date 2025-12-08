@@ -4491,8 +4491,6 @@ const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // (Eliminado código del saludo)
-
     container.innerHTML = `
         <div style="padding: 0 var(--sp-2) var(--sp-4);">
             
@@ -4526,7 +4524,7 @@ const renderPanelPage = async () => {
                         <span class="material-icons" style="font-size: 16px; color: var(--c-info);">account_balance_wallet</span> Liquidez
                         <button class="help-btn" data-action="show-kpi-help" data-kpi="liquidez">?</button>
                     </div>
-                    <div id="kpi-liquidez-value" class="status-value skeleton" style="font-size: 1.1rem;">0,00 €</div>
+                    <div id="kpi-liquidez-value" class="status-value skeleton text-positive" style="font-size: 1.1rem;">0,00 €</div>
                 </div>
 
                 <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
@@ -4534,7 +4532,7 @@ const renderPanelPage = async () => {
                         <span class="material-icons" style="font-size: 16px; color: #BF5AF2;">auto_graph</span> Inversiones
                         <button class="help-btn" data-action="show-kpi-help" data-kpi="invertido">?</button>
                     </div>
-                    <div id="kpi-inversion-total" class="status-value skeleton" style="font-size: 1.1rem;">0,00 €</div>
+                    <div id="kpi-inversion-total" class="status-value skeleton text-positive" style="font-size: 1.1rem;">0,00 €</div>
                 </div>
 
                 <div class="status-card" style="padding: 12px 16px; border-radius: 16px;">
@@ -4579,8 +4577,6 @@ const renderPanelPage = async () => {
                 </div>
             </div>
 
-            <div class="section-header">Salud Financiera</div>
-            
             <div style="display: flex; flex-direction: column; gap: var(--sp-3); padding-bottom: var(--sp-5);">
                 
                 <div class="card fade-in-up" style="padding: 16px 20px; border-radius: 20px; border: 1px solid #00E5FF; box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);">
