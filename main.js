@@ -4509,6 +4509,33 @@ const renderPanelPage = async () => {
                 <input type="date" id="filter-fecha-fin" class="form-input" style="font-size: 0.8rem; padding: 8px;">
             </div>
 
+            <div class="card fade-in-up" style="padding: 16px; border-radius: 20px; margin-bottom: var(--sp-3); border: 1px solid var(--c-outline);">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
+                    
+                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos" style="cursor: pointer;">
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
+                            Ingresos <button class="help-btn" data-action="show-kpi-help" data-kpi="ingresos" style="width:12px; height:12px; font-size:9px;">?</button>
+                        </div>
+                        <div id="kpi-ingresos-value" class="text-positive skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 800;">+0,00 €</div>
+                    </div>
+
+                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos" style="cursor: pointer; border-left: 1px solid var(--c-outline); border-right: 1px solid var(--c-outline);">
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
+                            Gastos <button class="help-btn" data-action="show-kpi-help" data-kpi="gastos" style="width:12px; height:12px; font-size:9px;">?</button>
+                        </div>
+                        <div id="kpi-gastos-value" class="text-negative skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 800;">-0,00 €</div>
+                    </div>
+
+                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto" style="cursor: pointer;">
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
+                            Neto <button class="help-btn" data-action="show-kpi-help" data-kpi="neto" style="width:12px; height:12px; font-size:9px;">?</button>
+                        </div>
+                        <div id="kpi-saldo-neto-value" class="skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 800;">0,00 €</div>
+                    </div>
+
+                </div>
+            </div>
+
             <div class="hero-card" style="padding: 25px 20px; text-align: center; margin-bottom: var(--sp-3); min-height: auto; border: 1px solid var(--c-primary); box-shadow: 0 4px 20px rgba(0, 179, 77, 0.15);">
                 <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 1.5px; margin-bottom: 4px; display:flex; justify-content:center; align-items:center;">
                     Patrimonio Total 
@@ -4547,33 +4574,6 @@ const renderPanelPage = async () => {
                          Rentabilidad <button class="help-btn" data-action="show-kpi-help" data-kpi="rentabilidad">?</button>
                     </div>
                     <div id="kpi-inversion-pct" class="status-value skeleton" style="font-size: 1.1rem;">0.00%</div>
-                </div>
-            </div>
-
-            <div class="card fade-in-up" style="padding: 16px; border-radius: 20px; margin-bottom: var(--sp-4); border: 1px solid var(--c-outline);">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
-                    
-                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos" style="cursor: pointer;">
-                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
-                            Ingresos <button class="help-btn" data-action="show-kpi-help" data-kpi="ingresos" style="width:12px; height:12px; font-size:9px;">?</button>
-                        </div>
-                        <div id="kpi-ingresos-value" class="text-positive skeleton" style="font-size: 1rem; font-weight: 800;">+0 €</div>
-                    </div>
-
-                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos" style="cursor: pointer; border-left: 1px solid var(--c-outline); border-right: 1px solid var(--c-outline);">
-                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
-                            Gastos <button class="help-btn" data-action="show-kpi-help" data-kpi="gastos" style="width:12px; height:12px; font-size:9px;">?</button>
-                        </div>
-                        <div id="kpi-gastos-value" class="text-negative skeleton" style="font-size: 1rem; font-weight: 800;">-0 €</div>
-                    </div>
-
-                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto" style="cursor: pointer;">
-                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 4px;">
-                            Neto <button class="help-btn" data-action="show-kpi-help" data-kpi="neto" style="width:12px; height:12px; font-size:9px;">?</button>
-                        </div>
-                        <div id="kpi-saldo-neto-value" class="skeleton" style="font-size: 1rem; font-weight: 800;">0 €</div>
-                    </div>
-
                 </div>
             </div>
 
@@ -6098,16 +6098,22 @@ const scheduleDashboardUpdate = () => {
                 kpiTir.className = `status-value ${tir >= 0 ? 'text-positive' : 'text-negative'}`;
             }
 
-            // D. Flujo del Periodo (Solo Texto, SIN barras que causaban error)
+            // D. Flujo del Periodo - AHORA CON ANIMACIÓN (CAMBIO AQUÍ)
             const elIng = select('kpi-ingresos-value');
             if (elIng) {
                 [select('kpi-ingresos-value'), select('kpi-gastos-value'), select('kpi-saldo-neto-value')].forEach(el => el?.classList.remove('skeleton'));
                 
-                select('kpi-ingresos-value').textContent = `+${formatCurrency(ingresos)}`;
-                select('kpi-gastos-value').textContent = `-${formatCurrency(Math.abs(gastos))}`;
+                // Usamos animateCountUp en lugar de textContent directo
+                // Ingresos: siempre positivos
+                animateCountUp(select('kpi-ingresos-value'), ingresos, 700, true, '+');
                 
+                // Gastos: vienen negativos, animateCountUp maneja el cambio numérico
+                // (Nota: animateCountUp animará desde 0 hasta el número negativo)
+                animateCountUp(select('kpi-gastos-value'), gastos, 700, true, '');
+                
+                // Neto: animado y con color
                 const elNet = select('kpi-saldo-neto-value');
-                elNet.textContent = formatCurrency(saldoNeto);
+                animateCountUp(elNet, saldoNeto, 700, true, saldoNeto >= 0 ? '+' : '');
                 elNet.className = `status-value ${saldoNeto >= 0 ? 'text-positive' : 'text-negative'}`;
             }
 
@@ -6124,7 +6130,6 @@ const scheduleDashboardUpdate = () => {
 
             // Cobertura
             const elRunway = select('health-runway-val');
-            // CORRECCIÓN ID: Antes buscaba 'health-runway-progress', ahora el correcto 'health-runway-progress-bar'
             const barRunway = select('health-runway-progress-bar'); 
             
             if(elRunway) {
