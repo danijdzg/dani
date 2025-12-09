@@ -2652,7 +2652,7 @@ const getFilteredMovements = async (forComparison = false) => {
 };
 		
 const calculatePortfolioPerformance = async (cuentaId = null) => {
-    // 1. Carga de datos (igual que antes)
+    // ... (Inicio de la función idéntico: carga de movimientos y cuentas) ...
     const allMovements = (typeof allDiarioMovementsCache !== 'undefined' && allDiarioMovementsCache.length > 0) 
         ? allDiarioMovementsCache 
         : await fetchAllMovementsForHistory();
@@ -2663,93 +2663,67 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
     const investmentAccounts = cuentaId ? allInvestmentAccounts.filter(c => c.id === cuentaId) : allInvestmentAccounts;
     
     if (investmentAccounts.length === 0) {
-        return { valorActual: 0, capitalInvertido: 0, pnlAbsoluto: 0, pnlPorcentual: 0, irr: 0, daysActive: 0, pnlYTD: 0, lastUpdate: null };
+        return { valorActual: 0, capitalInvertido: 0, pnlAbsoluto: 0, pnlPorcentual: 0, irr: 0, daysActive: 0 };
     }
     
     let totalValorActual = 0;
     let totalCapitalInvertido_para_PNL = 0;
-    let totalPnlYTD = 0; // NUEVO: Acumulador para YTD
     let allIrrCashflows = [];
-    let firstMovementDate = new Date();
-    let mostRecentValuationDate = 0; // NUEVO: Para detectar datos obsoletos
-
-    // Fechas para cálculo YTD
-    const startOfYear = new Date(new Date().getFullYear(), 0, 1); // 1 de Enero de este año
+    let firstMovementDate = new Date(); // Para calcular antigüedad
 
     for (const cuenta of investmentAccounts) {
-        // --- LÓGICA HISTÓRICA (Existente) ---
+        // ... (Lógica de P&L y Filtrado de Movimientos idéntica a la anterior) ...
         const valoraciones = (db.inversiones_historial || [])
             .filter(v => v.cuentaId === cuenta.id)
             .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-        
         const valorActual = valoraciones.length > 0 ? valoraciones[0].valor : 0;
         const capitalInvertido_para_PNL = cuenta.saldo || 0;
         
-        // NUEVO: Capturamos la fecha más reciente
-        if (valoraciones.length > 0) {
-            const valDate = new Date(valoraciones[0].fecha).getTime();
-            if (valDate > mostRecentValuationDate) mostRecentValuationDate = valDate;
-        }
-
         totalValorActual += valorActual;
         totalCapitalInvertido_para_PNL += capitalInvertido_para_PNL;
 
-        // --- LÓGICA YTD (NUEVA) ---
-        // 1. Buscamos el valor que tenía el activo al inicio del año (o la primera valoración del año)
-        // Si no hay valoración previa a este año, asumimos 0 o el primer movimiento del año.
-        const valorInicioAno = valoraciones.find(v => new Date(v.fecha) <= startOfYear)?.valor || 0;
-        
-        // 2. Sumamos los flujos de caja (aportaciones netas) de ESTE AÑO
-        const accountMovementsThisYear = allMovements.filter(m => 
-            new Date(m.fecha) >= startOfYear &&
-            ((m.tipo === 'movimiento' && m.cuentaId === cuenta.id) ||
-            (m.tipo === 'traspaso' && (m.cuentaDestinoId === cuenta.id || m.cuentaOrigenId === cuenta.id)))
-        );
-
-        let netFlowsYTD = 0;
-        accountMovementsThisYear.forEach(m => {
-            if (m.tipo === 'movimiento') netFlowsYTD += m.cantidad;
-            else if (m.tipo === 'traspaso') {
-                if (m.cuentaDestinoId === cuenta.id) netFlowsYTD += m.cantidad; // Aportación
-                else if (m.cuentaOrigenId === cuenta.id) netFlowsYTD -= m.cantidad; // Retirada
-            }
-        });
-
-        // Fórmula P&L YTD: Valor Hoy - (Valor Inicio Año + Lo que he metido este año)
-        // Si metí 1000€ y hoy vale 1100€, gané 100€.
-        const pnlYTD = valorActual - (valorInicioAno + netFlowsYTD);
-        totalPnlYTD += pnlYTD;
-
-        // --- PREPARACIÓN TIR (Existente) ---
         const accountMovements = allMovements.filter(m => 
             (m.tipo === 'movimiento' && m.cuentaId === cuenta.id) ||
             (m.tipo === 'traspaso' && (m.cuentaDestinoId === cuenta.id || m.cuentaOrigenId === cuenta.id))
         );
 
+        // Detectar fecha del primer movimiento para antigüedad
         if (accountMovements.length > 0) {
-            const firstInAcc = accountMovements.reduce((oldest, current) => new Date(current.fecha) < new Date(oldest.fecha) ? current : oldest);
+            const firstInAcc = accountMovements.reduce((oldest, current) => 
+                new Date(current.fecha) < new Date(oldest.fecha) ? current : oldest
+            );
             const mDate = new Date(firstInAcc.fecha);
             if (mDate < firstMovementDate) firstMovementDate = mDate;
         }
 
-        const irrCashflows = accountMovements.map(mov => {
-            let effectOnAccount = 0;
-            if (mov.tipo === 'movimiento') effectOnAccount = mov.cantidad;
-            else if (mov.tipo === 'traspaso') {
-                if (mov.cuentaDestinoId === cuenta.id) effectOnAccount = mov.cantidad;
-                else if (mov.cuentaOrigenId === cuenta.id) effectOnAccount = -mov.cantidad;
-            }
-            if (effectOnAccount !== 0) return { amount: -effectOnAccount, date: new Date(mov.fecha) };
-            return null;
-        }).filter(cf => cf !== null);
+        // ... (Lógica de conversión a Cashflows idéntica) ...
+        const irrCashflows = accountMovements
+            .map(mov => {
+                let effectOnAccount = 0;
+                if (mov.tipo === 'movimiento') effectOnAccount = mov.cantidad;
+                else if (mov.tipo === 'traspaso') {
+                    if (mov.cuentaDestinoId === cuenta.id) effectOnAccount = mov.cantidad;
+                    else if (mov.cuentaOrigenId === cuenta.id) effectOnAccount = -mov.cantidad;
+                }
+                
+                if (effectOnAccount !== 0) {
+                    return { amount: -effectOnAccount, date: new Date(mov.fecha) };
+                }
+                return null;
+            })
+            .filter(cf => cf !== null);
 
-        if (valorActual !== 0) irrCashflows.push({ amount: valorActual, date: new Date() });
+        if (valorActual !== 0) {
+            irrCashflows.push({ amount: valorActual, date: new Date() });
+        }
         allIrrCashflows.push(...irrCashflows);
     }
 
     const pnlAbsoluto = totalValorActual - totalCapitalInvertido_para_PNL;
     const pnlPorcentual = totalCapitalInvertido_para_PNL !== 0 ? (pnlAbsoluto / totalCapitalInvertido_para_PNL) * 100 : 0;
     const irr = calculateIRR(allIrrCashflows);
+
+    // NUEVO: Calculamos días activos
     const daysActive = (new Date() - firstMovementDate) / (1000 * 60 * 60 * 24);
 
     return { 
@@ -2757,10 +2731,8 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
         capitalInvertido: totalCapitalInvertido_para_PNL,
         pnlAbsoluto, 
         pnlPorcentual, 
-        pnlYTD: totalPnlYTD, // Dato Nuevo
         irr,
-        daysActive,
-        lastUpdate: mostRecentValuationDate // Dato Nuevo
+        daysActive // Retornamos la antigüedad
     };
 };
 
@@ -3326,7 +3298,11 @@ const renderPortfolioMainContent = async (targetContainerId) => {
     const CHART_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
 
     if (investmentAccounts.length === 0) {
-        container.innerHTML = `<div id="empty-investments" class="empty-state" style="margin-top: 0; border: none; background: transparent;"><span class="material-icons">rocket_launch</span><h3>Tu Portafolio empieza aquí</h3><p>Ve a 'Ajustes' > 'Cuentas' y marca una cuenta como 'de inversión'.</p></div>`;
+        container.innerHTML = `<div id="empty-investments" class="empty-state" style="margin-top: 0; border: none; background: transparent;">
+                <span class="material-icons">rocket_launch</span>
+                <h3>Tu Portafolio empieza aquí</h3>
+                <p>Ve a 'Ajustes' > 'Cuentas' y marca una cuenta como 'de inversión'.</p>
+            </div>`;
         return;
     }
 
@@ -3338,28 +3314,53 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         })
     );
 
+    // 2. Filtrado (igual que antes)
     const displayAssetsData = performanceData.filter(asset => !deselectedInvestmentTypesFilter.has(toSentenceCase(asset.tipo || 'S/T')));
 
-    // 2. Cálculos Totales
+    // 3. Cálculos Totales en EUROS
     let portfolioTotalValorado = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.valorActual, 0);
     let portfolioTotalInvertido = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.capitalInvertido, 0);
     let rentabilidadTotalAbsoluta = portfolioTotalValorado - portfolioTotalInvertido;
-    // Cálculo P&L YTD Total
-    let pnlYTDTotal = displayAssetsData.reduce((sum, cuenta) => sum + (cuenta.pnlYTD || 0), 0);
-    
-    // -- Bloque visualización BTC/EUR (Igual que tenías, omitido para brevedad, mantener tu lógica original de conversión aquí) --
+    const rentabilidadTotalPorcentual = portfolioTotalInvertido !== 0 ? (rentabilidadTotalAbsoluta / portfolioTotalInvertido) * 100 : 0;
+
+    // --- LÓGICA DE CONVERSIÓN A BITCOIN ---
     let displayTotalValorado = formatCurrency(portfolioTotalValorado);
     let displayTotalInvertido = formatCurrency(portfolioTotalInvertido);
-    // ... (Mantén tu lógica de BTC aquí si la usas)
+    let displayRentabilidadAbsoluta = formatCurrency(rentabilidadTotalAbsoluta);
+    let currencyClass = '';
+    let timestampHTML = '';
+
+    if (portfolioViewMode === 'BTC' && btcPriceData.price > 0) {
+        // Convertimos céntimos de Euro a Euros, y luego a BTC
+        const btcVal = (portfolioTotalValorado / 100) / btcPriceData.price;
+        const btcInv = (portfolioTotalInvertido / 100) / btcPriceData.price;
+        const btcPnl = (rentabilidadTotalAbsoluta / 100) / btcPriceData.price;
+
+        displayTotalValorado = formatBTC(btcVal);
+        displayTotalInvertido = formatBTC(btcInv);
+        displayRentabilidadAbsoluta = formatBTC(btcPnl);
+        
+        currencyClass = 'btc-mode-active'; // Clase CSS para poner el texto naranja/dorado
+
+        // Añadimos el timestamp de actualización
+        const timeStr = new Date(btcPriceData.lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        timestampHTML = `
+            <div class="portfolio-timestamp">
+                <div class="dot"></div>
+                <span>1 BTC = ${formatCurrency(Math.round(btcPriceData.price * 100))}</span>
+                <span style="opacity:0.6">• Actualizado ${timeStr}</span>
+            </div>
+        `;
+    }
+    // --------------------------------------
 
     const rentabilidadClass = rentabilidadTotalAbsoluta >= 0 ? 'text-positive' : 'text-negative';
-    const ytdClass = pnlYTDTotal >= 0 ? 'text-positive' : 'text-negative';
 
-    // 3. Renderizado HTML
+    // 4. Renderizado HTML
+    // Generación de pills (filtros) igual que antes...
     const allInvestmentTypes = [...new Set(performanceData.map(asset => toSentenceCase(asset.tipo || 'S/T')))].sort();
     const colorMap = {};
     allInvestmentTypes.forEach((label, index) => { colorMap[label] = CHART_COLORS[index % CHART_COLORS.length]; });
-    
     const pillsHTML = allInvestmentTypes.map(t => {
         const isActive = !deselectedInvestmentTypesFilter.has(t);
         const color = colorMap[t];
@@ -3368,96 +3369,129 @@ const renderPortfolioMainContent = async (targetContainerId) => {
     }).join('');
 
     container.innerHTML = `
-        <div class="card" style="margin-bottom: var(--sp-4);">
-            <div class="card__content" style="padding: var(--sp-3);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid var(--c-outline); padding-bottom:10px;">
-                    <h3 style="margin:0; font-size:1rem;">Resumen</h3>
-                    <button class="btn btn--secondary" onclick="showBulkUpdateModal()" style="padding:4px 10px; font-size:0.75rem; height:auto;">
-                        <span class="material-icons" style="font-size:14px;">update</span> Actualizar Todo
-                    </button>
+        ${timestampHTML} <div class="card" style="margin-bottom: var(--sp-4);">
+            <div class="card__content" style="display: flex; justify-content: space-around; text-align: center; padding: var(--sp-3);">
+                <div>
+                    <h4 class="kpi-item__label">Capital Aportado</h4>
+                    <strong class="kpi-item__value ${currencyClass}" style="font-size: var(--fs-lg);">${displayTotalInvertido}</strong>
                 </div>
-
-                <div style="display: flex; justify-content: space-around; text-align: center;">
-                    <div>
-                        <h4 class="kpi-item__label">Valor Actual</h4>
-                        <strong class="kpi-item__value" style="font-size: var(--fs-lg);">${displayTotalValorado}</strong>
-                    </div>
-                    <div>
-                        <h4 class="kpi-item__label">Total P&L</h4>
-                        <strong class="kpi-item__value ${rentabilidadClass}" style="font-size: var(--fs-lg);">${formatCurrency(rentabilidadTotalAbsoluta)}</strong>
-                    </div>
-                    <div>
-                        <h4 class="kpi-item__label">Este Año (YTD)</h4>
-                        <strong class="kpi-item__value ${ytdClass}" style="font-size: var(--fs-lg);">${formatCurrency(pnlYTDTotal)}</strong>
-                    </div>
+                <div>
+                    <h4 class="kpi-item__label">Valor de Mercado</h4>
+                    <strong class="kpi-item__value ${currencyClass}" style="font-size: var(--fs-lg);">${displayTotalValorado}</strong>
+                </div>
+                <div>
+                    <h4 class="kpi-item__label">Ganancia / Pérdida</h4>
+                    <strong class="kpi-item__value ${rentabilidadClass}" style="font-size: var(--fs-lg);">${(portfolioViewMode === 'BTC' && rentabilidadTotalAbsoluta >=0) ? '+' : ''}${displayRentabilidadAbsoluta}</strong>
+                    <div class="kpi-item__comparison ${rentabilidadClass}" style="font-weight: 600;">(${rentabilidadTotalPorcentual.toFixed(1)}%)</div>
                 </div>
             </div>
         </div>
         
-        <div class="filter-pills" style="margin-bottom: var(--sp-3); overflow-x:auto;">${pillsHTML}</div>
+        <details class="accordion" open style="margin-bottom: var(--sp-4);">
+            <summary><h3 class="card__title" style="margin:0; padding: 0; color: var(--c-on-surface);"><span class="material-icons">pie_chart</span>Asignación y Filtros</h3><span class="material-icons accordion__icon">expand_more</span></summary>
+            <div class="accordion__content" style="padding: var(--sp-3) var(--sp-4);">
+                <div class="filter-pills" style="margin-bottom: var(--sp-2);">${pillsHTML}</div>
+                <div class="chart-container" style="height: 250px; margin-bottom: 0;"><canvas id="asset-allocation-chart"></canvas></div>
+            </div>
+        </details>
+        
         <div id="investment-assets-list"></div>`;
+    
+    // Renderizado del Treemap (siempre se basa en valor relativo, así que funciona igual con los datos base en EUR)
+    setTimeout(() => {
+        const chartCtx = select('asset-allocation-chart')?.getContext('2d');
+        if (chartCtx) {
+            if (assetAllocationChart) assetAllocationChart.destroy();
+            const treeData = [];
+            displayAssetsData.forEach(asset => {
+                const valor = asset.valorActual / 100;
+                if (valor > 0) treeData.push({ tipo: toSentenceCase(asset.tipo || 'S/T'), nombre: asset.nombre, valor: valor });
+            });
+            if (treeData.length > 0) {
+                assetAllocationChart = new Chart(chartCtx, {
+                    type: 'treemap',
+                    data: {
+                        datasets: [{
+                            tree: treeData,
+                            key: 'valor',
+                            groups: ['tipo', 'nombre'],
+                            spacing: 0.5,
+                            borderWidth: 1.5,
+                            borderColor: getComputedStyle(document.body).getPropertyValue('--c-background'),
+                            backgroundColor: (ctx) => (ctx.type === 'data' ? colorMap[ctx.raw._data.tipo] || 'grey' : 'transparent'),
+                            labels: { display: true, color: '#FFFFFF', font: { size: 11, weight: '600' }, align: 'center', position: 'middle', formatter: (ctx) => (ctx.raw.g.includes(ctx.raw._data.nombre) ? ctx.raw._data.nombre.split(' ') : null) }
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw._data.nombre}: ${formatCurrency(ctx.raw.v * 100)}` } }, datalabels: { display: false } } }
+                });
+            }
+        }
+        
+        // Renderizado de la lista de activos individuales
+        const listContainer = select('investment-assets-list');
+        if (listContainer) {
+            const listHtml = displayAssetsData
+                .sort((a, b) => b.valorActual - a.valorActual)
+                .map(cuenta => {
+                    const pnlClassPill = cuenta.pnlAbsoluto >= 0 ? 'is-positive' : 'is-negative';
+                    const pnlClassText = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
+                    const tirClassPill = cuenta.irr >= 0 ? 'is-positive' : 'is-negative';
 
-    // Renderizado Lista de Activos
-    const listContainer = select('investment-assets-list');
-    if (listContainer) {
-        const listHtml = displayAssetsData
-            .sort((a, b) => b.valorActual - a.valorActual)
-            .map(cuenta => {
-                const itemValor = formatCurrency(cuenta.valorActual);
-                const itemYtd = formatCurrency(cuenta.pnlYTD);
-                const ytdColor = cuenta.pnlYTD >= 0 ? 'text-positive' : 'text-negative';
-                
-                // MEJORA 2: Alertas de Dato Obsoleto
-                const lastUpdate = cuenta.lastUpdate ? new Date(cuenta.lastUpdate) : null;
-                const daysSinceUpdate = lastUpdate ? Math.floor((new Date() - lastUpdate) / (1000 * 60 * 60 * 24)) : 999;
-                
-                let dateHtml = `<span style="color:var(--c-on-surface-secondary)">Hoy</span>`;
-                if (daysSinceUpdate > 0) {
-                    let colorDate = 'var(--c-on-surface-tertiary)';
-                    let icon = '';
-                    if (daysSinceUpdate > 30) { colorDate = 'var(--c-warning)'; icon = 'warning'; }
-                    if (daysSinceUpdate > 90) { colorDate = 'var(--c-danger)'; icon = 'error'; }
+                    // --- CONVERSIÓN INDIVIDUAL A BTC ---
+                    let itemValor = formatCurrency(cuenta.valorActual);
+                    let itemAportado = formatCurrency(cuenta.capitalInvertido);
+                    let itemPnl = formatCurrency(cuenta.pnlAbsoluto);
                     
-                    dateHtml = `<span style="color:${colorDate}; display:flex; align-items:center; gap:4px;">
-                        ${icon ? `<span class="material-icons" style="font-size:12px;">${icon}</span>` : ''} 
-                        Hace ${daysSinceUpdate} días
-                    </span>`;
-                }
+                    if (portfolioViewMode === 'BTC' && btcPriceData.price > 0) {
+                        itemValor = formatBTC((cuenta.valorActual/100) / btcPriceData.price);
+                        itemAportado = formatBTC((cuenta.capitalInvertido/100) / btcPriceData.price);
+                        itemPnl = formatBTC((cuenta.pnlAbsoluto/100) / btcPriceData.price);
+                    }
+                    // -----------------------------------
 
-                // MEJORA 3: Barra de Peso (Allocation)
-                const peso = portfolioTotalValorado > 0 ? (cuenta.valorActual / portfolioTotalValorado) * 100 : 0;
-                const barColor = colorMap[toSentenceCase(cuenta.tipo || 'S/T')] || 'var(--c-primary)';
+                    // Última valoración (Lógica existente)
+                    const ultimaValoracion = (db.inversiones_historial || [])
+                        .filter(v => v.cuentaId === cuenta.id)
+                        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
+                    let fechaUltimaValoracionHTML = '<small class="asset-card__last-valuation-date">Sin valorar</small>';
+                    if (ultimaValoracion) {
+                        const fecha = new Date(ultimaValoracion.fecha + 'T12:00:00Z');
+                        fechaUltimaValoracionHTML = `<small class="asset-card__last-valuation-date">Val. ${fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}</small>`;
+                    }
 
-                return `
-                <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true" style="flex-direction: column; align-items: stretch; gap: 8px;">
-                    
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
-                        <div class="asset-card__value">${itemValor}</div>
-                    </div>
-
-                    <div style="width: 100%; height: 4px; background: var(--c-surface-variant); border-radius: 2px; overflow: hidden;">
-                        <div style="width: ${peso}%; height: 100%; background-color: ${barColor}; opacity: 0.8;"></div>
-                    </div>
-
-                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--c-on-surface-secondary);">
-                        <div style="display:flex; gap:10px;">
-                            <span>Peso: <strong>${peso.toFixed(1)}%</strong></span>
-                            <span>YTD: <strong class="${ytdColor}">${itemYtd}</strong></span>
+                    return `
+                    <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true">
+                        <div class="asset-card__details">
+                            <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
+                            <div class="asset-card__allocation">Aportado: ${itemAportado}</div>
+                            <div class="asset-card__pnl-absolute ${pnlClassText}" style="font-size: var(--fs-sm); font-weight: 600;">
+                                ${(portfolioViewMode === 'BTC' && cuenta.pnlAbsoluto >= 0) ? '+' : ''}${cuenta.pnlAbsoluto >= 0 && portfolioViewMode !== 'BTC' ? '+' : ''}${itemPnl}
+                            </div>
                         </div>
-                        <div class="asset-card__valuation-area" style="margin:0;">
-                            ${dateHtml}
-                            <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}" style="padding: 2px 8px; font-size: 0.65rem;">
-                                <span class="material-icons" style="font-size: 12px;">edit</span>
-                            </button>
+                        <div class="asset-card__figures">
+                            <div class="asset-card__value ${currencyClass}">${itemValor}</div>
+                            <div style="display: flex; gap: var(--sp-2); align-items: center; justify-content: flex-end;">
+                                <button class="asset-card__pnl-pill ${pnlClassPill}" style="border:none; cursor:pointer;" data-action="show-pnl-breakdown" data-id="${cuenta.id}">
+                                    P&L: ${cuenta.pnlPorcentual.toFixed(1)}%
+                                </button>
+                                <button class="asset-card__pnl-pill ${tirClassPill}" style="border:none; cursor:pointer;" data-action="show-irr-breakdown" data-id="${cuenta.id}">
+                                    TIR: ${!isNaN(cuenta.irr) ? (cuenta.irr * 100).toFixed(1) + '%' : 'N/A'}
+                                </button>
+                            </div>
+                            <div class="asset-card__valuation-area">
+                                ${fechaUltimaValoracionHTML}
+                                <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}">
+                                    <span class="material-icons" style="font-size: 14px;">add_chart</span> Valorar
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </div>`;
-            }).join('');
+                    </div>`;
+                }).join('');
 
-        listContainer.innerHTML = listHtml ? `<div class="card fade-in-up"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
-        applyInvestmentItemInteractions(listContainer);
-    }
+            listContainer.innerHTML = listHtml ? `<div class="card fade-in-up"><div class="card__content" style="padding: 0;">${listHtml}</div></div>` : '';
+            applyInvestmentItemInteractions(listContainer);
+        }
+    }, 50);
 };
 
 
@@ -4777,10 +4811,9 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     const container = select(targetContainerId);
     if (!container) return;
 
-    // Estado de carga
     container.innerHTML = `<div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"><canvas id="portfolio-evolution-chart"></canvas></div>`;
 
-    // 1. Obtención de datos
+    // 1. Obtención de datos (Igual que antes)
     await loadInversiones();
     const allMovements = await fetchAllMovementsForHistory();
     const filteredInvestmentAccounts = getVisibleAccounts().filter(account => !deselectedInvestmentTypesFilter.has(toSentenceCase(account.tipo || 'S/T')) && account.esInversion);
@@ -4791,16 +4824,11 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         return;
     }
 
-    // 2. Procesamiento de datos (Timeline)
+    // Procesamiento de datos (Timeline)
     const timeline = [];
     const history = (db.inversiones_historial || []).filter(h => filteredAccountIds.has(h.cuentaId));
-    
-    // Valoraciones manuales
     history.forEach(v => timeline.push({ date: v.fecha.slice(0, 10), type: 'valuation', value: v.valor, accountId: v.cuentaId }));
-    
-    // Flujos de caja (Aportaciones/Retiradas)
     const cashFlowMovements = allMovements.filter(m => (m.tipo === 'movimiento' && filteredAccountIds.has(m.cuentaId)) || (m.tipo === 'traspaso' && (filteredAccountIds.has(m.cuentaOrigenId) || filteredAccountIds.has(m.cuentaDestinoId))));
-    
     cashFlowMovements.forEach(m => {
         let amount = 0;
         if (m.tipo === 'movimiento') amount = m.cantidad;
@@ -4815,22 +4843,16 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
          container.innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Datos insuficientes.</p></div>`;
          return;
     }
-    
-    // Ordenar cronológicamente
     timeline.sort((a, b) => new Date(a.date) - new Date(b.date));
     
-    // Calcular acumulados diarios
     const dailyData = new Map();
     let runningCapital = 0;
     const lastKnownValues = new Map();
-    
     timeline.forEach(event => {
         if (event.type === 'cashflow') { runningCapital += event.value; }
         else if (event.type === 'valuation') { lastKnownValues.set(event.accountId, event.value); }
-        
         let totalValue = 0;
         for (const value of lastKnownValues.values()) { totalValue += value; }
-        
         dailyData.set(event.date, { capital: runningCapital, value: totalValue });
     });
 
@@ -4839,7 +4861,6 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     const capitalData = sortedDates.map(date => dailyData.get(date).capital / 100);
     const totalValueData = sortedDates.map(date => dailyData.get(date).value / 100);
 
-    // 3. Renderizado del Gráfico
     const chartCanvas = select('portfolio-evolution-chart');
     const chartCtx = chartCanvas ? chartCanvas.getContext('2d') : null;
     if (!chartCtx) return;
@@ -4849,225 +4870,125 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     
     chartCanvas.closest('.chart-container').classList.remove('skeleton');
 
-    const capitalDataset = {
-        label: 'Capital Aportado',
-        data: capitalData,
-        borderColor: 'rgba(255, 255, 255, 0.5)', 
-        borderWidth: 1,
-        borderDash: [4, 4], 
-        pointRadius: 0, // Sin puntos
-        pointHoverRadius: 0,
-        fill: false,
-        tension: 0.1,
-        order: 1
-    };
+    // --- AQUI EMPIEZA LA MAGIA VISUAL "LUJOSA" ---
 
-    const valueDataset = {
-        label: 'Valor de Mercado',
-        data: totalValueData,
-        borderColor: '#00B34D', 
-        borderWidth: 2,
-        pointRadius: 0, // IMPORTANTE: Sin puntos
-        pointHoverRadius: 4, // El punto solo aparece al pasar el ratón (hover)
-        tension: 0.3,
-        order: 0, 
-        fill: {
-            target: '0', 
-            above: 'rgba(0, 179, 77, 0.20)',   
-            below: 'rgba(255, 59, 48, 0.20)'   
-        }
-    };
+    // 1. Obtenemos los colores base del CSS
+    const colorSuccessHex = getComputedStyle(document.body).getPropertyValue('--c-success').trim();
+    const colorDangerHex = getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
+    const colorPrimaryHex = getComputedStyle(document.body).getPropertyValue('--c-primary').trim();
+
+    // 2. Determinamos la tendencia global (¿El final es mayor que el principio?)
+    //    Si el valor actual es mayor que el capital aportado actual, estamos en GANANCIA (Verde).
+    //    Si es menor, estamos en PÉRDIDA (Rojo).
+    const currentVal = totalValueData[totalValueData.length - 1] || 0;
+    const currentCap = capitalData[capitalData.length - 1] || 0;
+    const isProfitable = currentVal >= currentCap;
+
+    const mainColorHex = isProfitable ? colorSuccessHex : colorDangerHex;
+
+    // 3. Creamos el Gradiente Vertical
+    // (0,0) es arriba, (0, 300) es abajo.
+    const gradient = chartCtx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, hexToRgba(mainColorHex, 0.4)); // Arriba: Color con 40% de opacidad
+    gradient.addColorStop(1, hexToRgba(mainColorHex, 0.0)); // Abajo: Totalmente transparente
 
     new Chart(chartCtx, {
         type: 'line',
         data: {
             labels: chartLabels,
-            datasets: [capitalDataset, valueDataset] 
+            datasets: [
+                {
+                    label: 'Valor Total',
+					data: totalValueData,
+                    borderColor: mainColorHex, // La línea sólida del color principal
+                    backgroundColor: gradient, // El relleno degradado "Lujoso"
+                    fill: true,                // ¡Activamos el relleno!
+					tension: 0.4,              // Curva suave
+					pointRadius: 0,            // Sin puntos para limpieza
+                    pointHoverRadius: 6,       // Puntos aparecen al tocar
+					borderWidth: 2.5,
+				},
+                {
+                    label: 'Capital Aportado',
+                    data: capitalData,
+                    borderColor: colorPrimaryHex, // Azul para diferenciar
+                    backgroundColor: 'transparent',
+                    fill: false, 
+                    pointRadius: 0,
+                    borderWidth: 2,
+                    borderDash: [5, 5], // Línea punteada para diferenciar del valor
+                    order: 1 // Asegura que se pinte encima o debajo según se desee
+                }
+            ]
         },
         options: {
             responsive: true, 
             maintainAspectRatio: false,
-            // Desactiva animaciones pesadas si hay muchos datos
-            animation: { duration: 0 }, 
             scales: {
                 y: { 
-                    display: true, 
-                    position: 'right',
-                    grid: { color: 'rgba(255,255,255,0.05)', borderDash: [5,5] },
+                    beginAtZero: false, 
                     ticks: { 
-                        callback: value => {
-                            if(Math.abs(value) >= 1000000) return (value/1000000).toFixed(1) + 'M';
-                            if(Math.abs(value) >= 1000) return (value/1000).toFixed(0) + 'k';
-                            return value;
-                        },
-                        color: 'rgba(255,255,255,0.5)',
-                        font: { size: 10 }
+                        callback: value => formatCurrency(value * 100),
+                        font: { size: 10, family: 'var(--font-family)' },
+                        color: 'rgba(150, 150, 150, 0.5)'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)',
+                        borderDash: [5, 5]
                     }
                 },
                 x: { 
                     type: 'time', 
                     time: { unit: 'month', tooltipFormat: 'dd MMM yyyy' }, 
                     grid: { display: false },
-                    // IMPORTANTE: Controla cuántas fechas salen abajo para que no se amontonen
-                    ticks: { 
-                        display: true,
-                        maxTicksLimit: 6, 
-                        color: 'rgba(255,255,255,0.5)',
-                        font: { size: 10 }
-                    } 
+                    ticks: {
+                        font: { size: 10, family: 'var(--font-family)' },
+                        color: 'rgba(150, 150, 150, 0.5)'
+                    }
                 }
             },
             plugins: {
                 legend: { 
                     display: true, 
                     position: 'top', 
-                    labels: { boxWidth: 10, usePointStyle: true, font: {size: 11}, color: '#fff' } 
+                    align: 'end', 
+                    labels: { 
+                        usePointStyle: true, 
+                        boxWidth: 8, 
+                        padding: 10,
+                        font: { size: 11, weight: '600' }
+                    }
                 },
-                // === AQUÍ ESTÁ LA SOLUCIÓN AL EMBORRONAMIENTO ===
-                datalabels: { 
-                    display: false // ¡DESACTIVADO! Esto quita los números blancos
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: 'rgba(20, 20, 30, 0.95)',
+                datalabels: { display: false },
+                tooltip: { 
+                    mode: 'index', 
+                    intersect: false, 
+                    backgroundColor: 'rgba(20, 20, 30, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#eee',
                     borderColor: 'rgba(255,255,255,0.1)',
                     borderWidth: 1,
-                    titleColor: '#fff',
-                    bodyColor: '#ddd',
+                    padding: 10,
                     callbacks: {
                         label: (context) => {
                             let label = context.dataset.label || '';
                             if (label) label += ': ';
-                            if (context.parsed.y !== null) {
-                                label += new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
-                            }
+                            if (context.parsed.y !== null) label += formatCurrency(context.parsed.y * 100);
                             return label;
                         },
                         footer: (tooltipItems) => {
-                            const capitalItem = tooltipItems.find(i => i.datasetIndex === 0);
-                            const valueItem = tooltipItems.find(i => i.datasetIndex === 1);
-                            if (capitalItem && valueItem) {
-                                const diff = valueItem.parsed.y - capitalItem.parsed.y;
-                                const sign = diff >= 0 ? '+' : '';
-                                return `Diferencia: ${sign}${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(diff)}`;
-                            }
-                            return '';
+                            const total = tooltipItems.find(i => i.dataset.label === 'Valor Total')?.parsed.y || 0;
+                            const capital = tooltipItems.find(i => i.dataset.label === 'Capital Aportado')?.parsed.y || 0;
+                            const pnl = total - capital;
+                            return `P&L: ${formatCurrency(pnl * 100)}`;
                         }
                     }
                 }
             },
-            interaction: { mode: 'index', intersect: false },
-            elements: {
-                point: {
-                    radius: 0 // Seguridad extra: ningún punto se dibuja por defecto
-                }
-            }
+            interaction: { mode: 'index', intersect: false }
         }
     });
 }
-	
-	// Función global para abrir el modal masivo
-window.showBulkUpdateModal = () => {
-    const investmentAccounts = getVisibleAccounts().filter(c => c.esInversion);
-    if (investmentAccounts.length === 0) return showToast("No hay cuentas de inversión.", "warning");
-
-    // Preparamos el HTML con inputs pre-rellenados con el último valor conocido
-    let rowsHtml = '';
-    
-    // Obtenemos los últimos valores de la caché para pre-rellenar
-    // (Esto usa la lógica que ya tienes en calculatePortfolioPerformance pero simplificada)
-    investmentAccounts.forEach(c => {
-        const history = (db.inversiones_historial || []).filter(h => h.cuentaId === c.id);
-        // Ordenar por fecha descendente
-        history.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
-        const lastVal = history.length > 0 ? history[0].valor : 0;
-        
-        const valStr = (lastVal / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, useGrouping: false });
-
-        rowsHtml += `
-        <div class="form-group" style="margin-bottom: 12px; display: grid; grid-template-columns: 1fr 120px; gap: 10px; align-items: center;">
-            <label style="margin:0; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.nombre}</label>
-            <input type="text" 
-                   class="form-input input-amount-calculator bulk-update-input" 
-                   data-account-id="${c.id}" 
-                   value="${valStr}" 
-                   inputmode="decimal" 
-                   style="text-align: right; padding: 8px;">
-        </div>`;
-    });
-
-    const html = `
-        <div style="max-height: 60vh; overflow-y: auto; padding: 5px;">
-            <p class="form-label" style="margin-bottom: 15px;">Actualiza el valor de mercado a día de hoy.</p>
-            <form id="bulk-update-form">
-                ${rowsHtml}
-                <div class="form-group" style="margin-top: 20px;">
-                    <label class="form-label">Fecha de valoración</label>
-                    <input type="date" id="bulk-update-date" class="form-input" value="${new Date().toISOString().slice(0,10)}">
-                </div>
-                <button type="button" class="btn btn--primary btn--full" onclick="saveBulkUpdate(this)">
-                    Guardar Todo
-                </button>
-            </form>
-        </div>
-    `;
-
-    showGenericModal("Actualizar Portafolio", html);
-    // Reactivar calculadoras en los inputs nuevos
-    setTimeout(initAmountInput, 100);
-};
-
-// Función para guardar
-window.saveBulkUpdate = async (btn) => {
-    setButtonLoading(btn, true, 'Guardando...');
-    
-    const inputs = document.querySelectorAll('.bulk-update-input');
-    const date = document.getElementById('bulk-update-date').value;
-    const batch = fbDb.batch();
-    const collectionRef = fbDb.collection('users').doc(currentUser.uid).collection('inversiones_historial');
-
-    let count = 0;
-    
-    // Iteramos sobre cada input
-    for (const input of inputs) {
-        const valRaw = parseCurrencyString(input.value);
-        if (isNaN(valRaw)) continue; // Saltamos vacíos o errores
-        
-        const valCents = Math.round(valRaw * 100);
-        const accId = input.dataset.accountId;
-        const newId = generateId(); // Tu función auxiliar existente
-
-        // Crear referencia de documento
-        const docRef = collectionRef.doc(newId);
-        
-        batch.set(docRef, {
-            id: newId,
-            cuentaId: accId,
-            valor: valCents,
-            fecha: date
-        });
-        
-        // Actualizar caché local manualmente para reflejo instantáneo
-        if (!db.inversiones_historial) db.inversiones_historial = [];
-        db.inversiones_historial.push({ id: newId, cuentaId: accId, valor: valCents, fecha: date });
-        
-        count++;
-    }
-
-    if (count > 0) {
-        await batch.commit();
-        showToast(`${count} activos actualizados.`, 'success');
-        hideModal('generic-modal');
-        // Recargar vista
-        renderPortfolioMainContent('portfolio-main-content');
-        renderPortfolioEvolutionChart('portfolio-evolution-container');
-    } else {
-        showToast("No hay datos válidos para guardar.", "warning");
-    }
-    
-    setButtonLoading(btn, false);
-};
 // =================================================================
 // === INICIO: NUEVO MOTOR DE RENDERIZADO DE INFORMES (v2.0) ===
 // =================================================================
