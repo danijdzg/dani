@@ -4825,15 +4825,41 @@ const createChartGradient = (ctx, colorHex) => {
     return gradient;
 };
 
+// Variable para recordar la selección del usuario (por defecto 3 Meses)
+let currentPortfolioTimeRange = '3M';
+
 async function renderPortfolioEvolutionChart(targetContainerId) {
     const container = select(targetContainerId);
     if (!container) return;
 
-    // Estado de carga
-    container.innerHTML = `<div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"><canvas id="portfolio-evolution-chart"></canvas></div>`;
+    // 1. Estructura HTML con Botones de Filtro Integrados
+    // Solo inyectamos el esqueleto si no existe ya el canvas, para evitar parpadeos al cambiar de rango
+    if (!select('portfolio-evolution-chart')) {
+        const ranges = [
+            { id: '1M', label: '1M' },
+            { id: '3M', label: '3M' },
+            { id: 'YTD', label: 'Este Año' },
+            { id: '1A', label: '1 Año' },
+            { id: 'MAX', label: 'Todo' }
+        ];
 
-    // 1. Obtención de datos (Igual que antes)
-    await loadInversiones();
+        const buttonsHtml = ranges.map(r => {
+            const isActive = currentPortfolioTimeRange === r.id ? 'filter-pill--active' : '';
+            const activeStyle = isActive ? `background-color: var(--c-primary); color: white; border-color: var(--c-primary);` : '';
+            return `<button class="filter-pill ${isActive}" style="font-size: 0.7rem; padding: 2px 8px; ${activeStyle}" onclick="changePortfolioRange('${r.id}')">${r.label}</button>`;
+        }).join('');
+
+        container.innerHTML = `
+            <div style="display: flex; justify-content: flex-end; gap: 5px; margin-bottom: 10px;">
+                ${buttonsHtml}
+            </div>
+            <div class="chart-container skeleton" style="height: 240px; border-radius: var(--border-radius-lg);">
+                <canvas id="portfolio-evolution-chart"></canvas>
+            </div>`;
+    }
+
+    // 2. Obtención de datos
+    if (!dataLoaded.inversiones) await loadInversiones();
     const allMovements = await fetchAllMovementsForHistory();
     const filteredInvestmentAccounts = getVisibleAccounts().filter(account => !deselectedInvestmentTypesFilter.has(toSentenceCase(account.tipo || 'S/T')) && account.esInversion);
     const filteredAccountIds = new Set(filteredInvestmentAccounts.map(c => c.id));
@@ -4843,14 +4869,12 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         return;
     }
 
-    // 2. Procesamiento de datos (Historia Completa)
+    // 3. Procesamiento de datos (Timeline Completo)
     const timeline = [];
     const history = (db.inversiones_historial || []).filter(h => filteredAccountIds.has(h.cuentaId));
-    
     history.forEach(v => timeline.push({ date: v.fecha.slice(0, 10), type: 'valuation', value: v.valor, accountId: v.cuentaId }));
     
     const cashFlowMovements = allMovements.filter(m => (m.tipo === 'movimiento' && filteredAccountIds.has(m.cuentaId)) || (m.tipo === 'traspaso' && (filteredAccountIds.has(m.cuentaOrigenId) || filteredAccountIds.has(m.cuentaDestinoId))));
-    
     cashFlowMovements.forEach(m => {
         let amount = 0;
         if (m.tipo === 'movimiento') amount = m.cantidad;
@@ -4862,152 +4886,132 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     });
     
     if (timeline.length < 1) {
-         container.innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Datos insuficientes.</p></div>`;
+         container.querySelector('.chart-container').innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Datos insuficientes.</p></div>`;
          return;
     }
     
     timeline.sort((a, b) => new Date(a.date) - new Date(b.date));
     
-    // 3. Generar la serie de datos completa día a día
+    // Generar datos diarios acumulados
     const dailyData = new Map();
     let runningCapital = 0;
     const lastKnownValues = new Map();
-    
     timeline.forEach(event => {
-        if (event.type === 'cashflow') { runningCapital += event.value; }
-        else if (event.type === 'valuation') { lastKnownValues.set(event.accountId, event.value); }
+        if (event.type === 'cashflow') runningCapital += event.value;
+        else if (event.type === 'valuation') lastKnownValues.set(event.accountId, event.value);
         
         let totalValue = 0;
-        for (const value of lastKnownValues.values()) { totalValue += value; }
-        
+        for (const value of lastKnownValues.values()) totalValue += value;
         dailyData.set(event.date, { capital: runningCapital, value: totalValue });
     });
 
     const sortedFullDates = [...dailyData.keys()].sort();
 
-    // === AQUÍ ESTÁ EL FILTRO DE 3 MESES ===
+    // 4. LÓGICA DE FILTRADO DE TIEMPO
     const today = new Date();
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setMonth(today.getMonth() - 3);
-    const cutoffDateStr = threeMonthsAgo.toISOString().slice(0, 10);
+    let cutoffDate = new Date('2000-01-01'); // Por defecto MAX
 
-    // Filtramos las fechas para quedarnos solo con las recientes
+    if (currentPortfolioTimeRange === '1M') cutoffDate = new Date(today.setMonth(today.getMonth() - 1));
+    else if (currentPortfolioTimeRange === '3M') cutoffDate = new Date(today.setMonth(today.getMonth() - 3));
+    else if (currentPortfolioTimeRange === '1A') cutoffDate = new Date(today.setFullYear(today.getFullYear() - 1));
+    else if (currentPortfolioTimeRange === 'YTD') cutoffDate = new Date(today.getFullYear(), 0, 1);
+
+    const cutoffDateStr = cutoffDate.toISOString().slice(0, 10);
+    
+    // Filtramos las fechas
     let chartDates = sortedFullDates.filter(d => d >= cutoffDateStr);
 
-    // TRUCO PRO: Si cortamos los datos, necesitamos saber cómo empezamos hace 3 meses.
-    // Buscamos el último estado conocido ANTES de la fecha de corte para usarlo como punto de partida.
+    // Ajuste de "Punto de Partida": Si cortamos datos, añadimos el punto inicial
     if (chartDates.length < sortedFullDates.length) {
-        // Encontrar el último dato anterior al corte
         const lastDateBeforeCutoff = sortedFullDates.reverse().find(d => d < cutoffDateStr);
-        
         if (lastDateBeforeCutoff) {
             const startState = dailyData.get(lastDateBeforeCutoff);
-            // Insertamos un punto artificial en la fecha de corte con los valores arrastrados
-            // Esto hace que la línea empiece pegada a la izquierda
             if (chartDates[0] !== cutoffDateStr) {
                 chartDates.unshift(cutoffDateStr);
                 dailyData.set(cutoffDateStr, startState);
             }
         }
     }
-    // Si no hay datos recientes, mostramos al menos el último conocido
+    // Fallback si no hay datos recientes
     if (chartDates.length === 0 && sortedFullDates.length > 0) {
-        const lastDate = sortedFullDates[0]; // El más reciente (ya que invertimos el array arriba o usar el ultimo del original)
-        // Corrección: sortedFullDates fue invertido en el find, mejor usar el original o acceder al ultimo
-        const realLastDate = sortedFullDates[sortedFullDates.length - 1]; // Recuperamos el orden correcto
-        chartDates.push(realLastDate);
+        chartDates.push(sortedFullDates[sortedFullDates.length - 1]);
     }
-    
-    // Aseguramos orden ascendente final
     chartDates.sort();
 
-    // Mapeamos los datos finales para el gráfico
     const chartLabels = chartDates;
     const capitalData = chartDates.map(date => dailyData.get(date).capital / 100);
     const totalValueData = chartDates.map(date => dailyData.get(date).value / 100);
 
-    // 4. Renderizado del Gráfico
+    // 5. Renderizado
     const chartCanvas = select('portfolio-evolution-chart');
-    const chartCtx = chartCanvas ? chartCanvas.getContext('2d') : null;
-    if (!chartCtx) return;
+    if (!chartCanvas) return;
+    const chartCtx = chartCanvas.getContext('2d');
 
     const existingChart = Chart.getChart(chartCanvas);
     if (existingChart) existingChart.destroy();
     
     chartCanvas.closest('.chart-container').classList.remove('skeleton');
 
-    const capitalDataset = {
-        label: 'Capital Aportado',
-        data: capitalData,
-        borderColor: 'rgba(255, 255, 255, 0.5)', 
-        borderWidth: 1,
-        borderDash: [4, 4], 
-        pointRadius: 0,
-        pointHoverRadius: 0,
-        fill: false,
-        tension: 0.1,
-        order: 1
-    };
-
-    const valueDataset = {
-        label: 'Valor de Mercado',
-        data: totalValueData,
-        borderColor: '#00B34D', 
-        borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        tension: 0.3,
-        order: 0, 
-        fill: {
-            target: '0', 
-            above: 'rgba(0, 179, 77, 0.20)',   
-            below: 'rgba(255, 59, 48, 0.20)'   
-        }
-    };
-
     new Chart(chartCtx, {
         type: 'line',
         data: {
             labels: chartLabels,
-            datasets: [capitalDataset, valueDataset] 
+            datasets: [
+                {
+                    label: 'Valor de Mercado',
+                    data: totalValueData,
+                    borderColor: '#00B34D', 
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    tension: 0.3,
+                    order: 0,
+                    // El relleno verde/rojo que muestra la ganancia/pérdida
+                    fill: {
+                        target: '1', 
+                        above: 'rgba(0, 179, 77, 0.25)',   
+                        below: 'rgba(255, 59, 48, 0.25)'   
+                    }
+                },
+                {
+                    label: 'Capital Aportado',
+                    data: capitalData,
+                    borderColor: 'rgba(255, 255, 255, 0.6)', 
+                    borderWidth: 1.5,
+                    borderDash: [3, 3], // Punteado para diferenciarlo claramente
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.1,
+                    order: 1
+                }
+            ]
         },
         options: {
             responsive: true, 
             maintainAspectRatio: false,
-            animation: { duration: 0 }, 
+            animation: { duration: 300 }, // Animación suave al cambiar de filtro
             scales: {
                 y: { 
-                    display: true, 
+                    display: true,
                     position: 'right',
+                    // IMPORTANTE: Dejamos que Chart.js haga zoom automático.
+                    // NO ponemos beginAtZero: true. Así se amplifican las diferencias.
                     grid: { color: 'rgba(255,255,255,0.05)', borderDash: [5,5] },
                     ticks: { 
-                        callback: value => {
-                            if(Math.abs(value) >= 1000000) return (value/1000000).toFixed(1) + 'M';
-                            if(Math.abs(value) >= 1000) return (value/1000).toFixed(0) + 'k';
-                            return value;
-                        },
+                        callback: value => (value/1000).toFixed(1) + 'k',
                         color: 'rgba(255,255,255,0.5)',
-                        font: { size: 10 }
+                        font: { size: 9 }
                     }
                 },
                 x: { 
                     type: 'time', 
                     time: { unit: 'month', tooltipFormat: 'dd MMM yyyy' }, 
                     grid: { display: false },
-                    ticks: { 
-                        display: true,
-                        maxTicksLimit: 4, // Limitamos a 4 etiquetas para que se vea limpio en 3 meses
-                        color: 'rgba(255,255,255,0.5)',
-                        font: { size: 10 }
-                    } 
+                    ticks: { maxTicksLimit: 5, color: 'rgba(255,255,255,0.5)', font: { size: 9 } } 
                 }
             },
             plugins: {
-                legend: { 
-                    display: true, 
-                    position: 'top', 
-                    labels: { boxWidth: 10, usePointStyle: true, font: {size: 11}, color: '#fff' } 
-                },
+                legend: { display: false }, // Ocultamos leyenda para ganar espacio, los colores lo dicen todo
                 datalabels: { display: false },
                 tooltip: {
                     mode: 'index',
@@ -5015,35 +5019,51 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                     backgroundColor: 'rgba(20, 20, 30, 0.95)',
                     borderColor: 'rgba(255,255,255,0.1)',
                     borderWidth: 1,
-                    titleColor: '#fff',
-                    bodyColor: '#ddd',
                     callbacks: {
-                        label: (context) => {
-                            let label = context.dataset.label || '';
-                            if (label) label += ': ';
-                            if (context.parsed.y !== null) {
-                                label += new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
-                            }
-                            return label;
-                        },
+                        label: (context) => `${context.dataset.label}: ${formatCurrency(context.raw * 100)}`,
                         footer: (tooltipItems) => {
-                            const capitalItem = tooltipItems.find(i => i.datasetIndex === 0);
-                            const valueItem = tooltipItems.find(i => i.datasetIndex === 1);
-                            if (capitalItem && valueItem) {
-                                const diff = valueItem.parsed.y - capitalItem.parsed.y;
-                                const sign = diff >= 0 ? '+' : '';
-                                return `Diferencia: ${sign}${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(diff)}`;
-                            }
-                            return '';
+                            const val = tooltipItems[0].parsed.y;
+                            const cap = tooltipItems[1].parsed.y;
+                            const diff = val - cap;
+                            const pct = cap !== 0 ? (diff / cap) * 100 : 0;
+                            const sign = diff >= 0 ? '+' : '';
+                            return `P&L: ${sign}${formatCurrency(diff * 100)} (${sign}${pct.toFixed(2)}%)`;
                         }
                     }
                 }
             },
-            interaction: { mode: 'index', intersect: false },
-            elements: { point: { radius: 0 } }
+            interaction: { mode: 'index', intersect: false }
         }
     });
 }
+
+// Función global auxiliar para cambiar el rango (necesaria para el onclick del HTML)
+window.changePortfolioRange = (newRange) => {
+    // Si pulsamos el mismo, no hacemos nada
+    if (currentPortfolioTimeRange === newRange) return;
+    
+    currentPortfolioTimeRange = newRange;
+    hapticFeedback('light');
+    
+    // 1. Actualizar visualmente los botones sin recargar todo el HTML
+    const buttons = document.querySelectorAll('#portfolio-evolution-container .filter-pill');
+    buttons.forEach(btn => {
+        if (btn.textContent.includes(newRange) || btn.textContent === newRange || btn.getAttribute('onclick').includes(newRange)) {
+            btn.classList.add('filter-pill--active');
+            btn.style.backgroundColor = 'var(--c-primary)';
+            btn.style.color = 'white';
+            btn.style.borderColor = 'var(--c-primary)';
+        } else {
+            btn.classList.remove('filter-pill--active');
+            btn.style.backgroundColor = '';
+            btn.style.color = '';
+            btn.style.borderColor = '';
+        }
+    });
+
+    // 2. Recargar solo el gráfico
+    renderPortfolioEvolutionChart('portfolio-evolution-container');
+};
 	
 	// Función global para abrir el modal masivo
 window.showBulkUpdateModal = () => {
