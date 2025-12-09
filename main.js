@@ -4777,9 +4777,10 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     const container = select(targetContainerId);
     if (!container) return;
 
+    // Estado de carga inicial
     container.innerHTML = `<div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"><canvas id="portfolio-evolution-chart"></canvas></div>`;
 
-    // 1. Obtención de datos (Igual que antes)
+    // 1. Obtención de datos
     await loadInversiones();
     const allMovements = await fetchAllMovementsForHistory();
     const filteredInvestmentAccounts = getVisibleAccounts().filter(account => !deselectedInvestmentTypesFilter.has(toSentenceCase(account.tipo || 'S/T')) && account.esInversion);
@@ -4790,11 +4791,16 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         return;
     }
 
-    // Procesamiento de datos (Timeline)
+    // 2. Procesamiento de datos (Timeline)
     const timeline = [];
     const history = (db.inversiones_historial || []).filter(h => filteredAccountIds.has(h.cuentaId));
+    
+    // Valoraciones manuales
     history.forEach(v => timeline.push({ date: v.fecha.slice(0, 10), type: 'valuation', value: v.valor, accountId: v.cuentaId }));
+    
+    // Flujos de caja (Aportaciones/Retiradas)
     const cashFlowMovements = allMovements.filter(m => (m.tipo === 'movimiento' && filteredAccountIds.has(m.cuentaId)) || (m.tipo === 'traspaso' && (filteredAccountIds.has(m.cuentaOrigenId) || filteredAccountIds.has(m.cuentaDestinoId))));
+    
     cashFlowMovements.forEach(m => {
         let amount = 0;
         if (m.tipo === 'movimiento') amount = m.cantidad;
@@ -4809,16 +4815,23 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
          container.innerHTML = `<div class="empty-state" style="padding:16px 0; background:transparent; border:none;"><p>Datos insuficientes.</p></div>`;
          return;
     }
+    
+    // Ordenar cronológicamente
     timeline.sort((a, b) => new Date(a.date) - new Date(b.date));
     
+    // Calcular acumulados diarios
     const dailyData = new Map();
     let runningCapital = 0;
     const lastKnownValues = new Map();
+    
     timeline.forEach(event => {
         if (event.type === 'cashflow') { runningCapital += event.value; }
         else if (event.type === 'valuation') { lastKnownValues.set(event.accountId, event.value); }
+        
         let totalValue = 0;
         for (const value of lastKnownValues.values()) { totalValue += value; }
+        
+        // Guardamos el estado al final de ese día
         dailyData.set(event.date, { capital: runningCapital, value: totalValue });
     });
 
@@ -4827,84 +4840,71 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     const capitalData = sortedDates.map(date => dailyData.get(date).capital / 100);
     const totalValueData = sortedDates.map(date => dailyData.get(date).value / 100);
 
+    // 3. Renderizado del Gráfico
     const chartCanvas = select('portfolio-evolution-chart');
     const chartCtx = chartCanvas ? chartCanvas.getContext('2d') : null;
     if (!chartCtx) return;
 
+    // Destruir gráfico anterior si existe
     const existingChart = Chart.getChart(chartCanvas);
     if (existingChart) existingChart.destroy();
     
     chartCanvas.closest('.chart-container').classList.remove('skeleton');
 
-    // --- AQUI EMPIEZA LA MAGIA VISUAL "LUJOSA" ---
-
-    // 1. Obtenemos los colores base del CSS
-    const colorSuccessHex = getComputedStyle(document.body).getPropertyValue('--c-success').trim();
-    const colorDangerHex = getComputedStyle(document.body).getPropertyValue('--c-danger').trim();
-    const colorPrimaryHex = getComputedStyle(document.body).getPropertyValue('--c-primary').trim();
-
-    // 2. Determinamos la tendencia global (¿El final es mayor que el principio?)
-    //    Si el valor actual es mayor que el capital aportado actual, estamos en GANANCIA (Verde).
-    //    Si es menor, estamos en PÉRDIDA (Rojo).
-    const currentVal = totalValueData[totalValueData.length - 1] || 0;
-    const currentCap = capitalData[capitalData.length - 1] || 0;
-    const isProfitable = currentVal >= currentCap;
-
-    const mainColorHex = isProfitable ? colorSuccessHex : colorDangerHex;
-
-    // 3. Creamos el Gradiente Vertical
-    // (0,0) es arriba, (0, 300) es abajo.
-    const gradient = chartCtx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, hexToRgba(mainColorHex, 0.4)); // Arriba: Color con 40% de opacidad
-    gradient.addColorStop(1, hexToRgba(mainColorHex, 0.0)); // Abajo: Totalmente transparente
-
-    new Chart(chartCtx, {
-        type: 'line',
-        // ... código previo de obtención de datos ...
-
-    // Crear datasets para Chart.js
+    // --- CONFIGURACIÓN DE DATASETS (Aquí estaba el problema antes) ---
+    // Definimos los datasets ANTES de crear el chart
+    
     const capitalDataset = {
         label: 'Capital Aportado',
         data: capitalData,
-        borderColor: 'rgba(255, 255, 255, 0.5)', // Gris claro para la línea base
+        borderColor: 'rgba(255, 255, 255, 0.5)', 
         borderWidth: 1,
-        borderDash: [4, 4], // Línea punteada
+        borderDash: [4, 4], 
         pointRadius: 0,
         fill: false,
-        tension: 0.1
+        tension: 0.1,
+        order: 1 // Capa superior
     };
 
     const valueDataset = {
         label: 'Valor de Mercado',
         data: totalValueData,
-        borderColor: '#00B34D', // El color del borde cambiará dinámicamente si quieres, pero verde base está bien
+        borderColor: '#00B34D', 
         borderWidth: 2,
         pointRadius: 0,
         tension: 0.3,
+        order: 0, // Capa base
         fill: {
-            target: '0', // Rellena hasta el dataset índice 0 (Capital)
-            above: 'rgba(0, 179, 77, 0.15)',   // Verde si Valor > Capital (Ganancia)
-            below: 'rgba(255, 59, 48, 0.15)'   // Rojo si Valor < Capital (Pérdida)
+            target: '0', // Rellena hasta el dataset 0 (Capital Aportado)
+            above: 'rgba(0, 179, 77, 0.20)',   // Verde si Valor > Capital (Ganancia)
+            below: 'rgba(255, 59, 48, 0.20)'   // Rojo si Valor < Capital (Pérdida)
         }
     };
 
+    // Creación del gráfico
     new Chart(chartCtx, {
         type: 'line',
         data: {
             labels: chartLabels,
-            datasets: [capitalDataset, valueDataset] // Importante el orden: Capital es 0
+            // IMPORTANTE: El orden aquí define los índices. Capital es index 0.
+            datasets: [capitalDataset, valueDataset] 
         },
         options: {
             responsive: true, 
             maintainAspectRatio: false,
             scales: {
                 y: { 
-                    display: true, // Mostrar eje Y ayuda a entender la escala
+                    display: true, 
                     position: 'right',
-                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    grid: { color: 'rgba(255,255,255,0.05)', borderDash: [5,5] },
                     ticks: { 
-                        callback: value => (value/1000).toFixed(0) + 'k', // Formato compacto 10k, 20k
-                        color: '#666',
+                        // Formato compacto para números grandes (10k, 1.5M)
+                        callback: value => {
+                            if(Math.abs(value) >= 1000000) return (value/1000000).toFixed(1) + 'M';
+                            if(Math.abs(value) >= 1000) return (value/1000).toFixed(0) + 'k';
+                            return value;
+                        },
+                        color: 'rgba(255,255,255,0.5)',
                         font: { size: 10 }
                     }
                 },
@@ -4912,22 +4912,48 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                     type: 'time', 
                     time: { unit: 'month', tooltipFormat: 'dd MMM yyyy' }, 
                     grid: { display: false },
-                    ticks: { display: false } // Ocultar fechas abajo para limpiar
+                    ticks: { display: false } // Ocultamos fechas eje X para limpieza
                 }
             },
             plugins: {
-                legend: { display: true, position: 'top', labels: { boxWidth: 10, font: {size: 10} } },
+                legend: { 
+                    display: true, 
+                    position: 'top', 
+                    labels: { boxWidth: 10, usePointStyle: true, font: {size: 11} } 
+                },
                 tooltip: {
                     mode: 'index',
                     intersect: false,
+                    backgroundColor: 'rgba(20, 20, 30, 0.9)',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
                     callbacks: {
-                        label: (ctx) => `${ctx.dataset.label}: ${formatCurrency(ctx.raw * 100)}`
+                        label: (context) => {
+                            let label = context.dataset.label || '';
+                            if (label) label += ': ';
+                            if (context.parsed.y !== null) {
+                                label += new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
+                            }
+                            return label;
+                        },
+                        // Footer del tooltip para mostrar la diferencia exacta
+                        footer: (tooltipItems) => {
+                            const capitalItem = tooltipItems.find(i => i.datasetIndex === 0);
+                            const valueItem = tooltipItems.find(i => i.datasetIndex === 1);
+                            if (capitalItem && valueItem) {
+                                const diff = valueItem.parsed.y - capitalItem.parsed.y;
+                                const sign = diff >= 0 ? '+' : '';
+                                return `Diferencia: ${sign}${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(diff)}`;
+                            }
+                            return '';
+                        }
                     }
                 }
             },
             interaction: { mode: 'index', intersect: false }
         }
     });
+}
 	
 	// Función global para abrir el modal masivo
 window.showBulkUpdateModal = () => {
