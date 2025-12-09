@@ -4777,7 +4777,7 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     const container = select(targetContainerId);
     if (!container) return;
 
-    // Estado de carga inicial
+    // Estado de carga
     container.innerHTML = `<div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"><canvas id="portfolio-evolution-chart"></canvas></div>`;
 
     // 1. Obtención de datos
@@ -4831,7 +4831,6 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         let totalValue = 0;
         for (const value of lastKnownValues.values()) { totalValue += value; }
         
-        // Guardamos el estado al final de ese día
         dailyData.set(event.date, { capital: runningCapital, value: totalValue });
     });
 
@@ -4845,25 +4844,22 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     const chartCtx = chartCanvas ? chartCanvas.getContext('2d') : null;
     if (!chartCtx) return;
 
-    // Destruir gráfico anterior si existe
     const existingChart = Chart.getChart(chartCanvas);
     if (existingChart) existingChart.destroy();
     
     chartCanvas.closest('.chart-container').classList.remove('skeleton');
 
-    // --- CONFIGURACIÓN DE DATASETS (Aquí estaba el problema antes) ---
-    // Definimos los datasets ANTES de crear el chart
-    
     const capitalDataset = {
         label: 'Capital Aportado',
         data: capitalData,
         borderColor: 'rgba(255, 255, 255, 0.5)', 
         borderWidth: 1,
         borderDash: [4, 4], 
-        pointRadius: 0,
+        pointRadius: 0, // Sin puntos
+        pointHoverRadius: 0,
         fill: false,
         tension: 0.1,
-        order: 1 // Capa superior
+        order: 1
     };
 
     const valueDataset = {
@@ -4871,34 +4867,34 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         data: totalValueData,
         borderColor: '#00B34D', 
         borderWidth: 2,
-        pointRadius: 0,
+        pointRadius: 0, // IMPORTANTE: Sin puntos
+        pointHoverRadius: 4, // El punto solo aparece al pasar el ratón (hover)
         tension: 0.3,
-        order: 0, // Capa base
+        order: 0, 
         fill: {
-            target: '0', // Rellena hasta el dataset 0 (Capital Aportado)
-            above: 'rgba(0, 179, 77, 0.20)',   // Verde si Valor > Capital (Ganancia)
-            below: 'rgba(255, 59, 48, 0.20)'   // Rojo si Valor < Capital (Pérdida)
+            target: '0', 
+            above: 'rgba(0, 179, 77, 0.20)',   
+            below: 'rgba(255, 59, 48, 0.20)'   
         }
     };
 
-    // Creación del gráfico
     new Chart(chartCtx, {
         type: 'line',
         data: {
             labels: chartLabels,
-            // IMPORTANTE: El orden aquí define los índices. Capital es index 0.
             datasets: [capitalDataset, valueDataset] 
         },
         options: {
             responsive: true, 
             maintainAspectRatio: false,
+            // Desactiva animaciones pesadas si hay muchos datos
+            animation: { duration: 0 }, 
             scales: {
                 y: { 
                     display: true, 
                     position: 'right',
                     grid: { color: 'rgba(255,255,255,0.05)', borderDash: [5,5] },
                     ticks: { 
-                        // Formato compacto para números grandes (10k, 1.5M)
                         callback: value => {
                             if(Math.abs(value) >= 1000000) return (value/1000000).toFixed(1) + 'M';
                             if(Math.abs(value) >= 1000) return (value/1000).toFixed(0) + 'k';
@@ -4912,21 +4908,33 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                     type: 'time', 
                     time: { unit: 'month', tooltipFormat: 'dd MMM yyyy' }, 
                     grid: { display: false },
-                    ticks: { display: false } // Ocultamos fechas eje X para limpieza
+                    // IMPORTANTE: Controla cuántas fechas salen abajo para que no se amontonen
+                    ticks: { 
+                        display: true,
+                        maxTicksLimit: 6, 
+                        color: 'rgba(255,255,255,0.5)',
+                        font: { size: 10 }
+                    } 
                 }
             },
             plugins: {
                 legend: { 
                     display: true, 
                     position: 'top', 
-                    labels: { boxWidth: 10, usePointStyle: true, font: {size: 11} } 
+                    labels: { boxWidth: 10, usePointStyle: true, font: {size: 11}, color: '#fff' } 
+                },
+                // === AQUÍ ESTÁ LA SOLUCIÓN AL EMBORRONAMIENTO ===
+                datalabels: { 
+                    display: false // ¡DESACTIVADO! Esto quita los números blancos
                 },
                 tooltip: {
                     mode: 'index',
                     intersect: false,
-                    backgroundColor: 'rgba(20, 20, 30, 0.9)',
+                    backgroundColor: 'rgba(20, 20, 30, 0.95)',
                     borderColor: 'rgba(255,255,255,0.1)',
                     borderWidth: 1,
+                    titleColor: '#fff',
+                    bodyColor: '#ddd',
                     callbacks: {
                         label: (context) => {
                             let label = context.dataset.label || '';
@@ -4936,7 +4944,6 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                             }
                             return label;
                         },
-                        // Footer del tooltip para mostrar la diferencia exacta
                         footer: (tooltipItems) => {
                             const capitalItem = tooltipItems.find(i => i.datasetIndex === 0);
                             const valueItem = tooltipItems.find(i => i.datasetIndex === 1);
@@ -4950,7 +4957,12 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                     }
                 }
             },
-            interaction: { mode: 'index', intersect: false }
+            interaction: { mode: 'index', intersect: false },
+            elements: {
+                point: {
+                    radius: 0 // Seguridad extra: ningún punto se dibuja por defecto
+                }
+            }
         }
     });
 }
