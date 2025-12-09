@@ -35,7 +35,7 @@ const KPI_EXPLANATIONS = {
     },
     'pnl': { 
         title: 'Ganancia / Pérdida (P&L)', 
-        text: 'El fruto de tus inversiones. Es la diferencia entre lo que valen tus activos hoy y lo que te costó comprarlos.' 
+        text: 'Es el "examen de notas" de tus inversiones. Te dice cuánto dinero has ganado o perdido sobre lo que pusiste.<br><br><strong>Ejemplo Didáctico:</strong><br>Pones 100€ en una hucha (Capital). Si el mercado sube y ahora vale 110€, tu P&L es <strong>+10€ (+10%)</strong>.<br><br><strong>Fórmula:</strong> Valor Actual - Capital Invertido.' 
     },
     'cobertura': { 
         title: 'Cobertura (Meses de Libertad)', 
@@ -6208,7 +6208,7 @@ const scheduleDashboardUpdate = () => {
             const saldos = await getSaldos();
             const visibleAccounts = getVisibleAccounts();
             
-            // --- CÁLCULOS REVISADOS ---
+            // --- CÁLCULOS ---
             const investmentAccounts = visibleAccounts.filter(c => c.esInversion);
             
             let totalCapitalInvertido = 0; // Lo que has puesto de tu bolsillo (Saldos)
@@ -6216,11 +6216,11 @@ const scheduleDashboardUpdate = () => {
 
             if (investmentAccounts.length > 0) {
                 for (const cuenta of investmentAccounts) {
-                    // 1. Capital Invertido es el SALDO de la cuenta (en este modelo)
+                    // 1. Capital Invertido es el SALDO de la cuenta
                     const capitalCuenta = saldos[cuenta.id] || 0;
                     totalCapitalInvertido += capitalCuenta;
 
-                    // 2. Valor de Mercado es la última valoración (o el saldo si no hay valoración)
+                    // 2. Valor de Mercado es la última valoración
                     const valoraciones = (db.inversiones_historial || [])
                         .filter(v => v.cuentaId === cuenta.id)
                         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
@@ -6232,33 +6232,35 @@ const scheduleDashboardUpdate = () => {
 
             let liquidezTotal = 0;
             visibleAccounts.forEach(c => {
-                // Sumamos solo si NO es inversión y NO es deuda
                 if (!c.esInversion && !['PRÉSTAMO', 'TARJETA DE CRÉDITO'].includes((c.tipo || '').toUpperCase())) {
                     liquidezTotal += (saldos[c.id] || 0);
                 }
             });
 
-            // --- CAMBIO DE LÓGICA DE PATRIMONIO ---
-            // Usuario: "Patrimonio Total debe ser suma de liquidez más capital invertido"
+            // Patrimonio Contable
             const patrimonioContable = liquidezTotal + totalCapitalInvertido;
 
-            // --- CÁLCULO PARA LA NUEVA TARJETA ---
+            // --- CÁLCULO P&L Y PORCENTAJE ---
             const pnlTotal = valorMercadoTotal - totalCapitalInvertido;
+            let pnlPct = 0;
+            if (totalCapitalInvertido !== 0) {
+                pnlPct = (pnlTotal / totalCapitalInvertido) * 100;
+            }
 
-            // Datos de flujo (Ingresos/Gastos)
+            // Datos de flujo
             const { current: currentMovs } = await getFilteredMovements(false);
             const visibleAccountIds = new Set(visibleAccounts.map(c => c.id));
             const { ingresos, gastos, saldoNeto } = calculateTotals(currentMovs, visibleAccountIds);
             const tasaAhorro = (ingresos > 0 && saldoNeto > 0) ? (saldoNeto / ingresos) * 100 : 0;
 
-            // Datos de salud financiera (Usamos el Valor de Mercado REAL para la Independencia Financiera, es más realista)
+            // Datos de salud (Usamos valor real de mercado para I.F.)
             const patrimonioRealParaCalculos = liquidezTotal + valorMercadoTotal;
             const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
             const fiData = calculateFinancialIndependence(patrimonioRealParaCalculos, efData.gastoMensualPromedio);
 
             // --- ACTUALIZACIÓN UI ---
 
-            // A. FLUJO (Ingresos/Gastos) - Sin cambios
+            // A. FLUJO
             const elIng = select('kpi-ingresos-value');
             if (elIng) {
                 [elIng, select('kpi-gastos-value'), select('kpi-saldo-neto-value'), select('kpi-tasa-ahorro-value')]
@@ -6276,19 +6278,18 @@ const scheduleDashboardUpdate = () => {
                 elAhorro.className = tasaAhorro >= 0 ? 'text-positive' : 'text-warning';
             }
 
-            // B. PATRIMONIO (Tarjeta Principal Modificada)
+            // B. PATRIMONIO
             const elPatrimonio = select('kpi-patrimonio-neto-value');
             if (elPatrimonio) {
                 [elPatrimonio, select('kpi-liquidez-value'), select('kpi-capital-invertido-total')]
                     .forEach(el => el?.classList.remove('skeleton'));
 
-                // Aquí mostramos el Patrimonio Contable (Liquidez + Capital Invertido)
                 animateCountUp(elPatrimonio, patrimonioContable);
                 animateCountUp(select('kpi-liquidez-value'), liquidezTotal);
                 animateCountUp(select('kpi-capital-invertido-total'), totalCapitalInvertido);
             }
 
-            // C. NUEVA TARJETA (Inversiones Realidad)
+            // C. NUEVA TARJETA (Inversiones Realidad) - AQUÍ ESTÁ EL CAMBIO CLAVE
             const elNewMarketVal = select('new-card-market-value');
             if (elNewMarketVal) {
                 elNewMarketVal.classList.remove('skeleton');
@@ -6296,16 +6297,18 @@ const scheduleDashboardUpdate = () => {
                 // Capital
                 select('new-card-capital').textContent = formatCurrency(totalCapitalInvertido);
                 
-                // P&L
+                // P&L con Porcentaje
                 const elPnl = select('new-card-pnl');
-                elPnl.textContent = (pnlTotal >= 0 ? '+' : '') + formatCurrency(pnlTotal);
+                const sign = pnlTotal >= 0 ? '+' : '';
+                // Usamos innerHTML para formatear el porcentaje más pequeño
+                elPnl.innerHTML = `${sign}${formatCurrency(pnlTotal)} <small style="font-size:0.8em; opacity:0.9;">(${sign}${pnlPct.toFixed(2)}%)</small>`;
                 elPnl.className = pnlTotal >= 0 ? 'text-positive' : 'text-negative';
                 
-                // Resultado Total (Market Value)
+                // Resultado Total
                 animateCountUp(elNewMarketVal, valorMercadoTotal);
             }
 
-            // D. METAS (Salud Financiera)
+            // D. METAS
             const elRunway = select('health-runway-val');
             if (elRunway) {
                 elRunway.classList.remove('skeleton');
