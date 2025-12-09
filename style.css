@@ -254,47 +254,7 @@
     }
 }
 /* === FIN: Estilos para Animación de Guardado === */
-	/* === INICIO: ESTILOS A PEGAR PARA LA INTRO CON VÍDEO Y SONIDO === */
-#start-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 10001; /* El más alto de todos para que tape todo */
-    background-color: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-#start-button {
-    background: none;
-    border: 2px solid white;
-    color: white;
-    padding: 15px 30px;
-    font-size: 1.2rem;
-    font-weight: 700;
-    cursor: pointer;
-    border-radius: 50px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: all 0.2s ease-in-out;
-}
-#start-button:hover {
-    background-color: white;
-    color: black;
-}
-#video-intro-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 10000;
-    background-color: #000;
-    transition: opacity 0.75s ease-in-out;
-}
-#intro-video {
-    width: 100%;
-    height: 100%;
-    object-fit: contain; 
-}
-/* === FIN: ESTILOS A PEGAR === */
+
 	 .form-input--error {
     border: 2px solid red;
     background: #ffecec;
@@ -1626,23 +1586,6 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 #generic-modal-body ul ul { margin-top: 6px; }
 #generic-modal-body a { color: var(--c-primary); text-decoration: none; font-weight: 600; }
 #generic-modal-body a:hover { text-decoration: underline; }
-
-.csv-converter-modal .upload-area { border: 2px dashed var(--c-outline); border-radius: var(--border-radius-lg); padding: 2.5rem; text-align: center; cursor: pointer; transition: border-color 0.3s, background-color 0.3s; margin-bottom: 1.5rem; }
-.csv-converter-modal .upload-area.drag-over { border-color: var(--c-primary); background-color: color-mix(in srgb, var(--c-primary) 10%, transparent); }
-.csv-converter-modal .upload-area p { margin: 0; color: var(--c-on-surface-tertiary); }
-.csv-converter-modal .upload-area strong { color: var(--c-primary); }
-.csv-converter-modal #file-name { font-weight: 600; color: var(--c-success); margin-top: 1rem; display: block; min-height: 24px; }
-.csv-converter-modal .results-log { margin-top: 2rem; background-color: var(--c-surface-variant); border: 1px solid var(--c-outline); border-radius: var(--border-radius-md); padding: 1.5rem; display: none; }
-.csv-converter-modal .results-log h2 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--c-on-surface-secondary); }
-.csv-converter-modal .results-log ul { list-style: none; padding: 0; }
-.csv-converter-modal .results-log li { padding: 0.5rem 0; border-bottom: 1px solid var(--c-outline); display: flex; justify-content: space-between; align-items: center; }
-.csv-converter-modal .results-log li:last-child { border-bottom: none; }
-.csv-converter-modal .results-log li .label { color: var(--c-on-surface-tertiary); }
-.csv-converter-modal .results-log li .value { font-weight: 700; color: var(--c-on-surface); padding: 0.1rem 0.5rem; border-radius: 6px; }
-.csv-converter-modal .results-log .value.success { background-color: color-mix(in srgb, var(--c-success) 20%, transparent); }
-.csv-converter-modal .results-log .value.warning { background-color: color-mix(in srgb, var(--c-warning) 20%, transparent); }
-.csv-converter-modal .results-log .value.danger { background-color: color-mix(in srgb, var(--c-danger) 20%, transparent); }
-.csv-converter-modal #download-container { margin-top: 1.5rem; display: none; }
 
 #json-drop-zone { border: 2px dashed var(--c-outline); border-radius: var(--border-radius-lg); padding: var(--sp-6); text-align: center; cursor: pointer; transition: border-color 0.3s, background-color 0.3s; }
 #json-drop-zone.drag-over { border-color: var(--c-primary); background-color: color-mix(in srgb, var(--c-primary) 10%, transparent); }
