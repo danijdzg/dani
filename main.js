@@ -3340,22 +3340,22 @@ const renderPortfolioMainContent = async (targetContainerId) => {
 
     const displayAssetsData = performanceData.filter(asset => !deselectedInvestmentTypesFilter.has(toSentenceCase(asset.tipo || 'S/T')));
 
-    // 2. Cálculos Totales
-    let portfolioTotalValorado = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.valorActual, 0);
+    // 2. Cálculos Totales (El orden lógico: Invertido -> P&L -> Valor Real)
     let portfolioTotalInvertido = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.capitalInvertido, 0);
+    let portfolioTotalValorado = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.valorActual, 0);
     let rentabilidadTotalAbsoluta = portfolioTotalValorado - portfolioTotalInvertido;
-    // Cálculo P&L YTD Total
-    let pnlYTDTotal = displayAssetsData.reduce((sum, cuenta) => sum + (cuenta.pnlYTD || 0), 0);
     
-    // -- Bloque visualización BTC/EUR (Igual que tenías, omitido para brevedad, mantener tu lógica original de conversión aquí) --
-    let displayTotalValorado = formatCurrency(portfolioTotalValorado);
+    // Formateo
     let displayTotalInvertido = formatCurrency(portfolioTotalInvertido);
-    // ... (Mantén tu lógica de BTC aquí si la usas)
+    let displayRentabilidadAbsoluta = formatCurrency(rentabilidadTotalAbsoluta);
+    let displayTotalValorado = formatCurrency(portfolioTotalValorado);
 
+    // Clases de color
     const rentabilidadClass = rentabilidadTotalAbsoluta >= 0 ? 'text-positive' : 'text-negative';
-    const ytdClass = pnlYTDTotal >= 0 ? 'text-positive' : 'text-negative';
+    const signo = rentabilidadTotalAbsoluta >= 0 ? '+' : '';
 
     // 3. Renderizado HTML
+    // Generación de filtros (Pills)
     const allInvestmentTypes = [...new Set(performanceData.map(asset => toSentenceCase(asset.tipo || 'S/T')))].sort();
     const colorMap = {};
     allInvestmentTypes.forEach((label, index) => { colorMap[label] = CHART_COLORS[index % CHART_COLORS.length]; });
@@ -3371,25 +3371,33 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         <div class="card" style="margin-bottom: var(--sp-4);">
             <div class="card__content" style="padding: var(--sp-3);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid var(--c-outline); padding-bottom:10px;">
-                    <h3 style="margin:0; font-size:1rem;">Resumen</h3>
+                    <h3 style="margin:0; font-size:1rem;">Resumen del Portafolio</h3>
                     <button class="btn btn--secondary" onclick="showBulkUpdateModal()" style="padding:4px 10px; font-size:0.75rem; height:auto;">
-                        <span class="material-icons" style="font-size:14px;">update</span> Actualizar Todo
+                        <span class="material-icons" style="font-size:14px;">update</span> Actualizar
                     </button>
                 </div>
 
-                <div style="display: flex; justify-content: space-around; text-align: center;">
-                    <div>
-                        <h4 class="kpi-item__label">Valor Actual</h4>
-                        <strong class="kpi-item__value" style="font-size: var(--fs-lg);">${displayTotalValorado}</strong>
+                <div style="display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; text-align: center; gap: 4px;">
+                    
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <h4 class="kpi-item__label" style="font-size:0.65rem;">Invertido</h4>
+                        <strong class="kpi-item__value" style="font-size: 0.9rem;">${displayTotalInvertido}</strong>
                     </div>
-                    <div>
-                        <h4 class="kpi-item__label">Total P&L</h4>
-                        <strong class="kpi-item__value ${rentabilidadClass}" style="font-size: var(--fs-lg);">${formatCurrency(rentabilidadTotalAbsoluta)}</strong>
+
+                    <div style="font-weight:700; color:var(--c-on-surface-tertiary); font-size:0.8rem;">+/-</div>
+
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <h4 class="kpi-item__label" style="font-size:0.65rem;">Ganancia/Pérdida</h4>
+                        <strong class="kpi-item__value ${rentabilidadClass}" style="font-size: 0.9rem;">${signo}${displayRentabilidadAbsoluta}</strong>
                     </div>
-                    <div>
-                        <h4 class="kpi-item__label">Este Año (YTD)</h4>
-                        <strong class="kpi-item__value ${ytdClass}" style="font-size: var(--fs-lg);">${formatCurrency(pnlYTDTotal)}</strong>
+
+                    <div style="font-weight:700; color:var(--c-on-surface-tertiary); font-size:0.8rem;">=</div>
+
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <h4 class="kpi-item__label" style="font-size:0.65rem;">Valor Real</h4>
+                        <strong class="kpi-item__value" style="font-size: 1.1rem; border-bottom: 2px solid var(--c-primary);">${displayTotalValorado}</strong>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -3397,60 +3405,57 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         <div class="filter-pills" style="margin-bottom: var(--sp-3); overflow-x:auto;">${pillsHTML}</div>
         <div id="investment-assets-list"></div>`;
 
-    // Renderizado Lista de Activos
+    // Renderizado Lista de Activos Individuales
     const listContainer = select('investment-assets-list');
     if (listContainer) {
         const listHtml = displayAssetsData
             .sort((a, b) => b.valorActual - a.valorActual)
             .map(cuenta => {
-                const itemValor = formatCurrency(cuenta.valorActual);
-                const itemYtd = formatCurrency(cuenta.pnlYTD);
-                const ytdColor = cuenta.pnlYTD >= 0 ? 'text-positive' : 'text-negative';
+                const cInvertido = formatCurrency(cuenta.capitalInvertido);
+                const cPnl = formatCurrency(cuenta.pnlAbsoluto);
+                const cReal = formatCurrency(cuenta.valorActual);
                 
-                // MEJORA 2: Alertas de Dato Obsoleto
-                const lastUpdate = cuenta.lastUpdate ? new Date(cuenta.lastUpdate) : null;
-                const daysSinceUpdate = lastUpdate ? Math.floor((new Date() - lastUpdate) / (1000 * 60 * 60 * 24)) : 999;
+                const pnlClass = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
+                const pnlSign = cuenta.pnlAbsoluto >= 0 ? '+' : '';
                 
-                let dateHtml = `<span style="color:var(--c-on-surface-secondary)">Hoy</span>`;
-                if (daysSinceUpdate > 0) {
-                    let colorDate = 'var(--c-on-surface-tertiary)';
-                    let icon = '';
-                    if (daysSinceUpdate > 30) { colorDate = 'var(--c-warning)'; icon = 'warning'; }
-                    if (daysSinceUpdate > 90) { colorDate = 'var(--c-danger)'; icon = 'error'; }
-                    
-                    dateHtml = `<span style="color:${colorDate}; display:flex; align-items:center; gap:4px;">
-                        ${icon ? `<span class="material-icons" style="font-size:12px;">${icon}</span>` : ''} 
-                        Hace ${daysSinceUpdate} días
-                    </span>`;
-                }
-
-                // MEJORA 3: Barra de Peso (Allocation)
+                // Barra de progreso visual (Peso)
                 const peso = portfolioTotalValorado > 0 ? (cuenta.valorActual / portfolioTotalValorado) * 100 : 0;
                 const barColor = colorMap[toSentenceCase(cuenta.tipo || 'S/T')] || 'var(--c-primary)';
 
                 return `
-                <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true" style="flex-direction: column; align-items: stretch; gap: 8px;">
+                <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 12px;">
                     
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div class="asset-card__name">${escapeHTML(cuenta.nombre)}</div>
-                        <div class="asset-card__value">${itemValor}</div>
+                        <div class="asset-card__name" style="font-size:1rem;">${escapeHTML(cuenta.nombre)}</div>
+                        <div style="font-size:0.7rem; color:var(--c-on-surface-tertiary); font-weight:600;">${peso.toFixed(1)}%</div>
+                    </div>
+                    <div style="width: 100%; height: 3px; background: var(--c-surface-variant); border-radius: 2px; overflow: hidden; margin-top:-4px;">
+                        <div style="width: ${peso}%; height: 100%; background-color: ${barColor};"></div>
                     </div>
 
-                    <div style="width: 100%; height: 4px; background: var(--c-surface-variant); border-radius: 2px; overflow: hidden;">
-                        <div style="width: ${peso}%; height: 100%; background-color: ${barColor}; opacity: 0.8;"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 4px; background: var(--c-surface-variant); padding: 8px; border-radius: 8px;">
+                        
+                        <div style="display:flex; flex-direction:column;">
+                            <span style="font-size:0.6rem; color:var(--c-on-surface-secondary); text-transform:uppercase;">Invertido</span>
+                            <span style="font-size:0.85rem; font-weight:600; color:var(--c-on-surface);">${cInvertido}</span>
+                        </div>
+
+                        <div style="display:flex; flex-direction:column; text-align:center;">
+                            <span style="font-size:0.6rem; color:var(--c-on-surface-secondary); text-transform:uppercase;">P&L</span>
+                            <span style="font-size:0.85rem; font-weight:700;" class="${pnlClass}">${pnlSign}${cPnl}</span>
+                        </div>
+
+                        <div style="display:flex; flex-direction:column; text-align:right;">
+                            <span style="font-size:0.6rem; color:var(--c-on-surface-secondary); text-transform:uppercase;">Valor Real</span>
+                            <span style="font-size:0.9rem; font-weight:800; color:var(--c-on-surface);">${cReal}</span>
+                        </div>
+
                     </div>
 
-                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--c-on-surface-secondary);">
-                        <div style="display:flex; gap:10px;">
-                            <span>Peso: <strong>${peso.toFixed(1)}%</strong></span>
-                            <span>YTD: <strong class="${ytdColor}">${itemYtd}</strong></span>
-                        </div>
-                        <div class="asset-card__valuation-area" style="margin:0;">
-                            ${dateHtml}
-                            <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}" style="padding: 2px 8px; font-size: 0.65rem;">
-                                <span class="material-icons" style="font-size: 12px;">edit</span>
-                            </button>
-                        </div>
+                    <div style="display:flex; justify-content:flex-end;">
+                         <button class="asset-card__valoracion-btn" data-action="update-asset-value" data-id="${cuenta.id}" style="padding: 4px 10px; font-size: 0.7rem;">
+                            <span class="material-icons" style="font-size: 14px;">edit</span> Actualizar Valor
+                        </button>
                     </div>
                 </div>`;
             }).join('');
