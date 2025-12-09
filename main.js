@@ -1,41 +1,49 @@
 
 import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
 const KPI_EXPLANATIONS = {
-    'patrimonio': { 
-        title: 'Patrimonio Neto', 
-        text: 'Es la fotografía de tu riqueza a día de hoy.<br><br><strong>Fórmula:</strong><br>(Todo lo que tienes) - (Todo lo que debes).<br><br>Incluye dinero en el banco, el valor actual de tus inversiones y el efectivo, restando deudas de tarjetas o préstamos.' 
-    },
-    'liquidez': { 
-        title: 'Liquidez Disponible', 
-        text: 'Es el "oxígeno" de tu economía. Representa el dinero al que puedes acceder de forma inmediata sin penalización.<br><br>Suma de todas las cuentas tipo <strong>Banco</strong> y <strong>Efectivo</strong>.' 
-    },
-    'inversiones': { 
-        title: 'Valor de Inversiones', 
-        text: 'El valor de mercado actual de todos tus activos trabajando para ti (Fondos, Acciones, Cripto, etc.).<br><br>No es lo que pusiste, sino <strong>lo que vale hoy</strong> si lo vendieras.' 
-    },
     'ingresos': { 
         title: 'Ingresos del Periodo', 
-        text: 'Dinero nuevo que ha entrado en tus bolsillos durante las fechas seleccionadas.<br><br>No cuenta los movimientos entre tus propias cuentas (traspasos).' 
+        text: 'Dinero nuevo que ha entrado en tus bolsillos durante las fechas seleccionadas (nómina, ventas, regalos...).<br><br>No cuenta los movimientos entre tus propias cuentas (traspasos).' 
     },
     'gastos': { 
         title: 'Gastos del Periodo', 
-        text: 'Salidas de dinero hacia terceros durante las fechas seleccionadas (compras, facturas, ocio...).' 
+        text: 'Dinero que ha salido de tu bolsillo para no volver (compras, facturas, ocio...).' 
     },
     'neto': { 
-        title: 'Flujo Neto (Cashflow)', 
-        text: 'La verdad sobre tu gestión este periodo.<br><br><strong>Ingresos - Gastos</strong>.<br>Si es positivo (+), tu riqueza ha crecido gracias a tu gestión. Si es negativo (-), has consumido ahorros previos.' 
+        title: 'Flujo Neto (Ahorro del Periodo)', 
+        text: 'Es la resta simple: <strong>Lo que entró - Lo que salió</strong>.<br><br>Si es positivo (Verde), has gastado menos de lo que ganaste. Si es negativo (Rojo), has tenido que tirar de ahorros anteriores.' 
     },
     'tasa_ahorro': { 
         title: 'Tasa de Ahorro', 
-        text: 'El porcentaje de tus ingresos que has logrado retener para tu "Yo" del futuro.<br><br><strong>(Ahorro Neto / Ingresos) × 100</strong>.<br>Una tasa saludable suele estar por encima del 10-20%.' 
+        text: 'Mide tu velocidad de acumulación de riqueza.<br><br>Si ganaste 1.000€ y te sobraron 200€, tu tasa es del 20%. Un porcentaje alto significa que vives muy por debajo de tus posibilidades (¡eso es bueno!).' 
+    },
+    'patrimonio': { 
+        title: 'Patrimonio (Capital Total)', 
+        text: 'Es la suma de todo tu dinero "contable".<br><br><strong>Fórmula:</strong> Liquidez + Capital Invertido.<br><br>Representa todo el dinero que tienes en el banco más todo el dinero que has enviado a tus cuentas de inversión. No tiene en cuenta si tus inversiones han subido o bajado, solo lo que tú pusiste.' 
+    },
+    'liquidez': { 
+        title: 'Liquidez Disponible', 
+        text: 'Tu oxígeno financiero. Es el dinero que tienes en cuentas corrientes, efectivo o huchas, listo para gastar hoy mismo si fuera necesario.' 
+    },
+    'capital_invertido': { 
+        title: 'Capital Invertido', 
+        text: 'El esfuerzo de tu bolsillo. Es la suma total de dinero que has transferido desde tus cuentas de banco a tus cuentas de inversión.<br><br>Es tu "coste base".' 
+    },
+    'posicion_real': { 
+        title: 'Posición Real de Mercado', 
+        text: 'La verdad actual. Es lo que valen tus inversiones si las vendieras todas hoy mismo.<br><br>Se calcula sumando tu <strong>Capital Invertido</strong> más tus <strong>Ganancias</strong> (o menos tus Pérdidas).' 
+    },
+    'pnl': { 
+        title: 'Ganancia / Pérdida (P&L)', 
+        text: 'El fruto de tus inversiones. Es la diferencia entre lo que valen tus activos hoy y lo que te costó comprarlos.' 
     },
     'cobertura': { 
-        title: 'Cobertura (Runway)', 
-        text: 'Tu seguro de vida financiero. Si hoy dejaras de tener ingresos, ¿cuántos meses podrías vivir manteniendo tu nivel de vida actual?<br><br>Se calcula dividiendo tu <strong>Liquidez</strong> entre tu <strong>Gasto Mensual Promedio</strong> (de los últimos 3 meses).' 
+        title: 'Cobertura (Meses de Libertad)', 
+        text: 'Si hoy dejaras de ingresar dinero, ¿cuánto tiempo podrías sobrevivir con tu liquidez actual manteniendo tu nivel de gastos de los últimos 3 meses?' 
     },
     'libertad': { 
         title: 'Independencia Financiera', 
-        text: 'Tu progreso hacia la libertad total: el punto donde tus inversiones pagan tus gastos.<br><br>Basado en la "Regla del 4%": Se considera que eres libre cuando acumulas <strong>25 veces tu gasto anual</strong> (o 300 veces tu gasto mensual).' 
+        text: 'Tu barra de progreso hacia la jubilación.<br><br>Se considera que eres libre cuando tienes acumulado 25 veces tus gastos anuales (o 300 veces tus gastos mensuales).' 
     }
 };
 const setupEnhancedFormNavigation = () => {
@@ -3340,15 +3348,18 @@ const renderPortfolioMainContent = async (targetContainerId) => {
 
     const displayAssetsData = performanceData.filter(asset => !deselectedInvestmentTypesFilter.has(toSentenceCase(asset.tipo || 'S/T')));
 
-    // 2. Cálculos Totales (El orden lógico: Invertido -> P&L -> Valor Real)
+    // 2. Cálculos Totales
     let portfolioTotalInvertido = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.capitalInvertido, 0);
     let portfolioTotalValorado = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.valorActual, 0);
     let rentabilidadTotalAbsoluta = portfolioTotalValorado - portfolioTotalInvertido;
+    // Cálculo del % Total
+    let rentabilidadTotalPorcentual = portfolioTotalInvertido !== 0 ? (rentabilidadTotalAbsoluta / portfolioTotalInvertido) * 100 : 0;
     
     // Formateo
     let displayTotalInvertido = formatCurrency(portfolioTotalInvertido);
     let displayRentabilidadAbsoluta = formatCurrency(rentabilidadTotalAbsoluta);
     let displayTotalValorado = formatCurrency(portfolioTotalValorado);
+    let displayPorcentajeTotal = rentabilidadTotalPorcentual.toFixed(2) + '%';
 
     // Clases de color
     const rentabilidadClass = rentabilidadTotalAbsoluta >= 0 ? 'text-positive' : 'text-negative';
@@ -3388,7 +3399,12 @@ const renderPortfolioMainContent = async (targetContainerId) => {
 
                     <div style="display:flex; flex-direction:column; align-items:center;">
                         <h4 class="kpi-item__label" style="font-size:0.65rem;">Ganancia/Pérdida</h4>
-                        <strong class="kpi-item__value ${rentabilidadClass}" style="font-size: 0.9rem;">${signo}${displayRentabilidadAbsoluta}</strong>
+                        <strong class="kpi-item__value ${rentabilidadClass}" style="font-size: 0.9rem;">
+                            ${signo}${displayRentabilidadAbsoluta}
+                        </strong>
+                        <small class="${rentabilidadClass}" style="font-size:0.7rem; font-weight:700;">
+                            (${signo}${displayPorcentajeTotal})
+                        </small>
                     </div>
 
                     <div style="font-weight:700; color:var(--c-on-surface-tertiary); font-size:0.8rem;">=</div>
@@ -3415,6 +3431,9 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                 const cPnl = formatCurrency(cuenta.pnlAbsoluto);
                 const cReal = formatCurrency(cuenta.valorActual);
                 
+                // Porcentaje Individual
+                const cPorcentaje = cuenta.pnlPorcentual.toFixed(2) + '%';
+                
                 const pnlClass = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
                 const pnlSign = cuenta.pnlAbsoluto >= 0 ? '+' : '';
                 
@@ -3427,7 +3446,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                     
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div class="asset-card__name" style="font-size:1rem;">${escapeHTML(cuenta.nombre)}</div>
-                        <div style="font-size:0.7rem; color:var(--c-on-surface-tertiary); font-weight:600;">${peso.toFixed(1)}%</div>
+                        <div style="font-size:0.7rem; color:var(--c-on-surface-tertiary); font-weight:600;">Peso: ${peso.toFixed(1)}%</div>
                     </div>
                     <div style="width: 100%; height: 3px; background: var(--c-surface-variant); border-radius: 2px; overflow: hidden; margin-top:-4px;">
                         <div style="width: ${peso}%; height: 100%; background-color: ${barColor};"></div>
@@ -3442,7 +3461,10 @@ const renderPortfolioMainContent = async (targetContainerId) => {
 
                         <div style="display:flex; flex-direction:column; text-align:center;">
                             <span style="font-size:0.6rem; color:var(--c-on-surface-secondary); text-transform:uppercase;">P&L</span>
-                            <span style="font-size:0.85rem; font-weight:700;" class="${pnlClass}">${pnlSign}${cPnl}</span>
+                            <div style="display:flex; flex-direction:column;">
+                                <span style="font-size:0.85rem; font-weight:700;" class="${pnlClass}">${pnlSign}${cPnl}</span>
+                                <span style="font-size:0.7rem; opacity:0.9;" class="${pnlClass}">(${pnlSign}${cPorcentaje})</span>
+                            </div>
                         </div>
 
                         <div style="display:flex; flex-direction:column; text-align:right;">
@@ -4551,14 +4573,14 @@ const renderPanelPage = async () => {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center;">
                     <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos" style="background: rgba(0, 179, 77, 0.1); padding: 10px; border-radius: 12px; border: 1px solid rgba(0, 179, 77, 0.2);">
                         <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-success); text-transform: uppercase; margin-bottom: 2px;">
-                            INGRESOS <button class="help-btn" data-action="show-kpi-help" data-kpi="ingresos" style="width:14px; height:14px; font-size:10px;">?</button>
+                            INGRESOS <button class="help-btn" data-action="show-kpi-help" data-kpi="ingresos">?</button>
                         </div>
                         <div id="kpi-ingresos-value" class="text-positive skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 800; color: var(--c-success);">+0,00 €</div>
                     </div>
 
                     <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos" style="background: rgba(255, 59, 48, 0.1); padding: 10px; border-radius: 12px; border: 1px solid rgba(255, 59, 48, 0.2);">
                         <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-danger); text-transform: uppercase; margin-bottom: 2px;">
-                            GASTOS <button class="help-btn" data-action="show-kpi-help" data-kpi="gastos" style="width:14px; height:14px; font-size:10px;">?</button>
+                            GASTOS <button class="help-btn" data-action="show-kpi-help" data-kpi="gastos">?</button>
                         </div>
                         <div id="kpi-gastos-value" class="text-negative skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 800; color: var(--c-danger);">-0,00 €</div>
                     </div>
@@ -4569,14 +4591,14 @@ const renderPanelPage = async () => {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center;">
                     <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
                         <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 2px;">
-                            NETO <button class="help-btn" data-action="show-kpi-help" data-kpi="neto" style="width:12px; height:12px; font-size:9px;">?</button>
+                            NETO <button class="help-btn" data-action="show-kpi-help" data-kpi="neto">?</button>
                         </div>
                         <div id="kpi-saldo-neto-value" class="skeleton" data-current-value="0" style="font-size: 1.3rem; font-weight: 800;">0,00 €</div>
                     </div>
 
                     <div>
                         <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 2px;">
-                            AHORRO <button class="help-btn" data-action="show-kpi-help" data-kpi="tasa_ahorro" style="width:12px; height:12px; font-size:9px;">?</button>
+                            AHORRO <button class="help-btn" data-action="show-kpi-help" data-kpi="tasa_ahorro">?</button>
                         </div>
                         <div id="kpi-tasa-ahorro-value" class="skeleton" data-current-value="0" style="font-size: 1.3rem; font-weight: 800;">0.00%</div>
                     </div>
@@ -4587,7 +4609,7 @@ const renderPanelPage = async () => {
                 
                 <div style="margin-bottom: 20px;">
                     <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 2px; margin-bottom: 8px;">
-                        PATRIMONIO (CAPITAL TOTAL) <button class="help-btn" data-action="show-kpi-help" data-kpi="patrimonio" style="width:16px; height:16px; font-size:11px;">?</button>
+                        PATRIMONIO (CAPITAL TOTAL) <button class="help-btn" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
                     </div>
                     <div id="kpi-patrimonio-neto-value" class="hero-value kpi-resaltado-azul skeleton" data-current-value="0" style="font-size: 2.8rem; line-height: 1; text-shadow: 0 0 20px rgba(0, 179, 77, 0.3);">0,00 €</div>
                 </div>
@@ -4597,6 +4619,7 @@ const renderPanelPage = async () => {
                     <div style="text-align: center;">
                         <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-info); text-transform: uppercase; margin-bottom: 4px; display:flex; justify-content:center; gap:4px; align-items:center;">
                             <span class="material-icons" style="font-size: 12px;">account_balance_wallet</span> Liquidez
+                            <button class="help-btn" data-action="show-kpi-help" data-kpi="liquidez">?</button>
                         </div>
                         <div id="kpi-liquidez-value" class="text-positive skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 700;">0,00 €</div>
                     </div>
@@ -4606,6 +4629,7 @@ const renderPanelPage = async () => {
                     <div style="text-align: center;">
                         <div style="font-size: 0.65rem; font-weight: 700; color: #BF5AF2; text-transform: uppercase; margin-bottom: 4px; display:flex; justify-content:center; gap:4px; align-items:center;">
                             <span class="material-icons" style="font-size: 12px;">savings</span> Capital Inv.
+                            <button class="help-btn" data-action="show-kpi-help" data-kpi="capital_invertido">?</button>
                         </div>
                         <div id="kpi-capital-invertido-total" class="text-positive skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 700;">0,00 €</div>
                     </div>
@@ -4628,20 +4652,23 @@ const renderPanelPage = async () => {
                         +/-
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom:4px;">Ganancia/Pérdida</div>
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom:4px;">
+                            P&L <button class="help-btn" data-action="show-kpi-help" data-kpi="pnl" style="width:14px; height:14px; font-size:9px;">?</button>
+                        </div>
                         <div id="new-card-pnl" style="font-weight:700;">0,00 €</div>
                     </div>
                 </div>
 
                 <div style="margin-top: 15px; text-align: center;">
-                    <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--c-on-surface-tertiary); margin-bottom: 5px;">= Valor Real de Mercado</div>
+                    <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--c-on-surface-tertiary); margin-bottom: 5px;">
+                        = Valor Real de Mercado <button class="help-btn" data-action="show-kpi-help" data-kpi="posicion_real">?</button>
+                    </div>
                     <div id="new-card-market-value" class="skeleton" style="font-size: 1.8rem; font-weight: 800; line-height: 1;">0,00 €</div>
                 </div>
             </div>
 
             <div class="hero-card fade-in-up" style="padding: 15px; margin-bottom: var(--sp-4); background: linear-gradient(180deg, var(--c-surface) 0%, rgba(0,0,0,0.2) 100%); border: 1px solid var(--c-outline);">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    
                     <div style="text-align: center;">
                         <div style="display: flex; justify-content: center; align-items: center; gap: 6px; margin-bottom: 6px;">
                             <span class="material-icons" style="color: #FFD60A; font-size: 18px;">shield</span>
@@ -4650,7 +4677,6 @@ const renderPanelPage = async () => {
                         </div>
                         <div id="health-runway-val" class="skeleton" style="font-size: 1.3rem; font-weight: 800; color: #FFD60A;">0.0 Meses</div>
                     </div>
-
                     <div style="text-align: center; border-left: 1px solid var(--c-outline);">
                         <div style="display: flex; justify-content: center; align-items: center; gap: 6px; margin-bottom: 6px;">
                             <span class="material-icons" style="color: #39FF14; font-size: 18px;">flag</span>
@@ -4659,10 +4685,8 @@ const renderPanelPage = async () => {
                         </div>
                         <div id="health-fi-val" class="skeleton" style="font-size: 1.3rem; font-weight: 800; color: #39FF14;">0.00%</div>
                     </div>
-
                 </div>
             </div>
-
         </div>
         
         <div id="concepto-totals-list" style="display:none;"></div>
@@ -4674,7 +4698,6 @@ const renderPanelPage = async () => {
     await Promise.all([loadPresupuestos(), loadInversiones()]);
     scheduleDashboardUpdate(); 
 };
-
  const showEstrategiaTab = (tabName) => {
     // 1. Gestionar el estado activo de los botones de las pestañas
     const tabButton = document.querySelector(`.tab-item[data-tab="${tabName}"]`);
