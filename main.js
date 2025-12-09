@@ -4832,7 +4832,7 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
     // Estado de carga
     container.innerHTML = `<div class="chart-container skeleton" style="height: 220px; border-radius: var(--border-radius-lg);"><canvas id="portfolio-evolution-chart"></canvas></div>`;
 
-    // 1. Obtención de datos
+    // 1. Obtención de datos (Igual que antes)
     await loadInversiones();
     const allMovements = await fetchAllMovementsForHistory();
     const filteredInvestmentAccounts = getVisibleAccounts().filter(account => !deselectedInvestmentTypesFilter.has(toSentenceCase(account.tipo || 'S/T')) && account.esInversion);
@@ -4843,14 +4843,12 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         return;
     }
 
-    // 2. Procesamiento de datos (Timeline)
+    // 2. Procesamiento de datos (Historia Completa)
     const timeline = [];
     const history = (db.inversiones_historial || []).filter(h => filteredAccountIds.has(h.cuentaId));
     
-    // Valoraciones manuales
     history.forEach(v => timeline.push({ date: v.fecha.slice(0, 10), type: 'valuation', value: v.valor, accountId: v.cuentaId }));
     
-    // Flujos de caja (Aportaciones/Retiradas)
     const cashFlowMovements = allMovements.filter(m => (m.tipo === 'movimiento' && filteredAccountIds.has(m.cuentaId)) || (m.tipo === 'traspaso' && (filteredAccountIds.has(m.cuentaOrigenId) || filteredAccountIds.has(m.cuentaDestinoId))));
     
     cashFlowMovements.forEach(m => {
@@ -4868,10 +4866,9 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
          return;
     }
     
-    // Ordenar cronológicamente
     timeline.sort((a, b) => new Date(a.date) - new Date(b.date));
     
-    // Calcular acumulados diarios
+    // 3. Generar la serie de datos completa día a día
     const dailyData = new Map();
     let runningCapital = 0;
     const lastKnownValues = new Map();
@@ -4886,12 +4883,50 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         dailyData.set(event.date, { capital: runningCapital, value: totalValue });
     });
 
-    const sortedDates = [...dailyData.keys()].sort();
-    const chartLabels = sortedDates;
-    const capitalData = sortedDates.map(date => dailyData.get(date).capital / 100);
-    const totalValueData = sortedDates.map(date => dailyData.get(date).value / 100);
+    const sortedFullDates = [...dailyData.keys()].sort();
 
-    // 3. Renderizado del Gráfico
+    // === AQUÍ ESTÁ EL FILTRO DE 3 MESES ===
+    const today = new Date();
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(today.getMonth() - 3);
+    const cutoffDateStr = threeMonthsAgo.toISOString().slice(0, 10);
+
+    // Filtramos las fechas para quedarnos solo con las recientes
+    let chartDates = sortedFullDates.filter(d => d >= cutoffDateStr);
+
+    // TRUCO PRO: Si cortamos los datos, necesitamos saber cómo empezamos hace 3 meses.
+    // Buscamos el último estado conocido ANTES de la fecha de corte para usarlo como punto de partida.
+    if (chartDates.length < sortedFullDates.length) {
+        // Encontrar el último dato anterior al corte
+        const lastDateBeforeCutoff = sortedFullDates.reverse().find(d => d < cutoffDateStr);
+        
+        if (lastDateBeforeCutoff) {
+            const startState = dailyData.get(lastDateBeforeCutoff);
+            // Insertamos un punto artificial en la fecha de corte con los valores arrastrados
+            // Esto hace que la línea empiece pegada a la izquierda
+            if (chartDates[0] !== cutoffDateStr) {
+                chartDates.unshift(cutoffDateStr);
+                dailyData.set(cutoffDateStr, startState);
+            }
+        }
+    }
+    // Si no hay datos recientes, mostramos al menos el último conocido
+    if (chartDates.length === 0 && sortedFullDates.length > 0) {
+        const lastDate = sortedFullDates[0]; // El más reciente (ya que invertimos el array arriba o usar el ultimo del original)
+        // Corrección: sortedFullDates fue invertido en el find, mejor usar el original o acceder al ultimo
+        const realLastDate = sortedFullDates[sortedFullDates.length - 1]; // Recuperamos el orden correcto
+        chartDates.push(realLastDate);
+    }
+    
+    // Aseguramos orden ascendente final
+    chartDates.sort();
+
+    // Mapeamos los datos finales para el gráfico
+    const chartLabels = chartDates;
+    const capitalData = chartDates.map(date => dailyData.get(date).capital / 100);
+    const totalValueData = chartDates.map(date => dailyData.get(date).value / 100);
+
+    // 4. Renderizado del Gráfico
     const chartCanvas = select('portfolio-evolution-chart');
     const chartCtx = chartCanvas ? chartCanvas.getContext('2d') : null;
     if (!chartCtx) return;
@@ -4907,7 +4942,7 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         borderColor: 'rgba(255, 255, 255, 0.5)', 
         borderWidth: 1,
         borderDash: [4, 4], 
-        pointRadius: 0, // Sin puntos
+        pointRadius: 0,
         pointHoverRadius: 0,
         fill: false,
         tension: 0.1,
@@ -4919,8 +4954,8 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         data: totalValueData,
         borderColor: '#00B34D', 
         borderWidth: 2,
-        pointRadius: 0, // IMPORTANTE: Sin puntos
-        pointHoverRadius: 4, // El punto solo aparece al pasar el ratón (hover)
+        pointRadius: 0,
+        pointHoverRadius: 4,
         tension: 0.3,
         order: 0, 
         fill: {
@@ -4939,7 +4974,6 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
         options: {
             responsive: true, 
             maintainAspectRatio: false,
-            // Desactiva animaciones pesadas si hay muchos datos
             animation: { duration: 0 }, 
             scales: {
                 y: { 
@@ -4960,10 +4994,9 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                     type: 'time', 
                     time: { unit: 'month', tooltipFormat: 'dd MMM yyyy' }, 
                     grid: { display: false },
-                    // IMPORTANTE: Controla cuántas fechas salen abajo para que no se amontonen
                     ticks: { 
                         display: true,
-                        maxTicksLimit: 6, 
+                        maxTicksLimit: 4, // Limitamos a 4 etiquetas para que se vea limpio en 3 meses
                         color: 'rgba(255,255,255,0.5)',
                         font: { size: 10 }
                     } 
@@ -4975,10 +5008,7 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                     position: 'top', 
                     labels: { boxWidth: 10, usePointStyle: true, font: {size: 11}, color: '#fff' } 
                 },
-                // === AQUÍ ESTÁ LA SOLUCIÓN AL EMBORRONAMIENTO ===
-                datalabels: { 
-                    display: false // ¡DESACTIVADO! Esto quita los números blancos
-                },
+                datalabels: { display: false },
                 tooltip: {
                     mode: 'index',
                     intersect: false,
@@ -5010,11 +5040,7 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                 }
             },
             interaction: { mode: 'index', intersect: false },
-            elements: {
-                point: {
-                    radius: 0 // Seguridad extra: ningún punto se dibuja por defecto
-                }
-            }
+            elements: { point: { radius: 0 } }
         }
     });
 }
