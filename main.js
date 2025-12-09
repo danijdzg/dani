@@ -46,6 +46,13 @@ const KPI_EXPLANATIONS = {
         text: 'Tu barra de progreso hacia la jubilación.<br><br>Se considera que eres libre cuando tienes acumulado 25 veces tus gastos anuales (o 300 veces tus gastos mensuales).' 
     }
 };
+
+const isCryptoType = (tipo) => {
+    const t = (tipo || '').toLowerCase();
+    // Detecta palabras clave comunes
+    return t.includes('cripto') || t.includes('btc') || t.includes('bitcoin') || t.includes('crypto') || t.includes('exchange') || t.includes('binance') || t.includes('coinbase');
+};
+
 const setupEnhancedFormNavigation = () => {
     const inputs = [
         { id: 'movimiento-cantidad', next: 'movimiento-concepto' },
@@ -3348,25 +3355,22 @@ const renderPortfolioMainContent = async (targetContainerId) => {
 
     const displayAssetsData = performanceData.filter(asset => !deselectedInvestmentTypesFilter.has(toSentenceCase(asset.tipo || 'S/T')));
 
-    // 2. Cálculos Totales
+    // 2. Cálculos Totales (SIEMPRE EN EUROS para mantener coherencia del Resumen Global)
     let portfolioTotalInvertido = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.capitalInvertido, 0);
     let portfolioTotalValorado = displayAssetsData.reduce((sum, cuenta) => sum + cuenta.valorActual, 0);
     let rentabilidadTotalAbsoluta = portfolioTotalValorado - portfolioTotalInvertido;
-    // Cálculo del % Total
     let rentabilidadTotalPorcentual = portfolioTotalInvertido !== 0 ? (rentabilidadTotalAbsoluta / portfolioTotalInvertido) * 100 : 0;
     
-    // Formateo
     let displayTotalInvertido = formatCurrency(portfolioTotalInvertido);
     let displayRentabilidadAbsoluta = formatCurrency(rentabilidadTotalAbsoluta);
     let displayTotalValorado = formatCurrency(portfolioTotalValorado);
     let displayPorcentajeTotal = rentabilidadTotalPorcentual.toFixed(2) + '%';
 
-    // Clases de color
     const rentabilidadClass = rentabilidadTotalAbsoluta >= 0 ? 'text-positive' : 'text-negative';
     const signo = rentabilidadTotalAbsoluta >= 0 ? '+' : '';
 
     // 3. Renderizado HTML
-    // Generación de filtros (Pills)
+    // Filtros (Pills)
     const allInvestmentTypes = [...new Set(performanceData.map(asset => toSentenceCase(asset.tipo || 'S/T')))].sort();
     const colorMap = {};
     allInvestmentTypes.forEach((label, index) => { colorMap[label] = CHART_COLORS[index % CHART_COLORS.length]; });
@@ -3378,42 +3382,42 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         return `<button class="filter-pill ${isActive ? 'filter-pill--active' : ''}" data-action="toggle-investment-type-filter" data-type="${t}" ${style}>${t}</button>`;
     }).join('');
 
+    // Información de Tasa de Cambio (Solo si el modo BTC está activo)
+    let btcInfoHTML = '';
+    if (portfolioViewMode === 'BTC' && btcPriceData.price > 0) {
+        btcInfoHTML = `<div style="text-align:center; font-size:0.7rem; color:var(--c-warning); margin-top:-10px; margin-bottom:10px;">
+            <span class="material-icons" style="font-size:10px; vertical-align:middle;">info</span> 
+            Mostrando Criptos en BTC (1 BTC = ${formatCurrency(Math.round(btcPriceData.price * 100))})
+        </div>`;
+    }
+
     container.innerHTML = `
+        ${btcInfoHTML}
         <div class="card" style="margin-bottom: var(--sp-4);">
             <div class="card__content" style="padding: var(--sp-3);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid var(--c-outline); padding-bottom:10px;">
-                    <h3 style="margin:0; font-size:1rem;">Resumen del Portafolio</h3>
+                    <h3 style="margin:0; font-size:1rem;">Resumen del Portafolio (Total €)</h3>
                     <button class="btn btn--secondary" onclick="showBulkUpdateModal()" style="padding:4px 10px; font-size:0.75rem; height:auto;">
                         <span class="material-icons" style="font-size:14px;">update</span> Actualizar
                     </button>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; text-align: center; gap: 4px;">
-                    
                     <div style="display:flex; flex-direction:column; align-items:center;">
                         <h4 class="kpi-item__label" style="font-size:0.65rem;">Invertido</h4>
                         <strong class="kpi-item__value" style="font-size: 0.9rem;">${displayTotalInvertido}</strong>
                     </div>
-
                     <div style="font-weight:700; color:var(--c-on-surface-tertiary); font-size:0.8rem;">+/-</div>
-
                     <div style="display:flex; flex-direction:column; align-items:center;">
                         <h4 class="kpi-item__label" style="font-size:0.65rem;">Ganancia/Pérdida</h4>
-                        <strong class="kpi-item__value ${rentabilidadClass}" style="font-size: 0.9rem;">
-                            ${signo}${displayRentabilidadAbsoluta}
-                        </strong>
-                        <small class="${rentabilidadClass}" style="font-size:0.7rem; font-weight:700;">
-                            (${signo}${displayPorcentajeTotal})
-                        </small>
+                        <strong class="kpi-item__value ${rentabilidadClass}" style="font-size: 0.9rem;">${signo}${displayRentabilidadAbsoluta}</strong>
+                        <small class="${rentabilidadClass}" style="font-size:0.7rem; font-weight:700;">(${signo}${displayPorcentajeTotal})</small>
                     </div>
-
                     <div style="font-weight:700; color:var(--c-on-surface-tertiary); font-size:0.8rem;">=</div>
-
                     <div style="display:flex; flex-direction:column; align-items:center;">
                         <h4 class="kpi-item__label" style="font-size:0.65rem;">Valor Real</h4>
                         <strong class="kpi-item__value" style="font-size: 1.1rem; border-bottom: 2px solid var(--c-primary);">${displayTotalValorado}</strong>
                     </div>
-
                 </div>
             </div>
         </div>
@@ -3421,31 +3425,52 @@ const renderPortfolioMainContent = async (targetContainerId) => {
         <div class="filter-pills" style="margin-bottom: var(--sp-3); overflow-x:auto;">${pillsHTML}</div>
         <div id="investment-assets-list"></div>`;
 
-    // Renderizado Lista de Activos Individuales
+    // 4. Renderizado Lista de Activos (LÓGICA HÍBRIDA)
     const listContainer = select('investment-assets-list');
     if (listContainer) {
         const listHtml = displayAssetsData
             .sort((a, b) => b.valorActual - a.valorActual)
             .map(cuenta => {
-                const cInvertido = formatCurrency(cuenta.capitalInvertido);
-                const cPnl = formatCurrency(cuenta.pnlAbsoluto);
-                const cReal = formatCurrency(cuenta.valorActual);
+                // Comprobamos si esta cuenta específica es cripto y si el modo BTC está activo
+                const showInBTC = portfolioViewMode === 'BTC' && isCryptoType(cuenta.tipo) && btcPriceData.price > 0;
+
+                let cInvertido, cPnl, cReal;
+                let unitLabel = '€'; // Etiqueta de unidad por defecto
+
+                if (showInBTC) {
+                    // CONVERSIÓN A BTC PARA ESTA TARJETA
+                    unitLabel = '₿';
+                    cInvertido = formatBTC((cuenta.capitalInvertido / 100) / btcPriceData.price);
+                    cReal = formatBTC((cuenta.valorActual / 100) / btcPriceData.price);
+                    
+                    const pnlVal = (cuenta.pnlAbsoluto / 100) / btcPriceData.price;
+                    cPnl = formatBTC(pnlVal);
+                } else {
+                    // MODO NORMAL (EUROS)
+                    cInvertido = formatCurrency(cuenta.capitalInvertido);
+                    cReal = formatCurrency(cuenta.valorActual);
+                    cPnl = formatCurrency(cuenta.pnlAbsoluto);
+                }
                 
-                // Porcentaje Individual
                 const cPorcentaje = cuenta.pnlPorcentual.toFixed(2) + '%';
-                
                 const pnlClass = cuenta.pnlAbsoluto >= 0 ? 'text-positive' : 'text-negative';
                 const pnlSign = cuenta.pnlAbsoluto >= 0 ? '+' : '';
                 
-                // Barra de progreso visual (Peso)
+                // Barra de peso (siempre basada en valoración EUR para ser relativa al total)
                 const peso = portfolioTotalValorado > 0 ? (cuenta.valorActual / portfolioTotalValorado) * 100 : 0;
                 const barColor = colorMap[toSentenceCase(cuenta.tipo || 'S/T')] || 'var(--c-primary)';
+                
+                // Estilo especial para tarjetas en modo BTC
+                const cardStyle = showInBTC ? 'border-left: 3px solid #F7931A;' : '';
 
                 return `
-                <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 12px;">
+                <div class="portfolio-asset-card" data-action="view-account-details" data-id="${cuenta.id}" data-is-investment="true" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 12px; ${cardStyle}">
                     
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div class="asset-card__name" style="font-size:1rem;">${escapeHTML(cuenta.nombre)}</div>
+                        <div class="asset-card__name" style="font-size:1rem;">
+                            ${escapeHTML(cuenta.nombre)} 
+                            ${showInBTC ? '<span style="font-size:0.6rem; background:#F7931A; color:white; padding:1px 4px; border-radius:4px; margin-left:4px;">BTC</span>' : ''}
+                        </div>
                         <div style="font-size:0.7rem; color:var(--c-on-surface-tertiary); font-weight:600;">Peso: ${peso.toFixed(1)}%</div>
                     </div>
                     <div style="width: 100%; height: 3px; background: var(--c-surface-variant); border-radius: 2px; overflow: hidden; margin-top:-4px;">
@@ -8881,27 +8906,30 @@ const handleStart = (e) => {
         
         // Mapa de acciones
         const actions = {
-			'toggle-portfolio-currency': async () => {
+		'toggle-portfolio-currency': async () => {
+    // Verificación de seguridad: Solo funciona si estamos en la página de Patrimonio
+    const activePage = document.querySelector('.view--active');
+    if (!activePage || activePage.id !== PAGE_IDS.PATRIMONIO) return;
+
     hapticFeedback('medium');
     const btnIcon = select('currency-toggle-icon');
     
     if (portfolioViewMode === 'EUR') {
-        // Cambiar a BTC
-        showToast('Obteniendo precio de Bitcoin...', 'info');
+        showToast('Calculando equivalencia en Bitcoin...', 'info');
         const price = await fetchBtcPrice();
         if (price > 0) {
             portfolioViewMode = 'BTC';
             if(btnIcon) {
-                btnIcon.textContent = 'euro'; // El botón ahora muestra "volver a Euro"
+                btnIcon.textContent = 'euro'; // Muestra el símbolo de Euro para indicar "volver a Euro"
                 btnIcon.classList.add('btc-mode-active');
             }
+            // Recargamos solo el contenido principal, no el gráfico (el gráfico se queda en EUR por coherencia)
             renderPortfolioMainContent('portfolio-main-content');
         }
     } else {
-        // Volver a EUR
         portfolioViewMode = 'EUR';
         if(btnIcon) {
-            btnIcon.textContent = 'currency_bitcoin';
+            btnIcon.textContent = 'currency_bitcoin'; // Muestra el símbolo de Bitcoin para indicar "ir a Bitcoin"
             btnIcon.classList.remove('btc-mode-active');
         }
         renderPortfolioMainContent('portfolio-main-content');
