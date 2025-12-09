@@ -4582,7 +4582,7 @@ const renderPanelPage = async () => {
                 
                 <div style="margin-bottom: 20px;">
                     <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 2px; margin-bottom: 8px;">
-                        PATRIMONIO TOTAL <button class="help-btn" data-action="show-kpi-help" data-kpi="patrimonio" style="width:16px; height:16px; font-size:11px;">?</button>
+                        PATRIMONIO (CAPITAL TOTAL) <button class="help-btn" data-action="show-kpi-help" data-kpi="patrimonio" style="width:16px; height:16px; font-size:11px;">?</button>
                     </div>
                     <div id="kpi-patrimonio-neto-value" class="hero-value kpi-resaltado-azul skeleton" data-current-value="0" style="font-size: 2.8rem; line-height: 1; text-shadow: 0 0 20px rgba(0, 179, 77, 0.3);">0,00 €</div>
                 </div>
@@ -4592,7 +4592,6 @@ const renderPanelPage = async () => {
                     <div style="text-align: center;">
                         <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-info); text-transform: uppercase; margin-bottom: 4px; display:flex; justify-content:center; gap:4px; align-items:center;">
                             <span class="material-icons" style="font-size: 12px;">account_balance_wallet</span> Liquidez
-                            <button class="help-btn" data-action="show-kpi-help" data-kpi="liquidez" style="width:12px; height:12px; font-size:9px;">?</button>
                         </div>
                         <div id="kpi-liquidez-value" class="text-positive skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 700;">0,00 €</div>
                     </div>
@@ -4601,12 +4600,37 @@ const renderPanelPage = async () => {
 
                     <div style="text-align: center;">
                         <div style="font-size: 0.65rem; font-weight: 700; color: #BF5AF2; text-transform: uppercase; margin-bottom: 4px; display:flex; justify-content:center; gap:4px; align-items:center;">
-                            <span class="material-icons" style="font-size: 12px;">trending_up</span> Inversiones
-                            <button class="help-btn" data-action="show-kpi-help" data-kpi="inversiones" style="width:12px; height:12px; font-size:9px;">?</button>
+                            <span class="material-icons" style="font-size: 12px;">savings</span> Capital Inv.
                         </div>
-                        <div id="kpi-inversion-total" class="text-positive skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 700;">0,00 €</div>
+                        <div id="kpi-capital-invertido-total" class="text-positive skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 700;">0,00 €</div>
                     </div>
 
+                </div>
+            </div>
+
+            <div class="hero-card fade-in-up" style="padding: 20px; margin-bottom: var(--sp-4); background: linear-gradient(180deg, rgba(191, 90, 242, 0.1) 0%, rgba(0,0,0,0.2) 100%); border: 1px solid var(--c-info);">
+                <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-bottom:15px;">
+                    <span class="material-icons" style="color:var(--c-info);">rocket_launch</span>
+                    <span style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--c-on-surface);">POSICIÓN REAL INVERSIONES</span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 12px;">
+                    <div style="text-align: left;">
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom:4px;">Capital Invertido</div>
+                        <div id="new-card-capital" style="font-weight:700;">0,00 €</div>
+                    </div>
+                    <div style="text-align: center; font-weight:800; color:var(--c-on-surface-secondary);">
+                        +/-
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom:4px;">Ganancia/Pérdida</div>
+                        <div id="new-card-pnl" style="font-weight:700;">0,00 €</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px; text-align: center;">
+                    <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--c-on-surface-tertiary); margin-bottom: 5px;">= Valor Real de Mercado</div>
+                    <div id="new-card-market-value" class="skeleton" style="font-size: 1.8rem; font-weight: 800; line-height: 1;">0,00 €</div>
                 </div>
             </div>
 
@@ -6156,40 +6180,57 @@ const scheduleDashboardUpdate = () => {
             const saldos = await getSaldos();
             const visibleAccounts = getVisibleAccounts();
             
-            // --- CÁLCULOS ---
+            // --- CÁLCULOS REVISADOS ---
             const investmentAccounts = visibleAccounts.filter(c => c.esInversion);
-            let valorMercadoTotal = 0;
+            
+            let totalCapitalInvertido = 0; // Lo que has puesto de tu bolsillo (Saldos)
+            let valorMercadoTotal = 0;     // Lo que vale hoy (Valoraciones)
+
             if (investmentAccounts.length > 0) {
                 for (const cuenta of investmentAccounts) {
+                    // 1. Capital Invertido es el SALDO de la cuenta (en este modelo)
+                    const capitalCuenta = saldos[cuenta.id] || 0;
+                    totalCapitalInvertido += capitalCuenta;
+
+                    // 2. Valor de Mercado es la última valoración (o el saldo si no hay valoración)
                     const valoraciones = (db.inversiones_historial || [])
                         .filter(v => v.cuentaId === cuenta.id)
                         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-                    const valor = valoraciones.length > 0 ? valoraciones[0].valor : (saldos[cuenta.id] || 0);
+                    
+                    const valor = valoraciones.length > 0 ? valoraciones[0].valor : capitalCuenta;
                     valorMercadoTotal += valor;
                 }
             }
 
             let liquidezTotal = 0;
             visibleAccounts.forEach(c => {
+                // Sumamos solo si NO es inversión y NO es deuda
                 if (!c.esInversion && !['PRÉSTAMO', 'TARJETA DE CRÉDITO'].includes((c.tipo || '').toUpperCase())) {
                     liquidezTotal += (saldos[c.id] || 0);
                 }
             });
 
-            // Patrimonio es la suma visual de las dos partes
-            const patrimonioTotal = liquidezTotal + valorMercadoTotal;
+            // --- CAMBIO DE LÓGICA DE PATRIMONIO ---
+            // Usuario: "Patrimonio Total debe ser suma de liquidez más capital invertido"
+            const patrimonioContable = liquidezTotal + totalCapitalInvertido;
 
+            // --- CÁLCULO PARA LA NUEVA TARJETA ---
+            const pnlTotal = valorMercadoTotal - totalCapitalInvertido;
+
+            // Datos de flujo (Ingresos/Gastos)
             const { current: currentMovs } = await getFilteredMovements(false);
             const visibleAccountIds = new Set(visibleAccounts.map(c => c.id));
             const { ingresos, gastos, saldoNeto } = calculateTotals(currentMovs, visibleAccountIds);
             const tasaAhorro = (ingresos > 0 && saldoNeto > 0) ? (saldoNeto / ingresos) * 100 : 0;
 
+            // Datos de salud financiera (Usamos el Valor de Mercado REAL para la Independencia Financiera, es más realista)
+            const patrimonioRealParaCalculos = liquidezTotal + valorMercadoTotal;
             const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
-            const fiData = calculateFinancialIndependence(patrimonioTotal, efData.gastoMensualPromedio);
+            const fiData = calculateFinancialIndependence(patrimonioRealParaCalculos, efData.gastoMensualPromedio);
 
             // --- ACTUALIZACIÓN UI ---
 
-            // A. FLUJO
+            // A. FLUJO (Ingresos/Gastos) - Sin cambios
             const elIng = select('kpi-ingresos-value');
             if (elIng) {
                 [elIng, select('kpi-gastos-value'), select('kpi-saldo-neto-value'), select('kpi-tasa-ahorro-value')]
@@ -6202,28 +6243,44 @@ const scheduleDashboardUpdate = () => {
                 animateCountUp(elNeto, saldoNeto, 700, true, saldoNeto >= 0 ? '+' : '');
                 elNeto.className = saldoNeto >= 0 ? 'text-positive' : 'text-negative';
 
-                // Tasa Ahorro (Porcentaje con 2 decimales)
                 const elAhorro = select('kpi-tasa-ahorro-value');
                 animateCountUp(elAhorro, tasaAhorro * 100, 700, false, '', '%');
                 elAhorro.className = tasaAhorro >= 0 ? 'text-positive' : 'text-warning';
             }
 
-            // B. RIQUEZA
+            // B. PATRIMONIO (Tarjeta Principal Modificada)
             const elPatrimonio = select('kpi-patrimonio-neto-value');
             if (elPatrimonio) {
-                [elPatrimonio, select('kpi-liquidez-value'), select('kpi-inversion-total')]
+                [elPatrimonio, select('kpi-liquidez-value'), select('kpi-capital-invertido-total')]
                     .forEach(el => el?.classList.remove('skeleton'));
 
-                animateCountUp(elPatrimonio, patrimonioTotal);
+                // Aquí mostramos el Patrimonio Contable (Liquidez + Capital Invertido)
+                animateCountUp(elPatrimonio, patrimonioContable);
                 animateCountUp(select('kpi-liquidez-value'), liquidezTotal);
-                animateCountUp(select('kpi-inversion-total'), valorMercadoTotal);
+                animateCountUp(select('kpi-capital-invertido-total'), totalCapitalInvertido);
             }
 
-            // C. METAS
+            // C. NUEVA TARJETA (Inversiones Realidad)
+            const elNewMarketVal = select('new-card-market-value');
+            if (elNewMarketVal) {
+                elNewMarketVal.classList.remove('skeleton');
+                
+                // Capital
+                select('new-card-capital').textContent = formatCurrency(totalCapitalInvertido);
+                
+                // P&L
+                const elPnl = select('new-card-pnl');
+                elPnl.textContent = (pnlTotal >= 0 ? '+' : '') + formatCurrency(pnlTotal);
+                elPnl.className = pnlTotal >= 0 ? 'text-positive' : 'text-negative';
+                
+                // Resultado Total (Market Value)
+                animateCountUp(elNewMarketVal, valorMercadoTotal);
+            }
+
+            // D. METAS (Salud Financiera)
             const elRunway = select('health-runway-val');
             if (elRunway) {
                 elRunway.classList.remove('skeleton');
-                // Runway ahora con 1 decimal es suficiente, pero si quieres 2, cambia toFixed(1) a (2)
                 const meses = efData.mesesCobertura;
                 elRunway.textContent = isFinite(meses) ? (meses >= 100 ? '∞' : `${meses.toFixed(1)} Meses`) : '∞';
             }
@@ -6231,7 +6288,6 @@ const scheduleDashboardUpdate = () => {
             const elFi = select('health-fi-val');
             if (elFi) {
                 elFi.classList.remove('skeleton');
-                // Libertad (Porcentaje con 2 decimales)
                 animateCountUp(elFi, fiData.progresoFI * 100, 700, false, '', '%');
             }
 
