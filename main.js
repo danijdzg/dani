@@ -1117,9 +1117,10 @@ const handleCalculatorInput = (key) => {
     updateCalculatorHistoryDisplay();
     updateActiveOperatorButton();
 
-    // === FEEDBACK EN VIVO: Actualizamos el input mientras escribes ===
-    // Solo si no estamos en medio de una operación pendiente (para no confundir)
-    if (!operand1) {
+    // === MEJORA 1: ACTUALIZACIÓN EN TIEMPO REAL ===
+    // Actualizamos el input objetivo SIEMPRE, no solo al dar OK.
+    // Excepto si estamos a mitad de una operación (ej. escribiendo el segundo número de una suma)
+    if (!operand1 || isResultDisplayed) {
         updateTargetInput(displayValue);
     }
 };
@@ -1834,8 +1835,18 @@ document.body.addEventListener('change', e => {
         const generateId = () => fbDb.collection('users').doc().id;
         const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         const formatCurrency = (numInCents) => {
-    const number = (numInCents || 0) / 100;
-    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(number);
+		const number = (numInCents || 0) / 100;
+		return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(number);
+		};
+const formatCurrencyHTML = (numInCents) => {
+    const formatted = formatCurrency(numInCents);
+    // Separa la parte entera de los decimales (asumiendo formato 1.234,56 €)
+    const parts = formatted.split(',');
+    if (parts.length === 2) {
+        // parts[0] es "1.234" y parts[1] es "56 €"
+        return `<span class="currency-major">${parts[0]}</span><small class="currency-minor">,${parts[1]}</small>`;
+    }
+    return `<span class="currency-major">${formatted}</span>`;
 };
 	const getLedgerName = (letter) => {
     // Intenta obtener el nombre personalizado, si no existe, usa "Caja X"
@@ -4899,7 +4910,7 @@ const TransactionCardComponent = (m, dbData) => {
                     <div class="transaction-card__row-2" style="opacity: 0.7;">${subtitle}</div>
                 </div>
                 <div class="transaction-card__figures">
-                    <div class="transaction-card__amount ${amountClass}" style="font-size: 1rem;">${amountSign}${formatCurrency(m.cantidad)}</div>
+                    <div class="transaction-card__amount ${amountClass}" style="font-size: 1rem;">${amountSign}${formatCurrencyHTML(m.cantidad)}</div>
                     <div class="transaction-card__balance" style="font-size: 0.75rem; opacity: 0.6;">${formatCurrency(m.runningBalance)}</div>
                 </div>
             </div>
@@ -9965,7 +9976,44 @@ const handleSaveMovement = async (form, btn) => {
 
             // Actualizar Saldos (Optimista)
             applyOptimisticBalanceUpdate(dataToSave, oldData);
-            triggerSaveAnimation(btn, dataToSave.cantidad >= 0 ? 'green' : 'red');
+            if (btn) {
+                // Cambiar estado a Éxito
+                btn.classList.remove('btn--loading'); // Quitamos spinner
+                btn.classList.add('btn--success-state'); // Ponemos verde
+                
+                // Cambiamos el texto con animación
+                btn.innerHTML = `
+                    <div class="btn-content-visible" style="display:flex; align-items:center; gap:8px; justify-content:center;">
+                        <span class="material-icons" style="font-size: 20px;">check_circle</span>
+                        <span>¡Guardado!</span>
+                    </div>`;
+                
+                hapticFeedback('success'); // Vibración fuerte
+                
+                // Esperamos para que el usuario vea el éxito
+                await new Promise(r => setTimeout(r, 650));
+            }
+
+            // Limpieza final (Ahora cerramos el modal)
+            if (!isSaveAndNew) {
+                hideModal('movimiento-modal');
+                // Restaurar botón después de cerrar (por si se reabre)
+                setTimeout(() => {
+                    if(btn) {
+                        btn.classList.remove('btn--success-state');
+                        btn.innerHTML = 'Guardar'; // O el texto original
+                        btn.removeAttribute('disabled');
+                    }
+                }, 300);
+            } else {
+                startMovementForm();
+                // Restaurar botón inmediatamente para el siguiente
+                if(btn) {
+                    btn.classList.remove('btn--success-state');
+                    btn.innerHTML = '+ Otro';
+                    btn.removeAttribute('disabled');
+                }
+            }
 
             // Batch Write a Firebase
             const batch = fbDb.batch();
