@@ -4573,26 +4573,33 @@ const renderPanelPage = async () => {
     if (!container) return;
 
     container.innerHTML = `
-        <div style="padding: 0 var(--sp-2) var(--sp-4);">
+        <div style="padding: var(--sp-3) var(--sp-2) var(--sp-4);">
             
-            <div style="display: flex; justify-content: flex-end; margin-bottom: var(--sp-3); margin-top: var(--sp-3);">
-                <div class="report-filters" style="margin: 0;">
-                    <select id="filter-periodo" class="form-select report-period-selector" style="font-size: 0.8rem; padding: 6px 12px; height: auto; width: auto; background-color: var(--c-surface-variant); border: none; border-radius: 99px; box-shadow: var(--shadow-sm);">
-                        <option value="mes-actual">Este Mes</option>
-                        <option value="año-actual">Este Año</option>
-                        <option value="custom">Personalizado</option>
-                    </select>
-                </div>
-            </div>
-
-            <div id="custom-date-filters" class="form-grid hidden" style="grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: var(--sp-4);">
-                <input type="date" id="filter-fecha-inicio" class="form-input" style="font-size: 0.8rem; padding: 8px;">
-                <input type="date" id="filter-fecha-fin" class="form-input" style="font-size: 0.8rem; padding: 8px;">
-            </div>
-
             <div class="hero-card fade-in-up" style="padding: 20px; margin-bottom: var(--sp-3); border-color: rgba(255, 255, 255, 0.1);">
-                <div style="margin-bottom: 10px; font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface); text-transform: uppercase; letter-spacing: 1px; opacity: 0.7;">
-                    Flujo de Caja
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface); text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">
+                        Flujo de Caja
+                    </div>
+                    
+                    <div class="report-filters" style="margin: 0;">
+                        <select id="filter-periodo" class="form-select report-period-selector" style="font-size: 0.75rem; padding: 4px 24px 4px 10px; height: auto; width: auto; background-color: rgba(255,255,255,0.05); border: 1px solid var(--c-outline); border-radius: 8px; color: var(--c-on-surface); cursor: pointer;">
+                            <option value="mes-actual">Este Mes</option>
+                            <option value="año-actual">Este Año</option>
+                            <option value="custom">Personalizado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="custom-date-filters" class="form-grid hidden" style="grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+                    <div style="display:flex; flex-direction:column;">
+                        <label style="font-size:0.6rem; color:var(--c-on-surface-secondary); margin-bottom:4px;">Desde</label>
+                        <input type="date" id="filter-fecha-inicio" class="form-input" style="font-size: 0.8rem; padding: 6px; background: var(--c-surface); border: 1px solid var(--c-outline); height:auto;">
+                    </div>
+                    <div style="display:flex; flex-direction:column;">
+                        <label style="font-size:0.6rem; color:var(--c-on-surface-secondary); margin-bottom:4px;">Hasta</label>
+                        <input type="date" id="filter-fecha-fin" class="form-input" style="font-size: 0.8rem; padding: 6px; background: var(--c-surface); border: 1px solid var(--c-outline); height:auto;">
+                    </div>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center;">
