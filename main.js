@@ -402,7 +402,7 @@ const handleGenerateInformeCuenta = async (form, btn = null) => {
 
     try {
         // --- Obtención y cálculo de datos (IGUAL QUE ANTES) ---
-        const todosLosMovimientos = await fetchAllMovementsForHistory();
+        const todosLosMovimientos = await AppStore.getAll();
         
         let movimientosDeLaCuenta = todosLosMovimientos.filter(m =>
             (m.cuentaId === cuentaId) || (m.cuentaOrigenId === cuentaId) || (m.cuentaDestinoId === cuentaId)
@@ -491,7 +491,7 @@ const handleGenerateGlobalExtract = async (btn = null) => {
 
     try {
         // 1. Obtener datos
-        const allMovements = await fetchAllMovementsForHistory();
+        const allMovements = await AppStore.getAll();
         const saldos = await getSaldos();
         
         // 2. Calcular Patrimonio Neto Actual (Punto de partida)
@@ -655,7 +655,75 @@ const THEMES = {
     'default': { name: 'Abismo Digital', icon: 'dark_mode' },
     'sunset-groove': { name: 'Brisa Alpina', icon: 'light_mode' }
 };
+// ==========================================
+// === CORE OPTIMIZATION: AppStore v1.0 ===
+// ==========================================
+const AppStore = {
+    movements: [],
+    isFullyLoaded: false,
+    lastFetch: 0,
+    CACHE_DURATION: 5 * 60 * 1000, // 5 minutos de validez si se solicita recarga suave
 
+    // Carga TODO el historial una sola vez y lo guarda en memoria RAM
+    async getAll() {
+        if (!currentUser) return [];
+
+        // Si ya tenemos datos y no forzamos recarga, devolvemos memoria (Instantáneo)
+        if (this.isFullyLoaded) {
+            return this.movements;
+        }
+
+        console.log("🚀 AppStore: Descargando historial completo de Firestore...");
+        try {
+            const snapshot = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos')
+                .orderBy('fecha', 'desc') // Ordenamos por fecha descendente
+                .get();
+            
+            this.movements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            this.isFullyLoaded = true;
+            this.lastFetch = Date.now();
+            
+            console.log(`✅ AppStore: ${this.movements.length} movimientos cargados en memoria.`);
+            return this.movements;
+        } catch (error) {
+            console.error("❌ AppStore Error:", error);
+            return [];
+        }
+    },
+
+    // Métodos para mantener la memoria sincronizada sin llamar a la DB
+    add(item) {
+        // Añadimos al principio (es el más reciente)
+        this.movements.unshift(item);
+        // Re-ordenamos por seguridad si la fecha no es hoy
+        this.sort();
+    },
+
+    update(updatedItem) {
+        const index = this.movements.findIndex(m => m.id === updatedItem.id);
+        if (index !== -1) {
+            this.movements[index] = updatedItem;
+            this.sort();
+        }
+    },
+
+    delete(id) {
+        const index = this.movements.findIndex(m => m.id === id);
+        if (index !== -1) {
+            this.movements.splice(index, 1);
+        }
+    },
+
+    sort() {
+        this.movements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    },
+
+    // Reset total (al cerrar sesión)
+    clear() {
+        this.movements = [];
+        this.isFullyLoaded = false;
+    }
+};
 // ▼▼▼ REEMPLAZAR TU FUNCIÓN updateAnalisisWidgets CON ESTA VERSIÓN SIMPLIFICADA ▼▼▼
 const updateAnalisisWidgets = async () => {
     try {
@@ -2464,22 +2532,7 @@ const getAllSaldos = () => {
     });
     return saldos;
 };
-        async function fetchAllMovementsForBalances() {
-            if (!currentUser) return [];
-            const snapshot = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').get();
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        }
-        const fetchAllMovementsForSearch = async () => {
-            if (!currentUser) return [];
-            try {
-                const snapshot = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').get();
-                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            } catch (error) {
-                console.error("Error al obtener todos los movimientos para la búsqueda:", error);
-                showToast("Error al realizar la búsqueda en la base de datos.", "danger");
-                return [];
-            }
-        };
+          
         const getSaldos = async () => {
             const visibleAccounts = getVisibleAccounts();
             const saldos = {};
@@ -2489,17 +2542,7 @@ const getAllSaldos = () => {
             return saldos;
         };
 		
-	const fetchAllMovementsForHistory = async () => {
-    if (!currentUser) return [];
-    try {
-        const snapshot = await fbDb.collection('users').doc(currentUser.uid).collection('movimientos').get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-        console.error("Error al obtener el historial completo de movimientos:", error);
-        showToast("Error al cargar el historial para el gráfico de patrimonio.", "danger");
-        return [];
-    }
-};
+
 const getValorMercadoInversiones = async () => {
     if (!dataLoaded.inversiones) await loadInversiones();
     
@@ -2670,7 +2713,7 @@ const calculatePortfolioPerformance = async (cuentaId = null) => {
     // 1. Carga de datos (igual que antes)
     const allMovements = (typeof allDiarioMovementsCache !== 'undefined' && allDiarioMovementsCache.length > 0) 
         ? allDiarioMovementsCache 
-        : await fetchAllMovementsForHistory();
+        : await AppStore.getAll();
     
     if (!dataLoaded.inversiones) await loadInversiones();
 
@@ -3152,7 +3195,7 @@ const renderBudgetTracking = async () => {
     // --- INICIO DE LA SOLUCIÓN DEFINITIVA ---
     // 1. En lugar de hacer una consulta compleja a Firebase, traemos TODOS los movimientos
     //    usando una función que ya sabemos que es fiable y no depende de índices.
-    const allMovements = await fetchAllMovementsForHistory();
+    const allMovements = await AppStore.getAll();
 
     // 2. Ahora, filtramos esos movimientos en JavaScript. Es más rápido y 100% seguro.
     //    Nos aseguramos de que el movimiento sea del tipo correcto Y del año seleccionado.
@@ -3832,14 +3875,6 @@ const updateVirtualListUI = () => {
     }
 };
 
-// Paso B: La función que carga los datos. Ahora es más simple y se llama
-// tanto al inicio como al pulsar el botón.
-// =============================================================
-// === INICIO: FUNCIÓN `fetchMovementsPage` (CORRECCIÓN CRÍTICA)
-// =============================================================
-
-// Esta función es la que se comunica directamente con Firestore para traer los lotes de movimientos.
-// Es ESENCIAL que esté presente en el código.
 
 async function fetchMovementsPage(startAfterDoc = null) {
     if (!currentUser) return [];
@@ -3872,13 +3907,6 @@ async function fetchMovementsPage(startAfterDoc = null) {
         return [];
     }
 }
-// ===========================================================
-// === FIN: FUNCIÓN `fetchMovementsPage`
-// ===========================================================
-
-// =================================================================
-// === INICIO: CÓDIGO A AÑADIR (ÚNICA VERSIÓN CORRECTA)
-// =================================================================
 
 const filterMovementsByLedger = (movements) => {
     const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
@@ -3893,62 +3921,96 @@ const filterMovementsByLedger = (movements) => {
     });
 };
 
-// ===============================================================
-// === FIN: CÓDIGO A AÑADIR
-// ===============================================================
 
 const loadMoreMovements = async (isInitial = false) => {
     if (isLoadingMoreMovements || allMovementsLoaded) return;
 
     isLoadingMoreMovements = true;
-    const loadMoreBtn = select('load-more-btn'); // Esto se usaba para el botón, lo mantenemos por si vuelve.
+    const loadMoreBtn = select('load-more-btn');
 
-    // La lógica de mostrar esqueletos o el spinner del botón pertenece a renderDiarioPage,
-    // pero la dejamos aquí condicionada para no romper nada si se usa en otro contexto.
+    // Estado visual de carga
     if (isInitial) {
         let skeletonHTML = '';
-        for (let i = 0; i < 7; i++) {
-            skeletonHTML += `<div class="skeleton-card"><div class="skeleton skeleton-card__indicator"></div><div class="skeleton-card__content"><div><div class="skeleton skeleton-card__line skeleton-card__line--sm"></div><div class="skeleton skeleton-card__line skeleton-card__line--xs"></div></div><div class="skeleton skeleton-card__amount"></div></div></div>`;
-        }
+        for (let i = 0; i < 6; i++) skeletonHTML += `<div class="skeleton-card" style="margin:10px 0;"><div class="skeleton" style="width:3px;height:50px;margin-right:10px;"></div><div style="flex:1"><div class="skeleton" style="width:60%;height:12px;margin-bottom:8px;"></div><div class="skeleton" style="width:40%;height:10px;"></div></div></div>`;
         const contentEl = select('virtual-list-content');
         if(contentEl) contentEl.innerHTML = skeletonHTML;
     } else if (loadMoreBtn) {
-        setButtonLoading(loadMoreBtn, true, 'Cargando...');
+        setButtonLoading(loadMoreBtn, true, 'Buscando...');
     }
 
     try {
-        let newMovementsChunk = [];
-        let fetchedFilteredCount = 0;
-		let safetyCounter = 0; // <--- NUEVO: Contador de seguridad
-		const MAX_BATCH_ATTEMPTS = 5; // <--- NUEVO: Máximo 5 llamadas a la base de datos por vez
-        while (fetchedFilteredCount < 50 && !allMovementsLoaded) {
-            const rawMovsFromDB = await fetchMovementsPage(lastVisibleMovementDoc);
-			safetyCounter++; // Incrementamos contador
-            if (rawMovsFromDB.length === 0) break;
-            const filteredBatch = filterMovementsByLedger(rawMovsFromDB);
-            newMovementsChunk.push(...filteredBatch);
-            fetchedFilteredCount += filteredBatch.length;
+        let newMovementsAccumulator = [];
+        let visibleCountFound = 0;
+        const MIN_ITEMS_NEEDED = 15; // Queremos asegurar al menos 15 items visibles
+        const MAX_BATCHES_SAFEGUARD = 10; // Freno de emergencia (evita bucle infinito si DB enorme)
+        let batchesFetched = 0;
+
+        // BUCLE DE BÚSQUEDA (El corazón de la solución)
+        // Seguiremos pidiendo a Firebase hasta que:
+        // 1. Tengamos suficientes items visibles para llenar la pantalla.
+        // 2. O se acabe la base de datos (allMovementsLoaded).
+        // 3. O lleguemos al límite de seguridad.
+        while (visibleCountFound < MIN_ITEMS_NEEDED && !allMovementsLoaded && batchesFetched < MAX_BATCHES_SAFEGUARD) {
+            
+            // 1. Pedimos bloque crudo a Firebase (200 items)
+            const rawBatch = await fetchMovementsPage(lastVisibleMovementDoc);
+            batchesFetched++;
+
+            if (rawBatch.length === 0) {
+                allMovementsLoaded = true;
+                break; // Se acabó la base de datos real
+            }
+
+            // 2. Filtramos localmente según la Caja actual (A/B/C)
+            const filteredBatch = filterMovementsByLedger(rawBatch);
+            
+            // 3. Acumulamos lo que sirve
+            if (filteredBatch.length > 0) {
+                newMovementsAccumulator.push(...filteredBatch);
+                visibleCountFound += filteredBatch.length;
+            }
+            
+            // Si el bloque crudo era menor a la página, es que llegamos al final físico
+            if (rawBatch.length < MOVEMENTS_PAGE_SIZE) {
+                allMovementsLoaded = true;
+            }
         }
         
-        if (newMovementsChunk.length > 0) {
-            db.movimientos.push(...newMovementsChunk);
+        // Finalización
+        if (newMovementsAccumulator.length > 0) {
+            // Añadimos a la lista principal
+            db.movimientos.push(...newMovementsAccumulator);
+            
+            // Aprovechamos para alimentar el AppStore silenciosamente
+            // (esto hace que la próxima vez que vayas a Patrimonio, ya esté cargado)
+            newMovementsAccumulator.forEach(m => {
+                // Solo añadimos si no existe para evitar duplicados
+                if (!AppStore.movements.some(existing => existing.id === m.id)) {
+                    AppStore.movements.push(m);
+                }
+            });
+            AppStore.sort();
+
+            // Recalcular saldos para la vista de lista
             await processMovementsForRunningBalance(db.movimientos, true);
+        } else if (isInitial && allMovementsLoaded) {
+            // Caso especial: Usuario nuevo o filtro vacío
+            select('virtual-list-content').innerHTML = `<div class="empty-state" style="padding-top:50px;"><span class="material-icons">receipt_long</span><p>No hay movimientos en esta Caja.</p></div>`;
+            isLoadingMoreMovements = false;
+            return;
         }
 
+        // Renderizar
         updateVirtualListUI();
 
     } catch (error) {
-        console.error("Error al cargar más movimientos:", error);
-        showToast("No se pudieron cargar más movimientos.", "danger");
+        console.error("Error crítico en scroll:", error);
+        showToast("Error de conexión al cargar historial.", "danger");
     } finally {
         isLoadingMoreMovements = false;
-        if (loadMoreBtn) {
-            setButtonLoading(loadMoreBtn, false);
-        }
+        if (loadMoreBtn) setButtonLoading(loadMoreBtn, false);
     }
 };
-
-
 
 // =========================================================================
 // === INICIO: REEMPLAZO COMPLETO Y MEJORADO DE loadInitialMovements     ===
@@ -4039,7 +4101,7 @@ const renderDiarioPage = async () => {
             select('diario-filter-active-indicator').classList.remove('hidden');
             
             if (allDiarioMovementsCache.length === 0) {
-                allDiarioMovementsCache = await fetchAllMovementsForHistory();
+                allDiarioMovementsCache = await AppStore.getAll();
             }
 
             const { startDate, endDate, description, minAmount, maxAmount, cuentas, conceptos } = diarioActiveFilters;
@@ -4509,7 +4571,7 @@ const handleShowIrrHistory = async (options) => {
 
 async function calculateHistoricalIrrForGroup(accountIds) {
     if (!dataLoaded.inversiones) await loadInversiones();
-    const allMovements = await fetchAllMovementsForHistory();
+    const allMovements = await AppStore.getAll();
     const accountIdSet = new Set(accountIds);
     
     const timeline = [];
@@ -4892,7 +4954,7 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
 
     // 2. Obtención de datos
     if (!dataLoaded.inversiones) await loadInversiones();
-    const allMovements = await fetchAllMovementsForHistory();
+    const allMovements = await AppStore.getAll();
     const filteredInvestmentAccounts = getVisibleAccounts().filter(account => !deselectedInvestmentTypesFilter.has(toSentenceCase(account.tipo || 'S/T')) && account.esInversion);
     const filteredAccountIds = new Set(filteredInvestmentAccounts.map(c => c.id));
 
@@ -6126,7 +6188,7 @@ const updateNetWorthChart = async (saldos) => {
     const existingChart = Chart.getChart(canvasId);
     if (existingChart) existingChart.destroy();
 
-    const allMovements = await fetchAllMovementsForHistory();
+    const allMovements = await AppStore.getAll();
     const visibleAccountIds = new Set(Object.keys(saldos));
 
     // Si no hay datos
@@ -7036,7 +7098,7 @@ const hideModal = (id) => {
 
     // 2. Reutilizamos la lógica que ya existe para obtener los datos crudos.
     await loadInversiones(); // Nos aseguramos de tener los datos de inversión
-    const allMovements = await fetchAllMovementsForHistory();
+    const allMovements = await AppStore.getAll();
     
     // Filtramos solo los movimientos que afectan a ESTA cuenta
     const accountMovements = allMovements.filter(m => 
@@ -7477,7 +7539,7 @@ const performGlobalSearch = async (query) => {
     let resultsHtml = '';
     const MAX_RESULTS_PER_GROUP = 10;
 
-    const allMovements = await fetchAllMovementsForSearch();
+    const allMovements = await AppStore.getAll();
 
     // --- SECCIÓN DE MOVIMIENTOS MEJORADA ---
     const movs = allMovements
@@ -9929,7 +9991,11 @@ const handleSaveMovement = async (form, btn) => {
             } else {
                 batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaId), { saldo: firebase.firestore.FieldValue.increment(dataToSave.cantidad) });
             }
-
+			if (oldData) {
+				AppStore.update(dataToSave);
+			} else {
+				AppStore.add(dataToSave);
+			}
             await batch.commit(); // Commit en fondo, la UI ya se actualizó
             
             hapticFeedback('success');
@@ -10129,7 +10195,7 @@ const handleAddAccount = async (btn) => {
      setButtonLoading(btn, true, 'Exportando...');
      
      try {
-         const allMovements = await fetchAllMovementsForSearch();
+         const allMovements = await AppStore.getAll();
          const allCuentas = db.cuentas;
          const allConceptos = db.conceptos;
 
@@ -10589,7 +10655,7 @@ const deleteMovementAndAdjustBalance = async (id, isRecurrent = false) => {
     try {
         // 2. ACTUALIZACIÓN OPTIMISTA (La UI cambia al instante)
         dbSource.splice(originalIndex, 1); // Lo borramos de la memoria local
-
+		AppStore.delete(id);
         if (!isRecurrent) {
             applyOptimisticBalanceUpdate(null, itemToDelete); // Revertimos el saldo en la caché local
         }
