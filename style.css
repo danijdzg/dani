@@ -4342,91 +4342,91 @@ body[data-theme="sunset-groove"] .hero-val-big {
     padding: 12px 0; /* Más aire vertical */
     align-items: center; /* Centrado vertical perfecto */
 }
-/* === ESTILOS AYUDA 2.0 (aiDANaI vs SYSTEM) === */
+/* === AYUDA DEFINITIVA: aiDANaI MASTERPIECE === */
 
-/* Estilo para el modo Historia (aiDANaI) */
-.help-story-card {
-    background-color: var(--c-surface);
-    border: 1px solid var(--c-outline);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
+.aidanai-scroll-container {
+    padding: 0 var(--sp-2);
+}
+
+/* Tarjeta de Héroe (La presentación) */
+.aidanai-hero {
+    text-align: center;
+    padding: 30px 20px;
+    background: radial-gradient(circle at center, rgba(0, 179, 77, 0.15) 0%, transparent 70%);
+    border-radius: 20px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(0, 179, 77, 0.2);
     position: relative;
     overflow: hidden;
 }
 
-.help-story-card::before {
+.aidanai-hero::after {
     content: '';
     position: absolute;
-    top: 0; left: 0; width: 4px; height: 100%;
-    background-color: var(--c-primary);
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2300B34D' fill-opacity='0.05' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3C/g%3E%3C/svg%3E");
+    mask-image: linear-gradient(to bottom, black, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, black, transparent);
 }
 
-.help-story-title {
-    font-size: 1.1rem;
+.aidanai-title {
+    font-size: 1.8rem;
     font-weight: 800;
-    margin-bottom: 8px;
-    color: var(--c-on-surface);
+    background: linear-gradient(135deg, #fff 0%, #00B34D 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+}
+
+/* Secciones de contenido */
+.aidanai-section {
+    margin-bottom: 25px;
+    padding: 20px;
+    background-color: var(--c-surface);
+    border-radius: 16px;
+    border-left: 3px solid var(--c-outline);
+    transition: transform 0.2s;
+}
+
+.aidanai-section:hover {
+    transform: translateX(5px);
+    background-color: var(--c-surface-variant);
+}
+
+.aidanai-section.tech-flex {
+    border-left-color: #BF5AF2; /* Púrpura para lo técnico */
+    background: rgba(191, 90, 242, 0.05);
+}
+
+.aidanai-section.finance-pro {
+    border-left-color: #FFD60A; /* Amarillo para dinero */
+}
+
+.aidanai-section h4 {
     display: flex;
     align-items: center;
     gap: 10px;
-}
-
-/* Estilo para el modo Técnico (Matrix/Terminal) */
-.help-tech-card {
-    background-color: #1a1a1a; /* Fondo muy oscuro siempre */
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 12px;
-    font-family: 'Fira Code', 'Courier New', monospace; /* Fuente monoespaciada */
-}
-
-.help-tech-title {
-    color: #00ff9d; /* Verde terminal */
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     font-weight: 700;
     margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    color: var(--c-on-surface);
 }
 
-.help-tech-text {
-    color: #cccccc;
-    font-size: 0.85rem;
+.aidanai-section p {
+    font-size: 0.95rem;
     line-height: 1.6;
+    color: var(--c-on-surface-secondary);
 }
 
-.tech-tag {
+.aidanai-tag {
     display: inline-block;
-    background: rgba(0, 255, 157, 0.1);
-    color: #00ff9d;
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: 4px;
-    font-size: 0.7rem;
-    margin-right: 6px;
-    border: 1px solid rgba(0, 255, 157, 0.2);
-}
-
-/* Pestañas mejoradas */
-.help-tabs {
-    background: var(--c-surface-variant);
-    padding: 4px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    display: flex;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.help-tab-btn.active {
-    background: var(--c-surface);
+    background: rgba(255,255,255,0.1);
+    font-family: monospace;
+    font-size: 0.75rem;
     color: var(--c-primary);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    margin-top: 8px;
 }
 /* ================================================================= */
 /* === PANEL EJECUTIVO COMPACTO (Sin Gráficos) === */

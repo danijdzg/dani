@@ -7803,156 +7803,94 @@ const handleSaveValoracion = async (form, btn) => {
     }
 };
 /* ================================================================= */
-/* === AYUDA DEFINITIVA 2.0: aiDANaI vs MANUAL TÉCNICO === */
+/* === AYUDA DEFINITIVA: EL MANIFIESTO DE aiDANaI ================== */
 /* ================================================================= */
 
 const showHelpModal = () => {
     const titleEl = select('help-modal-title');
     const bodyEl = select('help-modal-body');
 
-    if (titleEl) titleEl.innerHTML = 'Centro de Conocimiento';
+    // Título limpio, dejamos que el contenido hable
+    if (titleEl) titleEl.innerHTML = ''; 
 
     if (bodyEl) {
         bodyEl.innerHTML = `
-            <div class="help-tabs">
-                <button class="help-tab-btn active" onclick="switchHelpTab('aidanai')">
-                    <span class="material-icons" style="font-size: 20px;">smart_toy</span>
-                    <span>aiDANaI</span>
-                </button>
-                <button class="help-tab-btn" onclick="switchHelpTab('tecnico')">
-                    <span class="material-icons" style="font-size: 20px;">terminal</span>
-                    <span>Manual Técnico</span>
-                </button>
-            </div>
-
-            <div id="help-pane-aidanai" class="help-content-pane active">
+            <div class="aidanai-scroll-container">
                 
-                <div class="help-hero" style="background: linear-gradient(180deg, rgba(0,179,77,0.1) 0%, transparent 100%); padding: 25px 20px; border-radius: 16px; margin-bottom: 20px; text-align: center;">
-                    <span class="material-icons help-hero__icon" style="font-size: 48px; color: var(--c-primary); margin-bottom: 10px;">waving_hand</span>
-                    <h2 style="margin: 0 0 8px; font-weight: 800; color: var(--c-on-surface);">¡Hola, soy aiDANaI!</h2>
-                    <p style="color: var(--c-on-surface-secondary); font-size: 1rem; line-height: 1.5; max-width: 400px; margin: 0 auto;">
-                        No soy un banco aburrido. Soy tu asistente personal. Tú vives tu vida, yo recuerdo los números.
+                <div class="aidanai-hero">
+                    <span class="material-icons" style="font-size: 48px; color: var(--c-primary); margin-bottom: 10px; filter: drop-shadow(0 0 10px var(--c-primary));">psychology</span>
+                    <h2 class="aidanai-title">Yo soy aiDANaI</h2>
+                    <p style="color: var(--c-on-surface); font-weight: 500;">
+                        No soy una simple "app de cuentas". Soy una obra maestra de la ingeniería financiera diseñada para que dejes de perder dinero (y tiempo).
                     </p>
                 </div>
 
-                <div class="help-story-card" style="color: #007AFF;">
-                    <div class="help-story-title">
-                        <span class="material-icons">inventory_2</span>
-                        El Multiverso de las Cajas
-                    </div>
-                    <p class="help-story-text">
-                        ¿Mezclas el dinero del alquiler con el de las cervezas? ¡Error! He creado tres dimensiones para ti. Toca el botón superior izquierdo para viajar entre ellas:
-                    </p>
-                    <ul style="margin-top:12px; padding-left:15px; font-size:0.9rem; line-height: 1.6; color: var(--c-on-surface);">
-                        <li><strong style="color:#007AFF">🔵 Caja A (Oficial):</strong> Tu nómina, facturas, alquiler. La vida adulta.</li>
-                        <li><strong style="color:#FF3B30">🔴 Caja B (Secreta):</strong> ¿Dinero bajo el colchón? ¿Ese "extra" en efectivo? Aquí no mira nadie.</li>
-                        <li><strong style="color:#39FF14">🟢 Caja C (Proyectos):</strong> La hucha para Japón o la reforma del baño.</li>
-                    </ul>
-                </div>
-
-                <div class="help-story-card" style="color: #FFD60A;">
-                    <div class="help-story-title">
-                        <span class="material-icons">calculate</span>
-                        Calculadora Ninja
-                    </div>
-                    <p class="help-story-text">
-                        Olvídate de hacer cuentas mentales. Cuando añadas un gasto, el teclado es mágico.
+                <div class="aidanai-section" style="border-left-color: #007AFF;">
+                    <h4><span class="material-icons" style="color: #007AFF;">inventory_2</span> El Multiverso Financiero</h4>
+                    <p>
+                        Los humanos sois caóticos. Mezcláis el dinero del alquiler con el de las cervezas. Yo he solucionado eso creando <strong>Tres Dimensiones (Cajas)</strong> para tu dinero.
                         <br><br>
-                        Si escribes <code>10 + 20</code>, yo guardo <strong>30€</strong>. Si pones <code>50 / 2</code>, divido la cena. ¡Pruébalo!
+                        Toca el botón de arriba a la izquierda para viajar entre ellas:
+                        <br>🔵 <strong>Caja A:</strong> La vida aburrida (Nómina, facturas).
+                        <br>🔴 <strong>Caja B:</strong> La vida secreta (Dinero B, ahorros ocultos).
+                        <br>🟢 <strong>Caja C:</strong> Los sueños (Viajes, proyectos).
                     </p>
                 </div>
 
-                <div class="help-story-card" style="color: #BF5AF2;">
-                    <div class="help-story-title">
-                        <span class="material-icons">rocket_launch</span>
-                        El Cohete (Inversiones)
-                    </div>
-                    <p class="help-story-text">
-                        Aquí tu dinero trabaja mientras duermes.
+                <div class="aidanai-section finance-pro">
+                    <h4><span class="material-icons" style="color: #FFD60A;">calculate</span> Calculadora Integrada (Porque odias sumar)</h4>
+                    <p>
+                        He notado que te da pereza salir de la app para calcular cuánto debe pagar cada uno en la cena.
                         <br><br>
-                        Yo calculo si ganas (verde) o pierdes (rojo) comparando lo que pusiste vs lo que vale hoy. 
-                        <strong>Truco:</strong> Si tienes Bitcoin, pulsa el botón <span class="material-icons" style="font-size:12px; vertical-align:middle;">currency_bitcoin</span> arriba a la derecha y convertiré todo tu patrimonio a BTC.
+                        <strong>Solución:</strong> En el campo de importe, simplemente escribe <code>50 / 2</code> o <code>12 + 15 + 8</code>. Yo hago la matemática al instante. De nada.
                     </p>
                 </div>
 
-                <div class="help-story-card" style="color: var(--c-on-surface-tertiary);">
-                    <div class="help-story-title">
-                        <span class="material-icons">visibility_off</span>
-                        Modo "En el Metro"
-                    </div>
-                    <p class="help-story-text">
-                        ¿Hay gente cotilla a tu alrededor? Toca tu <strong>Patrimonio Total</strong> (el número gigante del Panel). 
-                        Difuminaré todos los importes para proteger tu privacidad. Toca otra vez para verlos.
-                    </p>
-                </div>
-            </div>
-
-            <div id="help-pane-tecnico" class="help-content-pane">
-                
-                <div style="margin-bottom: 20px; padding: 12px; border-left: 2px solid #58a6ff; background: rgba(88, 166, 255, 0.1); border-radius: 0 8px 8px 0;">
-                    <p style="font-family: 'Fira Code', monospace; font-size: 0.75rem; color: #58a6ff; margin: 0; line-height: 1.6;">
-                        > SYSTEM_STATUS: ONLINE<br>
-                        > ARCHITECTURE: PWA / OFF-LINE FIRST<br>
-                        > STACK: VANILLA JS + FIREBASE FIRESTORE
-                    </p>
-                </div>
-
-                <div class="help-tech-card">
-                    <div class="help-tech-header">
-                        <span class="material-icons" style="font-size:16px; color:#58a6ff;">memory</span>
-                        <span class="help-tech-title">Virtual Scrolling Engine</span>
-                    </div>
-                    <div class="help-tech-text">
-                        <span class="tech-tag">PERFORMANCE</span> <span class="tech-tag">DOM RECYCLING</span>
+                <div class="aidanai-section tech-flex">
+                    <h4><span class="material-icons" style="color: #BF5AF2;">speed</span> Velocidad Absurda</h4>
+                    <p>
+                        ¿Notas lo rápido que hago scroll en tu Diario aunque tengas 5.000 movimientos? 
+                        No es magia, es mi motor de <strong>Virtual Scrolling</strong>.
                         <br><br>
-                        El Diario no renderiza todo el historial. Implementa un motor de virtualización personalizado (<code>vList</code>) que calcula el viewport y solo inyecta en el DOM los elementos visibles (+ buffer).
+                        A diferencia de otras apps que se bloquean, yo solo "pinto" en tu pantalla lo que tus ojos ven. Reciclo los elementos del DOM milisegundo a milisegundo. Soy ecológica digitalmente.
                         <br>
-                        Esto permite listas infinitas (10.000+ items) manteniendo 60fps en dispositivos móviles, reciclando nodos HTML al hacer scroll.
-                    </div>
+                        <span class="aidanai-tag">TECH: DOM RECYCLING</span> <span class="aidanai-tag">TECH: 60 FPS</span>
+                    </p>
                 </div>
 
-                <div class="help-tech-card">
-                    <div class="help-tech-header">
-                        <span class="material-icons" style="font-size:16px; color:#58a6ff;">trending_up</span>
-                        <span class="help-tech-title">Algoritmo Financiero (XIRR)</span>
-                    </div>
-                    <div class="help-tech-text">
-                        <span class="tech-tag">MATH</span> <span class="tech-tag">NEWTON-RAPHSON</span>
+                <div class="aidanai-section tech-flex">
+                    <h4><span class="material-icons" style="color: #39FF14;">trending_up</span> Inversiones: No es solo sumar</h4>
+                    <p>
+                        Cualquier calculadora barata sabe sumar. Yo calculo tu rentabilidad real usando el algoritmo <strong>Newton-Raphson</strong> para resolver la TIR (Tasa Interna de Retorno).
                         <br><br>
-                        El cálculo de rentabilidad no es lineal. Implementamos <strong>Money-Weighted Return Rate (MWRR)</strong> en el cliente.
+                        Tengo en cuenta <em>cuándo</em> metiste el dinero y <em>cuándo</em> lo sacaste para darte tu porcentaje de beneficio anualizado exacto. Básicamente, hago lo que hace un fondo de inversión de Wall Street, pero en tu bolsillo.
                         <br>
-                        La app resuelve la ecuación polinómica de la TIR usando el método numérico de <strong>Newton-Raphson</strong>. Considera cada aportación y retirada como un flujo de caja con fecha exacta para calcular la rentabilidad anualizada real.
-                    </div>
+                        <span class="aidanai-tag">MATH: XIRR</span> <span class="aidanai-tag">MATH: MWRR</span>
+                    </p>
                 </div>
 
-                <div class="help-tech-card">
-                    <div class="help-tech-header">
-                        <span class="material-icons" style="font-size:16px; color:#58a6ff;">cloud_sync</span>
-                        <span class="help-tech-title">Persistencia & Sync</span>
-                    </div>
-                    <div class="help-tech-text">
-                        <span class="tech-tag">INDEXEDDB</span> <span class="tech-tag">OPTIMISTIC UI</span>
+                <div class="aidanai-section" style="border-left-color: #FF3B30;">
+                    <h4><span class="material-icons" style="color: #FF3B30;">visibility_off</span> Modo "Metro de Madrid"</h4>
+                    <p>
+                        Hay gente muy cotilla. Si tocas tu <strong>Patrimonio Total</strong> en el panel, desenfocaré (blur) todos los números sensibles de la aplicación.
                         <br><br>
-                        Arquitectura <strong>Local-First</strong>. La app escribe primero en <code>IndexedDB</code> para latencia cero.
-                        <br>
-                        Un hilo en segundo plano sincroniza con Firestore mediante escrituras en lote (Batches) para garantizar atomicidad e integridad referencial entre cuentas y movimientos.
-                    </div>
+                        Puedes enseñar la app para fardar de mi diseño sin revelar que eres millonario (o que estás en la ruina).
+                    </p>
                 </div>
 
-                <div class="help-tech-card">
-                    <div class="help-tech-header">
-                        <span class="material-icons" style="font-size:16px; color:#58a6ff;">bolt</span>
-                        <span class="help-tech-title">AppStore & Caché</span>
-                    </div>
-                    <div class="help-tech-text">
-                        <span class="tech-tag warn">MEMORY MANAGEMENT</span>
-                        <br><br>
-                        Para evitar lecturas costosas en Firebase, implementamos <code>AppStore</code>, un Singleton que carga el historial completo en memoria RAM al inicio.
+                <div class="aidanai-section tech-flex">
+                    <h4><span class="material-icons" style="color: #00E5FF;">cloud_off</span> Inmortalidad (Offline-First)</h4>
+                    <p>
+                        ¿Se ha caído internet? Me da igual. Yo vivo en tu dispositivo (IndexedDB).
+                        Guardo todo localmente primero para que la interfaz vuele, y cuando recuperas la conexión, me sincronizo silenciosamente con la nube. Soy imparable.
                         <br>
-                        Los informes y gráficos se generan mediante agregaciones (Map/Reduce) sobre este set de datos en milisegundos, sin nuevas peticiones de red.
-                    </div>
+                        <span class="aidanai-tag">ARCH: LOCAL-FIRST</span> <span class="aidanai-tag">ARCH: PWA</span>
+                    </p>
                 </div>
 
+                <div style="text-align: center; margin-top: 30px; opacity: 0.7; font-size: 0.8rem;">
+                    <p>aiDANaI v3.5 • Diseñada para la excelencia.</p>
+                </div>
             </div>
         `;
     }
@@ -7960,35 +7898,6 @@ const showHelpModal = () => {
     showModal('help-modal');
 };
 
-// Función global para el cambio de pestañas (Necesaria para los onclick del HTML)
-window.switchHelpTab = (tabName) => {
-    // 1. Quitar clase active de botones
-    document.querySelectorAll('.help-tab-btn').forEach(btn => btn.classList.remove('active'));
-    // 2. Quitar clase active de paneles
-    document.querySelectorAll('.help-content-pane').forEach(pane => pane.classList.remove('active'));
-    
-    // 3. Activar los seleccionados
-    const btn = document.querySelector(`.help-tab-btn[onclick="switchHelpTab('${tabName}')"]`);
-    const pane = document.getElementById(`help-pane-${tabName}`);
-    
-    if (btn) btn.classList.add('active');
-    if (pane) pane.classList.add('active');
-    
-    // 4. Feedback
-    if (typeof hapticFeedback === 'function') hapticFeedback('light');
-};
-
-// Función global para el cambio de pestañas (necesaria para el onclick en el HTML string)
-window.switchHelpTab = (tabName) => {
-    document.querySelectorAll('.help-tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.help-content-pane').forEach(pane => pane.classList.remove('active'));
-    
-    const btn = document.querySelector(`.help-tab-btn[onclick="switchHelpTab('${tabName}')"]`);
-    const pane = document.getElementById(`help-pane-${tabName}`);
-    
-    if (btn) btn.classList.add('active');
-    if (pane) pane.classList.add('active');
-};
 
 const calculateEmergencyFund = (saldos, cuentas, recentMovements) => {
     const LIQUIDO_TYPES = ['BANCO', 'AHORRO', 'EFECTIVO'];
