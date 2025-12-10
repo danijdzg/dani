@@ -2176,18 +2176,14 @@ const animateCountUp = (el, end, duration = 700, formatAsCurrency = true, prefix
             });
         };
     const initApp = async () => {
-    // Esta es la función que realmente carga el resto de la aplicación.
     const procederConCargaDeApp = () => {
         document.documentElement.lang = 'es';
         setupTheme();
-        const savedTheme = localStorage.getItem('appTheme') || 'default';
-        document.body.dataset.theme = savedTheme;
-        updateThemeIcon();
+        // Ya no necesitamos cargar tema, el CSS lo fuerza
         attachEventListeners();
-        checkAuthState(); // ¡La llamada clave está aquí!
+        checkAuthState(); 
     };
 
-    // LLAMAMOS DIRECTAMENTE A LA CARGA DE LA APP, IGNORANDO EL VÍDEO
     procederConCargaDeApp();
 };
 
@@ -2485,7 +2481,6 @@ const pageRenderers = {
     
     // Animaciones y Clases
     selectAll('.bottom-nav__item').forEach(b => b.classList.toggle('bottom-nav__item--active', b.dataset.page === newView.id));
-    updateThemeIcon();
     newView.classList.add('view--active'); 
     if (oldView && !isInitial) {
         const outClass = isForward ? 'view-transition-out-forward' : 'view-transition-out-backward';
