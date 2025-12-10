@@ -8769,7 +8769,6 @@ const syncMirrors = () => {
     document.querySelectorAll('#movimiento-cantidad').forEach(updateInputMirror);
 };
 
-// ▼▼▼ REEMPLAZA ESTA FUNCIÓN EN main.js ▼▼▼
 const initAmountInput = () => {
     const amountInputs = document.querySelectorAll('.input-amount-calculator');
     const calculatorToggle = select('calculator-toggle-btn'); 
@@ -8778,30 +8777,36 @@ const initAmountInput = () => {
 
     amountInputs.forEach(input => {
         // 1. EL TRUCO MAESTRO: Readonly evita que el teclado móvil se abra
-        // Así no tenemos que luchar con focus/blur ni vibraciones fantasma.
         input.readOnly = true; 
         
-        // 2. inputmode="none" es una seguridad extra para algunos Androids
+        // 2. Seguridad extra para móviles
         input.setAttribute('inputmode', 'none');
         input.setAttribute('autocomplete', 'off');
         
-        // 3. Limpieza total de eventos antiguos
-        // Clonamos el nodo para eliminar CUALQUIER event listener "fantasma" anterior
+        // 3. Limpieza de eventos antiguos (Clonado)
         const newInput = input.cloneNode(true);
         input.parentNode.replaceChild(newInput, input);
-	
-        // 4. Añadimos UN SOLO evento limpio: Click
+    
+        // 4. Inicializamos el espejo visual inmediatamente para el nuevo input
+        // (Esto asegura que si hay un valor guardado, se vea al cargar)
+        updateInputMirror(newInput); // CORREGIDO: Usamos newInput
+
+        // 5. Añadimos el evento Click al NUEVO input
         newInput.addEventListener('click', (e) => {
-            e.preventDefault(); // Evita comportamientos nativos
-            e.stopPropagation(); // Evita que el click atraviese y cierre cosas
-        // Inicializar espejo
-        updateInputMirror(input);
-        
-        // Actualizar espejo cuando cambie el valor (por la calculadora)
-        input.addEventListener('input', () => updateInputMirror(input));
-        // También observamos cambios de atributos por si acaso
-        new MutationObserver(() => updateInputMirror(input)).observe(input, { attributes: true, attributeFilter: ['value'] });    
-            // Solo abrimos si no está ya visible para evitar parpadeos
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            
+            // CORREGIDO: Referenciamos 'newInput' (el que está en pantalla), no 'input' (el viejo)
+            updateInputMirror(newInput);
+            
+            // Añadimos el listener de cambios al NUEVO input
+            // IMPORTANTE: Esto conecta la calculadora con el espejo visual
+            newInput.addEventListener('input', () => updateInputMirror(newInput));
+            
+            // Observador de mutaciones para el NUEVO input
+            new MutationObserver(() => updateInputMirror(newInput)).observe(newInput, { attributes: true, attributeFilter: ['value'] });    
+            
+            // Abrimos la calculadora apuntando al NUEVO input
             if (!calculatorState.isVisible || calculatorState.targetInput !== newInput) {
                 hapticFeedback('light');
                 showCalculator(newInput);
