@@ -7803,7 +7803,7 @@ const handleSaveValoracion = async (form, btn) => {
     }
 };
 /* ================================================================= */
-/* === AYUDA DEFINITIVA: aiDANaI vs MANUAL TÉCNICO === */
+/* === AYUDA DEFINITIVA 2.0: aiDANaI vs MANUAL TÉCNICO === */
 /* ================================================================= */
 
 const showHelpModal = () => {
@@ -7816,145 +7816,140 @@ const showHelpModal = () => {
         bodyEl.innerHTML = `
             <div class="help-tabs">
                 <button class="help-tab-btn active" onclick="switchHelpTab('aidanai')">
-                    <span class="material-icons" style="font-size: 18px;">smart_toy</span>
+                    <span class="material-icons" style="font-size: 20px;">smart_toy</span>
                     <span>aiDANaI</span>
                 </button>
                 <button class="help-tab-btn" onclick="switchHelpTab('tecnico')">
-                    <span class="material-icons" style="font-size: 18px;">terminal</span>
+                    <span class="material-icons" style="font-size: 20px;">terminal</span>
                     <span>Manual Técnico</span>
                 </button>
             </div>
 
             <div id="help-pane-aidanai" class="help-content-pane active">
                 
-                <div class="help-hero" style="background: linear-gradient(180deg, rgba(0,179,77,0.15) 0%, transparent 100%); padding: 25px 15px;">
-                    <span class="material-icons help-hero__icon" style="font-size: 50px; color: var(--c-primary);">waving_hand</span>
-                    <h2 style="margin: 10px 0 5px; font-weight: 800;">¡Hola, humano!</h2>
-                    <p style="color: var(--c-on-surface-secondary); font-size: 0.95rem; line-height: 1.5;">
-                        Soy <strong>aiDANaI</strong>, tu cerebro financiero externo. Tú gastas (o ahorras), yo recuerdo. 
-                        Aquí te explico cómo funciono sin palabras raras.
+                <div class="help-hero" style="background: linear-gradient(180deg, rgba(0,179,77,0.1) 0%, transparent 100%); padding: 25px 20px; border-radius: 16px; margin-bottom: 20px; text-align: center;">
+                    <span class="material-icons help-hero__icon" style="font-size: 48px; color: var(--c-primary); margin-bottom: 10px;">waving_hand</span>
+                    <h2 style="margin: 0 0 8px; font-weight: 800; color: var(--c-on-surface);">¡Hola, soy aiDANaI!</h2>
+                    <p style="color: var(--c-on-surface-secondary); font-size: 1rem; line-height: 1.5; max-width: 400px; margin: 0 auto;">
+                        No soy un banco aburrido. Soy tu asistente personal. Tú vives tu vida, yo recuerdo los números.
                     </p>
                 </div>
 
-                <div class="help-story-card" style="border-left: 4px solid var(--c-info);">
+                <div class="help-story-card" style="color: #007AFF;">
                     <div class="help-story-title">
-                        <span class="material-icons" style="color: var(--c-info);">inventory_2</span>
+                        <span class="material-icons">inventory_2</span>
                         El Multiverso de las Cajas
                     </div>
-                    <p style="font-size: 0.9rem; color: var(--c-on-surface-secondary);">
-                        ¿Mezclas el dinero del alquiler con el de las cervezas? ¡Mal! He creado tres universos paralelos para ti. Pulsa el botón superior izquierdo para saltar entre ellos:
+                    <p class="help-story-text">
+                        ¿Mezclas el dinero del alquiler con el de las cervezas? ¡Error! He creado tres dimensiones para ti. Toca el botón superior izquierdo para viajar entre ellas:
                     </p>
-                    <ul style="margin-top:10px; padding-left:15px; font-size:0.85rem; line-height: 1.6;">
-                        <li><strong style="color:#007AFF">🔵 Caja A (La Seria):</strong> Tu vida oficial. Nómina, alquiler, Mercadona. Lo aburrido pero necesario.</li>
-                        <li><strong style="color:#FF3B30">🔴 Caja B (La Secreta):</strong> ¿Dinero bajo el colchón? ¿Ese "extra" que no quieres mezclar? Aquí está seguro.</li>
-                        <li><strong style="color:#39FF14">🟢 Caja C (Proyectos):</strong> La hucha del viaje a Japón o la reforma del baño.</li>
+                    <ul style="margin-top:12px; padding-left:15px; font-size:0.9rem; line-height: 1.6; color: var(--c-on-surface);">
+                        <li><strong style="color:#007AFF">🔵 Caja A (Oficial):</strong> Tu nómina, facturas, alquiler. La vida adulta.</li>
+                        <li><strong style="color:#FF3B30">🔴 Caja B (Secreta):</strong> ¿Dinero bajo el colchón? ¿Ese "extra" en efectivo? Aquí no mira nadie.</li>
+                        <li><strong style="color:#39FF14">🟢 Caja C (Proyectos):</strong> La hucha para Japón o la reforma del baño.</li>
                     </ul>
                 </div>
 
-                <div class="help-story-card" style="border-left: 4px solid var(--c-warning);">
+                <div class="help-story-card" style="color: #FFD60A;">
                     <div class="help-story-title">
-                        <span class="material-icons" style="color: var(--c-warning);">calculate</span>
-                        La Calculadora Ninja
+                        <span class="material-icons">calculate</span>
+                        Calculadora Ninja
                     </div>
-                    <p style="font-size: 0.9rem; color: var(--c-on-surface-secondary);">
-                        Cuando añadas un gasto, no necesitas hacer cuentas mentales. 
+                    <p class="help-story-text">
+                        Olvídate de hacer cuentas mentales. Cuando añadas un gasto, el teclado es mágico.
                         <br><br>
-                        Si pones <code>10 + 20</code> en el campo de importe, yo hago la suma. Si pones <code>50 / 2</code>, divido la cuenta. 
-                        ¡Es magia! Úsalo para cenas con amigos.
+                        Si escribes <code>10 + 20</code>, yo guardo <strong>30€</strong>. Si pones <code>50 / 2</code>, divido la cena. ¡Pruébalo!
                     </p>
                 </div>
 
-                <div class="help-story-card" style="border-left: 4px solid var(--c-primary);">
+                <div class="help-story-card" style="color: #BF5AF2;">
                     <div class="help-story-title">
-                        <span class="material-icons" style="color: var(--c-primary);">rocket_launch</span>
+                        <span class="material-icons">rocket_launch</span>
                         El Cohete (Inversiones)
                     </div>
-                    <p style="font-size: 0.9rem; color: var(--c-on-surface-secondary);">
-                        Aquí es donde tu dinero trabaja (mientras tú duermes). 
-                        Marco con colores si ganas (verde) o pierdes (rojo). 
+                    <p class="help-story-text">
+                        Aquí tu dinero trabaja mientras duermes.
                         <br><br>
-                        <strong>Truco Pro:</strong> Si tienes Bitcoin, pulsa el botón <span class="material-icons" style="font-size:12px; vertical-align:middle;">currency_bitcoin</span> en la barra superior y te convertiré todo a BTC en tiempo real.
+                        Yo calculo si ganas (verde) o pierdes (rojo) comparando lo que pusiste vs lo que vale hoy. 
+                        <strong>Truco:</strong> Si tienes Bitcoin, pulsa el botón <span class="material-icons" style="font-size:12px; vertical-align:middle;">currency_bitcoin</span> arriba a la derecha y convertiré todo tu patrimonio a BTC.
                     </p>
                 </div>
 
-                <div class="help-story-card" style="border-left: 4px solid #BF5AF2;">
+                <div class="help-story-card" style="color: var(--c-on-surface-tertiary);">
                     <div class="help-story-title">
-                        <span class="material-icons" style="color: #BF5AF2;">visibility_off</span>
+                        <span class="material-icons">visibility_off</span>
                         Modo "En el Metro"
                     </div>
-                    <p style="font-size: 0.9rem; color: var(--c-on-surface-secondary);">
-                        ¿Hay gente cotilla a tu alrededor? Toca tu <strong>Patrimonio Total</strong> (el número grande del Panel). 
-                        Pondré todos los números borrosos para proteger tu privacidad. Toca otra vez para verlos.
+                    <p class="help-story-text">
+                        ¿Hay gente cotilla a tu alrededor? Toca tu <strong>Patrimonio Total</strong> (el número gigante del Panel). 
+                        Difuminaré todos los importes para proteger tu privacidad. Toca otra vez para verlos.
                     </p>
                 </div>
             </div>
 
             <div id="help-pane-tecnico" class="help-content-pane">
                 
-                <div style="margin-bottom: 20px; padding: 10px; border-left: 2px solid #00ff9d; background: rgba(0,255,157,0.05);">
-                    <p style="font-family: 'Fira Code', monospace; font-size: 0.8rem; color: #00ff9d; margin: 0;">
+                <div style="margin-bottom: 20px; padding: 12px; border-left: 2px solid #58a6ff; background: rgba(88, 166, 255, 0.1); border-radius: 0 8px 8px 0;">
+                    <p style="font-family: 'Fira Code', monospace; font-size: 0.75rem; color: #58a6ff; margin: 0; line-height: 1.6;">
                         > SYSTEM_STATUS: ONLINE<br>
-                        > ARCHITECTURE: PWA / LOCAL-FIRST<br>
-                        > RENDERING: VANILLA JS (NO FRAMEWORKS)
+                        > ARCHITECTURE: PWA / OFF-LINE FIRST<br>
+                        > STACK: VANILLA JS + FIREBASE FIRESTORE
                     </p>
                 </div>
 
                 <div class="help-tech-card">
-                    <div class="help-tech-title">
-                        <span class="material-icons">memory</span> Virtual Scrolling Engine
+                    <div class="help-tech-header">
+                        <span class="material-icons" style="font-size:16px; color:#58a6ff;">memory</span>
+                        <span class="help-tech-title">Virtual Scrolling Engine</span>
                     </div>
                     <div class="help-tech-text">
                         <span class="tech-tag">PERFORMANCE</span> <span class="tech-tag">DOM RECYCLING</span>
                         <br><br>
-                        El Diario no renderiza todos los movimientos. Utiliza un motor de <strong>virtualización</strong> personalizado (`vList`). 
+                        El Diario no renderiza todo el historial. Implementa un motor de virtualización personalizado (<code>vList</code>) que calcula el viewport y solo inyecta en el DOM los elementos visibles (+ buffer).
                         <br>
-                        Calcula la posición del scroll y solo inyecta en el DOM los elementos visibles (+ un buffer). Esto permite listas infinitas (10.000+ items) manteniendo 60fps en móviles antiguos.
+                        Esto permite listas infinitas (10.000+ items) manteniendo 60fps en dispositivos móviles, reciclando nodos HTML al hacer scroll.
                     </div>
                 </div>
 
                 <div class="help-tech-card">
-                    <div class="help-tech-title">
-                        <span class="material-icons">trending_up</span> Algoritmo Financiero (XIRR)
+                    <div class="help-tech-header">
+                        <span class="material-icons" style="font-size:16px; color:#58a6ff;">trending_up</span>
+                        <span class="help-tech-title">Algoritmo Financiero (XIRR)</span>
                     </div>
                     <div class="help-tech-text">
                         <span class="tech-tag">MATH</span> <span class="tech-tag">NEWTON-RAPHSON</span>
                         <br><br>
-                        El cálculo de rentabilidad no es lineal. Implementamos <strong>Money-Weighted Return Rate (MWRR)</strong>.
+                        El cálculo de rentabilidad no es lineal. Implementamos <strong>Money-Weighted Return Rate (MWRR)</strong> en el cliente.
                         <br>
-                        La app resuelve la ecuación polinómica de la TIR usando el método numérico de <strong>Newton-Raphson</strong> en el cliente. Considera cada aportación y retirada como un flujo de caja con fecha exacta para calcular tu rentabilidad real anualizada.
+                        La app resuelve la ecuación polinómica de la TIR usando el método numérico de <strong>Newton-Raphson</strong>. Considera cada aportación y retirada como un flujo de caja con fecha exacta para calcular la rentabilidad anualizada real.
                     </div>
                 </div>
 
                 <div class="help-tech-card">
-                    <div class="help-tech-title">
-                        <span class="material-icons">cloud_sync</span> Local-First & Sync
+                    <div class="help-tech-header">
+                        <span class="material-icons" style="font-size:16px; color:#58a6ff;">cloud_sync</span>
+                        <span class="help-tech-title">Persistencia & Sync</span>
                     </div>
                     <div class="help-tech-text">
-                        <span class="tech-tag">INDEXEDDB</span> <span class="tech-tag">FIRESTORE</span>
+                        <span class="tech-tag">INDEXEDDB</span> <span class="tech-tag">OPTIMISTIC UI</span>
                         <br><br>
-                        La app funciona 100% offline. Escribe primero en <strong>IndexedDB</strong> (persistencia local) para una latencia cero (Optimistic UI).
+                        Arquitectura <strong>Local-First</strong>. La app escribe primero en <code>IndexedDB</code> para latencia cero.
                         <br>
-                        En segundo plano, un hilo sincroniza los cambios con <strong>Firebase Firestore</strong> mediante escrituras en lote (Batches) para garantizar la atomicidad (integridad referencial entre cuentas y movimientos).
+                        Un hilo en segundo plano sincroniza con Firestore mediante escrituras en lote (Batches) para garantizar atomicidad e integridad referencial entre cuentas y movimientos.
                     </div>
                 </div>
 
                 <div class="help-tech-card">
-                    <div class="help-tech-title">
-                        <span class="material-icons">security</span> Cifrado & Seguridad
+                    <div class="help-tech-header">
+                        <span class="material-icons" style="font-size:16px; color:#58a6ff;">bolt</span>
+                        <span class="help-tech-title">AppStore & Caché</span>
                     </div>
                     <div class="help-tech-text">
-                        <span class="tech-tag">SHA-256</span> <span class="tech-tag">WEB CRYPTO API</span>
+                        <span class="tech-tag warn">MEMORY MANAGEMENT</span>
                         <br><br>
-                        El PIN de acceso rápido no se guarda en texto plano. Se almacena un hash <strong>SHA-256</strong> generado mediante la Web Crypto API nativa del navegador. La verificación ocurre localmente sin enviar el PIN a la red.
-                    </div>
-                </div>
-
-                <div class="help-tech-card">
-                    <div class="help-tech-title">
-                        <span class="material-icons">insights</span> Análisis de Datos
-                    </div>
-                    <div class="help-tech-text">
-                        Para los informes, utilizamos agregaciones en memoria (Map/Reduce) sobre el set de datos completo cargado en `AppStore`. Esto evita lecturas costosas a la base de datos cada vez que cambias un filtro, permitiendo análisis instantáneo de años de historial.
+                        Para evitar lecturas costosas en Firebase, implementamos <code>AppStore</code>, un Singleton que carga el historial completo en memoria RAM al inicio.
+                        <br>
+                        Los informes y gráficos se generan mediante agregaciones (Map/Reduce) sobre este set de datos en milisegundos, sin nuevas peticiones de red.
                     </div>
                 </div>
 
@@ -7965,23 +7960,23 @@ const showHelpModal = () => {
     showModal('help-modal');
 };
 
-// Función para el cambio de pestañas en el modal de ayuda
+// Función global para el cambio de pestañas (Necesaria para los onclick del HTML)
 window.switchHelpTab = (tabName) => {
-    // 1. Quitar clase active de todos los botones y paneles
+    // 1. Quitar clase active de botones
     document.querySelectorAll('.help-tab-btn').forEach(btn => btn.classList.remove('active'));
+    // 2. Quitar clase active de paneles
     document.querySelectorAll('.help-content-pane').forEach(pane => pane.classList.remove('active'));
     
-    // 2. Añadir clase active al botón pulsado (usando onclick attribute selector para identificarlo)
+    // 3. Activar los seleccionados
     const btn = document.querySelector(`.help-tab-btn[onclick="switchHelpTab('${tabName}')"]`);
     const pane = document.getElementById(`help-pane-${tabName}`);
     
     if (btn) btn.classList.add('active');
     if (pane) pane.classList.add('active');
     
-    // 3. Feedback táctil
+    // 4. Feedback
     if (typeof hapticFeedback === 'function') hapticFeedback('light');
 };
-
 
 // Función global para el cambio de pestañas (necesaria para el onclick en el HTML string)
 window.switchHelpTab = (tabName) => {
