@@ -4650,24 +4650,32 @@ body[data-theme="sunset-groove"] .hero-val-big {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-/* === VISUAL MIRROR: Para inputs con formato rico === */
+/* === VISUAL MIRROR REFORZADO (Para input de cantidad) === */
 
-/* Contenedor relativo para posicionar el espejo */
+/* 1. El Contenedor: Posición relativa para contener a los hijos absolutos */
 #movimiento-cantidad-form-group .input-wrapper {
-    position: relative;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: var(--c-surface) !important; /* Fondo visible aquí */
     z-index: 1;
+    overflow: hidden; /* Evita desbordes */
 }
 
-/* El Input Real: Invisible pero funcional */
+/* 2. El Input Real: Invisible pero funcional (Capa Superior) */
 #movimiento-cantidad {
-    color: transparent !important; /* Texto invisible */
-    caret-color: transparent; /* Cursor invisible */
-    z-index: 2; /* Por encima del espejo para recibir clics */
-    position: relative;
-    background: transparent !important; /* Fondo transparente */
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0 !important; /* Totalmente invisible */
+    z-index: 10 !important; /* Por encima de todo para recibir clics */
+    cursor: pointer;
 }
 
-/* El Espejo: Se ve pero no se toca */
+/* 3. El Espejo Visual: Texto bonito (Capa Inferior) */
 .input-visual-mirror {
     position: absolute;
     top: 0;
@@ -4676,25 +4684,59 @@ body[data-theme="sunset-groove"] .hero-val-big {
     height: 100%;
     display: flex;
     align-items: center;
-    justify-content: center; /* Centrado igual que el input */
-    pointer-events: none; /* Los clics pasan al input real */
-    z-index: 1; /* Detrás del input real */
+    justify-content: center; /* Centrado perfecto */
+    pointer-events: none; /* Los clics pasan a través */
+    z-index: 5; /* Debajo del input, encima del fondo */
     
-    /* Heredar estilos de fuente del input original */
+    /* Tipografía */
     font-family: var(--font-family);
-    font-size: 1.5rem; /* Debe coincidir con el CSS de #movimiento-cantidad */
+    font-size: 1.6rem; /* Tamaño grande */
     font-weight: 800;
     color: var(--c-on-surface);
 }
 
-/* Ajustes de color según el tipo (sincronizados con el input real) */
-.is-gasto .input-visual-mirror { color: var(--c-danger); }
-.is-ingreso .input-visual-mirror { color: var(--c-success); }
-.is-traspaso .input-visual-mirror { color: var(--c-info); }
+/* Colores dinámicos para el espejo */
+.is-gasto .input-visual-mirror { color: var(--c-danger) !important; }
+.is-ingreso .input-visual-mirror { color: var(--c-success) !important; }
+.is-traspaso .input-visual-mirror { color: var(--c-info) !important; }
 
-/* Ajuste específico para la calculadora */
-.calculator-display span, 
-.calculator-display small {
-    /* Asegura que los estilos se apliquen en el display grande */
-    font-family: inherit;
+/* Placeholder cuando está vacío (0,00 en gris) */
+.input-visual-mirror.is-empty span,
+.input-visual-mirror.is-empty small {
+    opacity: 0.3 !important;
+}
+/* === CORRECCIÓN SELECTORES PANEL (Modo Oscuro) === */
+
+/* Estilo del botón selector en el Panel */
+#filter-periodo, 
+.report-period-selector {
+    background-color: var(--c-surface-variant) !important;
+    color: var(--c-on-surface) !important; /* Texto blanco/claro */
+    border: 1px solid var(--c-outline) !important;
+    
+    /* Reemplazar la flecha nativa por una controlada (blanca) */
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 10px center !important;
+    background-size: 12px !important;
+    padding-right: 30px !important;
+}
+
+/* Estilo de las opciones del desplegable (Crucial para móviles) */
+#filter-periodo option,
+.report-period-selector option {
+    background-color: #1e1e1e !important; /* Fondo gris oscuro forzado */
+    color: #ffffff !important; /* Texto blanco forzado */
+}
+
+/* Fix para modo claro (si cambias de tema) */
+body[data-theme="sunset-groove"] #filter-periodo,
+body[data-theme="sunset-groove"] .report-period-selector {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !important;
+}
+body[data-theme="sunset-groove"] #filter-periodo option {
+    background-color: #ffffff !important;
+    color: #000000 !important;
 }

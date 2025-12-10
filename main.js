@@ -8725,27 +8725,41 @@ const updateInputMirror = (input) => {
     const wrapper = input.parentElement;
     let mirror = wrapper.querySelector('.input-visual-mirror');
     
-    // Si no existe, lo creamos
+    // Si no existe el espejo, lo creamos
     if (!mirror) {
         mirror = document.createElement('div');
         mirror.className = 'input-visual-mirror';
         wrapper.appendChild(mirror);
     }
     
-    // Obtenemos el valor crudo (ej: "1.200,50")
     const rawValue = input.value;
     
-    // Si está vacío, mostramos el placeholder (0,00)
-    if (!rawValue) {
-        mirror.innerHTML = `<span class="currency-major" style="opacity:0.3">0</span><small class="currency-minor" style="opacity:0.3">,00</small>`;
+    // CASO 1: Input vacío o solo "0"
+    if (!rawValue || rawValue === '0') {
+        mirror.classList.add('is-empty');
+        mirror.innerHTML = `<span class="currency-major">0</span><small class="currency-minor">,00</small>`;
         return;
     }
 
-    // Convertimos a formato HTML rico
-    // Truco: Usamos la lógica de string directa para respetar lo que hay en el input
-    const parts = rawValue.split(',');
-    const integerPart = parts[0] || '0';
-    const decimalPart = parts[1] !== undefined ? ',' + parts[1] : '';
+    mirror.classList.remove('is-empty');
+
+    // CASO 2: Tiene valor. Lo formateamos manualmente para respetar lo que escribe el usuario.
+    // Detectamos si hay coma
+    let integerPart = rawValue;
+    let decimalPart = '';
+
+    if (rawValue.includes(',')) {
+        const parts = rawValue.split(',');
+        integerPart = parts[0];
+        // Si parts[1] es undefined (ej: "12,"), mostramos la coma. Si es "5", mostramos ",5"
+        decimalPart = ',' + (parts[1] || ''); 
+    }
+
+    // Formateamos los miles del entero (ej: 1000 -> 1.000)
+    // Solo si es un número válido
+    if (!isNaN(parseFloat(integerPart.replace(/\./g, '')))) {
+        integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
     
     mirror.innerHTML = `<span class="currency-major">${integerPart}</span><small class="currency-minor">${decimalPart}</small>`;
 };
