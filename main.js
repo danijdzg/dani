@@ -1191,12 +1191,33 @@ const calculate = () => {
 };
 
 // Mejora visual: Escala dinámica de fuente en el display
+/* Reemplaza updateCalculatorDisplay por esta versión */
 const updateCalculatorDisplay = () => {
     const display = select('calculator-display');
     if (!display) return;
-    const value = calculatorState.displayValue;
-    display.textContent = value;
     
+    const value = calculatorState.displayValue; // Es un string tipo "125,5"
+    
+    // Lógica de formateo manual para respetar lo que el usuario está escribiendo (incluyendo comas a medias)
+    let html = '';
+    
+    if (value === 'Error') {
+        html = 'Error';
+    } else {
+        const parts = value.split(',');
+        const integerPart = parts[0];
+        // Formateamos la parte entera con puntos de miles si es necesario
+        const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        
+        const decimalPart = parts.length > 1 ? ',' + parts[1] : '';
+        
+        // Aplicamos las clases CSS de estilo
+        html = `<span class="currency-major">${formattedInteger}</span><small class="currency-minor">${decimalPart}</small>`;
+    }
+
+    display.innerHTML = html; // Usamos innerHTML en lugar de textContent
+    
+    // Ajuste de tamaño dinámico
     const length = value.length;
     if (length > 9) display.style.fontSize = '2rem';
     else if (length > 7) display.style.fontSize = '2.5rem';
@@ -8697,6 +8718,42 @@ const setupFabInteractions = () => {
     fab.addEventListener('mouseleave', () => { clearTimeout(longPressTimer); fab.style.transform = "scale(1)"; });
     fab.addEventListener('touchcancel', () => { clearTimeout(longPressTimer); fab.style.transform = "scale(1)"; });
 };
+/* --- NUEVAS FUNCIONES PARA EL ESPEJO VISUAL --- */
+
+// Crea o actualiza el espejo visual
+const updateInputMirror = (input) => {
+    const wrapper = input.parentElement;
+    let mirror = wrapper.querySelector('.input-visual-mirror');
+    
+    // Si no existe, lo creamos
+    if (!mirror) {
+        mirror = document.createElement('div');
+        mirror.className = 'input-visual-mirror';
+        wrapper.appendChild(mirror);
+    }
+    
+    // Obtenemos el valor crudo (ej: "1.200,50")
+    const rawValue = input.value;
+    
+    // Si está vacío, mostramos el placeholder (0,00)
+    if (!rawValue) {
+        mirror.innerHTML = `<span class="currency-major" style="opacity:0.3">0</span><small class="currency-minor" style="opacity:0.3">,00</small>`;
+        return;
+    }
+
+    // Convertimos a formato HTML rico
+    // Truco: Usamos la lógica de string directa para respetar lo que hay en el input
+    const parts = rawValue.split(',');
+    const integerPart = parts[0] || '0';
+    const decimalPart = parts[1] !== undefined ? ',' + parts[1] : '';
+    
+    mirror.innerHTML = `<span class="currency-major">${integerPart}</span><small class="currency-minor">${decimalPart}</small>`;
+};
+
+// Sincronizador global
+const syncMirrors = () => {
+    document.querySelectorAll('#movimiento-cantidad').forEach(updateInputMirror);
+};
 
 // ▼▼▼ REEMPLAZA ESTA FUNCIÓN EN main.js ▼▼▼
 const initAmountInput = () => {
@@ -8718,12 +8775,18 @@ const initAmountInput = () => {
         // Clonamos el nodo para eliminar CUALQUIER event listener "fantasma" anterior
         const newInput = input.cloneNode(true);
         input.parentNode.replaceChild(newInput, input);
-
+	
         // 4. Añadimos UN SOLO evento limpio: Click
         newInput.addEventListener('click', (e) => {
             e.preventDefault(); // Evita comportamientos nativos
             e.stopPropagation(); // Evita que el click atraviese y cierre cosas
-            
+        // Inicializar espejo
+        updateInputMirror(input);
+        
+        // Actualizar espejo cuando cambie el valor (por la calculadora)
+        input.addEventListener('input', () => updateInputMirror(input));
+        // También observamos cambios de atributos por si acaso
+        new MutationObserver(() => updateInputMirror(input)).observe(input, { attributes: true, attributeFilter: ['value'] });    
             // Solo abrimos si no está ya visible para evitar parpadeos
             if (!calculatorState.isVisible || calculatorState.targetInput !== newInput) {
                 hapticFeedback('light');
@@ -8732,6 +8795,7 @@ const initAmountInput = () => {
         });
     });
 };
+
 
 // Función auxiliar para manejar el evento de foco/click
 const handleInputFocus = (e) => {

@@ -4650,3 +4650,51 @@ body[data-theme="sunset-groove"] .hero-val-big {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+/* === VISUAL MIRROR: Para inputs con formato rico === */
+
+/* Contenedor relativo para posicionar el espejo */
+#movimiento-cantidad-form-group .input-wrapper {
+    position: relative;
+    z-index: 1;
+}
+
+/* El Input Real: Invisible pero funcional */
+#movimiento-cantidad {
+    color: transparent !important; /* Texto invisible */
+    caret-color: transparent; /* Cursor invisible */
+    z-index: 2; /* Por encima del espejo para recibir clics */
+    position: relative;
+    background: transparent !important; /* Fondo transparente */
+}
+
+/* El Espejo: Se ve pero no se toca */
+.input-visual-mirror {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centrado igual que el input */
+    pointer-events: none; /* Los clics pasan al input real */
+    z-index: 1; /* Detrás del input real */
+    
+    /* Heredar estilos de fuente del input original */
+    font-family: var(--font-family);
+    font-size: 1.5rem; /* Debe coincidir con el CSS de #movimiento-cantidad */
+    font-weight: 800;
+    color: var(--c-on-surface);
+}
+
+/* Ajustes de color según el tipo (sincronizados con el input real) */
+.is-gasto .input-visual-mirror { color: var(--c-danger); }
+.is-ingreso .input-visual-mirror { color: var(--c-success); }
+.is-traspaso .input-visual-mirror { color: var(--c-info); }
+
+/* Ajuste específico para la calculadora */
+.calculator-display span, 
+.calculator-display small {
+    /* Asegura que los estilos se apliquen en el display grande */
+    font-family: inherit;
+}
