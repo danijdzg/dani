@@ -4342,50 +4342,91 @@ body[data-theme="sunset-groove"] .hero-val-big {
     padding: 12px 0; /* Más aire vertical */
     align-items: center; /* Centrado vertical perfecto */
 }
-/* ================================================================= */
-/* === ESTILOS AYUDA DUAL (TABS) === */
-/* ================================================================= */
+/* === ESTILOS AYUDA 2.0 (aiDANaI vs SYSTEM) === */
 
-.help-tabs {
-    display: flex;
-    background-color: var(--c-surface-variant);
-    padding: 4px;
-    border-radius: 12px;
-    margin-bottom: 20px;
+/* Estilo para el modo Historia (aiDANaI) */
+.help-story-card {
+    background-color: var(--c-surface);
     border: 1px solid var(--c-outline);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
 }
 
-.help-tab-btn {
-    flex: 1;
-    padding: 8px 0;
-    text-align: center;
-    cursor: pointer;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--c-on-surface-secondary);
-    transition: all 0.2s ease;
-    border: none;
-    background: transparent;
+.help-story-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 4px; height: 100%;
+    background-color: var(--c-primary);
+}
+
+.help-story-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: var(--c-on-surface);
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 10px;
+}
+
+/* Estilo para el modo Técnico (Matrix/Terminal) */
+.help-tech-card {
+    background-color: #1a1a1a; /* Fondo muy oscuro siempre */
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    font-family: 'Fira Code', 'Courier New', monospace; /* Fuente monoespaciada */
+}
+
+.help-tech-title {
+    color: #00ff9d; /* Verde terminal */
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
     gap: 8px;
 }
 
-.help-tab-btn.active {
-    background-color: var(--c-surface);
-    color: var(--c-primary);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    font-weight: 700;
+.help-tech-text {
+    color: #cccccc;
+    font-size: 0.85rem;
+    line-height: 1.6;
 }
 
-.help-content-pane {
-    display: none;
-    animation: fadeIn 0.3s ease;
+.tech-tag {
+    display: inline-block;
+    background: rgba(0, 255, 157, 0.1);
+    color: #00ff9d;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    margin-right: 6px;
+    border: 1px solid rgba(0, 255, 157, 0.2);
 }
-.help-content-pane.active {
-    display: block;
+
+/* Pestañas mejoradas */
+.help-tabs {
+    background: var(--c-surface-variant);
+    padding: 4px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.help-tab-btn.active {
+    background: var(--c-surface);
+    color: var(--c-primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 /* ================================================================= */
 /* === PANEL EJECUTIVO COMPACTO (Sin Gráficos) === */

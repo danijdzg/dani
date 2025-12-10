@@ -7802,6 +7802,9 @@ const handleSaveValoracion = async (form, btn) => {
         setButtonLoading(btn, false);
     }
 };
+/* ================================================================= */
+/* === AYUDA DEFINITIVA: aiDANaI vs MANUAL TÉCNICO === */
+/* ================================================================= */
 
 const showHelpModal = () => {
     const titleEl = select('help-modal-title');
@@ -7812,128 +7815,173 @@ const showHelpModal = () => {
     if (bodyEl) {
         bodyEl.innerHTML = `
             <div class="help-tabs">
-                <button class="help-tab-btn active" onclick="switchHelpTab('piloto')">
-                    <span class="material-icons" style="font-size: 18px;">auto_stories</span> El Cuento
+                <button class="help-tab-btn active" onclick="switchHelpTab('aidanai')">
+                    <span class="material-icons" style="font-size: 18px;">smart_toy</span>
+                    <span>aiDANaI</span>
                 </button>
-                <button class="help-tab-btn" onclick="switchHelpTab('experto')">
-                    <span class="material-icons" style="font-size: 18px;">terminal</span> Manual Técnico
+                <button class="help-tab-btn" onclick="switchHelpTab('tecnico')">
+                    <span class="material-icons" style="font-size: 18px;">terminal</span>
+                    <span>Manual Técnico</span>
                 </button>
             </div>
 
-            <div id="help-pane-piloto" class="help-content-pane active">
-                <div class="help-hero">
-                    <span class="material-icons help-hero__icon">smart_toy</span>
-                    <h2 style="margin: 10px 0 5px;">Hola, soy aiDANaI</h2>
-                    <p style="color: var(--c-on-surface-secondary); max-width: 90%; margin: 0 auto;">
-                        Tu asistente financiero de bolsillo. No soy un banco, soy tu libreta mágica.
+            <div id="help-pane-aidanai" class="help-content-pane active">
+                
+                <div class="help-hero" style="background: linear-gradient(180deg, rgba(0,179,77,0.15) 0%, transparent 100%); padding: 25px 15px;">
+                    <span class="material-icons help-hero__icon" style="font-size: 50px; color: var(--c-primary);">waving_hand</span>
+                    <h2 style="margin: 10px 0 5px; font-weight: 800;">¡Hola, humano!</h2>
+                    <p style="color: var(--c-on-surface-secondary); font-size: 0.95rem; line-height: 1.5;">
+                        Soy <strong>aiDANaI</strong>, tu cerebro financiero externo. Tú gastas (o ahorras), yo recuerdo. 
+                        Aquí te explico cómo funciono sin palabras raras.
                     </p>
                 </div>
 
-                <div class="help-card">
-                    <div class="help-card__icon" style="background: #e3f2fd; color: #1976d2;"><span class="material-icons">menu_book</span></div>
-                    <div class="help-card__content">
-                        <h4>Capítulo 1: El Diario</h4>
-                        <p>Imagina que cada vez que compras el pan o cobras la nómina, lo apuntas en una hoja. Eso es el <strong>Diario</strong>. Simplemente pulsa el botón <strong>+</strong> y dile a la app lo que ha pasado. Ella lo recordará por ti.</p>
+                <div class="help-story-card" style="border-left: 4px solid var(--c-info);">
+                    <div class="help-story-title">
+                        <span class="material-icons" style="color: var(--c-info);">inventory_2</span>
+                        El Multiverso de las Cajas
                     </div>
+                    <p style="font-size: 0.9rem; color: var(--c-on-surface-secondary);">
+                        ¿Mezclas el dinero del alquiler con el de las cervezas? ¡Mal! He creado tres universos paralelos para ti. Pulsa el botón superior izquierdo para saltar entre ellos:
+                    </p>
+                    <ul style="margin-top:10px; padding-left:15px; font-size:0.85rem; line-height: 1.6;">
+                        <li><strong style="color:#007AFF">🔵 Caja A (La Seria):</strong> Tu vida oficial. Nómina, alquiler, Mercadona. Lo aburrido pero necesario.</li>
+                        <li><strong style="color:#FF3B30">🔴 Caja B (La Secreta):</strong> ¿Dinero bajo el colchón? ¿Ese "extra" que no quieres mezclar? Aquí está seguro.</li>
+                        <li><strong style="color:#39FF14">🟢 Caja C (Proyectos):</strong> La hucha del viaje a Japón o la reforma del baño.</li>
+                    </ul>
                 </div>
 
-                <div class="help-card">
-                    <div class="help-card__icon" style="background: #e8f5e9; color: #2e7d32;"><span class="material-icons">speed</span></div>
-                    <div class="help-card__content">
-                        <h4>Capítulo 2: El Panel</h4>
-                        <p>Es tu espejo mágico. Te dice de un vistazo:</p>
-                        <ul style="margin-top:4px; padding-left:15px; font-size:0.85rem;">
-                            <li><strong>Patrimonio:</strong> Todo lo que tienes menos lo que debes.</li>
-                            <li><strong>Liquidez:</strong> El dinero que puedes gastar hoy mismo.</li>
-                            <li><strong>Salud:</strong> Barras de colores que te dicen si vas bien.</li>
-                        </ul>
+                <div class="help-story-card" style="border-left: 4px solid var(--c-warning);">
+                    <div class="help-story-title">
+                        <span class="material-icons" style="color: var(--c-warning);">calculate</span>
+                        La Calculadora Ninja
                     </div>
+                    <p style="font-size: 0.9rem; color: var(--c-on-surface-secondary);">
+                        Cuando añadas un gasto, no necesitas hacer cuentas mentales. 
+                        <br><br>
+                        Si pones <code>10 + 20</code> en el campo de importe, yo hago la suma. Si pones <code>50 / 2</code>, divido la cuenta. 
+                        ¡Es magia! Úsalo para cenas con amigos.
+                    </p>
                 </div>
 
-                <div class="help-card">
-    <div class="help-card__icon" style="background: #f3e5f5; color: #7b1fa2;"><span class="material-icons">inventory_2</span></div>
-    <div class="help-card__content">
-        <h4>Capítulo 3: El Tridente (A, B y C)</h4>
-        <p>Ahora tienes tres dimensiones para organizar tu dinero.</p>
-        <ul style="margin-top:6px; padding-left:15px; font-size:0.85rem;">
-            <li><strong style="color:var(--c-primary)">Caja A (Azul):</strong> Tu economía principal y oficial.</li>
-            <li><strong style="color:var(--c-danger)">Caja B (Roja):</strong> Tus ahorros o gastos privados.</li>
-            <li><strong style="color:var(--c-success)">Caja C (Verde):</strong> Proyectos especiales, hucha conjunta o lo que tú quieras.</li>
-        </ul>
-        <p style="margin-top:6px; font-size:0.85rem;">Pulsa el botón de la esquina superior izquierda para rotar entre ellas.</p>
-    </div>
-</div>
-                
-                <div class="help-card">
-                    <div class="help-card__icon" style="background: #fff3e0; color: #ef6c00;"><span class="material-icons">calculate</span></div>
-                    <div class="help-card__content">
-                        <h4>Truco Final: Calculadora</h4>
-                        <p>¿Cena con amigos? Al poner el importe, puedes escribir <code>20 + 15 / 2</code> y la app calculará el resultado antes de guardarlo. ¡Sin salir de la pantalla!</p>
+                <div class="help-story-card" style="border-left: 4px solid var(--c-primary);">
+                    <div class="help-story-title">
+                        <span class="material-icons" style="color: var(--c-primary);">rocket_launch</span>
+                        El Cohete (Inversiones)
                     </div>
+                    <p style="font-size: 0.9rem; color: var(--c-on-surface-secondary);">
+                        Aquí es donde tu dinero trabaja (mientras tú duermes). 
+                        Marco con colores si ganas (verde) o pierdes (rojo). 
+                        <br><br>
+                        <strong>Truco Pro:</strong> Si tienes Bitcoin, pulsa el botón <span class="material-icons" style="font-size:12px; vertical-align:middle;">currency_bitcoin</span> en la barra superior y te convertiré todo a BTC en tiempo real.
+                    </p>
+                </div>
+
+                <div class="help-story-card" style="border-left: 4px solid #BF5AF2;">
+                    <div class="help-story-title">
+                        <span class="material-icons" style="color: #BF5AF2;">visibility_off</span>
+                        Modo "En el Metro"
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--c-on-surface-secondary);">
+                        ¿Hay gente cotilla a tu alrededor? Toca tu <strong>Patrimonio Total</strong> (el número grande del Panel). 
+                        Pondré todos los números borrosos para proteger tu privacidad. Toca otra vez para verlos.
+                    </p>
                 </div>
             </div>
 
-            <div id="help-pane-experto" class="help-content-pane">
+            <div id="help-pane-tecnico" class="help-content-pane">
                 
-                <p class="form-label" style="margin-bottom:15px;">Documentación técnica de las capacidades avanzadas de DaniCtas.</p>
+                <div style="margin-bottom: 20px; padding: 10px; border-left: 2px solid #00ff9d; background: rgba(0,255,157,0.05);">
+                    <p style="font-family: 'Fira Code', monospace; font-size: 0.8rem; color: #00ff9d; margin: 0;">
+                        > SYSTEM_STATUS: ONLINE<br>
+                        > ARCHITECTURE: PWA / LOCAL-FIRST<br>
+                        > RENDERING: VANILLA JS (NO FRAMEWORKS)
+                    </p>
+                </div>
 
-                <details class="accordion help-accordion">
-                    <summary><strong>1. Arquitectura de Datos (PWA)</strong> <span class="material-icons accordion__icon">expand_more</span></summary>
-                    <div class="accordion__content">
-                        <p><strong>Local-First:</strong> La app utiliza <code>IndexedDB</code> para almacenar todos los datos en el dispositivo. Funciona 100% offline.</p>
-                        <p><strong>Sincronización:</strong> Cuando hay red, los cambios se replican asíncronamente a <strong>Firebase Firestore</strong>. El sistema de autenticación mantiene los datos encriptados y aislados por UID de usuario.</p>
+                <div class="help-tech-card">
+                    <div class="help-tech-title">
+                        <span class="material-icons">memory</span> Virtual Scrolling Engine
                     </div>
-                </details>
-
-                <details class="accordion help-accordion" style="margin-top: 8px;">
-                    <summary><strong>2. Motor de Inversiones (MWRR & P&L)</strong> <span class="material-icons accordion__icon">expand_more</span></summary>
-                    <div class="accordion__content">
-                        <p>El cálculo de rendimiento no es una simple resta. Utilizamos algoritmos financieros profesionales:</p>
-                        <ul>
-                            <li><strong>P&L (Profit & Loss):</strong> Se calcula como <code>Valor Mercado - Capital Aportado Neto</code>. Las aportaciones suman capital, las retiradas restan capital, pero la ganancia se mantiene en el valor de mercado.</li>
-                            <li><strong>TIR (XIRR):</strong> Utilizamos el método de Newton-Raphson para resolver la Tasa Interna de Retorno anualizada basada en los flujos de caja irregulares (aportaciones/retiradas) y sus fechas exactas.</li>
-                        </ul>
-                    </div>
-                </details>
-
-                <details class="accordion help-accordion" style="margin-top: 8px;">
-                    <summary><strong>3. Sistema de Importación CSV</strong> <span class="material-icons accordion__icon">expand_more</span></summary>
-                    <div class="accordion__content">
-                        <p>El importador inteligente analiza archivos bancarios y realiza las siguientes operaciones:</p>
-                        <ul>
-                            <li><strong>Detección de Tipos:</strong> Infiere si una cuenta es de Inversión o Tarjeta basándose en palabras clave en el nombre.</li>
-                            <li><strong>Algoritmo de Traspasos:</strong> Busca movimientos con el mismo importe (uno positivo, uno negativo) en la misma fecha y los fusiona automáticamente en un único movimiento de tipo "Traspaso" entre cuentas.</li>
-                            <li><strong>Formato:</strong> <code>FECHA;CUENTA;CONCEPTO;IMPORTE;DESCRIPCIÓN</code>.</li>
-                        </ul>
-                    </div>
-                </details>
-                
-                <details class="accordion help-accordion" style="margin-top: 8px;">
-                    <summary><strong>4. Lógica de Planificación (Recurrentes)</strong> <span class="material-icons accordion__icon">expand_more</span></summary>
-                    <div class="accordion__content">
-                        <p>El sistema de recurrentes no crea movimientos "fantasma".</p>
-                        <ul>
-                            <li><strong>Proyección:</strong> Calcula las fechas futuras basándose en la frecuencia (mensual, semanal, anual).</li>
-                            <li><strong>Ejecución:</strong> Cuando confirmas un recurrente pendiente, se crea un movimiento real en la colección <code>movimientos</code> y se avanza el puntero <code>nextDate</code> del recurrente. Esto mantiene el historial limpio y real.</li>
-                        </ul>
-                    </div>
-                </details>
-
-                <div style="margin-top: 20px; padding: 15px; background: #1e1e1e; border-radius: 12px; border: 1px solid #333;">
-                    <h4 style="color: #fff; margin-top: 0;">⌨️ Power User Shortcuts</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-family: monospace; font-size: 0.8rem; color: #aaa;">
-                        <div>Ctrl + K</div><div>Buscador Global</div>
-                        <div>Esc</div><div>Cerrar Modales</div>
-                        <div>Enter</div><div>Siguiente Campo</div>
-                        <div>Long Press</div><div>Menú Contextual (Tarjetas)</div>
+                    <div class="help-tech-text">
+                        <span class="tech-tag">PERFORMANCE</span> <span class="tech-tag">DOM RECYCLING</span>
+                        <br><br>
+                        El Diario no renderiza todos los movimientos. Utiliza un motor de <strong>virtualización</strong> personalizado (`vList`). 
+                        <br>
+                        Calcula la posición del scroll y solo inyecta en el DOM los elementos visibles (+ un buffer). Esto permite listas infinitas (10.000+ items) manteniendo 60fps en móviles antiguos.
                     </div>
                 </div>
+
+                <div class="help-tech-card">
+                    <div class="help-tech-title">
+                        <span class="material-icons">trending_up</span> Algoritmo Financiero (XIRR)
+                    </div>
+                    <div class="help-tech-text">
+                        <span class="tech-tag">MATH</span> <span class="tech-tag">NEWTON-RAPHSON</span>
+                        <br><br>
+                        El cálculo de rentabilidad no es lineal. Implementamos <strong>Money-Weighted Return Rate (MWRR)</strong>.
+                        <br>
+                        La app resuelve la ecuación polinómica de la TIR usando el método numérico de <strong>Newton-Raphson</strong> en el cliente. Considera cada aportación y retirada como un flujo de caja con fecha exacta para calcular tu rentabilidad real anualizada.
+                    </div>
+                </div>
+
+                <div class="help-tech-card">
+                    <div class="help-tech-title">
+                        <span class="material-icons">cloud_sync</span> Local-First & Sync
+                    </div>
+                    <div class="help-tech-text">
+                        <span class="tech-tag">INDEXEDDB</span> <span class="tech-tag">FIRESTORE</span>
+                        <br><br>
+                        La app funciona 100% offline. Escribe primero en <strong>IndexedDB</strong> (persistencia local) para una latencia cero (Optimistic UI).
+                        <br>
+                        En segundo plano, un hilo sincroniza los cambios con <strong>Firebase Firestore</strong> mediante escrituras en lote (Batches) para garantizar la atomicidad (integridad referencial entre cuentas y movimientos).
+                    </div>
+                </div>
+
+                <div class="help-tech-card">
+                    <div class="help-tech-title">
+                        <span class="material-icons">security</span> Cifrado & Seguridad
+                    </div>
+                    <div class="help-tech-text">
+                        <span class="tech-tag">SHA-256</span> <span class="tech-tag">WEB CRYPTO API</span>
+                        <br><br>
+                        El PIN de acceso rápido no se guarda en texto plano. Se almacena un hash <strong>SHA-256</strong> generado mediante la Web Crypto API nativa del navegador. La verificación ocurre localmente sin enviar el PIN a la red.
+                    </div>
+                </div>
+
+                <div class="help-tech-card">
+                    <div class="help-tech-title">
+                        <span class="material-icons">insights</span> Análisis de Datos
+                    </div>
+                    <div class="help-tech-text">
+                        Para los informes, utilizamos agregaciones en memoria (Map/Reduce) sobre el set de datos completo cargado en `AppStore`. Esto evita lecturas costosas a la base de datos cada vez que cambias un filtro, permitiendo análisis instantáneo de años de historial.
+                    </div>
+                </div>
+
             </div>
         `;
     }
 
     showModal('help-modal');
 };
+
+// Función para el cambio de pestañas en el modal de ayuda
+window.switchHelpTab = (tabName) => {
+    // 1. Quitar clase active de todos los botones y paneles
+    document.querySelectorAll('.help-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.help-content-pane').forEach(pane => pane.classList.remove('active'));
+    
+    // 2. Añadir clase active al botón pulsado (usando onclick attribute selector para identificarlo)
+    const btn = document.querySelector(`.help-tab-btn[onclick="switchHelpTab('${tabName}')"]`);
+    const pane = document.getElementById(`help-pane-${tabName}`);
+    
+    if (btn) btn.classList.add('active');
+    if (pane) pane.classList.add('active');
+    
+    // 3. Feedback táctil
+    if (typeof hapticFeedback === 'function') hapticFeedback('light');
+};
+
 
 // Función global para el cambio de pestañas (necesaria para el onclick en el HTML string)
 window.switchHelpTab = (tabName) => {
