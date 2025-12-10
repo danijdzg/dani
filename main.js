@@ -8662,8 +8662,10 @@ const setupFabInteractions = () => {
     fab.addEventListener('mouseleave', () => { clearTimeout(longPressTimer); fab.style.transform = "scale(1)"; });
     fab.addEventListener('touchcancel', () => { clearTimeout(longPressTimer); fab.style.transform = "scale(1)"; });
 };
-/* --- NUEVAS FUNCIONES PARA EL ESPEJO VISUAL --- */
-/* --- FUNCIÓN ESENCIAL: Actualiza el Espejo Visual (Números Bonitos) --- */
+/* ========================================================= */
+/* === FUNCIONES DEL ESPEJO VISUAL (Números Bonitos)     === */
+/* ========================================================= */
+
 const updateInputMirror = (input) => {
     // Seguridad: Si no hay input o padre, salimos
     if (!input || !input.parentElement) return;
@@ -8698,15 +8700,15 @@ const updateInputMirror = (input) => {
         const parts = rawValue.split(',');
         integerPart = parts[0];
         // Si parts[1] es undefined (ej: escribiste "12,"), mostramos la coma.
-        // Si es "5", mostramos ",5".
         decimalPart = ',' + (parts[1] || ''); 
     }
 
     // Formateamos los miles del entero (ej: 1000 -> 1.000)
-    // Primero quitamos puntos existentes para evitar errores, luego formateamos
+    // Primero quitamos puntos existentes para evitar errores
     const cleanInteger = integerPart.replace(/\./g, '');
+    
     if (!isNaN(parseFloat(cleanInteger))) {
-        // Regex mágica para poner puntos de miles
+        // Regex para poner puntos de miles
         integerPart = cleanInteger.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
     
@@ -8714,56 +8716,11 @@ const updateInputMirror = (input) => {
     mirror.innerHTML = `<span class="currency-major">${integerPart}</span><small class="currency-minor">${decimalPart}</small>`;
 };
 
-/* Helper opcional para sincronizar todos a la vez */
 const syncMirrors = () => {
     document.querySelectorAll('.input-amount-calculator').forEach(updateInputMirror);
 };
 
-// Crea o actualiza el espejo visual
-const initAmountInput = () => {
-    const amountInputs = document.querySelectorAll('.input-amount-calculator');
-    const calculatorToggle = select('calculator-toggle-btn'); 
 
-    if (calculatorToggle) calculatorToggle.style.display = 'none';
-
-    amountInputs.forEach(input => {
-        // 1. Configuración anti-teclado nativo
-        input.readOnly = true; 
-        input.setAttribute('inputmode', 'none');
-        
-        // 2. Limpieza de eventos antiguos (Clonado)
-        const newInput = input.cloneNode(true);
-        input.parentNode.replaceChild(newInput, input);
-    
-        // 3. Inicializamos el espejo visual inmediatamente
-        updateInputMirror(newInput); 
-
-        // 4. Lógica de Sincronización (CRUCIAL)
-        // Cuando la calculadora cambia el valor, dispara 'input'. Aquí lo capturamos.
-        const syncHandler = () => updateInputMirror(newInput);
-        
-        newInput.addEventListener('input', syncHandler);
-        newInput.addEventListener('change', syncHandler);
-        
-        // Observador de respaldo por si el evento no se dispara
-        new MutationObserver(syncHandler).observe(newInput, { attributes: true, attributeFilter: ['value'] });
-
-        // 5. Evento de Apertura
-        newInput.addEventListener('click', (e) => {
-            e.preventDefault(); 
-            // Forzamos actualización visual antes de abrir
-            syncHandler();
-            
-            hapticFeedback('light');
-            showCalculator(newInput);
-        });
-    });
-};
-
-// Sincronizador global
-const syncMirrors = () => {
-    document.querySelectorAll('#movimiento-cantidad').forEach(updateInputMirror);
-};
 
 const initAmountInput = () => {
     const amountInputs = document.querySelectorAll('.input-amount-calculator');
