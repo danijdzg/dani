@@ -651,10 +651,6 @@ const PAGE_IDS = {
     AJUSTES: 'ajustes-page',
 };
 
-const THEMES = {
-    'default': { name: 'Abismo Digital', icon: 'dark_mode' },
-    'sunset-groove': { name: 'Brisa Alpina', icon: 'light_mode' }
-};
 // ==========================================
 // === CORE OPTIMIZATION: AppStore v1.0 ===
 // ==========================================
@@ -2232,8 +2228,7 @@ window.addEventListener('offline', () => {
     navigateTo(PAGE_IDS.PANEL, true); 
     // =====================================
 
-    updateThemeIcon(localStorage.getItem('appTheme') || 'default');
-    isInitialLoadComplete = true;
+      isInitialLoadComplete = true;
 };
 
         
@@ -7948,36 +7943,7 @@ window.switchHelpTab = (tabName) => {
     if (btn) btn.classList.add('active');
     if (pane) pane.classList.add('active');
 };
-	const updateThemeIcon = () => {
-    const themeBtn = select('theme-toggle-btn');
-    if (!themeBtn) return;
-    
-    const iconEl = themeBtn.querySelector('.material-icons');
-    if (!iconEl) return;
 
-    const themeKeys = Object.keys(THEMES);
-    const currentThemeKey = document.body.dataset.theme || 'default';
-    const currentIndex = themeKeys.indexOf(currentThemeKey);
-    
-    // Lógica para el siguiente tema (para el tooltip)
-    const nextIndex = (currentIndex + 1) % themeKeys.length;
-    const nextThemeKey = themeKeys[nextIndex];
-
-    // ¡CORRECCIÓN CLAVE!
-    // 1. El icono muestra el estado ACTUAL.
-    iconEl.textContent = THEMES[currentThemeKey].icon;
-    // 2. El tooltip describe la ACCIÓN a realizar.
-    themeBtn.title = `Cambiar a Tema: ${THEMES[nextThemeKey].name}`;
-};
-	// --- ▼▼▼ PEGA ESTAS DOS NUEVAS FUNCIONES COMPLETAS ▼▼▼ ---
-
-/**
- * Calcula los datos del colchón de emergencia.
- * @param {object} saldos - Objeto con los saldos de todas las cuentas.
- * @param {Array} cuentas - Array con la información de todas las cuentas.
- * @param {Array} recentMovements - Array con los movimientos de los últimos 3 meses.
- * @returns {object} Un objeto con los resultados del cálculo.
- */
 const calculateEmergencyFund = (saldos, cuentas, recentMovements) => {
     const LIQUIDO_TYPES = ['BANCO', 'AHORRO', 'EFECTIVO'];
     const DEBT_TYPES = ['TARJETA DE CRÉDITO'];
@@ -8022,29 +7988,7 @@ const calculateFinancialIndependence = (patrimonioNeto, gastoMensualPromedio) =>
 };
 
 
- // REEMPLAZA LA FUNCIÓN ANTIGUA CON ESTA
-const handleToggleTheme = () => {
-    const themeKeys = Object.keys(THEMES);
-    const currentTheme = document.body.dataset.theme || 'default';
-    const currentIndex = themeKeys.indexOf(currentTheme);
-    const nextIndex = (currentIndex + 1) % themeKeys.length;
-    const newTheme = themeKeys[nextIndex];
-
-    document.body.dataset.theme = newTheme;
-    localStorage.setItem('appTheme', newTheme);
-    hapticFeedback('light');
-    updateThemeIcon(); // No necesita parámetro, ahora es más inteligente
-
-    // Esto es importante para que los gráficos recarguen sus colores
-    if (conceptosChart) conceptosChart.destroy();
-    if (liquidAssetsChart) liquidAssetsChart.destroy();
-    
-    const activePageEl = document.querySelector('.view--active');
-    const activePageId = activePageEl ? activePageEl.id : null;
-    if (activePageId) {
-        navigateTo(activePageId, true);
-    }
-};
+ 
         const showConceptosModal = () => { 
             const html = `
     <div class="form-group" style="margin-bottom: var(--sp-3);">
@@ -8719,13 +8663,15 @@ const setupFabInteractions = () => {
     fab.addEventListener('touchcancel', () => { clearTimeout(longPressTimer); fab.style.transform = "scale(1)"; });
 };
 /* --- NUEVAS FUNCIONES PARA EL ESPEJO VISUAL --- */
-
-// Crea o actualiza el espejo visual
+/* --- FUNCIÓN ESENCIAL: Actualiza el Espejo Visual (Números Bonitos) --- */
 const updateInputMirror = (input) => {
+    // Seguridad: Si no hay input o padre, salimos
+    if (!input || !input.parentElement) return;
+
     const wrapper = input.parentElement;
     let mirror = wrapper.querySelector('.input-visual-mirror');
     
-    // Si no existe el espejo, lo creamos
+    // 1. Si no existe el espejo, lo creamos dinámicamente
     if (!mirror) {
         mirror = document.createElement('div');
         mirror.className = 'input-visual-mirror';
@@ -8734,7 +8680,7 @@ const updateInputMirror = (input) => {
     
     const rawValue = input.value;
     
-    // CASO 1: Input vacío o solo "0" -> Mostrar 0,00 gris
+    // 2. CASO VACÍO: Si no hay valor o es 0, mostramos "0,00" atenuado
     if (!rawValue || rawValue === '0' || rawValue === '') {
         mirror.classList.add('is-empty');
         mirror.innerHTML = `<span class="currency-major">0</span><small class="currency-minor">,00</small>`;
@@ -8743,23 +8689,75 @@ const updateInputMirror = (input) => {
 
     mirror.classList.remove('is-empty');
 
-    // CASO 2: Tiene valor. Formateamos manteniendo lo que el usuario escribe
+    // 3. CASO CON VALOR: Formateamos respetando lo que escribe el usuario
     let integerPart = rawValue;
     let decimalPart = '';
 
+    // Detectamos si hay decimales (coma)
     if (rawValue.includes(',')) {
         const parts = rawValue.split(',');
         integerPart = parts[0];
-        // Si parts[1] es undefined (ej: "12,"), mostramos la coma.
+        // Si parts[1] es undefined (ej: escribiste "12,"), mostramos la coma.
+        // Si es "5", mostramos ",5".
         decimalPart = ',' + (parts[1] || ''); 
     }
 
     // Formateamos los miles del entero (ej: 1000 -> 1.000)
-    if (!isNaN(parseFloat(integerPart.replace(/\./g, '')))) {
-        integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    // Primero quitamos puntos existentes para evitar errores, luego formateamos
+    const cleanInteger = integerPart.replace(/\./g, '');
+    if (!isNaN(parseFloat(cleanInteger))) {
+        // Regex mágica para poner puntos de miles
+        integerPart = cleanInteger.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
     
+    // 4. Renderizamos el HTML con las clases de estilo
     mirror.innerHTML = `<span class="currency-major">${integerPart}</span><small class="currency-minor">${decimalPart}</small>`;
+};
+
+/* Helper opcional para sincronizar todos a la vez */
+const syncMirrors = () => {
+    document.querySelectorAll('.input-amount-calculator').forEach(updateInputMirror);
+};
+
+// Crea o actualiza el espejo visual
+const initAmountInput = () => {
+    const amountInputs = document.querySelectorAll('.input-amount-calculator');
+    const calculatorToggle = select('calculator-toggle-btn'); 
+
+    if (calculatorToggle) calculatorToggle.style.display = 'none';
+
+    amountInputs.forEach(input => {
+        // 1. Configuración anti-teclado nativo
+        input.readOnly = true; 
+        input.setAttribute('inputmode', 'none');
+        
+        // 2. Limpieza de eventos antiguos (Clonado)
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+    
+        // 3. Inicializamos el espejo visual inmediatamente
+        updateInputMirror(newInput); 
+
+        // 4. Lógica de Sincronización (CRUCIAL)
+        // Cuando la calculadora cambia el valor, dispara 'input'. Aquí lo capturamos.
+        const syncHandler = () => updateInputMirror(newInput);
+        
+        newInput.addEventListener('input', syncHandler);
+        newInput.addEventListener('change', syncHandler);
+        
+        // Observador de respaldo por si el evento no se dispara
+        new MutationObserver(syncHandler).observe(newInput, { attributes: true, attributeFilter: ['value'] });
+
+        // 5. Evento de Apertura
+        newInput.addEventListener('click', (e) => {
+            e.preventDefault(); 
+            // Forzamos actualización visual antes de abrir
+            syncHandler();
+            
+            hapticFeedback('light');
+            showCalculator(newInput);
+        });
+    });
 };
 
 // Sincronizador global
@@ -9237,7 +9235,6 @@ const handleStart = (e) => {
                 }
             },
             'use-password-instead': () => showPasswordFallback(),
-            'toggle-theme': () => { handleToggleTheme(); hapticFeedback('light'); },
             'navigate': () => { hapticFeedback('light'); navigateTo(page); },
             'help': showHelpModal,
             'exit': handleExitApp,

@@ -351,75 +351,41 @@
 
 	
 :root {
-    /* TEMA 1: "ABISMO DIGITAL" (Oscuro Profesional) */
-    /* PALETA: Inspirada en fintech de lujo, con un fondo azul noche profundo. */
-    --c-primary: #00B34D;       /* Verde Esmeralda, reservado para acciones clave. */
+    /* TEMA ÚNICO: "ABISMO DIGITAL" */
+    --c-primary: #00B34D;       
     --c-primary-hover: #00CC55;
     --c-danger: #FF3B30;
     --c-success: #39FF14;
     --c-warning: #FFD60A;
     --c-info: #BF5AF2;
     
-    /* FONDOS Y SUPERFICIES: Elegancia y profundidad. */
-    --c-background: #0A121A;    /* AZUL NOCHE PROFUNDO - Casi negro, pero más rico. */
-    --c-surface: rgba(28, 42, 58, 0.6); /* Glassmorphism sutil sobre el fondo. */
+    /* FONDOS OSCUROS FIJOS */
+    --c-background: #0A121A;    
+    --c-surface: rgba(28, 42, 58, 0.6); 
     --c-surface-variant: rgba(42, 58, 78, 0.5);
     
-    /* BORDES Y LÍNEAS: Definición sin distracción. */
-    --c-outline: rgba(255, 255, 255, 0.1); /* Blanco de baja opacidad. */
-    --c-border-glow: 0 0 12px rgba(0, 179, 77, 0.4); /* Resplandor ahora en verde primario. */
+    --c-outline: rgba(255, 255, 255, 0.1); 
+    --c-border-glow: 0 0 12px rgba(0, 179, 77, 0.4);
     
-    /* TEXTOS: Optimizados para legibilidad. */
     --c-on-surface: #F0F8FF;
-    --c-on-surface-secondary: rgba(240, 248, 255, 0.85); /* Contraste mejorado. */
-    --c-on-surface-tertiary: rgba(240, 248, 255, 0.70); /* Contraste mejorado. */
+    --c-on-surface-secondary: rgba(240, 248, 255, 0.85); 
+    --c-on-surface-tertiary: rgba(240, 248, 255, 0.70); 
     
-    /* SOMBRAS: Resplandor suave. */
     --shadow-sm: 0 0 8px rgba(0, 0, 0, 0.25);
     --shadow-md: 0 0 20px rgba(0, 0, 0, 0.45);
     --glow-red: 0 0 20px rgba(255, 59, 48, 0.55);
 
-    /* VARIABLES BASE (No se tocan) */
-    --c-white: #FFFFFF; --c-black: #000000;
-    --c-chart-positive: var(--c-success); --c-chart-negative: var(--c-danger);
-    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    /* VARIABLES BASE */
+    --c-white: #FFFFFF; 
+    --c-black: #000000;
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-numeric: 'Inter', sans-serif;
+    
+    /* Tamaños y espacios (mantenlos igual) */
     --fs-xs: 0.75rem; --fs-sm: 0.875rem; --fs-base: 1rem; --fs-lg: 1.125rem; --fs-xl: 1.25rem;
     --sp-1: 0.25rem; --sp-2: 0.5rem; --sp-3: 0.75rem; --sp-4: 1rem; --sp-5: 1.25rem; --sp-6: 1.5rem;
     --border-radius-md: 10px; --border-radius-lg: 16px;
-	/* AÑADIMOS ESTO PARA NÚMEROS ESTABLES */
-    --font-numeric: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
-
-body[data-theme="sunset-groove"] {
-    /* TEMA 2: "BRISA ALPINA" (Claro y Profesional) */
-    /* PALETA: Inspirada en la claridad y limpieza del diseño de apps nativas modernas. */
-    --c-primary: #007AFF;       /* Azul más vibrante y moderno. */
-    --c-primary-hover: #0056b3;
-    --c-danger: #D92A2A;
-    --c-success: #28a745;
-    --c-warning: #FF9500;
-    --c-info: #5856D6;
-    
-    /* FONDOS Y SUPERFICIES: Limpieza y aire. */
-    --c-background: #F7F7F7;    /* FONDO CASI BLANCO - Para una sensación más nítida. */
-    --c-surface: rgba(255, 255, 255, 0.8); /* Glassmorphism muy sutil. */
-    --c-surface-variant: rgba(255, 255, 255, 0.7);
-    --c-outline: rgba(60, 60, 67, 0.12);  /* Borde más claro, casi imperceptible. */
-    
-    /* TEXTOS: Contraste perfecto sobre blanco. */
-    --c-on-surface: #1D1D1F; /* Gris muy oscuro, más suave que el negro puro. */
-    --c-on-surface-secondary: #3C3C4399;
-    --c-on-surface-tertiary: #3C3C4380;
-    
-    /* SOMBRAS: Suaves y difusas para un efecto de flotación. */
-    --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-
-/* ================================================================= */
-/* === ESTILOS GLOBALES DEL ENCABEZADO (INVARIABLE A LOS TEMAS)   === */
-/* ================================================================= */
 
 /* 1. Estilo base del encabezado (oscuro, para que contraste en ambos temas) */
 .top-bar {
@@ -428,12 +394,6 @@ body[data-theme="sunset-groove"] {
     backdrop-filter: blur(25px) saturate(180%); /* Saturate aviva los colores de fondo */
     -webkit-backdrop-filter: blur(25px) saturate(180%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Borde sutilísimo */
-}
-
-/* En Modo Claro (Sunset Groove) necesitarás ajustar el rgba del background a algo claro */
-body[data-theme="sunset-groove"] .top-bar {
-    background-color: rgba(255, 255, 255, 0.65);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 /* 2. Anulación específica para Contabilidad A (el encabezado se vuelve azul corporativo) */
