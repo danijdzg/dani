@@ -1124,13 +1124,21 @@ const handleCalculatorInput = (key) => {
 // Función auxiliar para escribir en el input real
 const updateTargetInput = (val) => {
     if (calculatorState.targetInput) {
+        // 1. Preparamos el número
         const num = parseFloat(val.replace(',', '.')) || 0;
-        // Formateamos bonito en el input real
+        
+        // 2. Escribimos en el input REAL (el invisible)
         calculatorState.targetInput.value = num.toLocaleString('es-ES', { 
-            useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 
+            useGrouping: false, // Importante: Sin puntos para que sea fácil de procesar luego
+            minimumFractionDigits: 0, 
+            maximumFractionDigits: 2 
         });
-        // Disparamos evento para que el sistema sepa que cambió
+        
+        // 3. Disparamos el evento para que otros scripts sepan que cambió
         calculatorState.targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+        
+        // 4. ¡LA CLAVE! Forzamos la actualización visual manualmente
+        updateInputMirror(calculatorState.targetInput);
     }
 };
 
@@ -8662,13 +8670,12 @@ const setupFabInteractions = () => {
 /* ========================================================= */
 
 const updateInputMirror = (input) => {
-    // Seguridad: Si no hay input o padre, salimos
     if (!input || !input.parentElement) return;
 
     const wrapper = input.parentElement;
     let mirror = wrapper.querySelector('.input-visual-mirror');
     
-    // 1. Si no existe el espejo, lo creamos dinámicamente
+    // Crear el espejo si no existe
     if (!mirror) {
         mirror = document.createElement('div');
         mirror.className = 'input-visual-mirror';
@@ -8677,8 +8684,8 @@ const updateInputMirror = (input) => {
     
     const rawValue = input.value;
     
-    // 2. CASO VACÍO: Si no hay valor o es 0, mostramos "0,00" atenuado
-    if (!rawValue || rawValue === '0' || rawValue === '') {
+    // Si está vacío o es 0, mostramos el placeholder gris
+    if (!rawValue || rawValue === '0' || rawValue === '' || rawValue === '0,00') {
         mirror.classList.add('is-empty');
         mirror.innerHTML = `<span class="currency-major">0</span><small class="currency-minor">,00</small>`;
         return;
@@ -8686,80 +8693,57 @@ const updateInputMirror = (input) => {
 
     mirror.classList.remove('is-empty');
 
-    // 3. CASO CON VALOR: Formateamos respetando lo que escribe el usuario
+    // Formateo visual
     let integerPart = rawValue;
     let decimalPart = '';
 
-    // Detectamos si hay decimales (coma)
     if (rawValue.includes(',')) {
         const parts = rawValue.split(',');
         integerPart = parts[0];
-        // Si parts[1] es undefined (ej: escribiste "12,"), mostramos la coma.
         decimalPart = ',' + (parts[1] || ''); 
     }
 
-    // Formateamos los miles del entero (ej: 1000 -> 1.000)
-    // Primero quitamos puntos existentes para evitar errores
+    // Puntos de miles
     const cleanInteger = integerPart.replace(/\./g, '');
-    
     if (!isNaN(parseFloat(cleanInteger))) {
-        // Regex para poner puntos de miles
         integerPart = cleanInteger.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
     
-    // 4. Renderizamos el HTML con las clases de estilo
     mirror.innerHTML = `<span class="currency-major">${integerPart}</span><small class="currency-minor">${decimalPart}</small>`;
 };
 
-const syncMirrors = () => {
-    document.querySelectorAll('.input-amount-calculator').forEach(updateInputMirror);
-};
 
 
-
+/* --- 3. INICIALIZADOR DE INPUTS --- */
 const initAmountInput = () => {
     const amountInputs = document.querySelectorAll('.input-amount-calculator');
-    const calculatorToggle = select('calculator-toggle-btn'); 
-
-    if (calculatorToggle) calculatorToggle.style.display = 'none';
+    
+    // Ocultar botón de calculadora antiguo si existe
+    const toggle = document.getElementById('calculator-toggle-btn');
+    if (toggle) toggle.style.display = 'none';
 
     amountInputs.forEach(input => {
-        // 1. EL TRUCO MAESTRO: Readonly evita que el teclado móvil se abra
         input.readOnly = true; 
-        
-        // 2. Seguridad extra para móviles
         input.setAttribute('inputmode', 'none');
-        input.setAttribute('autocomplete', 'off');
         
-        // 3. Limpieza de eventos antiguos (Clonado)
+        // Clonar para limpiar eventos viejos
         const newInput = input.cloneNode(true);
         input.parentNode.replaceChild(newInput, input);
     
-        // 4. Inicializamos el espejo visual inmediatamente para el NUEVO input
-        // (Esto asegura que si hay un valor guardado, se vea al cargar)
-        updateInputMirror(newInput); // CORREGIDO: Usamos newInput
+        // Inicializar visualización
+        updateInputMirror(newInput); 
 
-        // 5. Añadimos el evento Click al NUEVO input
+        // Listener para Click (Abrir calculadora)
         newInput.addEventListener('click', (e) => {
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            
-            // CORREGIDO: Referenciamos 'newInput' (el que está en pantalla), no 'input' (el viejo)
+            e.preventDefault();
+            // Actualizar visual por si acaso
             updateInputMirror(newInput);
-            
-            // Añadimos el listener de cambios al NUEVO input
-            // IMPORTANTE: Esto conecta la calculadora con el espejo visual
-            newInput.addEventListener('input', () => updateInputMirror(newInput));
-            
-            // Observador de mutaciones para el NUEVO input
-            new MutationObserver(() => updateInputMirror(newInput)).observe(newInput, { attributes: true, attributeFilter: ['value'] });    
-            
-            // Abrimos la calculadora apuntando al NUEVO input
-            if (!calculatorState.isVisible || calculatorState.targetInput !== newInput) {
-                hapticFeedback('light');
-                showCalculator(newInput);
-            }
+            hapticFeedback('light');
+            showCalculator(newInput);
         });
+
+        // Listener para cambios manuales (por si acaso)
+        newInput.addEventListener('input', () => updateInputMirror(newInput));
     });
 };
 
