@@ -1839,14 +1839,30 @@ document.body.addEventListener('change', e => {
 		return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(number);
 		};
 const formatCurrencyHTML = (numInCents) => {
-    const formatted = formatCurrency(numInCents);
-    // Separa la parte entera de los decimales (asumiendo formato 1.234,56 €)
-    const parts = formatted.split(',');
-    if (parts.length === 2) {
-        // parts[0] es "1.234" y parts[1] es "56 €"
-        return `<span class="currency-major">${parts[0]}</span><small class="currency-minor">,${parts[1]}</small>`;
-    }
-    return `<span class="currency-major">${formatted}</span>`;
+    // 1. Manejo seguro de nulos
+    if (numInCents === null || numInCents === undefined) numInCents = 0;
+    
+    // 2. Detectar negativo
+    const isNegative = numInCents < 0;
+    const absVal = Math.abs(numInCents);
+    
+    // 3. Formatear número base (sin símbolo)
+    const formatted = new Intl.NumberFormat('es-ES', { 
+        style: 'decimal', 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+    }).format(absVal / 100);
+
+    // 4. Separar partes
+    const parts = formatted.split(','); // En ES es coma, si tu locale es distinto, ajusta
+    const integerPart = parts[0];
+    const decimalPart = parts[1] || '00';
+    
+    // 5. Construir HTML
+    // El signo menos va fuera del span mayor para alineación correcta
+    const signHTML = isNegative ? '−' : ''; 
+    
+    return `${signHTML}<span class="currency-major">${integerPart}</span><small class="currency-minor">,${decimalPart}</small><small class="currency-symbol">€</small>`;
 };
 	const getLedgerName = (letter) => {
     // Intenta obtener el nombre personalizado, si no existe, usa "Caja X"
@@ -1955,9 +1971,14 @@ const showToast = (message, type = 'info', duration = 3500) => {
         /* --- REEMPLAZAR ESTA FUNCIÓN AUXILIAR PARA CORREGIR DECIMALES --- */
 const animateCountUp = (el, end, duration = 700, formatAsCurrency = true, prefix = '', suffix = '') => {
     if (!el) return;
-    // Si el elemento no es visible (ej. cambio de pestaña rápido), lo actualizamos directo sin animar
+    
+    // Si el elemento no es visible, renderizado estático inmediato
     if (!el.offsetParent) {
-        el.textContent = formatAsCurrency ? formatCurrency(end) : `${prefix}${(end / 100).toFixed(2)}${suffix}`;
+        if (formatAsCurrency) {
+            el.innerHTML = prefix + formatCurrencyHTML(end) + suffix; // USA innerHTML y formatCurrencyHTML
+        } else {
+            el.textContent = `${prefix}${(end / 100).toFixed(2)}${suffix}`;
+        }
         el.dataset.currentValue = String(end / 100);
         return;
     }
@@ -1966,7 +1987,11 @@ const animateCountUp = (el, end, duration = 700, formatAsCurrency = true, prefix
     const endValue = end / 100;
     
     if (start === endValue) {
-        el.textContent = formatAsCurrency ? formatCurrency(end) : `${prefix}${endValue.toFixed(2)}${suffix}`;
+        if (formatAsCurrency) {
+            el.innerHTML = prefix + formatCurrencyHTML(end) + suffix;
+        } else {
+            el.textContent = `${prefix}${endValue.toFixed(2)}${suffix}`;
+        }
         return;
     }
 
@@ -1976,24 +2001,26 @@ const animateCountUp = (el, end, duration = 700, formatAsCurrency = true, prefix
     const step = (timestamp) => {
         if (!startTime) startTime = timestamp;
         const progress = Math.min((timestamp - startTime) / duration, 1);
-        
-        // Easing (suavizado)
         const ease = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
         
         const current = start + (endValue - start) * ease;
+        const currentInCents = Math.round(current * 100);
 
-        // Durante la animación
-        el.textContent = formatAsCurrency 
-            ? formatCurrency(current * 100) 
-            : `${prefix}${current.toFixed(2)}${suffix}`;
+        if (formatAsCurrency) {
+            // Durante la animación usamos formatCurrencyHTML para que no parpadee el estilo
+            el.innerHTML = prefix + formatCurrencyHTML(currentInCents) + suffix;
+        } else {
+            el.textContent = `${prefix}${current.toFixed(2)}${suffix}`;
+        }
 
         if (progress < 1) {
             requestAnimationFrame(step);
         } else {
-            // Estado final exacto (Aquí forzamos los 2 decimales)
-            el.textContent = formatAsCurrency 
-                ? formatCurrency(end) 
-                : `${prefix}${(end / 100).toFixed(2)}${suffix}`;
+            if (formatAsCurrency) {
+                el.innerHTML = prefix + formatCurrencyHTML(end) + suffix;
+            } else {
+                el.textContent = `${prefix}${(end / 100).toFixed(2)}${suffix}`;
+            }
         }
     };
     
@@ -3415,9 +3442,9 @@ const renderPortfolioMainContent = async (targetContainerId) => {
     let rentabilidadTotalAbsoluta = portfolioTotalValorado - portfolioTotalInvertido;
     let rentabilidadTotalPorcentual = portfolioTotalInvertido !== 0 ? (rentabilidadTotalAbsoluta / portfolioTotalInvertido) * 100 : 0;
     
-    let displayTotalInvertido = formatCurrency(portfolioTotalInvertido);
-    let displayRentabilidadAbsoluta = formatCurrency(rentabilidadTotalAbsoluta);
-    let displayTotalValorado = formatCurrency(portfolioTotalValorado);
+    let displayTotalInvertido = formatCurrencyHTML(portfolioTotalInvertido);
+    let displayRentabilidadAbsoluta = formatCurrencyHTML(rentabilidadTotalAbsoluta);
+    let displayTotalValorado = formatCurrencyHTML(portfolioTotalValorado);
     let displayPorcentajeTotal = rentabilidadTotalPorcentual.toFixed(2) + '%';
 
     const rentabilidadClass = rentabilidadTotalAbsoluta >= 0 ? 'text-positive' : 'text-negative';
@@ -3501,9 +3528,9 @@ const renderPortfolioMainContent = async (targetContainerId) => {
                     cPnl = formatBTC(pnlVal);
                 } else {
                     // MODO NORMAL (EUROS)
-                    cInvertido = formatCurrency(cuenta.capitalInvertido);
-                    cReal = formatCurrency(cuenta.valorActual);
-                    cPnl = formatCurrency(cuenta.pnlAbsoluto);
+                    cInvertido = formatCurrencyHTML(cuenta.capitalInvertido);
+					cReal = formatCurrencyHTML(cuenta.valorActual);
+					cPnl = formatCurrencyHTML(cuenta.pnlAbsoluto);
                 }
                 
                 const cPorcentaje = cuenta.pnlPorcentual.toFixed(2) + '%';
@@ -3704,7 +3731,7 @@ const handleShowPnlBreakdown = async (accountId) => {
     return `
         <div class="movimiento-date-header ${label === 'Hoy' ? 'is-today' : ''}">
             <span style="text-transform: capitalize;">${label}</span>
-            <span>${formatCurrency(item.total)}</span>
+            <span>${formatCurrencyHTML(item.total)}</span>
         </div>
     `;
 }
@@ -4443,7 +4470,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
                         <small style="color: var(--c-on-surface-secondary);">${(saldos[c.id] || 0) / typeBalance * 100 > 0 ? ((saldos[c.id] || 0) / typeBalance * 100).toFixed(1) + '% de ' + tipo : ''}</small>
                     </div>
                     <div style="display: flex; align-items: center; gap: var(--sp-2);">
-                        ${formatCurrency(saldos[c.id] || 0)}
+                        ${formatCurrencyHTML(saldos[c.id] || 0)}
                         <span class="material-icons" style="font-size: 18px;">chevron_right</span>
                     </div>
                 </div>`
@@ -4911,7 +4938,7 @@ const TransactionCardComponent = (m, dbData) => {
                 </div>
                 <div class="transaction-card__figures">
                     <div class="transaction-card__amount ${amountClass}" style="font-size: 1rem;">${amountSign}${formatCurrencyHTML(m.cantidad)}</div>
-                    <div class="transaction-card__balance" style="font-size: 0.75rem; opacity: 0.6;">${formatCurrency(m.runningBalance)}</div>
+                    <div class="transaction-card__balance" style="font-size: 0.75rem; opacity: 0.6;">${formatCurrencyHTML(m.runningBalance)}</div>
                 </div>
             </div>
         </div>
@@ -5441,7 +5468,7 @@ async function renderInformeAsignacionActivos(container) {
         tableHtml += `
             <tr>
                 <td style="padding: 8px; border-bottom: 1px solid var(--c-outline);">${perf.nombre}</td>
-                <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;">${formatCurrency(perf.valorActual)}</td>
+                <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;">${formatCurrencyHTML(perf.valorActual)}</td>
                 <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;" class="${pnlClass}">${formatCurrency(perf.pnlAbsoluto)}</td>
                 <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;" class="${pnlClass}">${perf.pnlPorcentual.toFixed(2)}%</td>
                 <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;" class="${tirClass}">${(perf.irr * 100).toFixed(2)}%</td>
@@ -5458,8 +5485,8 @@ async function renderInformeAsignacionActivos(container) {
         <tfoot style="font-weight: 700; border-top: 2px solid var(--c-outline);">
             <tr>
                 <td style="padding: 10px 8px;">TOTAL PORTAFOLIO</td>
-                <td style="padding: 10px 8px; text-align: right;">${formatCurrency(portfolioTotal.valorActual)}</td>
-                <td style="padding: 10px 8px; text-align: right;" class="${totalPnlClass}">${formatCurrency(portfolioTotal.pnlAbsoluto)}</td>
+                <td style="padding: 10px 8px; text-align: right;">${formatCurrencyHTML(portfolioTotal.valorActual)}</td>
+                <td style="padding: 10px 8px; text-align: right;" class="${totalPnlClass}">${formatCurrencyHTML(portfolioTotal.pnlAbsoluto)}</td>
                 <td style="padding: 10px 8px; text-align: right;" class="${totalPnlClass}">${portfolioTotal.pnlPorcentual.toFixed(2)}%</td>
                 <td style="padding: 10px 8px; text-align: right;" class="${totalTirClass}">${(portfolioTotal.irr * 100).toFixed(2)}%</td>
             </tr>
@@ -6544,7 +6571,7 @@ const updateDashboardData = async () => {
             kpiInvPnl.classList.remove('skeleton');
             const pnl = portfolioPerf.pnlAbsoluto;
             const sign = pnl >= 0 ? '+' : '';
-            kpiInvPnl.textContent = `${sign}${formatCurrency(pnl)}`;
+            kpiInvPnl.textContent = `${sign}${formatCurrencyHTML(pnl)}`;
             kpiInvPnl.className = `status-value ${pnl >= 0 ? 'text-positive' : 'text-negative'}`;
             kpiInvPnl.style.fontSize = "1.1rem";
         }

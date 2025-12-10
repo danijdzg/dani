@@ -4585,17 +4585,41 @@ body[data-theme="sunset-groove"] .hero-val-big {
     background-color: var(--c-success);
     box-shadow: 0 0 6px var(--c-success);
 }
-/* MEJORA 3: Estilo de Moneda Pro (Decimales pequeños) */
+/* === ESTILOS DE MONEDA "FINTECH PRO" === */
+
+/* Parte entera (Euros) */
 .currency-major {
-    font-weight: 700;
+    font-weight: inherit; /* Hereda la negrita del padre */
+    letter-spacing: -0.02em; /* Un poco más pegado para números pro */
 }
+
+/* Parte decimal (Céntimos) */
 .currency-minor {
-    font-size: 0.75em;
-    font-weight: 600;
-    opacity: 0.8;
-    vertical-align: top;
-    margin-top: 0.1em;
+    font-size: 0.65em; /* 65% del tamaño del número principal */
+    font-weight: inherit;
+    opacity: 0.85; /* Ligeramente más suave */
+    vertical-align: top; /* Lo eleva */
+    position: relative;
+    top: 0.1em; /* Ajuste fino de altura */
+    margin-left: 1px;
     display: inline-block;
+}
+
+/* El símbolo del Euro */
+.currency-symbol {
+    font-size: 0.65em;
+    font-weight: inherit;
+    opacity: 0.85;
+    vertical-align: top;
+    position: relative;
+    top: 0.1em;
+    margin-left: 2px;
+}
+
+/* Ajuste específico para cuando los números son negativos (Rojos) */
+.text-negative .currency-minor,
+.text-negative .currency-symbol {
+    opacity: 0.9; /* Un poco más visibles en rojo */
 }
 /* MEJORA 2: Transiciones del Botón de Guardado */
 .btn {
