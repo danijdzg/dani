@@ -8734,8 +8734,8 @@ const updateInputMirror = (input) => {
     
     const rawValue = input.value;
     
-    // CASO 1: Input vacío o solo "0"
-    if (!rawValue || rawValue === '0') {
+    // CASO 1: Input vacío o solo "0" -> Mostrar 0,00 gris
+    if (!rawValue || rawValue === '0' || rawValue === '') {
         mirror.classList.add('is-empty');
         mirror.innerHTML = `<span class="currency-major">0</span><small class="currency-minor">,00</small>`;
         return;
@@ -8743,20 +8743,18 @@ const updateInputMirror = (input) => {
 
     mirror.classList.remove('is-empty');
 
-    // CASO 2: Tiene valor. Lo formateamos manualmente para respetar lo que escribe el usuario.
-    // Detectamos si hay coma
+    // CASO 2: Tiene valor. Formateamos manteniendo lo que el usuario escribe
     let integerPart = rawValue;
     let decimalPart = '';
 
     if (rawValue.includes(',')) {
         const parts = rawValue.split(',');
         integerPart = parts[0];
-        // Si parts[1] es undefined (ej: "12,"), mostramos la coma. Si es "5", mostramos ",5"
+        // Si parts[1] es undefined (ej: "12,"), mostramos la coma.
         decimalPart = ',' + (parts[1] || ''); 
     }
 
     // Formateamos los miles del entero (ej: 1000 -> 1.000)
-    // Solo si es un número válido
     if (!isNaN(parseFloat(integerPart.replace(/\./g, '')))) {
         integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
@@ -8787,7 +8785,7 @@ const initAmountInput = () => {
         const newInput = input.cloneNode(true);
         input.parentNode.replaceChild(newInput, input);
     
-        // 4. Inicializamos el espejo visual inmediatamente para el nuevo input
+        // 4. Inicializamos el espejo visual inmediatamente para el NUEVO input
         // (Esto asegura que si hay un valor guardado, se vea al cargar)
         updateInputMirror(newInput); // CORREGIDO: Usamos newInput
 
@@ -8814,7 +8812,6 @@ const initAmountInput = () => {
         });
     });
 };
-
 
 // Función auxiliar para manejar el evento de foco/click
 const handleInputFocus = (e) => {

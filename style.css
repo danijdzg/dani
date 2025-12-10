@@ -4652,45 +4652,32 @@ body[data-theme="sunset-groove"] .hero-val-big {
 }
 /* === VISUAL MIRROR REFORZADO (Para input de cantidad) === */
 
-/* 1. El Contenedor: Posición relativa para contener a los hijos absolutos */
+/* 1. El Contenedor relativo */
 #movimiento-cantidad-form-group .input-wrapper {
     position: relative !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background-color: var(--c-surface) !important; /* Fondo visible aquí */
     z-index: 1;
-    overflow: hidden; /* Evita desbordes */
+    overflow: hidden; 
+    background-color: var(--c-surface) !important;
 }
 
-/* 2. El Input Real: Invisible pero funcional (Capa Superior) */
+/* 2. El Input Real (Invisible pero clickable) */
 #movimiento-cantidad {
     position: absolute !important;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0 !important; /* Totalmente invisible */
-    z-index: 10 !important; /* Por encima de todo para recibir clics */
+    top: 0; left: 0; width: 100%; height: 100%;
+    opacity: 0 !important; /* CRUCIAL: Invisible */
+    z-index: 10 !important; /* CRUCIAL: Por encima del espejo */
     cursor: pointer;
 }
 
-/* 3. El Espejo Visual: Texto bonito (Capa Inferior) */
+/* 3. El Espejo Visual (Lo que se ve) */
 .input-visual-mirror {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center; /* Centrado perfecto */
-    pointer-events: none; /* Los clics pasan a través */
-    z-index: 5; /* Debajo del input, encima del fondo */
-    
-    /* Tipografía */
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 5; /* Debajo del input */
+    pointer-events: none; /* Los clics lo atraviesan y van al input real */
     font-family: var(--font-family);
-    font-size: 1.6rem; /* Tamaño grande */
+    font-size: 1.6rem;
     font-weight: 800;
     color: var(--c-on-surface);
 }
