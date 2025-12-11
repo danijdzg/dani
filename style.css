@@ -1578,60 +1578,90 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 
 
 #bottom-nav-add-btn {
-    /* 1. Posicionamiento: Al principio de la lista */
+    /* 1. Posicionamiento */
     position: relative;
     order: -1; 
     
-    /* 2. DIMENSIONES: ANCHO COMPLETO */
-    width: 100%; /* Ocupa todo el ancho disponible del menú lateral */
-    height: 54px; /* Altura cómoda para hacer clic con ratón */
-    margin: 0 0 24px 0; /* Separación inferior respecto a los iconos */
-    
-    /* 3. FORMA: Rectángulo redondeado (No círculo) */
-    border-radius: 12px; 
+    /* 2. Dimensiones y Forma "Premium" */
+    width: 100%; 
+    height: 60px; /* Un poco más alto para mayor presencia */
+    margin: 0 0 24px 0; 
+    border-radius: 16px; 
     border: none;
     
-    /* 4. CONTENIDO: Centrado y con espacio */
+    /* 3. Fondo Espectacular (Gradiente) */
+    background: linear-gradient(135deg, var(--c-primary) 0%, #00E676 100%);
+    
+    /* 4. Sombra con Color (Glow Effect) */
+    box-shadow: 0 10px 20px rgba(0, 179, 77, 0.3), 
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    
+    /* 5. Flexbox para centrar */
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px; /* Espacio generoso entre el icono '+' y el texto */
+    gap: 12px;
     
-    /* 5. Color y Sombra */
-    background-color: var(--c-primary);
-    color: var(--c-white);
-    box-shadow: 0 6px 15px rgba(0, 179, 77, 0.25); /* Sombra elegante */
-    
-    /* Reseteos de la versión móvil */
-    bottom: auto; right: auto; left: auto; transform: none;
+    /* 6. Transiciones Suaves */
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden; /* Necesario para el efecto de brillo */
 }
 
-/* Efecto Hover (Levantarse) */
+/* --- ESTADO HOVER (Al pasar el ratón) --- */
 #bottom-nav-add-btn:hover {
-    background-color: var(--c-primary-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(0, 179, 77, 0.35);
+    transform: translateY(-4px) scale(1.02); /* Se eleva y crece ligeramente */
+    box-shadow: 0 15px 35px rgba(0, 179, 77, 0.5), 
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, #00CC55 0%, #39FF14 100%);
 }
 
-/* Efecto Click (Hundirse) */
+/* --- ESTADO ACTIVE (Al hacer clic) --- */
 #bottom-nav-add-btn:active {
-    transform: scale(0.98);
-    box-shadow: 0 2px 8px rgba(0, 179, 77, 0.2);
+    transform: translateY(2px) scale(0.98); /* Efecto de presión */
+    box-shadow: 0 5px 10px rgba(0, 179, 77, 0.3);
 }
 
-/* Ajuste del Icono '+' */
+/* --- EL ICONO (+) --- */
 #bottom-nav-add-btn .material-icons {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 700;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* EL TEXTO: Se inyecta aquí para que sea visible */
+/* --- EL TEXTO (Inyectado por CSS) --- */
 #bottom-nav-add-btn::after {
-    content: "";
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    white-space: nowrap; /* Asegura que el texto no se parta en dos líneas */
+    content: "NUEVO MOVIMIENTO"; /* Texto en mayúsculas */
+    font-size: 0.95rem;
+    font-weight: 800; /* Extra negrita */
+    letter-spacing: 1px; /* Espaciado elegante entre letras */
+    color: #fff;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* --- EFECTO DE BRILLO (SHINE ANIMATION) --- */
+/* Crea una banda de luz que pasa rápido al hacer hover */
+#bottom-nav-add-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%; /* Empieza fuera a la izquierda */
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        to right, 
+        transparent, 
+        rgba(255, 255, 255, 0.3), 
+        transparent
+    );
+    transform: skewX(-20deg); /* Inclinamos la luz */
+    transition: none; /* Sin transición al volver */
+}
+
+#bottom-nav-add-btn:hover::before {
+    left: 150%; /* Se mueve hacia la derecha */
+    transition: left 0.6s ease-in-out; /* Velocidad del destello */
 }
     
     body[data-ledger-mode="B"] .bottom-nav__item--active { background-color: var(--c-danger); color: var(--c-white) !important; }
