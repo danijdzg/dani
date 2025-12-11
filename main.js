@@ -7095,6 +7095,16 @@ const showModal = (id) => {
 
         // (Resto de tu código original para gestos y foco...)
         const modalElement = m.querySelector('.modal');
+		if (modalElement) {
+    // CAMBIO: Detectamos si es táctil antes de añadir eventos de arrastre
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    if (isTouchDevice) {
+        // Solo añadimos listeners de arrastre en móviles
+        modalElement.addEventListener('touchstart', handleModalDragStart, { passive: true });
+        // Eliminamos mousedown para escritorio
+    }
+}
         if (modalElement) {
             modalElement.addEventListener('mousedown', handleModalDragStart);
             modalElement.addEventListener('touchstart', handleModalDragStart, { passive: true });
@@ -7130,7 +7140,16 @@ const hideModal = (id) => {
         select('app-root').classList.remove('app-layout--transformed-by-modal');
 
         const modalElement = m.querySelector('.modal');
-        // ... (resto de tu código de limpieza de listeners) ...
+        if (modalElement) {
+    // CAMBIO: Detectamos si es táctil antes de añadir eventos de arrastre
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    if (isTouchDevice) {
+        // Solo añadimos listeners de arrastre en móviles
+        modalElement.addEventListener('touchstart', handleModalDragStart, { passive: true });
+        // Eliminamos mousedown para escritorio
+    }
+}
         if (modalElement) {
             modalElement.removeEventListener('mousedown', handleModalDragStart);
             modalElement.removeEventListener('touchstart', handleModalDragStart);

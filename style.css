@@ -771,6 +771,8 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */
     justify-content: space-evenly; /* Distribución uniforme */
     padding: 0 4px; /* Pequeño padding interno */
     z-index: 200; 
+	padding-bottom: env(safe-area-inset-bottom);
+    height: calc(64px + env(safe-area-inset-bottom));
 }
 
 /* Ajuste de los botones dentro de la barra */
@@ -1497,40 +1499,104 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 
 /* Para escritorio */
 @media (min-width: 1024px) {
+	.modal-overlay {
+    align-items: center; /* Centrar verticalmente */
+    background-color: rgba(0,0,0,0.8); /* Fondo más oscuro para enfoque */
+}
+
+.modal {
+    max-width: 500px; /* Ancho máximo elegante */
+    max-height: 85vh;
+    border-radius: 20px; /* Bordes totalmente redondeados */
+    
+    /* Anulamos la animación de subida y usamos Fade In */
+    transform: scale(0.95); 
+    opacity: 0;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.modal-overlay--active .modal {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Ocultamos el "grabber" (la barrita para arrastrar) en escritorio */
+.modal__grabber {
+    display: none;
+}
     body { overflow-y: auto; }
     .app-layout { flex-direction: row; max-width: 100%; height: 100vh; }
     .bottom-nav { 
-        position: fixed; 
-        flex-direction: column; 
-        width: 240px; 
-        height: 100vh; 
-        left: 0; 
-        top: 0; 
-        bottom: auto; /* IMPORTANTE: Anula el bottom: 24px de la versión móvil */
-        transform: none; 
-        border-top: none; 
-        border-right: 1px solid var(--c-outline); 
-        padding: var(--sp-5) var(--sp-3); 
-        justify-content: flex-start; 
-        gap: var(--sp-2); 
-        box-shadow: none; 
-        background-color: var(--c-background); 
-        border-radius: 0; /* Quitamos el borde redondeado en PC */
-		display: flex; 
-		align-items: center; /* Centrado vertical */
-		justify-content: space-between; /* Distribución uniforme */
-		padding: 0 12px; /* Un poco más de aire lateral */
-		z-index: 200; 
-		
-    /* Aseguramos que el botón central tenga espacio */
-    gap: 8px;
-    }
-    .bottom-nav__item { flex: 0 0 auto; flex-direction: row; justify-content: flex-start; width: 100%; height: auto; padding: var(--sp-2) var(--sp-3); border-radius: var(--border-radius-md); }
-    .bottom-nav__item:hover { background-color: var(--c-surface-variant); }
-    body[data-ledger-mode="A"] .bottom-nav__item--active { 
-        background-color: #007AFF !important; 
-        color: #FFFFFF !important; 
-    }
+    position: fixed; 
+    flex-direction: column; 
+    width: 240px; 
+    height: 100vh; 
+    left: 0; 
+    top: 0; 
+    bottom: auto;
+    transform: none; 
+    border-top: none; 
+    border-right: 1px solid var(--c-outline); 
+    
+    /* CAMBIO CLAVE 1: Agrupamos los elementos arriba */
+    justify-content: flex-start !important; 
+    padding: 80px 16px 20px 16px; /* 80px arriba para dejar espacio al logo/título si lo hubiera */
+    gap: 8px; /* Espacio uniforme y pequeño entre botones */
+    
+    box-shadow: none; 
+    background-color: var(--c-background); 
+    border-radius: 0;
+    z-index: 200; 
+}
+    .bottom-nav__item { 
+    flex: 0 0 auto; /* No estirar */
+    flex-direction: row; /* Icono a la izquierda, texto a la derecha */
+    justify-content: flex-start; /* Alinear a la izquierda */
+    width: 100%; 
+    height: 48px; /* Altura estándar de escritorio */
+    padding: 0 16px; 
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+	.bottom-nav__item .material-icons { 
+    margin-right: 12px; 
+    font-size: 20px; 
+}
+
+.bottom-nav__label { 
+    display: inline-block; 
+    font-size: 0.9rem; 
+    font-weight: 600; 
+    margin-top: 0; 
+}
+
+/* Efecto Hover para Desktop (Vital para que no parezca una app móvil estirada) */
+.bottom-nav__item:hover {
+    background-color: var(--c-surface-variant);
+    transform: translateX(5px); /* Pequeño desplazamiento a la derecha */
+}
+
+/* Ajuste del botón flotante "+" para que se integre en la barra lateral */
+#bottom-nav-add-btn {
+    order: -1; /* Lo subimos arriba del todo */
+    width: 100%;
+    height: 48px;
+    border-radius: 12px;
+    margin-bottom: 20px; /* Separación con el resto del menú */
+    background-color: var(--c-primary);
+    box-shadow: 0 4px 15px rgba(0, 179, 77, 0.3);
+}
+#bottom-nav-add-btn .material-icons {
+    font-size: 24px;
+}
+/* Añadimos texto al botón + en escritorio */
+#bottom-nav-add-btn::after {
+    content: "Nuevo Movimiento";
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-left: 8px;
+}
+    
     
     body[data-ledger-mode="B"] .bottom-nav__item--active { background-color: var(--c-danger); color: var(--c-white) !important; }
     
@@ -4772,4 +4838,29 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     z-index: 10;
     position: relative;
     border-radius: 8px;
+}
+/* Solo para dispositivos que soportan hover (ratón) */
+@media (hover: hover) {
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: transparent; 
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.2); 
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(255, 255, 255, 0.4); 
+    }
+    
+    /* Restaurar scrollbars en listas que lo tenían oculto */
+    .app-layout__main, .modal__body, .custom-select__options {
+        scrollbar-width: thin; /* Firefox */
+    }
 }
