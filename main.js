@@ -4896,7 +4896,9 @@ const renderPanelPage = async () => {
 const TransactionCardComponent = (m, dbData) => {
     const { cuentas, conceptos } = dbData;
     const highlightClass = (m.id === newMovementIdToHighlight) ? 'list-item-animate' : '';
-    const formattedDate = new Date(m.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }); // Fecha más corta y limpia
+    
+    // Formato de fecha corto (ej: 12 oct)
+    const formattedDate = new Date(m.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
 
     let avatarHTML = '';
     let title = '';
@@ -4904,41 +4906,66 @@ const TransactionCardComponent = (m, dbData) => {
     let amountClass = '';
     let amountSign = '';
 
-    // --- Lógica de Avatar Inteligente ---
+    // --- Helper para extraer emoji ---
     const extractEmoji = (str) => {
         if (!str) return null;
         const match = str.match(/(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
         return match ? match[0] : null;
     };
 
+    // Helper para formatear saldo de forma compacta (sin decimales .00 si es entero para ahorrar espacio)
+    const formatCompact = (cents) => {
+        const val = cents / 100;
+        return val.toLocaleString('es-ES', { 
+            minimumFractionDigits: 0, 
+            maximumFractionDigits: 2 
+        }) + '€';
+    };
+
     if (m.tipo === 'traspaso') {
         const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || '?';
         const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || '?';
         
+        // Obtener saldos tras el traspaso (calculados previamente en processMovementsForRunningBalance)
+        const saldoOrigen = m.runningBalanceOrigen !== undefined ? formatCompact(m.runningBalanceOrigen) : '...';
+        const saldoDestino = m.runningBalanceDestino !== undefined ? formatCompact(m.runningBalanceDestino) : '...';
+
         // Icono de Traspaso
         avatarHTML = `<div class="transaction-avatar avatar--transfer"><span class="material-icons">swap_horiz</span></div>`;
-        title = 'Traspaso';
-        subtitle = `${origen} ➔ ${destino}`;
+        
+        // Título: Descripción si existe, si no "Traspaso"
+        title = m.descripcion && m.descripcion !== 'Traspaso' ? escapeHTML(m.descripcion) : 'Traspaso entre cuentas';
+        
+        // Subtítulo: Origen (Saldo) -> Destino (Saldo)
+        // Usamos un HTML especial para el subtítulo para poder colorear o estilizar si fuera necesario
+        subtitle = `<span style="font-size: 0.7rem;">${origen} (<strong>${saldoOrigen}</strong>) ➔ ${destino} (<strong>${saldoDestino}</strong>)</span>`;
+        
         amountClass = 'text-info';
     } else {
         const concepto = conceptos.find(c => c.id === m.conceptoId);
-        const cuenta = cuentas.find(c => c.id === m.cuentaId);
-        const conceptoNombre = concepto ? toSentenceCase(concepto.nombre) : 'S/C';
+        const conceptoNombre = concepto ? toSentenceCase(concepto.nombre) : 'Sin concepto';
         
-        // 1. Intentamos sacar el emoji del concepto
+        // 1. Avatar: Intentamos sacar el emoji del concepto
         const emoji = extractEmoji(conceptoNombre);
-        
-        // 2. Si no hay emoji, usamos la inicial
         const content = emoji || conceptoNombre.charAt(0).toUpperCase();
-        
-        // 3. Determinamos color
         const typeClass = m.cantidad >= 0 ? 'avatar--income' : 'avatar--expense';
         
         avatarHTML = `<div class="transaction-avatar ${typeClass}">${content}</div>`;
         
-        // Limpiamos el nombre del concepto para no repetir el emoji en el texto
-        title = emoji ? conceptoNombre.replace(emoji, '').trim() : conceptoNombre;
-        subtitle = `${formattedDate} • ${escapeHTML(m.descripcion || cuenta?.nombre || '')}`;
+        // 2. Título (Negrita): Priorizamos la DESCRIPCIÓN del usuario. 
+        // Si no hay descripción, usamos el nombre del concepto limpio.
+        // Si hay descripción, la mostramos tal cual.
+        const conceptoLimpio = emoji ? conceptoNombre.replace(emoji, '').trim() : conceptoNombre;
+        
+        if (m.descripcion && m.descripcion.trim().length > 0) {
+            title = escapeHTML(m.descripcion);
+        } else {
+            title = conceptoLimpio;
+        }
+        
+        // 3. Subtítulo: Fecha • Concepto
+        // Aquí aseguramos que el concepto SIEMPRE se muestre
+        subtitle = `${formattedDate} • ${conceptoLimpio}`;
         
         amountClass = m.cantidad >= 0 ? 'text-positive' : 'text-negative';
         amountSign = m.cantidad > 0 ? '+' : '';
@@ -4952,12 +4979,19 @@ const TransactionCardComponent = (m, dbData) => {
 
             <div class="transaction-card__content">
                 <div class="transaction-card__details">
-                    <div class="transaction-card__row-1" style="font-size: 1rem; font-weight: 600;">${title}</div>
-                    <div class="transaction-card__row-2" style="opacity: 0.7;">${subtitle}</div>
+                    <div class="transaction-card__row-1" style="font-size: 0.95rem; font-weight: 700; color: var(--c-on-surface); margin-bottom: 2px;">
+                        ${title}
+                    </div>
+                    <div class="transaction-card__row-2" style="opacity: 0.8; font-size: 0.75rem; color: var(--c-on-surface-secondary);">
+                        ${subtitle}
+                    </div>
                 </div>
                 <div class="transaction-card__figures">
                     <div class="transaction-card__amount ${amountClass}" style="font-size: 1rem;">${amountSign}${formatCurrencyHTML(m.cantidad)}</div>
-                    <div class="transaction-card__balance" style="font-size: 0.75rem; opacity: 0.6;">${formatCurrencyHTML(m.runningBalance)}</div>
+                    ${ m.tipo !== 'traspaso' 
+                       ? `<div class="transaction-card__balance" style="font-size: 0.7rem; opacity: 0.6; margin-top:2px;">${formatCurrencyHTML(m.runningBalance)}</div>` 
+                       : '' 
+                    }
                 </div>
             </div>
         </div>
