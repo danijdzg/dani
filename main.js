@@ -4913,7 +4913,7 @@ const TransactionCardComponent = (m, dbData) => {
         return match ? match[0] : null;
     };
 
-    // Helper para formatear saldo de forma compacta (sin decimales .00 si es entero para ahorrar espacio)
+    // Helper para formatear saldo de forma compacta
     const formatCompact = (cents) => {
         const val = cents / 100;
         return val.toLocaleString('es-ES', { 
@@ -4926,35 +4926,35 @@ const TransactionCardComponent = (m, dbData) => {
         const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || '?';
         const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || '?';
         
-        // Obtener saldos tras el traspaso (calculados previamente en processMovementsForRunningBalance)
+        // Obtener saldos tras el traspaso
         const saldoOrigen = m.runningBalanceOrigen !== undefined ? formatCompact(m.runningBalanceOrigen) : '...';
         const saldoDestino = m.runningBalanceDestino !== undefined ? formatCompact(m.runningBalanceDestino) : '...';
 
         // Icono de Traspaso
         avatarHTML = `<div class="transaction-avatar avatar--transfer"><span class="material-icons">swap_horiz</span></div>`;
         
-        // Título: Descripción si existe, si no "Traspaso"
+        // Título: Descripción o "Traspaso"
         title = m.descripcion && m.descripcion !== 'Traspaso' ? escapeHTML(m.descripcion) : 'Traspaso entre cuentas';
         
         // Subtítulo: Origen (Saldo) -> Destino (Saldo)
-        // Usamos un HTML especial para el subtítulo para poder colorear o estilizar si fuera necesario
-        subtitle = `<span style="font-size: 0.7rem;">${origen} (<strong>${saldoOrigen}</strong>) ➔ ${destino} (<strong>${saldoDestino}</strong>)</span>`;
+        subtitle = `<span style="font-size: 0.7rem;">${escapeHTML(origen)} (<strong>${saldoOrigen}</strong>) ➔ ${escapeHTML(destino)} (<strong>${saldoDestino}</strong>)</span>`;
         
         amountClass = 'text-info';
     } else {
         const concepto = conceptos.find(c => c.id === m.conceptoId);
-        const conceptoNombre = concepto ? toSentenceCase(concepto.nombre) : 'Sin concepto';
+        const cuentaObj = cuentas.find(c => c.id === m.cuentaId); // Buscamos la cuenta
         
-        // 1. Avatar: Intentamos sacar el emoji del concepto
+        const conceptoNombre = concepto ? toSentenceCase(concepto.nombre) : 'Sin concepto';
+        const nombreCuenta = cuentaObj ? escapeHTML(cuentaObj.nombre) : 'Cuenta?'; // Nombre de la cuenta
+        
+        // 1. Avatar: Emoji o Inicial del concepto
         const emoji = extractEmoji(conceptoNombre);
         const content = emoji || conceptoNombre.charAt(0).toUpperCase();
         const typeClass = m.cantidad >= 0 ? 'avatar--income' : 'avatar--expense';
         
         avatarHTML = `<div class="transaction-avatar ${typeClass}">${content}</div>`;
         
-        // 2. Título (Negrita): Priorizamos la DESCRIPCIÓN del usuario. 
-        // Si no hay descripción, usamos el nombre del concepto limpio.
-        // Si hay descripción, la mostramos tal cual.
+        // 2. Título (Negrita): Priorizamos la DESCRIPCIÓN
         const conceptoLimpio = emoji ? conceptoNombre.replace(emoji, '').trim() : conceptoNombre;
         
         if (m.descripcion && m.descripcion.trim().length > 0) {
@@ -4963,9 +4963,9 @@ const TransactionCardComponent = (m, dbData) => {
             title = conceptoLimpio;
         }
         
-        // 3. Subtítulo: Fecha • Concepto
-        // Aquí aseguramos que el concepto SIEMPRE se muestre
-        subtitle = `${formattedDate} • ${conceptoLimpio}`;
+        // 3. Subtítulo: Fecha • Concepto • Cuenta
+        // Aquí añadimos la variable nombreCuenta
+        subtitle = `${formattedDate} • ${conceptoLimpio} • ${nombreCuenta}`;
         
         amountClass = m.cantidad >= 0 ? 'text-positive' : 'text-negative';
         amountSign = m.cantidad > 0 ? '+' : '';
