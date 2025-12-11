@@ -1627,7 +1627,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 
 /* EL TEXTO: Se inyecta aquí para que sea visible */
 #bottom-nav-add-btn::after {
-    content: "Añadir";
+    content: "";
     font-size: 1rem;
     font-weight: 700;
     letter-spacing: 0.5px;
