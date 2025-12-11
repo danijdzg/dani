@@ -4789,11 +4789,7 @@ const renderPanelPage = async () => {
             </div>
 
             <div class="hero-card fade-in-up" style="padding: 20px; margin-bottom: var(--sp-4); background: linear-gradient(180deg, rgba(191, 90, 242, 0.1) 0%, rgba(0,0,0,0.2) 100%); border: 1px solid var(--c-info);">
-                <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-bottom:15px;">
-                    <span class="material-icons" style="color:var(--c-info);">rocket_launch</span>
-                    <span style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--c-on-surface);">POSICIÓN REAL INVERSIONES</span>
-                </div>
-
+                
                 <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 12px;">
                     <div style="text-align: left;">
                         <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom:4px;">Capital Invertido</div>
