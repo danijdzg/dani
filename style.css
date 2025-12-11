@@ -1578,23 +1578,58 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 
 /* Ajuste del botón flotante "+" para que se integre en la barra lateral */
 #bottom-nav-add-btn {
-    order: -1; /* Lo subimos arriba del todo */
-    width: 100%;
-    height: 48px;
-    border-radius: 12px;
-    margin-bottom: 20px; /* Separación con el resto del menú */
+    /* 1. Posicionamiento en el flujo normal (arriba de la barra) */
+    position: relative;
+    order: -1; /* Lo colocamos el primero de la lista */
+    
+    /* 2. Dimensiones de Botón Grande */
+    width: 100%; /* Que ocupe todo el ancho del menú lateral */
+    height: 56px; /* Altura cómoda para clicar */
+    border-radius: 16px; /* Rectángulo redondeado moderno */
+    margin: 0 0 24px 0; /* Separación con el resto de iconos */
+    
+    /* 3. Estilo Visual */
     background-color: var(--c-primary);
-    box-shadow: 0 4px 15px rgba(0, 179, 77, 0.3);
+    box-shadow: 0 8px 20px rgba(0, 179, 77, 0.25); /* Sombra difusa elegante */
+    border: none; /* Quitamos el borde grueso del móvil */
+    
+    /* 4. Alineación del contenido (Icono + Texto) */
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centrado */
+    gap: 12px; /* Espacio entre el + y el texto */
+    
+    /* 5. Reseteos de la versión móvil */
+    bottom: auto;
+    right: auto;
+    left: auto;
+    transform: none;
 }
+/* Efecto Hover en Escritorio */
+#bottom-nav-add-btn:hover {
+    background-color: var(--c-primary-hover);
+    transform: translateY(-2px); /* Se eleva un poquito */
+    box-shadow: 0 12px 25px rgba(0, 179, 77, 0.35);
+}
+
+#bottom-nav-add-btn:active {
+    transform: scale(0.98); /* Click satisfactorio */
+}
+
+/* El Icono (+) */
 #bottom-nav-add-btn .material-icons {
     font-size: 24px;
+    font-weight: 800; /* Hacemos el + más gordito */
 }
-/* Añadimos texto al botón + en escritorio */
+
+/* EL TRUCO: Añadir el texto "Nuevo Movimiento" solo en PC */
 #bottom-nav-add-btn::after {
     content: "Nuevo Movimiento";
-    font-size: 0.9rem;
+    color: var(--c-white);
+    font-size: 1rem;
     font-weight: 700;
-    margin-left: 8px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
 }
     
     
