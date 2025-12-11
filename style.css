@@ -1630,7 +1630,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 
 /* EL TEXTO: "NUEVO MOVIMIENTO" (Solo visible en escritorio) */
 #bottom-nav-add-btn::after {
-    content: "NUEVO MOVIMIENTO";
+    content: "Añadir";
     color: #ffffff;
     font-size: 1.1rem;
     font-weight: 800;
