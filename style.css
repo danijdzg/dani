@@ -1516,6 +1516,14 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
         box-shadow: none; 
         background-color: var(--c-background); 
         border-radius: 0; /* Quitamos el borde redondeado en PC */
+		display: flex; 
+		align-items: center; /* Centrado vertical */
+		justify-content: space-between; /* Distribución uniforme */
+		padding: 0 12px; /* Un poco más de aire lateral */
+		z-index: 200; 
+		
+    /* Aseguramos que el botón central tenga espacio */
+    gap: 8px;
     }
     .bottom-nav__item { flex: 0 0 auto; flex-direction: row; justify-content: flex-start; width: 100%; height: auto; padding: var(--sp-2) var(--sp-3); border-radius: var(--border-radius-md); }
     .bottom-nav__item:hover { background-color: var(--c-surface-variant); }
@@ -2322,19 +2330,26 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     align-items: flex-end; 
 }
 #bottom-nav-add-btn {
+    position: relative; /* YA NO ES FIXED, ahora es parte del flujo */
+    bottom: auto; right: auto; left: auto; transform: none; /* Reseteos */
+    
     width: 56px;
     height: 56px;
-    background-color: var(--c-primary);
+    border-radius: 50%; /* Círculo perfecto */
+    background: var(--c-primary); /* Color principal sólido */
     color: var(--c-white);
-    border: none;
-    border-radius: 50%;
+    border: 4px solid var(--c-background); /* Borde del color de fondo para "recortar" la barra */
+    
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 12px;
-    box-shadow: var(--shadow-md);
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
+    
+    /* EL TRUCO VISUAL: Lo subimos para que rompa la línea superior */
+    margin-top: -25px; 
+    box-shadow: 0 -4px 10px rgba(0, 179, 77, 0.3); /* Sombra hacia arriba (glow) */
+    
+    z-index: 201; /* Por encima de la barra */
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 #bottom-nav-add-btn:hover {
     transform: scale(1.1) rotate(15deg);
@@ -2342,6 +2357,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 }
 #bottom-nav-add-btn:active {
     transform: scale(0.95);
+	background-color: var(--c-primary-hover);
 }
 #bottom-nav-add-btn .material-icons {
     font-size: 28px;
@@ -3199,11 +3215,18 @@ body[data-theme="default"] .cartilla-container {
 
 .cartilla-row {
     display: grid;
-    grid-template-columns: 70px 1fr 85px 85px 90px; /* Columnas fijas para alineación numérica */
+    /* Hemos ampliado las últimas 3 columnas para que quepan millones */
+    grid-template-columns: 75px 1fr 100px 100px 110px; 
     gap: 10px;
     padding: 6px 4px;
     border-bottom: 1px dotted #bbb;
     align-items: baseline;
+}
+.cartilla-amount, 
+.cartilla-balance {
+    overflow: visible !important;      /* Permite que se vea todo */
+    text-overflow: clip !important;    /* Quita los puntos suspensivos (...) */
+    white-space: nowrap;               /* Mantiene el número en una línea */
 }
 
 .cartilla-row:last-child {
@@ -4736,4 +4759,17 @@ body[data-theme="sunset-groove"] .report-period-selector {
 body[data-theme="sunset-groove"] #filter-periodo option {
     background-color: #ffffff !important;
     color: #000000 !important;
+}
+/* Animación para resaltar un movimiento nuevo */
+@keyframes highlight-pulse {
+    0% { background-color: rgba(0, 179, 77, 0.3); transform: scale(1.02); }
+    50% { background-color: rgba(0, 179, 77, 0.1); transform: scale(1); }
+    100% { background-color: transparent; transform: scale(1); }
+}
+
+.item-highlighted {
+    animation: highlight-pulse 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    z-index: 10;
+    position: relative;
+    border-radius: 8px;
 }

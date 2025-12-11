@@ -556,7 +556,7 @@ const handleGenerateGlobalExtract = async (btn = null) => {
                         <div class="cartilla-cell">CUENTA / CONCEPTO</div>
                         <div class="cartilla-cell text-right">CARGOS</div>
                         <div class="cartilla-cell text-right">ABONOS</div>
-                        <div class="cartilla-cell text-right">GLOBAL</div>
+                        <div class="cartilla-cell text-right">TOTAL</div>
                     </div>`;
                 
         for (const mov of globalMovements) {
@@ -1855,7 +1855,22 @@ document.body.addEventListener('change', e => {
         }
     }
 });
-
+/* Helper para crear gradientes verticales en Chart.js */
+const createChartGradient = (ctx, colorHex) => {
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300); // De arriba a abajo
+    // Asumimos formato HEX o variable. Para simplificar, hardcodeamos opacidades:
+    // Convierte tu color principal a una versión transparente
+    // Nota: Si usas variables CSS, esto es complejo, así que usaremos colores fijos parecidos a tu tema
+    
+    if (colorHex.includes('0, 179, 77') || colorHex.includes('#00B34D')) { // Verde
+        gradient.addColorStop(0, 'rgba(0, 179, 77, 0.4)'); 
+        gradient.addColorStop(1, 'rgba(0, 179, 77, 0.0)');
+    } else { // Azul por defecto
+        gradient.addColorStop(0, 'rgba(0, 122, 255, 0.4)'); 
+        gradient.addColorStop(1, 'rgba(0, 122, 255, 0.0)');
+    }
+    return gradient;
+};
 
         const generateId = () => fbDb.collection('users').doc().id;
         const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -6320,8 +6335,8 @@ const updateNetWorthChart = async (saldos) => {
     
     // Gradiente sutil
     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, 'rgba(0, 179, 77, 0.15)'); // Color muy suave
-    gradient.addColorStop(1, 'rgba(0, 179, 77, 0.0)');
+    gradient.addColorStop(0, 'rgba(0, 179, 77, 0.25)'); // Verde suave arriba
+    gradient.addColorStop(1, 'rgba(0, 179, 77, 0.0)'); // Transparente abajo
 
     netWorthChart = new Chart(ctx, {
         type: 'line',
@@ -6335,7 +6350,7 @@ const updateNetWorthChart = async (saldos) => {
                 fill: true,
                 pointRadius: 0, // Línea limpia sin puntos
                 pointHoverRadius: 6,
-                tension: 0.1 // Línea casi recta para precisión (0.4 es muy curva)
+                tension: 0.3 // Línea casi recta para precisión (0.4 es muy curva)
             }]
         },
         options: {
@@ -6345,7 +6360,7 @@ const updateNetWorthChart = async (saldos) => {
             scales: {
                 x: { 
                     type: 'time', 
-                    time: { unit: 'month', displayFormats: { month: 'MMM yy' } },
+                    time: { unit: 'month', displayFormats: { month: 'MMM' } },
                     grid: { display: false },
                     ticks: { maxTicksLimit: 5, color: '#888', font: { size: 10 } }
                 },
@@ -6354,9 +6369,10 @@ const updateNetWorthChart = async (saldos) => {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    backgroundColor: 'rgba(20,20,30,0.9)',
                     titleColor: '#fff',
                     bodyFont: { size: 14, weight: 'bold' },
+					padding: 10,
                     callbacks: {
                         label: (ctx) => formatCurrency(ctx.raw.y * 100)
                     }
@@ -6365,6 +6381,50 @@ const updateNetWorthChart = async (saldos) => {
         }
     });
 };
+
+/* --- FUNCIÓN MÁGICA: Ir al Diario y resaltar un movimiento --- */
+const navigateToAndHighlight = async (movementId) => {
+    // 1. Cambiar a la pestaña Diario
+    await navigateTo(PAGE_IDS.DIARIO);
+    
+    // 2. Esperar un momento a que la lista se cargue/procese
+    setTimeout(() => {
+        // Encontramos el índice del movimiento en la base de datos actual
+        // (Asumimos que db.movimientos está ordenado como se muestra)
+        const index = db.movimientos.findIndex(m => m.id === movementId);
+        
+        if (index !== -1) {
+            const mainScroller = document.querySelector('.app-layout__main');
+            
+            // Calculamos posición estimada (Altura promedio 64px + cabeceras aprox)
+            // Esto es una aproximación para Virtual Scrolling, pero suele bastar
+            // Si tienes vList.itemMap (mapa de alturas), úsalo:
+            let scrollTarget = 0;
+            if (vList.itemMap && vList.itemMap[index]) {
+                scrollTarget = vList.itemMap[index].offset;
+            } else {
+                // Fallback si el mapa no está listo (multiplicamos por altura promedio)
+                scrollTarget = index * 65; 
+            }
+
+            // Hacemos scroll suave
+            mainScroller.scrollTo({ top: scrollTarget - 100, behavior: 'smooth' }); // -100 para dejar margen arriba
+
+            // 3. Resaltar el elemento visualmente
+            // Esperamos a que el scroll termine (aprox 400ms) para buscar el elemento en el DOM
+            setTimeout(() => {
+                // Buscamos por el atributo data-id que pusimos en TransactionCardComponent
+                const card = document.querySelector(`.transaction-card[data-id="${movementId}"]`);
+                if (card) {
+                    card.classList.add('item-highlighted');
+                    // Opcional: vibración al encontrarlo
+                    hapticFeedback('success');
+                }
+            }, 500);
+        }
+    }, 100);
+};
+
 
 const getLiquidityAccounts = () => {
     const visibleAccounts = getVisibleAccounts();
@@ -10024,7 +10084,13 @@ const handleSaveMovement = async (form, btn) => {
             
             hapticFeedback('success');
             showToast('Movimiento guardado.', 'info');
-			
+			if (!isSaveAndNew) {
+                hideModal('movimiento-modal');
+                
+                // Llamamos a la función mágica pasando el ID nuevo
+                navigateToAndHighlight(id); 
+            } else {
+                startMovementForm();
 			if (dataToSave.cantidad > 0 && dataToSave.tipo !== 'traspaso') {
 				confetti({
 				particleCount: 100,
