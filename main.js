@@ -1864,30 +1864,14 @@ document.body.addEventListener('change', e => {
 		return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(number);
 		};
 const formatCurrencyHTML = (numInCents) => {
-    // 1. Manejo seguro de nulos
-    if (numInCents === null || numInCents === undefined) numInCents = 0;
-    
-    // 2. Detectar negativo
-    const isNegative = numInCents < 0;
-    const absVal = Math.abs(numInCents);
-    
-    // 3. Formatear número base (sin símbolo)
-    const formatted = new Intl.NumberFormat('es-ES', { 
-        style: 'decimal', 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-    }).format(absVal / 100);
-
-    // 4. Separar partes
-    const parts = formatted.split(','); // En ES es coma, si tu locale es distinto, ajusta
-    const integerPart = parts[0];
-    const decimalPart = parts[1] || '00';
-    
-    // 5. Construir HTML
-    // El signo menos va fuera del span mayor para alineación correcta
-    const signHTML = isNegative ? '−' : ''; 
-    
-    return `${signHTML}<span class="currency-major">${integerPart}</span><small class="currency-minor">,${decimalPart}</small><small class="currency-symbol">€</small>`;
+    const formatted = formatCurrency(numInCents);
+    // Separa la parte entera de los decimales (asumiendo formato 1.234,56 €)
+    const parts = formatted.split(',');
+    if (parts.length === 2) {
+        // parts[0] es "1.234" y parts[1] es "56 €"
+        return `<span class="currency-major">${parts[0]}</span><small class="currency-minor">,${parts[1]}</small>`;
+    }
+    return `<span class="currency-major">${formatted}</span>`;
 };
 	const getLedgerName = (letter) => {
     // Intenta obtener el nombre personalizado, si no existe, usa "Caja X"
