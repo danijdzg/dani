@@ -9873,6 +9873,7 @@ const applyOptimisticBalanceUpdate = (newData, oldData = null) => {
     // --- ⭐ FIN DE LA CORRECCIÓN ⭐ ---
 };
 const handleSaveMovement = async (form, btn) => {
+    // 1. Validaciones iniciales
     clearAllErrors(form.id);
     if (!validateMovementForm()) {
         hapticFeedback('error');
@@ -9893,7 +9894,7 @@ const handleSaveMovement = async (form, btn) => {
     };
 
     try {
-        // 1. Obtener datos con seguridad (Null Check)
+        // 2. Obtener datos del formulario
         const getVal = (id) => {
             const el = select(id);
             return el ? el.value : '';
@@ -9933,15 +9934,12 @@ const handleSaveMovement = async (form, btn) => {
             baseData.cuentaDestinoId = null;
         }
 
-        // --- GUARDADO DE RECURRENTE ---
+        // --- 3. GUARDADO DE RECURRENTE (Lógica separada) ---
         if (isRecurrent) {
             const frequency = getVal('recurrent-frequency') || 'monthly';
-            
-            // Fecha: Si el input de "Próxima fecha" está vacío, usar la fecha principal
             let rawNextDate = getVal('recurrent-next-date');
             if (!rawNextDate) rawNextDate = getVal('movimiento-fecha');
             
-            // Validación extra para semanal
             let weekDays = [];
             if (frequency === 'weekly') {
                 weekDays = Array.from(document.querySelectorAll('.day-selector-btn.active')).map(b => b.dataset.day);
@@ -9953,7 +9951,7 @@ const handleSaveMovement = async (form, btn) => {
                 ...baseData,
                 frequency: frequency,
                 nextDate: rawNextDate, 
-                endDate: getVal('recurrent-end-date') || null, // Aquí fallaba antes
+                endDate: getVal('recurrent-end-date') || null,
                 weekDays: weekDays,
                 active: true
             };
@@ -9973,7 +9971,7 @@ const handleSaveMovement = async (form, btn) => {
             if (activePage && activePage.id === PAGE_IDS.PLANIFICAR) renderPlanificacionPage();
 
         } 
-        // --- GUARDADO DE MOVIMIENTO NORMAL ---
+        // --- 4. GUARDADO DE MOVIMIENTO NORMAL ---
         else {
             let oldData = null;
             if (mode.startsWith('edit')) {
@@ -9981,7 +9979,7 @@ const handleSaveMovement = async (form, btn) => {
                 if (original) oldData = { ...original };
             }
 
-            // CORRECCIÓN DE FECHA: Forzamos mediodía UTC para evitar saltos de día
+            // CORRECCIÓN DE FECHA: Forzamos mediodía UTC
             const rawDate = getVal('movimiento-fecha');
             const safeDateISO = rawDate ? new Date(rawDate + 'T12:00:00Z').toISOString() : new Date().toISOString();
 
@@ -9991,7 +9989,7 @@ const handleSaveMovement = async (form, btn) => {
                 ...baseData
             };
 
-            // Actualizar Memoria Local
+            // 4.1. Actualizar Memoria Local (Optimista)
             if (oldData) {
                 const index = db.movimientos.findIndex(m => m.id === id);
                 if (index > -1) db.movimientos[index] = dataToSave;
@@ -9999,48 +9997,24 @@ const handleSaveMovement = async (form, btn) => {
                 db.movimientos.unshift(dataToSave);
             }
 
-            // Actualizar Saldos (Optimista)
+            // 4.2. Actualizar Saldos (Optimista)
             applyOptimisticBalanceUpdate(dataToSave, oldData);
+
+            // 4.3. Feedback Visual en Botón (Mejora UX)
             if (btn) {
-                // Cambiar estado a Éxito
-                btn.classList.remove('btn--loading'); // Quitamos spinner
-                btn.classList.add('btn--success-state'); // Ponemos verde
-                
-                // Cambiamos el texto con animación
+                btn.classList.remove('btn--loading');
+                btn.classList.add('btn--success-state');
                 btn.innerHTML = `
                     <div class="btn-content-visible" style="display:flex; align-items:center; gap:8px; justify-content:center;">
                         <span class="material-icons" style="font-size: 20px;">check_circle</span>
                         <span>¡Guardado!</span>
                     </div>`;
-                
-                hapticFeedback('success'); // Vibración fuerte
-                
-                // Esperamos para que el usuario vea el éxito
+                hapticFeedback('success');
+                // Pequeña espera para ver el éxito
                 await new Promise(r => setTimeout(r, 650));
             }
 
-            // Limpieza final (Ahora cerramos el modal)
-            if (!isSaveAndNew) {
-                hideModal('movimiento-modal');
-                // Restaurar botón después de cerrar (por si se reabre)
-                setTimeout(() => {
-                    if(btn) {
-                        btn.classList.remove('btn--success-state');
-                        btn.innerHTML = 'Guardar'; // O el texto original
-                        btn.removeAttribute('disabled');
-                    }
-                }, 300);
-            } else {
-                startMovementForm();
-                // Restaurar botón inmediatamente para el siguiente
-                if(btn) {
-                    btn.classList.remove('btn--success-state');
-                    btn.innerHTML = '+ Otro';
-                    btn.removeAttribute('disabled');
-                }
-            }
-
-            // Batch Write a Firebase
+            // 4.4. Batch Write a Firebase (Persistencia)
             const batch = fbDb.batch();
             const userRef = fbDb.collection('users').doc(currentUser.uid);
 
@@ -10064,41 +10038,63 @@ const handleSaveMovement = async (form, btn) => {
             } else {
                 batch.update(userRef.collection('cuentas').doc(dataToSave.cuentaId), { saldo: firebase.firestore.FieldValue.increment(dataToSave.cantidad) });
             }
+            
+            // Actualizar AppStore
 			if (oldData) {
 				AppStore.update(dataToSave);
 			} else {
 				AppStore.add(dataToSave);
 			}
-            await batch.commit(); // Commit en fondo, la UI ya se actualizó
             
-            hapticFeedback('success');
-            showToast('Movimiento guardado.', 'info');
-			if (!isSaveAndNew) {
-                hideModal('movimiento-modal');
-                
-                // Llamamos a la función mágica pasando el ID nuevo
-                navigateToAndHighlight(id); 
-            } else {
-                startMovementForm();
+            await batch.commit();
+            
+            // 4.5. Efecto Confeti (Solo ingresos)
 			if (dataToSave.cantidad > 0 && dataToSave.tipo !== 'traspaso') {
 				confetti({
-				particleCount: 100,
-				spread: 70,
-				origin: { y: 0.7 }, // Sale desde la parte baja de la pantalla
-				colors: ['#39FF14', '#00B34D', '#FFD60A'], // Verdes y Oro
-			disableForReducedMotion: true
-			});
-		}
+    				particleCount: 100,
+    				spread: 70,
+    				origin: { y: 0.7 },
+    				colors: ['#39FF14', '#00B34D', '#FFD60A'],
+    			    disableForReducedMotion: true
+			    });
+		    }
+
+            // 4.6. NAVEGACIÓN Y RESALTADO (Nuevo Flujo)
+            if (!isSaveAndNew) {
+                hideModal('movimiento-modal');
+                // Llamamos a la función mágica para ir al diario y resaltar
+                navigateToAndHighlight(id); 
+                
+                // Restaurar botón después
+                setTimeout(() => {
+                    if(btn) {
+                        btn.classList.remove('btn--success-state');
+                        btn.innerHTML = 'Guardar';
+                        btn.removeAttribute('disabled');
+                    }
+                }, 500);
+            } else {
+                startMovementForm();
+                // Restaurar botón inmediatamente
+                if(btn) {
+                    btn.classList.remove('btn--success-state');
+                    btn.innerHTML = '+ Otro';
+                    btn.removeAttribute('disabled');
+                }
+            }
+            
+            // Refrescar UI global
             setTimeout(() => updateLocalDataAndRefreshUI(), 50);
         }
 
-        // Limpieza final
-        if (!isSaveAndNew) hideModal('movimiento-modal');
-        else startMovementForm();
-
-    } catch (error) {
+    } catch (error) { // <--- AQUÍ ESTABA EL PROBLEMA (Faltaba la llave de cierre arriba)
         console.error("Error al guardar:", error);
         showToast(error.message || "Error al guardar.", "danger");
+        // Restaurar botón en caso de error
+        if(btn) {
+             btn.classList.remove('btn--success-state');
+             btn.innerHTML = 'Guardar';
+        }
     } finally {
         releaseButtons();
     }
