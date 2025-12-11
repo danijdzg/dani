@@ -1855,17 +1855,18 @@ document.body.addEventListener('change', e => {
         }
     }
 });
-/* Helper para crear gradientes verticales en Chart.js */
+/* --- Helper para Gradientes en Gráficos --- */
+/* Asegúrate de que esta función esté SOLO UNA VEZ en todo el archivo main.js */
 const createChartGradient = (ctx, colorHex) => {
     const gradient = ctx.createLinearGradient(0, 0, 0, 300); // De arriba a abajo
-    // Asumimos formato HEX o variable. Para simplificar, hardcodeamos opacidades:
-    // Convierte tu color principal a una versión transparente
-    // Nota: Si usas variables CSS, esto es complejo, así que usaremos colores fijos parecidos a tu tema
     
-    if (colorHex.includes('0, 179, 77') || colorHex.includes('#00B34D')) { // Verde
+    // Detectamos si es el color verde principal o azul
+    if (colorHex && (colorHex.includes('0, 179, 77') || colorHex.includes('#00B34D'))) { 
+        // Verde (Ingresos / Patrimonio positivo)
         gradient.addColorStop(0, 'rgba(0, 179, 77, 0.4)'); 
         gradient.addColorStop(1, 'rgba(0, 179, 77, 0.0)');
-    } else { // Azul por defecto
+    } else { 
+        // Azul (Por defecto / Otros)
         gradient.addColorStop(0, 'rgba(0, 122, 255, 0.4)'); 
         gradient.addColorStop(1, 'rgba(0, 122, 255, 0.0)');
     }
@@ -4961,18 +4962,6 @@ const TransactionCardComponent = (m, dbData) => {
             </div>
         </div>
     </div>`;
-};
-
-const createChartGradient = (ctx, colorHex) => {
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400); // Ajusta 400 según altura aprox
-    // Convertimos HEX a RGBA para manejar opacidad
-    // Truco rápido: Asumimos que el color viene en formato HEX o Var, 
-    // pero para simplificar, usaremos un color fijo base o manipularemos el string si es rgba
-    // Para tu app, usemos una aproximación visual simple:
-    
-    gradient.addColorStop(0, colorHex.replace(')', ', 0.6)').replace('rgb', 'rgba')); // 60% opacidad arriba
-    gradient.addColorStop(1, colorHex.replace(')', ', 0.0)').replace('rgb', 'rgba')); // 0% opacidad abajo (transparente)
-    return gradient;
 };
 
 // Variable para recordar la selección del usuario (por defecto 3 Meses)
