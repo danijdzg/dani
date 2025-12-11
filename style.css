@@ -1576,62 +1576,63 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     transform: translateX(5px); /* Pequeño desplazamiento a la derecha */
 }
 
-/* Ajuste del botón flotante "+" para que se integre en la barra lateral */
+
 #bottom-nav-add-btn {
-    /* 1. Posicionamiento en el flujo normal (arriba de la barra) */
+    /* 1. Posicionamiento: Al principio de la lista */
     position: relative;
-    order: -1; /* Lo colocamos el primero de la lista */
+    order: -1; 
     
-    /* 2. Dimensiones de Botón Grande */
-    width: 100%; /* Que ocupe todo el ancho del menú lateral */
-    height: 56px; /* Altura cómoda para clicar */
-    border-radius: 16px; /* Rectángulo redondeado moderno */
-    margin: 0 0 24px 0; /* Separación con el resto de iconos */
+    /* 2. DIMENSIONES: ANCHO COMPLETO */
+    width: 100%; /* Ocupa todo el ancho disponible del menú lateral */
+    height: 54px; /* Altura cómoda para hacer clic con ratón */
+    margin: 0 0 24px 0; /* Separación inferior respecto a los iconos */
     
-    /* 3. Estilo Visual */
-    background-color: var(--c-primary);
-    box-shadow: 0 8px 20px rgba(0, 179, 77, 0.25); /* Sombra difusa elegante */
-    border: none; /* Quitamos el borde grueso del móvil */
+    /* 3. FORMA: Rectángulo redondeado (No círculo) */
+    border-radius: 12px; 
+    border: none;
     
-    /* 4. Alineación del contenido (Icono + Texto) */
+    /* 4. CONTENIDO: Centrado y con espacio */
     display: flex;
     align-items: center;
-    justify-content: center; /* Centrado */
-    gap: 12px; /* Espacio entre el + y el texto */
+    justify-content: center;
+    gap: 12px; /* Espacio generoso entre el icono '+' y el texto */
     
-    /* 5. Reseteos de la versión móvil */
-    bottom: auto;
-    right: auto;
-    left: auto;
-    transform: none;
+    /* 5. Color y Sombra */
+    background-color: var(--c-primary);
+    color: var(--c-white);
+    box-shadow: 0 6px 15px rgba(0, 179, 77, 0.25); /* Sombra elegante */
+    
+    /* Reseteos de la versión móvil */
+    bottom: auto; right: auto; left: auto; transform: none;
 }
-/* Efecto Hover en Escritorio */
+
+/* Efecto Hover (Levantarse) */
 #bottom-nav-add-btn:hover {
     background-color: var(--c-primary-hover);
-    transform: translateY(-2px); /* Se eleva un poquito */
-    box-shadow: 0 12px 25px rgba(0, 179, 77, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 179, 77, 0.35);
 }
 
+/* Efecto Click (Hundirse) */
 #bottom-nav-add-btn:active {
-    transform: scale(0.98); /* Click satisfactorio */
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(0, 179, 77, 0.2);
 }
 
-/* El Icono (+) */
+/* Ajuste del Icono '+' */
 #bottom-nav-add-btn .material-icons {
     font-size: 24px;
-    font-weight: 800; /* Hacemos el + más gordito */
+    font-weight: 700;
 }
 
-/* EL TRUCO: Añadir el texto "Nuevo Movimiento" solo en PC */
+/* EL TEXTO: Se inyecta aquí para que sea visible */
 #bottom-nav-add-btn::after {
-    content: "Nuevo Movimiento";
-    color: var(--c-white);
+    content: "Añadir";
     font-size: 1rem;
     font-weight: 700;
     letter-spacing: 0.5px;
-    white-space: nowrap;
+    white-space: nowrap; /* Asegura que el texto no se parta en dos líneas */
 }
-    
     
     body[data-ledger-mode="B"] .bottom-nav__item--active { background-color: var(--c-danger); color: var(--c-white) !important; }
     
