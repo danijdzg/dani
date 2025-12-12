@@ -3660,25 +3660,63 @@ const handleShowPnlBreakdown = async (accountId) => {
 
 const renderVirtualListItem = (item) => {
     
-    // Header de pendientes (Se mantiene simple)
+    // 1. Header de Pendientes (Amarillo)
     if (item.type === 'pending-header') {
-        return `<div class="movimiento-date-header" style="background-color: var(--c-warning); color: #000; margin: 10px 16px;"><span><span class="material-icons" style="font-size: 16px; vertical-align: middle;">update</span> Pendientes (${item.count})</span></div>`;
-    }
-
-    // Item de pendiente (Se mantiene la tarjeta estándar para diferenciarlos)
-    if (item.type === 'pending-item') {
-        const r = item.recurrent;
-        const date = new Date(r.nextDate).toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
-        return `<div class="transaction-card" style="margin:0 16px; border-bottom:1px solid var(--c-outline);">
-            <div class="transaction-card__content">
-                <div class="transaction-card__row-1">${escapeHTML(r.descripcion)}</div>
-                <div class="transaction-card__row-2 text-warning">Programado: ${date}</div>
-            </div>
-            <div class="transaction-card__figures"><span class="${r.cantidad>=0?'text-positive':'text-negative'}">${formatCurrency(r.cantidad)}</span></div>
+        return `
+        <div class="movimiento-date-header" style="background-color: var(--c-warning); color: #000; margin: 10px 16px;">
+            <span><span class="material-icons" style="font-size: 16px; vertical-align: middle;">update</span> Pendientes (${item.count})</span>
         </div>`;
     }
 
-   
+    // 2. Tarjeta de Pendiente (Estándar con botones)
+    if (item.type === 'pending-item') {
+        const r = item.recurrent;
+        const date = new Date(r.nextDate).toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
+        const amountClass = r.cantidad >= 0 ? 'text-positive' : 'text-negative';
+        
+        // Nota: Mantenemos la estructura antigua aquí porque tiene botones específicos
+        return `
+        <div class="transaction-card" id="pending-recurrente-${r.id}" style="margin:0 16px; border-bottom:1px solid var(--c-outline); background-color: rgba(255, 214, 10, 0.05);">
+            <div class="transaction-card__content">
+                <div class="transaction-card__details">
+                    <div class="transaction-card__row-1">${escapeHTML(r.descripcion)}</div>
+                    <div class="transaction-card__row-2" style="color: var(--c-warning); font-weight: 600;">Programado: ${date}</div>
+                    
+                    <div class="acciones-recurrentes-corregidas" style="margin-top: 8px;">
+                        <button class="btn btn--secondary" data-action="skip-recurrent" data-id="${r.id}" style="padding: 4px 8px; font-size: 0.7rem;">Omitir</button>
+                        <button class="btn btn--primary" data-action="confirm-recurrent" data-id="${r.id}" style="padding: 4px 8px; font-size: 0.7rem;">Añadir</button>
+                    </div>
+                </div>
+                <div class="transaction-card__figures">
+                    <strong class="transaction-card__amount ${amountClass}">${formatCurrency(r.cantidad)}</strong>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // 3. Header de Fecha Sticky
+    if (item.type === 'date-header') {
+        const dateObj = new Date(item.date + 'T12:00:00Z');
+        const today = new Date(); today.setHours(0,0,0,0);
+        const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1); yesterday.setHours(0,0,0,0);
+        const itemDate = new Date(dateObj); itemDate.setHours(0,0,0,0);
+        
+        let label = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+        if (itemDate.getTime() === today.getTime()) label = "Hoy";
+        else if (itemDate.getTime() === yesterday.getTime()) label = "Ayer";
+
+        const totalClass = item.total >= 0 ? 'text-positive' : 'text-negative';
+        const totalSign = item.total > 0 ? '+' : '';
+
+        return `
+            <div class="sticky-date-header">
+                <span class="sticky-date-label">${label}</span>
+                <span class="sticky-date-total ${totalClass}">${totalSign}${formatCurrencyHTML(item.total)}</span>
+            </div>
+        `;
+    }
+
+    // 4. MOVIMIENTOS REALES (Interacción Arreglada)
     if (item.type === 'transaction') {
         const m = item.movement;
         const { cuentas, conceptos } = db;
@@ -3690,29 +3728,25 @@ const renderVirtualListItem = (item) => {
 
         let iconHtml, line1, line2, amountClass, amountSign;
 
-        // Helper para saldo compacto (sin decimales .00)
         const formatCompact = (cents) => {
             if (cents === undefined || cents === null) return '...';
-            return (cents / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '€';
+            return (cents / 100).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + '€';
         };
 
         if (m.tipo === 'traspaso') {
-            const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || 'Origen desc.';
-            const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || 'Destino desc.';
+            const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || 'Origen';
+            const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || 'Destino';
             
-            // Icono de flechas cruzadas
             iconHtml = `<div class="t-icon t-icon--transfer"><span class="material-icons">sync_alt</span></div>`;
             
-            // LÍNEA 1: Cuenta Salida (Saldo resultante)
-            // Usamos flecha roja hacia arriba para indicar salida
-            line1 = `<span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px;">arrow_upward</span> ${escapeHTML(origen)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceOrigen)})</span></span>`;
+            // LÍNEA 1: Origen (Saldo)
+            line1 = `<span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:4px;">arrow_upward</span>${escapeHTML(origen)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceOrigen)})</span></span>`;
             
-            // LÍNEA 2: Cuenta Entrada (Saldo resultante)
-            // Usamos flecha verde hacia abajo para indicar entrada
-            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px;">arrow_downward</span> ${escapeHTML(destino)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceDestino)})</span></span>`;
+            // LÍNEA 2: Destino (Saldo)
+            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:4px;">arrow_downward</span>${escapeHTML(destino)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceDestino)})</span></span>`;
             
             amountClass = 'text-info';
-            amountSign = ''; // Traspaso es neutro visualmente en la derecha
+            amountSign = '';
             
         } else {
             const concepto = conceptos.find(c => c.id === m.conceptoId);
@@ -3720,31 +3754,27 @@ const renderVirtualListItem = (item) => {
             const cuentaObj = cuentas.find(c => c.id === m.cuentaId);
             const nombreCuenta = cuentaObj ? cuentaObj.nombre : 'Cuenta';
             
-            // Emoji o Inicial
             const emojiMatch = conceptoNombre.match(/(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
             const avatarContent = emojiMatch ? emojiMatch[0] : conceptoNombre.charAt(0).toUpperCase();
             
             const isGasto = m.cantidad < 0;
             iconHtml = `<div class="t-icon ${isGasto ? 't-icon--expense' : 't-icon--income'}">${avatarContent}</div>`;
             
-            // LÍNEA 1: Fecha (Mes/Día) y Concepto
-            // Usamos un span para la fecha con estilo distinto
+            // LÍNEA 1: Fecha y Concepto
             line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-concept">${escapeHTML(conceptoNombre)}</span>`;
             
             // LÍNEA 2: Cuenta y Descripción
-            // Si hay descripción la ponemos, si no, repetimos concepto o dejamos vacío
             const desc = m.descripcion && m.descripcion !== conceptoNombre ? m.descripcion : '';
             const separator = desc ? ' • ' : '';
-            
-            // Estructura: [Cuenta] Descripción
             line2 = `<span class="t-account-badge">${escapeHTML(nombreCuenta)}</span>${separator}${escapeHTML(desc)}`;
             
             amountClass = isGasto ? 'text-negative' : 'text-positive';
             amountSign = isGasto ? '' : '+';
         }
 
+        // --- CORRECCIÓN AQUÍ: Usamos data-action en lugar de onclick ---
         return `
-        <div class="t-card ${highlightClass}" data-id="${m.id}" onclick="startMovementForm('${m.id}', false)">
+        <div class="t-card ${highlightClass}" data-id="${m.id}" data-action="edit-movement-from-list">
             ${iconHtml}
             <div class="t-content">
                 <div class="t-row-primary">
@@ -3759,7 +3789,7 @@ const renderVirtualListItem = (item) => {
         </div>`;
     }
     return '';
-};       
+};
         
         const renderVisibleItems = () => {
             if (!vList.scrollerEl || !vList.contentEl) return; 
