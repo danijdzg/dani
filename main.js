@@ -8686,13 +8686,16 @@ const initAmountInput = () => {
         input.readOnly = true; 
         input.setAttribute('inputmode', 'none');
         
-        // Limpiamos listeners viejos
+        // Limpiamos listeners viejos clonando el nodo
         const newInput = input.cloneNode(true);
         input.parentNode.replaceChild(newInput, input);
     
-        updateInputMirror(newInput); 
+        // Inicializamos el espejo visual
+        if (typeof updateInputMirror === 'function') {
+            updateInputMirror(newInput);
+        }
 
-        // Listener PRINCIPAL
+        // Listener PRINCIPAL (Click)
         newInput.addEventListener('click', (e) => {
             e.preventDefault(); 
             // En móvil, esto evita que salga el teclado nativo un milisegundo
@@ -8701,13 +8704,21 @@ const initAmountInput = () => {
             showCalculator(newInput);
         });
 
-        // Evento FOCUS: Respaldo
+        // Evento FOCUS: Respaldo por si se llega vía Tab
         newInput.addEventListener('focus', (e) => {
             e.preventDefault();
             e.target.blur(); // Quitamos foco nativo
             showCalculator(newInput);
         });
-}};
+        
+        // Listener para actualizar el espejo cuando cambia el valor
+        newInput.addEventListener('input', () => {
+             if (typeof updateInputMirror === 'function') {
+                updateInputMirror(newInput);
+             }
+        });
+    }); // <--- AQUÍ ESTABA EL ERROR: Faltaba el paréntesis de cierre ')'
+};
 
 
 // Función auxiliar para manejar el evento de foco/click
