@@ -1049,7 +1049,7 @@ const handleCalculatorInput = (key) => {
         switch(key) {
             case 'done':
                 hapticFeedback('medium');
-                // Calcular final si hay pendiente
+                // Calcular si hay pendiente
                 if (operand1 !== null && operator !== null && !waitingForNewValue) {
                     calculate();
                     displayValue = calculatorState.displayValue;
@@ -1058,12 +1058,14 @@ const handleCalculatorInput = (key) => {
                 // Actualizar input del formulario
                 updateTargetInput(displayValue);
                 
-                // === CAMBIO: NO CERRAMOS, SOLO RESETEAMOS PARA SEGUIR OPERANDO ===
+                // === VOLVEMOS AL ORIGINAL: CERRAR AL TERMINAR ===
+                hideCalculator(); 
+                // ================================================
+                
+                // Resetear estados
                 historyValue = '';
                 operand1 = null;
                 operator = null;
-                isResultDisplayed = true; 
-                // ==============================================================
                 return;
 
             case 'comma':
@@ -8508,65 +8510,32 @@ const showCalculator = (targetInput) => {
     const calculatorOverlay = select('calculator-overlay');
     if (!calculatorOverlay) return;
     
-    // 1. Activar UI y Clase en Body
+    // 1. Mostrar
     calculatorOverlay.classList.add('modal-overlay--active');
-    document.body.classList.add('calculator-open'); // <--- IMPORTANTE PARA EL CSS
-    
     calculatorState.isVisible = true;
     calculatorState.targetInput = targetInput;
     
+    // 2. Cargar valor actual
     const currentValue = parseCurrencyString(targetInput.value);
     calculatorState.displayValue = currentValue ? currentValue.toString().replace('.', ',') : '0';
     calculatorState.waitingForNewValue = true;
     
+    // 3. Actualizar pantalla
     updateCalculatorDisplay(); 
-    updateCalculatorHistoryDisplay();
-
-    // Gestión de Teclado Físico
-    if (calculatorKeyboardHandler) document.removeEventListener('keydown', calculatorKeyboardHandler);
-    calculatorKeyboardHandler = (e) => {
-        const key = e.key;
-        if (!['Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
-             if (key >= '0' && key <= '9') { e.preventDefault(); handleCalculatorInput(key); }
-             else if (key === ',' || key === '.') { e.preventDefault(); handleCalculatorInput('comma'); }
-             else if (key === 'Enter') { e.preventDefault(); handleCalculatorInput('done'); }
-             else if (key === 'Backspace') { e.preventDefault(); handleCalculatorInput('backspace'); }
-             else if (key === 'Escape') { e.preventDefault(); hideCalculator(); }
-             else if (key === '+') { e.preventDefault(); handleCalculatorInput('add'); }
-             else if (key === '-') { e.preventDefault(); handleCalculatorInput('subtract'); }
-             else if (key === '*' || key.toLowerCase() === 'x') { e.preventDefault(); handleCalculatorInput('multiply'); }
-             else if (key === '/') { e.preventDefault(); handleCalculatorInput('divide'); }
-        }
-    };
-    document.addEventListener('keydown', calculatorKeyboardHandler);
-
+    
+    // 4. Marcar input visualmente
     document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
     targetInput.classList.add('form-input--active-calc');
 };
 
-/* --- FUNCIÓN hideCalculator ÚNICA Y DEFINITIVA --- */
 const hideCalculator = () => {
     const calculatorOverlay = select('calculator-overlay');
     if (calculatorOverlay) {
         calculatorOverlay.classList.remove('modal-overlay--active');
     }
-    
-    // Quitamos la clase del body para que el CSS sepa que la calculadora se ha ido
-    // y devuelva el formulario a su tamaño normal.
-    document.body.classList.remove('calculator-open'); 
-    
     calculatorState.isVisible = false;
     
-    // Limpiamos el listener del teclado físico
-    if (calculatorKeyboardHandler) {
-        document.removeEventListener('keydown', calculatorKeyboardHandler);
-        calculatorKeyboardHandler = null;
-    }
-    
-    // Devolvemos el foco al documento
-    if (document.activeElement) document.activeElement.blur();
-    
-    // Quitamos el estilo de foco visual de los inputs
+    // Limpieza visual
     document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
 };
 
@@ -8680,42 +8649,25 @@ const initAmountInput = () => {
     if (toggle) toggle.style.display = 'none';
 
     amountInputs.forEach(input => {
-        // Importante para que no salga el teclado nativo en móvil
         input.readOnly = true; 
         input.setAttribute('inputmode', 'none');
         
-        // Limpiamos listeners viejos clonando el nodo
         const newInput = input.cloneNode(true);
         input.parentNode.replaceChild(newInput, input);
     
-        // Inicializamos el espejo visual
-        if (typeof updateInputMirror === 'function') {
-            updateInputMirror(newInput);
-        }
+        if (typeof updateInputMirror === 'function') updateInputMirror(newInput);
 
-        // Listener PRINCIPAL (Click)
         newInput.addEventListener('click', (e) => {
             e.preventDefault(); 
-            // En móvil, esto evita que salga el teclado nativo un milisegundo
             if(document.activeElement) document.activeElement.blur(); 
-            
-            showCalculator(newInput);
-        });
-
-        // Evento FOCUS: Respaldo por si se llega vía Tab
-        newInput.addEventListener('focus', (e) => {
-            e.preventDefault();
-            e.target.blur(); // Quitamos foco nativo
-            showCalculator(newInput);
+            showCalculator(newInput); // Abre la versión simple
         });
         
-        // Listener para actualizar el espejo cuando cambia el valor
+        // Listener para espejo visual
         newInput.addEventListener('input', () => {
-             if (typeof updateInputMirror === 'function') {
-                updateInputMirror(newInput);
-             }
+             if (typeof updateInputMirror === 'function') updateInputMirror(newInput);
         });
-    }); 
+    });
 };
 
 
