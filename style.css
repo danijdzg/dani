@@ -5134,3 +5134,127 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         padding-bottom: calc(4px + env(safe-area-inset-bottom));
     }
 }
+/* ================================================================= */
+/* === 1. ARQUITECTURA DE ESCRITORIO (840px)                     === */
+/* ================================================================= */
+
+@media (min-width: 840px) {
+    body {
+        /* Fondo de escritorio profesional */
+        background-color: #050505;
+        background-image: radial-gradient(circle at 50% 50%, #1a202c 0%, #000000 100%);
+        display: flex;
+        justify-content: center; /* Centrado en el monitor */
+        align-items: flex-start;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .app-layout { 
+        /* Dimensiones fijas: Doble de un móvil (420px * 2) */
+        width: 840px !important;      
+        max-width: 840px !important;  
+        height: 100dvh; /* Misma altura que el móvil */
+        
+        /* Estética de "Ventana de App" */
+        margin: 0 auto;
+        border-left: 1px solid var(--c-outline);
+        border-right: 1px solid var(--c-outline);
+        box-shadow: 0 0 50px rgba(0,0,0,0.5); 
+        background-color: var(--c-background);
+        position: relative;
+    }
+
+    /* Ajustamos las barras fijas para que se queden DENTRO de los 840px */
+    .top-bar, .bottom-nav, .modal-overlay, #calculator-overlay, .toast-container {
+        position: absolute !important; /* Absoluto relativo a .app-layout */
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        transform: none !important;
+    }
+    
+    /* El Panel se adapta al doble ancho automáticamente gracias al Grid */
+    .kpi-grid {
+        grid-template-columns: repeat(4, 1fr) !important; /* 4 columnas en vez de 2 */
+    }
+}
+
+/* ================================================================= */
+/* === 2. MODO "AÑADIR MOVIMIENTO" (PANTALLA PARTIDA 60/40)      === */
+/* ================================================================= */
+
+/* Esta clase se añade al body cuando se abre el formulario */
+body.split-mode #movimiento-modal {
+    align-items: flex-start !important; /* Pegado arriba */
+    padding: 0 !important;
+    height: 60% !important; /* Ocupa el 60% superior */
+    bottom: auto !important;
+    top: 0 !important;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+body.split-mode #movimiento-modal .modal {
+    height: 100% !important;
+    max-height: 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 0 24px 24px !important; /* Solo bordes redondeados abajo */
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
+/* El contenido del formulario debe tener scroll si no cabe en el 60% */
+body.split-mode #movimiento-modal .modal__body {
+    padding-bottom: 0 !important;
+    overflow-y: auto;
+}
+
+/* Los botones de guardar se quedan fijos en la base del bloque superior */
+body.split-mode #movimiento-modal .modal__actions {
+    position: sticky;
+    bottom: 0;
+    border-top: 1px solid var(--c-outline);
+    background-color: var(--c-surface);
+    z-index: 50;
+}
+
+/* ================================================================= */
+/* === 3. CALCULADORA (Siempre presente en Split Mode)           === */
+/* ================================================================= */
+
+/* Cuando estamos en split-mode, la calculadora ocupa el 40% inferior */
+body.split-mode #calculator-overlay {
+    height: 40% !important; /* El resto del espacio */
+    top: auto !important;
+    bottom: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    background-color: var(--c-background); /* Fondo sólido para que no se vea lo de atrás */
+    border-top: 1px solid var(--c-primary); /* Línea divisoria visual */
+    z-index: 1040; /* Justo debajo del modal pero encima del contenido */
+}
+
+/* Ajustes de la calculadora para que quepa bien en el 40% */
+body.split-mode .calculator-ui {
+    height: 100% !important;
+    transform: translateY(0) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+body.split-mode .calculator-display {
+    height: 20%; /* Reducimos un poco el display */
+    padding: 5px 20px;
+    font-size: 2rem !important; /* Ajuste de fuente */
+}
+
+body.split-mode .calculator-grid {
+    height: 80%; /* Botones ocupan más espacio */
+}
+
+body.split-mode .calculator-btn {
+    height: 100%; /* Llenar el grid */
+}
