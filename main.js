@@ -4663,92 +4663,62 @@ async function calculateHistoricalIrrForGroup(accountIds) {
             if (userEmailEl && currentUser) userEmailEl.textContent = currentUser.email;  			
         };
 
+/* Reemplazo de renderPanelPage en main.js */
 const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // Estructura HTML dividida en DOS COLUMNAS para escritorio
-    // En móvil, el CSS hará que se apilen una debajo de otra.
+    // Simplemente ponemos las tarjetas una detrás de otra.
+    // El CSS Grid (@media min-width: 600px) se encargará de ponerlas en 2 columnas.
     container.innerHTML = `
-        <div class="panel-col-left fade-in-up">
-            
-            <div class="hero-card" style="padding: 30px 20px; border-color: var(--c-primary);">
-                <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--c-on-surface-tertiary); letter-spacing: 2px; margin-bottom: 10px;">
-                    PATRIMONIO NETO
-                </div>
-                <div id="kpi-patrimonio-neto-value" class="hero-value skeleton" data-current-value="0" style="font-size: 2.5rem; line-height: 1.1; color: var(--c-white); text-shadow: 0 0 30px rgba(0, 230, 118, 0.4);">
-                    0,00 €
-                </div>
-                
-                <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1px 1fr; gap: 10px; align-items: center;">
-                    <div>
-                        <div style="font-size: 0.7rem; color: var(--c-info); font-weight: 700;">LIQUIDEZ</div>
-                        <div id="kpi-liquidez-value" class="skeleton" style="font-size: 1.1rem; font-weight: 600;">0 €</div>
-                    </div>
-                    <div style="height: 20px; background: var(--c-outline);"></div>
-                    <div>
-                        <div style="font-size: 0.7rem; color: var(--c-warning); font-weight: 700;">INVERTIDO</div>
-                        <div id="kpi-capital-invertido-total" class="skeleton" style="font-size: 1.1rem; font-weight: 600;">0 €</div>
-                    </div>
-                </div>
+        
+        <div class="hero-card fade-in-up" style="padding: 25px 20px; text-align: center; border-color: var(--c-primary);">
+            <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--c-on-surface-tertiary); letter-spacing: 2px; margin-bottom: 10px;">
+                PATRIMONIO NETO
             </div>
-
-            <div class="card" style="padding: 20px;">
-                <h4 style="font-size: 0.9rem; margin-bottom: 15px; color: var(--c-on-surface-secondary);">SALUD FINANCIERA</h4>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                    <span>Cobertura (Meses)</span>
-                    <strong id="health-runway-val" class="text-warning skeleton">0.0</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span>Libertad Financiera</span>
-                    <strong id="health-fi-val" class="text-success skeleton">0.0%</strong>
-                </div>
+            <div id="kpi-patrimonio-neto-value" class="hero-value skeleton" data-current-value="0" style="font-size: 3rem; font-weight:800; line-height: 1.1;">
+                0,00 €
             </div>
-
         </div>
 
-        <div class="panel-col-right fade-in-up" style="animation-delay: 0.1s;">
-            
-            <div class="card" style="padding: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <div style="font-size: 0.9rem; font-weight: 700;">FLUJO DE CAJA</div>
-                    <select id="filter-periodo" class="cockpit-filter-select">
-                        <option value="mes-actual">Este Mes</option>
-                        <option value="año-actual">Este Año</option>
-                    </select>
+        <div class="card fade-in-up" style="padding: 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h4 style="margin:0; font-size:0.9rem;">FLUJO DEL MES</h4>
+                <select id="filter-periodo" class="cockpit-filter-select"><option value="mes-actual">Mes</option></select>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div class="clickable-kpi" data-type="ingresos">
+                    <small>Ingresos</small>
+                    <div id="kpi-ingresos-value" class="text-success skeleton" style="font-weight:700;">+0€</div>
                 </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos" style="background: rgba(0, 230, 118, 0.05); padding: 15px; border-radius: 16px; border: 1px solid rgba(0, 230, 118, 0.1);">
-                        <div style="font-size: 0.7rem; color: var(--c-success); font-weight: 700;">INGRESOS</div>
-                        <div id="kpi-ingresos-value" class="text-success skeleton" style="font-size: 1.4rem; font-weight: 700;">+0 €</div>
-                    </div>
-                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos" style="background: rgba(255, 45, 85, 0.05); padding: 15px; border-radius: 16px; border: 1px solid rgba(255, 45, 85, 0.1);">
-                        <div style="font-size: 0.7rem; color: var(--c-danger); font-weight: 700;">GASTOS</div>
-                        <div id="kpi-gastos-value" class="text-danger skeleton" style="font-size: 1.4rem; font-weight: 700;">-0 €</div>
-                    </div>
-                </div>
-
-                <div style="border-top: 1px dashed var(--c-outline); padding-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
-                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">AHORRO NETO</div>
-                        <div id="kpi-saldo-neto-value" class="skeleton" style="font-size: 1.2rem; font-weight: 700;">0 €</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary);">TASA</div>
-                        <div id="kpi-tasa-ahorro-value" class="skeleton" style="font-size: 1.2rem; font-weight: 700;">0%</div>
-                    </div>
+                <div class="clickable-kpi" data-type="gastos">
+                    <small>Gastos</small>
+                    <div id="kpi-gastos-value" class="text-danger skeleton" style="font-weight:700;">-0€</div>
                 </div>
             </div>
+        </div>
 
-            <div id="net-worth-chart-container" class="card hidden" style="height: 200px;">
-                <canvas id="net-worth-chart"></canvas>
+        <div class="card fade-in-up" style="padding: 20px;">
+            <h4 style="margin:0 0 15px 0; font-size:0.9rem;">SALUD FINANCIERA</h4>
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <span>Cobertura</span>
+                <strong id="health-runway-val" class="text-warning skeleton">0.0 Meses</strong>
             </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span>Libertad</span>
+                <strong id="health-fi-val" class="text-success skeleton">0.0%</strong>
+            </div>
+        </div>
 
+        <div class="card fade-in-up" style="padding: 20px;">
+            <h4 style="margin:0 0 15px 0; font-size:0.9rem;">PORTAFOLIO</h4>
+            <div style="text-align:center;">
+                <div id="kpi-inversion-total" class="skeleton" style="font-size:1.5rem; font-weight:700;">0,00 €</div>
+                <div id="kpi-inversion-pnl" class="skeleton" style="font-size:0.9rem; margin-top:5px;">+0,00 €</div>
+            </div>
         </div>
     `;
     
-    // Iniciar carga de datos
     populateAllDropdowns();
     await Promise.all([loadPresupuestos(), loadInversiones()]);
     scheduleDashboardUpdate(); 

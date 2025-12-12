@@ -489,18 +489,15 @@ html {
 }
 
 body {
-    font-family: var(--font-family);
-    background-color: var(--c-background);
-    /* Fondo sutil radial para dar profundidad */
-    background-image: radial-gradient(circle at 50% 0%, #1a202c 0%, #000000 80%);
-    background-attachment: fixed;
-    color: var(--c-on-surface);
+    background-color: #000000; /* Negro AMOLED puro para los laterales */
+    background-image: none;    /* Quitamos gradientes si los hubiera en el fondo global */
     margin: 0;
     height: 100dvh;
     width: 100%;
-    overflow: hidden;
-    font-variant-numeric: tabular-nums;
-    -webkit-font-smoothing: antialiased;
+    overflow: hidden; /* Evita scroll en el body, solo en la app */
+    display: flex;            /* Centrado flex */
+    justify-content: center;  /* Centrado horizontal */
+    align-items: stretch;     /* Ocupar toda la altura */
 }
 /* Estilo unificado de tarjetas */
 .card, .hero-card, .transaction-card, .cockpit-card {
@@ -704,7 +701,20 @@ body {
 .intro-screen__quote-author { display: block; font-size: clamp(0.8rem, 2.4vw, 1rem); color: var(--c-on-surface-secondary); font-weight: 500; }
 
 /* --- Estructura de la App --- */
-.app-layout { display: none; max-width: 500px; margin: 0 auto; height: 100vh; background-color: var(--c-background); flex-direction: column; opacity: 0; transition: opacity 0.5s ease-out, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.4s; }
+.app-layout {
+    width: 100%;
+    /* AQUÍ ESTÁ LA CLAVE: 420px (móvil) * 2 = 840px */
+    max-width: 840px; 
+    height: 100%;
+    background-color: var(--c-background); /* El color de fondo interno de tu app */
+    position: relative; /* Para contener elementos absolutos */
+    box-shadow: 0 0 50px rgba(20, 20, 20, 0.5); /* Sombra sutil para separar del fondo negro */
+    border-left: 1px solid rgba(255,255,255,0.1); /* Líneas sutiles para delimitar */
+    border-right: 1px solid rgba(255,255,255,0.1);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
 .app-layout--visible { display: flex; opacity: 1; }
 .app-layout__main { 
     flex: 1; 
@@ -720,8 +730,20 @@ body {
 .view--active { display: flex; }
 
 /* --- Navegación Superior (Top Bar) --- */
-.top-bar { display: flex; align-items: center; justify-content: space-between; padding: var(--sp-2) var(--sp-4); background-color: rgba(0,0,0,0.7); backdrop-filter: blur(20px) saturate(180%);
--webkit-backdrop-filter: blur(20px) saturate(180%);
+.top-bar {
+    position: fixed;
+    top: 0;
+    left: 50%; /* Centrado en pantalla */
+    transform: translateX(-50%); /* Corrección matemática del centro */
+    width: 100%;
+    max-width: 840px; /* ¡CRUCIAL! Mismo ancho que la app */
+    z-index: 100;
+    background: rgba(15, 15, 20, 0.85); /* Un poco translúcido */
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--c-outline);
+    /* Aseguramos que no se salga */
+    box-sizing: border-box; 
+}
 background-color: rgba(28, 42, 58, 0.75); /* Un poco más de opacidad */
 border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */
  border-bottom: 1px solid var(--c-outline); z-index: 200; height: 44px; position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; transition: background-color 0.3s ease-in-out; }
@@ -756,17 +778,23 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */
     margin-right: var(--sp-2); }
 .top-bar__left-group { display: flex; align-items: center; gap: var(--sp-3); }
 
-/* --- Navegación Inferior (Bottom Nav) --- */
 .bottom-nav {
-    background-color: rgba(10, 10, 12, 0.7); /* Oscuro translúcido */
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-top: 1px solid var(--c-outline);
-    /* Asegurar que esté pegada abajo */
-    bottom: 0; 
-    border-radius: 0;
-    max-width: none;
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
     width: 100%;
+    max-width: 840px; /* ¡CRUCIAL! */
+    height: 70px; /* Altura fija cómoda */
+    background: rgba(15, 15, 20, 0.9); /* Casi opaco para tapar contenido al hacer scroll */
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--c-outline);
+    border-radius: 0; /* Recto, pegado abajo */
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-around; /* Distribución uniforme */
+    padding-bottom: env(safe-area-inset-bottom); /* Soporte iPhone */
 }
 
 /* Ajuste de los botones dentro de la barra */
@@ -1473,143 +1501,6 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     align-items: center;
     border-bottom: 1px solid var(--c-outline);
 	}
-}
-
-/* Para tablets y pantallas medianas */
-@media (min-width: 768px) {
-    .app-layout { max-width: 95%; }
-    .top-bar, .bottom-nav { max-width: 100%; }
-    .modal-overlay { align-items: center; }
-    .calculator-overlay { align-items: flex-end !important; }
-    .modal { border-radius: var(--border-radius-lg); transform: translateY(0) scale(0.95); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s; }
-    .modal-overlay--active .modal { transform: translateY(0) scale(1); }
-    .view { padding: 0 var(--sp-5); }
-    .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--sp-4); }
-    .form-grid { grid-template-columns: 1fr 1fr; }
-    .patrimonio-header-grid { flex-direction: row; align-items: flex-start; }
-    .patrimonio-header-grid__kpi { flex: 1; min-width: 220px; }
-    .patrimonio-header-grid__filters { flex: 3; padding-left: var(--sp-4); border-left: 1px solid var(--c-outline); }
-}
-
-/* === MODO ESCRITORIO (DOBLE ANCHO) === */
-@media (min-width: 840px) {
-    
-    /* 1. Contenedor Flotante */
-    .app-layout {
-        width: 95vw !important;
-        max-width: 1200px !important;
-        height: 92vh !important;
-        margin: 4vh auto !important;
-        background: rgba(10, 10, 12, 0.6); /* Fondo semi-transparente */
-        border: 1px solid var(--c-outline);
-        border-radius: 32px;
-        box-shadow: 0 0 60px rgba(0,0,0,0.6);
-        display: grid !important;
-        /* Grid: Barra Lateral (80px) | Contenido (Resto) */
-        grid-template-columns: 80px 1fr; 
-        grid-template-rows: 1fr;
-        overflow: hidden;
-    }
-
-    /* 2. Barra de Navegación (Dock Lateral) */
-    .bottom-nav {
-        position: relative !important;
-        transform: none !important;
-        left: auto !important; bottom: auto !important;
-        width: 100% !important; height: 100% !important;
-        max-width: none !important;
-        flex-direction: column;
-        justify-content: flex-start;
-        padding-top: 100px; /* Espacio para no chocar con header si es necesario */
-        gap: 20px;
-        border-radius: 0 !important;
-        border: none !important;
-        border-right: 1px solid var(--c-outline) !important;
-        background: transparent !important;
-        box-shadow: none !important;
-    }
-
-    /* Items del menú lateral */
-    .bottom-nav__item {
-        height: 60px;
-        width: 60px;
-        border-radius: 16px;
-        margin: 0 auto;
-    }
-    .bottom-nav__item--active {
-        background: var(--c-surface-variant);
-        color: var(--c-primary) !important;
-        box-shadow: 0 0 15px rgba(0, 230, 118, 0.1);
-    }
-    .bottom-nav__item::after { display: none !important; } /* Quitar rayita de móvil */
-    .bottom-nav__label { display: none !important; } /* Solo iconos para limpieza */
-
-    /* El Botón "+" Flotante (Ahora arriba a la izquierda) */
-    #bottom-nav-add-btn {
-        position: absolute;
-        top: 20px; left: 50%;
-        transform: translateX(-50%);
-        margin: 0 !important;
-        width: 50px; height: 50px;
-        border: none;
-        box-shadow: var(--glow-primary);
-    }
-
-    /* 3. Área Principal de Contenido */
-    .app-layout__main {
-        padding: 80px 40px 40px 40px !important; /* Más aire */
-        width: 100% !important;
-        overflow-y: auto;
-    }
-
-    /* 4. Barra Superior (Header) */
-    .top-bar {
-        position: absolute !important;
-        width: calc(100% - 80px) !important; /* Restar ancho del menú */
-        left: 80px !important; /* Mover a la derecha */
-        max-width: none !important;
-        transform: none !important;
-        background: transparent !important;
-        backdrop-filter: none !important;
-        border-bottom: none !important;
-    }
-    
-    /* 5. DISEÑO DE PÁGINAS (GRID) */
-    
-    /* Panel Principal: 2 Columnas */
-    #panel-page {
-        display: grid;
-        grid-template-columns: 320px 1fr; /* Columna Resumen | Columna Gráficos */
-        grid-template-rows: auto auto;
-        gap: 24px;
-        align-content: start;
-    }
-    
-    /* Forzar que ciertos elementos ocupen columnas específicas */
-    .panel-col-left { grid-column: 1; display: flex; flex-direction: column; gap: 20px; }
-    .panel-col-right { grid-column: 2; display: flex; flex-direction: column; gap: 20px; }
-
-    /* Diario: Lista + Filtros */
-    #diario-page #diario-view-container {
-        display: grid;
-        grid-template-columns: 1fr 300px;
-        gap: 20px;
-        height: 100%;
-        overflow: hidden;
-    }
-    #movimientos-list-container {
-        height: 100%;
-        overflow-y: auto;
-        padding-right: 10px;
-    }
-    
-    /* Modales Centrados */
-    .modal-overlay { align-items: center; justify-content: center; }
-    .modal { 
-        max-width: 500px; 
-        border-radius: 24px !important; 
-        max-height: 80vh;
-    }
 }
 
 /* El resto de estilos de componentes específicos y helpers se mantienen sin cambios,
@@ -2397,26 +2288,16 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     align-items: flex-end; 
 }
 #bottom-nav-add-btn {
-    position: relative; /* YA NO ES FIXED, ahora es parte del flujo */
-    bottom: auto; right: auto; left: auto; transform: none; /* Reseteos */
-    
+    position: relative; /* Ya no fixed, vive dentro del flex de la barra */
+    top: -25px; /* Lo elevamos para que rompa la línea */
     width: 56px;
     height: 56px;
-    border-radius: 50%; /* Círculo perfecto */
-    background: var(--c-primary); /* Color principal sólido */
-    color: var(--c-white);
-    border: 4px solid var(--c-background); /* Borde del color de fondo para "recortar" la barra */
-    
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
-    /* EL TRUCO VISUAL: Lo subimos para que rompa la línea superior */
-    margin-top: -25px; 
-    box-shadow: 0 -4px 10px rgba(0, 179, 77, 0.3); /* Sombra hacia arriba (glow) */
-    
-    z-index: 201; /* Por encima de la barra */
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+    background-color: var(--c-primary);
+    box-shadow: 0 4px 15px rgba(0, 230, 118, 0.4);
+    border: 4px solid #1a1a1a; /* "Recorte" falso del mismo color que el fondo de la barra */
+    z-index: 101;
+    margin: 0;
 }
 #bottom-nav-add-btn:hover {
     transform: scale(1.1) rotate(15deg);
@@ -5082,5 +4963,46 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     .bottom-nav {
         height: calc(70px + env(safe-area-inset-bottom));
         padding-bottom: calc(4px + env(safe-area-inset-bottom));
+    }
+}
+/* === OPTIMIZACIÓN DE CONTENIDO PARA ANCHO 840px === */
+
+/* Ajuste del Scroll Principal */
+.app-layout__main {
+    padding-top: 70px; /* Espacio para header */
+    padding-bottom: 90px; /* Espacio para footer */
+    width: 100%;
+    overflow-y: auto;
+    /* Crear un padding lateral interno para que el contenido respire */
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+/* Rejilla inteligente para Tarjetas */
+/* Esto hace que si hay espacio, se pongan 2 tarjetas por fila */
+@media (min-width: 600px) {
+    
+    /* Panel Principal: Convertimos el flujo vertical en Grid de 2 columnas */
+    #panel-page, 
+    #diario-view-container, 
+    .dense-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Dos columnas iguales */
+        gap: 20px;
+        align-items: start;
+    }
+
+    /* Excepciones: Elementos que queremos que sigan ocupando todo el ancho */
+    .hero-card, /* La tarjeta de Patrimonio grande */
+    #kpi-patrimonio-neto-value,
+    .full-width-desktop {
+        grid-column: 1 / -1; /* Ocupar todas las columnas */
+    }
+
+    /* En el Diario, la lista de movimientos puede ser doble */
+    .transaction-card {
+        margin: 0; /* Quitar márgenes negativos si los hubiera */
+        border: 1px solid var(--c-outline);
+        border-radius: 16px; /* Redondear bordes en vista grid */
     }
 }
