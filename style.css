@@ -1499,127 +1499,167 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 
 /* Para escritorio */
 @media (min-width: 1024px) {
-	.modal-overlay {
-    align-items: center; /* Centrar verticalmente */
-    background-color: rgba(0,0,0,0.8); /* Fondo más oscuro para enfoque */
-}
-
-.modal {
-    max-width: 500px; /* Ancho máximo elegante */
-    max-height: 85vh;
-    border-radius: 20px; /* Bordes totalmente redondeados */
     
-    /* Anulamos la animación de subida y usamos Fade In */
-    transform: scale(0.95); 
-    opacity: 0;
-    transition: transform 0.2s ease, opacity 0.2s ease;
-}
+    /* 1. LAYOUT PRINCIPAL (Centrado y sin márgenes laterales extraños) */
+    .app-layout { 
+        flex-direction: column; /* Mantenemos columna como en móvil */
+        max-width: 100%; 
+        height: 100vh; 
+    }
 
-.modal-overlay--active .modal {
-    transform: scale(1);
-    opacity: 1;
-}
+    .app-layout__main { 
+        margin-left: 0 !important; /* Quitamos el margen izquierdo de la barra lateral */
+        width: 100% !important; 
+        height: 100vh; 
+        /* Padding inferior grande para que el contenido no quede tapado por la barra flotante */
+        padding: 80px 20% 120px 20%; 
+    }
 
-/* Ocultamos el "grabber" (la barrita para arrastrar) en escritorio */
-.modal__grabber {
-    display: none;
-}
-    body { overflow-y: auto; }
-    .app-layout { flex-direction: row; max-width: 100%; height: 100vh; }
+    .top-bar { 
+        max-width: 100%; 
+        width: 100% !important; 
+        left: 0 !important; 
+        right: 0; 
+        transform: none; 
+        padding-left: 10%; 
+        padding-right: 10%; 
+    }
+
+    /* 2. BARRA DE NAVEGACIÓN (Dock Flotante Premium) */
     .bottom-nav { 
-    position: fixed; 
-    flex-direction: column; 
-    width: 240px; 
-    height: 100vh; 
-    left: 0; 
-    top: 0; 
-    bottom: auto;
-    transform: none; 
-    border-top: none; 
-    border-right: 1px solid var(--c-outline); 
-    
-    /* CAMBIO CLAVE 1: Agrupamos los elementos arriba */
-    justify-content: flex-start !important; 
-    padding: 80px 16px 20px 16px; /* 80px arriba para dejar espacio al logo/título si lo hubiera */
-    gap: 8px; /* Espacio uniforme y pequeño entre botones */
-    
-    box-shadow: none; 
-    background-color: var(--c-background); 
-    border-radius: 0;
-    z-index: 200; 
-}
+        position: fixed; 
+        bottom: 30px; /* Elevada del suelo */
+        left: 50%; 
+        top: auto;
+        transform: translateX(-50%); 
+        
+        /* Dimensiones ampliadas */
+        width: auto;
+        min-width: 600px; /* Ancho mínimo para que quepan los textos */
+        height: 80px; 
+        
+        /* Estética de Cristal */
+        border-radius: 40px; /* Píldora gigante */
+        background-color: rgba(28, 42, 58, 0.85); /* Fondo oscuro semitransparente */
+        backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid var(--c-outline); 
+        box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        
+        /* Alineación Horizontal */
+        flex-direction: row; 
+        justify-content: space-evenly; 
+        padding: 0 20px;
+        gap: 15px;
+        z-index: 1000; 
+    }
+
+    /* 3. ITEMS DE NAVEGACIÓN (Con texto visible) */
     .bottom-nav__item { 
-    flex: 0 0 auto; 
-    flex-direction: row; 
-    justify-content: flex-start; /* Icono y texto a la izquierda */
-    align-items: center;
-    width: 100%; 
-    height: 56px; /* Misma altura que el botón de añadir para consistencia */
-    padding: 0 24px; 
-    margin-bottom: 8px; /* Separación entre botones */
-    border-radius: 16px; /* Bordes redondeados modernos */
-    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+        flex: 1;
+        flex-direction: row; /* Icono al lado del texto */
+        justify-content: center;
+        align-items: center;
+        height: 50px;
+        border-radius: 25px;
+        padding: 0 20px;
+        transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+        color: var(--c-on-surface-secondary);
+        gap: 10px;
+        margin: 0; /* Reset */
+    }
+
+    .bottom-nav__item:hover {
+        background-color: var(--c-surface-variant);
+        transform: translateY(-2px); /* Pequeño salto al pasar el ratón */
+    }
+
+    .bottom-nav__item .material-icons { 
+        font-size: 24px; 
+        margin: 0; /* Reset margins */
+    }
+
+    /* ¡AQUÍ ESTÁ EL CAMBIO!: Hacemos visible el texto */
+    .bottom-nav__label { 
+        display: inline-block !important; 
+        font-size: 0.95rem; 
+        font-weight: 600;
+        margin-top: 0;
+        white-space: nowrap;
+    }
+
+    /* Estado Activo: Fondo de color suave */
+    .bottom-nav__item--active { 
+        background-color: color-mix(in srgb, var(--c-primary) 15%, transparent);
+        color: var(--c-primary) !important;
+        box-shadow: 0 4px 15px rgba(0, 179, 77, 0.15);
+    }
     
-    /* Estado inactivo: Sutil */
-    background-color: transparent;
-    border: 1px solid transparent;
-    color: var(--c-on-surface-secondary);
-    font-weight: 600;
-}
+    /* Colores por Caja (A, B, C) */
+    body[data-ledger-mode="B"] .bottom-nav__item--active { 
+        background-color: color-mix(in srgb, var(--c-danger) 15%, transparent);
+        color: var(--c-danger) !important; 
+    }
+    body[data-ledger-mode="C"] .bottom-nav__item--active { 
+        background-color: color-mix(in srgb, #28a745 15%, transparent);
+        color: #28a745 !important; 
+    }
 
-/* 2. Iconos más grandes y alineados */
-.bottom-nav__item .material-icons { 
-    margin-right: 16px; 
-    font-size: 24px; 
-    transition: transform 0.2s;
-}
+    /* 4. BOTÓN "AÑADIR" ESPECTACULAR (Estilo Cápsula Central) */
+    #bottom-nav-add-btn {
+        position: relative;
+        order: 0; /* Lo dejamos en su posición natural (en medio) */
+        
+        /* Forma de Cápsula Grande */
+        width: auto !important;
+        height: 64px !important;
+        border-radius: 32px !important;
+        padding: 0 32px;
+        
+        /* Efecto Flotante (sobresale de la barra) */
+        margin-top: -40px !important; /* Sube hacia arriba */
+        margin-bottom: 0 !important;
+        
+        /* Estilo Visual Potente */
+        background: linear-gradient(135deg, var(--c-primary) 0%, #00E676 100%) !important;
+        box-shadow: 0 10px 25px rgba(0, 179, 77, 0.4), 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+        border: 4px solid var(--c-background) !important; /* Borde del color de fondo para "recortar" visualmente */
+        
+        display: flex !important;
+        gap: 8px;
+        z-index: 1001;
+    }
 
-.bottom-nav__label { 
-    display: inline-block; 
-    font-size: 1rem; 
-    margin-top: 0; 
-}
+    #bottom-nav-add-btn:hover {
+        transform: translateY(-4px) scale(1.05); /* Levita aún más */
+        box-shadow: 0 20px 40px rgba(0, 179, 77, 0.6) !important;
+    }
 
-/* 3. EFECTO HOVER (Al pasar el ratón) */
-.bottom-nav__item:hover {
-    background-color: var(--c-surface-variant);
-    color: var(--c-on-surface);
-    transform: translateX(4px); /* Pequeño desplazamiento a la derecha */
-    border-color: var(--c-outline);
-}
-
-.bottom-nav__item:hover .material-icons {
-    transform: scale(1.1); /* El icono crece un poco */
-    color: var(--c-primary);
-}
-
-/* 4. ESTADO ACTIVO (La pestaña seleccionada) - Estilo "Revolut" */
-.bottom-nav__item--active { 
-    background-color: color-mix(in srgb, var(--c-primary) 15%, var(--c-surface)); /* Fondo tintado del color principal */
-    color: var(--c-primary) !important;
-    border: 1px solid color-mix(in srgb, var(--c-primary) 30%, transparent);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    font-weight: 700;
-}
-
-.bottom-nav__item--active .material-icons {
-    color: var(--c-primary);
-}
-
-/* Ajuste específico para Caja B (Roja) */
-body[data-ledger-mode="B"] .bottom-nav__item--active {
-    background-color: color-mix(in srgb, var(--c-danger) 15%, var(--c-surface));
-    color: var(--c-danger) !important;
-    border-color: color-mix(in srgb, var(--c-danger) 30%, transparent);
-}
-body[data-ledger-mode="B"] .bottom-nav__item:hover .material-icons { color: var(--c-danger); }
-
-/* Ajuste específico para Caja C (Verde) */
-body[data-ledger-mode="C"] .bottom-nav__item--active {
-    background-color: color-mix(in srgb, #28a745 15%, var(--c-surface));
-    color: #28a745 !important;
-    border-color: color-mix(in srgb, #28a745 30%, transparent);
-}
+    /* Texto "NUEVO" visible en el botón central */
+    #bottom-nav-add-btn::after {
+        content: "NUEVO";
+        display: block !important;
+        font-weight: 800;
+        font-size: 1rem;
+        letter-spacing: 1px;
+    }
+    
+    /* 5. Ajustes de Modales para Pantalla Grande */
+    .modal-overlay { align-items: center; background-color: rgba(0,0,0,0.85); }
+    .modal {
+        max-width: 550px;
+        max-height: 85vh;
+        border-radius: 24px;
+        transform: scale(0.95);
+        opacity: 0;
+        transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s;
+    }
+    .modal-overlay--active .modal { transform: scale(1); opacity: 1; }
+    .modal__grabber { display: none; } /* No necesitamos la barra de arrastre en PC */
+    
+    /* 6. Otros ajustes visuales */
+    .toast-container { bottom: 120px; } /* Subimos los toasts para que no los tape la barra */
+    .fab-container { display: none !important; }
 }
 
 /* El resto de estilos de componentes específicos y helpers se mantienen sin cambios,
