@@ -3658,6 +3658,7 @@ const handleShowPnlBreakdown = async (accountId) => {
     showGenericModal(`Desglose P&L: ${cuenta.nombre}`, modalHtml);
 };
 
+/* --- renderVirtualListItem: VERSIÓN CORREGIDA (Fecha añadida a Traspasos) --- */
 const renderVirtualListItem = (item) => {
     
     // 1. Header de Pendientes (Amarillo)
@@ -3668,13 +3669,12 @@ const renderVirtualListItem = (item) => {
         </div>`;
     }
 
-    // 2. Tarjeta de Pendiente (Estándar con botones)
+    // 2. Tarjeta de Pendiente
     if (item.type === 'pending-item') {
         const r = item.recurrent;
         const date = new Date(r.nextDate).toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
         const amountClass = r.cantidad >= 0 ? 'text-positive' : 'text-negative';
         
-        // Nota: Mantenemos la estructura antigua aquí porque tiene botones específicos
         return `
         <div class="transaction-card" id="pending-recurrente-${r.id}" style="margin:0 16px; border-bottom:1px solid var(--c-outline); background-color: rgba(255, 214, 10, 0.05);">
             <div class="transaction-card__content">
@@ -3716,7 +3716,7 @@ const renderVirtualListItem = (item) => {
         `;
     }
 
-    // 4. MOVIMIENTOS REALES (Interacción Arreglada)
+    // 4. MOVIMIENTOS REALES
     if (item.type === 'transaction') {
         const m = item.movement;
         const { cuentas, conceptos } = db;
@@ -3739,11 +3739,12 @@ const renderVirtualListItem = (item) => {
             
             iconHtml = `<div class="t-icon t-icon--transfer"><span class="material-icons">sync_alt</span></div>`;
             
-            // LÍNEA 1: Origen (Saldo)
-            line1 = `<span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:4px;">arrow_upward</span>${escapeHTML(origen)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceOrigen)})</span></span>`;
+            // --- CORRECCIÓN AQUÍ: Añadimos la fecha a la línea 1 ---
+            // LÍNEA 1: [Fecha] ↑ Origen (Saldo)
+            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:2px;">arrow_upward</span>${escapeHTML(origen)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceOrigen)})</span></span>`;
             
-            // LÍNEA 2: Destino (Saldo)
-            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:4px;">arrow_downward</span>${escapeHTML(destino)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceDestino)})</span></span>`;
+            // LÍNEA 2: ↓ Destino (Saldo) (Aquí dejamos un espacio vacío al inicio para alinear visualmente con el texto de arriba si se desea, o lo dejamos natural)
+            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:2px;">arrow_downward</span>${escapeHTML(destino)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceDestino)})</span></span>`;
             
             amountClass = 'text-info';
             amountSign = '';
@@ -3772,7 +3773,6 @@ const renderVirtualListItem = (item) => {
             amountSign = isGasto ? '' : '+';
         }
 
-        // --- CORRECCIÓN AQUÍ: Usamos data-action en lugar de onclick ---
         return `
         <div class="t-card ${highlightClass}" data-id="${m.id}" data-action="edit-movement-from-list">
             ${iconHtml}
