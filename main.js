@@ -1049,31 +1049,36 @@ const handleCalculatorInput = (key) => {
         switch(key) {
             case 'done':
                 hapticFeedback('medium');
-                // Calcular final si hay pendiente
+                // Calcular si hay operación pendiente
                 if (operand1 !== null && operator !== null && !waitingForNewValue) {
                     calculate();
                     displayValue = calculatorState.displayValue;
                 }
                 
-                // Actualizar input final
+                // Actualizar input del formulario
                 updateTargetInput(displayValue);
                 
+                // Resetear historial para limpieza visual
                 historyValue = '';
-                hideCalculator(); 
-
-                // --- AVANCE AUTOMÁTICO AL SIGUIENTE CAMPO ---
-                // Al dar OK, pasamos al concepto automáticamente
-                setTimeout(() => {
-                    const conceptoSelect = document.getElementById('movimiento-concepto');
-                    // Buscamos el trigger del custom select
-                    const wrapper = conceptoSelect?.closest('.custom-select-wrapper');
-                    const trigger = wrapper?.querySelector('.custom-select__trigger');
-                    
-                    if (trigger) {
-                        trigger.focus(); // Enfocar para navegación teclado
-                        trigger.click(); // Abrir el menú
-                    }
+                
+                // === CAMBIO CLAVE: NO CERRAMOS (hideCalculator eliminado) ===
+                
+                // Solo reseteamos la lógica interna para empezar nueva cuenta si se quiere
+                operand1 = null;
+                operator = null;
+                isResultDisplayed = true;
+                
+                // Actualizamos visuales
+                updateCalculatorDisplay();
+                updateCalculatorHistoryDisplay();
+                updateActiveOperatorButton();
+                
+                // Opcional: Enfocar el siguiente campo (Concepto) PERO manteniendo calc abierta
+                /* setTimeout(() => {
+                   const concepto = document.getElementById('movimiento-concepto');
+                   // Logica para abrir concepto...
                 }, 100); 
+                */
                 return;
 
             case 'comma':
@@ -7125,6 +7130,10 @@ const showModal = (id) => {
 };
 
 const hideModal = (id) => {
+	// Si cerramos el modal de añadir movimiento, MATAMOS la calculadora
+    if (id === 'movimiento-modal') {
+        hideCalculator();
+    }
     if (document.activeElement) document.activeElement.blur(); 
     const m = select(id);
     
@@ -8537,16 +8546,16 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
 
 const showCalculator = (targetInput) => {
     const calculatorOverlay = select('calculator-overlay');
-    const calculatorUi = select('calculator-ui');
-    
     if (!calculatorOverlay) return;
     
-    // 1. Mostrar la UI (sin bloquear scroll de fondo visualmente)
+    // 1. Activar UI
     calculatorOverlay.classList.add('modal-overlay--active');
+    document.body.classList.add('calculator-open'); // <--- NUEVO: Para el padding del CSS
+    
     calculatorState.isVisible = true;
     calculatorState.targetInput = targetInput;
     
-    // 2. Cargar valor inicial
+    // 2. Cargar valor
     const currentValue = parseCurrencyString(targetInput.value);
     calculatorState.displayValue = currentValue ? currentValue.toString().replace('.', ',') : '0';
     calculatorState.waitingForNewValue = true;
@@ -8607,6 +8616,8 @@ const hideCalculator = () => {
     if (calculatorOverlay) {
         calculatorOverlay.classList.remove('modal-overlay--active');
     }
+    document.body.classList.remove('calculator-open'); // <--- NUEVO
+    
     calculatorState.isVisible = false;
     
     // Limpiamos el listener del teclado físico
@@ -8730,34 +8741,35 @@ const updateInputMirror = (input) => {
 /* --- 3. INICIALIZADOR DE INPUTS --- */
 const initAmountInput = () => {
     const amountInputs = document.querySelectorAll('.input-amount-calculator');
-    
-    // Ocultar botón de calculadora antiguo si existe
     const toggle = document.getElementById('calculator-toggle-btn');
     if (toggle) toggle.style.display = 'none';
 
     amountInputs.forEach(input => {
+        // Importante para que no salga el teclado nativo en móvil
         input.readOnly = true; 
         input.setAttribute('inputmode', 'none');
         
-        // Clonar para limpiar eventos viejos
+        // Limpiamos listeners viejos
         const newInput = input.cloneNode(true);
         input.parentNode.replaceChild(newInput, input);
     
-        // Inicializar visualización
         updateInputMirror(newInput); 
 
-        // Listener para Click (Abrir calculadora)
+        // Listener PRINCIPAL
         newInput.addEventListener('click', (e) => {
-            e.preventDefault();
-            // Actualizar visual por si acaso
-            updateInputMirror(newInput);
-            hapticFeedback('light');
+            e.preventDefault(); 
+            // En móvil, esto evita que salga el teclado nativo un milisegundo
+            if(document.activeElement) document.activeElement.blur(); 
+            
             showCalculator(newInput);
         });
 
-        // Listener para cambios manuales (por si acaso)
-        newInput.addEventListener('input', () => updateInputMirror(newInput));
-    });
+        // Evento FOCUS: Respaldo
+        newInput.addEventListener('focus', (e) => {
+            e.preventDefault();
+            e.target.blur(); // Quitamos foco nativo
+            showCalculator(newInput);
+        });
 };
 
 // Función auxiliar para manejar el evento de foco/click
