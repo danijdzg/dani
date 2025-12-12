@@ -4455,22 +4455,35 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             const accountsInType = accountsByType[tipo];
             const typeBalance = accountsInType.reduce((sum, acc) => sum + (saldos[acc.id] || 0), 0);
             const porcentajeGlobal = totalFiltrado > 0 ? (typeBalance / totalFiltrado) * 100 : 0;
-            const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => 
-                `<div class="modal__list-item" 
+            const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => {
+                
+                // LÓGICA DE MONEDA:
+                // Si el modo es BTC, tenemos precio, y la cuenta es cripto...
+                let balanceDisplay;
+                if (portfolioViewMode === 'BTC' && isCryptoType(c.tipo) && btcPriceData.price > 0) {
+                    // Convertir Saldo (céntimos) a Euros, y luego a BTC
+                    const btcValue = (saldos[c.id] / 100) / btcPriceData.price;
+                    balanceDisplay = `<span style="color:#F7931A; font-weight:700;">${formatBTC(btcValue)}</span>`;
+                } else {
+                    // Si no, mostrar en Euros normal
+                    balanceDisplay = formatCurrencyHTML(saldos[c.id] || 0);
+                }
+
+                return `<div class="modal__list-item" 
                      data-action="view-account-details" 
                      data-id="${c.id}" 
                      ${c.esInversion ? 'data-is-investment="true"' : ''}
                      style="cursor: pointer; padding: var(--sp-2) 0;">
                     <div>
-                        <span style="display: block;">${c.nombre}</span>
+                        <span style="display: block;">${escapeHTML(c.nombre)}</span>
                         <small style="color: var(--c-on-surface-secondary);">${(saldos[c.id] || 0) / typeBalance * 100 > 0 ? ((saldos[c.id] || 0) / typeBalance * 100).toFixed(1) + '% de ' + tipo : ''}</small>
                     </div>
                     <div style="display: flex; align-items: center; gap: var(--sp-2);">
-                        ${formatCurrencyHTML(saldos[c.id] || 0)}
+                        ${balanceDisplay}
                         <span class="material-icons" style="font-size: 18px;">chevron_right</span>
                     </div>
-                </div>`
-            ).join('');
+                </div>`;
+            }).join('');
 
             if (!accountsHtml) return '';
 
@@ -9002,19 +9015,22 @@ const handleStart = (e) => {
         if (price > 0) {
             portfolioViewMode = 'BTC';
             if(btnIcon) {
-                btnIcon.textContent = 'euro'; // Muestra el símbolo de Euro para indicar "volver a Euro"
+                btnIcon.textContent = 'euro'; // Icono para volver
                 btnIcon.classList.add('btc-mode-active');
             }
-            // Recargamos solo el contenido principal, no el gráfico (el gráfico se queda en EUR por coherencia)
+            // Recargamos AMBAS secciones
             renderPortfolioMainContent('portfolio-main-content');
+            renderPatrimonioOverviewWidget('patrimonio-overview-container'); // <--- ¡NUEVA LÍNEA!
         }
     } else {
         portfolioViewMode = 'EUR';
         if(btnIcon) {
-            btnIcon.textContent = 'currency_bitcoin'; // Muestra el símbolo de Bitcoin para indicar "ir a Bitcoin"
+            btnIcon.textContent = 'currency_bitcoin'; // Icono original
             btnIcon.classList.remove('btc-mode-active');
         }
+        // Recargamos AMBAS secciones
         renderPortfolioMainContent('portfolio-main-content');
+        renderPatrimonioOverviewWidget('patrimonio-overview-container'); // <--- ¡NUEVA LÍNEA!
     }
 },
 			'rename-ledgers': showRenameLedgersModal,
