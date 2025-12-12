@@ -1021,7 +1021,6 @@ const fetchBtcPrice = async () => {
     }
     return btcPriceData.price || 0; // Retorna 0 o el último precio conocido si falla
 };
-
 const handleCalculatorInput = (key) => {
     hapticFeedback('light');
     let { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue } = calculatorState;
@@ -1042,6 +1041,7 @@ const handleCalculatorInput = (key) => {
         }
         operand1 = parseFloat(displayValue.replace(',', '.'));
         operator = key;
+        // Mostramos la operación en la barrita pequeña de historial
         historyValue = `${displayValue} ${getOperatorSymbol(operator)}`;
         waitingForNewValue = true;
         isResultDisplayed = false;
@@ -1049,23 +1049,31 @@ const handleCalculatorInput = (key) => {
         switch(key) {
             case 'done':
                 hapticFeedback('medium');
-                // Calcular si hay pendiente
+                // Calcular final si hay pendiente
                 if (operand1 !== null && operator !== null && !waitingForNewValue) {
                     calculate();
                     displayValue = calculatorState.displayValue;
                 }
                 
-                // Actualizar input del formulario
+                // Actualizar input final
                 updateTargetInput(displayValue);
                 
-                // === VOLVEMOS AL ORIGINAL: CERRAR AL TERMINAR ===
-                hideCalculator(); 
-                // ================================================
-                
-                // Resetear estados
                 historyValue = '';
-                operand1 = null;
-                operator = null;
+                hideCalculator(); 
+
+                // --- AVANCE AUTOMÁTICO AL SIGUIENTE CAMPO ---
+                // Al dar OK, pasamos al concepto automáticamente
+                setTimeout(() => {
+                    const conceptoSelect = document.getElementById('movimiento-concepto');
+                    // Buscamos el trigger del custom select
+                    const wrapper = conceptoSelect?.closest('.custom-select-wrapper');
+                    const trigger = wrapper?.querySelector('.custom-select__trigger');
+                    
+                    if (trigger) {
+                        trigger.focus(); // Enfocar para navegación teclado
+                        trigger.click(); // Abrir el menú
+                    }
+                }, 100); 
                 return;
 
             case 'comma':
@@ -1097,12 +1105,17 @@ const handleCalculatorInput = (key) => {
         }
     }
     
+    // Guardamos estado
     Object.assign(calculatorState, { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue });
     
+    // Actualizamos UI interna
     updateCalculatorDisplay();
     updateCalculatorHistoryDisplay();
     updateActiveOperatorButton();
 
+    // === MEJORA 1: ACTUALIZACIÓN EN TIEMPO REAL ===
+    // Actualizamos el input objetivo SIEMPRE, no solo al dar OK.
+    // Excepto si estamos a mitad de una operación (ej. escribiendo el segundo número de una suma)
     if (!operand1 || isResultDisplayed) {
         updateTargetInput(displayValue);
     }
@@ -7112,10 +7125,6 @@ const showModal = (id) => {
 };
 
 const hideModal = (id) => {
-	// Si cerramos el modal de añadir movimiento, MATAMOS la calculadora
-    if (id === 'movimiento-modal') {
-        hideCalculator();
-    }
     if (document.activeElement) document.activeElement.blur(); 
     const m = select(id);
     
@@ -8457,17 +8466,20 @@ function createCustomSelect(selectElement) {
     populateOptions(selectElement, optionsContainer, trigger, wrapper);
 }
 
-/* --- REEMPLAZO DE populateOptions (SIN ERROR DE SINTAXIS) --- */
+// Helper para poblar opciones SOLO CON TEXTO (Sin Iconos)
 function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
     optionsContainer.innerHTML = ''; 
     
+    // 1. Lógica del Texto Predictivo
     let placeholderText = 'Seleccionar...';
     const id = selectElement.id;
+    
     if (id.includes('concepto')) placeholderText = 'Concepto';
     else if (id.includes('cuenta-origen')) placeholderText = 'Desde cuenta...';
     else if (id.includes('cuenta-destino')) placeholderText = 'Hacia cuenta...';
     else if (id.includes('cuenta')) placeholderText = 'Cuenta';
     
+    // Este es el texto gris que se ve cuando no hay nada seleccionado
     let selectedHTML = `<span style="color: var(--c-on-surface-tertiary); opacity: 0.7;">${placeholderText}</span>`; 
 
     Array.from(selectElement.options).forEach(optionEl => {
@@ -8475,11 +8487,14 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
 
         const customOption = document.createElement('div');
         customOption.className = 'custom-select__option';
+        
+        // Mostramos solo el texto limpio
         customOption.innerHTML = `<span class="option-text">${optionEl.textContent}</span>`;
         customOption.dataset.value = optionEl.value;
 
         if (optionEl.selected) {
             customOption.classList.add('is-selected');
+            // Actualizamos el HTML seleccionado
             selectedHTML = `<span style="font-weight: 600; color: var(--c-on-surface);">${optionEl.textContent}</span>`;
         }
 
@@ -8490,30 +8505,48 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
             wrapper.classList.remove('is-open');
             trigger.focus(); 
 
+            // ▼▼▼ MEJORA UX: AVANCE AUTOMÁTICO ▼▼▼
             if (selectElement.id === 'movimiento-concepto') {
                 setTimeout(() => {
                     const descInput = document.getElementById('movimiento-descripcion');
-                    if (descInput) { descInput.focus(); descInput.select(); }
+                    if (descInput) {
+                        descInput.focus();
+                        descInput.select();
+                    }
                 }, 50);
             }
+            if (selectElement.id === 'movimiento-cuenta-origen') {
+                 setTimeout(() => {
+                    const destinoSelect = document.getElementById('movimiento-cuenta-destino');
+                    const wrapperDest = destinoSelect?.closest('.custom-select-wrapper');
+                    const triggerDest = wrapperDest?.querySelector('.custom-select__trigger');
+                    if(triggerDest) triggerDest.click();
+                }, 50);
+            }
+            // ▲▲▲ FIN MEJORA ▲▲▲
         });
 
+        // ⚠️ ESTA LÍNEA FALTABA Y ERA CRÍTICA PARA QUE APAREZCAN LAS OPCIONES
         optionsContainer.appendChild(customOption); 
-    }); 
+    }); // ⚠️ AQUÍ FALTABA EL CIERRE ); QUE PROVOCABA EL ERROR DE SINTAXIS
 
     trigger.innerHTML = selectedHTML;
 }
 
+/* EN main.js - Reemplaza showCalculator */
+
 const showCalculator = (targetInput) => {
     const calculatorOverlay = select('calculator-overlay');
+    const calculatorUi = select('calculator-ui');
+    
     if (!calculatorOverlay) return;
     
-    // Solo activamos el overlay
+    // 1. Mostrar la UI (sin bloquear scroll de fondo visualmente)
     calculatorOverlay.classList.add('modal-overlay--active');
-    
     calculatorState.isVisible = true;
     calculatorState.targetInput = targetInput;
     
+    // 2. Cargar valor inicial
     const currentValue = parseCurrencyString(targetInput.value);
     calculatorState.displayValue = currentValue ? currentValue.toString().replace('.', ',') : '0';
     calculatorState.waitingForNewValue = true;
@@ -8521,22 +8554,72 @@ const showCalculator = (targetInput) => {
     updateCalculatorDisplay(); 
     updateCalculatorHistoryDisplay();
 
-    // Marcamos el input activo
+    // 3. Gestión de Teclado Físico (PC)
+    if (calculatorKeyboardHandler) document.removeEventListener('keydown', calculatorKeyboardHandler);
+    calculatorKeyboardHandler = (e) => {
+        const key = e.key;
+        if (key >= '0' && key <= '9') { e.preventDefault(); handleCalculatorInput(key); }
+        else if (key === ',' || key === '.') { e.preventDefault(); handleCalculatorInput('comma'); }
+        else if (key === 'Enter') { e.preventDefault(); handleCalculatorInput('done'); }
+        else if (key === 'Backspace') { e.preventDefault(); handleCalculatorInput('backspace'); }
+        else if (key === 'Escape') { e.preventDefault(); hideCalculator(); }
+        else if (key === '+') { e.preventDefault(); handleCalculatorInput('add'); }
+        else if (key === '-') { e.preventDefault(); handleCalculatorInput('subtract'); }
+        else if (key === '*' || key.toLowerCase() === 'x') { e.preventDefault(); handleCalculatorInput('multiply'); }
+        else if (key === '/') { e.preventDefault(); handleCalculatorInput('divide'); }
+    };
+    document.addEventListener('keydown', calculatorKeyboardHandler);
+
+    // 4. Feedback Visual en el Input
     document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
     targetInput.classList.add('form-input--active-calc');
+    
+    // 5. === SCROLL INTELIGENTE PARA NO TAPAR ===
+    setTimeout(() => {
+        // Altura real del teclado (~260px con los nuevos estilos)
+        const uiHeight = calculatorUi ? calculatorUi.offsetHeight : 260;
+        
+        const inputRect = targetInput.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        
+        // Calculamos dónde termina el input visualmente
+        const inputBottom = inputRect.bottom;
+        // Calculamos dónde empieza el teclado
+        const keyboardTop = windowHeight - uiHeight;
+        
+        // Si el input está por debajo del inicio del teclado (tapado)
+        if (inputBottom > keyboardTop) {
+            // Calculamos cuánto hay que subir (con 20px de margen extra para que respire)
+            const scrollAmount = (inputBottom - keyboardTop) + 20;
+            
+            // Buscamos quién tiene el scroll (el modal o la página principal)
+            const scrollContainer = targetInput.closest('.modal__body') || selectOne('.app-layout__main');
+            
+            if (scrollContainer) {
+                scrollContainer.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+            }
+        }
+    }, 250); // Esperamos a que termine la animación de subida del teclado
 };
 
-/* --- hideCalculator: VERSIÓN LIMPIA --- */
 const hideCalculator = () => {
     const calculatorOverlay = select('calculator-overlay');
     if (calculatorOverlay) {
         calculatorOverlay.classList.remove('modal-overlay--active');
     }
-    
     calculatorState.isVisible = false;
     
-    // Limpiamos estilos de foco
-    document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
+    // Limpiamos el listener del teclado físico
+    if (calculatorKeyboardHandler) {
+        document.removeEventListener('keydown', calculatorKeyboardHandler);
+        calculatorKeyboardHandler = null;
+    }
+    
+    // Devolvemos el foco al documento para quitarlo de cualquier input residual
+    if (document.activeElement) {
+        document.activeElement.blur();
+    }
+	document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
 };
 
 // =============================================================
@@ -8643,8 +8726,12 @@ const updateInputMirror = (input) => {
 };
 
 
+
+/* --- 3. INICIALIZADOR DE INPUTS --- */
 const initAmountInput = () => {
     const amountInputs = document.querySelectorAll('.input-amount-calculator');
+    
+    // Ocultar botón de calculadora antiguo si existe
     const toggle = document.getElementById('calculator-toggle-btn');
     if (toggle) toggle.style.display = 'none';
 
@@ -8652,24 +8739,26 @@ const initAmountInput = () => {
         input.readOnly = true; 
         input.setAttribute('inputmode', 'none');
         
+        // Clonar para limpiar eventos viejos
         const newInput = input.cloneNode(true);
         input.parentNode.replaceChild(newInput, input);
     
-        if (typeof updateInputMirror === 'function') updateInputMirror(newInput);
+        // Inicializar visualización
+        updateInputMirror(newInput); 
 
+        // Listener para Click (Abrir calculadora)
         newInput.addEventListener('click', (e) => {
-            e.preventDefault(); 
-            if(document.activeElement) document.activeElement.blur(); 
-            showCalculator(newInput); // Abre la versión simple
+            e.preventDefault();
+            // Actualizar visual por si acaso
+            updateInputMirror(newInput);
+            hapticFeedback('light');
+            showCalculator(newInput);
         });
-        
-        // Listener para espejo visual
-        newInput.addEventListener('input', () => {
-             if (typeof updateInputMirror === 'function') updateInputMirror(newInput);
-        });
+
+        // Listener para cambios manuales (por si acaso)
+        newInput.addEventListener('input', () => updateInputMirror(newInput));
     });
 };
-
 
 // Función auxiliar para manejar el evento de foco/click
 const handleInputFocus = (e) => {
