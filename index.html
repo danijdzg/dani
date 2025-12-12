@@ -140,7 +140,6 @@
     
     <div id="toast-container" aria-live="assertive"></div>
     
- <!-- EN index.html - REEMPLAZA EL MODAL #movimiento-modal POR COMPLETO -->
 <div id="movimiento-modal" class="modal-overlay" role="dialog" aria-modal="true">
     <div class="modal">
         <div class="modal__grabber"></div>
@@ -155,113 +154,88 @@
                 <input type="hidden" id="movimiento-id" />
                 <input type="hidden" id="movimiento-mode" value="new" />
 
-                <div class="filter-pills" style="justify-content: center;">
+                <div class="filter-pills">
                     <button type="button" class="filter-pill filter-pill--active" data-action="set-movimiento-type" data-type="gasto">Gasto</button>
                     <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="ingreso">Ingreso</button>
                     <button type="button" class="filter-pill" data-action="set-movimiento-type" data-type="traspaso">Traspaso</button>
                 </div>
 
                 <div class="form-field-compact" id="movimiento-cantidad-form-group">
-                    <label for="movimiento-cantidad">IMPORTE (€)</label>
                     <div class="input-wrapper">
                          <input type="text" id="movimiento-cantidad" required placeholder="0,00" inputmode="decimal" autocomplete="off" class="input-amount-calculator" />
-                    </div>
+                         </div>
                     <span class="form-error" id="movimiento-cantidad-error"></span>
                 </div>
 
-                <div class="dense-form-grid">
+                <div class="compact-grid">
                     
-                    <div id="movimiento-fields">
+                    <div id="movimiento-fields" style="display: contents;">
                         <div class="form-field-compact">
-                            
                             <div class="input-wrapper">
                                 <select id="movimiento-concepto" required></select>
                             </div>
                         </div>
                         <div class="form-field-compact">
-                            
                             <div class="input-wrapper">
                                 <select id="movimiento-cuenta" required></select>
                             </div>
                         </div>
-                        <div class="form-field-compact">
-                            <label for="movimiento-descripcion">DETALLE</label>
-                            <div class="input-wrapper">
-                                <input type="text" id="movimiento-descripcion" required placeholder="Nota..." autocomplete="off" />
-                            </div>
-                            </div>
                     </div>
 
-                    <div id="traspaso-fields" class="hidden">
+                    <div id="traspaso-fields" class="hidden" style="display: contents;">
                         <div class="form-field-compact">
-                            
                             <div class="input-wrapper">
                                 <select id="movimiento-cuenta-origen"></select>
                             </div>
                         </div>
                         <div class="form-field-compact">
-                            
                             <div class="input-wrapper">
                                 <select id="movimiento-cuenta-destino"></select>
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="date-recurrent-row">
-                    <div class="input-wrapper" style="flex: 1;">
-                        <input type="date" id="movimiento-fecha" class="visually-hidden" required />
-                        <button type="button" id="movimiento-fecha-display" class="date-button-compact">
-                            <span class="material-icons" style="font-size: 16px;">calendar_today</span>
-                            <span id="movimiento-fecha-text">Hoy</span>
-                        </button>
+
+                    <div class="form-field-compact">
+                        <div class="input-wrapper">
+                            <input type="date" id="movimiento-fecha" required />
+                        </div>
                     </div>
-                    
-                    <div class="recurrent-toggle-compact">
-                        <label for="movimiento-recurrente">Repetir</label>
+
+                    <div class="form-field-compact full-width">
+                        <div class="input-wrapper">
+                            <input type="text" id="movimiento-descripcion" required placeholder="Nota o descripción..." autocomplete="off" />
+                        </div>
+                    </div>
+
+                    <div class="form-field-compact full-width" style="display:flex; align-items:center; justify-content:space-between; padding: 0 10px;">
+                        <label for="movimiento-recurrente" style="position:static; font-size:0.9rem; color:var(--c-on-surface-secondary);">¿Es recurrente?</label>
                         <label class="form-switch">
                             <input type="checkbox" id="movimiento-recurrente">
                             <span class="slider"></span>
                         </label>
                     </div>
-                </div>
 
-                <div id="recurrent-options" class="hidden" style="margin-bottom: 4px;">
-    <div class="recurrent-options__main" style="display: flex; gap: 6px;">
-        <select id="recurrent-frequency" style="flex: 1.2; min-width: 0;">
-            <option value="monthly" selected>Mensual</option>
-            <option value="weekly">Semanal</option>
-            <option value="daily">Diaria</option>
-            <option value="yearly">Anual</option>
-        </select>
-        
-        <input type="date" id="recurrent-next-date" title="Inicio" style="flex: 1; min-width: 0;">
-        
-        <input type="date" id="recurrent-end-date" title="Fin (Opcional)" style="flex: 1; min-width: 0; color: var(--c-on-surface-secondary);">
-    </div>
-    
-    <div id="weekly-day-selector" class="hidden" style="margin-top:6px;">
-        <div id="weekly-day-selector-buttons">
-            <button type="button" class="day-selector-btn" data-day="1">L</button>
-            <button type="button" class="day-selector-btn" data-day="2">M</button>
-            <button type="button" class="day-selector-btn" data-day="3">X</button>
-            <button type="button" class="day-selector-btn" data-day="4">J</button>
-            <button type="button" class="day-selector-btn" data-day="5">V</button>
-            <button type="button" class="day-selector-btn" data-day="6">S</button>
-            <button type="button" class="day-selector-btn" data-day="0">D</button>
+                    <div id="recurrent-options" class="hidden full-width" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 16px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <select id="recurrent-frequency">
+                                <option value="monthly" selected>Mensual</option>
+                                <option value="weekly">Semanal</option>
+                                <option value="daily">Diaria</option>
+                                <option value="yearly">Anual</option>
+                            </select>
+                            <input type="date" id="recurrent-next-date" title="Inicio">
+                        </div>
+                    </div>
+
+                </div> </form>
         </div>
-    </div>
-</div>
 
-                <div class="modal__actions">
-     <button type="button" id="delete-movimiento-btn" data-action="delete-movement-from-modal" class="icon-btn hidden" style="background: var(--c-surface-variant); width: 40px;" title="Eliminar"><span class="material-icons text-danger">delete</span></button>
-     
-     <button type="button" id="duplicate-movimiento-btn" data-action="duplicate-movement-from-modal" class="icon-btn hidden" style="background: var(--c-surface-variant); width: 40px;" title="Duplicar"><span class="material-icons text-warning">content_copy</span></button>
-     
-     <button id="save-and-new-movimiento-btn" type="button" data-action="save-and-new-movement" class="btn btn--secondary" style="flex: 1;">+ Otro</button>
-     <button id="save-movimiento-btn" type="submit" class="btn btn--primary" style="flex: 1.5;">Guardar</button>
-</div>
-            </form>
+        <div class="modal__actions">
+             <button type="button" id="delete-movimiento-btn" data-action="delete-movement-from-modal" class="icon-btn hidden" style="background: rgba(255, 59, 48, 0.1); color: var(--c-danger);"><span class="material-icons">delete</span></button>
+             <button type="button" id="duplicate-movimiento-btn" data-action="duplicate-movement-from-modal" class="icon-btn hidden" style="background: rgba(255, 214, 10, 0.1); color: var(--c-warning);"><span class="material-icons">content_copy</span></button>
+             
+             <button id="save-and-new-movimiento-btn" type="button" data-action="save-and-new-movement" class="btn">Otro</button>
+             <button id="save-movimiento-btn" type="submit" form="form-movimiento" class="btn btn--primary">Guardar</button>
         </div>
     </div>
 </div>

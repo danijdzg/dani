@@ -5134,3 +5134,158 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         padding-bottom: calc(4px + env(safe-area-inset-bottom));
     }
 }
+/* ================================================================= */
+/* === MODIFICACIÓN ESTÉTICA "NEOBANK PRO" (ZERO SCROLL) === */
+/* ================================================================= */
+
+/* 1. EL MODAL COMO PANTALLA FIJA */
+#movimiento-modal .modal {
+    display: flex;
+    flex-direction: column;
+    height: 92dvh; /* Ocupa casi toda la altura en móvil */
+    max-height: 800px; /* Límite para PC */
+    border-radius: 24px 24px 0 0;
+    overflow: hidden; /* Nada sale de los bordes */
+    background-color: var(--c-background); /* Fondo oscuro sólido */
+}
+
+/* 2. CABECERA LIMPIA */
+#movimiento-modal .modal__header {
+    flex: 0 0 auto; /* Tamaño fijo */
+    padding: 20px 20px 0 20px;
+    border-bottom: none;
+    justify-content: center; /* Título centrado */
+    position: relative;
+    min-height: 50px;
+}
+#movimiento-modal .modal__title {
+    font-size: 1rem;
+    color: var(--c-on-surface-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+/* Botón cerrar flotante a la derecha */
+#movimiento-modal .modal__header .icon-btn {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    background: rgba(255,255,255,0.05);
+}
+
+/* 3. CUERPO FLEXIBLE (Aquí ocurre la magia del espacio) */
+#movimiento-modal .modal__body {
+    flex: 1 1 auto; /* Ocupa todo el espacio sobrante */
+    display: flex;
+    flex-direction: column;
+    padding: 10px 24px !important; /* Padding lateral */
+    overflow-y: auto; /* Scroll solo si es una pantalla minúscula */
+    gap: 20px; /* Espacio entre secciones */
+}
+
+/* 4. SECCIÓN DEL IMPORTE (GIGANTE) */
+#movimiento-cantidad-form-group {
+    margin: 20px 0 10px 0;
+    text-align: center;
+}
+#movimiento-cantidad-form-group .input-wrapper {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    height: auto !important;
+}
+/* El número gigante */
+#movimiento-cantidad, 
+.input-visual-mirror {
+    font-size: 4rem !important; /* Tamaño enorme */
+    font-weight: 800;
+    text-align: center;
+    padding: 0 !important;
+    height: auto !important;
+    letter-spacing: -2px;
+    color: var(--c-white);
+    text-shadow: 0 0 30px rgba(255,255,255,0.1);
+}
+/* Ocultamos etiquetas estorbosas */
+#movimiento-cantidad-form-group label { display: none; }
+
+/* 5. SELECTOR DE TIPO (Pastillas) */
+.filter-pills {
+    background-color: rgba(255,255,255,0.05);
+    padding: 4px;
+    border-radius: 16px;
+    display: flex;
+    gap: 0 !important;
+    margin: 0 auto;
+    width: 100%;
+}
+.filter-pill {
+    flex: 1; /* Todos mismo ancho */
+    border: none !important;
+    background: transparent !important;
+    color: var(--c-on-surface-secondary);
+    font-size: 0.8rem;
+    height: 36px;
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+.filter-pill--active {
+    background-color: var(--c-surface-variant) !important;
+    color: var(--c-white) !important;
+    font-weight: 800;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+/* Colores sutiles para el activo */
+.filter-pill[data-type="gasto"].filter-pill--active { color: var(--c-danger) !important; }
+.filter-pill[data-type="ingreso"].filter-pill--active { color: var(--c-success) !important; }
+.filter-pill[data-type="traspaso"].filter-pill--active { color: var(--c-info) !important; }
+
+/* 6. GRID DE DETALLES COMPACTOS */
+.compact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Dos columnas */
+    gap: 12px;
+}
+.form-field-compact .input-wrapper,
+.custom-select__trigger {
+    background-color: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+    border-radius: 16px !important;
+    height: 56px !important;
+    padding: 0 16px !important;
+}
+/* Texto dentro de los inputs */
+.form-field-compact input, 
+.custom-select__trigger {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--c-on-surface);
+}
+/* El campo de detalle ocupa todo el ancho */
+.full-width { grid-column: 1 / -1; }
+
+/* 7. FOOTER DE ACCIONES FIJO */
+#movimiento-modal .modal__actions {
+    flex: 0 0 auto;
+    background-color: var(--c-background);
+    padding: 16px 24px calc(16px + env(safe-area-inset-bottom)) 24px;
+    border-top: 1px solid var(--c-outline);
+    display: flex;
+    gap: 12px;
+    z-index: 100;
+}
+/* Botón Guardar Grande */
+#save-movimiento-btn {
+    flex: 2;
+    height: 56px;
+    font-size: 1rem;
+    border-radius: 16px;
+    background: var(--c-primary);
+    box-shadow: 0 4px 20px rgba(0, 179, 77, 0.4);
+}
+#save-and-new-movimiento-btn {
+    flex: 1;
+    height: 56px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.05);
+    border: none;
+}

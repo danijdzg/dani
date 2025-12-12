@@ -7543,8 +7543,7 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
             const fechaISO = dateStringForInput.includes('T') ? dateStringForInput.split('T')[0] : dateStringForInput;
             if (fechaISO) {
                 fechaInput.value = fechaISO;
-                updateDateDisplay(fechaInput); 
-            }
+             }
         }
 
         select('movimiento-descripcion').value = data.descripcion || '';
@@ -7593,7 +7592,6 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
         const now = new Date();
         const localIsoDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
         fechaInput.value = localIsoDate;
-        updateDateDisplay(fechaInput);
     }
     
     // Gestión de botones
