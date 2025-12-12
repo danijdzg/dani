@@ -5134,158 +5134,94 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         padding-bottom: calc(4px + env(safe-area-inset-bottom));
     }
 }
-/* ================================================================= */
-/* === MODIFICACIÓN ESTÉTICA "NEOBANK PRO" (ZERO SCROLL) === */
-/* ================================================================= */
+/* ======================================================= */
+/* === FORMULARIO COMPACTO "ZERO SCROLL" (ESTILO PRO) === */
+/* ======================================================= */
 
-/* 1. EL MODAL COMO PANTALLA FIJA */
+/* 1. Congelar el modal para que no haga scroll general */
 #movimiento-modal .modal {
+    height: 95vh; /* Ocupa casi toda la altura */
+    max-height: 700px;
     display: flex;
     flex-direction: column;
-    height: 92dvh; /* Ocupa casi toda la altura en móvil */
-    max-height: 800px; /* Límite para PC */
-    border-radius: 24px 24px 0 0;
-    overflow: hidden; /* Nada sale de los bordes */
-    background-color: var(--c-background); /* Fondo oscuro sólido */
+    overflow: hidden; /* Corta el scroll sobrante */
 }
 
-/* 2. CABECERA LIMPIA */
-#movimiento-modal .modal__header {
-    flex: 0 0 auto; /* Tamaño fijo */
-    padding: 20px 20px 0 20px;
-    border-bottom: none;
-    justify-content: center; /* Título centrado */
-    position: relative;
-    min-height: 50px;
-}
-#movimiento-modal .modal__title {
-    font-size: 1rem;
-    color: var(--c-on-surface-secondary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-/* Botón cerrar flotante a la derecha */
-#movimiento-modal .modal__header .icon-btn {
-    position: absolute;
-    right: 16px;
-    top: 16px;
-    background: rgba(255,255,255,0.05);
-}
-
-/* 3. CUERPO FLEXIBLE (Aquí ocurre la magia del espacio) */
+/* 2. Cuerpo flexible: Se adapta al espacio disponible */
 #movimiento-modal .modal__body {
-    flex: 1 1 auto; /* Ocupa todo el espacio sobrante */
+    flex: 1; /* Ocupa el espacio libre */
+    overflow-y: auto; /* Solo scroll si la pantalla es minúscula (iPhone SE) */
+    padding-bottom: 20px;
     display: flex;
     flex-direction: column;
-    padding: 10px 24px !important; /* Padding lateral */
-    overflow-y: auto; /* Scroll solo si es una pantalla minúscula */
-    gap: 20px; /* Espacio entre secciones */
+    justify-content: center; /* Centra el contenido verticalmente */
 }
 
-/* 4. SECCIÓN DEL IMPORTE (GIGANTE) */
+/* 3. Footer (Botones) pegado abajo */
+#movimiento-modal .modal__actions {
+    margin-top: auto; /* Empuja hacia abajo */
+    padding-top: 15px;
+    padding-bottom: calc(15px + env(safe-area-inset-bottom));
+    background: var(--c-surface);
+    border-top: 1px solid var(--c-outline);
+    flex-shrink: 0;
+}
+
+/* 4. Importe más grande y centrado */
 #movimiento-cantidad-form-group {
-    margin: 20px 0 10px 0;
     text-align: center;
+    margin-bottom: 15px;
 }
 #movimiento-cantidad-form-group .input-wrapper {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    height: auto !important;
+    background: transparent;
+    border: none;
+    justify-content: center;
 }
-/* El número gigante */
-#movimiento-cantidad, 
-.input-visual-mirror {
-    font-size: 4rem !important; /* Tamaño enorme */
-    font-weight: 800;
+#movimiento-cantidad {
+    font-size: 2.5rem !important; /* Número grande estilo Revolut */
     text-align: center;
+    font-weight: 700;
     padding: 0 !important;
-    height: auto !important;
-    letter-spacing: -2px;
-    color: var(--c-white);
-    text-shadow: 0 0 30px rgba(255,255,255,0.1);
 }
-/* Ocultamos etiquetas estorbosas */
-#movimiento-cantidad-form-group label { display: none; }
+#movimiento-cantidad-form-group label { display: none; } /* Ocultar etiqueta "IMPORTE" */
 
-/* 5. SELECTOR DE TIPO (Pastillas) */
-.filter-pills {
-    background-color: rgba(255,255,255,0.05);
-    padding: 4px;
-    border-radius: 16px;
-    display: flex;
-    gap: 0 !important;
-    margin: 0 auto;
-    width: 100%;
-}
-.filter-pill {
-    flex: 1; /* Todos mismo ancho */
-    border: none !important;
-    background: transparent !important;
-    color: var(--c-on-surface-secondary);
-    font-size: 0.8rem;
-    height: 36px;
-    border-radius: 12px;
-    transition: all 0.2s;
-}
-.filter-pill--active {
-    background-color: var(--c-surface-variant) !important;
-    color: var(--c-white) !important;
-    font-weight: 800;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-}
-/* Colores sutiles para el activo */
-.filter-pill[data-type="gasto"].filter-pill--active { color: var(--c-danger) !important; }
-.filter-pill[data-type="ingreso"].filter-pill--active { color: var(--c-success) !important; }
-.filter-pill[data-type="traspaso"].filter-pill--active { color: var(--c-info) !important; }
-
-/* 6. GRID DE DETALLES COMPACTOS */
-.compact-grid {
+/* 5. La clave: Poner campos en 2 columnas */
+.two-columns {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Dos columnas */
-    gap: 12px;
+    grid-template-columns: 1fr 1fr; /* 50% y 50% */
+    gap: 12px; /* Espacio entre columnas */
+    margin-bottom: 12px;
 }
+
+/* 6. Ajuste de altura de los inputs para ganar espacio */
 .form-field-compact .input-wrapper,
 .custom-select__trigger {
-    background-color: rgba(255,255,255,0.03) !important;
-    border: 1px solid rgba(255,255,255,0.05) !important;
-    border-radius: 16px !important;
-    height: 56px !important;
-    padding: 0 16px !important;
-}
-/* Texto dentro de los inputs */
-.form-field-compact input, 
-.custom-select__trigger {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--c-on-surface);
-}
-/* El campo de detalle ocupa todo el ancho */
-.full-width { grid-column: 1 / -1; }
-
-/* 7. FOOTER DE ACCIONES FIJO */
-#movimiento-modal .modal__actions {
-    flex: 0 0 auto;
-    background-color: var(--c-background);
-    padding: 16px 24px calc(16px + env(safe-area-inset-bottom)) 24px;
-    border-top: 1px solid var(--c-outline);
+    height: 48px !important; /* Un poco más compactos */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
     display: flex;
-    gap: 12px;
-    z-index: 100;
+    align-items: center;
 }
-/* Botón Guardar Grande */
-#save-movimiento-btn {
-    flex: 2;
-    height: 56px;
-    font-size: 1rem;
-    border-radius: 16px;
-    background: var(--c-primary);
-    box-shadow: 0 4px 20px rgba(0, 179, 77, 0.4);
+
+/* Descripción ocupa todo el ancho */
+.full-width-field {
+    width: 100%;
+    margin-bottom: 12px;
 }
-#save-and-new-movimiento-btn {
-    flex: 1;
-    height: 56px;
-    border-radius: 16px;
-    background: rgba(255,255,255,0.05);
-    border: none;
+
+/* 7. Fila de Fecha y Recurrente en una sola línea */
+.date-recurrent-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+.date-button-compact {
+    flex: 1; /* La fecha ocupa el espacio sobrante */
+}
+.recurrent-toggle-compact {
+    width: auto;
+    flex-shrink: 0;
 }
