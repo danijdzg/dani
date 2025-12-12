@@ -1875,10 +1875,16 @@ const createChartGradient = (ctx, colorHex) => {
 
         const generateId = () => fbDb.collection('users').doc().id;
         const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-        const formatCurrency = (numInCents) => {
-		const number = (numInCents || 0) / 100;
-		return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(number);
-		};
+        const currencyFormatter = new Intl.NumberFormat('es-ES', { 
+				style: 'currency', 
+				currency: 'EUR',
+				minimumFractionDigits: 2
+		});
+
+		const formatCurrency = (numInCents) => {
+			const number = (numInCents || 0) / 100;
+			return currencyFormatter.format(number);
+};
 const formatCurrencyHTML = (numInCents) => {
     const formatted = formatCurrency(numInCents);
     // Separa la parte entera de los decimales (asumiendo formato 1.234,56 €)
@@ -3655,31 +3661,7 @@ const handleShowPnlBreakdown = async (accountId) => {
 // ▲▲▲ FIN DEL BLOQUE A REEMPLAZAR ▲▲▲
 
         const renderVirtualListItem = (item) => {
-			if (item.type === 'month-header') {
-    const monthName = item.date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-    
-    // --- NUEVO HTML: Solo Título, Estilo Minimalista ---
-    return `
-        <div class="movimiento-month-header" style="
-            height: 40px; 
-            display: flex; 
-            align-items: center; 
-            padding: 0 var(--sp-4); 
-            background-color: var(--c-background); /* Fondo sólido para que al hacer sticky tape lo de abajo */
-            border-bottom: 1px solid var(--c-outline);
-            z-index: 5;
-        ">
-            <h3 class="movimiento-month-header__title" style="
-                font-size: 1rem; 
-                margin: 0; 
-                color: var(--c-primary); 
-                font-weight: 800;
-                text-transform: capitalize;
-            ">${monthName}</h3>
-        </div>
-    `;
-}
-            if (item.type === 'pending-header') {
+		    if (item.type === 'pending-header') {
                 return `
                     <div class="movimiento-date-header" style="background-color: var(--c-warning); color: var(--c-black); font-weight: 800; letter-spacing: 0.5px;">
                         <span>
@@ -3725,40 +3707,86 @@ const handleShowPnlBreakdown = async (accountId) => {
         </div>
     </div>`;
 }
-            if (item.type === 'date-header') {
-    const dateObj = new Date(item.date + 'T12:00:00Z');
-    let label = '';
-    
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    today.setHours(0,0,0,0);
-    yesterday.setHours(0,0,0,0);
-    
-    const itemDate = new Date(dateObj); // Clonamos para no modificar el original
-    itemDate.setHours(0,0,0,0);
-    
-    // Creamos las etiquetas especiales
-    if (itemDate.getTime() === today.getTime()) {
-        label = "Hoy";
-    } else if (itemDate.getTime() === yesterday.getTime()) {
-        label = "Ayer";
-    } else {
-        label = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric' });
+    if (item.type === 'date-header') {
+        const dateObj = new Date(item.date + 'T12:00:00Z');
+        const today = new Date(); today.setHours(0,0,0,0);
+        const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1); yesterday.setHours(0,0,0,0);
+        const itemDate = new Date(dateObj); itemDate.setHours(0,0,0,0);
+        
+        let label = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+        if (itemDate.getTime() === today.getTime()) label = "Hoy";
+        else if (itemDate.getTime() === yesterday.getTime()) label = "Ayer";
+
+        const totalClass = item.total >= 0 ? 'text-positive' : 'text-negative';
+        const totalSign = item.total > 0 ? '+' : '';
+
+        // DISEÑO NUEVO: Sticky Header limpio
+        return `
+            <div class="sticky-date-header">
+                <span class="sticky-date-label">${label}</span>
+                <span class="sticky-date-total ${totalClass}">${totalSign}${formatCurrencyHTML(item.total)}</span>
+            </div>
+        `;
     }
 
-    return `
-        <div class="movimiento-date-header ${label === 'Hoy' ? 'is-today' : ''}">
-            <span style="text-transform: capitalize;">${label}</span>
-            <span>${formatCurrencyHTML(item.total)}</span>
-        </div>
-    `;
-}
-			if (item.type === 'transaction') {
-        return TransactionCardComponent(item.movement, { cuentas: db.cuentas, conceptos: db.conceptos });
-		}
+    if (item.type === 'transaction') {
+        // Lógica INLINE para máxima velocidad, reemplazando TransactionCardComponent antiguo
+        const m = item.movement;
+        const { cuentas, conceptos } = db;
+        const highlightClass = (m.id === newMovementIdToHighlight) ? 'highlight-pulse' : '';
         
-        };
+        let iconHtml, title, subtitle, amountClass, amountSign, accountName;
+
+        if (m.tipo === 'traspaso') {
+            const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || '?';
+            const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || '?';
+            iconHtml = `<div class="t-icon t-icon--transfer"><span class="material-icons">swap_horiz</span></div>`;
+            title = m.descripcion && m.descripcion !== 'Traspaso' ? m.descripcion : 'Traspaso';
+            subtitle = `${origen} <span class="material-icons" style="font-size:10px">arrow_forward</span> ${destino}`;
+            amountClass = 'text-info';
+            amountSign = '';
+            accountName = ''; // En traspaso ya mostramos origen/destino en subtítulo
+        } else {
+            const concepto = conceptos.find(c => c.id === m.conceptoId);
+            const conceptoNombre = concepto ? concepto.nombre : 'Varios';
+            // Extracción de emoji o letra
+            const emojiMatch = conceptoNombre.match(/(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
+            const avatarContent = emojiMatch ? emojiMatch[0] : conceptoNombre.charAt(0).toUpperCase();
+            
+            const isGasto = m.cantidad < 0;
+            iconHtml = `<div class="t-icon ${isGasto ? 't-icon--expense' : 't-icon--income'}">${avatarContent}</div>`;
+            
+            // Lógica de visualización
+            title = m.descripcion || conceptoNombre; // Descripción tiene prioridad
+            
+            // Subtítulo: Concepto • Cuenta
+            const cuentaObj = cuentas.find(c => c.id === m.cuentaId);
+            const nombreCuenta = cuentaObj ? cuentaObj.nombre : '';
+            const conceptoLimpio = emojiMatch ? conceptoNombre.replace(emojiMatch[0], '').trim() : conceptoNombre;
+            
+            subtitle = `${conceptoLimpio} <span style="opacity:0.5">•</span> ${nombreCuenta}`;
+            
+            amountClass = isGasto ? 'text-negative' : 'text-positive';
+            amountSign = isGasto ? '' : '+';
+        }
+
+        // HTML GRID OPTIMIZADO
+        return `
+        <div class="t-card ${highlightClass}" data-id="${m.id}" onclick="startMovementForm('${m.id}', false)">
+            ${iconHtml}
+            <div class="t-content">
+                <div class="t-top">
+                    <span class="t-title">${escapeHTML(title)}</span>
+                    <span class="t-amount ${amountClass}">${amountSign}${formatCurrencyHTML(m.cantidad)}</span>
+                </div>
+                <div class="t-bottom">
+                    <span class="t-subtitle">${subtitle}</span>
+                    ${m.tipo !== 'traspaso' ? `<span class="t-balance">${formatCurrency(m.runningBalance)}</span>` : ''}
+                </div>
+            </div>
+        </div>`;
+    }
+};
         
         const renderVisibleItems = () => {
             if (!vList.scrollerEl || !vList.contentEl) return; 
@@ -3813,8 +3841,6 @@ const updateLocalDataAndRefreshUI = async () => {
 // === FIN: NUEVA FUNCIÓN AYUDANTE                               ===
 // ================================================================= 
  
-// ▼▼▼ REEMPLAZA TU FUNCIÓN updateVirtualListUI POR COMPLETO CON ESTA VERSIÓN CORREGIDA ▼▼▼
-
 const updateVirtualListUI = () => {
     if (!vList.sizerEl) return;
 
@@ -3822,9 +3848,8 @@ const updateVirtualListUI = () => {
     vList.itemMap = [];
     let currentHeight = 0;
     
-    // 1. Lógica para los recurrentes pendientes (esto no cambia)
+    // 1. Recurrentes pendientes (Sin cambios, se mantiene igual)
     const pendingRecurrents = getPendingRecurrents();
-
     if (pendingRecurrents.length > 0) {
         vList.items.push({ type: 'pending-header', count: pendingRecurrents.length });
         vList.itemMap.push({ height: vList.heights.pendingHeader, offset: currentHeight });
@@ -3836,91 +3861,72 @@ const updateVirtualListUI = () => {
         });
     }
 
-   // 2. Agrupación de movimientos por mes y día
-    const groupedByMonth = {};
+    // 2. Agrupación PLANA por DÍA (Eliminamos la capa de Mes)
+    const groupedByDay = {};
     const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
 
     (db.movimientos || []).forEach(mov => {
         let isVisibleInLedger = false;
         let amountForTotals = 0;
 
-        // ✅ INICIO DE LA LÓGICA CORREGIDA PARA VISIBILIDAD Y TOTALES ✅
         if (mov.tipo === 'traspaso') {
             const origenVisible = visibleAccountIds.has(mov.cuentaOrigenId);
             const destinoVisible = visibleAccountIds.has(mov.cuentaDestinoId);
-            
-            // Un traspaso es VISIBLE si al menos una de sus cuentas está en la contabilidad actual.
             isVisibleInLedger = origenVisible || destinoVisible;
-
-            // Su IMPACTO en los totales solo se cuenta si es un traspaso entre contabilidades.
             if (origenVisible && !destinoVisible) amountForTotals = -mov.cantidad;
             else if (!origenVisible && destinoVisible) amountForTotals = mov.cantidad;
-
-        } else { // Es un movimiento normal (ingreso/gasto)
+        } else {
             isVisibleInLedger = visibleAccountIds.has(mov.cuentaId);
-            if (isVisibleInLedger) {
-                amountForTotals = mov.cantidad;
-            }
+            if (isVisibleInLedger) amountForTotals = mov.cantidad;
         }
 
-        // Si el movimiento es visible, lo procesamos para mostrarlo.
         if (isVisibleInLedger) {
-            const date = new Date(mov.fecha);
-            const monthKey = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+            // Usamos solo la fecha como clave (YYYY-MM-DD)
             const dateKey = mov.fecha.slice(0, 10);
             
-            if (!groupedByMonth[monthKey]) { groupedByMonth[monthKey] = { days: {}, monthNet: 0, monthIncome: 0, monthExpense: 0 }; }
-            if (!groupedByMonth[monthKey].days[dateKey]) { groupedByMonth[monthKey].days[dateKey] = { movements: [], total: 0 }; }
+            if (!groupedByDay[dateKey]) { 
+                groupedByDay[dateKey] = { movements: [], total: 0 }; 
+            }
             
-            // Añadimos el movimiento a la lista de ESE DÍA.
-            groupedByMonth[monthKey].days[dateKey].movements.push(mov);
-
-            // Actualizamos los totales SÓLO con el impacto real en la contabilidad.
-            groupedByMonth[monthKey].days[dateKey].total += amountForTotals;
-            groupedByMonth[monthKey].monthNet += amountForTotals;
-            if (amountForTotals > 0) groupedByMonth[monthKey].monthIncome += amountForTotals;
-            else groupedByMonth[monthKey].monthExpense += amountForTotals;
+            groupedByDay[dateKey].movements.push(mov);
+            groupedByDay[dateKey].total += amountForTotals;
         }
-        // ✅ FIN DE LA LÓGICA CORREGIDA ✅
     });
 
-    // 3. Construcción de la lista para la interfaz (esta parte ya era correcta)
-    const sortedMonths = Object.keys(groupedByMonth).sort((a, b) => b.localeCompare(a));
+    // 3. Ordenar días (Reciente a Antiguo) y construir lista lineal
+    const sortedDates = Object.keys(groupedByDay).sort((a, b) => b.localeCompare(a));
 
-    for (const monthKey of sortedMonths) {
-        const monthData = groupedByMonth[monthKey];
-        const monthDate = new Date(monthKey + '-02T12:00:00Z');
+    for (const dateKey of sortedDates) {
+        const group = groupedByDay[dateKey];
+        
+        // Header de Día (Ahora actúa como separador principal)
+        vList.items.push({ type: 'date-header', date: dateKey, total: group.total });
+        vList.itemMap.push({ height: 45, offset: currentHeight }); // Altura fija ajustada
+        currentHeight += 45;
 
-        vList.items.push({ type: 'month-header', date: monthDate, });
-        vList.itemMap.push({ height: 40, offset: currentHeight });
-        currentHeight += 40;
-
-        const sortedDates = Object.keys(monthData.days).sort((a, b) => b.localeCompare(a));
-        for (const dateKey of sortedDates) {
-            const group = monthData.days[dateKey];
-            
-            if (group.movements && group.movements.length > 0) {
-                vList.items.push({ type: 'date-header', date: dateKey, total: group.total });
-                vList.itemMap.push({ height: vList.heights.header, offset: currentHeight });
-                currentHeight += vList.heights.header;
-                group.movements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id.localeCompare(a.id));
-                for (const mov of group.movements) {
-                    const itemHeight = mov.tipo === 'traspaso' ? vList.heights.transfer : vList.heights.transaction;
-                    vList.items.push({ type: 'transaction', movement: mov });
-                    vList.itemMap.push({ height: itemHeight, offset: currentHeight });
-                    currentHeight += itemHeight;
-                }
-            }
+        // Movimientos del día
+        // Ordenamos por fecha/hora descendente dentro del día
+        group.movements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id.localeCompare(a.id));
+        
+        for (const mov of group.movements) {
+            // Usamos altura fija para consistencia visual
+            const itemHeight = 72; // Altura cómoda para dedo
+            vList.items.push({ type: 'transaction', movement: mov });
+            vList.itemMap.push({ height: itemHeight, offset: currentHeight });
+            currentHeight += itemHeight;
         }
     }
     
-    // 4. Renderizar y actualizar (sin cambios)
+    // 4. Renderizar
     vList.sizerEl.style.height = `${currentHeight}px`;
     vList.lastRenderedRange = { start: -1, end: -1 }; 
     renderVisibleItems();
+    
+    // Gestión de estados vacíos (igual que antes)
     const loadMoreContainer = select('load-more-container');
     const emptyContainer = select('empty-movimientos');
     const listContainer = select('movimientos-list-container');
+    
     if (vList.items.length === 0) {
         listContainer?.classList.add('hidden');
         loadMoreContainer?.classList.add('hidden');
