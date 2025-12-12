@@ -5225,3 +5225,134 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     width: auto;
     flex-shrink: 0;
 }
+/* ================================================================= */
+/* === PANEL "COCKPIT" ZERO SCROLL (Estilo Ejecutivo) === */
+/* ================================================================= */
+
+/* 1. Contenedor Principal: Ocupa el 100% y no deja hacer scroll */
+#panel-page {
+    height: 100%;
+    overflow: hidden; /* Cortamos el scroll */
+    display: flex;
+    flex-direction: column;
+}
+
+/* 2. La Rejilla Maestra */
+.dashboard-grid {
+    display: grid;
+    height: 100%;
+    /* Definimos filas: 
+       1. Cabecera (Auto) 
+       2. Patrimonio (Flexible pero prominente)
+       3. Flujo (Flexible)
+       4. Detalles Inversión/Salud (Flexible)
+    */
+    grid-template-rows: auto 1.2fr 1fr 1fr; 
+    gap: 8px; /* Espacio pequeñito entre tarjetas */
+    padding: 10px 12px 85px 12px; /* Padding bottom grande para no chocar con el menú de abajo */
+}
+
+/* 3. Tarjetas del Dashboard */
+.d-card {
+    background-color: var(--c-surface);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centrado vertical */
+    position: relative;
+    min-height: 0; /* Permite encogerse si hace falta */
+}
+
+/* 4. Cabecera con Filtro */
+.d-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+}
+.d-header h2 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: var(--c-on-surface-secondary);
+    margin: 0;
+    font-weight: 700;
+}
+
+/* 5. Tarjeta Héroe (Patrimonio) */
+.d-hero {
+    background: linear-gradient(160deg, rgba(0, 179, 77, 0.15) 0%, var(--c-surface) 100%);
+    border: 1px solid var(--c-primary);
+    text-align: center;
+    justify-content: space-evenly; /* Distribución vertical */
+}
+.d-hero-title {
+    font-size: 0.75rem;
+    color: var(--c-primary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+/* El número se adapta al tamaño de pantalla usando 'clamp' y 'vh' */
+.d-hero-value {
+    font-size: clamp(2.5rem, 6vh, 4rem); 
+    font-weight: 800;
+    line-height: 1;
+    color: var(--c-white);
+    text-shadow: 0 0 20px rgba(0, 179, 77, 0.4);
+}
+.d-hero-sub {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    font-size: 0.8rem;
+    color: var(--c-on-surface-tertiary);
+}
+
+/* 6. Fila de Flujo (Ingresos/Gastos/Neto en una línea) */
+.d-flow-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr; /* 3 columnas iguales */
+    gap: 8px;
+    text-align: center;
+}
+.d-kpi-tiny {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: rgba(255,255,255,0.03);
+    border-radius: 12px;
+    padding: 6px;
+}
+.d-label { font-size: 0.65rem; color: var(--c-on-surface-secondary); margin-bottom: 2px; text-transform: uppercase;}
+.d-value { font-size: 0.95rem; font-weight: 700; }
+
+/* 7. Fila Inferior (Inversiones y Salud divididas) */
+.d-bottom-row {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr; /* Inversiones un poco más ancho */
+    gap: 8px;
+}
+.d-split-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    justify-content: space-around;
+    height: 100%;
+}
+.d-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--c-outline);
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+}
+.d-stat-row:last-child { border: none; margin: 0; padding: 0; }
+
+/* Ajuste específico para pantallas muy pequeñas (iPhone SE) */
+@media (max-height: 600px) {
+    .dashboard-grid { gap: 4px; padding-bottom: 70px; }
+    .d-hero-value { font-size: 2rem; }
+}
