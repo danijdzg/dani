@@ -3658,135 +3658,108 @@ const handleShowPnlBreakdown = async (accountId) => {
     showGenericModal(`Desglose P&L: ${cuenta.nombre}`, modalHtml);
 };
 
-// ▲▲▲ FIN DEL BLOQUE A REEMPLAZAR ▲▲▲
-
-        const renderVirtualListItem = (item) => {
-		    if (item.type === 'pending-header') {
-                return `
-                    <div class="movimiento-date-header" style="background-color: var(--c-warning); color: var(--c-black); font-weight: 800; letter-spacing: 0.5px;">
-                        <span>
-                            <span class="material-icons" style="font-size: 16px; vertical-align: bottom; margin-right: 4px;">update</span>
-                            RECURRENTES PENDIENTES (${item.count})
-                        </span>
-                    </div>`;
-            }
-
-            if (item.type === 'pending-item') {
-				const r = item.recurrent;
-				const nextDate = new Date(r.nextDate + 'T12:00:00Z');
-				const formattedDate = nextDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-				const amountClass = r.cantidad >= 0 ? 'text-positive' : 'text-negative';
-
-    return `
-    <div class="transaction-card" id="pending-recurrente-${r.id}" style="background-color: color-mix(in srgb, var(--c-warning) 10%, transparent);">
-        <div class="transaction-card__indicator transaction-card__indicator--recurrent"></div>
-        <div class="transaction-card__content">
-            <div class="transaction-card__details">
-                <div class="transaction-card__row-1">${escapeHTML(r.descripcion)}</div>
-                <div class="transaction-card__row-2" style="font-weight: 600; color: var(--c-warning);">Pendiente desde: ${formattedDate}</div>
-                
-                <!-- NUEVO: Ahora las acciones están mejor organizadas y con el botón Editar -->
-                <div class="acciones-recurrentes-corregidas">
-    <button class="btn btn--secondary" data-action="edit-recurrente-from-pending" data-id="${r.id}" title="Editar antes de añadir" style="padding: 4px 8px; font-size: 0.7rem;">
-        <span class="material-icons" style="font-size: 14px;">edit</span>
-        <span>Editar</span>
-    </button>
-    <button class="btn btn--secondary" data-action="skip-recurrent" data-id="${r.id}" title="Omitir esta vez" style="padding: 4px 8px; font-size: 0.7rem;">
-        <span class="material-icons" style="font-size: 14px;">skip_next</span>
-        <span>No añadir</span>
-    </button>
-    <button class="btn btn--primary" data-action="confirm-recurrent" data-id="${r.id}" title="Crear el movimiento ahora" style="padding: 4px 8px; font-size: 0.7rem;">
-        <span class="material-icons" style="font-size: 14px;">check</span>
-        <span>Añadir Ahora</span>
-    </button>
-</div>
-            </div>
-            <div class="transaction-card__figures">
-                <strong class="transaction-card__amount ${amountClass}">${formatCurrency(r.cantidad)}</strong>
-            </div>
-        </div>
-    </div>`;
-}
-    if (item.type === 'date-header') {
-        const dateObj = new Date(item.date + 'T12:00:00Z');
-        const today = new Date(); today.setHours(0,0,0,0);
-        const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1); yesterday.setHours(0,0,0,0);
-        const itemDate = new Date(dateObj); itemDate.setHours(0,0,0,0);
-        
-        let label = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-        if (itemDate.getTime() === today.getTime()) label = "Hoy";
-        else if (itemDate.getTime() === yesterday.getTime()) label = "Ayer";
-
-        const totalClass = item.total >= 0 ? 'text-positive' : 'text-negative';
-        const totalSign = item.total > 0 ? '+' : '';
-
-        // DISEÑO NUEVO: Sticky Header limpio
-        return `
-            <div class="sticky-date-header">
-                <span class="sticky-date-label">${label}</span>
-                <span class="sticky-date-total ${totalClass}">${totalSign}${formatCurrencyHTML(item.total)}</span>
-            </div>
-        `;
+const renderVirtualListItem = (item) => {
+    
+    // Header de pendientes (Se mantiene simple)
+    if (item.type === 'pending-header') {
+        return `<div class="movimiento-date-header" style="background-color: var(--c-warning); color: #000; margin: 10px 16px;"><span><span class="material-icons" style="font-size: 16px; vertical-align: middle;">update</span> Pendientes (${item.count})</span></div>`;
     }
 
+    // Item de pendiente (Se mantiene la tarjeta estándar para diferenciarlos)
+    if (item.type === 'pending-item') {
+        const r = item.recurrent;
+        const date = new Date(r.nextDate).toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
+        return `<div class="transaction-card" style="margin:0 16px; border-bottom:1px solid var(--c-outline);">
+            <div class="transaction-card__content">
+                <div class="transaction-card__row-1">${escapeHTML(r.descripcion)}</div>
+                <div class="transaction-card__row-2 text-warning">Programado: ${date}</div>
+            </div>
+            <div class="transaction-card__figures"><span class="${r.cantidad>=0?'text-positive':'text-negative'}">${formatCurrency(r.cantidad)}</span></div>
+        </div>`;
+    }
+
+   
     if (item.type === 'transaction') {
-        // Lógica INLINE para máxima velocidad, reemplazando TransactionCardComponent antiguo
         const m = item.movement;
         const { cuentas, conceptos } = db;
         const highlightClass = (m.id === newMovementIdToHighlight) ? 'highlight-pulse' : '';
         
-        let iconHtml, title, subtitle, amountClass, amountSign, accountName;
+        // Formatear fecha: "12 oct"
+        const dateObj = new Date(m.fecha);
+        const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+
+        let iconHtml, line1, line2, amountClass, amountSign;
+
+        // Helper para saldo compacto (sin decimales .00)
+        const formatCompact = (cents) => {
+            if (cents === undefined || cents === null) return '...';
+            return (cents / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '€';
+        };
 
         if (m.tipo === 'traspaso') {
-            const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || '?';
-            const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || '?';
-            iconHtml = `<div class="t-icon t-icon--transfer"><span class="material-icons">swap_horiz</span></div>`;
-            title = m.descripcion && m.descripcion !== 'Traspaso' ? m.descripcion : 'Traspaso';
-            subtitle = `${origen} <span class="material-icons" style="font-size:10px">arrow_forward</span> ${destino}`;
+            const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || 'Origen desc.';
+            const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || 'Destino desc.';
+            
+            // Icono de flechas cruzadas
+            iconHtml = `<div class="t-icon t-icon--transfer"><span class="material-icons">sync_alt</span></div>`;
+            
+            // LÍNEA 1: Cuenta Salida (Saldo resultante)
+            // Usamos flecha roja hacia arriba para indicar salida
+            line1 = `<span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px;">arrow_upward</span> ${escapeHTML(origen)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceOrigen)})</span></span>`;
+            
+            // LÍNEA 2: Cuenta Entrada (Saldo resultante)
+            // Usamos flecha verde hacia abajo para indicar entrada
+            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px;">arrow_downward</span> ${escapeHTML(destino)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceDestino)})</span></span>`;
+            
             amountClass = 'text-info';
-            amountSign = '';
-            accountName = ''; // En traspaso ya mostramos origen/destino en subtítulo
+            amountSign = ''; // Traspaso es neutro visualmente en la derecha
+            
         } else {
             const concepto = conceptos.find(c => c.id === m.conceptoId);
             const conceptoNombre = concepto ? concepto.nombre : 'Varios';
-            // Extracción de emoji o letra
+            const cuentaObj = cuentas.find(c => c.id === m.cuentaId);
+            const nombreCuenta = cuentaObj ? cuentaObj.nombre : 'Cuenta';
+            
+            // Emoji o Inicial
             const emojiMatch = conceptoNombre.match(/(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
             const avatarContent = emojiMatch ? emojiMatch[0] : conceptoNombre.charAt(0).toUpperCase();
             
             const isGasto = m.cantidad < 0;
             iconHtml = `<div class="t-icon ${isGasto ? 't-icon--expense' : 't-icon--income'}">${avatarContent}</div>`;
             
-            // Lógica de visualización
-            title = m.descripcion || conceptoNombre; // Descripción tiene prioridad
+            // LÍNEA 1: Fecha (Mes/Día) y Concepto
+            // Usamos un span para la fecha con estilo distinto
+            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-concept">${escapeHTML(conceptoNombre)}</span>`;
             
-            // Subtítulo: Concepto • Cuenta
-            const cuentaObj = cuentas.find(c => c.id === m.cuentaId);
-            const nombreCuenta = cuentaObj ? cuentaObj.nombre : '';
-            const conceptoLimpio = emojiMatch ? conceptoNombre.replace(emojiMatch[0], '').trim() : conceptoNombre;
+            // LÍNEA 2: Cuenta y Descripción
+            // Si hay descripción la ponemos, si no, repetimos concepto o dejamos vacío
+            const desc = m.descripcion && m.descripcion !== conceptoNombre ? m.descripcion : '';
+            const separator = desc ? ' • ' : '';
             
-            subtitle = `${conceptoLimpio} <span style="opacity:0.5">•</span> ${nombreCuenta}`;
+            // Estructura: [Cuenta] Descripción
+            line2 = `<span class="t-account-badge">${escapeHTML(nombreCuenta)}</span>${separator}${escapeHTML(desc)}`;
             
             amountClass = isGasto ? 'text-negative' : 'text-positive';
             amountSign = isGasto ? '' : '+';
         }
 
-        // HTML GRID OPTIMIZADO
         return `
         <div class="t-card ${highlightClass}" data-id="${m.id}" onclick="startMovementForm('${m.id}', false)">
             ${iconHtml}
             <div class="t-content">
-                <div class="t-top">
-                    <span class="t-title">${escapeHTML(title)}</span>
-                    <span class="t-amount ${amountClass}">${amountSign}${formatCurrencyHTML(m.cantidad)}</span>
+                <div class="t-row-primary">
+                    <div class="t-line-1">${line1}</div>
+                    <div class="t-amount ${amountClass}">${amountSign}${formatCurrency(m.cantidad)}</div>
                 </div>
-                <div class="t-bottom">
-                    <span class="t-subtitle">${subtitle}</span>
-                    ${m.tipo !== 'traspaso' ? `<span class="t-balance">${formatCurrency(m.runningBalance)}</span>` : ''}
+                <div class="t-row-secondary">
+                    <div class="t-line-2">${line2}</div>
+                    ${m.tipo !== 'traspaso' ? `<div class="t-running-balance">${formatCurrency(m.runningBalance)}</div>` : ''}
                 </div>
             </div>
         </div>`;
     }
-};
+    return '';
+};       
         
         const renderVisibleItems = () => {
             if (!vList.scrollerEl || !vList.contentEl) return; 
@@ -3826,9 +3799,7 @@ renderedItems.forEach((item, index) => {
             vList.contentEl.style.transform = `translateY(${offsetY}px)`; 
             vList.lastRenderedRange = { start: startIndex, end: endIndex };
         };
-// =================================================================
-// === INICIO: NUEVA FUNCIÓN AYUDANTE PARA REFRESCOS RÁPIDOS     ===
-// =================================================================
+
 const updateLocalDataAndRefreshUI = async () => {
     // 1. Recalcula los saldos con la lista de movimientos actualizada que tenemos en memoria.
     await processMovementsForRunningBalance(db.movimientos, true);
@@ -3837,9 +3808,6 @@ const updateLocalDataAndRefreshUI = async () => {
     updateVirtualListUI();
 
 };
-// =================================================================
-// === FIN: NUEVA FUNCIÓN AYUDANTE                               ===
-// ================================================================= 
  
 const updateVirtualListUI = () => {
     if (!vList.sizerEl) return;
@@ -3848,7 +3816,7 @@ const updateVirtualListUI = () => {
     vList.itemMap = [];
     let currentHeight = 0;
     
-    // 1. Recurrentes pendientes (Sin cambios, se mantiene igual)
+    // 1. Recurrentes pendientes (Se mantiene igual)
     const pendingRecurrents = getPendingRecurrents();
     if (pendingRecurrents.length > 0) {
         vList.items.push({ type: 'pending-header', count: pendingRecurrents.length });
@@ -3861,68 +3829,41 @@ const updateVirtualListUI = () => {
         });
     }
 
-    // 2. Agrupación PLANA por DÍA (Eliminamos la capa de Mes)
-    const groupedByDay = {};
+    // 2. Lista de Movimientos PLANA (Sin separadores)
     const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+    const allMovements = [];
 
     (db.movimientos || []).forEach(mov => {
-        let isVisibleInLedger = false;
-        let amountForTotals = 0;
-
+        let isVisible = false;
         if (mov.tipo === 'traspaso') {
-            const origenVisible = visibleAccountIds.has(mov.cuentaOrigenId);
-            const destinoVisible = visibleAccountIds.has(mov.cuentaDestinoId);
-            isVisibleInLedger = origenVisible || destinoVisible;
-            if (origenVisible && !destinoVisible) amountForTotals = -mov.cantidad;
-            else if (!origenVisible && destinoVisible) amountForTotals = mov.cantidad;
+            isVisible = visibleAccountIds.has(mov.cuentaOrigenId) || visibleAccountIds.has(mov.cuentaDestinoId);
         } else {
-            isVisibleInLedger = visibleAccountIds.has(mov.cuentaId);
-            if (isVisibleInLedger) amountForTotals = mov.cantidad;
+            isVisible = visibleAccountIds.has(mov.cuentaId);
         }
 
-        if (isVisibleInLedger) {
-            // Usamos solo la fecha como clave (YYYY-MM-DD)
-            const dateKey = mov.fecha.slice(0, 10);
-            
-            if (!groupedByDay[dateKey]) { 
-                groupedByDay[dateKey] = { movements: [], total: 0 }; 
-            }
-            
-            groupedByDay[dateKey].movements.push(mov);
-            groupedByDay[dateKey].total += amountForTotals;
+        if (isVisible) {
+            allMovements.push(mov);
         }
     });
 
-    // 3. Ordenar días (Reciente a Antiguo) y construir lista lineal
-    const sortedDates = Object.keys(groupedByDay).sort((a, b) => b.localeCompare(a));
+    // Ordenamos por fecha descendente (más reciente arriba)
+    allMovements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id.localeCompare(a.id));
 
-    for (const dateKey of sortedDates) {
-        const group = groupedByDay[dateKey];
-        
-        // Header de Día (Ahora actúa como separador principal)
-        vList.items.push({ type: 'date-header', date: dateKey, total: group.total });
-        vList.itemMap.push({ height: 45, offset: currentHeight }); // Altura fija ajustada
-        currentHeight += 45;
-
-        // Movimientos del día
-        // Ordenamos por fecha/hora descendente dentro del día
-        group.movements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id.localeCompare(a.id));
-        
-        for (const mov of group.movements) {
-            // Usamos altura fija para consistencia visual
-            const itemHeight = 72; // Altura cómoda para dedo
-            vList.items.push({ type: 'transaction', movement: mov });
-            vList.itemMap.push({ height: itemHeight, offset: currentHeight });
-            currentHeight += itemHeight;
-        }
+    // Generamos los items de la lista virtual
+    for (const mov of allMovements) {
+        // Altura fija un poco mayor para que quepan las dos líneas de texto cómodamente
+        const itemHeight = 76; 
+        vList.items.push({ type: 'transaction', movement: mov });
+        vList.itemMap.push({ height: itemHeight, offset: currentHeight });
+        currentHeight += itemHeight;
     }
     
-    // 4. Renderizar
+    // 3. Renderizado final
     vList.sizerEl.style.height = `${currentHeight}px`;
     vList.lastRenderedRange = { start: -1, end: -1 }; 
     renderVisibleItems();
     
-    // Gestión de estados vacíos (igual que antes)
+    // Gestión de estados vacíos
     const loadMoreContainer = select('load-more-container');
     const emptyContainer = select('empty-movimientos');
     const listContainer = select('movimientos-list-container');

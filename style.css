@@ -4954,14 +4954,13 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     font-family: var(--font-numeric);
 }
 
-/* Tarjeta de Movimiento (Grid Layout) */
 .t-card {
     display: flex;
     align-items: center;
-    padding: 12px 16px;
+    padding: 10px 16px; /* Padding equilibrado */
     background-color: var(--c-surface);
     border-bottom: 1px solid var(--c-outline);
-    height: 72px; /* Altura fija para virtual scroll */
+    height: 76px; /* Altura fija para consistencia */
     cursor: pointer;
     transition: background-color 0.2s;
 }
@@ -4970,77 +4969,119 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     background-color: var(--c-surface-variant);
 }
 
+/* Icono Izquierdo */
 .t-icon {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     font-weight: 700;
-    margin-right: 12px;
+    margin-right: 14px;
     flex-shrink: 0;
+    border: 1px solid var(--c-outline);
 }
+.t-icon--income { background: color-mix(in srgb, var(--c-success) 10%, var(--c-surface)); color: var(--c-success); }
+.t-icon--expense { background: color-mix(in srgb, var(--c-danger) 10%, var(--c-surface)); color: var(--c-danger); }
+.t-icon--transfer { background: color-mix(in srgb, var(--c-info) 10%, var(--c-surface)); color: var(--c-info); }
 
-.t-icon--income { background: rgba(57, 255, 20, 0.15); color: var(--c-success); }
-.t-icon--expense { background: rgba(255, 59, 48, 0.15); color: var(--c-danger); }
-.t-icon--transfer { background: rgba(191, 90, 242, 0.15); color: var(--c-info); }
-
+/* Contenido Central */
 .t-content {
     flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 4px;
-    min-width: 0; /* Permite ellipsis */
+    gap: 4px; /* Espacio entre línea 1 y línea 2 */
+    min-width: 0;
 }
 
-.t-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-}
-
-.t-title {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--c-on-surface);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-right: 8px;
-}
-
-.t-amount {
-    font-size: 1rem;
-    font-weight: 700;
-    font-family: var(--font-numeric);
-    white-space: nowrap;
-}
-
-.t-bottom {
+/* Filas Flexbox */
+.t-row-primary, .t-row-secondary {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
 }
 
-.t-subtitle {
-    font-size: 0.75rem;
-    color: var(--c-on-surface-secondary);
+/* --- LÍNEA 1: Fecha + Concepto --- */
+.t-line-1 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
     white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.t-date-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--c-on-surface-secondary);
+    background-color: var(--c-surface-variant);
+    padding: 2px 6px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.t-concept {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--c-on-surface);
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 70%;
 }
 
-.t-balance {
+/* Importe principal */
+.t-amount {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-left: 8px;
+    font-feature-settings: "tnum";
+}
+
+/* --- LÍNEA 2: Cuenta + Descripción --- */
+.t-line-2 {
+    font-size: 0.8rem;
+    color: var(--c-on-surface-secondary);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.t-account-badge {
+    color: var(--c-primary);
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+/* Saldo Acumulado (derecha abajo) */
+.t-running-balance {
     font-size: 0.7rem;
     color: var(--c-on-surface-tertiary);
-    font-family: var(--font-numeric);
-    background-color: var(--c-surface-variant);
-    padding: 1px 6px;
-    border-radius: 4px;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+/* --- ESTILOS ESPECÍFICOS PARA TRASPASOS --- */
+.t-transfer-part {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--c-on-surface);
+}
+
+.t-balance-pill {
+    font-size: 0.7rem;
+    color: var(--c-on-surface-tertiary);
+    font-weight: 400;
 }
 
 /* Ajuste para eliminar márgenes del container en modo lista */
