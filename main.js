@@ -7125,14 +7125,8 @@ const showModal = (id) => {
 };
 
 const hideModal = (id) => {
-    // === NUEVO: LIMPIEZA DEL MODO SPLIT ===
-    if (id === 'movimiento-modal') {
-        document.body.classList.remove('split-mode');
-        hideCalculator(); // Cerramos la calculadora también
-    }
-    // ======================================
-
-    if (document.activeElement) document.activeElement.blur();
+    if (document.activeElement) document.activeElement.blur(); 
+    const m = select(id);
     
     // --- NUEVA LÓGICA DE HISTORIAL ---
     // Verificamos: ¿El estado actual del historial pertenece a ESTE modal?
@@ -7615,23 +7609,19 @@ const startMovementForm = async (id = null, isRecurrent = false, initialType = '
 
     showModal('movimiento-modal');
     
-    // === NUEVO: ACTIVAR MODO PANTALLA PARTIDA ===
-    document.body.classList.add('split-mode'); // Activamos el CSS del 60/40
-    
-    // Forzamos la apertura de la calculadora (sin foco inicial para no abrir teclado nativo)
-    // Usamos un pequeño timeout para que la animación del modal empiece antes
-    setTimeout(() => {
-        const amountInput = select('movimiento-cantidad');
-        // Llamamos a showCalculator pero pasamos un flag (o simplemente la llamamos)
-        // para que se renderice visualmente en el hueco del 40%.
-        if (amountInput) {
-            // Esto prepara la calculadora en su sitio
-            showCalculator(amountInput); 
-        }
-    }, 100);
-
     if (typeof initAmountInput === 'function') initAmountInput(); 
     if (typeof setupFormNavigation === 'function') setupFormNavigation();
+
+    // ▼▼▼ AQUÍ ESTÁ LA MEJORA 1: AUTO-APERTURA INTELIGENTE ▼▼▼
+    if (mode === 'new') {
+        setTimeout(() => {
+            const amountInput = select('movimiento-cantidad');
+            if (amountInput) {
+                // En lugar de solo focus(), llamamos directamente a la calculadora
+                showCalculator(amountInput);
+            }
+        }, 300); // Un poco más de tiempo para asegurar que el modal terminó de subir
+    }
 };
         
         
@@ -8547,11 +8537,12 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
 
 const showCalculator = (targetInput) => {
     const calculatorOverlay = select('calculator-overlay');
+    const calculatorUi = select('calculator-ui');
+    
     if (!calculatorOverlay) return;
     
-    // Activar visibilidad (El CSS se encarga de la posición gracias a body.split-mode)
+    // 1. Mostrar la UI (sin bloquear scroll de fondo visualmente)
     calculatorOverlay.classList.add('modal-overlay--active');
-    
     calculatorState.isVisible = true;
     calculatorState.targetInput = targetInput;
     
