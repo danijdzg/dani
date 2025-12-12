@@ -8708,7 +8708,7 @@ const initAmountInput = () => {
             showCalculator(newInput);
         });
 };
-};
+
 
 // Función auxiliar para manejar el evento de foco/click
 const handleInputFocus = (e) => {
