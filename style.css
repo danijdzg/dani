@@ -5226,39 +5226,34 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     flex-shrink: 0;
 }
 /* ================================================================= */
-/* === PANEL "COCKPIT" ZERO SCROLL (Estilo Ejecutivo) === */
+/* === PANEL "COCKPIT" ZERO SCROLL (Layout Reorganizado) === */
 /* ================================================================= */
 
-/* 1. Contenedor Principal: Ocupa el 100% y no deja hacer scroll */
+/* 1. Contenedor Principal */
 #panel-page.view--active {
     height: 100%;
-    overflow: hidden; /* Cortamos el scroll */
-    display: flex;    /* Solo flex si está activo */
+    overflow: hidden;
+    display: flex;
     flex-direction: column;
-    padding: 0; /* Reseteamos el padding para controlarlo con el grid */
+    padding: 0;
 }
+#panel-page:not(.view--active) { display: none !important; }
 
-/* Aseguramos que si NO está activo, se oculte (por si acaso) */
-#panel-page:not(.view--active) {
-    display: none !important;
-}
-
-/* 2. La Rejilla Maestra */
+/* 2. La Rejilla Maestra (Ajustada) */
 .dashboard-grid {
     display: grid;
     height: 100%;
-    /* Definimos filas: 
-       1. Cabecera (Auto) 
-       2. Patrimonio (Flexible pero prominente)
-       3. Flujo (Flexible)
-       4. Detalles Inversión/Salud (Flexible)
+    /* Fila 1: Cabecera (Auto)
+       Fila 2: Flujo (La nueva tarjeta destacada - 0.9fr)
+       Fila 3: Patrimonio (En medio - 1.1fr)
+       Fila 4: Detalles (Abajo - 1fr)
     */
-    grid-template-rows: auto 1.2fr 1fr 1fr; 
-    gap: 8px; /* Espacio pequeñito entre tarjetas */
-    padding: 10px 12px 85px 12px; /* Padding bottom grande para no chocar con el menú de abajo */
+    grid-template-rows: min-content 0.9fr 1.1fr 1fr;
+    gap: 8px;
+    padding: 10px 12px 85px 12px;
 }
 
-/* 3. Tarjetas del Dashboard */
+/* 3. Estilos Base de Tarjetas */
 .d-card {
     background-color: var(--c-surface);
     border: 1px solid rgba(255,255,255,0.05);
@@ -5266,170 +5261,84 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     padding: 10px;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Centrado vertical */
+    justify-content: center;
     position: relative;
-    min-height: 0; /* Permite encogerse si hace falta */
+    min-height: 0;
 }
 
-/* 4. Cabecera con Filtro */
+/* 4. Cabecera */
 .d-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 4px;
+    display: flex; justify-content: space-between; align-items: center; padding: 0 4px;
 }
 .d-header h2 {
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    color: var(--c-on-surface-secondary);
-    margin: 0;
-    font-weight: 700;
+    font-size: 0.9rem; text-transform: uppercase; color: var(--c-on-surface-secondary); margin: 0; font-weight: 700;
 }
 
-/* 5. Tarjeta Héroe (Patrimonio) */
-.d-hero {
-    background: linear-gradient(160deg, rgba(0, 179, 77, 0.15) 0%, var(--c-surface) 100%);
-    border: 1px solid var(--c-primary);
+/* 5. NUEVA TARJETA DESTACADA (Ingresos/Gastos/Ahorro) */
+/* Esta es la que tiene el borde llamativo */
+.d-flow-card-unified {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr; /* 3 columnas */
+    background: linear-gradient(145deg, var(--c-surface) 0%, rgba(255,255,255,0.03) 100%);
+    /* Borde llamativo (Color primario brillante) */
+    border: 2px solid var(--c-primary); 
+    border-radius: 20px;
+    /* Sombra resplandeciente */
+    box-shadow: 0 0 15px rgba(0, 179, 77, 0.15), inset 0 0 20px rgba(0,0,0,0.5);
+    padding: 5px;
+    align-items: center;
+}
+
+/* Items dentro de la tarjeta destacada */
+.d-kpi-highlight {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     text-align: center;
-    justify-content: space-evenly; /* Distribución vertical */
+    height: 100%;
+    /* Separadores verticales sutiles */
+    border-right: 1px solid rgba(255,255,255,0.1);
 }
-.d-hero-title {
-    font-size: 0.75rem;
-    color: var(--c-primary);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+.d-kpi-highlight:last-child { border-right: none; }
+
+.d-label { font-size: 0.65rem; color: var(--c-on-surface-secondary); margin-bottom: 4px; text-transform: uppercase; font-weight: 700; }
+.d-value { font-size: 1rem; font-weight: 800; line-height: 1.1; }
+
+/* 6. Patrimonio (Ahora en medio y con estilo secundario) */
+.d-hero-middle {
+    background: rgba(255,255,255,0.03); /* Fondo más neutro para no competir */
+    border: 1px solid var(--c-outline);
+    text-align: center;
+    justify-content: space-evenly;
 }
-/* El número se adapta al tamaño de pantalla usando 'clamp' y 'vh' */
 .d-hero-value {
     font-size: clamp(2.5rem, 6vh, 4rem); 
     font-weight: 800;
     line-height: 1;
     color: var(--c-white);
-    text-shadow: 0 0 20px rgba(0, 179, 77, 0.4);
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
 }
 .d-hero-sub {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    font-size: 0.8rem;
-    color: var(--c-on-surface-tertiary);
+    display: flex; justify-content: center; gap: 20px; font-size: 0.8rem; color: var(--c-on-surface-tertiary);
 }
 
-/* 6. Fila de Flujo (Ingresos/Gastos/Neto en una línea) */
-.d-flow-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr; /* 3 columnas iguales */
-    gap: 8px;
-    text-align: center;
-}
-.d-kpi-tiny {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    background: rgba(255,255,255,0.03);
-    border-radius: 12px;
-    padding: 6px;
-}
-.d-label { font-size: 0.65rem; color: var(--c-on-surface-secondary); margin-bottom: 2px; text-transform: uppercase;}
-.d-value { font-size: 0.95rem; font-weight: 700; }
-
-/* 7. Fila Inferior (Inversiones y Salud divididas) */
+/* 7. Fila Inferior (Igual que antes) */
 .d-bottom-row {
-    display: grid;
-    grid-template-columns: 1.2fr 0.8fr; /* Inversiones un poco más ancho */
-    gap: 8px;
+    display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 8px;
 }
 .d-split-col {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    justify-content: space-around;
-    height: 100%;
-}
-.d-stat-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--c-outline);
-    padding-bottom: 4px;
-    margin-bottom: 4px;
-}
-.d-stat-row:last-child { border: none; margin: 0; padding: 0; }
-
-/* Ajuste específico para pantallas muy pequeñas (iPhone SE) */
-@media (max-height: 600px) {
-    .dashboard-grid { gap: 4px; padding-bottom: 70px; }
-    .d-hero-value { font-size: 2rem; }
-}
-/* =============================================================== */
-/* === MEJORA: BARRA DE FECHAS COMPACTA (Panel Personalizado) === */
-/* =============================================================== */
-
-/* Ajustamos la rejilla para que la cabecera se adapte si crece */
-.dashboard-grid {
-    grid-template-rows: min-content 1.2fr 1fr 1fr; /* min-content deja crecer la cabecera */
+    display: flex; flex-direction: column; gap: 4px; justify-content: space-around; height: 100%;
 }
 
-/* Contenedor de la barra de fechas (inicialmente oculto) */
+/* === ESTILOS FECHA (Requeridos del paso anterior) === */
 #custom-date-filters {
     background-color: var(--c-surface-variant);
-    margin: 0 4px 8px 4px;
-    padding: 6px 12px;
-    border-radius: 12px;
-    border: 1px solid var(--c-primary); /* Borde verde para destacar que está activo */
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    margin: 0 4px 8px 4px; padding: 6px 12px; border-radius: 12px;
+    border: 1px solid var(--c-primary); display: flex; align-items: center; justify-content: space-between; gap: 10px;
     animation: slideDown 0.2s ease-out;
 }
-
-#custom-date-filters.hidden {
-    display: none !important;
-}
-
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Estilo de los inputs de fecha para que parezcan texto/botones */
-.compact-date-input {
-    background: transparent;
-    border: none;
-    color: var(--c-on-surface);
-    font-family: var(--font-numeric); /* Tu fuente de números */
-    font-size: 0.85rem;
-    font-weight: 700;
-    width: 100%;
-    padding: 0;
-    text-align: center;
-    cursor: pointer;
-}
-
-/* Icono de calendario para forzar la apertura */
-.date-picker-trigger {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(0,0,0,0.2);
-    padding: 4px 8px;
-    border-radius: 8px;
-    flex: 1; /* Ocupan espacio igual */
-    cursor: pointer;
-}
-
-/* Flecha separadora */
-.date-separator {
-    color: var(--c-on-surface-tertiary);
-    font-size: 1rem;
-}
-
-/* Fix para invertir el color del icono de calendario nativo en modo oscuro */
-.compact-date-input::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-    opacity: 0.6;
-    transform: scale(0.8);
-    cursor: pointer;
-}
+#custom-date-filters.hidden { display: none !important; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+.compact-date-input { background: transparent; border: none; color: var(--c-on-surface); font-family: var(--font-numeric); font-size: 0.85rem; font-weight: 700; width: 100%; padding: 0; text-align: center; cursor: pointer; }
+.date-picker-trigger { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 8px; flex: 1; cursor: pointer; }
+.compact-date-input::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; transform: scale(0.8); cursor: pointer; }

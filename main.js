@@ -4685,27 +4685,43 @@ const renderPanelPage = async () => {
                 </div>
 
                 <div id="custom-date-filters" class="hidden">
-                    
                     <div class="date-picker-trigger" onclick="document.getElementById('filter-fecha-inicio').showPicker()">
                         <span class="material-icons" style="font-size:14px; color:var(--c-primary);">event</span>
                         <input type="date" id="filter-fecha-inicio" class="compact-date-input">
                     </div>
-
-                    <span class="material-icons date-separator" style="font-size:14px;">arrow_forward</span>
-
+                    <span class="material-icons date-separator" style="font-size:14px; color:var(--c-on-surface-tertiary);">arrow_forward</span>
                     <div class="date-picker-trigger" onclick="document.getElementById('filter-fecha-fin').showPicker()">
                         <span class="material-icons" style="font-size:14px; color:var(--c-primary);">event</span>
                         <input type="date" id="filter-fecha-fin" class="compact-date-input">
                     </div>
-
                 </div>
             </div>
 
-            <div class="d-card d-hero clickable-kpi" data-action="show-kpi-drilldown" data-type="patrimonio">
-                <div class="d-hero-title">Patrimonio Neto</div>
+            <div class="d-flow-card-unified">
+                <div class="d-kpi-highlight clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
+                    <div class="d-label" style="color:var(--c-success);">Ingresos</div>
+                    <div id="kpi-ingresos-value" class="d-value text-positive skeleton">...</div>
+                </div>
+                
+                <div class="d-kpi-highlight clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
+                    <div class="d-label" style="color:var(--c-danger);">Gastos</div>
+                    <div id="kpi-gastos-value" class="d-value text-negative skeleton">...</div>
+                </div>
+
+                <div class="d-kpi-highlight clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
+                    <div class="d-label" style="color:var(--c-warning);">Ahorro <small id="kpi-tasa-ahorro-value" style="color:inherit; opacity:0.8;">(0%)</small></div>
+                    <div id="kpi-saldo-neto-value" class="d-value skeleton">...</div>
+                </div>
+            </div>
+
+            <div class="d-card d-hero-middle clickable-kpi" data-action="show-kpi-drilldown" data-type="patrimonio">
+                <div style="font-size:0.7rem; font-weight:700; color:var(--c-primary); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">
+                    Patrimonio Neto
+                </div>
+                
                 <div id="kpi-patrimonio-neto-value" class="d-hero-value skeleton" data-current-value="0">0,00 €</div>
                 
-                <div class="d-hero-sub">
+                <div class="d-hero-sub" style="margin-top:15px;">
                     <div style="color: var(--c-info);">
                         <span class="material-icons" style="font-size:10px; vertical-align:middle;">account_balance_wallet</span> 
                         Liq: <strong id="kpi-liquidez-value">...</strong>
@@ -4717,28 +4733,16 @@ const renderPanelPage = async () => {
                 </div>
             </div>
 
-            <div class="d-flow-row">
-                <div class="d-kpi-tiny clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
-                    <div class="d-label text-success">Ingresos</div>
-                    <div id="kpi-ingresos-value" class="d-value text-positive skeleton">...</div>
-                </div>
-                <div class="d-kpi-tiny clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
-                    <div class="d-label text-danger">Gastos</div>
-                    <div id="kpi-gastos-value" class="d-value text-negative skeleton">...</div>
-                </div>
-                <div class="d-kpi-tiny clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
-                    <div class="d-label">Ahorro <small id="kpi-tasa-ahorro-value" class="text-warning">(0%)</small></div>
-                    <div id="kpi-saldo-neto-value" class="d-value skeleton">...</div>
-                </div>
-            </div>
-
             <div class="d-bottom-row">
+                
                 <div class="d-card d-split-col" style="border-color: rgba(191, 90, 242, 0.3); background: rgba(191, 90, 242, 0.05);">
                     <div class="d-label" style="text-align:center; color:#BF5AF2; font-weight:700;">RENDIMIENTO INV.</div>
+                    
                     <div style="text-align:center;">
                         <div class="d-label">Valor Real</div>
                         <div id="new-card-market-value" class="d-value skeleton" style="font-size:1.1rem;">...</div>
                     </div>
+
                     <div style="display:flex; justify-content:space-between; padding-top:4px; border-top:1px dashed rgba(255,255,255,0.1);">
                         <div><div class="d-label">Capital</div><div id="new-card-capital" style="font-size:0.75rem;">...</div></div>
                         <div style="text-align:right;"><div class="d-label">P&L</div><div id="new-card-pnl" style="font-size:0.75rem; font-weight:700;">...</div></div>
@@ -4756,6 +4760,7 @@ const renderPanelPage = async () => {
                         <div id="health-fi-val" class="d-value skeleton" style="color:#39FF14;">...</div>
                     </div>
                 </div>
+
             </div>
 
         </div> `;
