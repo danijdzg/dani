@@ -8544,32 +8544,16 @@ const showCalculator = (targetInput) => {
     targetInput.classList.add('form-input--active-calc');
 };
 
+/* --- FUNCIÓN hideCalculator ÚNICA Y DEFINITIVA --- */
 const hideCalculator = () => {
     const calculatorOverlay = select('calculator-overlay');
     if (calculatorOverlay) {
         calculatorOverlay.classList.remove('modal-overlay--active');
     }
-    document.body.classList.remove('calculator-open'); // <--- QUITAMOS LA CLASE
     
-    calculatorState.isVisible = false;
-    
-    if (calculatorKeyboardHandler) {
-        document.removeEventListener('keydown', calculatorKeyboardHandler);
-        calculatorKeyboardHandler = null;
-    }
-    if (document.activeElement) document.activeElement.blur();
-	document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
-};
-
-const hideCalculator = () => {
-	if (id === 'movimiento-modal') {
-        hideCalculator();
-    }
-    const calculatorOverlay = select('calculator-overlay');
-    if (calculatorOverlay) {
-        calculatorOverlay.classList.remove('modal-overlay--active');
-    }
-    document.body.classList.remove('calculator-open'); // <--- NUEVO
+    // Quitamos la clase del body para que el CSS sepa que la calculadora se ha ido
+    // y devuelva el formulario a su tamaño normal.
+    document.body.classList.remove('calculator-open'); 
     
     calculatorState.isVisible = false;
     
@@ -8579,9 +8563,11 @@ const hideCalculator = () => {
         calculatorKeyboardHandler = null;
     }
     
-    // Devolvemos el foco al documento para quitarlo de cualquier input residual
-    if (document.activeElement) document.activeElement.blur(); 
-    const m = select(id);
+    // Devolvemos el foco al documento
+    if (document.activeElement) document.activeElement.blur();
+    
+    // Quitamos el estilo de foco visual de los inputs
+    document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
 };
 
 // =============================================================
