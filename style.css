@@ -1545,22 +1545,19 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 }
 
 /* ================================================================= */
-/* === MODO ESCRITORIO: LAYOUT DE PRODUCTIVIDAD (v2.0) === */
+/* === MODO ESCRITORIO: APP IZQUIERDA 840px (FIXED) === */
 /* ================================================================= */
 
 @media (min-width: 1024px) {
-    
-    /* 1. CONFIGURACIÓN DEL BODY */
     body {
-        justify-content: flex-start; /* Alineación izquierda */
+        justify-content: flex-start; /* Alineado a la izquierda */
         padding-left: 40px; 
         padding-right: 40px;
         background-color: #050505;
-        background-image: radial-gradient(circle at 10% 50%, #1a202c 0%, #000000 50%);
         overflow-x: hidden;
     }
 
-    /* 2. LA APP PRINCIPAL (Izquierda, 840px Fijos) */
+    /* APP: Columna Fija a la Izquierda */
     .app-layout { 
         width: 840px !important;      
         max-width: 840px !important;  
@@ -1568,135 +1565,159 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
         margin: 0 !important;               
         left: 0 !important;
         transform: none !important;
-        
-        border-left: 1px solid var(--c-outline);
         border-right: 1px solid var(--c-outline);
-        box-shadow: 20px 0 50px rgba(0,0,0,0.5); 
         background-color: var(--c-background);
         z-index: 10; 
     }
 
-    .app-layout__main { 
-        width: 100% !important; 
-        margin: 0 !important; 
-        padding: 80px 40px 120px 40px; 
-    }
-
-    /* 3. ELEMENTOS FIJOS (Anclados a la App) */
-    .top-bar, 
-    .bottom-nav, 
-    .toast-container {
+    /* Elementos Fijos: Alineados con la App */
+    .top-bar, .bottom-nav, .toast-container {
         left: 40px !important; 
         transform: none !important;
         width: 840px !important;
         max-width: 840px !important;
     }
-
     .bottom-nav {
         width: 800px !important; 
         left: 60px !important; 
     }
 
-    /* 4. EL FORMULARIO (PEGADO ARRIBA) */
-    /* Modificamos el overlay del modal normal para que alinee arriba, no al centro */
+    /* MODAL: Ajuste para Escritorio */
     .modal-overlay {
-        width: 840px !important; /* Limitado al ancho de la app */
+        width: 840px !important;
         left: 40px !important;
-        align-items: flex-start !important; /* <--- CLAVE: Pegado arriba */
-        padding-top: 70px; /* Espacio para que no tape la barra superior */
+        align-items: flex-end !important; /* Alineamos abajo para controlar altura */
+        justify-content: center;
+        padding-bottom: 0;
         transform: none !important;
         position: fixed;
     }
-
+    
     .modal {
-        max-width: 700px; /* Un poco más ancho para aprovechar los 840px */
-        margin: 0 auto; 
-        max-height: 85vh;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        max-width: 800px; /* Aprovechamos el ancho */
+        margin: 0 auto;
+        border-radius: 24px 24px 0 0; /* Solo bordes de arriba */
     }
+}
 
-    /* 5. LA CALCULADORA (DERECHA, PEGADA AL FORMULARIO Y GIGANTE) */
+/* ================================================================= */
+/* === CALCULADORA "TERMINAL PRO" (DISEÑO SPLIT-SCREEN) === */
+/* ================================================================= */
+
+/* 1. EL CONTENEDOR (Overlay) */
+#calculator-overlay {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    /* En escritorio se ajusta al ancho de la app */
+    z-index: 2147483647; 
+    pointer-events: none; /* Dejamos pasar clics si está cerrada */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Pegada abajo */
+}
+
+@media (min-width: 1024px) {
     #calculator-overlay {
-        /* Posición: A la derecha de la app */
-        left: 900px !important; /* 40px padding + 840px app + 20px hueco */
-        
-        /* Ocupa el resto de la pantalla */
-        width: calc(100vw - 920px) !important;
-        height: 100vh;
-        top: 0;
-        
-        /* Alineación: Arriba (Top) para coincidir con el formulario */
-        align-items: flex-start !important; /* <--- CLAVE: Pegado arriba */
-        justify-content: flex-start !important;
-        padding-top: 70px; /* Mismo nivel visual que el formulario */
-        padding-left: 20px;
-        
-        position: fixed;
-        background: transparent !important;
-        pointer-events: none; 
-        z-index: 100;
-    }
-
-    .calculator-ui {
-        position: relative !important; 
-        left: auto !important;
-        bottom: auto !important;
-        transform: translateX(20px); /* Animación de entrada */
-        
-        /* TAMAÑO MÁS GRANDE */
-        width: 100%;
-        max-width: 450px; /* Calculadora ancha */
-        
-        border-radius: 24px !important;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important;
-        border: 1px solid var(--c-outline);
-        background-color: var(--c-surface);
-        
-        opacity: 0;
-        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        visibility: hidden;
-    }
-
-    /* PANTALLA DE CALCULADORA GIGANTE */
-    #calculator-display {
-        font-size: 3.5rem !important; /* Números enormes */
-        padding: 30px 20px !important; /* Más aire */
-        height: auto !important;
-        min-height: 100px;
-        font-weight: 800;
-        letter-spacing: -1px;
-    }
-    
-    /* Historial un poco más grande también */
-    #calculator-history-display {
-        font-size: 1rem !important;
-        padding: 10px 20px !important;
-        opacity: 0.7;
-    }
-
-    /* Botones de calculadora más grandes */
-    .calculator-btn {
-        height: 70px !important; /* Teclas grandes */
-        font-size: 1.5rem !important;
-    }
-
-    /* ESTADO ACTIVO CALCULADORA */
-    #calculator-overlay.modal-overlay--active .calculator-ui {
-        opacity: 1;
-        visibility: visible;
-        transform: translateX(0);
-        pointer-events: auto; 
-    }
-    
-    /* Aseguramos que el overlay no bloquee */
-    #calculator-overlay.modal-overlay--active { pointer-events: none; }
-    
-    /* Fix para el modal de iframe (calculadora externa) */
-    #calculator-iframe-modal {
-        width: 840px !important;
+        width: 840px !important; /* Coincide con la app */
         left: 40px !important;
     }
+}
+
+/* 2. LA UI DE LA CALCULADORA */
+.calculator-ui {
+    background-color: #000000; /* Negro puro profesional */
+    border-top: 2px solid var(--c-primary); /* Línea láser verde */
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+    width: 100%;
+    
+    /* Animación de entrada */
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    visibility: hidden;
+    pointer-events: auto; /* Captura clics */
+    
+    /* Ajuste para iPhone */
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ESTADO ABIERTO */
+#calculator-overlay.modal-overlay--active .calculator-ui {
+    transform: translateY(0);
+    visibility: visible;
+}
+
+/* 3. PANTALLA GIGANTE */
+.calculator-display {
+    background-color: #080808;
+    color: #fff;
+    font-family: var(--font-numeric);
+    font-size: 3.5rem !important; /* Números enormes */
+    font-weight: 700;
+    letter-spacing: -1px;
+    text-align: right;
+    padding: 20px 20px 5px 20px;
+    height: 100px;
+    border-bottom: 1px solid #222;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    overflow: hidden;
+}
+
+.calculator-history-display {
+    background-color: #080808;
+    color: var(--c-primary);
+    font-family: monospace;
+    font-size: 1rem;
+    padding: 10px 20px 0;
+    text-align: right;
+    border: none;
+    opacity: 0.8;
+}
+
+/* 4. BOTONES GRANDES */
+.calculator-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background-color: #1a1a1a;
+    gap: 1px;
+    border-top: 1px solid #222;
+}
+
+.calculator-btn {
+    height: 70px; /* Altura cómoda */
+    font-size: 1.5rem;
+    font-weight: 500;
+    background-color: #111;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+.calculator-btn:active { background-color: #333; }
+.calculator-btn.btn-operator { background-color: #1c1c1c; color: var(--c-primary); font-size: 1.8rem; }
+.calculator-btn.btn-confirm { background-color: var(--c-primary); color: #000; font-weight: 800; grid-row: span 2; height: auto; }
+
+/* 5. MAGIA SPLIT-SCREEN (Cuando la calculadora se abre) */
+body.calculator-open #movimiento-modal .modal {
+    /* El modal se encoge y se pega arriba para dejar sitio a la calculadora */
+    height: calc(100vh - 420px) !important; /* Restamos altura aprox de calculadora */
+    min-height: 0 !important;
+    border-radius: 24px 24px 0 0 !important;
+    transition: height 0.3s ease;
+    overflow: hidden; /* El scroll va dentro del body */
+}
+
+/* El contenido del modal hace scroll si es necesario */
+body.calculator-open #movimiento-modal .modal__body {
+    padding-bottom: 20px !important;
+}
+
+/* Los botones de acción del modal se quedan pegados abajo del modal (encima de la calculadora) */
+body.calculator-open #movimiento-modal .modal__actions {
+    border-top: 1px solid var(--c-outline);
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
 }
 
 /* El resto de estilos de componentes específicos y helpers se mantienen sin cambios,
