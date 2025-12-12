@@ -8635,13 +8635,14 @@ const setupFabInteractions = () => {
     const LONG_PRESS_DURATION = 500; 
 
     const startPress = (e) => {
-        // Evitamos que el evento se propague si es táctil para no duplicar con el ratón
-        if (e.type === 'mousedown' && e.buttons !== 1) return;
-        
-        isLongPress = false;
-        fab.style.transform = "scale(0.90)"; // Efecto visual de presión
-        fab.style.transition = "transform 0.1s";
-
+    if (e.type === 'mousedown' && e.buttons !== 1) return;
+    
+    isLongPress = false;
+    
+    // FEEDBACK VISUAL INSTANTÁNEO
+    fab.style.transform = "scale(0.90)"; 
+    fab.style.filter = "brightness(1.2)"; // Se ilumina al pulsar
+    fab.style.transition = "transform 0.1s, filter 0.1s";
         longPressTimer = setTimeout(() => {
             // ¡BINGO! Se ha mantenido pulsado: Abrimos el menú de selección
             isLongPress = true;
@@ -8654,8 +8655,9 @@ const setupFabInteractions = () => {
     };
 
     const endPress = (e) => {
-        clearTimeout(longPressTimer);
-        fab.style.transform = "scale(1)";
+    clearTimeout(longPressTimer);
+    fab.style.transform = "scale(1)";
+    fab.style.filter = "brightness(1)";
 
         // Si NO fue una pulsación larga, es un CLIC normal
         if (!isLongPress) {
