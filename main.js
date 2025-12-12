@@ -50,7 +50,7 @@ const KPI_EXPLANATIONS = {
 const isCryptoType = (tipo) => {
     const t = (tipo || '').toLowerCase();
     // Detecta palabras clave comunes
-    return t.includes('cripto') || t.includes('btc') || t.includes('bitcoin') || t.includes('crypto') || t.includes('exchange') || t.includes('binance') || t.includes('coinbase');
+    return t.includes('criptomoneda') ;
 };
 
 const setupEnhancedFormNavigation = () => {
