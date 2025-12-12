@@ -1583,125 +1583,143 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 }
 
 /* ================================================================= */
-/* === CALCULADORA "TERMINAL PRO" (DISEÑO SPLIT-SCREEN) === */
+/* === SISTEMA DE PANTALLA DIVIDIDA (SPLIT SCREEN) v4.0 === */
 /* ================================================================= */
 
-/* 1. EL CONTENEDOR (Overlay) */
+/* --- 1. DEFINICIÓN DE LA CALCULADORA (Abajo, 40% altura) --- */
 #calculator-overlay {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    /* En escritorio se ajusta al ancho de la app */
-    z-index: 2147483647; 
-    pointer-events: none; /* Dejamos pasar clics si está cerrada */
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end; /* Pegada abajo */
-}
-
-@media (min-width: 1024px) {
-    #calculator-overlay {
-        width: 840px !important; /* Coincide con la app */
-        left: 40px !important;
-    }
-}
-
-/* 2. LA UI DE LA CALCULADORA */
-.calculator-ui {
-    background-color: #000000; /* Negro puro profesional */
-    border-top: 2px solid var(--c-primary); /* Línea láser verde */
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
-    width: 100%;
     
-    /* Animación de entrada */
+    /* ALTURA FIJA: 40% de la pantalla */
+    height: 40dvh; 
+    
+    z-index: 2147483647; 
+    pointer-events: none; /* Deja pasar clics si está oculta */
+    
+    /* Animación de entrada desde abajo */
     transform: translateY(100%);
     transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    visibility: hidden;
-    pointer-events: auto; /* Captura clics */
-    
-    /* Ajuste para iPhone */
-    padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* ESTADO ABIERTO */
-#calculator-overlay.modal-overlay--active .calculator-ui {
-    transform: translateY(0);
-    visibility: visible;
+#calculator-overlay.modal-overlay--active {
+    transform: translateY(0); /* Sube a su sitio */
+    pointer-events: auto;
 }
 
-/* 3. PANTALLA GIGANTE */
+.calculator-ui {
+    width: 100%;
+    height: 100%; /* Ocupa el 100% del contenedor (40dvh) */
+    background-color: #050505;
+    border-top: 2px solid var(--c-primary);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 -5px 30px rgba(0,0,0,0.5);
+}
+
+/* Pantalla Calculadora ajustada */
 .calculator-display {
-    background-color: #080808;
+    flex-shrink: 0;
+    height: 25%; /* 25% del espacio de la calculadora */
+    font-size: 2.5rem !important; /* Un poco más pequeño para asegurar que cabe */
+    padding: 10px 20px;
+    background-color: #000;
     color: #fff;
     font-family: var(--font-numeric);
-    font-size: 3.5rem !important; /* Números enormes */
-    font-weight: 700;
-    letter-spacing: -1px;
     text-align: right;
-    padding: 20px 20px 5px 20px;
-    height: 100px;
     border-bottom: 1px solid #222;
     display: flex;
     align-items: flex-end;
     justify-content: flex-end;
-    overflow: hidden;
 }
+.calculator-history-display { display: none; } /* Ocultamos historial para ganar espacio */
 
-.calculator-history-display {
-    background-color: #080808;
-    color: var(--c-primary);
-    font-family: monospace;
-    font-size: 1rem;
-    padding: 10px 20px 0;
-    text-align: right;
-    border: none;
-    opacity: 0.8;
-}
-
-/* 4. BOTONES GRANDES */
+/* Botonera ajustada */
 .calculator-grid {
+    flex-grow: 1; /* Ocupa el resto (75%) */
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     background-color: #1a1a1a;
     gap: 1px;
-    border-top: 1px solid #222;
 }
-
 .calculator-btn {
-    height: 70px; /* Altura cómoda */
-    font-size: 1.5rem;
-    font-weight: 500;
+    height: auto !important; /* Altura automática para llenar el grid */
+    font-size: 1.3rem;
     background-color: #111;
     color: #fff;
     border: none;
-    cursor: pointer;
 }
 .calculator-btn:active { background-color: #333; }
-.calculator-btn.btn-operator { background-color: #1c1c1c; color: var(--c-primary); font-size: 1.8rem; }
-.calculator-btn.btn-confirm { background-color: var(--c-primary); color: #000; font-weight: 800; grid-row: span 2; height: auto; }
+.calculator-btn.btn-confirm { background-color: var(--c-primary); color: #000; font-weight: 800; grid-row: span 2; }
 
-/* 5. MAGIA SPLIT-SCREEN (Cuando la calculadora se abre) */
-body.calculator-open #movimiento-modal .modal {
-    /* El modal se encoge y se pega arriba para dejar sitio a la calculadora */
-    height: calc(100vh - 420px) !important; /* Restamos altura aprox de calculadora */
-    min-height: 0 !important;
-    border-radius: 24px 24px 0 0 !important;
+
+/* --- 2. ADAPTACIÓN DEL FORMULARIO (Arriba, 60% altura) --- */
+
+/* Cuando el cuerpo tiene la clase 'calculator-open', forzamos al modal */
+body.calculator-open #movimiento-modal {
+    /* Posición Fija Arriba */
+    position: fixed !important;
+    top: 0 !important;
+    bottom: auto !important;
+    
+    /* ALTURA FIJA: 60% de la pantalla (el resto) */
+    height: 60dvh !important; 
+    
+    /* Alineación */
+    align-items: flex-start !important; /* Pegado al techo */
+    padding: 0 !important; /* Sin márgenes externos */
+    
     transition: height 0.3s ease;
-    overflow: hidden; /* El scroll va dentro del body */
+    overflow: hidden; /* Cortamos lo que sobre */
 }
 
-/* El contenido del modal hace scroll si es necesario */
+/* El contenido del modal se estira para llenar ese 60% */
+body.calculator-open #movimiento-modal .modal {
+    height: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    border-radius: 0 0 24px 24px !important; /* Redondeado solo abajo */
+    margin: 0 !important;
+    display: flex;
+    flex-direction: column;
+}
+
+/* El cuerpo hace scroll si el formulario es largo */
 body.calculator-open #movimiento-modal .modal__body {
-    padding-bottom: 20px !important;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-bottom: 0 !important;
 }
 
-/* Los botones de acción del modal se quedan pegados abajo del modal (encima de la calculadora) */
+/* Los botones del formulario se pegan abajo de su sección (encima de la calc) */
 body.calculator-open #movimiento-modal .modal__actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
     border-top: 1px solid var(--c-outline);
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+    background-color: var(--c-surface);
 }
 
+
+/* --- 3. ESCRITORIO (840px Izquierda) --- */
+@media (min-width: 1024px) {
+    
+    /* El Formulario (Arriba) */
+    body.calculator-open #movimiento-modal {
+        width: 840px !important;
+        left: 40px !important; /* Padding del body */
+        transform: none !important;
+    }
+
+    /* La Calculadora (Abajo) */
+    #calculator-overlay {
+        width: 840px !important;
+        left: 40px !important; /* Padding del body */
+        /* bottom: 0 ya viene del estilo base */
+    }
+}
 /* El resto de estilos de componentes específicos y helpers se mantienen sin cambios,
    ya que son estructurales y se adaptan a las variables de los temas. */
 #generic-modal-body h3, #generic-modal-body h4 { margin-top: 1.2em; margin-bottom: 0.6em; color: var(--c-primary); font-weight: 700; } 
