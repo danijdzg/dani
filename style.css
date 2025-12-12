@@ -1201,144 +1201,126 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     font-weight: 700;
 }
 /* ================================================================= */
-/* === CALCULADORA "TERMINAL FINANCIERO" (Global & Pro) === */
+/* === SISTEMA DE PANTALLA PARTIDA (Formulario vs Calculadora) === */
 /* ================================================================= */
 
-/* 1. EL CONTENEDOR (Overlay) */
-/* Lo convertimos en un contenedor pasivo que aloja la calculadora abajo */
+/* 1. CONTENEDOR BASE DE LA CALCULADORA */
 #calculator-overlay {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 0; /* Altura 0 para no bloquear clics en la parte superior */
-    z-index: 2147483647; /* Máxima prioridad */
-    overflow: visible; /* Permite que la calculadora se vea */
-    transition: none; /* Sin fade en el contenedor */
+    height: 0; /* Por defecto cerrada, no ocupa espacio */
+    z-index: 2147483647; /* Máxima prioridad absoluta */
+    transition: height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    overflow: hidden;
+    pointer-events: none; /* Deja pasar clics cuando está altura 0 */
 }
 
-/* 2. LA CALCULADORA (El Teclado) */
+/* 2. LA UI DE LA CALCULADORA (El Teclado) */
 .calculator-ui {
-    position: absolute;
-    bottom: 0;
-    left: 0;
     width: 100%;
-    height: auto;
-    
-    /* ESTÉTICA PRO (Bloomberg Style) */
-    background-color: #000000; 
-    border-top: 2px solid var(--c-primary); /* Línea verde neón arriba */
-    box-shadow: 0 -20px 50px rgba(0,0,0,0.8);
-    
-    /* ANIMACIÓN DE DESLIZAMIENTO */
-    transform: translateY(100%); /* Escondida abajo */
-    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); /* Movimiento sólido */
-    visibility: hidden;
-    pointer-events: auto; /* Captura clics */
-    
-    /* Padding para iPhone (Barra inferior) */
+    height: 100%; /* Ocupa todo el overlay */
+    background-color: #050505; /* Fondo oscuro sólido */
+    border-top: 2px solid var(--c-primary);
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto; /* Reactiva los clics dentro */
     padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
 }
 
-/* ESTADO ABIERTO */
-#calculator-overlay.modal-overlay--active .calculator-ui {
-    transform: translateY(0);
-    visibility: visible;
-}
-
-/* 3. PANTALLA GIGANTE */
+/* Pantalla de números */
 .calculator-display {
-    background-color: #050505;
+    background-color: #000;
     color: #fff;
     font-family: var(--font-numeric);
-    
-    /* TIPOGRAFÍA MASIVA */
-    font-size: 3.5rem !important; 
+    font-size: 3rem !important;
     font-weight: 700;
-    letter-spacing: -2px;
-    
     text-align: right;
-    padding: 20px 20px 10px 20px;
-    height: 90px;
+    padding: 15px 20px;
+    flex-shrink: 0;
     border-bottom: 1px solid #222;
-    display: flex;
-    align-items: flex-end;
-    justify-content: flex-end;
-    overflow: hidden;
 }
 
-/* Historial sutil */
-.calculator-history-display {
-    background-color: #050505;
-    color: var(--c-primary);
-    font-family: monospace;
-    font-size: 0.9rem;
-    padding: 8px 20px 0;
-    text-align: right;
-    border: none;
-    opacity: 0.8;
-}
-
-/* 4. BOTONERA DE ALTO RENDIMIENTO */
+/* Botonera */
 .calculator-grid {
+    flex-grow: 1;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    background-color: #1a1a1a; /* Color de las líneas separadoras */
+    background-color: #1a1a1a;
     gap: 1px;
-    border-top: 1px solid #222;
 }
 
 .calculator-btn {
-    background-color: #111; /* Botones casi negros */
+    background-color: #111;
     color: #fff;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 500;
-    height: 65px; /* Altura cómoda */
     border: none;
     cursor: pointer;
-    transition: background-color 0.1s;
 }
+.calculator-btn:active { background-color: #333; }
+.calculator-btn.btn-confirm { background-color: var(--c-primary); color: #000; font-weight: 800; grid-row: span 2; }
 
-.calculator-btn:active {
-    background-color: #333;
-}
-
-/* Operadores destacados */
-.calculator-btn.btn-operator {
-    background-color: #1a1a1a;
-    color: var(--c-primary);
-    font-size: 1.8rem;
-}
-
-/* Botón OK (Acción Principal) */
-.calculator-btn.btn-confirm {
-    background-color: var(--c-primary);
-    color: #000; /* Contraste máximo */
-    font-weight: 800;
-    grid-row: span 2;
-    height: auto;
-}
 /* ================================================================= */
-/* === AJUSTE DE ESCRITORIO (840px Izquierda) === */
+/* === LÓGICA DE ACTIVACIÓN (La Magia "No Mezclar") === */
+/* ================================================================= */
+
+/* CUANDO LA CALCULADORA SE ABRE: */
+
+/* 1. La calculadora sube y ocupa el 45% inferior */
+#calculator-overlay.modal-overlay--active {
+    height: 45dvh !important; /* Altura fija visible */
+    pointer-events: auto;
+}
+
+/* 2. EL MODAL DEL FORMULARIO SE ENCOGE Y SE PEGA ARRIBA */
+body.calculator-open #movimiento-modal .modal {
+    height: 55dvh !important; /* El resto del espacio (100 - 45) */
+    min-height: 0 !important;
+    border-radius: 0 0 0 0 !important; /* Quitar bordes inferiores */
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) !important;
+    transition: height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Asegurar que el contenido del formulario tenga scroll si no cabe */
+body.calculator-open #movimiento-modal .modal__body {
+    padding-bottom: 0 !important; /* Quitamos padding extra */
+    overflow-y: auto;
+}
+
+/* Los botones del formulario se quedan fijos en la base del bloque superior */
+body.calculator-open #movimiento-modal .modal__actions {
+    position: sticky;
+    bottom: 0;
+    background-color: var(--c-surface);
+    border-top: 1px solid var(--c-outline);
+    z-index: 50;
+}
+
+/* ================================================================= */
+/* === AJUSTE ESCRITORIO (840px a la izquierda) === */
 /* ================================================================= */
 
 @media (min-width: 1024px) {
-    /* Ajustamos el overlay para que coincida EXACTAMENTE con la app */
+    /* El formulario se queda en su columna izquierda */
+    body.calculator-open #movimiento-modal .modal {
+        width: 840px !important;
+        left: 40px !important; /* Alineado al margen izquierdo */
+        transform: none !important;
+        border-radius: 0 !important;
+    }
+
+    /* La calculadora se alinea EXACTAMENTE debajo */
     #calculator-overlay {
-        width: 840px !important; /* Mismo ancho que la app */
-        left: 40px !important;   /* Mismo margen izquierdo que la app */
-        /* bottom: 0 está heredado del global */
-    }
-    
-    /* La UI interna hereda el 100% del overlay, así que ocupará los 840px */
-    .calculator-ui {
-        border-radius: 20px 20px 0 0; /* Un toque elegante arriba */
-        max-width: none; /* Quitamos límites anteriores */
-    }
-    
-    /* Hacemos los botones un poco más grandes en PC para aprovechar espacio */
-    .calculator-btn {
-        height: 75px; 
+        width: 840px !important;
+        left: 40px !important;
+        /* bottom: 0 ya está definido arriba */
     }
 }
 

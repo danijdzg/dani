@@ -8674,8 +8674,6 @@ const updateInputMirror = (input) => {
 };
 
 
-
-/* --- 3. INICIALIZADOR DE INPUTS --- */
 const initAmountInput = () => {
     const amountInputs = document.querySelectorAll('.input-amount-calculator');
     const toggle = document.getElementById('calculator-toggle-btn');
@@ -8717,7 +8715,7 @@ const initAmountInput = () => {
                 updateInputMirror(newInput);
              }
         });
-    }); // <--- AQUÍ ESTABA EL ERROR: Faltaba el paréntesis de cierre ')'
+    }); 
 };
 
 
