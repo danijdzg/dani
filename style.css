@@ -5230,11 +5230,17 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 /* ================================================================= */
 
 /* 1. Contenedor Principal: Ocupa el 100% y no deja hacer scroll */
-#panel-page {
+#panel-page.view--active {
     height: 100%;
     overflow: hidden; /* Cortamos el scroll */
-    display: flex;
+    display: flex;    /* Solo flex si está activo */
     flex-direction: column;
+    padding: 0; /* Reseteamos el padding para controlarlo con el grid */
+}
+
+/* Aseguramos que si NO está activo, se oculte (por si acaso) */
+#panel-page:not(.view--active) {
+    display: none !important;
 }
 
 /* 2. La Rejilla Maestra */
