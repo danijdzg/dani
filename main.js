@@ -8707,7 +8707,7 @@ const initAmountInput = () => {
             e.target.blur(); // Quitamos foco nativo
             showCalculator(newInput);
         });
-};
+}};
 
 
 // Función auxiliar para manejar el evento de foco/click
