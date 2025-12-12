@@ -1583,136 +1583,128 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 }
 
 /* ================================================================= */
-/* === RESTAURACIÓN: CALCULADORA ESTÁNDAR Y ROBUSTA === */
+/* === CALCULADORA ESTÁNDAR (Diseño Limpio y Nativo) === */
 /* ================================================================= */
 
-/* 1. EL CONTENEDOR (Overlay) */
+/* 1. EL CONTENEDOR (Fondo oscurecido) */
 #calculator-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 2147483647; /* Por encima de todo */
-    background-color: rgba(0, 0, 0, 0.5); /* Fondo semitransparente para enfoque */
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 2147483647; /* Encima de todo */
+    background-color: rgba(0, 0, 0, 0.4); /* Fondo semitransparente suave */
     
-    /* Flexbox para alinear la calculadora abajo */
     display: flex;
     flex-direction: column;
-    justify-content: flex-end; /* Pegada al suelo */
-    pointer-events: none; /* Dejamos pasar clics cuando está oculta */
+    justify-content: flex-end; /* Alineada abajo */
+    
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s;
+    pointer-events: none;
 }
 
-/* ESTADO VISIBLE */
 #calculator-overlay.modal-overlay--active {
     opacity: 1;
     visibility: visible;
-    pointer-events: auto; /* Captura clics */
+    pointer-events: auto;
 }
 
-/* 2. LA CALCULADORA (UI) */
+/* 2. LA CALCULADORA (Panel) */
 .calculator-ui {
     width: 100%;
-    background-color: #121212; /* Negro sólido */
-    border-top: 2px solid var(--c-primary);
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+    max-width: 500px; /* Límite para escritorio */
+    margin: 0 auto; /* Centrado en escritorio */
     
-    /* Animación de entrada: Sube desde abajo */
+    background-color: var(--c-surface); /* Color del tema (Blanco/Gris) */
+    border-radius: 24px 24px 0 0; /* Bordes redondeados arriba */
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+    border-top: 1px solid var(--c-outline);
+    
     transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
     
-    /* Padding para iPhone */
     padding-bottom: env(safe-area-inset-bottom);
+    overflow: hidden;
 }
 
 #calculator-overlay.modal-overlay--active .calculator-ui {
-    transform: translateY(0); /* Sube a su sitio */
+    transform: translateY(0);
 }
 
-/* 3. PANTALLA Y BOTONES (Grandes y Claros) */
+/* 3. PANTALLA (Display) */
 .calculator-display {
-    background-color: #000;
-    color: #fff;
+    background-color: var(--c-surface);
+    color: var(--c-on-surface); /* Texto del color del tema */
     font-family: var(--font-numeric);
-    font-size: 3.5rem; 
+    font-size: 2.5rem !important;
     font-weight: 700;
     text-align: right;
-    padding: 20px;
-    border-bottom: 1px solid #333;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--c-outline);
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
 }
 
+.calculator-history-display {
+    background-color: var(--c-surface);
+    color: var(--c-on-surface-secondary);
+    font-size: 0.9rem;
+    padding: 8px 20px 0;
+    text-align: right;
+    min-height: 24px;
+}
+
+/* 4. BOTONES (Grid) */
 .calculator-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    background-color: #222;
     gap: 1px;
+    background-color: var(--c-outline); /* Líneas de separación */
+    border-top: 1px solid var(--c-outline);
 }
 
 .calculator-btn {
-    background-color: #1a1a1a;
-    color: #fff;
+    background-color: var(--c-surface);
+    color: var(--c-on-surface);
     font-size: 1.5rem;
-    height: 70px;
+    font-weight: 500;
+    height: 65px;
     border: none;
     cursor: pointer;
+    transition: background-color 0.1s;
 }
-.calculator-btn:active { background-color: #444; }
-.calculator-btn.btn-confirm { background-color: var(--c-primary); color: #000; font-weight: 800; grid-row: span 2; height: auto; }
 
-/* ================================================================= */
-/* === RESTAURACIÓN: MODO ESCRITORIO (840px Izquierda) === */
-/* ================================================================= */
+.calculator-btn:active {
+    background-color: var(--c-surface-variant);
+}
 
+/* Operadores con color sutil */
+.calculator-btn.btn-operator {
+    background-color: var(--c-surface-variant);
+    color: var(--c-primary);
+    font-weight: 600;
+}
+
+/* Botón OK destacado */
+.calculator-btn.btn-confirm {
+    background-color: var(--c-primary);
+    color: var(--c-white);
+    font-weight: 700;
+    grid-row: span 2;
+    height: auto;
+}
+
+/* 5. AJUSTE DE ESCRITORIO */
 @media (min-width: 1024px) {
-    body {
-        justify-content: flex-start;
-        padding-left: 40px; 
-        padding-right: 40px;
-        background-color: #050505;
-    }
-
-    /* APP: Columna Fija a la Izquierda */
-    .app-layout { 
-        width: 840px !important;      
-        max-width: 840px !important;  
-        height: 100dvh;
-        margin: 0 !important;               
-        left: 0 !important;
-        transform: none !important;
-        border-right: 1px solid var(--c-outline);
-        background-color: var(--c-background);
-    }
-
-    /* Los elementos fijos se alinean a la izquierda con la app */
-    .top-bar, .bottom-nav, .toast-container, .modal-overlay {
-        left: 40px !important; 
-        transform: none !important;
-        width: 840px !important;
-        max-width: 840px !important;
-        position: fixed;
-    }
-    
-    /* El modal del formulario vuelve a ser normal (Centrado) */
-    .modal-overlay {
-        align-items: center !important; /* Centrado vertical */
-        justify-content: center !important;
-        padding-top: 0 !important;
-    }
-    
-    .modal {
-        max-width: 600px;
-        border-radius: 20px !important;
-        max-height: 85vh;
-        height: auto !important; /* Altura automática según contenido */
-    }
-    
-    /* La calculadora en escritorio también se limita al ancho de la app */
-    #calculator-overlay {
-        width: 840px !important;
-        left: 40px !important;
+    /* En escritorio la hacemos flotar un poco */
+    .calculator-ui {
+        margin-bottom: 20px;
+        border-radius: 24px; /* Redondeada completa */
     }
 }
 /* El resto de estilos de componentes específicos y helpers se mantienen sin cambios,

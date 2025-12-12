@@ -8504,38 +8504,38 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
     trigger.innerHTML = selectedHTML;
 }
 
-/* EN main.js - Reemplaza showCalculator */
-
 const showCalculator = (targetInput) => {
     const calculatorOverlay = select('calculator-overlay');
     if (!calculatorOverlay) return;
     
-    // 1. Mostrar
+    // Solo activamos el overlay
     calculatorOverlay.classList.add('modal-overlay--active');
+    
     calculatorState.isVisible = true;
     calculatorState.targetInput = targetInput;
     
-    // 2. Cargar valor actual
     const currentValue = parseCurrencyString(targetInput.value);
     calculatorState.displayValue = currentValue ? currentValue.toString().replace('.', ',') : '0';
     calculatorState.waitingForNewValue = true;
     
-    // 3. Actualizar pantalla
     updateCalculatorDisplay(); 
-    
-    // 4. Marcar input visualmente
+    updateCalculatorHistoryDisplay();
+
+    // Marcamos el input activo
     document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
     targetInput.classList.add('form-input--active-calc');
 };
 
+/* --- hideCalculator: VERSIÓN LIMPIA --- */
 const hideCalculator = () => {
     const calculatorOverlay = select('calculator-overlay');
     if (calculatorOverlay) {
         calculatorOverlay.classList.remove('modal-overlay--active');
     }
+    
     calculatorState.isVisible = false;
     
-    // Limpieza visual
+    // Limpiamos estilos de foco
     document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
 };
 
