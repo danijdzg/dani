@@ -5362,3 +5362,74 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     .dashboard-grid { gap: 4px; padding-bottom: 70px; }
     .d-hero-value { font-size: 2rem; }
 }
+/* =============================================================== */
+/* === MEJORA: BARRA DE FECHAS COMPACTA (Panel Personalizado) === */
+/* =============================================================== */
+
+/* Ajustamos la rejilla para que la cabecera se adapte si crece */
+.dashboard-grid {
+    grid-template-rows: min-content 1.2fr 1fr 1fr; /* min-content deja crecer la cabecera */
+}
+
+/* Contenedor de la barra de fechas (inicialmente oculto) */
+#custom-date-filters {
+    background-color: var(--c-surface-variant);
+    margin: 0 4px 8px 4px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--c-primary); /* Borde verde para destacar que está activo */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    animation: slideDown 0.2s ease-out;
+}
+
+#custom-date-filters.hidden {
+    display: none !important;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Estilo de los inputs de fecha para que parezcan texto/botones */
+.compact-date-input {
+    background: transparent;
+    border: none;
+    color: var(--c-on-surface);
+    font-family: var(--font-numeric); /* Tu fuente de números */
+    font-size: 0.85rem;
+    font-weight: 700;
+    width: 100%;
+    padding: 0;
+    text-align: center;
+    cursor: pointer;
+}
+
+/* Icono de calendario para forzar la apertura */
+.date-picker-trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,0,0,0.2);
+    padding: 4px 8px;
+    border-radius: 8px;
+    flex: 1; /* Ocupan espacio igual */
+    cursor: pointer;
+}
+
+/* Flecha separadora */
+.date-separator {
+    color: var(--c-on-surface-tertiary);
+    font-size: 1rem;
+}
+
+/* Fix para invertir el color del icono de calendario nativo en modo oscuro */
+.compact-date-input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.6;
+    transform: scale(0.8);
+    cursor: pointer;
+}

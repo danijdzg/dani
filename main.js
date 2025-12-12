@@ -4671,21 +4671,34 @@ const renderPanelPage = async () => {
     container.innerHTML = `
         <div class="dashboard-grid">
             
-            <div class="d-header">
-                <h2>Resumen Global</h2>
-                <div class="report-filters" style="margin:0;">
-                    <select id="filter-periodo" class="form-select report-period-selector" 
-                            style="font-size:0.75rem; padding:4px 24px 4px 10px; height:auto; background:rgba(255,255,255,0.05); border:1px solid var(--c-outline);">
-                        <option value="mes-actual">Este Mes</option>
-                        <option value="año-actual">Este Año</option>
-                        <option value="custom">Personalizado</option>
-                    </select>
+            <div style="display:flex; flex-direction:column;">
+                <div class="d-header">
+                    <h2>Resumen Global</h2>
+                    <div class="report-filters" style="margin:0;">
+                        <select id="filter-periodo" class="form-select report-period-selector" 
+                                style="font-size:0.75rem; padding:4px 24px 4px 10px; height:auto; background:rgba(255,255,255,0.05); border:1px solid var(--c-outline);">
+                            <option value="mes-actual">Este Mes</option>
+                            <option value="año-actual">Este Año</option>
+                            <option value="custom">Personalizado</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <div id="custom-date-filters" class="form-grid hidden" style="grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 10px;">
-                <input type="date" id="filter-fecha-inicio" class="form-input" style="padding:4px;">
-                <input type="date" id="filter-fecha-fin" class="form-input" style="padding:4px;">
+                <div id="custom-date-filters" class="hidden">
+                    
+                    <div class="date-picker-trigger" onclick="document.getElementById('filter-fecha-inicio').showPicker()">
+                        <span class="material-icons" style="font-size:14px; color:var(--c-primary);">event</span>
+                        <input type="date" id="filter-fecha-inicio" class="compact-date-input">
+                    </div>
+
+                    <span class="material-icons date-separator" style="font-size:14px;">arrow_forward</span>
+
+                    <div class="date-picker-trigger" onclick="document.getElementById('filter-fecha-fin').showPicker()">
+                        <span class="material-icons" style="font-size:14px; color:var(--c-primary);">event</span>
+                        <input type="date" id="filter-fecha-fin" class="compact-date-input">
+                    </div>
+
+                </div>
             </div>
 
             <div class="d-card d-hero clickable-kpi" data-action="show-kpi-drilldown" data-type="patrimonio">
@@ -4709,12 +4722,10 @@ const renderPanelPage = async () => {
                     <div class="d-label text-success">Ingresos</div>
                     <div id="kpi-ingresos-value" class="d-value text-positive skeleton">...</div>
                 </div>
-                
                 <div class="d-kpi-tiny clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
                     <div class="d-label text-danger">Gastos</div>
                     <div id="kpi-gastos-value" class="d-value text-negative skeleton">...</div>
                 </div>
-
                 <div class="d-kpi-tiny clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
                     <div class="d-label">Ahorro <small id="kpi-tasa-ahorro-value" class="text-warning">(0%)</small></div>
                     <div id="kpi-saldo-neto-value" class="d-value skeleton">...</div>
@@ -4722,41 +4733,29 @@ const renderPanelPage = async () => {
             </div>
 
             <div class="d-bottom-row">
-                
                 <div class="d-card d-split-col" style="border-color: rgba(191, 90, 242, 0.3); background: rgba(191, 90, 242, 0.05);">
                     <div class="d-label" style="text-align:center; color:#BF5AF2; font-weight:700;">RENDIMIENTO INV.</div>
-                    
                     <div style="text-align:center;">
                         <div class="d-label">Valor Real</div>
                         <div id="new-card-market-value" class="d-value skeleton" style="font-size:1.1rem;">...</div>
                     </div>
-
                     <div style="display:flex; justify-content:space-between; padding-top:4px; border-top:1px dashed rgba(255,255,255,0.1);">
-                        <div>
-                            <div class="d-label">Capital</div>
-                            <div id="new-card-capital" style="font-size:0.75rem;">...</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div class="d-label">P&L</div>
-                            <div id="new-card-pnl" style="font-size:0.75rem; font-weight:700;">...</div>
-                        </div>
+                        <div><div class="d-label">Capital</div><div id="new-card-capital" style="font-size:0.75rem;">...</div></div>
+                        <div style="text-align:right;"><div class="d-label">P&L</div><div id="new-card-pnl" style="font-size:0.75rem; font-weight:700;">...</div></div>
                     </div>
                 </div>
 
                 <div class="d-card d-split-col">
                     <div class="d-label" style="text-align:center;">SALUD</div>
-                    
                     <div style="text-align:center;">
                         <div class="d-label">Cobertura</div>
                         <div id="health-runway-val" class="d-value skeleton" style="color:#FFD60A;">...</div>
                     </div>
-                    
                     <div style="text-align:center; border-top:1px solid var(--c-outline); padding-top:4px;">
                         <div class="d-label">Libertad</div>
                         <div id="health-fi-val" class="d-value skeleton" style="color:#39FF14;">...</div>
                     </div>
                 </div>
-
             </div>
 
         </div> `;
@@ -9291,20 +9290,34 @@ const handleStart = (e) => {
     
     // 9. Cambios en filtros y selects
     document.addEventListener('change', e => {
-        const target = e.target;
-        if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
-            const panelPage = select('panel-page');
-            if (!panelPage || !panelPage.classList.contains('view--active')) return;
-            if (target.id === 'filter-periodo') {
-                const customDateFilters = select('custom-date-filters');
-                if (customDateFilters) customDateFilters.classList.toggle('hidden', target.value !== 'custom');
-                if (target.value !== 'custom') { hapticFeedback('light'); scheduleDashboardUpdate(); }
-            }
-            if (target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
-                const s = select('filter-fecha-inicio'), en = select('filter-fecha-fin');
-                if (s && en && s.value && en.value) { hapticFeedback('light'); scheduleDashboardUpdate(); }
-            }
+    const target = e.target;
+    // Detectar cambios en el selector de periodo
+    if (target.id === 'filter-periodo') {
+        const customDateFilters = select('custom-date-filters');
+        
+        // Si elige "Personalizado", quitamos la clase 'hidden'
+        if (customDateFilters) {
+            customDateFilters.classList.toggle('hidden', target.value !== 'custom');
         }
+        
+        // Si NO es personalizado, actualizamos datos inmediatamente
+        if (target.value !== 'custom') { 
+            hapticFeedback('light'); 
+            scheduleDashboardUpdate(); 
+        }
+    }
+    
+    // Detectar cambios en las fechas (Inicio o Fin)
+    if (target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
+        const s = select('filter-fecha-inicio');
+        const en = select('filter-fecha-fin');
+        
+        // Solo actualizamos si ambas fechas tienen valor
+        if (s && en && s.value && en.value) { 
+            hapticFeedback('light'); 
+            scheduleDashboardUpdate(); 
+        }
+    }
         // Lógica opciones recurrentes
         if (target.id === 'movimiento-recurrente') {
             select('recurrent-options').classList.toggle('hidden', !target.checked);
