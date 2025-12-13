@@ -5405,25 +5405,18 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     padding-left: 30px;
     justify-content: flex-start; /* Alineado a la izquierda como iOS */
 }
-/* ================================================================= */
-/* === DISEÑO "BENTO GRID" ESPECTACULAR (Zero Scroll) === */
+//* ================================================================= */
+/* === DISEÑO "BENTO GRID" ESPECTACULAR (Mejorado v2) === */
 /* ================================================================= */
 
-/* Contenedor Principal de Rejilla */
+/* Contenedor Principal (Igual que antes) */
 .dashboard-bento-grid {
     display: grid;
     height: 100%;
     gap: 12px;
-    padding: 10px 15px 85px 15px; /* Espacio abajo para menú */
-    /* Definimos áreas: 
-       H: Header
-       M: Main (Patrimonio)
-       F: Flow (Ingresos/Gastos)
-       I: Inversiones
-       S: Salud
-    */
-    grid-template-columns: 1.4fr 1fr; /* Columna Izq ancha, Der normal */
-    grid-template-rows: auto 1fr 1fr 0.8fr; /* Filas adaptables */
+    padding: 10px 15px 85px 15px;
+    grid-template-columns: 1.4fr 1fr;
+    grid-template-rows: auto 1fr 1fr 0.8fr;
     grid-template-areas: 
         "H H"
         "M F"
@@ -5431,119 +5424,169 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         "M S";
 }
 
-/* Áreas Asignadas */
+/* Áreas */
 .bento-header { grid-area: H; }
 .bento-hero   { grid-area: M; }
 .bento-flow   { grid-area: F; }
 .bento-invest { grid-area: I; }
 .bento-health { grid-area: S; }
 
-/* ESTILOS DE TARJETAS */
-
-/* 1. HÉROE (Patrimonio) - El protagonista */
+/* --- 1. HÉROE (Patrimonio) - ESPECTACULAR --- */
 .bento-hero {
-    background: linear-gradient(160deg, rgba(0, 179, 77, 0.15) 0%, rgba(10, 18, 26, 0.8) 100%);
-    border: 1px solid var(--c-primary);
+    background: radial-gradient(circle at 50% 0%, rgba(0, 179, 77, 0.2) 0%, rgba(10, 18, 26, 1) 80%);
+    border: 1px solid rgba(0, 179, 77, 0.3); /* Borde verde sutil */
     border-radius: 24px;
-    padding: 20px;
+    padding: 25px 20px;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Centrado vertical perfecto */
+    justify-content: center;
     align-items: center;
     text-align: center;
-    box-shadow: 0 0 30px rgba(0, 179, 77, 0.15); /* Resplandor verde */
+    box-shadow: 0 0 40px rgba(0, 179, 77, 0.1);
     position: relative;
     overflow: hidden;
 }
-/* Efecto de fondo sutil */
-.bento-hero::before {
-    content: ''; position: absolute; inset: 0;
-    background: radial-gradient(circle at 50% 30%, rgba(0,179,77,0.1), transparent 60%);
-    pointer-events: none;
+
+.bento-label { 
+    font-size: 0.75rem; font-weight: 700; color: var(--c-primary); 
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; 
+    opacity: 0.9;
 }
 
-.bento-label { font-size: 0.75rem; font-weight: 700; color: var(--c-primary); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
 .bento-value-giant {
-    font-size: clamp(3rem, 7vh, 5.5rem); /* NÚMEROS GIGANTES QUE ESCALAN */
+    font-size: clamp(3.2rem, 7.5vh, 6rem); /* Un poco más grande aún */
     font-weight: 800;
     color: #FFF;
-    text-shadow: 0 0 20px rgba(0,179,77,0.5); /* Texto neón */
+    text-shadow: 0 0 25px rgba(0,179,77,0.4);
     line-height: 1;
     letter-spacing: -2px;
+    margin-bottom: 20px;
 }
 
-.bento-hero-footer {
-    margin-top: 20px;
+/* Barra de Composición Visual */
+.hero-composition-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
     display: flex;
-    gap: 10px;
+    overflow: hidden;
+    margin-bottom: 15px;
 }
-.hero-chip {
+.comp-bar-segment { height: 100%; transition: width 1s ease-out; }
+.comp-bar-segment.liquid { background-color: var(--c-info); box-shadow: 0 0 10px var(--c-info); }
+.comp-bar-segment.invest { background-color: #BF5AF2; box-shadow: 0 0 10px #BF5AF2; }
+
+/* Footer Desglosado */
+.bento-hero-footer-split {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    align-items: center;
+}
+.hero-stat-box {
+    text-align: center;
+}
+.stat-label {
+    font-size: 0.75rem; color: var(--c-on-surface-secondary); 
+    margin-bottom: 2px; display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.dot { width: 6px; height: 6px; border-radius: 50%; }
+.dot.liquid { background-color: var(--c-info); }
+.dot.invest { background-color: #BF5AF2; }
+
+.stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    font-family: var(--font-numeric);
+}
+.hero-divider {
+    width: 1px; height: 30px; background: rgba(255,255,255,0.15);
+}
+
+/* --- BOTONES DE AYUDA (?) --- */
+.help-btn-floating {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 22px; height: 22px;
+    background: rgba(255,255,255,0.1);
+    border: none; border-radius: 50%;
+    color: var(--c-on-surface-secondary);
+    font-size: 12px; font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    z-index: 10;
+}
+.help-btn-floating:hover { background: var(--c-primary); color: white; transform: scale(1.1); }
+
+.help-btn-mini {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 18px; height: 18px;
     background: rgba(255,255,255,0.05);
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    display: flex; align-items: center; gap: 6px;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: none; border-radius: 50%;
+    color: var(--c-on-surface-tertiary);
+    font-size: 10px; font-weight: 700;
+    cursor: pointer;
+}
+.help-btn-inline {
+    width: 16px; height: 16px;
+    background: rgba(255,255,255,0.1);
+    border: none; border-radius: 50%;
+    color: var(--c-on-surface-secondary);
+    font-size: 10px; font-weight: 700;
+    cursor: pointer;
+    vertical-align: middle;
 }
 
-/* 2. FLUJO (Tarjeta compacta derecha) */
-.bento-flow {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    justify-content: space-between;
-}
+/* --- Resto de tarjetas (Estilos base mantenidos y ajustados) --- */
 .bento-card-mini {
     background: var(--c-surface);
     border: 1px solid var(--c-outline);
     border-radius: 16px;
     padding: 10px 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    display: flex; justify-content: space-between; align-items: center;
     flex: 1;
+    position: relative; /* Para el botón de ayuda absoluto */
 }
 .bento-value-mid { font-size: 1.2rem; font-weight: 700; }
 
-/* 3. INVERSIONES (Tarjeta mediana derecha) */
 .bento-invest {
-    background: rgba(191, 90, 242, 0.08); /* Tinte morado */
+    background: rgba(191, 90, 242, 0.08);
     border: 1px solid rgba(191, 90, 242, 0.3);
     border-radius: 20px;
     padding: 15px;
     display: flex; flex-direction: column; text-align: center;
+    position: relative;
 }
 .bento-value-large { font-size: 2rem; font-weight: 800; color: #fff; line-height: 1.1; }
 .bento-invest-footer {
     display: flex; justify-content: space-between; margin-top: auto;
-    font-size: 0.75rem; color: var(--c-on-surface-tertiary); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;
+    font-size: 0.75rem; color: var(--c-on-surface-tertiary); 
+    border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;
 }
 
-/* 4. SALUD (Tarjeta inferior derecha) */
 .bento-health {
     background: var(--c-surface); border: 1px solid var(--c-outline);
     border-radius: 16px; padding: 10px 15px;
     display: flex; align-items: center; justify-content: space-around;
 }
-.health-row { text-align: center; }
 .bento-value-small { font-size: 1.3rem; font-weight: 700; line-height: 1; margin-top: 4px; }
 .health-divider { width: 1px; height: 30px; background: var(--c-outline); }
 
-/* --- RESPONSIVIDAD DEL BENTO GRID --- */
-/* En móvil vertical, cambiamos a una columna */
+/* RESPONSIVIDAD MÓVIL */
 @media (max-width: 600px) {
     .dashboard-bento-grid {
         grid-template-columns: 1fr;
         grid-template-rows: auto auto auto auto auto;
-        grid-template-areas: 
-            "H"
-            "F" /* Flujo arriba en móvil */
-            "M" /* Patrimonio en medio */
-            "I"
-            "S";
+        grid-template-areas: "H" "F" "M" "I" "S";
+        padding-bottom: 90px;
     }
-    .bento-flow { flex-direction: row; } /* Flujo horizontal en móvil */
-    .bento-card-mini { flex-direction: column; text-align: center; padding: 8px; }
-    .bento-value-mid { font-size: 0.9rem; }
-    .bento-value-giant { font-size: 3.5rem; } /* Un poco más pequeño en móvil */
+    .bento-hero { padding: 20px 15px; } /* Menos padding lateral en móvil */
+    .bento-value-giant { font-size: 3.5rem; } 
+    .bento-flow { flex-direction: row; }
+    .bento-card-mini { flex-direction: column; text-align: center; padding: 8px; justify-content: center; gap: 4px; }
+    .help-btn-mini { top: 2px; right: 2px; } /* Ajuste fino */
 }
