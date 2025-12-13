@@ -1194,40 +1194,48 @@ const calculate = () => {
     updateCalculatorDisplay();
 };
 
-// Mejora visual: Escala dinámica de fuente en el display
-/* Reemplaza updateCalculatorDisplay por esta versión */
 const updateCalculatorDisplay = () => {
     const display = select('calculator-display');
     if (!display) return;
     
-    const value = calculatorState.displayValue; // Es un string tipo "125,5"
+    let value = calculatorState.displayValue; 
     
-    // Lógica de formateo manual para respetar lo que el usuario está escribiendo (incluyendo comas a medias)
-    let html = '';
-    
+    // Si hay error
     if (value === 'Error') {
-        html = 'Error';
-    } else {
-        const parts = value.split(',');
-        const integerPart = parts[0];
-        // Formateamos la parte entera con puntos de miles si es necesario
-        const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        
-        const decimalPart = parts.length > 1 ? ',' + parts[1] : '';
-        
-        // Aplicamos las clases CSS de estilo
-        html = `<span class="currency-major">${formattedInteger}</span><small class="currency-minor">${decimalPart}</small>`;
+        display.innerHTML = 'Error';
+        return;
     }
 
-    display.innerHTML = html; // Usamos innerHTML en lugar de textContent
+    // Formateo visual
+    let html = '';
+    const parts = value.split(',');
     
-    // Ajuste de tamaño dinámico
-    const length = value.length;
-    if (length > 9) display.style.fontSize = '2rem';
-    else if (length > 7) display.style.fontSize = '2.5rem';
-    else display.style.fontSize = '3rem';
+    // Parte Entera: Añadimos puntos de miles (1.000.000)
+    let integerPart = parts[0];
+    // Eliminar puntos existentes para reformatear limpiamente si es necesario
+    integerPart = integerPart.replace(/\./g, '');
+    
+    // Formatear solo si es número válido
+    if (!isNaN(parseFloat(integerPart))) {
+        integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+    
+    // Parte Decimal
+    const decimalPart = parts.length > 1 ? ',' + parts[1] : '';
+    
+    // Construcción HTML: Entero Grande + Decimal Pequeño
+    html = `<span class="currency-major">${integerPart}</span><span class="currency-minor">${decimalPart}</span>`;
+
+    display.innerHTML = html;
+    
+    // Ajuste dinámico de tamaño de fuente (para que quepan números largos)
+    // Contamos caracteres sin etiquetas HTML
+    const length = integerPart.length + decimalPart.length;
+    
+    if (length > 12) display.style.fontSize = '2.2rem';
+    else if (length > 9) display.style.fontSize = '2.8rem';
+    else display.style.fontSize = '3.5rem';
 };
-// --- FIN: BLOQUE CALCULADORA ---
                     
 
 		let isDashboardRendering = false;
