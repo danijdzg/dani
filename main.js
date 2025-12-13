@@ -378,81 +378,152 @@ const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
 };
 
 const handleGenerateInformeCuenta = async (form, btn = null) => {
-    // 1. Solo activamos la animación del botón si se proporciona (ahora es opcional)
-    if (btn) setButtonLoading(btn, true, 'Imprimiendo...');
+    if (btn) setButtonLoading(btn, true, 'Procesando...');
     
-    const cuentaId = select('informe-cuenta-select').value;
+    // 1. Recoger parámetros de la nueva interfaz
+    const cuentaId = select('informe-cuenta-select')?.value;
+    const fechaInicio = select('extracto-fecha-inicio')?.value;
+    const fechaFin = select('extracto-fecha-fin')?.value;
+    const textoBusqueda = select('extracto-search')?.value.toLowerCase().trim();
     const resultadoContainer = select('informe-resultado-container');
 
-    // 2. Si no hay cuenta seleccionada, limpiamos y salimos
     if (!cuentaId) {
-        resultadoContainer.innerHTML = '';
         if (btn) setButtonLoading(btn, false);
+        showToast("Por favor, selecciona una cuenta.", "warning");
         return;
     }
 
-    // 3. Mostramos un indicador de carga en el contenedor de resultados
-    resultadoContainer.innerHTML = `
-        <div style="text-align:center; padding: var(--sp-5);">
-            <span class="spinner" style="color:var(--c-primary); width: 24px; height:24px;"></span>
-            <p style="font-size:var(--fs-xs); margin-top:8px; color:var(--c-on-surface-secondary);">Cargando movimientos...</p>
-        </div>`;
+    // Indicador de carga
+    if(resultadoContainer) {
+        resultadoContainer.innerHTML = `
+            <div style="text-align:center; padding: var(--sp-5);">
+                <span class="spinner" style="color:var(--c-primary); width: 24px; height:24px;"></span>
+                <p style="font-size:var(--fs-xs); margin-top:8px; color:var(--c-on-surface-secondary);">
+                    Analizando historial completo...
+                </p>
+            </div>`;
+    }
 
     const cuenta = db.cuentas.find(c => c.id === cuentaId);
 
     try {
-        // --- Obtención y cálculo de datos (IGUAL QUE ANTES) ---
+        // 2. OBTENER TODO EL HISTORIAL (Necesario para calcular saldos exactos)
+        // Usamos AppStore para asegurar que tenemos todo, no solo lo reciente.
         const todosLosMovimientos = await AppStore.getAll();
         
-        let movimientosDeLaCuenta = todosLosMovimientos.filter(m =>
+        let movimientosCuenta = todosLosMovimientos.filter(m =>
             (m.cuentaId === cuentaId) || (m.cuentaOrigenId === cuentaId) || (m.cuentaDestinoId === cuentaId)
         );
 
-        if (movimientosDeLaCuenta.length === 0) {
-             resultadoContainer.innerHTML = `<div class="empty-state" style="background:transparent; border:none; padding:var(--sp-4);"><p>Sin movimientos registrados.</p></div>`;
+        // 3. CÁLCULO DE SALDOS (Retroceso desde el presente)
+        // Ordenamos del más reciente al más antiguo
+        movimientosCuenta.sort((a, b) => {
+            const dateDiff = new Date(b.fecha) - new Date(a.fecha);
+            if (dateDiff !== 0) return dateDiff;
+            return b.id.localeCompare(a.id);
+        });
+
+        // Partimos del saldo actual real de la cuenta
+        let saldoVolatil = cuenta.saldo;
+
+        // Recorremos todo el historial para asignar el saldo resultante a cada movimiento
+        const movimientosProcesados = movimientosCuenta.map(mov => {
+            // Clonamos el movimiento para no afectar la memoria global
+            const m = { ...mov };
+            
+            // El saldo DESPUÉS de este movimiento es el saldoVolatil actual
+            m.runningBalance = saldoVolatil;
+
+            // Deshacemos el movimiento para saber cuánto había antes
+            let impacto = 0;
+            if (m.tipo === 'traspaso') {
+                if (m.cuentaOrigenId === cuentaId) impacto = -m.cantidad;
+                else if (m.cuentaDestinoId === cuentaId) impacto = m.cantidad;
+            } else {
+                impacto = m.cantidad;
+            }
+            
+            // Retrocedemos el saldo
+            saldoVolatil -= impacto;
+            
+            // Guardamos también el saldo anterior a este movimiento (útil para el reporte)
+            m.previousBalance = saldoVolatil;
+            
+            return m;
+        });
+
+        // 4. FILTRADO (Ahora que tenemos los saldos correctos, filtramos qué mostrar)
+        let movimientosVisibles = movimientosProcesados.filter(m => {
+            const fechaMov = m.fecha.split('T')[0]; // "YYYY-MM-DD"
+            
+            // Filtro de Fecha
+            if (fechaInicio && fechaMov < fechaInicio) return false;
+            if (fechaFin && fechaMov > fechaFin) return false;
+            
+            // Filtro de Texto (Búsqueda)
+            if (textoBusqueda) {
+                const concepto = db.conceptos.find(c => c.id === m.conceptoId)?.nombre || '';
+                const matchTexto = 
+                    (m.descripcion || '').toLowerCase().includes(textoBusqueda) ||
+                    concepto.toLowerCase().includes(textoBusqueda) ||
+                    (m.cantidad / 100).toString().includes(textoBusqueda);
+                
+                if (!matchTexto) return false;
+            }
+            
+            return true;
+        });
+
+        if (movimientosVisibles.length === 0) {
+             resultadoContainer.innerHTML = `<div class="empty-state" style="background:transparent; border:none; padding:var(--sp-4);"><p>No se encontraron movimientos en este periodo/búsqueda.</p></div>`;
              if (btn) setButtonLoading(btn, false);
              return;
         }
 
-        movimientosDeLaCuenta.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+        // 5. DETERMINAR SALDO INICIAL DEL PERIODO MOSTRADO
+        // Es el "Saldo Anterior" del movimiento más antiguo que se muestra.
+        // Como están ordenados desc (reciente -> antiguo), el último es el más antiguo.
+        const ultimoMovimientoVisible = movimientosVisibles[movimientosVisibles.length - 1];
+        const saldoInicialPeriodo = ultimoMovimientoVisible.previousBalance;
 
-        let saldoAcumulado = 0;
-        for (const mov of movimientosDeLaCuenta) {
-            let impacto = 0;
-            if (mov.tipo === 'traspaso') {
-                if (mov.cuentaOrigenId === cuentaId) impacto = -mov.cantidad;
-                if (mov.cuentaDestinoId === cuentaId) impacto = mov.cantidad;
-            } else {
-                impacto = mov.cantidad;
-            }
-            saldoAcumulado += impacto;
-            mov.runningBalance = saldoAcumulado;
-        }
-
-        movimientosDeLaCuenta.reverse(); 
-
-        // --- Renderizado HTML ---
+        // 6. RENDERIZADO
         let html = `
             <div class="cartilla-container">
                 <div class="cartilla-header-info">
                     <h4>EXTRACTO DE CUENTA</h4>
                     <p><strong>Titular:</strong> ${escapeHTML(cuenta.nombre)}</p>
-                    <p class="cartilla-print-date">Fecha: ${new Date().toLocaleDateString()}</p>
+                    <p class="cartilla-print-date">
+                        Periodo: ${fechaInicio ? new Date(fechaInicio).toLocaleDateString() : 'Inicio'} - ${fechaFin ? new Date(fechaFin).toLocaleDateString() : 'Hoy'}
+                    </p>
                 </div>
-                <div class="cartilla-table">
-                    <div class="cartilla-row cartilla-head">
-                        <div class="cartilla-cell">FECHA</div>
-                        <div class="cartilla-cell">CONCEPTO</div>
-                        <div class="cartilla-cell text-right">CARGOS</div>
-                        <div class="cartilla-cell text-right">ABONOS</div>
-                        <div class="cartilla-cell text-right">SALDO</div>
-                    </div>`;
                 
-        for (const mov of movimientosDeLaCuenta) {
+                <div class="cartilla-table">
+                    <div class="informe-linea-resumen" style="background-color: rgba(0,0,0,0.05);">
+                        <span class="fecha">---</span>
+                        <span class="descripcion">SALDO ANTERIOR (Al inicio del periodo)</span>
+                        <span class="importe"></span>
+                        <span class="saldo">${formatCurrency(saldoInicialPeriodo)}</span>
+                    </div>`;
+        
+        // Renderizamos las filas
+        for (const mov of movimientosVisibles) {
             html += renderInformeCuentaRow(mov, cuentaId, db.cuentas);
         }
         
-        html += `</div><div class="cartilla-footer">** FIN DEL EXTRACTO **</div></div>`;
+        // Saldo Final del Periodo (El saldo del movimiento más reciente mostrado)
+        const saldoFinalPeriodo = movimientosVisibles[0].runningBalance;
+
+        html += `
+                    <div class="informe-linea-resumen" style="border-top: 2px solid var(--c-on-surface); margin-top: 10px;">
+                        <span class="fecha">---</span>
+                        <span class="descripcion">SALDO FINAL (Al final del periodo)</span>
+                        <span class="importe"></span>
+                        <span class="saldo" style="font-weight: 800;">${formatCurrency(saldoFinalPeriodo)}</span>
+                    </div>
+                </div>
+                <div class="cartilla-footer">** FIN DEL EXTRACTO **</div>
+            </div>`;
+            
         resultadoContainer.innerHTML = html;
 
     } catch (error) {
@@ -5498,82 +5569,84 @@ async function renderInformeDetallado(informeId) {
 
     try {
         const reportRenderers = {
-            'extracto_cuenta': () => { 
-                // 1. HTML ACTUALIZADO (Con el botón TODO)
-                const content = `
-                    <div id="informe-cuenta-wrapper">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta:</label>
-                            
-                            <div style="display: flex; gap: 8px; align-items: stretch; width: 100%;">
-                                <div class="input-wrapper" style="flex-grow: 1; min-width: 0;">
-                                    <select id="informe-cuenta-select" class="form-select"></select>
-                                </div>
-                                <button id="btn-extracto-todo" class="btn btn--secondary" style="flex-shrink: 0; min-width: auto; padding: 0 16px; font-weight: 700; white-space: nowrap;" title="Ver todo ordenado por fecha">
-                                    TODO
-                                </button>
-                            </div>
-                            </div>
-                    </div>
-                    
-                    <div id="informe-resultado-container" style="margin-top: var(--sp-4);">
-                        <div class="empty-state" style="background:transparent; padding:var(--sp-2); border:none;">
-                            <p style="font-size:0.85rem;">Selecciona una cuenta o pulsa <strong>TODO</strong>.</p>
-                        </div>
-                    </div>`;
-                
-                container.innerHTML = content;
-
-                // 2. Lógica de activación
-                const selectEl = select('informe-cuenta-select');
-                if (selectEl) {
-                    const populate = (el, data) => {
-                        let opts = '<option value="">Seleccionar cuenta...</option>';
-                        [...data].sort((a,b) => a.nombre.localeCompare(b.nombre))
-                                 .forEach(cuenta => {
-                                     opts += `<option value="${cuenta.id}">${cuenta.nombre}</option>`;
-                                 });
-                        el.innerHTML = opts;
-                    };
-                    populate(selectEl, getVisibleAccounts());
-
-                    // Inicializamos el selector visual
-                    createCustomSelect(selectEl);
-
-                    // Evento al cambiar selección individual
-                    selectEl.addEventListener('change', () => {
-                        handleGenerateInformeCuenta(null, null);
-                        setTimeout(() => {
-                            if (document.activeElement) document.activeElement.blur();
-                            const wrapper = selectEl.closest('.custom-select-wrapper');
-                            if (wrapper) {
-                                wrapper.classList.remove('is-open');
-                                const trigger = wrapper.querySelector('.custom-select__trigger');
-                                if (trigger) trigger.blur();
-                            }
-                        }, 50);
-                    });
-                }
-
-                // 3. Lógica del Botón TODO (Crucial añadirla aquí también)
-                const btnTodo = select('btn-extracto-todo');
-                if (btnTodo) {
-                    // Clonamos para eliminar listeners previos por seguridad
-                    const newBtn = btnTodo.cloneNode(true);
-                    btnTodo.parentNode.replaceChild(newBtn, btnTodo);
-                    
-                    newBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.target.blur();
-                        // Llamamos a la función global que ordena por fecha
-                        if (typeof handleGenerateGlobalExtract === 'function') {
-                            handleGenerateGlobalExtract(e.target);
-                        }
-                    });
-                }
-            },
             
+'extracto_cuenta': () => { 
+    // 1. HTML ACTUALIZADO: Fechas + Búsqueda + Cuenta
+    const content = `
+        <div id="informe-cuenta-wrapper">
+            <div class="form-group" style="margin-bottom: var(--sp-3);">
+                <label for="informe-cuenta-select" class="form-label">Cuenta a consultar:</label>
+                <div class="input-wrapper">
+                    <select id="informe-cuenta-select" class="form-select"></select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <label class="form-label" style="font-size:0.7rem;">Desde</label>
+                    <input type="date" id="extracto-fecha-inicio" class="form-input" style="padding: 8px;">
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:0.7rem;">Hasta</label>
+                    <input type="date" id="extracto-fecha-fin" class="form-input" style="padding: 8px;">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: var(--sp-4);">
+                <input type="search" id="extracto-search" class="form-input" placeholder="Buscar concepto o importe..." style="padding: 8px 12px; flex-grow: 1;">
+                <button id="btn-generar-extracto" class="btn btn--primary" style="padding: 0 20px;">
+                    <span class="material-icons">search</span>
+                </button>
+            </div>
+        </div>
+        
+        <div id="informe-resultado-container" style="margin-top: var(--sp-4);">
+            <div class="empty-state" style="background:transparent; padding:var(--sp-2); border:none;">
+                <p style="font-size:0.85rem;">Selecciona los criterios y pulsa la lupa.</p>
+            </div>
+        </div>`;
+    
+    container.innerHTML = content;
+
+    // 2. Inicialización de Fechas (Por defecto: Mes Actual)
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0,10);
+    
+    const startInput = select('extracto-fecha-inicio');
+    const endInput = select('extracto-fecha-fin');
+    if(startInput) startInput.value = firstDay;
+    if(endInput) endInput.value = lastDay;
+
+    // 3. Lógica de activación
+    const selectEl = select('informe-cuenta-select');
+    if (selectEl) {
+        const populate = (el, data) => {
+            let opts = '<option value="">Seleccionar cuenta...</option>';
+            [...data].sort((a,b) => a.nombre.localeCompare(b.nombre))
+                     .forEach(cuenta => {
+                         opts += `<option value="${cuenta.id}">${cuenta.nombre}</option>`;
+                     });
+            el.innerHTML = opts;
+        };
+        populate(selectEl, getVisibleAccounts());
+        createCustomSelect(selectEl);
+    }
+
+    // 4. Listener del Botón Generar
+    const btnGenerar = select('btn-generar-extracto');
+    if (btnGenerar) {
+        // Clonar para limpiar eventos antiguos por seguridad
+        const newBtn = btnGenerar.cloneNode(true);
+        btnGenerar.parentNode.replaceChild(newBtn, btnGenerar);
+        
+        newBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Llamamos a la función mejorada
+            handleGenerateInformeCuenta(null, e.target.closest('button'));
+        });
+    }
+},
             // Resto de informes (sin cambios)
             'flujo_caja': () => renderInformeFlujoCaja(container),
             'resumen_ejecutivo': () => renderInformeResumenEjecutivo(container),
