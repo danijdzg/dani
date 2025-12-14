@@ -4759,7 +4759,7 @@ const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // Estructura HTML Compacta (Bento Grid Mejorado)
+    // Estructura Bento Grid: Header + 4 Áreas Principales
     container.innerHTML = `
         <div class="dashboard-bento-grid">
             
@@ -4788,80 +4788,91 @@ const renderPanelPage = async () => {
                 </div>
             </div>
 
-            <div class="bento-hero clickable-kpi" data-action="show-kpi-drilldown" data-type="patrimonio">
-                <button class="help-btn-floating" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
-                
-                <div class="bento-label">PATRIMONIO NETO</div>
-                <div id="kpi-patrimonio-neto-value" class="bento-value-giant skeleton" data-current-value="0">0,00 €</div>
-                
-                <div class="hero-composition-bar">
-                    <div id="hero-bar-liquid" class="comp-bar-segment liquid" style="width: 50%"></div>
-                    <div id="hero-bar-invest" class="comp-bar-segment invest" style="width: 50%"></div>
-                </div>
-
-                <div class="bento-hero-footer-split">
-                    <div class="hero-stat-box">
-                        <div class="stat-label"><span class="dot liquid"></span> Líquido</div>
-                        <div id="kpi-liquidez-value" class="stat-value skeleton">...</div>
-                    </div>
-                    <div class="hero-divider"></div>
-                    <div class="hero-stat-box">
-                        <div class="stat-label"><span class="dot invest"></span> Invertido</div>
-                        <div id="kpi-capital-invertido-total" class="stat-value skeleton">...</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bento-flow">
-                <div class="bento-card-mini clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
-                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="ingresos">?</button>
-                    <div class="d-label" style="color:var(--c-success);">Ingresos</div>
-                    <div id="kpi-ingresos-value" class="bento-value-mid text-positive skeleton">...</div>
-                </div>
-                <div class="bento-card-mini clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
-                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="gastos">?</button>
-                    <div class="d-label" style="color:var(--c-danger);">Gastos</div>
-                    <div id="kpi-gastos-value" class="bento-value-mid text-negative skeleton">...</div>
-                </div>
-                <div class="bento-card-mini clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
+            <div class="bento-card bento-flow">
+                <div class="bento-card-title">
+                    <span>TU FLUJO</span>
                     <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="neto">?</button>
-                    <div class="d-label" style="color:var(--c-warning);">Ahorro <small id="kpi-tasa-ahorro-value">(0%)</small></div>
-                    <div id="kpi-saldo-neto-value" class="bento-value-mid skeleton">...</div>
+                </div>
+                
+                <div class="flow-grid">
+                    <div class="flow-item clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
+                        <div class="flow-label text-success">Ingresos</div>
+                        <div id="kpi-ingresos-value" class="flow-value skeleton">...</div>
+                    </div>
+                    <div class="flow-item clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
+                        <div class="flow-label text-danger">Gastos</div>
+                        <div id="kpi-gastos-value" class="flow-value skeleton">...</div>
+                    </div>
+                    <div class="flow-item main clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
+                        <div class="flow-label text-warning">Ahorro Neto <small id="kpi-tasa-ahorro-value" style="opacity:0.8">(0%)</small></div>
+                        <div id="kpi-saldo-neto-value" class="flow-value-big skeleton">...</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="bento-invest">
-                <button class="help-btn-floating" data-action="show-kpi-help" data-kpi="pnl">?</button>
-                <div class="d-label" style="color:#BF5AF2; font-weight:700; margin-bottom:4px;">RENDIMIENTO INV.</div>
-                <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+            <div class="bento-card bento-patrimonio clickable-kpi" data-action="show-kpi-drilldown" data-type="patrimonio">
+                <div class="bento-card-title">
+                    <span>PATRIMONIO</span>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
+                </div>
+                
+                <div class="patrimonio-content">
+                    <div id="kpi-patrimonio-neto-value" class="bento-value-giant skeleton" data-current-value="0">0 €</div>
+                    
+                    <div class="patrimonio-split">
+                        <div class="split-item">
+                            <span class="dot liquid"></span> Líquido
+                            <strong id="kpi-liquidez-value">...</strong>
+                        </div>
+                        <div class="split-item">
+                            <span class="dot invest"></span> Invertido
+                            <strong id="kpi-capital-invertido-total">...</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bento-card bento-invest">
+                <div class="bento-card-title">
+                    <span style="color:#BF5AF2">INVERSIONES</span>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="pnl">?</button>
+                </div>
+                <div class="invest-content">
+                    <div class="d-label" style="opacity:0.7">Valor de Mercado</div>
                     <div id="new-card-market-value" class="bento-value-large skeleton">...</div>
-                    <div class="d-label" style="opacity:0.7;">Valor de Mercado</div>
-                </div>
-                <div class="bento-invest-footer">
-                    <div>Cap: <span id="new-card-capital" style="color:var(--c-white);">...</span></div>
-                    <div>P&L: <span id="new-card-pnl" style="font-weight:700;">...</span></div>
+                    
+                    <div class="invest-footer">
+                        <div class="invest-stat">
+                            <span>Capital</span>
+                            <span id="new-card-capital" class="val-white">...</span>
+                        </div>
+                        <div class="invest-stat">
+                            <span>Ganancia</span>
+                            <span id="new-card-pnl" class="val-pnl">...</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="bento-health">
-                <div class="health-row">
-                    <div class="d-label" style="display:flex; align-items:center; justify-content:center; gap:4px;">
-                        Cobertura <button class="help-btn-inline" data-action="show-kpi-help" data-kpi="cobertura">?</button>
-                    </div>
-                    <div id="health-runway-val" class="bento-value-small skeleton" style="color:#FFD60A;">...</div>
+            <div class="bento-card bento-health">
+                <div class="bento-card-title">
+                    <span>SALUD FINANCIERA</span>
                 </div>
-                <div class="health-divider"></div>
-                <div class="health-row">
-                    <div class="d-label" style="display:flex; align-items:center; justify-content:center; gap:4px;">
-                        Libertad <button class="help-btn-inline" data-action="show-kpi-help" data-kpi="libertad">?</button>
+                <div class="health-grid">
+                    <div class="health-item">
+                        <div class="d-label">Cobertura <button class="help-btn-inline" data-action="show-kpi-help" data-kpi="cobertura">?</button></div>
+                        <div id="health-runway-val" class="bento-value-health skeleton" style="color:#FFD60A;">...</div>
                     </div>
-                    <div id="health-fi-val" class="bento-value-small skeleton" style="color:#39FF14;">...</div>
+                    <div class="health-divider"></div>
+                    <div class="health-item">
+                        <div class="d-label">Libertad <button class="help-btn-inline" data-action="show-kpi-help" data-kpi="libertad">?</button></div>
+                        <div id="health-fi-val" class="bento-value-health skeleton" style="color:#39FF14;">...</div>
+                    </div>
                 </div>
             </div>
 
         </div> `;
     
-    // Inicializar lógica de carga
     populateAllDropdowns();
     await Promise.all([loadPresupuestos(), loadInversiones()]);
     scheduleDashboardUpdate(); 
