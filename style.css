@@ -5588,7 +5588,7 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 .dot.invest { background: #BF5AF2; box-shadow: 0 0 5px #BF5AF2; }
 
 /* ================================================================= */
-/* === PANEL VERTICAL "SMART FIT" (Prioridad Flujo) === */
+/* === PANEL VERTICAL "PERFECT FIT" (Sin Scroll, Espacio Optimizado) === */
 /* ================================================================= */
 
 .dashboard-stack-layout {
@@ -5596,177 +5596,164 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     flex-direction: column;
     height: 100%;
     width: 100%;
-    /* Padding inferior ajustado para la barra de navegación */
-    padding: 8px 10px 85px 10px; 
+    /* Padding inferior ajustado para no chocar con el menú */
+    padding: 10px 10px 90px 10px; 
     box-sizing: border-box;
     overflow: hidden; /* CERO SCROLL */
-    gap: 6px; /* Espacio mínimo para maximizar contenido */
+    gap: 8px; /* Separación equilibrada */
     max-width: 550px;
     margin: 0 auto;
 }
 
-/* Tarjeta Base */
+/* TARJETA BASE */
 .stack-card {
-    /* Por defecto todas flexibles, pero con capacidad de encogerse mucho */
+    /* Flexibilidad base para todas */
     flex: 1; 
-    min-height: 0; 
+    min-height: 0; /* Permite encogerse sin desbordar */
     background: var(--c-surface);
     border: 1px solid var(--c-outline);
-    border-radius: 16px;
-    padding: 8px 12px;
+    border-radius: 18px;
+    padding: 10px 14px;
+    
+    /* DISTRIBUCIÓN INTERNA MEJORADA */
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    /* Esto es clave: reparte el espacio blanco entre los elementos */
+    justify-content: space-between; 
+    
     position: relative;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: flex-grow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: flex-grow 0.3s ease;
 }
 
-/* Cabeceras Ultra-Compactas */
+/* Cabeceras Compactas */
 .stack-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2px;
-    flex-shrink: 0; /* No aplastar cabecera */
-    min-height: 24px;
+    /* Reducimos margen para ganar espacio para los datos */
+    margin-bottom: 2px; 
+    flex-shrink: 0;
+    min-height: 22px;
 }
 .header-title-row {
     display: flex; align-items: center; gap: 6px;
-    font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px;
     color: var(--c-on-surface-tertiary); text-transform: uppercase;
 }
-.card-icon-font { font-size: 14px; color: var(--c-primary); }
+.card-icon-font { font-size: 15px; color: var(--c-primary); }
 
-/* --- TARJETA 1: FLUJO (La Protagonista) --- */
+/* --- 1. TARJETA FLUJO (Prioridad Alta) --- */
 .card-flow {
-    /* ALTO FLEXIBLE: Se lleva más espacio (1.6) para acomodar fechas */
-    flex-grow: 1.6; 
-    background: linear-gradient(170deg, var(--c-surface) 0%, rgba(255,255,255,0.03) 100%);
-    justify-content: flex-start; /* Contenido arriba */
-    gap: 4px;
+    /* Le damos más importancia (1.4) para que quepan las fechas cómodamente */
+    flex-grow: 1.4; 
+    background: linear-gradient(175deg, var(--c-surface) 0%, rgba(255,255,255,0.03) 100%);
+    gap: 2px;
 }
 
-/* Barra de Fechas (Aparece y empuja) */
+/* Barra de Fechas (Compacta) */
 .compact-date-bar {
-    display: flex; justify-content: center; gap: 6px; 
-    background: rgba(0,0,0,0.2); padding: 4px; border-radius: 8px;
-    flex-shrink: 0; /* No se deja aplastar */
-    margin-bottom: 4px;
+    display: flex; justify-content: center; gap: 8px; 
+    background: rgba(0,0,0,0.25); padding: 4px; border-radius: 8px;
+    flex-shrink: 0; margin: 2px 0; border: 1px solid var(--c-outline);
 }
 .tiny-date-input {
     background: transparent; border: none; color: #fff;
     font-size: 0.75rem; font-family: var(--font-numeric);
-    width: 85px; text-align: center; padding: 0;
+    width: 85px; text-align: center; padding: 0; margin: 0;
 }
 
-/* Contenedor de Números (Ingreso/Gasto/Ahorro) */
+/* Display de Números (Se expande) */
 .flow-display {
     display: flex; justify-content: space-between; align-items: center;
-    background: rgba(0,0,0,0.2); border-radius: 10px; padding: 4px;
-    flex: 1; /* Ocupa todo el espacio restante */
-    min-height: 0; /* Permite encoger texto si es necesario */
+    background: rgba(0,0,0,0.2); border-radius: 12px; padding: 0 8px;
+    /* Ocupa todo el espacio vertical disponible en la tarjeta */
+    flex-grow: 1; 
+    min-height: 0;
 }
 .flow-col { 
     display: flex; flex-direction: column; 
     align-items: center; justify-content: center; 
     flex: 1; text-align: center; 
+    height: 100%; /* Asegura centrado vertical */
 }
-.flow-label { font-size: 0.55rem; font-weight: 700; margin-bottom: 1px; opacity: 0.7; }
+.flow-label { font-size: 0.6rem; font-weight: 700; margin-bottom: 2px; opacity: 0.8; }
 .flow-number { 
-    font-size: clamp(0.9rem, 2.5vh, 1.2rem); /* Texto adaptable */
-    font-weight: 700; line-height: 1.1; color: #fff;
-    white-space: nowrap;
+    font-size: clamp(1rem, 3vh, 1.4rem); /* Texto grande y legible */
+    font-weight: 800; color: #fff; line-height: 1; white-space: nowrap;
 }
-.flow-divider { width: 1px; height: 60%; background: rgba(255,255,255,0.1); }
+.flow-sep { width: 1px; height: 50%; background: rgba(255,255,255,0.1); }
 
-/* --- TARJETA 2: PATRIMONIO (Importante pero cede espacio) --- */
+/* --- 2. TARJETA PATRIMONIO (Equilibrada) --- */
 .card-patrimonio {
-    flex-grow: 1.2; /* Menos que flujo para compensar */
+    flex-grow: 1.2; 
     background: radial-gradient(circle at 50% 100%, rgba(0, 179, 77, 0.15) 0%, var(--c-surface) 80%);
     border: 1px solid rgba(0, 179, 77, 0.3);
 }
-.patrimonio-main { text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; }
+/* El contenedor principal centra el número */
+.patrimonio-main { 
+    flex-grow: 1; display: flex; align-items: center; justify-content: center;
+    min-height: 0;
+}
 .math-total-giant {
-    font-size: clamp(2rem, 6vh, 3.5rem); 
+    font-size: clamp(2.5rem, 6.5vh, 4rem); 
     font-weight: 800; color: #fff;
-    text-shadow: 0 0 20px rgba(0,179,77,0.3);
-    line-height: 1; letter-spacing: -1px;
+    text-shadow: 0 0 25px rgba(0,179,77,0.3);
+    line-height: 1; letter-spacing: -1.5px; margin: 0;
 }
 .patrimonio-details {
-    display: flex; justify-content: center; gap: 10px;
-    background: rgba(255,255,255,0.05); padding: 3px 10px; border-radius: 99px;
+    display: flex; justify-content: center; gap: 12px;
+    background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 99px;
     margin: 0 auto; width: fit-content; flex-shrink: 0;
 }
 .p-detail { font-size: 0.7rem; color: var(--c-on-surface-tertiary); display: flex; align-items: center; gap: 4px; }
-.dot { width: 6px; height: 6px; border-radius: 50%; }
-.dot.liquid { background: var(--c-primary); } .dot.invest { background: #BF5AF2; }
+.dot { width: 6px; height: 6px; border-radius: 50%; box-shadow: 0 0 5px currentColor; }
+.dot.liquid { background: var(--c-primary); color: var(--c-primary); } 
+.dot.invest { background: #BF5AF2; color: #BF5AF2; }
 
-/* --- TARJETA 3: INVERSIONES --- */
+/* --- 3. TARJETA INVERSIONES (Estilo Gigante) --- */
 .card-invest {
-    flex-grow: 1; /* Estándar */
-    background: rgba(191, 90, 242, 0.05); border-color: rgba(191, 90, 242, 0.2);
+    flex-grow: 1.2;
+    background: radial-gradient(circle at 50% 100%, rgba(191, 90, 242, 0.12) 0%, var(--c-surface) 80%);
+    border: 1px solid rgba(191, 90, 242, 0.3);
 }
-.invest-main { text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.invest-label-top { font-size: 0.6rem; font-weight: 700; color: #BF5AF2; text-transform: uppercase; margin-bottom: 2px; }
+.invest-main {
+    flex-grow: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; min-height: 0;
+}
+.invest-label-top { 
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; color: #BF5AF2; 
+    text-transform: uppercase; margin-bottom: 0; opacity: 0.9;
+}
 .invest-val-giant {
-    font-size: clamp(1.8rem, 5vh, 3rem);
+    font-size: clamp(2rem, 5vh, 3.5rem); 
     font-weight: 800; color: #fff;
-    text-shadow: 0 0 15px rgba(191, 90, 242, 0.4);
-    line-height: 1;
+    text-shadow: 0 0 20px rgba(191, 90, 242, 0.4);
+    line-height: 1; letter-spacing: -1px;
 }
 .invest-details-row {
-    display: flex; justify-content: center; gap: 10px;
-    background: rgba(255,255,255,0.05); padding: 3px 10px; border-radius: 99px;
+    display: flex; justify-content: center; gap: 12px;
+    background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 99px;
     margin: 0 auto; width: fit-content; flex-shrink: 0;
 }
 
-/* --- TARJETA 4: SALUD (Se comprime al máximo si es necesario) --- */
+/* --- 4. TARJETA SALUD (Compacta) --- */
 .card-health { 
-    flex-grow: 0.8; /* La que más se encoge para salvar espacio */
+    flex-grow: 0.9; /* Un poco más pequeña que el resto */
     background: var(--c-surface); 
 }
-.health-grid { display: flex; justify-content: space-around; align-items: center; flex: 1; }
+.health-grid { 
+    display: flex; justify-content: space-around; align-items: center; 
+    flex-grow: 1; min-height: 0;
+}
 .health-item { text-align: center; display: flex; flex-direction: column; justify-content: center; }
-.health-label { font-size: 0.55rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; }
-.health-val { font-size: clamp(1.1rem, 3vh, 1.6rem); font-weight: 800; line-height: 1; margin: 2px 0; }
-.health-sub { font-size: 0.55rem; opacity: 0.6; }
+.health-label { font-size: 0.6rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 2px;}
+.health-val { font-size: clamp(1.2rem, 3.5vh, 1.8rem); font-weight: 800; line-height: 1; }
+.health-sub { font-size: 0.6rem; opacity: 0.6; }
 .health-divider-vert { width: 1px; height: 60%; background: var(--c-outline); }
-/* ================================================================= */
-/* === AJUSTE PARA PANTALLAS GRANDES (840px+) - MODO COLUMNA === */
-/* ================================================================= */
 
+/* Ajuste PC */
 @media (min-width: 840px) {
-    .dashboard-stack-layout {
-        /* FORZAR COLUMNA ÚNICA (Igual que en móvil) */
-        display: flex;
-        flex-direction: column;
-        
-        /* Centrado elegante en la pantalla */
-        max-width: 600px; /* Ancho máximo para que no se "estiren" demasiado */
-        margin: 0 auto;   /* Centra el bloque en el contenedor */
-        
-        padding: 30px 20px 40px 20px;
-        gap: 20px; /* Un poco más de separación que en móvil */
-        
-        /* Asegura que ocupe la altura pero permita scroll si es necesario */
-        height: 100%;
-        overflow-y: auto; 
-    }
-
-    /* Anulamos cualquier rastro de Grid anterior */
-    .card-flow, .card-patrimonio, .card-invest, .card-health {
-        grid-column: auto;
-        grid-area: auto;
-        width: 100%; /* Ocupan todo el ancho del contenedor de 600px */
-    }
-    
-    /* Ajustes de tipografía para aprovechar la nitidez del monitor */
-    .math-total-giant { font-size: 4.5rem; }
-    .flow-number { font-size: 1.4rem; }
-    
-    /* Hacemos las tarjetas un poco más altas/homogéneas visualmente */
-    .stack-card {
-        min-height: 160px; /* Altura mínima consistente */
-    }
+    .dashboard-stack-layout { padding: 30px; gap: 15px; }
+    .card-flow, .card-patrimonio, .card-invest, .card-health { flex-grow: 1; } 
 }

@@ -4761,15 +4761,12 @@ const renderPanelPage = async () => {
                         <span class="material-icons card-icon-font">sync_alt</span>
                         <span>FLUJO DE CAJA</span>
                     </div>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="ingresos">?</button>
-                        <div class="report-filters">
-                            <select id="filter-periodo" class="form-select compact-select">
-                                <option value="mes-actual">Este Mes</option>
-                                <option value="año-actual">Este Año</option>
-                                <option value="custom">Personalizado</option>
-                            </select>
-                        </div>
+                    <div class="report-filters">
+                        <select id="filter-periodo" class="form-select compact-select">
+                            <option value="mes-actual">Este Mes</option>
+                            <option value="año-actual">Este Año</option>
+                            <option value="custom">Personalizado</option>
+                        </select>
                     </div>
                 </div>
 
@@ -4784,12 +4781,12 @@ const renderPanelPage = async () => {
                         <span class="flow-label text-success">INGRESOS</span>
                         <span id="kpi-ingresos-value" class="flow-number skeleton">...</span>
                     </div>
-                    <div class="flow-divider"></div>
+                    <div class="flow-sep"></div>
                     <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
                         <span class="flow-label text-danger">GASTOS</span>
                         <span id="kpi-gastos-value" class="flow-number skeleton">...</span>
                     </div>
-                    <div class="flow-divider"></div>
+                    <div class="flow-sep"></div>
                     <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
                         <span class="flow-label text-warning">AHORRO</span>
                         <span id="kpi-saldo-neto-value" class="flow-number skeleton">...</span>
@@ -4832,7 +4829,7 @@ const renderPanelPage = async () => {
 
                 <div class="invest-details-row">
                     <div class="p-detail">
-                        <span style="opacity:0.7">Capital:</span> 
+                        <span style="opacity:0.7">Invertido:</span> 
                         <strong id="new-card-capital" style="color:#fff">...</strong>
                     </div>
                     <div style="width:1px; height:12px; background:rgba(255,255,255,0.2); align-self:center;"></div>
