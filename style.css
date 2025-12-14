@@ -5485,3 +5485,142 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .dot.liquid { background: var(--c-primary); box-shadow: 0 0 5px var(--c-primary); }
 .dot.invest { background: #BF5AF2; box-shadow: 0 0 5px #BF5AF2; }
+
+/* ================================================================= */
+/* === PANEL "VISUAL HORIZONTAL STACK" (Fit-to-Screen) vFinal === */
+/* ================================================================= */
+
+/* Contenedor Principal: Ocupa el 100% exacto y bloquea el scroll */
+.dashboard-stack-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Altura completa de la vista */
+    width: 100%;
+    padding: 10px 10px 85px 10px; /* Padding inferior para no chocar con el menú */
+    box-sizing: border-box;
+    overflow: hidden; /* CORTA EL SCROLL: Todo debe caber */
+    gap: 10px; /* Espacio entre tarjetas */
+}
+
+/* Estilo Base de Tarjeta Elástica */
+.stack-card {
+    flex: 1; /* MAGIA: Ocupa proporcionalmente el espacio disponible */
+    min-height: 0; /* Permite encogerse si la pantalla es pequeña */
+    border-radius: 20px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: transform 0.2s;
+}
+.stack-card:active { transform: scale(0.98); }
+
+/* Cabeceras de Tarjeta */
+.stack-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    flex-shrink: 0; /* La cabecera no se aplasta */
+}
+.card-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.9;
+    color: rgba(255,255,255,0.9);
+    display: flex; align-items: center; gap: 6px;
+}
+
+/* --- TARJETA 1: FLUJO (Degradado Azul Oscuro - Control) --- */
+.card-flow {
+    background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); /* Sunset fuerte pero oscuro */
+    background: linear-gradient(145deg, rgba(30, 40, 50, 1) 0%, rgba(20, 20, 25, 1) 100%);
+    border-left: 4px solid var(--c-warning); /* Indicador visual */
+}
+.flow-display {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(0,0,0,0.3); border-radius: 12px; padding: 8px;
+    flex: 1; /* Ocupa el centro */
+}
+.flow-col { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; text-align: center; }
+.flow-val { font-size: clamp(1rem, 2.5vh, 1.4rem); font-weight: 700; color: #fff; line-height: 1.1; }
+.flow-sub { font-size: 0.65rem; text-transform: uppercase; font-weight: 600; opacity: 0.7; margin-bottom: 2px; }
+.flow-sep { font-size: 1.2rem; color: rgba(255,255,255,0.3); font-weight: 300; }
+
+/* --- TARJETA 2: PATRIMONIO (Degradado Verde Rico - Riqueza) --- */
+.card-patrimonio {
+    flex: 1.4; /* Esta tarjeta es un 40% más grande que las otras */
+    background: radial-gradient(circle at 100% 0%, rgba(0, 179, 77, 0.4) 0%, #050505 80%);
+    border: 1px solid rgba(0, 179, 77, 0.3);
+}
+.patrimonio-main {
+    text-align: center;
+    flex: 1; display: flex; flex-direction: column; justify-content: center;
+}
+.patrimonio-val {
+    font-size: clamp(2.5rem, 7vh, 4.5rem); /* NÚMERO GIGANTE */
+    font-weight: 800; color: #fff;
+    text-shadow: 0 0 30px rgba(0,179,77,0.4);
+    line-height: 1; letter-spacing: -2px;
+}
+.patrimonio-split {
+    display: flex; justify-content: center; gap: 20px;
+    background: rgba(255,255,255,0.05); border-radius: 99px;
+    padding: 6px 12px; margin: 0 auto; width: fit-content;
+}
+.split-pill { font-size: 0.75rem; color: rgba(255,255,255,0.8); display: flex; align-items: center; gap: 5px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 5px currentColor; }
+
+/* --- TARJETA 3: INVERSIONES (Degradado Púrpura - Futuro) --- */
+.card-invest {
+    background: linear-gradient(135deg, rgba(45, 10, 60, 1) 0%, rgba(10, 5, 20, 1) 100%);
+    border-left: 4px solid #BF5AF2;
+}
+.invest-row {
+    display: flex; justify-content: space-around; align-items: center; flex: 1;
+}
+.invest-group { text-align: center; }
+.invest-num { font-size: clamp(1.2rem, 3vh, 2rem); font-weight: 700; color: #fff; display: block; }
+.invest-lbl { font-size: 0.65rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px; }
+.invest-pnl-tag { 
+    background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 6px; 
+    font-size: 0.8rem; font-weight: 700; display: inline-block; margin-top: 4px;
+}
+
+/* --- TARJETA 4: SALUD (Degradado Cian - Tranquilidad) --- */
+.card-health {
+    background: linear-gradient(135deg, rgba(10, 40, 50, 1) 0%, rgba(5, 15, 20, 1) 100%);
+    border-left: 4px solid #00E5FF;
+}
+.health-grid { display: flex; justify-content: space-around; align-items: center; flex: 1; }
+.health-box { text-align: center; }
+.health-val { font-size: clamp(1.5rem, 4vh, 2.5rem); font-weight: 800; line-height: 1; }
+.health-sub { font-size: 0.65rem; opacity: 0.6; display: block; margin-top: 2px; }
+
+/* Selectores y Ayudas */
+.compact-select {
+    background: rgba(0,0,0,0.4) !important; color: #fff !important; border: none !important;
+    font-size: 0.7rem !important; padding: 2px 8px !important; height: auto !important; border-radius: 6px !important;
+}
+.help-btn {
+    background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.7);
+    width: 20px; height: 20px; border-radius: 50%; font-size: 12px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
+/* Ajuste PC: En ordenador, limitamos el ancho para que no se vea estirado */
+@media (min-width: 840px) {
+    .dashboard-stack-layout {
+        max-width: 550px; /* Estilo "App móvil en escritorio" centrado */
+        margin: 0 auto;
+        padding: 20px;
+        gap: 15px;
+    }
+    .patrimonio-val { font-size: 4rem; } /* Más grande en PC */
+}
