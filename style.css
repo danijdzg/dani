@@ -5406,26 +5406,25 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     justify-content: flex-start; /* Alineado a la izquierda como iOS */
 }
 /* ================================================================= */
-/* === PANEL ESPECTACULAR "ZERO SCROLL" (Reordenado) === */
+/* === DISEÑO "BENTO GRID" ULTIMATE (Afinado) === */
 /* ================================================================= */
 
 .dashboard-bento-grid {
     display: grid;
     height: 100%;
     width: 100%;
-    gap: 10px;
-    padding: 10px 10px 80px 10px; /* Padding inferior para el menú */
+    gap: 12px;
+    padding: 10px 10px 85px 10px;
     box-sizing: border-box;
-    
-    /* DEFINICIÓN DE ÁREAS (Móvil Primero - Stacked) */
+    /* Estructura Móvil por Defecto (Apilado Vertical) */
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1.2fr 1fr 1fr 0.8fr;
+    grid-template-rows: auto auto auto auto auto;
     grid-template-areas: 
         "HEAD"
-        "FLOW"
-        "PATR"
-        "INVS"
-        "HLTH";
+        "FLOW" /* 1. Flujo */
+        "PATR" /* 2. Patrimonio */
+        "INVS" /* 3. Inversiones */
+        "HLTH"; /* 4. Salud */
 }
 
 /* Áreas */
@@ -5435,132 +5434,147 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 .bento-invest     { grid-area: INVS; }
 .bento-health     { grid-area: HLTH; }
 
-/* Estilos Generales de Tarjeta */
+/* --- TARJETAS GENERALES --- */
 .bento-card {
     background: var(--c-surface);
     border: 1px solid var(--c-outline);
     border-radius: 20px;
-    padding: 12px 16px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
+    justify-content: space-between; /* Distribuye espacio */
     position: relative;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 .bento-card-title {
     display: flex; justify-content: space-between; align-items: center;
-    font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
-    color: var(--c-on-surface-secondary); margin-bottom: 8px;
+    font-size: 0.75rem; font-weight: 800; letter-spacing: 1px;
+    color: var(--c-on-surface-tertiary); margin-bottom: 8px;
     text-transform: uppercase;
 }
 
-/* BOTONES DE AYUDA */
-.help-btn-mini, .help-btn-inline {
-    background: rgba(255,255,255,0.1);
-    color: var(--c-on-surface-secondary);
-    border: none; border-radius: 50%;
-    width: 18px; height: 18px;
-    font-size: 11px; font-weight: 700;
-    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-}
-.help-btn-inline { margin-left: 6px; width: 16px; height: 16px; font-size: 10px; }
-
-/* 1. FLUJO (Tarjeta 1) */
+/* 1. TARJETA FLUJO (3 Columnas) */
 .bento-flow {
-    background: linear-gradient(145deg, var(--c-surface) 0%, rgba(255,255,255,0.03) 100%);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: linear-gradient(145deg, var(--c-surface) 0%, rgba(255,255,255,0.02) 100%);
 }
 .flow-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
+    grid-template-columns: 1fr 1fr 1.2fr; /* Ingresos | Gastos | Ahorro (más ancho) */
     gap: 8px;
-    flex: 1;
+    height: 100%;
+    align-items: center;
 }
 .flow-item {
     background: rgba(0,0,0,0.2);
     border-radius: 12px;
-    padding: 8px;
-    display: flex; flex-direction: column; justify-content: center;
+    padding: 10px 5px;
+    display: flex; flex-direction: column; 
+    justify-content: center; align-items: center; text-align: center;
+    height: 100%;
+    border: 1px solid transparent;
 }
-.flow-item.main {
-    grid-column: 1 / -1; /* Ahorro ocupa todo el ancho */
-    background: rgba(255,214,10,0.05); /* Tinte amarillo sutil */
-    border: 1px solid rgba(255,214,10,0.1);
-    align-items: center;
+.flow-item.main { /* Ahorro destacado */
+    background: rgba(255,214,10,0.08);
+    border-color: rgba(255,214,10,0.2);
 }
-.flow-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; margin-bottom: 2px; }
-.flow-value { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px; }
-.flow-value-big { font-size: 1.8rem; font-weight: 800; color: #fff; line-height: 1; }
+.flow-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; opacity: 0.8; }
+.flow-value { font-size: clamp(1rem, 2.5vh, 1.4rem); font-weight: 800; letter-spacing: -0.5px; }
+.flow-value-big { font-size: clamp(1.2rem, 3vh, 1.8rem); font-weight: 800; color: #fff; }
 
-/* 2. PATRIMONIO (Tarjeta 2 - Espectacular) */
+/* 2. TARJETA PATRIMONIO (Espectacular) */
 .bento-patrimonio {
-    background: radial-gradient(circle at 50% 0%, rgba(0, 179, 77, 0.15) 0%, #050505 100%);
-    border: 1px solid var(--c-primary);
-    box-shadow: 0 0 25px rgba(0, 179, 77, 0.1);
+    background: radial-gradient(circle at 50% 0%, rgba(0, 179, 77, 0.15) 0%, #080f15 100%);
+    border: 1px solid rgba(0, 179, 77, 0.4);
+    box-shadow: 0 0 30px rgba(0, 179, 77, 0.1);
     text-align: center;
-    justify-content: space-evenly;
+    padding: 20px 10px;
+    justify-content: center; /* Centrado vertical */
+}
+.patrimonio-content {
+    display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; gap: 15px;
 }
 .bento-value-giant {
-    font-size: clamp(3rem, 10vw, 5rem); /* Gigante pero adaptable */
+    font-size: clamp(3.5rem, 8vh, 5.5rem); /* NÚMEROS ENORMES */
     font-weight: 800;
-    color: #fff;
-    text-shadow: 0 0 30px rgba(0, 179, 77, 0.4);
     line-height: 1;
     letter-spacing: -2px;
+    text-shadow: 0 0 40px rgba(0,179,77,0.25);
     margin: 10px 0;
 }
+/* Colores para el texto gigante definidos por JS, aquí reforzamos */
+.text-positive { color: var(--c-success) !important; text-shadow: 0 0 15px rgba(57, 255, 20, 0.3); }
+.text-negative { color: var(--c-danger) !important; text-shadow: 0 0 15px rgba(255, 59, 48, 0.3); }
+.text-neutral  { color: #fff !important; }
+
 .patrimonio-split {
     display: flex; justify-content: center; gap: 20px;
     background: rgba(255,255,255,0.05);
-    padding: 6px 12px; border-radius: 20px;
-    margin: 0 auto; width: fit-content;
+    padding: 8px 16px; border-radius: 99px;
+    width: fit-content; margin: 0 auto;
+    border: 1px solid rgba(255,255,255,0.1);
 }
-.split-item { font-size: 0.8rem; color: var(--c-on-surface-tertiary); display: flex; align-items: center; gap: 6px; }
-.split-item strong { color: #fff; }
+.split-item { font-size: 0.75rem; color: var(--c-on-surface-tertiary); display: flex; align-items: center; gap: 6px; }
+.split-item strong { color: #fff; font-size: 0.9rem; }
 .dot { width: 8px; height: 8px; border-radius: 50%; }
 .dot.liquid { background: var(--c-info); box-shadow: 0 0 8px var(--c-info); }
 .dot.invest { background: #BF5AF2; box-shadow: 0 0 8px #BF5AF2; }
 
-/* 3. INVERSIONES (Tarjeta 3) */
+/* 3. TARJETA INVERSIONES */
 .bento-invest {
     background: rgba(191, 90, 242, 0.05);
-    border-color: rgba(191, 90, 242, 0.3);
+    border-color: rgba(191, 90, 242, 0.25);
 }
 .invest-content {
-    flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center;
+    flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; gap: 10px;
 }
-.bento-value-large { font-size: 2.2rem; font-weight: 800; color: #fff; margin-bottom: 10px; }
+.bento-value-large { font-size: clamp(2rem, 4vh, 3rem); font-weight: 800; color: #fff; }
 .invest-footer {
-    display: flex; justify-content: space-between;
+    display: flex; justify-content: space-around;
     border-top: 1px solid rgba(255,255,255,0.1);
-    padding-top: 8px; margin-top: auto;
+    padding-top: 10px; margin-top: 5px;
 }
 .invest-stat { display: flex; flex-direction: column; font-size: 0.7rem; color: var(--c-on-surface-tertiary); }
-.invest-stat .val-white { color: #fff; font-weight: 600; font-size: 0.9rem; }
-.invest-stat .val-pnl { font-weight: 700; font-size: 0.9rem; }
+.invest-stat .val-white { color: #fff; font-weight: 600; font-size: 1rem; }
+.invest-stat .val-pnl { font-weight: 700; font-size: 1rem; }
 
-/* 4. SALUD (Tarjeta 4) */
-.health-grid { display: flex; align-items: center; justify-content: space-around; height: 100%; }
-.health-item { text-align: center; }
-.bento-value-health { font-size: 1.6rem; font-weight: 800; line-height: 1; margin-top: 5px; }
+/* 4. TARJETA SALUD */
+.health-grid { display: flex; align-items: center; justify-content: space-around; height: 100%; padding: 10px 0; }
+.health-item { text-align: center; flex: 1; }
+.bento-value-health { font-size: clamp(1.5rem, 3vh, 2.2rem); font-weight: 800; line-height: 1.2; margin-top: 5px; display: block; }
 .health-divider { width: 1px; height: 40px; background: var(--c-outline); }
 
-/* --- RESPONSIVIDAD PC (Bento Grid 2x2) --- */
+/* --- RESPONSIVIDAD ESCRITORIO (840px+) --- */
 @media (min-width: 840px) {
     .dashboard-bento-grid {
-        grid-template-columns: 1fr 1fr; /* 2 columnas iguales */
-        grid-template-rows: auto 1fr 1fr; /* Header + 2 filas de tarjetas */
+        /* Layout 2x2 para escritorio */
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 1fr 1fr;
         grid-template-areas: 
             "HEAD HEAD"
-            "FLOW PATR"
-            "INVS HLTH";
+            "FLOW PATR"  /* Flujo Izq, Patrimonio Der */
+            "INVS HLTH"; /* Inversiones Izq, Salud Der */
         gap: 15px;
-        padding-bottom: 15px; /* Menos padding abajo en PC */
+        padding-bottom: 20px;
     }
     
-    /* En PC, hacemos que el patrimonio destaque más si quieres, o mantenemos simetría */
-    .bento-value-giant { font-size: 4rem; } 
-    .flow-value-big { font-size: 2.2rem; }
+    /* En PC, hacemos que el patrimonio sea aún más grande */
+    .bento-value-giant { font-size: 5rem; } 
+    .flow-grid { grid-template-columns: 1fr 1fr 1fr; } /* 3 columnas iguales en PC para flujo */
 }
+
+/* BOTONES DE AYUDA (Estilos) */
+.help-btn-mini, .help-btn-inline {
+    background: rgba(255,255,255,0.1);
+    color: var(--c-on-surface-secondary);
+    border: none; border-radius: 50%;
+    width: 20px; height: 20px;
+    font-size: 12px; font-weight: 700;
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+}
+.help-btn-mini:hover, .help-btn-inline:hover {
+    background: var(--c-primary); color: #fff; transform: scale(1.1);
+}
+.help-btn-inline { margin-left: 6px; vertical-align: middle; }
