@@ -1033,11 +1033,6 @@ const clearDiarioFilters = async () => {
 			renderBuffer: 10, lastRenderedRange: { start: -1, end: -1 }, isScrolling: null
 		};
         
- 
-const updateCalculatorHistoryDisplay = () => {
-    const historyDisplay = select('calculator-history-display');
-    if (historyDisplay) historyDisplay.textContent = calculatorState.historyValue;
-};
 
 // Mapea las claves a los símbolos visuales
 const getOperatorSymbol = (key) => ({
