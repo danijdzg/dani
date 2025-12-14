@@ -4755,19 +4755,19 @@ async function calculateHistoricalIrrForGroup(accountIds) {
             if (userEmailEl && currentUser) userEmailEl.textContent = currentUser.email;  			
         };
 
-/* EN main.js - REEMPLAZO TOTAL DE renderPanelPage */
-
 const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
+    // Estructura de Pila Vertical (4 Tarjetas)
     container.innerHTML = `
         <div class="dashboard-stack-layout">
             
-            <div class="stack-card card-flow">
+            <div class="stack-card flow-card">
                 <div class="stack-card-header">
-                    <div class="card-label">
-                        <span class="material-icons" style="font-size:16px;">sync_alt</span> FLUJO DE CAJA
+                    <div class="header-title-row">
+                        <span class="material-icons card-icon-font">sync_alt</span>
+                        <span>FLUJO DE CAJA</span>
                     </div>
                     <div class="report-filters">
                         <select id="filter-periodo" class="form-select compact-select">
@@ -4778,85 +4778,90 @@ const renderPanelPage = async () => {
                     </div>
                 </div>
 
-                <div id="custom-date-filters" class="hidden compact-date-bar" style="margin-bottom:8px; display:flex; justify-content:center; gap:8px;">
-                    <input type="date" id="filter-fecha-inicio" class="tiny-date-input" style="background:rgba(0,0,0,0.3); border:none; color:#fff; padding:4px; border-radius:6px;">
-                    <span style="color:#aaa">➜</span>
-                    <input type="date" id="filter-fecha-fin" class="tiny-date-input" style="background:rgba(0,0,0,0.3); border:none; color:#fff; padding:4px; border-radius:6px;">
+                <div id="custom-date-filters" class="hidden compact-date-bar">
+                    <input type="date" id="filter-fecha-inicio" class="tiny-date-input">
+                    <span class="date-arrow">➜</span>
+                    <input type="date" id="filter-fecha-fin" class="tiny-date-input">
                 </div>
 
                 <div class="flow-display">
                     <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
-                        <span class="flow-sub text-success">INGRESOS</span>
-                        <span id="kpi-ingresos-value" class="flow-val skeleton">...</span>
+                        <span class="flow-label text-success">INGRESOS</span>
+                        <span id="kpi-ingresos-value" class="flow-number skeleton">...</span>
                     </div>
-                    <span class="flow-sep">-</span>
+                    <div class="flow-divider"></div>
                     <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
-                        <span class="flow-sub text-danger">PAGOS</span>
-                        <span id="kpi-gastos-value" class="flow-val skeleton">...</span>
+                        <span class="flow-label text-danger">GASTOS</span>
+                        <span id="kpi-gastos-value" class="flow-number skeleton">...</span>
                     </div>
-                    <span class="flow-sep">=</span>
+                    <div class="flow-divider"></div>
                     <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
-                        <span class="flow-sub text-warning">AHORRO</span>
-                        <span id="kpi-saldo-neto-value" class="flow-val skeleton">...</span>
+                        <span class="flow-label text-warning">AHORRO</span>
+                        <span id="kpi-saldo-neto-value" class="flow-number skeleton">...</span>
                     </div>
                 </div>
             </div>
 
-            <div class="stack-card card-patrimonio clickable-kpi" data-action="show-kpi-drilldown" data-type="patrimonio">
+            <div class="stack-card patrimonio-card clickable-kpi" data-action="show-kpi-drilldown" data-type="patrimonio">
                 <div class="stack-card-header">
-                    <div class="card-label" style="color:var(--c-primary)">
-                        <span class="material-icons" style="font-size:16px;">account_balance</span> PATRIMONIO NETO
+                    <div class="header-title-row">
+                        <span class="material-icons card-icon-font">account_balance</span>
+                        <span>PATRIMONIO</span>
                     </div>
-                    <button class="help-btn" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
                 </div>
                 
                 <div class="patrimonio-main">
-                    <div id="kpi-patrimonio-neto-value" class="patrimonio-val skeleton">0 €</div>
+                    <div id="kpi-patrimonio-neto-value" class="math-total-giant skeleton">0 €</div>
                 </div>
 
-                <div class="patrimonio-split">
-                    <div class="split-pill"><span class="dot" style="color:var(--c-primary); background:currentColor"></span> Liq: <strong id="kpi-liquidez-value" style="color:#fff">...</strong></div>
-                    <div class="split-pill"><span class="dot" style="color:#BF5AF2; background:currentColor"></span> Inv: <strong id="kpi-capital-invertido-total" style="color:#fff">...</strong></div>
+                <div class="patrimonio-details">
+                    <div class="p-detail"><span class="dot liquid"></span> Liq: <strong id="kpi-liquidez-value">...</strong></div>
+                    <div class="p-detail"><span class="dot invest"></span> Inv: <strong id="kpi-capital-invertido-total">...</strong></div>
                 </div>
             </div>
 
-            <div class="stack-card card-invest">
+            <div class="stack-card invest-card">
                 <div class="stack-card-header">
-                    <div class="card-label" style="color:#BF5AF2">
-                        <span class="material-icons" style="font-size:16px;">trending_up</span> INVERSIONES
+                    <div class="header-title-row">
+                        <span class="material-icons card-icon-font" style="color:#BF5AF2">trending_up</span>
+                        <span style="color:#BF5AF2">INVERSIONES</span>
                     </div>
-                    <button class="help-btn" data-action="show-kpi-help" data-kpi="pnl">?</button>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="pnl">?</button>
                 </div>
-                
-                <div class="invest-row">
-                    <div class="invest-group">
-                        <span class="invest-lbl">Valor Mercado</span>
-                        <span id="new-card-market-value" class="invest-num skeleton">...</span>
+
+                <div class="invest-display-row">
+                    <div class="invest-box">
+                        <span class="invest-label">Valor Mercado</span>
+                        <span id="new-card-market-value" class="invest-val skeleton">...</span>
                     </div>
-                    <div class="invest-group">
-                        <span class="invest-lbl">Resultado (P&L)</span>
-                        <div id="new-card-pnl" class="invest-pnl-tag skeleton">...</div>
+                    <div class="invest-box">
+                        <span class="invest-label">Resultado (P&L)</span>
+                        <div id="new-card-pnl" class="invest-pnl-badge skeleton">...</div>
                     </div>
                 </div>
                 <span id="new-card-capital" style="display:none"></span>
             </div>
 
-            <div class="stack-card card-health">
+            <div class="stack-card health-card">
                 <div class="stack-card-header">
-                    <div class="card-label" style="color:#00E5FF">
-                        <span class="material-icons" style="font-size:16px;">health_and_safety</span> SALUD FINANCIERA
+                    <div class="header-title-row">
+                        <span class="material-icons card-icon-font">health_and_safety</span>
+                        <span>SALUD</span>
                     </div>
                 </div>
                 
                 <div class="health-grid">
-                    <div class="health-box">
-                        <span class="health-val skeleton" id="health-runway-val" style="color:#FFD60A">...</span>
-                        <span class="health-sub">Meses Cobertura <button class="help-btn" style="display:inline-flex; width:14px; height:14px; font-size:9px;" data-action="show-kpi-help" data-kpi="cobertura">?</button></span>
+                    <div class="health-item">
+                        <span class="health-label">Cobertura</span>
+                        <span id="health-runway-val" class="health-val skeleton" style="color:#FFD60A">...</span>
+                        <span class="health-sub">Meses</span>
                     </div>
-                    <div style="width:1px; height:40px; background:rgba(255,255,255,0.1)"></div>
-                    <div class="health-box">
-                        <span class="health-val skeleton" id="health-fi-val" style="color:#00E5FF">...</span>
-                        <span class="health-sub">Libertad Financiera <button class="help-btn" style="display:inline-flex; width:14px; height:14px; font-size:9px;" data-action="show-kpi-help" data-kpi="libertad">?</button></span>
+                    <div class="health-divider-vert"></div>
+                    <div class="health-item">
+                        <span class="health-label">Libertad</span>
+                        <span id="health-fi-val" class="health-val skeleton" style="color:#39FF14">...</span>
+                        <span class="health-sub">Objetivo</span>
                     </div>
                 </div>
             </div>
@@ -6493,7 +6498,7 @@ const scheduleDashboardUpdate = () => {
             const saldos = await getSaldos();
             const visibleAccounts = getVisibleAccounts();
             
-            // --- CÁLCULOS ---
+            // CÁLCULOS
             const investmentAccounts = visibleAccounts.filter(c => c.esInversion);
             let totalCapitalInvertido = 0;
             let valorMercadoTotal = 0;
@@ -6520,26 +6525,16 @@ const scheduleDashboardUpdate = () => {
             const patrimonioContable = liquidezTotal + totalCapitalInvertido;
             const pnlTotal = valorMercadoTotal - totalCapitalInvertido;
 
-            // Datos de flujo
             const { current: currentMovs } = await getFilteredMovements(false);
             const visibleAccountIds = new Set(visibleAccounts.map(c => c.id));
             const { ingresos, gastos, saldoNeto } = calculateTotals(currentMovs, visibleAccountIds);
             const tasaAhorro = (ingresos > 0 && saldoNeto > 0) ? (saldoNeto / ingresos) * 100 : 0;
 
-            // Datos de salud
             const patrimonioRealParaCalculos = liquidezTotal + valorMercadoTotal;
             const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
             const fiData = calculateFinancialIndependence(patrimonioRealParaCalculos, efData.gastoMensualPromedio);
 
-            // --- ACTUALIZACIÓN UI ---
-
-            const applyColor = (el, value, inverse = false) => {
-                if (!el) return;
-                el.classList.remove('text-positive', 'text-negative', 'text-neutral');
-                if (value > 0) el.classList.add(inverse ? 'text-negative' : 'text-positive');
-                else if (value < 0) el.classList.add(inverse ? 'text-positive' : 'text-negative');
-                else el.classList.add('text-neutral');
-            };
+            // --- ACTUALIZACIÓN UI SEGURA ---
 
             // A. FLUJO
             const elIng = select('kpi-ingresos-value');
@@ -6547,27 +6542,26 @@ const scheduleDashboardUpdate = () => {
                 [elIng, select('kpi-gastos-value'), select('kpi-saldo-neto-value')].forEach(el => el?.classList.remove('skeleton'));
                 
                 animateCountUp(elIng, ingresos, 700, true, '+');
-                // Ingresos siempre verde
-                if(ingresos > 0) elIng.classList.add('text-positive');
-
+                
                 animateCountUp(select('kpi-gastos-value'), gastos, 700, true, '');
-                // Gastos siempre rojo
-                if(Math.abs(gastos) > 0) select('kpi-gastos-value')?.classList.add('text-negative');
                 
                 const elNeto = select('kpi-saldo-neto-value');
                 animateCountUp(elNeto, saldoNeto, 700, true, saldoNeto > 0 ? '+' : '');
-                applyColor(elNeto, saldoNeto);
+                
+                // Aplicar colores de forma segura
+                if(elNeto) {
+                    elNeto.className = 'flow-number ' + (saldoNeto >= 0 ? 'text-positive' : 'text-negative');
+                }
             }
 
             // B. PATRIMONIO
             const elPatrimonio = select('kpi-patrimonio-neto-value');
             if (elPatrimonio) {
-                [elPatrimonio, select('kpi-liquidez-value'), select('kpi-capital-invertido-total')]
-                    .forEach(el => el?.classList.remove('skeleton'));
+                elPatrimonio.classList.remove('skeleton');
+                select('kpi-liquidez-value')?.classList.remove('skeleton');
+                select('kpi-capital-invertido-total')?.classList.remove('skeleton');
 
                 animateCountUp(elPatrimonio, patrimonioContable);
-                applyColor(elPatrimonio, patrimonioContable);
-
                 animateCountUp(select('kpi-liquidez-value'), liquidezTotal);
                 animateCountUp(select('kpi-capital-invertido-total'), totalCapitalInvertido);
             }
@@ -6576,22 +6570,15 @@ const scheduleDashboardUpdate = () => {
             const elNewMarketVal = select('new-card-market-value');
             if (elNewMarketVal) {
                 elNewMarketVal.classList.remove('skeleton');
-                
-                // Capital (invisible en UI pero por si acaso)
-                const elCap = select('new-card-capital');
-                if (elCap) elCap.textContent = formatCurrency(totalCapitalInvertido);
+                select('new-card-pnl')?.classList.remove('skeleton');
                 
                 const elPnl = select('new-card-pnl');
                 if (elPnl) {
-                    elPnl.classList.remove('skeleton');
                     const sign = pnlTotal >= 0 ? '+' : '';
                     const pnlPct = totalCapitalInvertido !== 0 ? (pnlTotal / totalCapitalInvertido) * 100 : 0;
-                    
-                    elPnl.innerHTML = `${sign}${formatCurrency(pnlTotal)} <span style="opacity:0.7; font-size:0.8em; margin-left:4px;">(${sign}${pnlPct.toFixed(2)}%)</span>`;
-                    
-                    // Colores de fondo para el P&L tag
-                    elPnl.style.backgroundColor = pnlTotal >= 0 ? 'rgba(0, 179, 77, 0.2)' : 'rgba(255, 59, 48, 0.2)';
+                    elPnl.innerHTML = `${sign}${formatCurrency(pnlTotal)} <small>(${sign}${pnlPct.toFixed(2)}%)</small>`;
                     elPnl.style.color = pnlTotal >= 0 ? '#39FF14' : '#FF3B30';
+                    elPnl.style.backgroundColor = pnlTotal >= 0 ? 'rgba(57, 255, 20, 0.1)' : 'rgba(255, 59, 48, 0.1)';
                 }
                 
                 animateCountUp(elNewMarketVal, valorMercadoTotal);
@@ -6603,6 +6590,8 @@ const scheduleDashboardUpdate = () => {
                 elRunway.classList.remove('skeleton');
                 const meses = efData.mesesCobertura;
                 elRunway.textContent = isFinite(meses) ? (meses >= 100 ? '∞' : `${meses.toFixed(1)}`) : '∞';
+                // Corrección del error:
+                elRunway.className = 'health-val ' + (meses >= 6 ? 'text-positive' : (meses >= 3 ? 'text-warning' : 'text-negative'));
             }
 
             const elFi = select('health-fi-val');
@@ -6612,7 +6601,7 @@ const scheduleDashboardUpdate = () => {
             }
 
         } catch (error) {
-            console.error("Error en actualización panel:", error);
+            console.error("Error en panel:", error);
         } finally {
             isDashboardRendering = false;
         }

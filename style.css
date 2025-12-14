@@ -5487,140 +5487,141 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 .dot.invest { background: #BF5AF2; box-shadow: 0 0 5px #BF5AF2; }
 
 /* ================================================================= */
-/* === PANEL "VISUAL HORIZONTAL STACK" (Fit-to-Screen) vFinal === */
+/* === PANEL VERTICAL ELÁSTICO (Sin Scroll - Mobile Perfect) === */
 /* ================================================================= */
 
-/* Contenedor Principal: Ocupa el 100% exacto y bloquea el scroll */
+/* Contenedor Principal: Ocupa el 100% y bloquea scroll */
 .dashboard-stack-layout {
     display: flex;
     flex-direction: column;
-    height: 100%; /* Altura completa de la vista */
+    height: 100%;
     width: 100%;
-    padding: 10px 10px 85px 10px; /* Padding inferior para no chocar con el menú */
+    padding: 10px 10px 85px 10px; /* Padding inferior ajustado */
     box-sizing: border-box;
-    overflow: hidden; /* CORTA EL SCROLL: Todo debe caber */
-    gap: 10px; /* Espacio entre tarjetas */
+    overflow: hidden; /* CORTA cualquier scroll */
+    gap: 8px;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
-/* Estilo Base de Tarjeta Elástica */
+/* Tarjeta Base Elástica */
 .stack-card {
-    flex: 1; /* MAGIA: Ocupa proporcionalmente el espacio disponible */
-    min-height: 0; /* Permite encogerse si la pantalla es pequeña */
-    border-radius: 20px;
-    padding: 12px 16px;
+    flex: 1; /* Ocupa espacio disponible proporcionalmente */
+    min-height: 0; /* Permite encogerse */
+    background: var(--c-surface);
+    border: 1px solid var(--c-outline);
+    border-radius: 16px;
+    padding: 10px 14px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.05);
-    transition: transform 0.2s;
+    justify-content: center; /* Centra contenido verticalmente */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: flex-grow 0.3s; /* Animación suave si cambia de tamaño */
 }
-.stack-card:active { transform: scale(0.98); }
 
 /* Cabeceras de Tarjeta */
 .stack-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 5px;
-    flex-shrink: 0; /* La cabecera no se aplasta */
+    margin-bottom: 4px;
+    flex-shrink: 0; /* No se aplasta */
 }
-.card-label {
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    opacity: 0.9;
-    color: rgba(255,255,255,0.9);
+.header-title-row {
     display: flex; align-items: center; gap: 6px;
+    font-size: 0.7rem; font-weight: 700; 
+    color: var(--c-on-surface-secondary); text-transform: uppercase;
 }
+.card-icon-font { font-size: 16px; color: var(--c-primary); }
 
-/* --- TARJETA 1: FLUJO (Degradado Azul Oscuro - Control) --- */
+/* --- 1. FLUJO (Compacto pero completo) --- */
 .card-flow {
-    background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); /* Sunset fuerte pero oscuro */
-    background: linear-gradient(145deg, rgba(30, 40, 50, 1) 0%, rgba(20, 20, 25, 1) 100%);
-    border-left: 4px solid var(--c-warning); /* Indicador visual */
+    flex-grow: 1.2; /* Un poco más grande para los filtros */
+    background: linear-gradient(160deg, var(--c-surface) 0%, rgba(255,255,255,0.03) 100%);
+    justify-content: flex-start;
 }
 .flow-display {
     display: flex; justify-content: space-between; align-items: center;
-    background: rgba(0,0,0,0.3); border-radius: 12px; padding: 8px;
-    flex: 1; /* Ocupa el centro */
+    background: rgba(0,0,0,0.2); border-radius: 12px; padding: 8px;
+    margin-top: auto; margin-bottom: auto; /* Centrado vertical elástico */
+    height: 100%;
 }
-.flow-col { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; text-align: center; }
-.flow-val { font-size: clamp(1rem, 2.5vh, 1.4rem); font-weight: 700; color: #fff; line-height: 1.1; }
-.flow-sub { font-size: 0.65rem; text-transform: uppercase; font-weight: 600; opacity: 0.7; margin-bottom: 2px; }
-.flow-sep { font-size: 1.2rem; color: rgba(255,255,255,0.3); font-weight: 300; }
+.flow-col { display: flex; flex-direction: column; align-items: center; flex: 1; text-align: center; justify-content: center; }
+.flow-label { font-size: 0.6rem; font-weight: 700; margin-bottom: 2px; opacity: 0.8; }
+.flow-number { font-size: clamp(0.9rem, 2.5vh, 1.2rem); font-weight: 700; color: #fff; }
+.flow-divider { width: 1px; height: 60%; background: rgba(255,255,255,0.1); }
 
-/* --- TARJETA 2: PATRIMONIO (Degradado Verde Rico - Riqueza) --- */
+/* Filtro de Fechas Compacto */
+.compact-date-bar {
+    display: flex; justify-content: center; gap: 8px; margin-bottom: 6px;
+    background: rgba(0,0,0,0.2); padding: 4px; border-radius: 8px;
+    flex-shrink: 0;
+}
+.tiny-date-input {
+    background: transparent; border: none; color: #fff;
+    font-size: 0.75rem; font-family: var(--font-numeric);
+    width: 90px; text-align: center;
+}
+.compact-select {
+    padding: 2px 20px 2px 8px !important; height: 24px !important;
+    font-size: 0.7rem !important; background-color: rgba(255,255,255,0.1) !important;
+    border: none !important; color: #fff !important;
+}
+
+/* --- 2. PATRIMONIO (Gigante) --- */
 .card-patrimonio {
-    flex: 1.4; /* Esta tarjeta es un 40% más grande que las otras */
-    background: radial-gradient(circle at 100% 0%, rgba(0, 179, 77, 0.4) 0%, #050505 80%);
+    flex-grow: 1.5; /* La tarjeta más grande */
+    background: radial-gradient(circle at 50% 100%, rgba(0, 179, 77, 0.15) 0%, var(--c-surface) 80%);
     border: 1px solid rgba(0, 179, 77, 0.3);
 }
-.patrimonio-main {
-    text-align: center;
-    flex: 1; display: flex; flex-direction: column; justify-content: center;
-}
-.patrimonio-val {
-    font-size: clamp(2.5rem, 7vh, 4.5rem); /* NÚMERO GIGANTE */
+.patrimonio-main { text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; }
+.math-total-giant {
+    font-size: clamp(2.5rem, 7vh, 4rem); /* Se adapta a la altura disponible */
     font-weight: 800; color: #fff;
-    text-shadow: 0 0 30px rgba(0,179,77,0.4);
-    line-height: 1; letter-spacing: -2px;
+    text-shadow: 0 0 20px rgba(0,179,77,0.3);
+    line-height: 1; letter-spacing: -1px;
 }
-.patrimonio-split {
-    display: flex; justify-content: center; gap: 20px;
-    background: rgba(255,255,255,0.05); border-radius: 99px;
-    padding: 6px 12px; margin: 0 auto; width: fit-content;
+.patrimonio-details {
+    display: flex; justify-content: center; gap: 15px;
+    background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 99px;
+    margin: 0 auto; width: fit-content; flex-shrink: 0;
 }
-.split-pill { font-size: 0.75rem; color: rgba(255,255,255,0.8); display: flex; align-items: center; gap: 5px; }
-.dot { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 5px currentColor; }
+.p-detail { font-size: 0.75rem; color: var(--c-on-surface-tertiary); display: flex; align-items: center; gap: 4px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; }
+.dot.liquid { background: var(--c-primary); } .dot.invest { background: #BF5AF2; }
 
-/* --- TARJETA 3: INVERSIONES (Degradado Púrpura - Futuro) --- */
+/* --- 3. INVERSIONES --- */
 .card-invest {
-    background: linear-gradient(135deg, rgba(45, 10, 60, 1) 0%, rgba(10, 5, 20, 1) 100%);
-    border-left: 4px solid #BF5AF2;
+    background: rgba(191, 90, 242, 0.05); border-color: rgba(191, 90, 242, 0.2);
 }
-.invest-row {
+.invest-display-row {
     display: flex; justify-content: space-around; align-items: center; flex: 1;
 }
-.invest-group { text-align: center; }
-.invest-num { font-size: clamp(1.2rem, 3vh, 2rem); font-weight: 700; color: #fff; display: block; }
-.invest-lbl { font-size: 0.65rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px; }
-.invest-pnl-tag { 
-    background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 6px; 
-    font-size: 0.8rem; font-weight: 700; display: inline-block; margin-top: 4px;
+.invest-box { text-align: center; }
+.invest-label { font-size: 0.65rem; color: var(--c-on-surface-tertiary); display: block; margin-bottom: 2px; }
+.invest-val { font-size: clamp(1.2rem, 3vh, 1.8rem); font-weight: 800; color: #fff; }
+.invest-pnl-badge {
+    font-size: 0.85rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; display: inline-block;
 }
 
-/* --- TARJETA 4: SALUD (Degradado Cian - Tranquilidad) --- */
-.card-health {
-    background: linear-gradient(135deg, rgba(10, 40, 50, 1) 0%, rgba(5, 15, 20, 1) 100%);
-    border-left: 4px solid #00E5FF;
-}
+/* --- 4. SALUD --- */
+.card-health { background: var(--c-surface); }
 .health-grid { display: flex; justify-content: space-around; align-items: center; flex: 1; }
-.health-box { text-align: center; }
-.health-val { font-size: clamp(1.5rem, 4vh, 2.5rem); font-weight: 800; line-height: 1; }
-.health-sub { font-size: 0.65rem; opacity: 0.6; display: block; margin-top: 2px; }
+.health-item { text-align: center; display: flex; flex-direction: column; justify-content: center; }
+.health-label { font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; }
+.health-val { font-size: clamp(1.4rem, 3.5vh, 2rem); font-weight: 800; line-height: 1; margin: 2px 0; }
+.health-sub { font-size: 0.6rem; opacity: 0.6; }
+.health-divider-vert { width: 1px; height: 60%; background: var(--c-outline); }
 
-/* Selectores y Ayudas */
-.compact-select {
-    background: rgba(0,0,0,0.4) !important; color: #fff !important; border: none !important;
-    font-size: 0.7rem !important; padding: 2px 8px !important; height: auto !important; border-radius: 6px !important;
-}
-.help-btn {
-    background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.7);
-    width: 20px; height: 20px; border-radius: 50%; font-size: 12px; font-weight: 700;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-}
-
-/* Ajuste PC: En ordenador, limitamos el ancho para que no se vea estirado */
+/* Ajuste PC */
 @media (min-width: 840px) {
     .dashboard-stack-layout {
-        max-width: 550px; /* Estilo "App móvil en escritorio" centrado */
-        margin: 0 auto;
-        padding: 20px;
-        gap: 15px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 1fr;
+        max-width: 900px;
+        gap: 20px;
+        padding: 30px;
     }
-    .patrimonio-val { font-size: 4rem; } /* Más grande en PC */
+    .flow-card { grid-column: 1 / -1; } /* Flujo ocupa todo el ancho */
 }
