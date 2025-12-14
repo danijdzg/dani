@@ -1222,74 +1222,199 @@ const updateTargetInput = (val) => {
 
 // --- INICIO: BLOQUE CALCULADORA REPARADO Y BLINDADO ---
 
-// Función auxiliar segura: Convierte cualquier entrada a CÉNTIMOS (entero)
 const parseCalculatorValue = (val) => {
     if (val === null || val === undefined || val === '') return 0;
-    // Convierte "12,50" -> 12.50
-    const stringVal = val.toString().replace(',', '.');
-    // Parsea a float y multiplica por 100 para operar con enteros
+    
+    // Convertimos a string por seguridad
+    let stringVal = val.toString();
+    
+    // Eliminamos los puntos de miles (1.000 -> 1000)
+    stringVal = stringVal.replace(/\./g, '');
+    
+    // Reemplazamos la coma decimal por punto para que JS lo entienda (1000,50 -> 1000.50)
+    stringVal = stringVal.replace(',', '.');
+    
+    // Parseamos a Float y multiplicamos por 100 para operar con enteros (evita errores de decimales)
     const num = parseFloat(stringVal);
+    
     return isNaN(num) ? 0 : Math.round(num * 100);
 };
 
+// 2. Función de Cálculo
 const calculate = () => {
-    // 1. Obtener valores en céntimos (enteros)
-    const val1 = parseCalculatorValue(calculatorState.operand1); // Ya guardado como string/float
-    const val2 = parseCalculatorValue(calculatorState.displayValue); // Lo que hay en pantalla
+    const { operand1, displayValue, operator } = calculatorState;
     
-    if (!calculatorState.operator) return;
+    // Si falta algo, no hacemos nada
+    if (operand1 === null || operator === null) return;
 
+    const val1 = parseCalculatorValue(operand1);
+    const val2 = parseCalculatorValue(displayValue);
+    
     let resultInCents = 0;
     
-    // 2. Operar
-    switch (calculatorState.operator) {
+    switch (operator) {
         case 'add': resultInCents = val1 + val2; break;
         case 'subtract': resultInCents = val1 - val2; break;
-        case 'multiply': resultInCents = Math.round((val1 * val2) / 100); break; 
+        case 'multiply': resultInCents = Math.round((val1 * val2) / 100); break;
         case 'divide':
             if (val2 === 0) { 
-                showToast("Error: Div. por cero", "danger"); 
-                calculatorState.displayValue = '0'; return; 
+                showToast("Error: No se puede dividir por cero", "danger"); 
+                calculatorState.displayValue = '0'; 
+                return; 
             }
+            // División segura multiplicando primero
             resultInCents = Math.round((val1 * 100) / val2); 
             break;
     }
 
-    // 3. Convertir de vuelta a string con coma (sin puntos de miles, eso es visual)
+    // Convertimos de vuelta a string con coma (120050 -> "1200,50")
+    // No ponemos puntos aquí, eso lo hace el formateador visual (updateCalculatorDisplay)
     const result = resultInCents / 100;
     calculatorState.displayValue = result.toString().replace('.', ',');
     
-    // 4. Resetear operandos para que el siguiente "=" sepa que ya terminamos
+    // Actualizamos estado para indicar que hemos terminado una operación
     calculatorState.operand1 = null;
     calculatorState.operator = null;
     calculatorState.waitingForNewValue = true;
     calculatorState.isResultDisplayed = true;
-    
-    updateCalculatorDisplay();
 };
 
+// 3. Manejador de Entrada Principal (Teclado y Pantalla)
+const handleCalculatorInput = (key) => {
+    if (typeof hapticFeedback === 'function') hapticFeedback('light');
+    
+    let { displayValue, waitingForNewValue, operand1, operator } = calculatorState;
+    
+    const isOperator = ['add', 'subtract', 'multiply', 'divide'].includes(key);
+
+    // --- CASO A: Es un Operador (+, -, x, /) ---
+    if (isOperator) {
+        // Si ya hay una operación pendiente (ej: pulsas '+' después de '50 + 20'), calculamos el intermedio
+        if (operator !== null && !waitingForNewValue) {
+            calculate();
+            displayValue = calculatorState.displayValue;
+        }
+        
+        // Guardamos el primer número y el operador
+        calculatorState.operand1 = displayValue;
+        calculatorState.operator = key;
+        calculatorState.waitingForNewValue = true;
+        calculatorState.isResultDisplayed = false;
+        
+        // Actualizamos visuales (Historial)
+        calculatorState.historyValue = `${displayValue} ${getOperatorSymbol(key)}`;
+    } 
+    // --- CASO B: Otras Teclas ---
+    else {
+        switch(key) {
+            case 'done': // TECLA IGUAL (=) - VERDE
+                // 1. Si hay operación pendiente -> CALCULAR
+                if (calculatorState.operator !== null) {
+                    calculate();
+                    updateCalculatorDisplay();
+                    updateCalculatorHistoryDisplay();
+                    return; // No cerramos, mostramos el resultado
+                } 
+                // 2. Si NO hay operación (es un número directo o 2º clic) -> CERRAR Y GUARDAR
+                else {
+                    updateTargetInput(calculatorState.displayValue);
+                    calculatorState.historyValue = '';
+                    hideCalculator();
+                    
+                    // Salto automático al siguiente campo
+                    setTimeout(() => {
+                        const conceptoSelect = document.getElementById('movimiento-concepto');
+                        const wrapper = conceptoSelect?.closest('.custom-select-wrapper');
+                        const trigger = wrapper?.querySelector('.custom-select__trigger');
+                        if (trigger) { trigger.focus(); trigger.click(); }
+                    }, 100); 
+                }
+                return;
+
+            case 'clear': // AC
+                calculatorState.displayValue = '0';
+                calculatorState.operand1 = null;
+                calculatorState.operator = null;
+                calculatorState.waitingForNewValue = true;
+                calculatorState.historyValue = '';
+                break;
+
+            case 'sign': // +/-
+                if (displayValue !== '0') {
+                    if (displayValue.startsWith('-')) calculatorState.displayValue = displayValue.slice(1);
+                    else calculatorState.displayValue = '-' + displayValue;
+                }
+                break;
+
+            case 'percent': // %
+                const val = parseFloat(displayValue.replace(/\./g, '').replace(',', '.'));
+                if (!isNaN(val)) {
+                    calculatorState.displayValue = (val / 100).toString().replace('.', ',');
+                }
+                break;
+
+            case 'backspace': // Borrar dígito
+                if (waitingForNewValue) return; // No borrar si estamos esperando número nuevo
+                if (displayValue.length > 1) {
+                    calculatorState.displayValue = displayValue.slice(0, -1);
+                } else {
+                    calculatorState.displayValue = '0';
+                    calculatorState.waitingForNewValue = true;
+                }
+                break;
+
+            case 'comma': // Coma decimal
+                if (calculatorState.waitingForNewValue) {
+                    calculatorState.displayValue = '0,';
+                    calculatorState.waitingForNewValue = false;
+                } else if (!displayValue.includes(',')) {
+                    calculatorState.displayValue += ',';
+                }
+                break;
+
+            default: // NÚMEROS (0-9)
+                // Si estamos esperando nuevo valor (tras operador o al inicio) -> Reemplazar
+                if (calculatorState.waitingForNewValue || displayValue === '0') {
+                    calculatorState.displayValue = key;
+                    calculatorState.waitingForNewValue = false;
+                } 
+                // Si estamos escribiendo -> Añadir (con límite de longitud)
+                else {
+                    const plainNumber = displayValue.replace(/\./g, '');
+                    if (plainNumber.length < 12) {
+                        calculatorState.displayValue += key;
+                    }
+                }
+                calculatorState.isResultDisplayed = false;
+                break;
+        }
+    }
+    
+    // Renderizado final
+    updateCalculatorDisplay();
+    updateCalculatorHistoryDisplay();
+    updateActiveOperatorButton();
+    
+    // Reflejo en tiempo real en el input de fondo (solo si no estamos en medio de operación)
+    if (!calculatorState.operator && !calculatorState.isResultDisplayed) {
+        updateTargetInput(calculatorState.displayValue);
+    }
+};
+
+// 4. Actualización Visual de la Pantalla (Con formato de miles)
 const updateCalculatorDisplay = () => {
-    const display = select('calculator-display');
+    const display = document.getElementById('calculator-display');
     if (!display) return;
     
     let value = calculatorState.displayValue; 
     
-    // Si hay error
-    if (value === 'Error') {
-        display.innerHTML = 'Error';
-        return;
-    }
-
     // Formateo visual
     let html = '';
     const parts = value.split(',');
     
     // Parte Entera: Añadimos puntos de miles (1.000.000)
-    let integerPart = parts[0];
-    // Eliminar puntos existentes para reformatear limpiamente si es necesario
-    integerPart = integerPart.replace(/\./g, '');
+    let integerPart = parts[0].replace(/\./g, ''); // Limpiar puntos viejos
     
-    // Formatear solo si es número válido
     if (!isNaN(parseFloat(integerPart))) {
         integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
@@ -1297,18 +1422,16 @@ const updateCalculatorDisplay = () => {
     // Parte Decimal
     const decimalPart = parts.length > 1 ? ',' + parts[1] : '';
     
-    // Construcción HTML: Entero Grande + Decimal Pequeño
+    // HTML: Entero Grande + Decimal Pequeño
     html = `<span class="currency-major">${integerPart}</span><span class="currency-minor">${decimalPart}</span>`;
 
     display.innerHTML = html;
     
-    // Ajuste dinámico de tamaño de fuente (para que quepan números largos)
-    // Contamos caracteres sin etiquetas HTML
+    // Ajuste dinámico de tamaño de fuente
     const length = integerPart.length + decimalPart.length;
-    
-    if (length > 12) display.style.fontSize = '2.2rem';
-    else if (length > 9) display.style.fontSize = '2.8rem';
-    else display.style.fontSize = '3.5rem';
+    if (length > 12) display.style.fontSize = '2.5rem';
+    else if (length > 9) display.style.fontSize = '3.5rem';
+    else display.style.fontSize = '4.5rem';
 };
                     
 
