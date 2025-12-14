@@ -1033,20 +1033,7 @@ const clearDiarioFilters = async () => {
 			renderBuffer: 10, lastRenderedRange: { start: -1, end: -1 }, isScrolling: null
 		};
         
- // ▼▼▼ COPIA Y PEGA ESTE BLOQUE ÚNICO EN LUGAR DEL CÓDIGO DE LA CALCULADORA QUE TENGAS ▼▼▼
-
-let calculatorState = {
-    displayValue: '0',
-    operand1: null,
-    operator: null,
-    waitingForNewValue: true,
-    targetInput: null,
-    isVisible: false, 
-    isResultDisplayed: false,
-    historyValue: '', // Guarda la operación en curso
-};
-
-// Actualiza el display del historial
+ 
 const updateCalculatorHistoryDisplay = () => {
     const historyDisplay = select('calculator-history-display');
     if (historyDisplay) historyDisplay.textContent = calculatorState.historyValue;
@@ -1086,120 +1073,7 @@ const fetchBtcPrice = async () => {
     }
     return btcPriceData.price || 0; // Retorna 0 o el último precio conocido si falla
 };
-const handleCalculatorInput = (key) => {
-    hapticFeedback('light');
-    let { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed } = calculatorState;
-    
-    const isOperator = ['add', 'subtract', 'multiply', 'divide'].includes(key);
 
-    // --- CASO 1: OPERADOR (+, -, x, /) ---
-    if (isOperator) {
-        // Si ya había una operación en curso (ej: 5 + 5 y pulso +), calculamos primero
-        if (operand1 !== null && operator !== null && !waitingForNewValue) {
-            calculate();
-            displayValue = calculatorState.displayValue; // Actualizamos con el resultado parcial
-        }
-        
-        // Guardamos el primer operando y el operador
-        operand1 = displayValue; // Guardamos el string actual como primer operando
-        operator = key;
-        historyValue = `${displayValue} ${getOperatorSymbol(operator)}`;
-        
-        waitingForNewValue = true;
-        isResultDisplayed = false;
-    } 
-    
-    // --- CASO 2: OTRAS TECLAS ---
-    else {
-        switch(key) {
-            case 'done': // TECLA (=)
-                hapticFeedback('medium');
-                
-                // A) Si hay operación pendiente -> CALCULAR (Primer toque)
-                if (operand1 !== null && operator !== null) {
-                    calculate();
-                    updateCalculatorDisplay();
-                    updateCalculatorHistoryDisplay(); // Muestra el resultado en el historial pequeño
-                    return; // ¡IMPORTANTE! No cerramos todavía
-                } 
-                
-                // B) Si NO hay operación (ya calculamos o es número directo) -> CONFIRMAR Y CERRAR
-                else {
-                    updateTargetInput(calculatorState.displayValue);
-                    historyValue = '';
-                    hideCalculator();
-                    
-                    // Salto automático al siguiente campo
-                    setTimeout(() => {
-                        const conceptoSelect = document.getElementById('movimiento-concepto');
-                        const wrapper = conceptoSelect?.closest('.custom-select-wrapper');
-                        const trigger = wrapper?.querySelector('.custom-select__trigger');
-                        if (trigger) { trigger.focus(); trigger.click(); }
-                    }, 100); 
-                }
-                return;
-
-            case 'clear': 
-                displayValue = '0';
-                waitingForNewValue = true;
-                operand1 = null;
-                operator = null;
-                isResultDisplayed = false;
-                historyValue = '';
-                break;
-
-            case 'comma':
-                if (waitingForNewValue) { 
-                    displayValue = '0,'; 
-                    waitingForNewValue = false; 
-                } else if (!displayValue.includes(',')) {
-                    displayValue += ',';
-                }
-                break;
-                
-            case 'backspace':
-                if (displayValue.length > 1) displayValue = displayValue.slice(0, -1);
-                else displayValue = '0';
-                break;
-
-            case 'sign':
-                if (displayValue !== '0') {
-                    if (displayValue.startsWith('-')) displayValue = displayValue.slice(1);
-                    else displayValue = '-' + displayValue;
-                }
-                break;
-
-            case 'percent':
-                const val = parseFloat(displayValue.replace(',', '.'));
-                if (!isNaN(val)) displayValue = (val / 100).toString().replace('.', ',');
-                break;
-
-            default: // NÚMEROS (0-9)
-                if (waitingForNewValue || displayValue === '0') {
-                    displayValue = key;
-                    waitingForNewValue = false;
-                } else if (displayValue.replace(/[^0-9]/g, '').length < 12) { // Límite de longitud
-                    displayValue += key;
-                }
-                isResultDisplayed = false; // Ya no estamos mostrando un resultado viejo
-                break;
-        }
-    }
-    
-    // Guardar estado global
-    Object.assign(calculatorState, { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue });
-    
-    // Actualizar UI
-    updateCalculatorDisplay();
-    updateCalculatorHistoryDisplay();
-    updateActiveOperatorButton();
-
-    // Reflejo en tiempo real (si no estamos en medio de una operación)
-    if (!operand1 || isResultDisplayed) {
-        updateTargetInput(displayValue);
-    }
-};
-// Función auxiliar para escribir en el input real
 const updateTargetInput = (val) => {
     if (calculatorState.targetInput) {
         // 1. Preparamos el número
@@ -1220,31 +1094,56 @@ const updateTargetInput = (val) => {
     }
 };
 
-// --- INICIO: BLOQUE CALCULADORA REPARADO Y BLINDADO ---
+ /* ================================================================= */
+/* === MOTOR DE CALCULADORA V3 (Lógica Unificada y Blindada) === */
+/* ================================================================= */
 
+let calculatorState = {
+    displayValue: '0',
+    operand1: null,
+    operator: null,
+    waitingForNewValue: true,
+    targetInput: null,
+    isVisible: false, 
+    isResultDisplayed: false,
+    historyValue: '', 
+};
+
+// Helper: Convierte "1.200,50" -> 120050 (céntimos) de forma segura
 const parseCalculatorValue = (val) => {
     if (val === null || val === undefined || val === '') return 0;
-    
-    // Convertimos a string por seguridad
     let stringVal = val.toString();
-    
-    // Eliminamos los puntos de miles (1.000 -> 1000)
+    // 1. Quitamos puntos de miles (1.000 -> 1000)
     stringVal = stringVal.replace(/\./g, '');
-    
-    // Reemplazamos la coma decimal por punto para que JS lo entienda (1000,50 -> 1000.50)
+    // 2. Cambiamos coma decimal por punto (12,50 -> 12.50)
     stringVal = stringVal.replace(',', '.');
-    
-    // Parseamos a Float y multiplicamos por 100 para operar con enteros (evita errores de decimales)
+    // 3. Parseamos y pasamos a céntimos
     const num = parseFloat(stringVal);
-    
     return isNaN(num) ? 0 : Math.round(num * 100);
 };
 
-// 2. Función de Cálculo
+// Actualiza el historial pequeño (ej: "50 + ")
+const updateCalculatorHistoryDisplay = () => {
+    const historyDisplay = document.getElementById('calculator-history-display');
+    if (historyDisplay) historyDisplay.textContent = calculatorState.historyValue;
+};
+
+// Resalta el botón del operador activo
+const updateActiveOperatorButton = () => {
+    document.querySelectorAll('.calculator-btn.btn-operator').forEach(btn => btn.classList.remove('btn-operator--active'));
+    if (calculatorState.operator) {
+        const activeBtn = document.querySelector(`.calculator-btn[data-key="${calculatorState.operator}"]`);
+        if (activeBtn) activeBtn.classList.add('btn-operator--active');
+    }
+};
+
+const getOperatorSymbol = (key) => ({
+    'add': '+', 'subtract': '−', 'multiply': '×', 'divide': '÷'
+}[key] || '');
+
+// Función Principal de Cálculo
 const calculate = () => {
     const { operand1, displayValue, operator } = calculatorState;
-    
-    // Si falta algo, no hacemos nada
     if (operand1 === null || operator === null) return;
 
     const val1 = parseCalculatorValue(operand1);
@@ -1258,64 +1157,64 @@ const calculate = () => {
         case 'multiply': resultInCents = Math.round((val1 * val2) / 100); break;
         case 'divide':
             if (val2 === 0) { 
-                showToast("Error: No se puede dividir por cero", "danger"); 
+                // Evitar error visual, resetear
                 calculatorState.displayValue = '0'; 
                 return; 
             }
-            // División segura multiplicando primero
             resultInCents = Math.round((val1 * 100) / val2); 
             break;
     }
 
-    // Convertimos de vuelta a string con coma (120050 -> "1200,50")
-    // No ponemos puntos aquí, eso lo hace el formateador visual (updateCalculatorDisplay)
+    // Convertir de nuevo a string con coma (120050 -> "1200,50")
     const result = resultInCents / 100;
     calculatorState.displayValue = result.toString().replace('.', ',');
     
-    // Actualizamos estado para indicar que hemos terminado una operación
+    // Resetear estado de operación pendiente
     calculatorState.operand1 = null;
     calculatorState.operator = null;
     calculatorState.waitingForNewValue = true;
     calculatorState.isResultDisplayed = true;
 };
 
-// 3. Manejador de Entrada Principal (Teclado y Pantalla)
+// Manejador de eventos (Clics y Teclado)
 const handleCalculatorInput = (key) => {
+    // Feedback táctil si está disponible
     if (typeof hapticFeedback === 'function') hapticFeedback('light');
     
     let { displayValue, waitingForNewValue, operand1, operator } = calculatorState;
-    
     const isOperator = ['add', 'subtract', 'multiply', 'divide'].includes(key);
 
-    // --- CASO A: Es un Operador (+, -, x, /) ---
+    // --- 1. ES UN OPERADOR ---
     if (isOperator) {
-        // Si ya hay una operación pendiente (ej: pulsas '+' después de '50 + 20'), calculamos el intermedio
-        if (operator !== null && !waitingForNewValue) {
+        // Si ya había una operación a medio hacer (ej: "5 + 5" y pulsas "+"), calcula el total primero
+        if (operand1 !== null && operator !== null && !waitingForNewValue) {
             calculate();
             displayValue = calculatorState.displayValue;
         }
         
-        // Guardamos el primer número y el operador
+        // Guardar el primer número y el operador
         calculatorState.operand1 = displayValue;
         calculatorState.operator = key;
         calculatorState.waitingForNewValue = true;
         calculatorState.isResultDisplayed = false;
         
-        // Actualizamos visuales (Historial)
         calculatorState.historyValue = `${displayValue} ${getOperatorSymbol(key)}`;
     } 
-    // --- CASO B: Otras Teclas ---
+    // --- 2. OTRAS TECLAS ---
     else {
         switch(key) {
-            case 'done': // TECLA IGUAL (=) - VERDE
-                // 1. Si hay operación pendiente -> CALCULAR
+            case 'done': // (=)
+                if (typeof hapticFeedback === 'function') hapticFeedback('medium');
+                
+                // A) Si hay operación pendiente -> CALCULAR Y MOSTRAR (No cerrar)
                 if (calculatorState.operator !== null) {
                     calculate();
                     updateCalculatorDisplay();
                     updateCalculatorHistoryDisplay();
-                    return; // No cerramos, mostramos el resultado
+                    updateActiveOperatorButton();
+                    return; 
                 } 
-                // 2. Si NO hay operación (es un número directo o 2º clic) -> CERRAR Y GUARDAR
+                // B) Si NO hay operación -> CERRAR Y GUARDAR
                 else {
                     updateTargetInput(calculatorState.displayValue);
                     calculatorState.historyValue = '';
@@ -1331,7 +1230,7 @@ const handleCalculatorInput = (key) => {
                 }
                 return;
 
-            case 'clear': // AC
+            case 'clear': // (AC)
                 calculatorState.displayValue = '0';
                 calculatorState.operand1 = null;
                 calculatorState.operator = null;
@@ -1339,31 +1238,30 @@ const handleCalculatorInput = (key) => {
                 calculatorState.historyValue = '';
                 break;
 
-            case 'sign': // +/-
+            case 'sign': // (+/-)
                 if (displayValue !== '0') {
                     if (displayValue.startsWith('-')) calculatorState.displayValue = displayValue.slice(1);
                     else calculatorState.displayValue = '-' + displayValue;
                 }
                 break;
 
-            case 'percent': // %
+            case 'percent': // (%)
                 const val = parseFloat(displayValue.replace(/\./g, '').replace(',', '.'));
                 if (!isNaN(val)) {
                     calculatorState.displayValue = (val / 100).toString().replace('.', ',');
                 }
                 break;
 
-            case 'backspace': // Borrar dígito
-                if (waitingForNewValue) return; // No borrar si estamos esperando número nuevo
-                if (displayValue.length > 1) {
-                    calculatorState.displayValue = displayValue.slice(0, -1);
-                } else {
+            case 'backspace': // Borrar
+                if (waitingForNewValue) return;
+                if (displayValue.length > 1) calculatorState.displayValue = displayValue.slice(0, -1);
+                else {
                     calculatorState.displayValue = '0';
                     calculatorState.waitingForNewValue = true;
                 }
                 break;
 
-            case 'comma': // Coma decimal
+            case 'comma': // (,)
                 if (calculatorState.waitingForNewValue) {
                     calculatorState.displayValue = '0,';
                     calculatorState.waitingForNewValue = false;
@@ -1373,67 +1271,53 @@ const handleCalculatorInput = (key) => {
                 break;
 
             default: // NÚMEROS (0-9)
-                // Si estamos esperando nuevo valor (tras operador o al inicio) -> Reemplazar
                 if (calculatorState.waitingForNewValue || displayValue === '0') {
                     calculatorState.displayValue = key;
                     calculatorState.waitingForNewValue = false;
-                } 
-                // Si estamos escribiendo -> Añadir (con límite de longitud)
-                else {
-                    const plainNumber = displayValue.replace(/\./g, '');
-                    if (plainNumber.length < 12) {
-                        calculatorState.displayValue += key;
-                    }
+                } else {
+                    const plain = displayValue.replace(/\./g, '');
+                    if (plain.length < 12) calculatorState.displayValue += key;
                 }
                 calculatorState.isResultDisplayed = false;
                 break;
         }
     }
     
-    // Renderizado final
     updateCalculatorDisplay();
     updateCalculatorHistoryDisplay();
     updateActiveOperatorButton();
     
-    // Reflejo en tiempo real en el input de fondo (solo si no estamos en medio de operación)
+    // Reflejo en tiempo real en el formulario
     if (!calculatorState.operator && !calculatorState.isResultDisplayed) {
         updateTargetInput(calculatorState.displayValue);
     }
 };
 
-// 4. Actualización Visual de la Pantalla (Con formato de miles)
 const updateCalculatorDisplay = () => {
     const display = document.getElementById('calculator-display');
     if (!display) return;
     
     let value = calculatorState.displayValue; 
-    
-    // Formateo visual
     let html = '';
     const parts = value.split(',');
     
-    // Parte Entera: Añadimos puntos de miles (1.000.000)
-    let integerPart = parts[0].replace(/\./g, ''); // Limpiar puntos viejos
-    
+    // Formatear miles
+    let integerPart = parts[0].replace(/\./g, '');
     if (!isNaN(parseFloat(integerPart))) {
         integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
     
-    // Parte Decimal
     const decimalPart = parts.length > 1 ? ',' + parts[1] : '';
-    
-    // HTML: Entero Grande + Decimal Pequeño
     html = `<span class="currency-major">${integerPart}</span><span class="currency-minor">${decimalPart}</span>`;
 
     display.innerHTML = html;
     
-    // Ajuste dinámico de tamaño de fuente
+    // Ajuste de tamaño de fuente
     const length = integerPart.length + decimalPart.length;
-    if (length > 12) display.style.fontSize = '2.5rem';
-    else if (length > 9) display.style.fontSize = '3.5rem';
+    if (length > 10) display.style.fontSize = '2.5rem';
+    else if (length > 7) display.style.fontSize = '3.5rem';
     else display.style.fontSize = '4.5rem';
-};
-                    
+}; 
 
 		let isDashboardRendering = false;
 		let isDiarioPageRendering = false; // <-- AÑADE ESTA LÍNEA
