@@ -1201,135 +1201,111 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     font-weight: 700;
 }
 /* ================================================================= */
-/* === CALCULADORA NATIVA COMPACTA Y CENTRADA v4.0 === */
+/* === CALCULADORA ESTILO iOS (Clon Exacto) === */
 /* ================================================================= */
 
-/* 1. CONTENEDOR PRINCIPAL */
-#calculator-overlay {
-    background: transparent !important; /* Sin fondo oscuro */
-    backdrop-filter: none !important;
-    pointer-events: none; /* Permite ver y tocar lo de atrás */
-    z-index: 12000 !important; 
-}
-
+/* 1. Contenedor y Pantalla */
 .calculator-ui {
-    /* ... (mantén posición fixed, bottom 0, etc.) ... */
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.15); /* Sombra más suave hacia arriba */
-    border-top: 1px solid var(--c-outline);
+    background-color: #000000;
+    border-radius: 30px 30px 0 0;
+    padding: 15px; /* Más padding alrededor de los botones */
+    padding-bottom: calc(15px + env(safe-area-inset-bottom));
 }
 
-/* Solo activamos eventos de puntero cuando está visible */
-#calculator-overlay.modal-overlay--active {
-    pointer-events: auto; 
-    /* Pero permitimos que los clicks fuera de la UI cierren (gestionado por JS) 
-       o pasen al fondo si ajustamos el pointer-events de la UI */
+.calculator-screen-area {
+    padding: 0 15px 15px 15px;
+    background-color: #000000;
+    min-height: 80px;
+    margin-bottom: 5px;
 }
 
-/* 2. EL PANEL DE LA CALCULADORA (El teclado) */
-.calculator-ui {
-    position: fixed;
-    bottom: 0;
-    left: 50%; /* 1. La colocamos en el centro horizontal */
-    width: 100%;
-    max-width: 380px; /* 2. Límite de ancho para que no se estire */
-    
-    z-index: 2147483647;
-    background-color: var(--c-surface);
-    
-    /* 3. Estética de tarjeta "Premium" */
-    border-radius: 20px 20px 0 0; /* Bordes superiores redondeados */
-    border: 1px solid var(--c-outline);
-    border-bottom: none; /* Pegado abajo no necesita borde */
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.15); /* Sombra más suave hacia arriba */
-    border-top: 1px solid var(--c-outline);
-    padding-bottom: env(safe-area-inset-bottom);
-    
-    /* 4. Animación corregida para incluir el centrado */
-    /* translate(-50%, 100%) = Centrada en X, Escondida abajo en Y */
-    transform: translate(-50%, 100%); 
-    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-    
-    visibility: hidden;
-    pointer-events: auto;
+#calculator-display {
+    font-size: 4rem; /* Números muy grandes como en iOS */
+    font-weight: 300; /* Fuente más fina */
+    letter-spacing: -1px;
+    color: #fff;
+    padding-right: 10px;
 }
 
-/* Estado Activo: Sube hacia arriba (Y=0) manteniendo el centro (X=-50%) */
-#calculator-overlay.modal-overlay--active .calculator-ui {
-    transform: translate(-50%, 0);
-    visibility: visible;
-}
-
-/* 3. BARRA DE HISTORIAL MINIMALISTA */
-.calculator-history-display {
-    background-color: var(--c-surface-variant);
-    color: var(--c-on-surface-secondary);
-    font-size: 0.75rem;
-    font-weight: 600;
-    height: 24px; /* Aún más compacta */
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 0 12px;
-    border-bottom: 1px solid var(--c-outline);
-    font-family: monospace;
-    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
-}
-
-.calculator-display { display: none; }
-
-/* 4. GRID DE BOTONES */
+/* 2. Grid Espaciado */
 .calculator-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    width: 100%;
-    gap: 0;
-    border: none;
+    grid-gap: 12px; /* Separación notable entre botones */
 }
 
-/* 5. BOTONES OPTIMIZADOS */
+/* 3. Botones Base (Números - Gris Oscuro) */
 .calculator-btn {
-    height: 44px; /* Altura ideal para dedo pero compacta */
-    font-size: 1.25rem;
+    appearance: none;
     border: none;
-    border-right: 1px solid var(--c-outline);
-    border-bottom: 1px solid var(--c-outline);
-    background-color: var(--c-surface);
-    color: var(--c-on-surface);
+    outline: none;
+    background-color: #333333;
+    color: #ffffff;
+    font-size: 1.7rem;
+    font-weight: 500;
+    border-radius: 50%; /* Botones perfectamente redondos */
+    width: 100%;
+    aspect-ratio: 1; /* Mantiene proporción 1:1 (círculo) */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    margin: 0;
-    transition: background-color 0.1s; transform 0.05s;
+    transition: filter 0.2s, transform 0.1s;
+    margin: 0; /* Quitar márgenes antiguos */
 }
 
 .calculator-btn:active {
-    background-color: var(--c-surface-variant);
-    transform: scale(0.92); /* Efecto de hundimiento físico */
-    border-radius: 8px; /* Un pequeño redondeo al pulsar queda muy orgánico */
+    filter: brightness(1.4); /* Se ilumina al pulsar */
 }
 
+/* 4. Botones de Función (Gris Claro - Texto Negro) */
+/* AC, +/-, % */
+.calculator-btn.btn-function {
+    background-color: #A5A5A5;
+    color: #000000;
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+.calculator-btn.btn-function:active {
+    background-color: #D4D4D2;
+}
+
+/* 5. Botones de Operador (Naranja) */
+/* /, x, -, +, = */
 .calculator-btn.btn-operator {
-    background-color: var(--c-surface-variant);
-    font-size: 1.1rem;
+    background-color: #FF9F0A;
+    color: #ffffff;
+    font-size: 2rem;
+    padding-bottom: 4px; /* Ajuste visual del icono */
+}
+.calculator-btn.btn-operator:active {
+    background-color: #FBC78D;
+    color: #FF9F0A;
 }
 
-.calculator-btn.btn-confirm {
-    background-color: var(--c-primary);
-    color: var(--c-white);
-    font-weight: 700;
-    font-size: 0.9rem;
-    grid-column: 4;
-    grid-row: 3 / span 2;
-    height: auto; 
+/* Estado activo del operador seleccionado (Borde blanco inverso) */
+.btn-operator--active {
+    background-color: #ffffff !important;
+    color: #FF9F0A !important;
 }
 
+/* 6. El Botón Cero (Ancho) */
 .calculator-btn.zero {
     grid-column: span 2;
+    width: 100%;
+    aspect-ratio: auto; /* Desactiva el 1:1 */
+    height: auto; /* Hereda altura del grid */
+    border-radius: 40px; /* Forma de píldora */
+    justify-content: flex-start;
+    padding-left: 28px; /* Alineación del texto a la izquierda */
 }
 
-/* Quitar bordes externos sobrantes */
-.calculator-grid .calculator-btn:nth-child(4n) { border-right: none; }
+/* Ajustes para pantallas pequeñas */
+@media (max-width: 360px) {
+    .calculator-grid { grid-gap: 8px; }
+    .calculator-btn { font-size: 1.5rem; }
+    #calculator-display { font-size: 3.5rem; }
+}
 
 /* --- Estilos de Contabilidad Dual (A/B) --- */
 body[data-ledger-mode="A"] #ledger-toggle-btn { background-color: var(--c-primary); border-color: var(--c-primary); color: var(--c-white); box-shadow: var(--shadow-sm); }

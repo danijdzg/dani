@@ -1092,101 +1092,106 @@ const fetchBtcPrice = async () => {
     }
     return btcPriceData.price || 0; // Retorna 0 o el último precio conocido si falla
 };
+/* EN main.js - REEMPLAZO DE handleCalculatorInput */
+
 const handleCalculatorInput = (key) => {
     hapticFeedback('light');
     let { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue } = calculatorState;
     
-    // Reset si venimos de un resultado y se escribe número
-    if (isResultDisplayed && !['add', 'subtract', 'multiply', 'divide', 'sign'].includes(key)) {
-        displayValue = '0';
-        isResultDisplayed = false;
-        historyValue = ''; 
-    }
-
+    // Lista de operadores básicos
     const isOperator = ['add', 'subtract', 'multiply', 'divide'].includes(key);
 
     if (isOperator) {
+        // ... (Lógica de operadores igual que antes) ...
         if (operand1 !== null && operator !== null && !waitingForNewValue) {
             calculate();
             displayValue = calculatorState.displayValue; 
         }
-        operand1 = parseFloat(displayValue.replace(',', '.'));
+        operand1 = parseCalculatorValue(displayValue); // Usamos el helper de parseo seguro
         operator = key;
-        // Mostramos la operación en la barrita pequeña de historial
         historyValue = `${displayValue} ${getOperatorSymbol(operator)}`;
         waitingForNewValue = true;
         isResultDisplayed = false;
+        
     } else {
         switch(key) {
-            case 'done':
+            case 'done': // Botón Igual (=)
                 hapticFeedback('medium');
-                // Calcular final si hay pendiente
-                if (operand1 !== null && operator !== null && !waitingForNewValue) {
-                    calculate();
+                // Si hay operación pendiente, calculamos
+                if (operand1 !== null && operator !== null) {
+                    calculate(); 
                     displayValue = calculatorState.displayValue;
                 }
                 
-                // Actualizar input final
+                // Efecto visual de cierre
                 updateTargetInput(displayValue);
-                
                 historyValue = '';
-                hideCalculator(); 
-
-                // --- AVANCE AUTOMÁTICO AL SIGUIENTE CAMPO ---
-                // Al dar OK, pasamos al concepto automáticamente
+                hideCalculator();
+                
+                // Avance automático
                 setTimeout(() => {
                     const conceptoSelect = document.getElementById('movimiento-concepto');
-                    // Buscamos el trigger del custom select
                     const wrapper = conceptoSelect?.closest('.custom-select-wrapper');
                     const trigger = wrapper?.querySelector('.custom-select__trigger');
-                    
-                    if (trigger) {
-                        trigger.focus(); // Enfocar para navegación teclado
-                        trigger.click(); // Abrir el menú
-                    }
+                    if (trigger) { trigger.focus(); trigger.click(); }
                 }, 100); 
                 return;
+
+            case 'sign': // (+/-) Invierte el signo
+                if (displayValue !== '0') {
+                    if (displayValue.startsWith('-')) displayValue = displayValue.slice(1);
+                    else displayValue = '-' + displayValue;
+                }
+                break;
+
+            case 'percent': // (%) Divide por 100
+                const val = parseFloat(displayValue.replace(',', '.'));
+                if (!isNaN(val)) {
+                    // Calculamos porcentaje directo o relativo según contexto
+                    // Comportamiento iOS simple: valor / 100
+                    displayValue = (val / 100).toString().replace('.', ',');
+                }
+                break;
+
+            case 'clear': // (AC)
+                displayValue = '0';
+                waitingForNewValue = true;
+                operand1 = null;
+                operator = null;
+                isResultDisplayed = false;
+                historyValue = '';
+                break;
+
+            case 'backspace': // Borrar último dígito (Opcional, iOS usa swipe pero lo mantenemos por si acaso)
+                displayValue = displayValue.length > 1 ? displayValue.slice(0, -1) : '0';
+                if (displayValue === '0' || displayValue === '-') { displayValue = '0'; waitingForNewValue = true; }
+                break;
 
             case 'comma':
                 if (waitingForNewValue) { displayValue = '0,'; waitingForNewValue = false; } 
                 else if (!displayValue.includes(',')) displayValue += ',';
                 break;
 
-            case 'clear': 
-                displayValue = '0'; waitingForNewValue = true; operand1 = null; operator = null; isResultDisplayed = false; historyValue = '';
-                break;
-
-            case 'backspace': 
-                displayValue = displayValue.length > 1 ? displayValue.slice(0, -1) : '0';
-                if (displayValue === '0') waitingForNewValue = true;
-                break;
-
-            case 'sign': 
-                if (displayValue !== '0') displayValue = displayValue.startsWith('-') ? displayValue.slice(1) : `-${displayValue}`; 
-                break;
-
-            default: // Dígitos (0-9)
+            default: // Números (0-9)
                 if (waitingForNewValue || displayValue === '0') {
                     displayValue = key;
                     waitingForNewValue = false;
-                } else if (displayValue.length < 12) { 
+                } else if (displayValue.replace(/[.,]/, '').length < 9) { // Límite 9 dígitos
                     displayValue += key;
                 }
                 break;
         }
     }
     
-    // Guardamos estado
+    // Guardar estado
     Object.assign(calculatorState, { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue });
     
-    // Actualizamos UI interna
+    // Actualizar UI
     updateCalculatorDisplay();
     updateCalculatorHistoryDisplay();
     updateActiveOperatorButton();
 
-    // === MEJORA 1: ACTUALIZACIÓN EN TIEMPO REAL ===
-    // Actualizamos el input objetivo SIEMPRE, no solo al dar OK.
-    // Excepto si estamos a mitad de una operación (ej. escribiendo el segundo número de una suma)
+    // Actualización en tiempo real del input de fondo (salvo si estamos operando)
     if (!operand1 || isResultDisplayed) {
         updateTargetInput(displayValue);
     }
