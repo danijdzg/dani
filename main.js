@@ -1108,23 +1108,38 @@ const handleCalculatorInput = (key) => {
         switch(key) {
             case 'done': // Botón IGUAL (=)
                 hapticFeedback('medium');
-                if (operand1 !== null && operator !== null) {
+                
+                // CONDICIÓN DE DOBLE PULSACIÓN:
+                // Si hay una operación pendiente (ej: "50 + 50"), calculamos y mostramos.
+                if (operand1 !== null && operator !== null && !waitingForNewValue) {
                     calculate(); 
                     displayValue = calculatorState.displayValue;
+                    // IMPORTANTE: Reseteamos operandos para que la próxima vez entre en el 'else'
+                    calculatorState.operand1 = null;
+                    calculatorState.operator = null;
+                    
+                    // Actualizamos UI pero NO cerramos todavía
+                    updateCalculatorDisplay();
+                    updateCalculatorHistoryDisplay();
+                    return; // Salimos aquí esperando el segundo clic
+                } 
+                // Si NO hay operación pendiente (es el segundo clic o un número directo), cerramos.
+                else {
+                    // Actualiza el input del formulario
+                    updateTargetInput(displayValue);
+                    
+                    // Limpieza y Cierre
+                    historyValue = '';
+                    hideCalculator();
+                    
+                    // Avance automático al siguiente campo
+                    setTimeout(() => {
+                        const conceptoSelect = document.getElementById('movimiento-concepto');
+                        const wrapper = conceptoSelect?.closest('.custom-select-wrapper');
+                        const trigger = wrapper?.querySelector('.custom-select__trigger');
+                        if (trigger) { trigger.focus(); trigger.click(); }
+                    }, 100); 
                 }
-                
-                // Actualiza el input y cierra
-                updateTargetInput(displayValue);
-                historyValue = '';
-                hideCalculator();
-                
-                // Pasa al siguiente campo (Concepto)
-                setTimeout(() => {
-                    const conceptoSelect = document.getElementById('movimiento-concepto');
-                    const wrapper = conceptoSelect?.closest('.custom-select-wrapper');
-                    const trigger = wrapper?.querySelector('.custom-select__trigger');
-                    if (trigger) { trigger.focus(); trigger.click(); }
-                }, 100); 
                 return;
 
             case 'sign': // Botón (+/-)
@@ -4762,21 +4777,18 @@ const renderPanelPage = async () => {
                         <span class="material-icons card-icon-font">sync_alt</span>
                         <span>FLUJO DE CAJA</span>
                     </div>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="flujo">?</button>
-                        <div class="report-filters">
-                            <select id="filter-periodo" class="form-select compact-select">
-                                <option value="mes-actual">Este Mes</option>
-                                <option value="año-actual">Este Año</option>
-                                <option value="custom">Personalizado</option>
-                            </select>
-                        </div>
+                    <div class="report-filters">
+                        <select id="filter-periodo" class="form-select compact-select">
+                            <option value="mes-actual">Este Mes</option>
+                            <option value="año-actual">Este Año</option>
+                            <option value="custom">Personalizado</option>
+                        </select>
                     </div>
                 </div>
 
                 <div id="custom-date-filters" class="hidden compact-date-bar">
                     <input type="date" id="filter-fecha-inicio" class="tiny-date-input">
-                    <span style="opacity:0.5; font-size:0.8rem; display:flex; align-items:center;">➜</span>
+                    <span style="opacity:0.5">➜</span>
                     <input type="date" id="filter-fecha-fin" class="tiny-date-input">
                 </div>
 
@@ -4785,12 +4797,12 @@ const renderPanelPage = async () => {
                         <span class="flow-label text-success">INGRESOS</span>
                         <span id="kpi-ingresos-value" class="flow-number skeleton">...</span>
                     </div>
-                    <div class="flow-sep"></div>
+                    <div class="flow-divider"></div>
                     <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
                         <span class="flow-label text-danger">GASTOS</span>
                         <span id="kpi-gastos-value" class="flow-number skeleton">...</span>
                     </div>
-                    <div class="flow-sep"></div>
+                    <div class="flow-divider"></div>
                     <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
                         <span class="flow-label text-warning">AHORRO</span>
                         <span id="kpi-saldo-neto-value" class="flow-number skeleton">...</span>
@@ -4826,24 +4838,28 @@ const renderPanelPage = async () => {
                     <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="inversiones">?</button>
                 </div>
 
-                <div class="invest-display-row">
-                    <div class="invest-box">
-                        <span class="invest-label">Valor Mercado</span>
-                        <span id="new-card-market-value" class="invest-val skeleton">...</span>
+                <div class="invest-main">
+                    <div id="new-card-market-value" class="invest-val-giant skeleton">0 €</div>
+                </div>
+
+                <div class="invest-details">
+                    <div class="i-detail">
+                        <span style="opacity:0.7">Capital:</span> 
+                        <strong id="new-card-capital" style="color:#fff">...</strong>
                     </div>
-                    <div class="invest-box">
-                        <span class="invest-label">Resultado (P&L)</span>
-                        <div id="new-card-pnl" class="invest-pnl-badge skeleton">...</div>
+                    <div style="width:1px; height:12px; background:rgba(255,255,255,0.2);"></div>
+                    <div class="i-detail">
+                        <span style="opacity:0.7">P&L:</span> 
+                        <strong id="new-card-pnl">...</strong>
                     </div>
                 </div>
-                <span id="new-card-capital" style="display:none"></span>
             </div>
 
             <div class="stack-card card-health">
                 <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">health_and_safety</span>
-                        <span>SALUD</span>
+                        <span>SALUD FINANCIERA</span>
                     </div>
                     <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="salud">?</button>
                 </div>
@@ -4869,7 +4885,6 @@ const renderPanelPage = async () => {
     await Promise.all([loadPresupuestos(), loadInversiones()]);
     scheduleDashboardUpdate(); 
 };
-
  const showEstrategiaTab = (tabName) => {
     // 1. Gestionar el estado activo de los botones de las pestañas
     const tabButton = document.querySelector(`.tab-item[data-tab="${tabName}"]`);
