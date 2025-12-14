@@ -4755,7 +4755,7 @@ async function calculateHistoricalIrrForGroup(accountIds) {
             if (userEmailEl && currentUser) userEmailEl.textContent = currentUser.email;  			
         };
 
-const renderPanelPage = async () => {const renderPanelPage = async () => {
+const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
@@ -4817,6 +4817,11 @@ const renderPanelPage = async () => {const renderPanelPage = async () => {
                 <div class="patrimonio-content">
                     <div id="kpi-patrimonio-neto-value" class="bento-value-giant skeleton" style="white-space: nowrap;">0 €</div>
                     
+                    <div class="hero-composition-bar">
+                        <div id="hero-bar-liquid" class="comp-bar-segment liquid" style="width: 50%"></div>
+                        <div id="hero-bar-invest" class="comp-bar-segment invest" style="width: 50%"></div>
+                    </div>
+
                     <div class="patrimonio-split">
                         <div class="split-item"><span class="dot liquid"></span> Liq: <strong id="kpi-liquidez-value">...</strong></div>
                         <div class="split-item"><span class="dot invest"></span> Inv: <strong id="kpi-capital-invertido-total">...</strong></div>
@@ -6471,7 +6476,6 @@ const getLiquidityAccounts = () => {
     });
 };
 
-/* EN main.js - DENTRO DE scheduleDashboardUpdate */
 
 const scheduleDashboardUpdate = () => {
     if (dashboardUpdateDebounceTimer) clearTimeout(dashboardUpdateDebounceTimer);
@@ -6487,7 +6491,7 @@ const scheduleDashboardUpdate = () => {
             const saldos = await getSaldos();
             const visibleAccounts = getVisibleAccounts();
             
-            // --- CÁLCULOS (Igual que antes) ---
+            // --- CÁLCULOS ---
             const investmentAccounts = visibleAccounts.filter(c => c.esInversion);
             let totalCapitalInvertido = 0;
             let valorMercadoTotal = 0;
@@ -6533,7 +6537,7 @@ const scheduleDashboardUpdate = () => {
                 el.classList.remove('text-positive', 'text-negative', 'text-neutral');
                 if (value > 0) el.classList.add(inverse ? 'text-negative' : 'text-positive');
                 else if (value < 0) el.classList.add(inverse ? 'text-positive' : 'text-negative');
-                else el.classList.add('text-neutral'); // Blanco/Gris si es 0
+                else el.classList.add('text-neutral');
             };
 
             // A. FLUJO
@@ -6543,10 +6547,10 @@ const scheduleDashboardUpdate = () => {
                     .forEach(el => el?.classList.remove('skeleton'));
                 
                 animateCountUp(elIng, ingresos, 700, true, '+');
-                applyColor(elIng, ingresos); // Ingresos siempre verde si > 0
+                applyColor(elIng, ingresos); 
 
                 animateCountUp(select('kpi-gastos-value'), gastos, 700, true, '');
-                applyColor(select('kpi-gastos-value'), gastos, true); // Gastos (negativo) -> Rojo si es < 0 (aunque lógicamente gasto es negativo, visualmente rojo)
+                applyColor(select('kpi-gastos-value'), gastos, true); 
                 
                 const elNeto = select('kpi-saldo-neto-value');
                 animateCountUp(elNeto, saldoNeto, 700, true, saldoNeto > 0 ? '+' : '');
@@ -6557,14 +6561,14 @@ const scheduleDashboardUpdate = () => {
                 elAhorro.className = tasaAhorro >= 0 ? 'text-positive' : 'text-warning';
             }
 
-            // B. PATRIMONIO (Ahora con color en el gigante)
+            // B. PATRIMONIO
             const elPatrimonio = select('kpi-patrimonio-neto-value');
             if (elPatrimonio) {
                 [elPatrimonio, select('kpi-liquidez-value'), select('kpi-capital-invertido-total')]
                     .forEach(el => el?.classList.remove('skeleton'));
 
                 animateCountUp(elPatrimonio, patrimonioContable);
-                applyColor(elPatrimonio, patrimonioContable); // Verde si tienes dinero, Rojo si debes
+                applyColor(elPatrimonio, patrimonioContable);
 
                 animateCountUp(select('kpi-liquidez-value'), liquidezTotal);
                 animateCountUp(select('kpi-capital-invertido-total'), totalCapitalInvertido);
@@ -6592,11 +6596,9 @@ const scheduleDashboardUpdate = () => {
                 const pnlPct = totalCapitalInvertido !== 0 ? (pnlTotal / totalCapitalInvertido) * 100 : 0;
                 
                 elPnl.innerHTML = `${sign}${formatCurrency(pnlTotal)} <small style="font-size:0.8em; opacity:0.9;">(${sign}${pnlPct.toFixed(2)}%)</small>`;
-                applyColor(elPnl, pnlTotal); // Verde si ganas, Rojo si pierdes
+                applyColor(elPnl, pnlTotal);
                 
                 animateCountUp(elNewMarketVal, valorMercadoTotal);
-                // El valor de mercado total lo dejamos en blanco para no saturar, o verde si quieres:
-                // applyColor(elNewMarketVal, valorMercadoTotal); 
             }
 
             // D. SALUD
@@ -6605,7 +6607,6 @@ const scheduleDashboardUpdate = () => {
                 elRunway.classList.remove('skeleton');
                 const meses = efData.mesesCobertura;
                 elRunway.textContent = isFinite(meses) ? (meses >= 100 ? '∞' : `${meses.toFixed(1)} Meses`) : '∞';
-                // Colorear meses: >6 verde, >3 amarillo, <3 rojo
                 elRunway.className = 'bento-value-health ' + (meses >= 6 ? 'text-positive' : (meses >= 3 ? 'text-warning' : 'text-negative'));
             }
 
@@ -6622,6 +6623,7 @@ const scheduleDashboardUpdate = () => {
         }
     }, 300);
 };
+
 
 
 const updateDashboardData = async () => {

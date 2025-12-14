@@ -5406,23 +5406,23 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     justify-content: flex-start; /* Alineado a la izquierda como iOS */
 }
 /* ================================================================= */
-/* === PANEL "PERFECT FIT" (Móvil y Escritorio sin Scroll) === */
+/* === PANEL PERFECTO (Estilo Neobank, Zero Scroll, 100% Fit) === */
 /* ================================================================= */
 
 .dashboard-bento-grid {
-    display: flex;
+    display: flex; /* Flex en vez de Grid para evitar cortes en móvil */
     flex-direction: column;
     height: 100%;
     width: 100%;
-    gap: 8px; /* Gap reducido para ganar espacio */
+    gap: 8px; /* Gap reducido */
     padding: 8px 10px 85px 10px; /* Padding inferior para el menú */
     box-sizing: border-box;
-    overflow: hidden; /* Cortamos cualquier desbordamiento rebelde */
+    overflow: hidden; /* Cortamos cualquier desbordamiento */
 }
 
-/* HEADER FLEXIBLE */
+/* HEADER COMPACTO */
 .bento-header {
-    flex: 0 0 auto; /* No se encoge */
+    flex: 0 0 auto;
 }
 .header-top-row {
     display: flex; justify-content: space-between; align-items: center;
@@ -5446,7 +5446,6 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     font-family: var(--font-numeric); font-size: 0.75rem; font-weight: 600;
     width: 100%; padding: 0;
 }
-/* Forzar que el calendario nativo no ocupe mucho espacio */
 .tiny-date-input::-webkit-calendar-picker-indicator {
     width: 12px; height: 12px; filter: invert(1); opacity: 0.5;
 }
@@ -5457,7 +5456,7 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     background: var(--c-surface);
     border: 1px solid var(--c-outline);
     border-radius: 16px;
-    padding: 8px 12px; /* Padding interno reducido */
+    padding: 8px 12px;
     display: flex; flex-direction: column; 
     position: relative;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
@@ -5471,7 +5470,7 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 
 /* 1. FLUJO (Tarjeta Superior) - Altura fija contenida */
 .bento-flow {
-    flex: 0 0 auto; /* Tamaño según contenido */
+    flex: 0 0 auto; /* Altura ajustada al contenido */
     background: linear-gradient(145deg, var(--c-surface) 0%, rgba(255,255,255,0.03) 100%);
 }
 .flow-grid {
@@ -5484,7 +5483,9 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     background: rgba(0,0,0,0.2); border-radius: 10px; padding: 6px 4px;
     display: flex; flex-direction: column; justify-content: center; text-align: center;
 }
-.flow-item.main { background: rgba(255,214,10,0.05); border: 1px solid rgba(255,214,10,0.1); }
+.flow-item.main {
+    background: rgba(255,214,10,0.05); border: 1px solid rgba(255,214,10,0.1);
+}
 .flow-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; opacity: 0.8; }
 .flow-value { font-size: clamp(0.9rem, 2vh, 1.1rem); font-weight: 800; letter-spacing: -0.5px; }
 .flow-value-big { font-size: clamp(1.1rem, 2.5vh, 1.4rem); font-weight: 800; color: #fff; line-height: 1; }
@@ -5502,7 +5503,6 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     display: flex; flex-direction: column; justify-content: center; align-items: center; 
     height: 100%; gap: 5px;
 }
-/* EL FIX DEL TEXTO CORTADO */
 .bento-value-giant {
     /* Clamp inteligente: Mínimo 2.5rem, Ideal 8% altura pantalla, Max 4.5rem */
     font-size: clamp(2.5rem, 8vh, 4.5rem); 
@@ -5516,13 +5516,21 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding: 0 5px; /* Margen seguridad */
+    padding: 0 5px; 
 }
+.hero-composition-bar {
+    width: 80%; height: 4px; background: rgba(255,255,255,0.1);
+    border-radius: 3px; display: flex; overflow: hidden; margin-bottom: 5px;
+}
+.comp-bar-segment { height: 100%; transition: width 1s ease-out; }
+.comp-bar-segment.liquid { background-color: var(--c-info); }
+.comp-bar-segment.invest { background-color: #BF5AF2; }
+
 .patrimonio-split {
     display: flex; justify-content: center; gap: 15px;
     background: rgba(255,255,255,0.05);
     padding: 4px 10px; border-radius: 99px;
-    white-space: nowrap; /* No saltar línea en los detalles */
+    white-space: nowrap;
 }
 .split-item { font-size: 0.7rem; color: var(--c-on-surface-tertiary); display: flex; align-items: center; gap: 4px; }
 .split-item strong { color: #fff; font-size: 0.8rem; }
@@ -5555,20 +5563,15 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 .bento-value-health { font-size: clamp(1.2rem, 3vh, 1.5rem); font-weight: 800; line-height: 1; margin-top: 2px; }
 .health-divider { width: 1px; height: 30px; background: var(--c-outline); }
 
-/* --- BOTONES DE AYUDA --- */
-.help-btn-mini {
-    background: rgba(255,255,255,0.1); color: var(--c-on-surface-secondary);
-    border: none; border-radius: 50%; width: 18px; height: 18px;
-    font-size: 11px; font-weight: 700; cursor: pointer;
-    display: inline-flex; align-items: center; justify-content: center;
-}
-.help-btn-inline { margin-left: 4px; width: 14px; height: 14px; font-size: 9px; vertical-align: middle; }
+/* CLASES DE COLOR GLOBALES */
+.text-positive { color: var(--c-success) !important; text-shadow: 0 0 10px rgba(57, 255, 20, 0.2); }
+.text-negative { color: var(--c-danger) !important; text-shadow: 0 0 10px rgba(255, 59, 48, 0.2); }
+.text-neutral  { color: #fff !important; }
 
-/* --- RESPONSIVIDAD ESCRITORIO (840px+) --- */
-/* Aquí cambiamos de Flex Vertical a Grid 2x2 para aprovechar el ancho */
+/* RESPONSIVIDAD ESCRITORIO (Grid 2x2) */
 @media (min-width: 840px) {
     .dashboard-bento-grid {
-        display: grid;
+        display: grid; /* Volvemos a Grid en PC */
         grid-template-columns: 1fr 1fr;
         grid-template-rows: auto 1fr 1fr;
         grid-template-areas: 
@@ -5579,11 +5582,8 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         padding-bottom: 20px;
     }
     
-    /* En PC los números pueden ser aún más grandes */
     .bento-value-giant { font-size: 4.5rem; } 
     .flow-value-big { font-size: 2rem; }
-    
-    /* Flujo en 3 columnas en PC */
     .flow-grid { grid-template-columns: 1fr 1fr 1fr; }
-    .bento-patrimonio, .bento-invest { min-height: auto; } /* Grid controla la altura */
+    .bento-patrimonio, .bento-invest { min-height: auto; }
 }
