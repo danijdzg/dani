@@ -1211,7 +1211,16 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     padding: 15px; /* Más padding alrededor de los botones */
     padding-bottom: calc(15px + env(safe-area-inset-bottom));
 }
+.calculator-btn[data-key="done"] {
+    background-color: var(--c-success) !important; /* Verde Neón */
+    color: #000000 !important; /* Texto negro para contraste */
+    font-weight: 800;
+    font-size: 2rem;
+}
 
+.calculator-btn[data-key="done"]:active {
+    filter: brightness(0.8);
+}
 .calculator-screen-area {
     padding: 0 15px 15px 15px;
     background-color: #000000;
@@ -5477,14 +5486,6 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 }
 .p-detail-item { font-size: 0.8rem; color: var(--c-on-surface-secondary); }
 .p-detail-item strong { color: #fff; margin-left: 4px; }
-
-/* --- TARJETA 3: INVERSIONES (Estilo Tech) --- */
-.card-invest {
-    background: rgba(191, 90, 242, 0.05);
-    border: 1px solid rgba(191, 90, 242, 0.3);
-}
-.invest-display { text-align: center; }
-.invest-main { margin-bottom: 15px; }
 .invest-label { font-size: 0.75rem; color: var(--c-on-surface-tertiary); display: block; margin-bottom: 4px; }
 .invest-val-big { font-size: 2.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 15px rgba(191, 90, 242, 0.3); }
 .invest-grid {
@@ -5651,18 +5652,66 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 
 /* --- TARJETA 3: INVERSIONES --- */
 .card-invest {
-    background: rgba(191, 90, 242, 0.05); border-color: rgba(191, 90, 242, 0.2);
-}
-.invest-display-row {
-    display: flex; justify-content: space-around; align-items: center; flex: 1;
-}
-.invest-box { text-align: center; }
-.invest-label { font-size: 0.6rem; color: var(--c-on-surface-tertiary); display: block; margin-bottom: 4px; }
-.invest-val { font-size: clamp(1.2rem, 3.5vh, 1.8rem); font-weight: 800; color: #fff; line-height: 1; }
-.invest-pnl-badge {
-    font-size: 0.8rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; display: inline-block;
+    /* Le damos más peso visual, igual que a Patrimonio */
+    flex-grow: 1.4; 
+    background: radial-gradient(circle at 50% 100%, rgba(191, 90, 242, 0.15) 0%, var(--c-surface) 80%);
+    border: 1px solid rgba(191, 90, 242, 0.3);
 }
 
+/* Contenedor central para el número gigante */
+.invest-main {
+    text-align: center;
+    flex: 1; 
+    display: flex; 
+    flex-direction: column;
+    align-items: center; 
+    justify-content: center;
+}
+
+/* Etiqueta superior pequeña */
+.invest-label-top {
+    font-size: 0.7rem; 
+    font-weight: 700; 
+    letter-spacing: 1.5px; 
+    color: #BF5AF2; 
+    text-transform: uppercase;
+    margin-bottom: 2px;
+    opacity: 0.9;
+}
+
+/* El valor gigante (Reutiliza tamaño pero cambia color/brillo) */
+.invest-val-giant {
+    font-size: clamp(2.5rem, 7vh, 4rem); 
+    font-weight: 800; 
+    color: #fff;
+    text-shadow: 0 0 25px rgba(191, 90, 242, 0.5); /* Brillo Neón Púrpura */
+    line-height: 1; 
+    letter-spacing: -1px;
+}
+
+/* Contenedor de detalles inferior */
+.invest-details-row {
+    display: flex; 
+    justify-content: center; 
+    gap: 15px;
+    background: rgba(255,255,255,0.05); 
+    padding: 4px 14px; 
+    border-radius: 99px;
+    margin: 0 auto; 
+    width: fit-content; 
+    flex-shrink: 0;
+}
+
+/* --- 2. MODIFICACIÓN CALCULADORA (Tecla Igual Verde) --- */
+.calculator-btn[data-key="done"] {
+    background-color: var(--c-success) !important; /* Verde Neón */
+    color: #000000 !important; /* Texto negro para contraste máximo */
+    font-weight: 800;
+    font-size: 2rem;
+}
+.calculator-btn[data-key="done"]:active {
+    filter: brightness(0.8);
+}
 /* --- TARJETA 4: SALUD --- */
 .card-health { background: var(--c-surface); }
 .health-grid { display: flex; justify-content: space-around; align-items: center; flex: 1; }
