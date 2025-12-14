@@ -1088,50 +1088,48 @@ const fetchBtcPrice = async () => {
 };
 const handleCalculatorInput = (key) => {
     hapticFeedback('light');
-    let { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue } = calculatorState;
+    let { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed } = calculatorState;
     
-    // Lista de operadores
     const isOperator = ['add', 'subtract', 'multiply', 'divide'].includes(key);
 
+    // --- CASO 1: OPERADOR (+, -, x, /) ---
     if (isOperator) {
+        // Si ya había una operación en curso (ej: 5 + 5 y pulso +), calculamos primero
         if (operand1 !== null && operator !== null && !waitingForNewValue) {
             calculate();
-            displayValue = calculatorState.displayValue; 
+            displayValue = calculatorState.displayValue; // Actualizamos con el resultado parcial
         }
-        operand1 = parseCalculatorValue(displayValue);
+        
+        // Guardamos el primer operando y el operador
+        operand1 = displayValue; // Guardamos el string actual como primer operando
         operator = key;
         historyValue = `${displayValue} ${getOperatorSymbol(operator)}`;
+        
         waitingForNewValue = true;
         isResultDisplayed = false;
-        
-    } else {
+    } 
+    
+    // --- CASO 2: OTRAS TECLAS ---
+    else {
         switch(key) {
-            case 'done': // Botón IGUAL (=)
+            case 'done': // TECLA (=)
                 hapticFeedback('medium');
                 
-                // CASO A: Hay una operación pendiente (Ej: "50 + 20")
-                // Acción: CALCULAR y MOSTRAR resultado, pero NO cerrar todavía.
-                if (operand1 !== null && operator !== null && !waitingForNewValue) {
-                    calculate(); 
-                    displayValue = calculatorState.displayValue;
-                    
-                    // Reseteamos operandos para que el próximo click entre en el CASO B
-                    calculatorState.operand1 = null;
-                    calculatorState.operator = null;
-                    
+                // A) Si hay operación pendiente -> CALCULAR (Primer toque)
+                if (operand1 !== null && operator !== null) {
+                    calculate();
                     updateCalculatorDisplay();
-                    updateCalculatorHistoryDisplay();
-                    return; // IMPORTANTE: Salimos para esperar el segundo clic
+                    updateCalculatorHistoryDisplay(); // Muestra el resultado en el historial pequeño
+                    return; // ¡IMPORTANTE! No cerramos todavía
                 } 
                 
-                // CASO B: No hay operación (Ej: He puesto "100" directo, o es el segundo clic tras calcular)
-                // Acción: CONFIRMAR, TRANSFERIR valor y CERRAR.
+                // B) Si NO hay operación (ya calculamos o es número directo) -> CONFIRMAR Y CERRAR
                 else {
-                    updateTargetInput(displayValue);
+                    updateTargetInput(calculatorState.displayValue);
                     historyValue = '';
                     hideCalculator();
                     
-                    // Avance automático
+                    // Salto automático al siguiente campo
                     setTimeout(() => {
                         const conceptoSelect = document.getElementById('movimiento-concepto');
                         const wrapper = conceptoSelect?.closest('.custom-select-wrapper');
@@ -1141,7 +1139,30 @@ const handleCalculatorInput = (key) => {
                 }
                 return;
 
-            case 'sign': 
+            case 'clear': 
+                displayValue = '0';
+                waitingForNewValue = true;
+                operand1 = null;
+                operator = null;
+                isResultDisplayed = false;
+                historyValue = '';
+                break;
+
+            case 'comma':
+                if (waitingForNewValue) { 
+                    displayValue = '0,'; 
+                    waitingForNewValue = false; 
+                } else if (!displayValue.includes(',')) {
+                    displayValue += ',';
+                }
+                break;
+                
+            case 'backspace':
+                if (displayValue.length > 1) displayValue = displayValue.slice(0, -1);
+                else displayValue = '0';
+                break;
+
+            case 'sign':
                 if (displayValue !== '0') {
                     if (displayValue.startsWith('-')) displayValue = displayValue.slice(1);
                     else displayValue = '-' + displayValue;
@@ -1153,48 +1174,31 @@ const handleCalculatorInput = (key) => {
                 if (!isNaN(val)) displayValue = (val / 100).toString().replace('.', ',');
                 break;
 
-            case 'clear': 
-                displayValue = '0';
-                waitingForNewValue = true;
-                operand1 = null;
-                operator = null;
-                isResultDisplayed = false;
-                historyValue = '';
-                break;
-
-            case 'backspace': 
-                displayValue = displayValue.length > 1 ? displayValue.slice(0, -1) : '0';
-                if (displayValue === '0' || displayValue === '-') { displayValue = '0'; waitingForNewValue = true; }
-                break;
-
-            case 'comma':
-                if (waitingForNewValue) { displayValue = '0,'; waitingForNewValue = false; } 
-                else if (!displayValue.includes(',')) displayValue += ',';
-                break;
-
-            default: // Números
+            default: // NÚMEROS (0-9)
                 if (waitingForNewValue || displayValue === '0') {
                     displayValue = key;
                     waitingForNewValue = false;
-                } else if (displayValue.replace(/[.,]/, '').length < 12) {
+                } else if (displayValue.replace(/[^0-9]/g, '').length < 12) { // Límite de longitud
                     displayValue += key;
                 }
+                isResultDisplayed = false; // Ya no estamos mostrando un resultado viejo
                 break;
         }
     }
     
-    // Guardar estado y actualizar UI
+    // Guardar estado global
     Object.assign(calculatorState, { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue });
+    
+    // Actualizar UI
     updateCalculatorDisplay();
     updateCalculatorHistoryDisplay();
     updateActiveOperatorButton();
 
-    // Actualización en tiempo real del input de fondo
+    // Reflejo en tiempo real (si no estamos en medio de una operación)
     if (!operand1 || isResultDisplayed) {
         updateTargetInput(displayValue);
     }
 };
-
 // Función auxiliar para escribir en el input real
 const updateTargetInput = (val) => {
     if (calculatorState.targetInput) {
@@ -1220,46 +1224,42 @@ const updateTargetInput = (val) => {
 
 // Función auxiliar segura: Convierte cualquier entrada a CÉNTIMOS (entero)
 const parseCalculatorValue = (val) => {
-    if (val === null || val === undefined || val === '') return NaN;
-    // Convierte a string, cambia coma por punto y multiplica por 100
-    const num = parseFloat(val.toString().replace(',', '.'));
-    return Math.round(num * 100);
+    if (val === null || val === undefined || val === '') return 0;
+    // Convierte "12,50" -> 12.50
+    const stringVal = val.toString().replace(',', '.');
+    // Parsea a float y multiplica por 100 para operar con enteros
+    const num = parseFloat(stringVal);
+    return isNaN(num) ? 0 : Math.round(num * 100);
 };
 
 const calculate = () => {
-    // 1. Convertimos todo a enteros (céntimos)
-    const val1 = parseCalculatorValue(calculatorState.operand1);
-    const val2 = parseCalculatorValue(calculatorState.displayValue);
+    // 1. Obtener valores en céntimos (enteros)
+    const val1 = parseCalculatorValue(calculatorState.operand1); // Ya guardado como string/float
+    const val2 = parseCalculatorValue(calculatorState.displayValue); // Lo que hay en pantalla
     
-    // 2. Seguridad
-    if (isNaN(val1) || isNaN(val2) || !calculatorState.operator) return;
+    if (!calculatorState.operator) return;
 
     let resultInCents = 0;
     
-    // 3. Operamos en enteros para precisión perfecta
+    // 2. Operar
     switch (calculatorState.operator) {
         case 'add': resultInCents = val1 + val2; break;
         case 'subtract': resultInCents = val1 - val2; break;
         case 'multiply': resultInCents = Math.round((val1 * val2) / 100); break; 
         case 'divide':
             if (val2 === 0) { 
-                showToast("No se puede dividir por cero.", "danger"); 
-                calculatorState.displayValue = 'Error';
-                return; 
+                showToast("Error: Div. por cero", "danger"); 
+                calculatorState.displayValue = '0'; return; 
             }
             resultInCents = Math.round((val1 * 100) / val2); 
             break;
     }
 
-    // 4. Formateamos bonito para el usuario
+    // 3. Convertir de vuelta a string con coma (sin puntos de miles, eso es visual)
     const result = resultInCents / 100;
-    calculatorState.displayValue = result.toLocaleString('es-ES', { 
-        minimumFractionDigits: 0, 
-        maximumFractionDigits: 2,
-        useGrouping: false 
-    }); 
+    calculatorState.displayValue = result.toString().replace('.', ',');
     
-    // 5. Reset de estado
+    // 4. Resetear operandos para que el siguiente "=" sepa que ya terminamos
     calculatorState.operand1 = null;
     calculatorState.operator = null;
     calculatorState.waitingForNewValue = true;
@@ -4845,7 +4845,7 @@ const renderPanelPage = async () => {
                         <span style="opacity:0.7">Invertido:</span> 
                         <strong id="new-card-capital" style="color:#fff">...</strong>
                     </div>
-                    <div style="width:1px; height:12px; background:rgba(255,255,255,0.2); align-self:center;"></div>
+                    <div style="width:1px; height:14px; background:rgba(255,255,255,0.2);"></div>
                     <div class="p-detail">
                         <span style="opacity:0.7">P&L:</span> 
                         <strong id="new-card-pnl">...</strong>
@@ -4857,7 +4857,7 @@ const renderPanelPage = async () => {
                 <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">health_and_safety</span>
-                        <span>SALUD</span>
+                        <span>SALUD FINANCIERA</span>
                     </div>
                     <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="cobertura">?</button>
                 </div>
