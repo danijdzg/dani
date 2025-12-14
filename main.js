@@ -1,49 +1,43 @@
 
 import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
 const KPI_EXPLANATIONS = {
-    'ingresos': { 
-        title: 'Ingresos del Periodo', 
-        text: 'Dinero nuevo que ha entrado en tus bolsillos durante las fechas seleccionadas (nómina, ventas, regalos...).<br><br>No cuenta los movimientos entre tus propias cuentas (traspasos).' 
+    'flujo': { 
+        title: 'Tu Motor Financiero (Flujo de Caja)',
+        text: `
+            <p>Aquí ves el movimiento de tu dinero en el periodo seleccionado:</p>
+            <ul style="list-style:none; padding:0; margin:10px 0;">
+                <li style="margin-bottom:8px;">🟢 <strong>INGRESOS:</strong> Dinero nuevo que entra (nómina, ventas). Es tu combustible.</li>
+                <li style="margin-bottom:8px;">🔴 <strong>GASTOS:</strong> Dinero que sale para no volver (facturas, ocio).</li>
+                <li>🟡 <strong>AHORRO (Neto):</strong> El resultado de <em>Ingresos - Gastos</em>. Si es positivo, te estás enriqueciendo. Si es negativo, estás consumiendo ahorros pasados.</li>
+            </ul>`
     },
-    'gastos': { 
-        title: 'Gastos del Periodo', 
-        text: 'Dinero que ha salido de tu bolsillo para no volver (compras, facturas, ocio...).' 
+    'patrimonio': {
+        title: 'Tu Riqueza Total (Patrimonio Neto)',
+        text: `
+            <p>Es la "foto fija" de todo lo que tienes hoy. Se compone de:</p>
+            <ul style="list-style:none; padding:0; margin:10px 0;">
+                <li style="margin-bottom:8px;">💧 <strong>LÍQUIDO:</strong> Dinero en banco y efectivo. Es tu seguridad inmediata.</li>
+                <li style="margin-bottom:8px;">🚀 <strong>INVERTIDO:</strong> Dinero puesto en activos para que crezca.</li>
+                <li><strong>TOTAL:</strong> La suma de ambos. Es tu marcador en el juego financiero.</li>
+            </ul>`
     },
-    'neto': { 
-        title: 'Flujo Neto (Ahorro del Periodo)', 
-        text: 'Es la resta simple: <strong>Lo que entró - Lo que salió</strong>.<br><br>Si es positivo (Verde), has gastado menos de lo que ganaste. Si es negativo (Rojo), has tenido que tirar de ahorros anteriores.' 
+    'inversiones': {
+        title: 'Rendimiento de Inversiones',
+        text: `
+            <p>¿Qué tal lo están haciendo tus activos?</p>
+            <ul style="list-style:none; padding:0; margin:10px 0;">
+                <li style="margin-bottom:8px;">📈 <strong>VALOR MERCADO:</strong> Precio actual si vendieras todo hoy.</li>
+                <li style="margin-bottom:8px;">💼 <strong>CAPITAL PUESTO:</strong> Dinero real que salió de tu bolsillo.</li>
+                <li>📊 <strong>P&L (Ganancia):</strong> La diferencia. Si es <span style="color:#39FF14">Verde</span>, tu dinero ha trabajado por ti.</li>
+            </ul>`
     },
-    'tasa_ahorro': { 
-        title: 'Tasa de Ahorro', 
-        text: 'Mide tu velocidad de acumulación de riqueza.<br><br>Si ganaste 1.000€ y te sobraron 200€, tu tasa es del 20%. Un porcentaje alto significa que vives muy por debajo de tus posibilidades (¡eso es bueno!).' 
-    },
-    'patrimonio': { 
-        title: 'Patrimonio (Capital Total)', 
-        text: 'Es la suma de todo tu dinero "contable".<br><br><strong>Fórmula:</strong> Liquidez + Capital Invertido.<br><br>Representa todo el dinero que tienes en el banco más todo el dinero que has enviado a tus cuentas de inversión. No tiene en cuenta si tus inversiones han subido o bajado, solo lo que tú pusiste.' 
-    },
-    'liquidez': { 
-        title: 'Liquidez Disponible', 
-        text: 'Tu oxígeno financiero. Es el dinero que tienes en cuentas corrientes, efectivo o huchas, listo para gastar hoy mismo si fuera necesario.' 
-    },
-    'capital_invertido': { 
-        title: 'Capital Invertido', 
-        text: 'El esfuerzo de tu bolsillo. Es la suma total de dinero que has transferido desde tus cuentas de banco a tus cuentas de inversión.<br><br>Es tu "coste base".' 
-    },
-    'posicion_real': { 
-        title: 'Posición Real de Mercado', 
-        text: 'La verdad actual. Es lo que valen tus inversiones si las vendieras todas hoy mismo.<br><br>Se calcula sumando tu <strong>Capital Invertido</strong> más tus <strong>Ganancias</strong> (o menos tus Pérdidas).' 
-    },
-    'pnl': { 
-        title: 'Ganancia / Pérdida (P&L)', 
-        text: 'Es el "examen de notas" de tus inversiones. Te dice cuánto dinero has ganado o perdido sobre lo que pusiste.<br><br><strong>Ejemplo Didáctico:</strong><br>Pones 100€ en una hucha (Capital). Si el mercado sube y ahora vale 110€, tu P&L es <strong>+10€ (+10%)</strong>.<br><br><strong>Fórmula:</strong> Valor Actual - Capital Invertido.' 
-    },
-    'cobertura': { 
-        title: 'Cobertura (Meses de Libertad)', 
-        text: 'Si hoy dejaras de ingresar dinero, ¿cuánto tiempo podrías sobrevivir con tu liquidez actual manteniendo tu nivel de gastos de los últimos 3 meses?' 
-    },
-    'libertad': { 
-        title: 'Independencia Financiera', 
-        text: 'Tu barra de progreso hacia la jubilación.<br><br>Se considera que eres libre cuando tienes acumulado 25 veces tus gastos anuales (o 300 veces tus gastos mensuales).' 
+    'salud': {
+        title: 'Signos Vitales',
+        text: `
+            <ul style="list-style:none; padding:0; margin:0;">
+                <li style="margin-bottom:10px;">🛡️ <strong>COBERTURA:</strong> Si dejaras de ingresar hoy, ¿cuántos meses podrías vivir con tu liquidez actual? (Ideal > 6 meses).</li>
+                <li>🗽 <strong>LIBERTAD:</strong> Porcentaje de camino recorrido para poder vivir de tus rentas sin trabajar.</li>
+            </ul>`
     }
 };
 
@@ -4766,20 +4760,23 @@ const renderPanelPage = async () => {
                 <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">sync_alt</span>
-                        <span>FLUJO</span>
+                        <span>FLUJO DE CAJA</span>
                     </div>
-                    <div class="report-filters">
-                        <select id="filter-periodo" class="form-select compact-select">
-                            <option value="mes-actual">Este Mes</option>
-                            <option value="año-actual">Este Año</option>
-                            <option value="custom">Personalizado</option>
-                        </select>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="flujo">?</button>
+                        <div class="report-filters">
+                            <select id="filter-periodo" class="form-select compact-select">
+                                <option value="mes-actual">Este Mes</option>
+                                <option value="año-actual">Este Año</option>
+                                <option value="custom">Personalizado</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <div id="custom-date-filters" class="hidden compact-date-bar">
                     <input type="date" id="filter-fecha-inicio" class="tiny-date-input">
-                    <span style="opacity:0.5; font-size: 0.8rem;">➜</span>
+                    <span style="opacity:0.5; font-size:0.8rem; display:flex; align-items:center;">➜</span>
                     <input type="date" id="filter-fecha-fin" class="tiny-date-input">
                 </div>
 
@@ -4788,12 +4785,12 @@ const renderPanelPage = async () => {
                         <span class="flow-label text-success">INGRESOS</span>
                         <span id="kpi-ingresos-value" class="flow-number skeleton">...</span>
                     </div>
-                    <div class="flow-divider"></div>
+                    <div class="flow-sep"></div>
                     <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
                         <span class="flow-label text-danger">GASTOS</span>
                         <span id="kpi-gastos-value" class="flow-number skeleton">...</span>
                     </div>
-                    <div class="flow-divider"></div>
+                    <div class="flow-sep"></div>
                     <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
                         <span class="flow-label text-warning">AHORRO</span>
                         <span id="kpi-saldo-neto-value" class="flow-number skeleton">...</span>
@@ -4805,7 +4802,7 @@ const renderPanelPage = async () => {
                 <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">account_balance</span>
-                        <span>PATRIMONIO</span>
+                        <span>PATRIMONIO NETO</span>
                     </div>
                     <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
                 </div>
@@ -4826,7 +4823,7 @@ const renderPanelPage = async () => {
                         <span class="material-icons card-icon-font" style="color:#BF5AF2">trending_up</span>
                         <span style="color:#BF5AF2">INVERSIONES</span>
                     </div>
-                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="pnl">?</button>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="inversiones">?</button>
                 </div>
 
                 <div class="invest-display-row">
@@ -4839,6 +4836,7 @@ const renderPanelPage = async () => {
                         <div id="new-card-pnl" class="invest-pnl-badge skeleton">...</div>
                     </div>
                 </div>
+                <span id="new-card-capital" style="display:none"></span>
             </div>
 
             <div class="stack-card card-health">
@@ -4847,6 +4845,7 @@ const renderPanelPage = async () => {
                         <span class="material-icons card-icon-font">health_and_safety</span>
                         <span>SALUD</span>
                     </div>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="salud">?</button>
                 </div>
                 
                 <div class="health-grid">
@@ -6496,7 +6495,7 @@ const scheduleDashboardUpdate = () => {
             const saldos = await getSaldos();
             const visibleAccounts = getVisibleAccounts();
             
-            // CÁLCULOS
+            // --- CÁLCULOS ---
             const investmentAccounts = visibleAccounts.filter(c => c.esInversion);
             let totalCapitalInvertido = 0;
             let valorMercadoTotal = 0;
@@ -6526,13 +6525,20 @@ const scheduleDashboardUpdate = () => {
             const { current: currentMovs } = await getFilteredMovements(false);
             const visibleAccountIds = new Set(visibleAccounts.map(c => c.id));
             const { ingresos, gastos, saldoNeto } = calculateTotals(currentMovs, visibleAccountIds);
-            const tasaAhorro = (ingresos > 0 && saldoNeto > 0) ? (saldoNeto / ingresos) * 100 : 0;
-
+            
             const patrimonioRealParaCalculos = liquidezTotal + valorMercadoTotal;
             const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
             const fiData = calculateFinancialIndependence(patrimonioRealParaCalculos, efData.gastoMensualPromedio);
 
-            // --- ACTUALIZACIÓN UI SEGURA ---
+            // --- ACTUALIZACIÓN UI (BLINDADA CONTRA NULL) ---
+
+            const applyColor = (el, value, inverse = false) => {
+                if (!el) return;
+                el.classList.remove('text-positive', 'text-negative', 'text-neutral');
+                if (value > 0) el.classList.add(inverse ? 'text-negative' : 'text-positive');
+                else if (value < 0) el.classList.add(inverse ? 'text-positive' : 'text-negative');
+                else el.classList.add('text-neutral');
+            };
 
             // A. FLUJO
             const elIng = select('kpi-ingresos-value');
@@ -6540,13 +6546,12 @@ const scheduleDashboardUpdate = () => {
                 [elIng, select('kpi-gastos-value'), select('kpi-saldo-neto-value')].forEach(el => el?.classList.remove('skeleton'));
                 
                 animateCountUp(elIng, ingresos, 700, true, '+');
-                
                 animateCountUp(select('kpi-gastos-value'), gastos, 700, true, '');
                 
                 const elNeto = select('kpi-saldo-neto-value');
                 animateCountUp(elNeto, saldoNeto, 700, true, saldoNeto > 0 ? '+' : '');
                 
-                // Aplicar colores de forma segura
+                // Corrección del error de clase
                 if(elNeto) {
                     elNeto.className = 'flow-number ' + (saldoNeto >= 0 ? 'text-positive' : 'text-negative');
                 }
@@ -6568,13 +6573,17 @@ const scheduleDashboardUpdate = () => {
             const elNewMarketVal = select('new-card-market-value');
             if (elNewMarketVal) {
                 elNewMarketVal.classList.remove('skeleton');
-                select('new-card-pnl')?.classList.remove('skeleton');
+                
+                const elCap = select('new-card-capital');
+                if (elCap) elCap.textContent = formatCurrency(totalCapitalInvertido);
                 
                 const elPnl = select('new-card-pnl');
                 if (elPnl) {
+                    elPnl.classList.remove('skeleton');
                     const sign = pnlTotal >= 0 ? '+' : '';
                     const pnlPct = totalCapitalInvertido !== 0 ? (pnlTotal / totalCapitalInvertido) * 100 : 0;
-                    elPnl.innerHTML = `${sign}${formatCurrency(pnlTotal)} <small>(${sign}${pnlPct.toFixed(2)}%)</small>`;
+                    
+                    elPnl.innerHTML = `${sign}${formatCurrency(pnlTotal)} <small style="font-size:0.8em; opacity:0.8; margin-left:4px;">(${sign}${pnlPct.toFixed(2)}%)</small>`;
                     elPnl.style.color = pnlTotal >= 0 ? '#39FF14' : '#FF3B30';
                     elPnl.style.backgroundColor = pnlTotal >= 0 ? 'rgba(57, 255, 20, 0.1)' : 'rgba(255, 59, 48, 0.1)';
                 }
@@ -6588,7 +6597,6 @@ const scheduleDashboardUpdate = () => {
                 elRunway.classList.remove('skeleton');
                 const meses = efData.mesesCobertura;
                 elRunway.textContent = isFinite(meses) ? (meses >= 100 ? '∞' : `${meses.toFixed(1)}`) : '∞';
-                // Corrección del error:
                 elRunway.className = 'health-val ' + (meses >= 6 ? 'text-positive' : (meses >= 3 ? 'text-warning' : 'text-negative'));
             }
 

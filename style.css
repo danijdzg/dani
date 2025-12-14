@@ -5464,109 +5464,107 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 .dot.invest { background: #BF5AF2; box-shadow: 0 0 5px #BF5AF2; }
 
 /* ================================================================= */
-/* === PANEL VERTICAL PERFECTO (4 Tarjetas, Sin Scroll, Mobile Safe) === */
+/* === PANEL "MASTER CLASS" (Vertical, Elástico y Didáctico) === */
 /* ================================================================= */
 
-/* Contenedor Principal: Ocupa el 100% y reparte espacio */
+/* Contenedor Principal: Ocupa el 100% y reparte el espacio matemáticamente */
 .dashboard-stack-layout {
     display: flex;
     flex-direction: column;
     height: 100%;
     width: 100%;
-    /* Padding ajustado para dar aire pero no comer espacio vital */
-    padding: 8px 10px 85px 10px; 
+    padding: 10px 10px 85px 10px; /* Espacio para el menú abajo */
     box-sizing: border-box;
-    overflow: hidden; /* CORTA cualquier scroll */
-    gap: 6px; /* Espacio reducido entre tarjetas para ganar altura */
-    max-width: 550px; /* En PC se ve como una app centrada elegante */
+    overflow: hidden; /* CERO SCROLL */
+    gap: 8px; /* Separación justa y elegante */
+    max-width: 500px; /* En PC se ve centrado como una app móvil */
     margin: 0 auto;
 }
 
-/* Tarjeta Base Elástica */
+/* Tarjeta Base Inteligente */
 .stack-card {
-    flex: 1; /* Todas intentan ocupar espacio igual */
-    min-height: 0; /* PERMITE ENCOGERSE: Vital para que no se corten */
+    flex: 1; /* Todas intentan ocupar el mismo espacio */
+    min-height: 0; /* PERMITE ENCOGERSE: La clave para que no se corte nada */
     background: var(--c-surface);
     border: 1px solid var(--c-outline);
-    border-radius: 16px;
-    padding: 8px 12px;
+    border-radius: 18px;
+    padding: 10px 14px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    transition: all 0.3s ease; /* Animación suave al cambiar tamaño */
+    justify-content: center; /* Centrado vertical */
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: flex-grow 0.3s ease; /* Animación suave al abrir fechas */
 }
 
-/* Cabeceras de Tarjeta Ultra-Compactas */
+/* Cabeceras de Tarjeta */
 .stack-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2px;
-    flex-shrink: 0; /* La cabecera no se aplasta */
+    margin-bottom: 4px;
+    flex-shrink: 0; /* La cabecera nunca se aplasta */
     min-height: 24px;
 }
 .header-title-row {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;
-    color: var(--c-on-surface-tertiary); text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px;
+    color: var(--c-on-surface-secondary); text-transform: uppercase;
 }
-.card-icon-font { font-size: 14px; color: var(--c-primary); }
+.card-icon-font { font-size: 16px; color: var(--c-primary); }
 
-/* Selector Compacto */
-.compact-select {
-    padding: 0 18px 0 6px !important;
-    height: 22px !important;
-    font-size: 0.65rem !important;
-    background-color: rgba(255,255,255,0.08) !important;
-    border-radius: 6px !important;
-    border: none !important;
-    color: var(--c-on-surface) !important;
+/* Botones de Ayuda (Leyenda) */
+.help-btn-mini {
+    background: rgba(255,255,255,0.05); 
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--c-on-surface-tertiary);
+    width: 20px; height: 20px; border-radius: 50%; 
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
 }
 
-/* --- TARJETA 1: FLUJO (Flexible para Fechas) --- */
+/* --- TARJETA 1: FLUJO (Se adapta a las fechas) --- */
 .card-flow {
-    /* Si aparecen fechas, esta tarjeta crecerá un poco a costa de las otras */
-    flex-grow: 1.2; 
-    background: linear-gradient(180deg, var(--c-surface) 0%, rgba(255,255,255,0.02) 100%);
-    justify-content: flex-start; /* Contenido arriba */
-    gap: 4px;
+    flex-grow: 1.2; /* Un poco más grande para acomodar filtros */
+    background: linear-gradient(170deg, var(--c-surface) 0%, rgba(255,255,255,0.03) 100%);
+    justify-content: flex-start; /* Contenido alineado arriba */
+    gap: 5px;
 }
 
-/* Barra de Fechas (Aparece y empuja contenido) */
+/* Barra de Fechas (Aparece sin romper nada) */
 .compact-date-bar {
-    display: flex; justify-content: center; gap: 6px; 
-    background: rgba(0,0,0,0.2); padding: 3px; border-radius: 6px;
+    display: flex; justify-content: center; gap: 8px; 
+    background: rgba(0,0,0,0.2); padding: 4px; border-radius: 8px;
     flex-shrink: 0; margin-bottom: 2px;
 }
 .tiny-date-input {
     background: transparent; border: none; color: #fff;
-    font-size: 0.7rem; font-family: var(--font-numeric);
-    width: 85px; text-align: center; padding: 0;
+    font-size: 0.75rem; font-family: var(--font-numeric);
+    width: 90px; text-align: center; padding: 0;
+}
+.compact-select {
+    padding: 0 20px 0 8px !important; height: 24px !important;
+    font-size: 0.7rem !important; background-color: rgba(255,255,255,0.08) !important;
+    border: none !important; color: #fff !important; border-radius: 6px !important;
 }
 
-/* Display de Números de Flujo */
+/* Números de Flujo */
 .flow-display {
     display: flex; justify-content: space-between; align-items: center;
-    background: rgba(0,0,0,0.2); border-radius: 10px; padding: 6px;
-    flex: 1; /* Ocupa todo el espacio restante de la tarjeta */
-    min-height: 0; /* Permite que los textos se encojan si hace falta */
+    background: rgba(0,0,0,0.2); border-radius: 12px; padding: 8px;
+    flex: 1; min-height: 0; /* Elástico total */
 }
-.flow-col { 
-    display: flex; flex-direction: column; 
-    align-items: center; justify-content: center; 
-    flex: 1; text-align: center; 
-}
-.flow-label { font-size: 0.55rem; font-weight: 700; margin-bottom: 2px; opacity: 0.7; }
-/* Fuente adaptable: Se hace pequeña si falta sitio */
+.flow-col { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; text-align: center; }
+.flow-label { font-size: 0.6rem; font-weight: 700; margin-bottom: 2px; opacity: 0.7; }
+/* Fuente inteligente con clamp */
 .flow-number { 
-    font-size: clamp(0.8rem, 2.2vh, 1.1rem); 
-    font-weight: 700; line-height: 1; color: #fff;
-    white-space: nowrap;
+    font-size: clamp(0.9rem, 2.5vh, 1.3rem); 
+    font-weight: 700; color: #fff; line-height: 1; white-space: nowrap;
 }
-.flow-divider { width: 1px; height: 50%; background: rgba(255,255,255,0.1); }
+.flow-sep { width: 1px; height: 60%; background: rgba(255,255,255,0.1); }
 
-/* --- TARJETA 2: PATRIMONIO (Siempre Grande) --- */
+/* --- TARJETA 2: PATRIMONIO (Visualmente dominante) --- */
 .card-patrimonio {
     flex-grow: 1.4; /* Prioridad visual */
     background: radial-gradient(circle at 50% 100%, rgba(0, 179, 77, 0.15) 0%, var(--c-surface) 80%);
@@ -5577,19 +5575,20 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     display: flex; align-items: center; justify-content: center; 
 }
 .math-total-giant {
-    font-size: clamp(2rem, 6vh, 3.5rem); /* Un poco más contenido para asegurar encaje */
+    font-size: clamp(2.5rem, 7vh, 4rem); /* Gigante pero seguro */
     font-weight: 800; color: #fff;
-    text-shadow: 0 0 20px rgba(0,179,77,0.3);
+    text-shadow: 0 0 25px rgba(0,179,77,0.3);
     line-height: 1; letter-spacing: -1px;
 }
 .patrimonio-details {
-    display: flex; justify-content: center; gap: 10px;
-    background: rgba(255,255,255,0.05); padding: 3px 10px; border-radius: 99px;
+    display: flex; justify-content: center; gap: 15px;
+    background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 99px;
     margin: 0 auto; width: fit-content; flex-shrink: 0;
 }
-.p-detail { font-size: 0.7rem; color: var(--c-on-surface-tertiary); display: flex; align-items: center; gap: 4px; }
-.dot { width: 6px; height: 6px; border-radius: 50%; }
-.dot.liquid { background: var(--c-primary); } .dot.invest { background: #BF5AF2; }
+.p-detail { font-size: 0.7rem; color: var(--c-on-surface-tertiary); display: flex; align-items: center; gap: 5px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; box-shadow: 0 0 5px currentColor; }
+.dot.liquid { background: var(--c-primary); color: var(--c-primary); } 
+.dot.invest { background: #BF5AF2; color: #BF5AF2; }
 
 /* --- TARJETA 3: INVERSIONES --- */
 .card-invest {
@@ -5599,10 +5598,10 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     display: flex; justify-content: space-around; align-items: center; flex: 1;
 }
 .invest-box { text-align: center; }
-.invest-label { font-size: 0.6rem; color: var(--c-on-surface-tertiary); display: block; margin-bottom: 2px; }
-.invest-val { font-size: clamp(1.1rem, 3vh, 1.6rem); font-weight: 800; color: #fff; line-height: 1; }
+.invest-label { font-size: 0.6rem; color: var(--c-on-surface-tertiary); display: block; margin-bottom: 4px; }
+.invest-val { font-size: clamp(1.2rem, 3.5vh, 1.8rem); font-weight: 800; color: #fff; line-height: 1; }
 .invest-pnl-badge {
-    font-size: 0.75rem; font-weight: 700; padding: 2px 6px; border-radius: 6px; display: inline-block;
+    font-size: 0.8rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; display: inline-block;
 }
 
 /* --- TARJETA 4: SALUD --- */
@@ -5610,21 +5609,19 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 .health-grid { display: flex; justify-content: space-around; align-items: center; flex: 1; }
 .health-item { text-align: center; display: flex; flex-direction: column; justify-content: center; }
 .health-label { font-size: 0.6rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; }
-.health-val { font-size: clamp(1.2rem, 3vh, 1.8rem); font-weight: 800; line-height: 1; margin: 2px 0; }
-.health-sub { font-size: 0.55rem; opacity: 0.6; }
+.health-val { font-size: clamp(1.3rem, 3.5vh, 2rem); font-weight: 800; line-height: 1; margin: 4px 0; }
+.health-sub { font-size: 0.6rem; opacity: 0.6; }
 .health-divider-vert { width: 1px; height: 60%; background: var(--c-outline); }
 
-/* Helpers */
-.text-positive { color: var(--c-success) !important; }
-.text-negative { color: var(--c-danger) !important; }
-.help-btn-mini { background: rgba(255,255,255,0.1); width: 18px; height: 18px; border-radius: 50%; border:none; color:#aaa; font-size:10px; display:flex; align-items:center; justify-content:center; }
-
-/* AJUSTE PC: Mantenemos columna única pero más ancha */
+/* Ajuste PC */
 @media (min-width: 840px) {
     .dashboard-stack-layout {
-        gap: 15px; /* Un poco más de aire en PC */
-        padding: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 1fr;
+        max-width: 900px;
+        padding: 30px;
+        gap: 20px;
     }
-    .math-total-giant { font-size: 4rem; }
-    .flow-number { font-size: 1.5rem; }
+    .card-flow { grid-column: 1 / -1; }
 }
