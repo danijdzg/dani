@@ -5222,113 +5222,114 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 .date-picker-trigger { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 8px; flex: 1; cursor: pointer; }
 .compact-date-input::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; transform: scale(0.8); cursor: pointer; }
 
-/* ================================================================= */
-/* === CALCULADORA PRO (PANTALLA Y TECLADO VISIBLES) === */
+//* ================================================================= */
+/* === CALCULADORA ESTILO iOS (Clon Exacto) === */
 /* ================================================================= */
 
-/* 1. Contenedor Principal (El chasis) */
+/* 1. Contenedor Principal */
 #calculator-ui {
-    background-color: #000000; /* Fondo negro puro o muy oscuro */
-    padding-bottom: env(safe-area-inset-bottom);
-    border-top: 1px solid rgba(255,255,255,0.1);
-    box-shadow: 0 -20px 50px rgba(0,0,0,0.5);
-    z-index: 2147483647 !important; /* Siempre encima de todo */
+    background-color: #000000;
+    padding: 15px;
+    padding-bottom: calc(15px + env(safe-area-inset-bottom));
+    /* Bordes redondeados superiores */
+    border-radius: 30px 30px 0 0; 
+    box-shadow: 0 -20px 40px rgba(0,0,0,0.5);
 }
 
-/* 2. Área de Pantalla (Contenedor de textos) */
-/* Esto arregla el fallo: antes estaba oculto o mal posicionado */
+/* 2. Pantalla */
 .calculator-screen-area {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
     align-items: flex-end;
-    padding: 20px 24px 10px 24px;
+    padding: 0 15px 15px 15px;
     background-color: #000000;
-    min-height: 100px; /* Altura mínima para que respire */
+    min-height: 100px;
 }
 
-/* 3. Historial (La operación: "50 + 20") */
 #calculator-history-display {
-    font-family: var(--font-numeric);
+    color: #888;
     font-size: 1.2rem;
-    color: var(--c-on-surface-tertiary); /* Gris claro */
-    margin-bottom: 4px;
-    min-height: 1.5rem; /* Para que no salte si está vacío */
-    font-weight: 500;
-    opacity: 0.8;
+    min-height: 1.5rem;
+    margin-bottom: 5px;
 }
 
-/* 4. Display Principal (El número que escribes) */
 #calculator-display {
-    display: block !important; /* FORZAMOS QUE SE VEA */
-    font-family: var(--font-numeric);
-    font-weight: 700;
-    color: #FFFFFF;
+    font-size: 4rem; /* Números muy grandes */
+    font-weight: 300;
+    color: #fff;
     line-height: 1;
-    text-align: right;
-    width: 100%;
-    /* Ajuste fluido del tamaño de fuente */
-    font-size: 3.5rem; 
-    letter-spacing: -1px;
-    
-    /* Evita que el número se salga si es muy largo */
-    white-space: nowrap;
-    overflow-x: auto; 
-    overflow-y: hidden;
-    scrollbar-width: none; /* Ocultar scrollbar */
 }
-#calculator-display::-webkit-scrollbar { display: none; }
 
-/* Estilos para los decimales pequeños (Efecto Fintech) */
-#calculator-display .currency-major { font-size: 1em; }
-#calculator-display .currency-minor { font-size: 0.6em; opacity: 0.7; vertical-align: top; margin-top: 0.2em; display: inline-block;}
-
-/* 5. Ajuste del Grid de Botones */
+/* 3. Rejilla de Botones */
 .calculator-grid {
-    padding: 0 10px 10px 10px;
-    gap: 10px; /* Separación entre teclas estilo iOS */
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 12px; /* Separación entre botones */
 }
 
+/* 4. Botones Base (Números - Gris Oscuro) */
 .calculator-btn {
-    background-color: #333333; /* Gris oscuro botón */
-    border-radius: 40px; /* Botones redondos/ovalados */
-    height: 70px; /* Botones más altos y fáciles de tocar */
-    font-size: 1.8rem;
+    appearance: none;
     border: none;
+    background-color: #333333;
+    color: #ffffff;
+    font-size: 1.7rem;
     font-weight: 500;
-    color: #FFF;
-    transition: background-color 0.1s;
+    border-radius: 50%; /* Círculo perfecto */
+    width: 100%;
+    /* Mantiene proporción 1:1 para que sean redondos sin importar el ancho de pantalla */
+    aspect-ratio: 1; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: filter 0.2s;
+    margin: 0;
 }
 
-.calculator-btn:active { background-color: #555; }
+.calculator-btn:active {
+    filter: brightness(1.4); /* Efecto al pulsar */
+}
 
-/* Operadores (Columna derecha) */
-.calculator-btn[data-key="divide"],
-.calculator-btn[data-key="multiply"],
-.calculator-btn[data-key="subtract"],
-.calculator-btn[data-key="add"],
-.calculator-btn.btn-confirm {
-    background-color: #FF9F0A; /* Naranja iOS */
-    color: white;
+/* 5. Botones de Función (Gris Claro - Texto Negro: AC, +/-, %) */
+.calculator-btn.btn-function {
+    background-color: #A5A5A5;
+    color: #000000;
     font-weight: 600;
+    font-size: 1.4rem;
 }
-.calculator-btn.btn-confirm {
-    background-color: var(--c-primary); /* O el verde de tu marca */
-}
-
-/* Botones Superiores (AC, Borrar) */
-.calculator-btn[data-key="clear"],
-.calculator-btn[data-key="backspace"] {
-    background-color: #A5A5A5; /* Gris claro */
-    color: #000; /* Texto negro */
-    font-weight: 600;
+.calculator-btn.btn-function:active {
+    background-color: #D4D4D2;
 }
 
-/* El botón CERO ocupa 2 espacios */
+/* 6. Botones de Operador (Naranja: /, x, -, +, =) */
+.calculator-btn.btn-operator {
+    background-color: #FF9F0A;
+    color: #ffffff;
+    font-size: 2rem;
+    padding-bottom: 4px;
+}
+.calculator-btn.btn-operator:active {
+    background-color: #FBC78D;
+    color: #FF9F0A;
+}
+
+/* Estado activo del operador seleccionado (Invierte colores) */
+.btn-operator--active {
+    background-color: #ffffff !important;
+    color: #FF9F0A !important;
+}
+
+/* 7. El Botón Cero (Ancho) */
 .calculator-btn.zero {
-    border-radius: 40px;
-    padding-left: 30px;
-    justify-content: flex-start; /* Alineado a la izquierda como iOS */
+    grid-column: span 2;
+    width: 100%;
+    aspect-ratio: auto; /* Desactiva el ratio 1:1 */
+    height: auto; /* Hereda la altura de la fila */
+    border-radius: 40px; /* Forma de píldora */
+    justify-content: flex-start;
+    padding-left: 28px; /* Texto alineado a la izquierda */
 }
 /* ================================================================= */
 /* === PANEL VERTICAL "VISUAL STACK" (Final) === */

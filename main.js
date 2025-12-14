@@ -1092,22 +1092,19 @@ const fetchBtcPrice = async () => {
     }
     return btcPriceData.price || 0; // Retorna 0 o el último precio conocido si falla
 };
-/* EN main.js - REEMPLAZO DE handleCalculatorInput */
-
 const handleCalculatorInput = (key) => {
     hapticFeedback('light');
     let { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue } = calculatorState;
     
-    // Lista de operadores básicos
+    // Operadores
     const isOperator = ['add', 'subtract', 'multiply', 'divide'].includes(key);
 
     if (isOperator) {
-        // ... (Lógica de operadores igual que antes) ...
         if (operand1 !== null && operator !== null && !waitingForNewValue) {
             calculate();
             displayValue = calculatorState.displayValue; 
         }
-        operand1 = parseCalculatorValue(displayValue); // Usamos el helper de parseo seguro
+        operand1 = parseCalculatorValue(displayValue);
         operator = key;
         historyValue = `${displayValue} ${getOperatorSymbol(operator)}`;
         waitingForNewValue = true;
@@ -1115,20 +1112,19 @@ const handleCalculatorInput = (key) => {
         
     } else {
         switch(key) {
-            case 'done': // Botón Igual (=)
+            case 'done': // Botón IGUAL (=)
                 hapticFeedback('medium');
-                // Si hay operación pendiente, calculamos
                 if (operand1 !== null && operator !== null) {
                     calculate(); 
                     displayValue = calculatorState.displayValue;
                 }
                 
-                // Efecto visual de cierre
+                // Actualiza el input y cierra
                 updateTargetInput(displayValue);
                 historyValue = '';
                 hideCalculator();
                 
-                // Avance automático
+                // Pasa al siguiente campo (Concepto)
                 setTimeout(() => {
                     const conceptoSelect = document.getElementById('movimiento-concepto');
                     const wrapper = conceptoSelect?.closest('.custom-select-wrapper');
@@ -1137,23 +1133,22 @@ const handleCalculatorInput = (key) => {
                 }, 100); 
                 return;
 
-            case 'sign': // (+/-) Invierte el signo
+            case 'sign': // Botón (+/-)
                 if (displayValue !== '0') {
                     if (displayValue.startsWith('-')) displayValue = displayValue.slice(1);
                     else displayValue = '-' + displayValue;
                 }
                 break;
 
-            case 'percent': // (%) Divide por 100
+            case 'percent': // Botón (%)
                 const val = parseFloat(displayValue.replace(',', '.'));
                 if (!isNaN(val)) {
-                    // Calculamos porcentaje directo o relativo según contexto
-                    // Comportamiento iOS simple: valor / 100
+                    // Divide por 100
                     displayValue = (val / 100).toString().replace('.', ',');
                 }
                 break;
 
-            case 'clear': // (AC)
+            case 'clear': // Botón (AC)
                 displayValue = '0';
                 waitingForNewValue = true;
                 operand1 = null;
@@ -1162,7 +1157,7 @@ const handleCalculatorInput = (key) => {
                 historyValue = '';
                 break;
 
-            case 'backspace': // Borrar último dígito (Opcional, iOS usa swipe pero lo mantenemos por si acaso)
+            case 'backspace': // Borrar (Por si usas teclado físico)
                 displayValue = displayValue.length > 1 ? displayValue.slice(0, -1) : '0';
                 if (displayValue === '0' || displayValue === '-') { displayValue = '0'; waitingForNewValue = true; }
                 break;
@@ -1176,7 +1171,7 @@ const handleCalculatorInput = (key) => {
                 if (waitingForNewValue || displayValue === '0') {
                     displayValue = key;
                     waitingForNewValue = false;
-                } else if (displayValue.replace(/[.,]/, '').length < 9) { // Límite 9 dígitos
+                } else if (displayValue.replace(/[.,]/, '').length < 12) { // Límite de dígitos
                     displayValue += key;
                 }
                 break;
@@ -1191,7 +1186,7 @@ const handleCalculatorInput = (key) => {
     updateCalculatorHistoryDisplay();
     updateActiveOperatorButton();
 
-    // Actualización en tiempo real del input de fondo (salvo si estamos operando)
+    // Reflejo en tiempo real en el input de fondo
     if (!operand1 || isResultDisplayed) {
         updateTargetInput(displayValue);
     }
