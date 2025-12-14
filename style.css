@@ -1232,11 +1232,45 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
 }
 
 #calculator-display {
-    font-size: 4rem; /* Números muy grandes como en iOS */
-    font-weight: 300; /* Fuente más fina */
-    letter-spacing: -1px;
+    font-size: 3.5rem; /* Tamaño móvil */
+    font-weight: 300;
     color: #fff;
-    padding-right: 10px;
+    letter-spacing: -1px;
+}
+/* --- 2. EXCEPCIÓN: DISEÑO ESCRITORIO (Flotante a la derecha) --- */
+/* Solo se aplica si la pantalla es ancha (> 840px) */
+
+@media (min-width: 840px) {
+    #calculator-overlay {
+        background-color: transparent; /* Sin fondo oscuro en PC */
+        pointer-events: none; /* Permite clicar fuera */
+        justify-content: center; /* Reseteamos alineación */
+        align-items: flex-start;
+    }
+
+    #calculator-ui {
+        position: fixed;
+        width: 340px; /* Ancho fijo de "calculadora física" */
+        bottom: 40px;
+        left: 900px; /* Posición al lado de la app principal */
+        
+        border-radius: 24px; /* Redondeado completo */
+        border: 1px solid var(--c-outline);
+        
+        /* Animación lateral en vez de vertical */
+        transform: translateX(20px);
+        opacity: 0;
+        pointer-events: auto; /* Reactivar clics en la calculadora */
+    }
+
+    #calculator-overlay.modal-overlay--active #calculator-ui {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    
+    #calculator-display {
+        font-size: 4rem; /* Un poco más grande en PC */
+    }
 }
 
 /* 2. Grid Espaciado */
@@ -1623,14 +1657,47 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     
     /* El overlay de la calculadora sale del flujo de la app */
     #calculator-overlay {
-        width: auto !important; /* Ancho libre */
-        left: 0 !important;
-        right: 0 !important;
-        transform: none !important;
-        background: transparent !important;
-        pointer-events: none; /* Permite clicar en la app aunque la calc esté abierta */
-    }
-
+    position: fixed;
+    inset: 0; /* Ocupa toda la pantalla */
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
+    z-index: 20000 !important; /* Por encima de TODO */
+    
+    /* Flexbox para alinear la calculadora ABAJO */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Pega el contenido al fondo */
+    align-items: center;
+    
+    /* Estado inicial: invisible */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-out;
+}
+	/* Cuando se activa */
+#calculator-overlay.modal-overlay--active {
+    opacity: 1;
+    pointer-events: auto;
+}
+/* El cuerpo de la calculadora (Teclado) */
+#calculator-ui {
+    width: 100%; /* En móvil ocupa todo el ancho */
+    max-width: 100%;
+    
+    background-color: #000000; /* Negro puro estilo Apple */
+    padding: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom)); /* Respetar barra iOS */
+    
+    border-radius: 24px 24px 0 0; /* Redondeado solo arriba */
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+    
+    /* Animación de deslizamiento hacia arriba */
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* Al activar, sube a su sitio */
+#calculator-overlay.modal-overlay--active #calculator-ui {
+    transform: translateY(0);
+}
     /* El cuerpo de la calculadora se posiciona a la derecha de la app */
     #calculator-overlay .calculator-ui {
         position: fixed;
@@ -5307,13 +5374,10 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 
 /* Pantalla de números */
 .calculator-screen-area {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: flex-end;
-    padding: 0 15px 15px 15px;
-    background-color: #000000;
-    min-height: 100px; /* Altura suficiente para historial y número */
+    background-color: transparent;
+    padding: 0 10px 10px 10px;
+    margin-bottom: 5px;
+    text-align: right;
 }
 
 /* Historial pequeño (ej: "50 +") */

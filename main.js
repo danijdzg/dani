@@ -8582,15 +8582,13 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
     trigger.innerHTML = selectedHTML;
 }
 
-/* EN main.js - Reemplaza showCalculator */
-
 const showCalculator = (targetInput) => {
     const calculatorOverlay = select('calculator-overlay');
     const calculatorUi = select('calculator-ui');
     
     if (!calculatorOverlay) return;
     
-    // 1. Mostrar la UI (sin bloquear scroll de fondo visualmente)
+    // 1. Mostrar la UI
     calculatorOverlay.classList.add('modal-overlay--active');
     calculatorState.isVisible = true;
     calculatorState.targetInput = targetInput;
@@ -8600,10 +8598,38 @@ const showCalculator = (targetInput) => {
     calculatorState.displayValue = currentValue ? currentValue.toString().replace('.', ',') : '0';
     calculatorState.waitingForNewValue = true;
     
+    // Resetear operadores
+    calculatorState.operand1 = null;
+    calculatorState.operator = null;
+    calculatorState.historyValue = '';
+    
     updateCalculatorDisplay(); 
     updateCalculatorHistoryDisplay();
+    updateActiveOperatorButton();
 
-    // 3. Gestión de Teclado Físico (PC)
+    // 3. Feedback Visual en el Input
+    document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
+    targetInput.classList.add('form-input--active-calc');
+    
+    // 4. SCROLL INTELIGENTE PARA MÓVIL
+    // Esperamos 300ms a que la calculadora suba (animación CSS)
+    setTimeout(() => {
+        // Altura de la calculadora (aprox 45% de la pantalla o altura fija)
+        const uiHeight = calculatorUi ? calculatorUi.offsetHeight : 350;
+        
+        // Dónde está el input en la pantalla
+        const inputRect = targetInput.getBoundingClientRect();
+        
+        // El espacio visible que nos queda arriba
+        const visibleHeight = window.innerHeight - uiHeight;
+        
+        // Si el input está cubierto o muy cerca del borde del teclado
+        if (inputRect.bottom > visibleHeight) {
+            targetInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 300);
+
+    // 5. Gestión de Teclado Físico (Solo PC)
     if (calculatorKeyboardHandler) document.removeEventListener('keydown', calculatorKeyboardHandler);
     calculatorKeyboardHandler = (e) => {
         const key = e.key;
@@ -8618,37 +8644,6 @@ const showCalculator = (targetInput) => {
         else if (key === '/') { e.preventDefault(); handleCalculatorInput('divide'); }
     };
     document.addEventListener('keydown', calculatorKeyboardHandler);
-
-    // 4. Feedback Visual en el Input
-    document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
-    targetInput.classList.add('form-input--active-calc');
-    
-    // 5. === SCROLL INTELIGENTE PARA NO TAPAR ===
-    setTimeout(() => {
-        // Altura real del teclado (~260px con los nuevos estilos)
-        const uiHeight = calculatorUi ? calculatorUi.offsetHeight : 260;
-        
-        const inputRect = targetInput.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        
-        // Calculamos dónde termina el input visualmente
-        const inputBottom = inputRect.bottom;
-        // Calculamos dónde empieza el teclado
-        const keyboardTop = windowHeight - uiHeight;
-        
-        // Si el input está por debajo del inicio del teclado (tapado)
-        if (inputBottom > keyboardTop) {
-            // Calculamos cuánto hay que subir (con 20px de margen extra para que respire)
-            const scrollAmount = (inputBottom - keyboardTop) + 20;
-            
-            // Buscamos quién tiene el scroll (el modal o la página principal)
-            const scrollContainer = targetInput.closest('.modal__body') || selectOne('.app-layout__main');
-            
-            if (scrollContainer) {
-                scrollContainer.scrollBy({ top: scrollAmount, behavior: 'smooth' });
-            }
-        }
-    }, 250); // Esperamos a que termine la animación de subida del teclado
 };
 
 const hideCalculator = () => {
