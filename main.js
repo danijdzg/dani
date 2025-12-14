@@ -1090,7 +1090,7 @@ const handleCalculatorInput = (key) => {
     hapticFeedback('light');
     let { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue } = calculatorState;
     
-    // Operadores
+    // Lista de operadores
     const isOperator = ['add', 'subtract', 'multiply', 'divide'].includes(key);
 
     if (isOperator) {
@@ -1109,30 +1109,29 @@ const handleCalculatorInput = (key) => {
             case 'done': // Botón IGUAL (=)
                 hapticFeedback('medium');
                 
-                // CONDICIÓN DE DOBLE PULSACIÓN:
-                // Si hay una operación pendiente (ej: "50 + 50"), calculamos y mostramos.
+                // CASO A: Hay una operación pendiente (Ej: "50 + 20")
+                // Acción: CALCULAR y MOSTRAR resultado, pero NO cerrar todavía.
                 if (operand1 !== null && operator !== null && !waitingForNewValue) {
                     calculate(); 
                     displayValue = calculatorState.displayValue;
-                    // IMPORTANTE: Reseteamos operandos para que la próxima vez entre en el 'else'
+                    
+                    // Reseteamos operandos para que el próximo click entre en el CASO B
                     calculatorState.operand1 = null;
                     calculatorState.operator = null;
                     
-                    // Actualizamos UI pero NO cerramos todavía
                     updateCalculatorDisplay();
                     updateCalculatorHistoryDisplay();
-                    return; // Salimos aquí esperando el segundo clic
+                    return; // IMPORTANTE: Salimos para esperar el segundo clic
                 } 
-                // Si NO hay operación pendiente (es el segundo clic o un número directo), cerramos.
+                
+                // CASO B: No hay operación (Ej: He puesto "100" directo, o es el segundo clic tras calcular)
+                // Acción: CONFIRMAR, TRANSFERIR valor y CERRAR.
                 else {
-                    // Actualiza el input del formulario
                     updateTargetInput(displayValue);
-                    
-                    // Limpieza y Cierre
                     historyValue = '';
                     hideCalculator();
                     
-                    // Avance automático al siguiente campo
+                    // Avance automático
                     setTimeout(() => {
                         const conceptoSelect = document.getElementById('movimiento-concepto');
                         const wrapper = conceptoSelect?.closest('.custom-select-wrapper');
@@ -1142,22 +1141,19 @@ const handleCalculatorInput = (key) => {
                 }
                 return;
 
-            case 'sign': // Botón (+/-)
+            case 'sign': 
                 if (displayValue !== '0') {
                     if (displayValue.startsWith('-')) displayValue = displayValue.slice(1);
                     else displayValue = '-' + displayValue;
                 }
                 break;
 
-            case 'percent': // Botón (%)
+            case 'percent':
                 const val = parseFloat(displayValue.replace(',', '.'));
-                if (!isNaN(val)) {
-                    // Divide por 100
-                    displayValue = (val / 100).toString().replace('.', ',');
-                }
+                if (!isNaN(val)) displayValue = (val / 100).toString().replace('.', ',');
                 break;
 
-            case 'clear': // Botón (AC)
+            case 'clear': 
                 displayValue = '0';
                 waitingForNewValue = true;
                 operand1 = null;
@@ -1166,7 +1162,7 @@ const handleCalculatorInput = (key) => {
                 historyValue = '';
                 break;
 
-            case 'backspace': // Borrar (Por si usas teclado físico)
+            case 'backspace': 
                 displayValue = displayValue.length > 1 ? displayValue.slice(0, -1) : '0';
                 if (displayValue === '0' || displayValue === '-') { displayValue = '0'; waitingForNewValue = true; }
                 break;
@@ -1176,26 +1172,24 @@ const handleCalculatorInput = (key) => {
                 else if (!displayValue.includes(',')) displayValue += ',';
                 break;
 
-            default: // Números (0-9)
+            default: // Números
                 if (waitingForNewValue || displayValue === '0') {
                     displayValue = key;
                     waitingForNewValue = false;
-                } else if (displayValue.replace(/[.,]/, '').length < 12) { // Límite de dígitos
+                } else if (displayValue.replace(/[.,]/, '').length < 12) {
                     displayValue += key;
                 }
                 break;
         }
     }
     
-    // Guardar estado
+    // Guardar estado y actualizar UI
     Object.assign(calculatorState, { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue });
-    
-    // Actualizar UI
     updateCalculatorDisplay();
     updateCalculatorHistoryDisplay();
     updateActiveOperatorButton();
 
-    // Reflejo en tiempo real en el input de fondo
+    // Actualización en tiempo real del input de fondo
     if (!operand1 || isResultDisplayed) {
         updateTargetInput(displayValue);
     }
@@ -4777,18 +4771,21 @@ const renderPanelPage = async () => {
                         <span class="material-icons card-icon-font">sync_alt</span>
                         <span>FLUJO DE CAJA</span>
                     </div>
-                    <div class="report-filters">
-                        <select id="filter-periodo" class="form-select compact-select">
-                            <option value="mes-actual">Este Mes</option>
-                            <option value="año-actual">Este Año</option>
-                            <option value="custom">Personalizado</option>
-                        </select>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="ingresos">?</button>
+                        <div class="report-filters">
+                            <select id="filter-periodo" class="form-select compact-select">
+                                <option value="mes-actual">Este Mes</option>
+                                <option value="año-actual">Este Año</option>
+                                <option value="custom">Personalizado</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <div id="custom-date-filters" class="hidden compact-date-bar">
                     <input type="date" id="filter-fecha-inicio" class="tiny-date-input">
-                    <span style="opacity:0.5">➜</span>
+                    <span style="opacity:0.5; font-size:0.8rem; display:flex; align-items:center;">➜</span>
                     <input type="date" id="filter-fecha-fin" class="tiny-date-input">
                 </div>
 
@@ -4797,12 +4794,12 @@ const renderPanelPage = async () => {
                         <span class="flow-label text-success">INGRESOS</span>
                         <span id="kpi-ingresos-value" class="flow-number skeleton">...</span>
                     </div>
-                    <div class="flow-divider"></div>
+                    <div class="flow-sep"></div>
                     <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
                         <span class="flow-label text-danger">GASTOS</span>
                         <span id="kpi-gastos-value" class="flow-number skeleton">...</span>
                     </div>
-                    <div class="flow-divider"></div>
+                    <div class="flow-sep"></div>
                     <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
                         <span class="flow-label text-warning">AHORRO</span>
                         <span id="kpi-saldo-neto-value" class="flow-number skeleton">...</span>
@@ -4835,20 +4832,21 @@ const renderPanelPage = async () => {
                         <span class="material-icons card-icon-font" style="color:#BF5AF2">trending_up</span>
                         <span style="color:#BF5AF2">INVERSIONES</span>
                     </div>
-                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="inversiones">?</button>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="pnl">?</button>
                 </div>
 
                 <div class="invest-main">
+                    <span class="invest-label-top">VALOR ACTUAL</span>
                     <div id="new-card-market-value" class="invest-val-giant skeleton">0 €</div>
                 </div>
 
-                <div class="invest-details">
-                    <div class="i-detail">
-                        <span style="opacity:0.7">Capital:</span> 
+                <div class="invest-details-row">
+                    <div class="p-detail">
+                        <span style="opacity:0.7">Invertido:</span> 
                         <strong id="new-card-capital" style="color:#fff">...</strong>
                     </div>
-                    <div style="width:1px; height:12px; background:rgba(255,255,255,0.2);"></div>
-                    <div class="i-detail">
+                    <div style="width:1px; height:12px; background:rgba(255,255,255,0.2); align-self:center;"></div>
+                    <div class="p-detail">
                         <span style="opacity:0.7">P&L:</span> 
                         <strong id="new-card-pnl">...</strong>
                     </div>
@@ -4859,9 +4857,9 @@ const renderPanelPage = async () => {
                 <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">health_and_safety</span>
-                        <span>SALUD FINANCIERA</span>
+                        <span>SALUD</span>
                     </div>
-                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="salud">?</button>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="cobertura">?</button>
                 </div>
                 
                 <div class="health-grid">
