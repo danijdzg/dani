@@ -4784,12 +4784,12 @@ const renderPanelPage = async () => {
                         <span class="flow-label text-success">INGRESOS</span>
                         <span id="kpi-ingresos-value" class="flow-number skeleton">...</span>
                     </div>
-                    <div class="flow-sep"></div>
+                    <div class="flow-divider"></div>
                     <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
                         <span class="flow-label text-danger">GASTOS</span>
                         <span id="kpi-gastos-value" class="flow-number skeleton">...</span>
                     </div>
-                    <div class="flow-sep"></div>
+                    <div class="flow-divider"></div>
                     <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
                         <span class="flow-label text-warning">AHORRO</span>
                         <span id="kpi-saldo-neto-value" class="flow-number skeleton">...</span>
@@ -4822,7 +4822,7 @@ const renderPanelPage = async () => {
                         <span class="material-icons card-icon-font" style="color:#BF5AF2">trending_up</span>
                         <span style="color:#BF5AF2">INVERSIONES</span>
                     </div>
-                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="pnl">?</button>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="inversiones">?</button>
                 </div>
 
                 <div class="invest-main">
@@ -4832,10 +4832,10 @@ const renderPanelPage = async () => {
 
                 <div class="invest-details-row">
                     <div class="p-detail">
-                        <span style="opacity:0.7">Invertido:</span> 
+                        <span style="opacity:0.7">Capital:</span> 
                         <strong id="new-card-capital" style="color:#fff">...</strong>
                     </div>
-                    <div style="width:1px; height:14px; background:rgba(255,255,255,0.2);"></div>
+                    <div style="width:1px; height:12px; background:rgba(255,255,255,0.2); align-self:center;"></div>
                     <div class="p-detail">
                         <span style="opacity:0.7">P&L:</span> 
                         <strong id="new-card-pnl">...</strong>
@@ -4849,7 +4849,7 @@ const renderPanelPage = async () => {
                         <span class="material-icons card-icon-font">health_and_safety</span>
                         <span>SALUD FINANCIERA</span>
                     </div>
-                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="cobertura">?</button>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="salud">?</button>
                 </div>
                 
                 <div class="health-grid">
