@@ -1034,10 +1034,6 @@ const clearDiarioFilters = async () => {
 		};
         
 
-// Mapea las claves a los símbolos visuales
-const getOperatorSymbol = (key) => ({
-    'add': '+', 'subtract': '−', 'multiply': '×', 'divide': '÷'
-}[key] || '');
 
 const fetchBtcPrice = async () => {
     // Evitar llamadas excesivas (cache de 60 segundos)
