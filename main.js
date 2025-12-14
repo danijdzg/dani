@@ -4755,35 +4755,35 @@ async function calculateHistoricalIrrForGroup(accountIds) {
             if (userEmailEl && currentUser) userEmailEl.textContent = currentUser.email;  			
         };
 
-const renderPanelPage = async () => {
+const renderPanelPage = async () => {const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // Estructura Bento Grid: Header + 4 Áreas Principales
     container.innerHTML = `
         <div class="dashboard-bento-grid">
             
             <div class="bento-header">
-                <div class="d-header" style="padding:0;">
+                <div class="header-top-row">
                     <h2>Resumen Global</h2>
-                    <div class="report-filters" style="margin:0;">
+                    <div class="report-filters">
                         <select id="filter-periodo" class="form-select report-period-selector" 
-                                style="font-size:0.75rem; padding:4px 24px 4px 10px; height:auto; background:rgba(255,255,255,0.05); border:1px solid var(--c-outline);">
+                                style="font-size:0.75rem; padding:2px 20px 2px 8px; height:28px; background:rgba(255,255,255,0.05); border:1px solid var(--c-outline);">
                             <option value="mes-actual">Este Mes</option>
                             <option value="año-actual">Este Año</option>
                             <option value="custom">Personalizado</option>
                         </select>
                     </div>
                 </div>
-                <div id="custom-date-filters" class="hidden" style="margin-top:8px;">
-                    <div class="date-picker-trigger" onclick="document.getElementById('filter-fecha-inicio').showPicker()">
-                        <span class="material-icons" style="font-size:14px; color:var(--c-primary);">event</span>
-                        <input type="date" id="filter-fecha-inicio" class="compact-date-input">
+                
+                <div id="custom-date-filters" class="hidden compact-date-bar">
+                    <div class="date-input-wrapper">
+                        <span class="material-icons">event</span>
+                        <input type="date" id="filter-fecha-inicio" class="tiny-date-input">
                     </div>
-                    <span class="material-icons date-separator" style="font-size:14px; color:var(--c-on-surface-tertiary);">arrow_forward</span>
-                    <div class="date-picker-trigger" onclick="document.getElementById('filter-fecha-fin').showPicker()">
-                        <span class="material-icons" style="font-size:14px; color:var(--c-primary);">event</span>
-                        <input type="date" id="filter-fecha-fin" class="compact-date-input">
+                    <span class="date-separator">➜</span>
+                    <div class="date-input-wrapper">
+                        <span class="material-icons">event</span>
+                        <input type="date" id="filter-fecha-fin" class="tiny-date-input">
                     </div>
                 </div>
             </div>
@@ -4793,7 +4793,6 @@ const renderPanelPage = async () => {
                     <span>TU FLUJO</span>
                     <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="neto">?</button>
                 </div>
-                
                 <div class="flow-grid">
                     <div class="flow-item clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
                         <div class="flow-label text-success">Ingresos</div>
@@ -4804,7 +4803,7 @@ const renderPanelPage = async () => {
                         <div id="kpi-gastos-value" class="flow-value skeleton">...</div>
                     </div>
                     <div class="flow-item main clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
-                        <div class="flow-label text-warning">Ahorro Neto <small id="kpi-tasa-ahorro-value" style="opacity:0.8">(0%)</small></div>
+                        <div class="flow-label text-warning">Ahorro <small id="kpi-tasa-ahorro-value" style="opacity:0.8">(0%)</small></div>
                         <div id="kpi-saldo-neto-value" class="flow-value-big skeleton">...</div>
                     </div>
                 </div>
@@ -4815,19 +4814,12 @@ const renderPanelPage = async () => {
                     <span>PATRIMONIO</span>
                     <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
                 </div>
-                
                 <div class="patrimonio-content">
-                    <div id="kpi-patrimonio-neto-value" class="bento-value-giant skeleton" data-current-value="0">0 €</div>
+                    <div id="kpi-patrimonio-neto-value" class="bento-value-giant skeleton" style="white-space: nowrap;">0 €</div>
                     
                     <div class="patrimonio-split">
-                        <div class="split-item">
-                            <span class="dot liquid"></span> Líquido
-                            <strong id="kpi-liquidez-value">...</strong>
-                        </div>
-                        <div class="split-item">
-                            <span class="dot invest"></span> Invertido
-                            <strong id="kpi-capital-invertido-total">...</strong>
-                        </div>
+                        <div class="split-item"><span class="dot liquid"></span> Liq: <strong id="kpi-liquidez-value">...</strong></div>
+                        <div class="split-item"><span class="dot invest"></span> Inv: <strong id="kpi-capital-invertido-total">...</strong></div>
                     </div>
                 </div>
             </div>
@@ -4838,26 +4830,17 @@ const renderPanelPage = async () => {
                     <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="pnl">?</button>
                 </div>
                 <div class="invest-content">
-                    <div class="d-label" style="opacity:0.7">Valor de Mercado</div>
+                    <div class="d-label" style="opacity:0.7">Valor Mercado</div>
                     <div id="new-card-market-value" class="bento-value-large skeleton">...</div>
-                    
                     <div class="invest-footer">
-                        <div class="invest-stat">
-                            <span>Capital</span>
-                            <span id="new-card-capital" class="val-white">...</span>
-                        </div>
-                        <div class="invest-stat">
-                            <span>Ganancia</span>
-                            <span id="new-card-pnl" class="val-pnl">...</span>
-                        </div>
+                        <div class="invest-stat"><span>Cap</span> <span id="new-card-capital" class="val-white">...</span></div>
+                        <div class="invest-stat"><span>P&L</span> <span id="new-card-pnl" class="val-pnl">...</span></div>
                     </div>
                 </div>
             </div>
 
             <div class="bento-card bento-health">
-                <div class="bento-card-title">
-                    <span>SALUD FINANCIERA</span>
-                </div>
+                <div class="bento-card-title"><span>SALUD</span></div>
                 <div class="health-grid">
                     <div class="health-item">
                         <div class="d-label">Cobertura <button class="help-btn-inline" data-action="show-kpi-help" data-kpi="cobertura">?</button></div>
@@ -4871,7 +4854,7 @@ const renderPanelPage = async () => {
                 </div>
             </div>
 
-        </div> `;
+        </div>`;
     
     populateAllDropdowns();
     await Promise.all([loadPresupuestos(), loadInversiones()]);
@@ -6488,6 +6471,8 @@ const getLiquidityAccounts = () => {
     });
 };
 
+/* EN main.js - DENTRO DE scheduleDashboardUpdate */
+
 const scheduleDashboardUpdate = () => {
     if (dashboardUpdateDebounceTimer) clearTimeout(dashboardUpdateDebounceTimer);
     
@@ -6502,23 +6487,18 @@ const scheduleDashboardUpdate = () => {
             const saldos = await getSaldos();
             const visibleAccounts = getVisibleAccounts();
             
-            // --- CÁLCULOS ---
+            // --- CÁLCULOS (Igual que antes) ---
             const investmentAccounts = visibleAccounts.filter(c => c.esInversion);
-            
-            let totalCapitalInvertido = 0; // Lo que has puesto de tu bolsillo (Saldos)
-            let valorMercadoTotal = 0;     // Lo que vale hoy (Valoraciones)
+            let totalCapitalInvertido = 0;
+            let valorMercadoTotal = 0;
 
             if (investmentAccounts.length > 0) {
                 for (const cuenta of investmentAccounts) {
-                    // 1. Capital Invertido es el SALDO de la cuenta
                     const capitalCuenta = saldos[cuenta.id] || 0;
                     totalCapitalInvertido += capitalCuenta;
-
-                    // 2. Valor de Mercado es la última valoración
                     const valoraciones = (db.inversiones_historial || [])
                         .filter(v => v.cuentaId === cuenta.id)
                         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-                    
                     const valor = valoraciones.length > 0 ? valoraciones[0].valor : capitalCuenta;
                     valorMercadoTotal += valor;
                 }
@@ -6531,15 +6511,8 @@ const scheduleDashboardUpdate = () => {
                 }
             });
 
-            // Patrimonio Contable
             const patrimonioContable = liquidezTotal + totalCapitalInvertido;
-
-            // --- CÁLCULO P&L Y PORCENTAJE ---
             const pnlTotal = valorMercadoTotal - totalCapitalInvertido;
-            let pnlPct = 0;
-            if (totalCapitalInvertido !== 0) {
-                pnlPct = (pnlTotal / totalCapitalInvertido) * 100;
-            }
 
             // Datos de flujo
             const { current: currentMovs } = await getFilteredMovements(false);
@@ -6547,12 +6520,21 @@ const scheduleDashboardUpdate = () => {
             const { ingresos, gastos, saldoNeto } = calculateTotals(currentMovs, visibleAccountIds);
             const tasaAhorro = (ingresos > 0 && saldoNeto > 0) ? (saldoNeto / ingresos) * 100 : 0;
 
-            // Datos de salud (Usamos valor real de mercado para I.F.)
+            // Datos de salud
             const patrimonioRealParaCalculos = liquidezTotal + valorMercadoTotal;
             const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
             const fiData = calculateFinancialIndependence(patrimonioRealParaCalculos, efData.gastoMensualPromedio);
 
-            // --- ACTUALIZACIÓN UI ---
+            // --- ACTUALIZACIÓN UI CON COLORES ---
+
+            // Helper para aplicar color
+            const applyColor = (el, value, inverse = false) => {
+                if (!el) return;
+                el.classList.remove('text-positive', 'text-negative', 'text-neutral');
+                if (value > 0) el.classList.add(inverse ? 'text-negative' : 'text-positive');
+                else if (value < 0) el.classList.add(inverse ? 'text-positive' : 'text-negative');
+                else el.classList.add('text-neutral'); // Blanco/Gris si es 0
+            };
 
             // A. FLUJO
             const elIng = select('kpi-ingresos-value');
@@ -6561,66 +6543,70 @@ const scheduleDashboardUpdate = () => {
                     .forEach(el => el?.classList.remove('skeleton'));
                 
                 animateCountUp(elIng, ingresos, 700, true, '+');
+                applyColor(elIng, ingresos); // Ingresos siempre verde si > 0
+
                 animateCountUp(select('kpi-gastos-value'), gastos, 700, true, '');
+                applyColor(select('kpi-gastos-value'), gastos, true); // Gastos (negativo) -> Rojo si es < 0 (aunque lógicamente gasto es negativo, visualmente rojo)
                 
                 const elNeto = select('kpi-saldo-neto-value');
-                animateCountUp(elNeto, saldoNeto, 700, true, saldoNeto >= 0 ? '+' : '');
-                elNeto.className = saldoNeto >= 0 ? 'text-positive' : 'text-negative';
+                animateCountUp(elNeto, saldoNeto, 700, true, saldoNeto > 0 ? '+' : '');
+                applyColor(elNeto, saldoNeto);
 
                 const elAhorro = select('kpi-tasa-ahorro-value');
                 animateCountUp(elAhorro, tasaAhorro * 100, 700, false, '', '%');
                 elAhorro.className = tasaAhorro >= 0 ? 'text-positive' : 'text-warning';
             }
 
-            /// B. PATRIMONIO
+            // B. PATRIMONIO (Ahora con color en el gigante)
             const elPatrimonio = select('kpi-patrimonio-neto-value');
             if (elPatrimonio) {
                 [elPatrimonio, select('kpi-liquidez-value'), select('kpi-capital-invertido-total')]
                     .forEach(el => el?.classList.remove('skeleton'));
 
                 animateCountUp(elPatrimonio, patrimonioContable);
+                applyColor(elPatrimonio, patrimonioContable); // Verde si tienes dinero, Rojo si debes
+
                 animateCountUp(select('kpi-liquidez-value'), liquidezTotal);
                 animateCountUp(select('kpi-capital-invertido-total'), totalCapitalInvertido);
 
-                // --- NUEVO: CÁLCULO DE BARRAS VISUALES ---
+                // Barras visuales
                 const totalParaBarras = liquidezTotal + totalCapitalInvertido;
                 if (totalParaBarras > 0) {
                     const pctLiq = (liquidezTotal / totalParaBarras) * 100;
                     const pctInv = 100 - pctLiq;
-                    
                     const barLiq = select('hero-bar-liquid');
                     const barInv = select('hero-bar-invest');
-                    
                     if(barLiq) barLiq.style.width = `${pctLiq}%`;
                     if(barInv) barInv.style.width = `${pctInv}%`;
                 }
             }
 
-            // C. NUEVA TARJETA (Inversiones Realidad) - AQUÍ ESTÁ EL CAMBIO CLAVE
+            // C. INVERSIONES
             const elNewMarketVal = select('new-card-market-value');
             if (elNewMarketVal) {
                 elNewMarketVal.classList.remove('skeleton');
-                
-                // Capital
                 select('new-card-capital').textContent = formatCurrency(totalCapitalInvertido);
                 
-                // P&L con Porcentaje
                 const elPnl = select('new-card-pnl');
                 const sign = pnlTotal >= 0 ? '+' : '';
-                // Usamos innerHTML para formatear el porcentaje más pequeño
-                elPnl.innerHTML = `${sign}${formatCurrency(pnlTotal)} <small style="font-size:0.8em; opacity:0.9;">(${sign}${pnlPct.toFixed(2)}%)</small>`;
-                elPnl.className = pnlTotal >= 0 ? 'text-positive' : 'text-negative';
+                const pnlPct = totalCapitalInvertido !== 0 ? (pnlTotal / totalCapitalInvertido) * 100 : 0;
                 
-                // Resultado Total
+                elPnl.innerHTML = `${sign}${formatCurrency(pnlTotal)} <small style="font-size:0.8em; opacity:0.9;">(${sign}${pnlPct.toFixed(2)}%)</small>`;
+                applyColor(elPnl, pnlTotal); // Verde si ganas, Rojo si pierdes
+                
                 animateCountUp(elNewMarketVal, valorMercadoTotal);
+                // El valor de mercado total lo dejamos en blanco para no saturar, o verde si quieres:
+                // applyColor(elNewMarketVal, valorMercadoTotal); 
             }
 
-            // D. METAS
+            // D. SALUD
             const elRunway = select('health-runway-val');
             if (elRunway) {
                 elRunway.classList.remove('skeleton');
                 const meses = efData.mesesCobertura;
                 elRunway.textContent = isFinite(meses) ? (meses >= 100 ? '∞' : `${meses.toFixed(1)} Meses`) : '∞';
+                // Colorear meses: >6 verde, >3 amarillo, <3 rojo
+                elRunway.className = 'bento-value-health ' + (meses >= 6 ? 'text-positive' : (meses >= 3 ? 'text-warning' : 'text-negative'));
             }
 
             const elFi = select('health-fi-val');
@@ -6630,7 +6616,7 @@ const scheduleDashboardUpdate = () => {
             }
 
         } catch (error) {
-            console.error("Error actualizando cockpit:", error);
+            console.error("Error actualizando panel:", error);
         } finally {
             isDashboardRendering = false;
         }
