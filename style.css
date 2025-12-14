@@ -5191,19 +5191,6 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 }
 #panel-page:not(.view--active) { display: none !important; }
 
-/* 2. La Rejilla Maestra (Ajustada) */
-.dashboard-grid {
-    display: grid;
-    height: 100%;
-    /* Fila 1: Cabecera (Auto)
-       Fila 2: Flujo (La nueva tarjeta destacada - 0.9fr)
-       Fila 3: Patrimonio (En medio - 1.1fr)
-       Fila 4: Detalles (Abajo - 1fr)
-    */
-    grid-template-rows: min-content 0.9fr 1.1fr 1fr;
-    gap: 8px;
-    padding: 10px 12px 85px 12px;
-}
 
 /* 3. Estilos Base de Tarjetas */
 .d-card {
@@ -5368,176 +5355,133 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     justify-content: flex-start; /* Alineado a la izquierda como iOS */
 }
 /* ================================================================= */
-/* === PANEL VERTICAL "MATH STACK" (Diseño Didáctico Final) === */
+/* === PANEL VERTICAL "VISUAL STACK" (Final) === */
 /* ================================================================= */
 
-/* Contenedor Principal: Columna Única siempre */
-.dashboard-stack-layout {
+/* Contenedor Principal: Scroll Vertical Activado para que nada se corte */
+.dashboard-vertical-panel {
     display: flex;
     flex-direction: column;
-    gap: 16px; /* Espacio generoso entre tarjetas */
-    padding: 10px 10px 85px 10px;
+    gap: 20px;
+    padding: 15px 15px 100px 15px; /* Espacio extra abajo para el menú */
+    height: 100%;
+    overflow-y: auto; /* IMPORTANTE: Permite scroll si las tarjetas son grandes */
     width: 100%;
-    max-width: 600px; /* Ancho máximo elegante en PC para lectura vertical */
-    margin: 0 auto; /* Centrado automático en PC */
-    box-sizing: border-box;
+    max-width: 500px; /* Ancho máximo elegante para PC */
+    margin: 0 auto;   /* Centrado en PC */
 }
 
 /* Estilo Base de Tarjeta */
-.stack-card {
+.panel-card {
     background: var(--c-surface);
     border: 1px solid var(--c-outline);
-    border-radius: 20px;
+    border-radius: 24px; /* Bordes muy redondeados */
     padding: 20px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3); /* Sombra profunda */
     position: relative;
     overflow: hidden;
+    flex-shrink: 0; /* Evita que se aplasten */
 }
 
-/* Cabecera de Tarjeta */
-.stack-card-header {
+/* Cabeceras */
+.panel-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    padding-bottom: 10px;
-    margin-bottom: 5px;
+    margin-bottom: 15px;
 }
-.header-title-row {
-    display: flex; align-items: center; gap: 10px;
-    font-size: 0.85rem; font-weight: 800; letter-spacing: 1px;
-    color: var(--c-on-surface-secondary); text-transform: uppercase;
-}
-.card-icon {
-    font-family: 'Material Icons';
-    font-size: 20px;
-    color: var(--c-primary);
-    font-weight: normal;
+.panel-card-title {
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: var(--c-on-surface-secondary);
+    text-transform: uppercase;
 }
 
-/* Selector Compacto Integrado */
-.compact-select {
-    padding: 4px 24px 4px 10px !important;
-    height: 32px !important;
-    font-size: 0.8rem !important;
-    background-color: rgba(255,255,255,0.08) !important;
-    border-radius: 12px !important;
-    font-weight: 600;
-    border: 1px solid var(--c-outline) !important;
-    color: var(--c-on-surface) !important;
+/* --- TARJETA 1: FLUJO (Estilo Degradado) --- */
+.card-flow {
+    background: linear-gradient(160deg, var(--c-surface) 0%, rgba(255,255,255,0.05) 100%);
+    border-top: 1px solid rgba(255,255,255,0.1);
 }
-
-/* --- TARJETA 1: FLUJO (Horizontal) --- */
-.flow-card {
-    background: linear-gradient(180deg, var(--c-surface) 0%, rgba(255,255,255,0.02) 100%);
-}
-.flow-main-display {
+.flow-display {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: rgba(0,0,0,0.2);
+    border-radius: 16px;
+    padding: 15px 10px;
+}
+.flow-col {
+    display: flex; flex-direction: column; align-items: center; flex: 1; text-align: center;
+}
+.flow-label { font-size: 0.65rem; font-weight: 700; margin-bottom: 6px; opacity: 0.8; }
+.flow-val { font-size: 1.1rem; font-weight: 700; color: #fff; }
+.flow-divider { width: 1px; height: 30px; background: rgba(255,255,255,0.1); }
+
+/* --- TARJETA 2: PATRIMONIO (Estilo Neón) --- */
+.card-patrimonio {
+    background: radial-gradient(circle at 50% 0%, rgba(0, 179, 77, 0.2) 0%, #000000 100%);
+    border: 1px solid rgba(0, 179, 77, 0.5); /* Borde verde brillante */
+    box-shadow: 0 0 30px rgba(0, 179, 77, 0.15);
     text-align: center;
 }
-.flow-column {
-    display: flex; flex-direction: column; align-items: center; flex: 1;
-    justify-content: center;
-}
-.flow-column.result {
-    flex: 1.3;
-    background: rgba(255,214,10,0.05);
-    border-radius: 16px;
-    padding: 10px 5px;
-    border: 1px solid rgba(255,214,10,0.15);
-}
-.flow-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; opacity: 0.9; }
-.flow-number { font-size: clamp(1rem, 4vw, 1.3rem); font-weight: 700; }
-.flow-number-big { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; line-height: 1; color: #fff; }
-.math-operator { font-size: 1.5rem; font-weight: 300; color: var(--c-on-surface-tertiary); margin: 0 2px; }
-
-/* --- TARJETA 2: PATRIMONIO (Ecuación) --- */
-.patrimonio-card {
-    background: radial-gradient(circle at 50% 0%, rgba(0, 179, 77, 0.15) 0%, #0a1016 100%);
-    border: 1px solid rgba(0, 179, 77, 0.4);
-    box-shadow: 0 0 30px rgba(0, 179, 77, 0.1);
-}
-.math-equation-row {
-    display: flex; justify-content: space-around; align-items: flex-end;
-    margin-bottom: 5px; padding: 0 10px;
-}
-.math-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
-.math-label { font-size: 0.75rem; color: var(--c-on-surface-tertiary); margin-bottom: 4px; }
-.math-val { font-size: 1.1rem; font-weight: 600; color: var(--c-on-surface); }
-.math-sign { font-size: 1.5rem; color: var(--c-on-surface-tertiary); font-weight: 300; padding-bottom: 2px; }
-
-.math-result-row {
-    display: flex; flex-direction: column; align-items: center;
-    border-top: 1px dashed rgba(255,255,255,0.1);
-    padding-top: 15px;
-}
-.math-total-giant {
-    font-size: clamp(3.5rem, 10vw, 5rem); /* NÚMEROS GIGANTES */
+.patrimonio-val-big {
+    font-size: 3.5rem; /* Grande */
     font-weight: 800;
     color: #fff;
-    text-shadow: 0 0 30px rgba(0,179,77,0.4);
+    text-shadow: 0 0 25px rgba(0, 179, 77, 0.5);
+    margin: 10px 0 20px 0;
     line-height: 1;
-    margin-top: 5px;
-    letter-spacing: -2px;
 }
+.patrimonio-details {
+    display: flex; justify-content: center; gap: 15px;
+    background: rgba(255,255,255,0.05);
+    padding: 8px 16px; border-radius: 99px;
+    display: inline-flex;
+}
+.p-detail-item { font-size: 0.8rem; color: var(--c-on-surface-secondary); }
+.p-detail-item strong { color: #fff; margin-left: 4px; }
 
-/* --- TARJETA 3: INVERSIONES --- */
-.invest-card {
+/* --- TARJETA 3: INVERSIONES (Estilo Tech) --- */
+.card-invest {
     background: rgba(191, 90, 242, 0.05);
-    border-color: rgba(191, 90, 242, 0.3);
+    border: 1px solid rgba(191, 90, 242, 0.3);
 }
-.math-total-large { font-size: clamp(2rem, 6vw, 3rem); font-weight: 800; color: #fff; }
+.invest-display { text-align: center; }
+.invest-main { margin-bottom: 15px; }
+.invest-label { font-size: 0.75rem; color: var(--c-on-surface-tertiary); display: block; margin-bottom: 4px; }
+.invest-val-big { font-size: 2.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 15px rgba(191, 90, 242, 0.3); }
+.invest-grid {
+    display: flex; justify-content: space-around;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 12px;
+}
+.invest-item { display: flex; flex-direction: column; font-size: 0.9rem; color: var(--c-on-surface-secondary); }
 
 /* --- TARJETA 4: SALUD --- */
-.health-card { background: var(--c-surface); }
-.health-grid-2 { display: flex; justify-content: space-around; align-items: flex-start; }
-.health-box { text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center;}
-.health-val { font-size: clamp(1.8rem, 5vw, 2.5rem); font-weight: 800; line-height: 1.1; margin: 8px 0; }
-.health-desc { font-size: 0.65rem; color: var(--c-on-surface-tertiary); }
-.health-divider { width: 1px; height: 60px; background: var(--c-outline); }
+.card-health { background: var(--c-surface); }
+.health-grid { display: flex; justify-content: space-around; text-align: center; padding: 10px 0; }
+.health-item { display: flex; flex-direction: column; gap: 5px; }
+.health-label { font-size: 0.75rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; }
+.health-val { font-size: 1.8rem; font-weight: 800; }
 
-/* --- AYUDAS Y EXTRAS --- */
-.help-btn-mini, .help-btn-inline {
-    background: rgba(255,255,255,0.1); color: var(--c-on-surface-secondary);
-    border: none; border-radius: 50%; width: 22px; height: 22px;
-    font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
+/* --- Selectores y Botones --- */
+.compact-select {
+    background: rgba(255,255,255,0.1) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    color: #fff !important;
+    font-size: 0.75rem !important;
+    padding: 4px 10px !important;
+    height: auto !important;
 }
-.help-btn-mini:hover, .help-btn-inline:hover { background: var(--c-primary); color: #fff; transform: scale(1.1); }
-.help-btn-inline { width: 16px; height: 16px; font-size: 10px; margin-left: 6px; vertical-align: middle; display: inline-flex;}
-
-.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-.dot.liquid { background: var(--c-info); box-shadow: 0 0 5px var(--c-info); }
+.compact-date-bar {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px; margin-bottom: 15px;
+}
+.tiny-date-input {
+    background: transparent; border: 1px solid var(--c-outline); 
+    color: #fff; font-size: 0.8rem; padding: 4px; border-radius: 4px;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dot.liquid { background: var(--c-primary); box-shadow: 0 0 5px var(--c-primary); }
 .dot.invest { background: #BF5AF2; box-shadow: 0 0 5px #BF5AF2; }
-
-/* AJUSTE PARA PANTALLAS GRANDES (840px+) */
-@media (min-width: 840px) {
-    .dashboard-stack-layout {
-        /* En PC mantenemos la columna única pero aprovechamos mejor el ancho */
-        max-width: 100%; 
-        padding: 20px 40px;
-        gap: 20px;
-    }
-    
-    /* En PC, hacemos que el layout sea de 2 columnas para no desperdiciar espacio vertical */
-    .dashboard-stack-layout {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: auto auto auto;
-        grid-template-areas: 
-            "FLOW FLOW"
-            "PATR INVS"
-            "PATR HLTH";
-    }
-    .flow-card { grid-area: FLOW; }
-    .patrimonio-card { grid-area: PATR; justify-content: center; } /* Patrimonio alto a la izquierda */
-    .invest-card { grid-area: INVS; }
-    .health-card { grid-area: HLTH; }
-    
-    .math-total-giant { font-size: 5rem; }
-}

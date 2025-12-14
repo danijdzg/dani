@@ -4759,19 +4759,14 @@ const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // Estructura Vertical Matemática (4 Tarjetas Claras)
     container.innerHTML = `
-        <div class="dashboard-stack-layout">
+        <div class="dashboard-vertical-panel">
             
-            <div class="stack-card flow-card">
-                <div class="stack-card-header">
-                    <div class="header-title-row">
-                        <span class="card-icon">sync_alt</span>
-                        <span>TU FLUJO DEL PERIODO</span>
-                        <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="neto">?</button>
-                    </div>
+            <div class="panel-card card-flow">
+                <div class="panel-card-header">
+                    <span class="panel-card-title">FLUJO DE CAJA</span>
                     <div class="report-filters">
-                        <select id="filter-periodo" class="form-select report-period-selector compact-select">
+                        <select id="filter-periodo" class="form-select compact-select">
                             <option value="mes-actual">Este Mes</option>
                             <option value="año-actual">Este Año</option>
                             <option value="custom">Personalizado</option>
@@ -4780,109 +4775,85 @@ const renderPanelPage = async () => {
                 </div>
 
                 <div id="custom-date-filters" class="hidden compact-date-bar">
-                    <div class="date-input-wrapper"><span class="material-icons">event</span><input type="date" id="filter-fecha-inicio" class="tiny-date-input"></div>
-                    <span class="date-separator">➜</span>
-                    <div class="date-input-wrapper"><span class="material-icons">event</span><input type="date" id="filter-fecha-fin" class="tiny-date-input"></div>
+                    <input type="date" id="filter-fecha-inicio" class="tiny-date-input">
+                    <span style="opacity:0.5">➜</span>
+                    <input type="date" id="filter-fecha-fin" class="tiny-date-input">
                 </div>
 
-                <div class="flow-main-display">
-                    <div class="flow-column clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
+                <div class="flow-display">
+                    <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
                         <span class="flow-label text-success">INGRESOS</span>
-                        <span id="kpi-ingresos-value" class="flow-number skeleton">...</span>
+                        <span id="kpi-ingresos-value" class="flow-val skeleton">...</span>
                     </div>
-                    
-                    <span class="math-operator">-</span>
-                    
-                    <div class="flow-column clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
-                        <span class="flow-label text-danger">PAGOS</span>
-                        <span id="kpi-gastos-value" class="flow-number skeleton">...</span>
+                    <div class="flow-divider"></div>
+                    <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
+                        <span class="flow-label text-danger">GASTOS</span>
+                        <span id="kpi-gastos-value" class="flow-val skeleton">...</span>
                     </div>
-                    
-                    <span class="math-operator">=</span>
-                    
-                    <div class="flow-column result clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
-                        <span class="flow-label text-warning">AHORRO <small id="kpi-tasa-ahorro-value" style="opacity:0.8">(0%)</small></span>
-                        <span id="kpi-saldo-neto-value" class="flow-number-big skeleton">...</span>
+                    <div class="flow-divider"></div>
+                    <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
+                        <span class="flow-label text-warning">AHORRO</span>
+                        <span id="kpi-saldo-neto-value" class="flow-val skeleton">...</span>
                     </div>
                 </div>
             </div>
 
-            <div class="stack-card patrimonio-card clickable-kpi" data-action="show-kpi-drilldown" data-type="patrimonio">
-                <div class="stack-card-header">
-                    <div class="header-title-row">
-                        <span class="card-icon">account_balance</span>
-                        <span>PATRIMONIO NETO</span>
-                        <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
-                    </div>
+            <div class="panel-card card-patrimonio clickable-kpi" data-action="show-kpi-drilldown" data-type="patrimonio">
+                <div class="panel-card-header">
+                    <span class="panel-card-title" style="color:var(--c-primary)">PATRIMONIO NETO</span>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
                 </div>
                 
-                <div class="math-equation-row">
-                    <div class="math-item">
-                        <span class="math-label"><span class="dot liquid"></span> Líquido</span>
-                        <span id="kpi-liquidez-value" class="math-val">...</span>
-                    </div>
-                    <span class="math-sign">+</span>
-                    <div class="math-item">
-                        <span class="math-label"><span class="dot invest"></span> Invertido</span>
-                        <span id="kpi-capital-invertido-total" class="math-val">...</span>
-                    </div>
-                </div>
-                
-                <div class="math-result-row">
-                    <span class="math-sign">=</span>
-                    <div id="kpi-patrimonio-neto-value" class="math-total-giant skeleton">0 €</div>
-                </div>
-            </div>
-
-            <div class="stack-card invest-card">
-                <div class="stack-card-header">
-                    <div class="header-title-row">
-                        <span class="card-icon" style="color:#BF5AF2">trending_up</span>
-                        <span style="color:#BF5AF2">INVERSIONES</span>
-                        <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="pnl">?</button>
-                    </div>
-                </div>
-
-                <div class="math-equation-row">
-                    <div class="math-item">
-                        <span class="math-label">Capital Puesto</span>
-                        <span id="new-card-capital" class="math-val">...</span>
-                    </div>
-                    <span class="math-sign">+/-</span>
-                    <div class="math-item">
-                        <span class="math-label">Ganancia/Pérdida</span>
-                        <span id="new-card-pnl" class="math-val" style="font-weight:800;">...</span>
-                    </div>
-                </div>
-
-                <div class="math-result-row">
-                    <span class="math-sign">=</span>
-                    <div class="math-item result">
-                        <span class="math-label">Valor de Mercado</span>
-                        <span id="new-card-market-value" class="math-total-large skeleton">...</span>
+                <div class="patrimonio-display">
+                    <div id="kpi-patrimonio-neto-value" class="patrimonio-val-big skeleton">0 €</div>
+                    
+                    <div class="patrimonio-details">
+                        <div class="p-detail-item">
+                            <span class="dot liquid"></span> Líquido: <strong id="kpi-liquidez-value">...</strong>
+                        </div>
+                        <div class="p-detail-item">
+                            <span class="dot invest"></span> Invertido: <strong id="kpi-capital-invertido-total">...</strong>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="stack-card health-card">
-                <div class="stack-card-header">
-                    <div class="header-title-row">
-                        <span class="card-icon">health_and_safety</span>
-                        <span>SALUD FINANCIERA</span>
-                    </div>
+            <div class="panel-card card-invest">
+                <div class="panel-card-header">
+                    <span class="panel-card-title" style="color:#BF5AF2">RENDIMIENTO</span>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="pnl">?</button>
                 </div>
                 
-                <div class="health-grid-2">
-                    <div class="health-box">
-                        <div class="d-label">Cobertura <button class="help-btn-inline" data-action="show-kpi-help" data-kpi="cobertura">?</button></div>
-                        <div id="health-runway-val" class="health-val skeleton" style="color:#FFD60A;">...</div>
-                        <div class="health-desc">Meses sin ingresos</div>
+                <div class="invest-display">
+                    <div class="invest-main">
+                        <span class="invest-label">Valor de Mercado</span>
+                        <span id="new-card-market-value" class="invest-val-big skeleton">...</span>
                     </div>
-                    <div class="health-divider"></div>
-                    <div class="health-box">
-                        <div class="d-label">Libertad <button class="help-btn-inline" data-action="show-kpi-help" data-kpi="libertad">?</button></div>
-                        <div id="health-fi-val" class="health-val skeleton" style="color:#39FF14;">...</div>
-                        <div class="health-desc">% del Objetivo</div>
+                    <div class="invest-grid">
+                        <div class="invest-item">
+                            <span>Capital</span>
+                            <span id="new-card-capital" style="color:#fff; font-weight:600;">...</span>
+                        </div>
+                        <div class="invest-item">
+                            <span>Resultado</span>
+                            <span id="new-card-pnl" style="font-weight:800;">...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-card card-health">
+                <div class="panel-card-header">
+                    <span class="panel-card-title">SALUD FINANCIERA</span>
+                </div>
+                <div class="health-grid">
+                    <div class="health-item">
+                        <span class="health-label">Cobertura</span>
+                        <span id="health-runway-val" class="health-val skeleton" style="color:#FFD60A">...</span>
+                    </div>
+                    <div class="health-item">
+                        <span class="health-label">Libertad</span>
+                        <span id="health-fi-val" class="health-val skeleton" style="color:#39FF14">...</span>
                     </div>
                 </div>
             </div>
