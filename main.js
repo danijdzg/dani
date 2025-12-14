@@ -1039,14 +1039,6 @@ const getOperatorSymbol = (key) => ({
     'add': '+', 'subtract': '−', 'multiply': '×', 'divide': '÷'
 }[key] || '');
 
-// Gestiona qué botón de operador se ve activo
-const updateActiveOperatorButton = () => {
-    selectAll('.calculator-btn.btn-operator').forEach(btn => btn.classList.remove('btn-operator--active'));
-    if (calculatorState.operator) {
-        const activeBtn = document.querySelector(`.calculator-btn[data-key="${calculatorState.operator}"]`);
-        if (activeBtn) activeBtn.classList.add('btn-operator--active');
-    }
-};      
 const fetchBtcPrice = async () => {
     // Evitar llamadas excesivas (cache de 60 segundos)
     const now = Date.now();
