@@ -5463,110 +5463,134 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 .dot.invest { background: #BF5AF2; box-shadow: 0 0 5px #BF5AF2; }
 
 /* ================================================================= */
-/* === PANEL VERTICAL ELÁSTICO (Sin Scroll - Mobile Perfect) === */
+/* === PANEL VERTICAL PERFECTO (4 Tarjetas, Sin Scroll, Mobile Safe) === */
 /* ================================================================= */
 
-/* Contenedor Principal: Ocupa el 100% y bloquea scroll */
+/* Contenedor Principal: Ocupa el 100% y reparte espacio */
 .dashboard-stack-layout {
     display: flex;
     flex-direction: column;
     height: 100%;
     width: 100%;
-    padding: 10px 10px 85px 10px; /* Padding inferior ajustado */
+    /* Padding ajustado para dar aire pero no comer espacio vital */
+    padding: 8px 10px 85px 10px; 
     box-sizing: border-box;
     overflow: hidden; /* CORTA cualquier scroll */
-    gap: 8px;
-    max-width: 500px;
+    gap: 6px; /* Espacio reducido entre tarjetas para ganar altura */
+    max-width: 550px; /* En PC se ve como una app centrada elegante */
     margin: 0 auto;
 }
 
 /* Tarjeta Base Elástica */
 .stack-card {
-    flex: 1; /* Ocupa espacio disponible proporcionalmente */
-    min-height: 0; /* Permite encogerse */
+    flex: 1; /* Todas intentan ocupar espacio igual */
+    min-height: 0; /* PERMITE ENCOGERSE: Vital para que no se corten */
     background: var(--c-surface);
     border: 1px solid var(--c-outline);
     border-radius: 16px;
-    padding: 10px 14px;
+    padding: 8px 12px;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Centra contenido verticalmente */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    transition: flex-grow 0.3s; /* Animación suave si cambia de tamaño */
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transition: all 0.3s ease; /* Animación suave al cambiar tamaño */
 }
 
-/* Cabeceras de Tarjeta */
+/* Cabeceras de Tarjeta Ultra-Compactas */
 .stack-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 4px;
-    flex-shrink: 0; /* No se aplasta */
+    margin-bottom: 2px;
+    flex-shrink: 0; /* La cabecera no se aplasta */
+    min-height: 24px;
 }
 .header-title-row {
     display: flex; align-items: center; gap: 6px;
-    font-size: 0.7rem; font-weight: 700; 
-    color: var(--c-on-surface-secondary); text-transform: uppercase;
+    font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;
+    color: var(--c-on-surface-tertiary); text-transform: uppercase;
 }
-.card-icon-font { font-size: 16px; color: var(--c-primary); }
+.card-icon-font { font-size: 14px; color: var(--c-primary); }
 
-/* --- 1. FLUJO (Compacto pero completo) --- */
+/* Selector Compacto */
+.compact-select {
+    padding: 0 18px 0 6px !important;
+    height: 22px !important;
+    font-size: 0.65rem !important;
+    background-color: rgba(255,255,255,0.08) !important;
+    border-radius: 6px !important;
+    border: none !important;
+    color: var(--c-on-surface) !important;
+}
+
+/* --- TARJETA 1: FLUJO (Flexible para Fechas) --- */
 .card-flow {
-    flex-grow: 1.2; /* Un poco más grande para los filtros */
-    background: linear-gradient(160deg, var(--c-surface) 0%, rgba(255,255,255,0.03) 100%);
-    justify-content: flex-start;
+    /* Si aparecen fechas, esta tarjeta crecerá un poco a costa de las otras */
+    flex-grow: 1.2; 
+    background: linear-gradient(180deg, var(--c-surface) 0%, rgba(255,255,255,0.02) 100%);
+    justify-content: flex-start; /* Contenido arriba */
+    gap: 4px;
 }
-.flow-display {
-    display: flex; justify-content: space-between; align-items: center;
-    background: rgba(0,0,0,0.2); border-radius: 12px; padding: 8px;
-    margin-top: auto; margin-bottom: auto; /* Centrado vertical elástico */
-    height: 100%;
-}
-.flow-col { display: flex; flex-direction: column; align-items: center; flex: 1; text-align: center; justify-content: center; }
-.flow-label { font-size: 0.6rem; font-weight: 700; margin-bottom: 2px; opacity: 0.8; }
-.flow-number { font-size: clamp(0.9rem, 2.5vh, 1.2rem); font-weight: 700; color: #fff; }
-.flow-divider { width: 1px; height: 60%; background: rgba(255,255,255,0.1); }
 
-/* Filtro de Fechas Compacto */
+/* Barra de Fechas (Aparece y empuja contenido) */
 .compact-date-bar {
-    display: flex; justify-content: center; gap: 8px; margin-bottom: 6px;
-    background: rgba(0,0,0,0.2); padding: 4px; border-radius: 8px;
-    flex-shrink: 0;
+    display: flex; justify-content: center; gap: 6px; 
+    background: rgba(0,0,0,0.2); padding: 3px; border-radius: 6px;
+    flex-shrink: 0; margin-bottom: 2px;
 }
 .tiny-date-input {
     background: transparent; border: none; color: #fff;
-    font-size: 0.75rem; font-family: var(--font-numeric);
-    width: 90px; text-align: center;
-}
-.compact-select {
-    padding: 2px 20px 2px 8px !important; height: 24px !important;
-    font-size: 0.7rem !important; background-color: rgba(255,255,255,0.1) !important;
-    border: none !important; color: #fff !important;
+    font-size: 0.7rem; font-family: var(--font-numeric);
+    width: 85px; text-align: center; padding: 0;
 }
 
-/* --- 2. PATRIMONIO (Gigante) --- */
+/* Display de Números de Flujo */
+.flow-display {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(0,0,0,0.2); border-radius: 10px; padding: 6px;
+    flex: 1; /* Ocupa todo el espacio restante de la tarjeta */
+    min-height: 0; /* Permite que los textos se encojan si hace falta */
+}
+.flow-col { 
+    display: flex; flex-direction: column; 
+    align-items: center; justify-content: center; 
+    flex: 1; text-align: center; 
+}
+.flow-label { font-size: 0.55rem; font-weight: 700; margin-bottom: 2px; opacity: 0.7; }
+/* Fuente adaptable: Se hace pequeña si falta sitio */
+.flow-number { 
+    font-size: clamp(0.8rem, 2.2vh, 1.1rem); 
+    font-weight: 700; line-height: 1; color: #fff;
+    white-space: nowrap;
+}
+.flow-divider { width: 1px; height: 50%; background: rgba(255,255,255,0.1); }
+
+/* --- TARJETA 2: PATRIMONIO (Siempre Grande) --- */
 .card-patrimonio {
-    flex-grow: 1.5; /* La tarjeta más grande */
+    flex-grow: 1.4; /* Prioridad visual */
     background: radial-gradient(circle at 50% 100%, rgba(0, 179, 77, 0.15) 0%, var(--c-surface) 80%);
     border: 1px solid rgba(0, 179, 77, 0.3);
 }
-.patrimonio-main { text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; }
+.patrimonio-main { 
+    text-align: center; flex: 1; 
+    display: flex; align-items: center; justify-content: center; 
+}
 .math-total-giant {
-    font-size: clamp(2.5rem, 7vh, 4rem); /* Se adapta a la altura disponible */
+    font-size: clamp(2rem, 6vh, 3.5rem); /* Un poco más contenido para asegurar encaje */
     font-weight: 800; color: #fff;
     text-shadow: 0 0 20px rgba(0,179,77,0.3);
     line-height: 1; letter-spacing: -1px;
 }
 .patrimonio-details {
-    display: flex; justify-content: center; gap: 15px;
-    background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 99px;
+    display: flex; justify-content: center; gap: 10px;
+    background: rgba(255,255,255,0.05); padding: 3px 10px; border-radius: 99px;
     margin: 0 auto; width: fit-content; flex-shrink: 0;
 }
-.p-detail { font-size: 0.75rem; color: var(--c-on-surface-tertiary); display: flex; align-items: center; gap: 4px; }
+.p-detail { font-size: 0.7rem; color: var(--c-on-surface-tertiary); display: flex; align-items: center; gap: 4px; }
 .dot { width: 6px; height: 6px; border-radius: 50%; }
 .dot.liquid { background: var(--c-primary); } .dot.invest { background: #BF5AF2; }
 
-/* --- 3. INVERSIONES --- */
+/* --- TARJETA 3: INVERSIONES --- */
 .card-invest {
     background: rgba(191, 90, 242, 0.05); border-color: rgba(191, 90, 242, 0.2);
 }
@@ -5574,30 +5598,32 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     display: flex; justify-content: space-around; align-items: center; flex: 1;
 }
 .invest-box { text-align: center; }
-.invest-label { font-size: 0.65rem; color: var(--c-on-surface-tertiary); display: block; margin-bottom: 2px; }
-.invest-val { font-size: clamp(1.2rem, 3vh, 1.8rem); font-weight: 800; color: #fff; }
+.invest-label { font-size: 0.6rem; color: var(--c-on-surface-tertiary); display: block; margin-bottom: 2px; }
+.invest-val { font-size: clamp(1.1rem, 3vh, 1.6rem); font-weight: 800; color: #fff; line-height: 1; }
 .invest-pnl-badge {
-    font-size: 0.85rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; display: inline-block;
+    font-size: 0.75rem; font-weight: 700; padding: 2px 6px; border-radius: 6px; display: inline-block;
 }
 
-/* --- 4. SALUD --- */
+/* --- TARJETA 4: SALUD --- */
 .card-health { background: var(--c-surface); }
 .health-grid { display: flex; justify-content: space-around; align-items: center; flex: 1; }
 .health-item { text-align: center; display: flex; flex-direction: column; justify-content: center; }
-.health-label { font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; }
-.health-val { font-size: clamp(1.4rem, 3.5vh, 2rem); font-weight: 800; line-height: 1; margin: 2px 0; }
-.health-sub { font-size: 0.6rem; opacity: 0.6; }
+.health-label { font-size: 0.6rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; }
+.health-val { font-size: clamp(1.2rem, 3vh, 1.8rem); font-weight: 800; line-height: 1; margin: 2px 0; }
+.health-sub { font-size: 0.55rem; opacity: 0.6; }
 .health-divider-vert { width: 1px; height: 60%; background: var(--c-outline); }
 
-/* Ajuste PC */
+/* Helpers */
+.text-positive { color: var(--c-success) !important; }
+.text-negative { color: var(--c-danger) !important; }
+.help-btn-mini { background: rgba(255,255,255,0.1); width: 18px; height: 18px; border-radius: 50%; border:none; color:#aaa; font-size:10px; display:flex; align-items:center; justify-content:center; }
+
+/* AJUSTE PC: Mantenemos columna única pero más ancha */
 @media (min-width: 840px) {
     .dashboard-stack-layout {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: auto 1fr;
-        max-width: 900px;
-        gap: 20px;
-        padding: 30px;
+        gap: 15px; /* Un poco más de aire en PC */
+        padding: 20px;
     }
-    .flow-card { grid-column: 1 / -1; } /* Flujo ocupa todo el ancho */
+    .math-total-giant { font-size: 4rem; }
+    .flow-number { font-size: 1.5rem; }
 }

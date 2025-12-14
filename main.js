@@ -4764,15 +4764,14 @@ const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
-    // Estructura de Pila Vertical (4 Tarjetas)
     container.innerHTML = `
         <div class="dashboard-stack-layout">
             
-            <div class="stack-card flow-card">
+            <div class="stack-card card-flow">
                 <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">sync_alt</span>
-                        <span>FLUJO DE CAJA</span>
+                        <span>FLUJO</span>
                     </div>
                     <div class="report-filters">
                         <select id="filter-periodo" class="form-select compact-select">
@@ -4785,7 +4784,7 @@ const renderPanelPage = async () => {
 
                 <div id="custom-date-filters" class="hidden compact-date-bar">
                     <input type="date" id="filter-fecha-inicio" class="tiny-date-input">
-                    <span class="date-arrow">➜</span>
+                    <span style="opacity:0.5; font-size: 0.8rem;">➜</span>
                     <input type="date" id="filter-fecha-fin" class="tiny-date-input">
                 </div>
 
@@ -4807,7 +4806,7 @@ const renderPanelPage = async () => {
                 </div>
             </div>
 
-            <div class="stack-card patrimonio-card clickable-kpi" data-action="show-kpi-drilldown" data-type="patrimonio">
+            <div class="stack-card card-patrimonio clickable-kpi" data-action="show-kpi-drilldown" data-type="patrimonio">
                 <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">account_balance</span>
@@ -4826,7 +4825,7 @@ const renderPanelPage = async () => {
                 </div>
             </div>
 
-            <div class="stack-card invest-card">
+            <div class="stack-card card-invest">
                 <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font" style="color:#BF5AF2">trending_up</span>
@@ -4845,10 +4844,9 @@ const renderPanelPage = async () => {
                         <div id="new-card-pnl" class="invest-pnl-badge skeleton">...</div>
                     </div>
                 </div>
-                <span id="new-card-capital" style="display:none"></span>
             </div>
 
-            <div class="stack-card health-card">
+            <div class="stack-card card-health">
                 <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">health_and_safety</span>
