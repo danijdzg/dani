@@ -6155,26 +6155,30 @@ input[type="date"].form-input {
 }
 
 /* ================================================================= */
-/* === MENÚ FLOTANTE "SPEED DIAL" (Animación Espectacular) === */
+/* === MENÚ FLOTANTE "SPEED DIAL" (CORREGIDO) === */
 /* ================================================================= */
 
-/* 1. El contenedor del botón debe estar POR ENCIMA del fondo oscuro */
+/* 1. Contenedor FLOTANTE INDEPENDIENTE */
 .fab-container {
-    position: relative;
-    margin-top: -35px;
-    z-index: 2100 !important; /* <--- CAMBIO CRÍTICO: Mayor que 2000 */
+    position: fixed; /* Ahora es fixed, independiente de la nav */
+    bottom: 30px;    /* Altura ajustada para coincidir con la barra */
+    left: 50%;
+    transform: translateX(-50%); /* Centrado perfecto */
+    z-index: 2100 !important; /* CRÍTICO: Por encima del backdrop (2000) */
     display: flex;
     flex-direction: column;
     align-items: center;
+    /* Ajuste para iPhone X/11/12+ */
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* 2. El fondo oscuro se queda debajo */
+/* 2. El fondo oscuro (Backdrop) */
 .fab-backdrop {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8);
-    backdrop-filter: blur(4px);
-    z-index: 2000; /* Alto, pero menor que el botón (2100) */
+    background: rgba(0,0,0,0.85); /* Un poco más oscuro */
+    backdrop-filter: blur(6px);    /* Más desenfoque */
+    z-index: 2000; /* Debe ser MENOR que el .fab-container (2100) */
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s;
@@ -6185,135 +6189,11 @@ input[type="date"].form-input {
     pointer-events: auto;
 }
 
-/* Aseguramos que la barra de navegación no interfiera */
-.bottom-nav {
-    overflow: visible !important; /* Importante para que el menú salga hacia arriba */
-    z-index: 100;
-}
-
-/* 2. Botón Principal (+) */
-#bottom-nav-add-btn {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: var(--c-primary);
-    color: white;
-    border: 4px solid var(--c-background); /* Borde para recortar la barra */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(0, 179, 77, 0.4);
-    cursor: pointer;
-    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), background-color 0.2s;
-    z-index: 10;
-}
-
-/* Estado Activo: Gira a 'X' */
-.fab-container.active #bottom-nav-add-btn {
-    transform: rotate(135deg);
-    background-color: var(--c-surface-variant);
-    color: var(--c-danger);
-    box-shadow: none;
-}
-
-#bottom-nav-add-btn .material-icons {
-    font-size: 32px;
-    font-weight: 700;
-}
-
-/* 3. El Menú Desplegable */
-.fab-menu {
-    position: absolute;
-    bottom: 75px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column-reverse; /* Se apilan de abajo arriba */
-    gap: 15px;
-    align-items: center;
-    pointer-events: none;
-    width: 200px;
-}
-
-.fab-container.active .fab-menu {
-    pointer-events: auto;
-}
-
-/* 4. Botones Mini (Las Opciones) */
-.fab-mini-btn {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end; /* Texto izquierda, Icono derecha */
-    gap: 15px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    width: 100%;
-    
-    /* Estado Inicial: Oculto y desplazado */
-    opacity: 0;
-    transform: translateY(20px) scale(0.5);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-/* Animación de Entrada */
-.fab-container.active .fab-mini-btn {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    transition-delay: var(--delay); 
-}
-
-/* 5. Iconos Mini */
-.fab-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    color: white;
-    border: 1px solid rgba(255,255,255,0.1);
-}
-
-/* Colores */
-.icon-expense { background: linear-gradient(135deg, #FF3B30, #FF9F0A); }
-.icon-income { background: linear-gradient(135deg, #30D158, #00B34D); }
-.icon-transfer { background: linear-gradient(135deg, #BF5AF2, #5E5CE6); }
-
-/* 6. Etiquetas de Texto */
-.fab-label {
-    background-color: var(--c-surface);
-    color: var(--c-on-surface);
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    border: 1px solid var(--c-outline);
-    opacity: 0;
-    transform: translateX(10px);
-    transition: all 0.2s ease-out;
-}
-
-.fab-container.active .fab-label {
-    opacity: 1;
-    transform: translateX(0);
-    transition-delay: calc(var(--delay) + 50ms);
-}
-
-/* 7. Fondo Oscuro (Backdrop) */
-.fab-backdrop {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8); /* Oscuro fuerte */
-    backdrop-filter: blur(4px);
-    z-index: 1999;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-}
-.fab-backdrop.active {
-    opacity: 1;
-    pointer-events: auto;
+/* 3. Ajuste para Ordenador (Si usas la vista de escritorio) */
+@media (min-width: 840px) {
+    .fab-container {
+        /* En PC, el botón flota sobre la barra lateral/inferior */
+        left: 440px !important; /* Ajustar según tu diseño de columnas */
+        bottom: 40px;
+    }
 }

@@ -8663,7 +8663,7 @@ const hideCalculator = () => {
 	document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
 };
 
-/* EN main.js - NUEVA LÓGICA SPEED DIAL */
+/* EN main.js - VERSIÓN ROBUSTA DE setupFabInteractions */
 
 const setupFabInteractions = () => {
     const fabBtn = document.getElementById('bottom-nav-add-btn');
@@ -8689,37 +8689,49 @@ const setupFabInteractions = () => {
         if (isActive) {
             fabContainer.classList.add('active');
             backdrop.classList.add('active');
-            hapticFeedback('medium'); // Vibración al abrir
+            hapticFeedback('medium');
         } else {
             fabContainer.classList.remove('active');
             backdrop.classList.remove('active');
-            hapticFeedback('light'); // Vibración al cerrar
+            hapticFeedback('light');
         }
     };
 
-    // 3. Limpiar listeners antiguos clonando el botón
+    // 3. Listener del Botón Principal
     const newBtn = fabBtn.cloneNode(true);
     fabBtn.parentNode.replaceChild(newBtn, fabBtn);
 
-    // Click en el botón principal (+)
     newBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleFab(); // Alternar abierto/cerrado
+        toggleFab();
     });
 
-    // 4. Click en las opciones (Gasto, Ingreso...)
+    // 4. Listeners para los botones de opciones
     const options = document.querySelectorAll('.fab-mini-btn');
     options.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            // Cerramos el menú inmediatamente
+        // Clonamos para eliminar listeners antiguos
+        const newOptionBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newOptionBtn, btn);
+
+        newOptionBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // 1. Cerramos el menú
             toggleFab(false);
-            // La acción real (abrir formulario) la maneja el listener global 'click' 
-            // que busca el atributo data-action="open-movement-form".
+            
+            // 2. Ejecutamos la acción manualmente para asegurar que funciona
+            const type = newOptionBtn.dataset.type;
+            console.log("Abriendo formulario para:", type); // Depuración
+            
+            // Pequeño retardo para la animación
+            setTimeout(() => {
+                startMovementForm(null, false, type);
+            }, 100);
         });
     });
 };
-
  /* ========================================================= */
 /* === FUNCIONES DEL ESPEJO VISUAL (Números Bonitos)     === */
 /* ========================================================= */
