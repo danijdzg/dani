@@ -5784,3 +5784,88 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
     }
 }
+
+/* ================================================================= */
+/* === BOTONES SOFISTICADOS (FAB y Opciones) === */
+/* ================================================================= */
+
+/* 1. El Botón Principal (+) */
+#bottom-nav-add-btn {
+    /* Reemplazamos el color plano por un gradiente "Cyber" */
+    background: linear-gradient(135deg, #2563eb, #0a84ff); 
+    /* Añadimos una sombra con luz (Glow effect) */
+    box-shadow: 
+        0 8px 20px -5px rgba(10, 132, 255, 0.5), /* Sombra difusa azul */
+        inset 0 2px 3px rgba(255, 255, 255, 0.2); /* Brillo superior */
+    border: none;
+    /* Transición más compleja y elástica */
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); 
+}
+
+/* Efecto al pasar el mouse */
+#bottom-nav-add-btn:hover {
+    transform: scale(1.1) rotate(15deg); /* Crece y rota un poco */
+    box-shadow: 
+        0 12px 25px -5px rgba(10, 132, 255, 0.7),
+        inset 0 2px 3px rgba(255, 255, 255, 0.3);
+}
+
+/* ESTADO ACTIVO (Cuando el menú está abierto) */
+/* Transformamos el botón azul en un botón rojo de "Cerrar" */
+.fab-container.active #bottom-nav-add-btn {
+    transform: rotate(135deg) scale(1.05); /* Rota 135 grados para formar una X */
+    background: linear-gradient(135deg, #dc2626, #ef4444); /* Gradiente Rojo */
+    box-shadow: 
+        0 8px 20px -5px rgba(239, 68, 68, 0.5), /* Glow rojo */
+        inset 0 2px 3px rgba(255, 255, 255, 0.2);
+}
+
+/* 2. Las Opciones (Pago, Traspaso, Ingreso) */
+.fab-option {
+    border: none;
+    width: 55px; height: 55px; /* Un poco más grandes */
+    /* Base estilo cristal */
+    background: rgba(30, 40, 55, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    /* Transición suave */
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+/* Hover en las opciones */
+.fab-option:hover {
+    transform: scale(1.15) translateY(-3px); /* Se elevan al pasar el mouse */
+    filter: brightness(1.2); /* Se iluminan */
+    z-index: 10;
+}
+
+/* --- COLORES ESPECÍFICOS PARA CADA ACCIÓN (Código de Color Semántico) --- */
+
+/* PAGO (Gasto) -> Tonos Rojos/Naranjas */
+#fab-pay {
+    background: linear-gradient(135deg, #ff4d4d, #f0932b);
+    box-shadow: 0 5px 15px rgba(240, 147, 43, 0.3);
+}
+#fab-pay ion-icon { color: white; }
+
+/* TRASPASO -> Tonos Azules/Violetas */
+#fab-transfer {
+    background: linear-gradient(135deg, #4834d4, #686de0);
+    box-shadow: 0 5px 15px rgba(104, 109, 224, 0.3);
+}
+#fab-transfer ion-icon { color: white; }
+
+/* INGRESO -> Tonos Verdes/Esmeralda */
+#fab-income {
+    background: linear-gradient(135deg, #00b894, #55efc4);
+    box-shadow: 0 5px 15px rgba(0, 184, 148, 0.3);
+}
+#fab-income ion-icon { color: #0a3d30; /* Icono oscuro para contraste en verde claro */ }
+
+
+/* Ajuste de posición para escritorio */
+@media (min-width: 1024px) {
+    .fab-container {
+        bottom: 35px; /* Subimos el contenedor para que el botón central quede perfectamente alineado en la navbar más alta */
+    }
+}
