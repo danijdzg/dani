@@ -5610,21 +5610,19 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         width: 200vw; /* Asegurar cobertura total */
     }
 }
-
 /* ================================================================= */
 /* === 2. MODO ESCRITORIO (PC/MAC) - >= 1024px                   === */
-/* === ALINEACIÓN CENTRADA PERFECTA                              === */
+/* === ALINEACIÓN CENTRADA PERFECTA (CORREGIDO v2)               === */
 /* ================================================================= */
 
 @media (min-width: 1024px) {
     
     /* 1. EL BODY: Centrado Flex */
     body {
-        justify-content: center !important; /* Centra el contenido horizontalmente */
-        padding-left: 0 !important; /* Eliminamos el margen izquierdo forzado */
+        justify-content: center !important; 
+        padding-left: 0 !important; 
         overflow: hidden; 
         background-color: #050505;
-        /* Fondo elegante para rellenar los laterales vacíos */
         background-image: radial-gradient(circle at 50% 50%, #1a202c 0%, #000000 100%);
     }
 
@@ -5633,26 +5631,20 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         width: 900px !important;
         max-width: 900px !important;
         height: 100vh !important;
-        
-        /* Posicionamiento: Margen automático a los lados = Centrado */
         margin: 0 auto !important; 
         left: auto !important;
         right: auto !important;
-        transform: none !important;
+        transform: none !important; /* Reset de transformaciones previas */
         position: relative !important;
-        
-        /* Estética: Bordes a ambos lados para definir la app */
         border-left: 1px solid var(--c-outline);
         border-right: 1px solid var(--c-outline);
-        border-radius: 0; /* Recto en PC */
-        box-shadow: 0 0 100px rgba(0,0,0,0.8); /* Sombra difusa centrada */
+        border-radius: 0; 
+        box-shadow: 0 0 100px rgba(0,0,0,0.8); 
         background-color: var(--c-background);
         z-index: 10;
     }
 
-    /* 3. ELEMENTOS FIJOS (Barras Superior e Inferior) */
-    /* Usamos left: 50% + translateX(-50%) para anclarlos al centro exacto */
-    
+    /* 3. ELEMENTOS FIJOS (Barras) */
     .top-bar {
         width: 900px !important;
         left: 50% !important;
@@ -5671,11 +5663,11 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         z-index: 9000 !important;
     }
 
-    /* 4. EL BOTÓN (+) - CENTRADO PERFECTO */
+    /* 4. EL BOTÓN (+) */
     .fab-container {
         position: fixed !important;
-        left: 50% !important; /* Mitad de la pantalla */
-        transform: translateX(-50%) !important; /* Corrección de su propio ancho */
+        left: 50% !important; 
+        transform: translateX(-50%) !important; 
         bottom: 30px !important;
         right: auto !important;
         width: auto !important;
@@ -5685,15 +5677,49 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         align-items: center !important;
     }
     
-    /* El fondo oscuro del menú también debe centrarse */
     .fab-backdrop {
         left: 50% !important;
         transform: translateX(-50%);
-        width: 900px !important; /* Solo oscurece la app, no todo el monitor */
+        width: 900px !important; 
         height: 100vh !important;
     }
 
-    /* --- PANEL DE CONTROL: Ajuste de Grid --- */
+    /* 5. CORRECCIÓN MODALES Y CALCULADORA */
+    /* LA SOLUCIÓN: forzamos transform: none para anular el desplazamiento lateral heredado */
+    .modal-overlay, #calculator-iframe-modal, #calculator-overlay {
+        justify-content: center !important; 
+        align-items: center !important;     
+        padding-left: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        transform: none !important; /* <--- ESTA LÍNEA ARREGLA EL PROBLEMA */
+    }
+
+    .modal {
+        max-width: 600px !important; 
+        margin: 0 auto !important;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        border-radius: 20px;
+        position: relative !important;
+        transform: none !important;
+    }
+
+    /* Calculadora Flotante: Centrada en pantalla */
+    #calculator-ui {
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        max-width: 420px !important; /* Evita que la calculadora sea gigante en PC */
+    }
+    
+    /* Corrección de Login */
+    .login-view {
+        justify-content: center !important;
+        padding-left: 0 !important;
+    }
+    
+    /* Panel Grid: Asegurar que se vea bien en ancho completo */
     #panel-page.view--active {
         display: block !important;
         height: 100%;
@@ -5708,46 +5734,11 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         gap: 20px;
         padding: 80px 40px 120px 40px !important;
         max-width: 900px !important;
-        margin: 0 auto; /* Centrado interno */
+        margin: 0 auto;
     }
 
     #panel-page.view--active > div > .hero-card {
         grid-column: 1 / -1 !important;
         width: 100% !important;
-    }
-
-    .hero-value { font-size: 3rem !important; }
-
-    /* --- MODALES Y CALCULADORA (Centrados en pantalla) --- */
-    
-    /* El overlay ocupa toda la pantalla */
-    .modal-overlay, #calculator-iframe-modal, #calculator-overlay {
-        justify-content: center !important; /* Centra el contenido horizontalmente */
-        align-items: center !important;     /* Centra el contenido verticalmente */
-        padding-left: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-    }
-
-    /* La ventana modal en sí */
-    .modal {
-        max-width: 600px !important; /* Ancho razonable para diálogo */
-        margin: 0 auto !important;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        border-radius: 20px;
-    }
-
-    /* Calculadora */
-    #calculator-ui {
-        /* Si la calculadora es flotante */
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        bottom: 0 !important;
-    }
-    
-    /* Pantalla de Login */
-    .login-view {
-        justify-content: center !important;
-        padding-left: 0 !important;
     }
 }
