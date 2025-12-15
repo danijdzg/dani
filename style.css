@@ -5607,7 +5607,7 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 .dot.invest { background: #BF5AF2; box-shadow: 0 0 5px #BF5AF2; }
 
 /* ================================================================= */
-/* === PANEL ADAPTATIVO: STACK (Móvil) vs GRID (PC) === */
+/* === PANEL ADAPTATIVO (Ajuste Flujo con Fechas) === */
 /* ================================================================= */
 
 .dashboard-stack-layout {
@@ -5615,20 +5615,19 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     flex-direction: column;
     height: 100%;
     width: 100%;
-    /* Padding inferior ajustado para no chocar con la barra de navegación */
+    /* Padding optimizado */
     padding: 10px 10px 95px 10px; 
     box-sizing: border-box;
     overflow: hidden; /* CERO SCROLL */
     gap: 8px;
     margin: 0 auto;
-    max-width: 600px; /* En móvil limitamos el ancho para que parezca app */
+    max-width: 600px;
 }
 
 /* --- TARJETA BASE --- */
 .stack-card {
-    /* La magia del no-scroll: flex 1 y min-height 0 */
     flex: 1; 
-    min-height: 0; 
+    min-height: 0; /* CRUCIAL: Permite encogerse */
     
     background: var(--c-surface);
     border: 1px solid var(--c-outline);
@@ -5644,14 +5643,14 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     transition: all 0.3s ease;
 }
 
-/* Cabeceras (Nunca se encogen) */
+/* Cabeceras (Fijas) */
 .stack-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2px;
     flex-shrink: 0; 
-    min-height: 24px;
+    min-height: 26px;
 }
 .header-title-row {
     display: flex; align-items: center; gap: 8px;
@@ -5660,46 +5659,49 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 }
 .card-icon-font { font-size: 16px; color: var(--c-primary); }
 
-/* --- 1. TARJETA FLUJO (La que cambia de tamaño) --- */
+/* --- 1. TARJETA FLUJO (Prioridad Máxima para Fechas) --- */
 .card-flow {
-    /* Le damos PESO DOBLE (2) para que al salir las fechas tenga espacio */
+    /* Le damos PESO DOBLE (2) para acomodar las fechas sin problemas */
     flex-grow: 2; 
     background: linear-gradient(170deg, var(--c-surface) 0%, rgba(255,255,255,0.03) 100%);
-    justify-content: flex-start; /* Contenido pegado arriba */
+    justify-content: flex-start; 
     gap: 4px;
 }
 
-/* Barra de Fechas (Compacta y sin desbordar) */
+/* Barra de Fechas (Ultra Compacta) */
 .compact-date-bar {
     display: flex; justify-content: center; align-items: center; gap: 6px; 
-    background: rgba(0,0,0,0.25); padding: 4px; border-radius: 8px;
-    flex-shrink: 0; margin-bottom: 4px; border: 1px solid var(--c-outline);
-    min-height: 32px;
+    background: rgba(0,0,0,0.25); padding: 2px 4px; border-radius: 8px;
+    flex-shrink: 0; margin-bottom: 2px; border: 1px solid var(--c-outline);
+    min-height: 28px; /* Altura mínima controlada */
 }
 .tiny-date-input {
     background: transparent; border: none; color: #fff;
     font-size: 0.75rem; font-family: var(--font-numeric);
-    width: 85px; text-align: center; padding: 0; margin: 0;
+    width: 80px; text-align: center; padding: 0; margin: 0;
 }
 
 /* Contenedor de Números (Elástico) */
 .flow-display {
     display: flex; justify-content: space-between; align-items: center;
     background: rgba(0,0,0,0.2); border-radius: 12px; padding: 0 4px;
-    /* Ocupa todo el espacio que sobre */
+    
+    /* Ocupa el resto del espacio disponible */
     flex: 1; 
-    min-height: 0; /* Permite que los números se hagan pequeños si hace falta */
+    min-height: 0; 
 }
 .flow-col { 
     display: flex; flex-direction: column; 
     align-items: center; justify-content: center; 
     flex: 1; text-align: center; height: 100%;
 }
-.flow-label { font-size: 0.6rem; font-weight: 700; margin-bottom: 2px; opacity: 0.7; }
-/* Fuente inteligente: se adapta al espacio vertical disponible */
+.flow-label { 
+    font-size: 0.6rem; font-weight: 700; margin-bottom: 2px; opacity: 0.7; 
+}
 .flow-number { 
-    font-size: clamp(0.9rem, 3vh, 1.4rem); 
-    font-weight: 700; color: #fff; line-height: 1; white-space: nowrap;
+    /* Clamp ajustado para que no se salga nunca */
+    font-size: clamp(0.9rem, 2.8vh, 1.3rem); 
+    font-weight: 800; color: #fff; line-height: 1; white-space: nowrap;
 }
 .flow-sep { width: 1px; height: 60%; background: rgba(255,255,255,0.1); }
 
@@ -5713,20 +5715,10 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0;
 }
 .math-total-giant {
-    /* Ajuste de fuente: Mínimo 1.8rem, Ideal 9% del ancho, Máximo 3rem */
-    /* Usamos 'vw' (ancho) en vez de 'vh' para que se adapte al ancho del móvil */
-    font-size: clamp(1.8rem, 9vw, 3rem); 
-    font-weight: 800; 
-    color: #fff;
+    font-size: clamp(2rem, 6vh, 3.5rem); 
+    font-weight: 800; color: #fff;
     text-shadow: 0 0 20px rgba(0,179,77,0.3);
-    line-height: 1.1; 
-    letter-spacing: -1px;
-    
-    /* Seguridad Anti-Desbordamiento */
-    white-space: nowrap;      /* Obliga a una sola línea */
-    overflow: hidden;         /* Corta si se pasa (seguridad) */
-    text-overflow: ellipsis;  /* Pone "..." si es astronómico */
-    max-width: 100%;          /* No pasar del contenedor */
+    line-height: 1; letter-spacing: -1.5px;
 }
 .patrimonio-details {
     display: flex; justify-content: center; gap: 12px;
@@ -5752,19 +5744,10 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     text-transform: uppercase; margin-bottom: 0; opacity: 0.9; letter-spacing: 1px;
 }
 .invest-val-giant {
-    /* Un poco más pequeña que Patrimonio para jerarquía */
-    font-size: clamp(1.6rem, 8vw, 2.6rem); 
-    font-weight: 800; 
-    color: #fff;
-    text-shadow: 0 0 15px rgba(191, 90, 242, 0.4);
-    line-height: 1.1; 
-    letter-spacing: -1px;
-    
-    /* Seguridad Anti-Desbordamiento */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
+    font-size: clamp(1.8rem, 5vh, 3rem); 
+    font-weight: 800; color: #fff;
+    text-shadow: 0 0 20px rgba(191, 90, 242, 0.4);
+    line-height: 1; letter-spacing: -1px;
 }
 .invest-details-row {
     display: flex; justify-content: center; gap: 12px;
@@ -5772,9 +5755,9 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     margin: 0 auto; width: fit-content; flex-shrink: 0;
 }
 
-/* --- 4. TARJETA SALUD (Vuelve al panel) --- */
+/* --- 4. TARJETA SALUD --- */
 .card-health { 
-    flex-grow: 1; /* Un poco más pequeña para equilibrar */
+    flex-grow: 0.9; /* Compacta para equilibrar */
     background: var(--c-surface); 
 }
 .health-grid { 
@@ -5789,34 +5772,28 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 
 
 /* ========================================================= */
-/* === MODO ORDENADOR (GRID 2x2 PARA MAXIMIZAR PANTALLA) === */
+/* === MODO ORDENADOR (GRID 2x2) === */
 /* ========================================================= */
 @media (min-width: 840px) {
     .dashboard-stack-layout {
-        /* En PC usamos GRID 2x2 para llenar la pantalla */
         display: grid;
         grid-template-columns: 1fr 1fr;
         grid-template-rows: 1fr 1fr;
         gap: 20px;
         padding: 30px;
-        max-width: 1400px; /* Permitimos más ancho en PC */
+        max-width: 1400px;
     }
 
-    /* Asignamos posiciones */
     .card-flow { order: 1; }
     .card-patrimonio { order: 2; }
     .card-invest { order: 3; }
     .card-health { order: 4; }
 
-    /* Ajustes visuales para pantalla grande */
-    .stack-card { 
-        padding: 20px; 
-    }
-    /* Textos más grandes en PC para aprovechar el espacio */
+    .stack-card { padding: 20px; }
     .header-title-row { font-size: 0.85rem; }
     .flow-number { font-size: 2.2rem; }
-    .math-total-giant { font-size: 3rem; }
-    .invest-val-giant { font-size: 3rem; }
+    .math-total-giant { font-size: 5rem; }
+    .invest-val-giant { font-size: 4rem; }
     .health-val { font-size: 2.5rem; }
 }
 /* ================================================================= */
