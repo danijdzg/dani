@@ -10135,7 +10135,19 @@ const handleSaveMovement = async (form, btn) => {
 			}
             
             await batch.commit();
-            
+            // Efecto Flash (Feedback visual sutil para escritorio/móvil)
+            const flash = document.createElement('div');
+            flash.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: white; opacity: 0.15; pointer-events: none; z-index: 2147483647;
+                transition: opacity 0.3s ease-out;
+            `;
+            document.body.appendChild(flash);
+            // Forzamos un reflow para que la transición funcione
+            requestAnimationFrame(() => { 
+                flash.style.opacity = '0'; 
+            });
+            setTimeout(() => flash.remove(), 300);
             // 4.5. Efecto Confeti (Solo ingresos)
 			if (dataToSave.cantidad > 0 && dataToSave.tipo !== 'traspaso') {
 				confetti({

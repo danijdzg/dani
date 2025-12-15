@@ -3962,7 +3962,10 @@ body.privacy-mode .asset-card__value:active {
     overflow: hidden;
 	background: linear-gradient(145deg, var(--c-surface), var(--c-surface-variant));
     border: 1px solid rgba(255, 255, 255, 0.05); /* Borde sutil */
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5); /* Sombra elevada */
+    box-shadow: 
+        0 10px 30px -10px rgba(0, 0, 0, 0.5), /* Sombra base */
+        0 0 0 1px rgba(255, 255, 255, 0.05), /* Borde sutil de luz */
+        inset 0 1px 0 rgba(255, 255, 255, 0.1); /* Luz superior (efecto cristal) */
 }
 .hero-value {
     /* Tipografía financiera monoespaciada para números */
@@ -4903,23 +4906,29 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 }
 /* Solo para dispositivos que soportan hover (ratón) */
 @media (hover: hover) {
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+.transaction-card:hover {
+        background-color: rgba(255, 255, 255, 0.03);
+        border-left: 2px solid var(--c-primary); /* Indicador visual sutil */
     }
-    
-    ::-webkit-scrollbar-track {
-        background: transparent; 
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background-color: rgba(255, 255, 255, 0.2); 
-        border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background-color: rgba(255, 255, 255, 0.4); 
-    }
+/* Para Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
     
     /* Restaurar scrollbars en listas que lo tenían oculto */
     .app-layout__main, .modal__body, .custom-select__options {
@@ -5611,163 +5620,160 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     }
 }
 /* ================================================================= */
-/* === MODO ESCRITORIO REAL (FULL SCREEN DASHBOARD) === */
+/* === MODO ESCRITORIO: DASHBOARD "BENTO" (SIN SCROLL GLOBAL) === */
 /* ================================================================= */
 @media (min-width: 1024px) {
     
-    /* 1. LIENZO Y FONDO */
+    /* 1. ESTRUCTURA BASE */
     body {
-        justify-content: flex-start !important; /* Alinear arriba-izquierda */
         background-color: #050505;
-        background-image: radial-gradient(circle at 50% 50%, #1a202c 0%, #000000 100%);
-        overflow: hidden; /* Evitar scroll en el body */
-    }
-
-    /* 2. LAYOUT PRINCIPAL EXPANDIDO */
-    .app-layout {
-        width: 100% !important;
-        max-width: 100% !important;
-        height: 100vh !important;
-        margin: 0 !important;
-        border: none;
-        border-radius: 0;
-        box-shadow: none;
+        background-image: 
+            radial-gradient(circle at 15% 50%, rgba(0, 179, 77, 0.08), transparent 25%),
+            radial-gradient(circle at 85% 30%, rgba(0, 122, 255, 0.08), transparent 25%);
+        overflow: hidden; /* BLOQUEAMOS EL SCROLL DEL CUERPO */
         display: flex;
-        flex-direction: column;
-    }
-
-    /* 3. BARRA SUPERIOR (HEADER) */
-    .top-bar {
-        width: 100% !important;
-        max-width: 100% !important;
-        left: 0 !important;
-        transform: none !important;
-        border-radius: 0;
-        padding: 0 40px; /* Más aire lateral */
-        height: 60px; /* Un poco más alta */
-        background-color: rgba(28, 42, 58, 0.95); /* Más opaca en escritorio */
-    }
-
-    /* 4. BARRA INFERIOR (FOOTER) -> AHORA ES HEADER SECUNDARIO O STICKY BOTTOM */
-    /* Para aprovechar la pantalla, la dejamos abajo pero full-width */
-    .bottom-nav {
-        width: 100% !important;
-        max-width: 100% !important;
-        left: 0 !important;
-        transform: none !important;
-        border-radius: 0;
-        bottom: 0;
-        padding: 0 40px;
-        justify-content: center; /* Centramos los botones */
-        gap: 40px; /* Más separación entre iconos */
-    }
-
-    /* Ajuste del contenido principal para que no quede tapado */
-    .app-layout__main {
-        padding-top: 80px !important; /* Espacio para el header */
-        padding-bottom: 80px !important; /* Espacio para el footer */
-        padding-left: 40px;
-        padding-right: 40px;
-        height: 100vh;
-        overflow-y: auto; /* Scroll interno solo si es necesario */
-        display: flex;
-        flex-direction: column;
-    }
-
-    /* 5. MODALES Y CALCULADORA CENTRADOS */
-    .modal-overlay, #calculator-overlay {
-        left: 0 !important;
-        width: 100vw !important;
-        transform: none !important;
         justify-content: center;
         align-items: center;
+		font-feature-settings: "tnum" on, "cv11" on, "ss01" on;
     }
-    .modal {
-        max-width: 600px !important;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    }
-}
 
-/* DISEÑO DE PANEL "COCKPIT" PARA ESCRITORIO */
-@media (min-width: 1024px) {
+    .app-layout {
+        width: 100vw !important;
+        max-width: 1600px !important; /* Límite para pantallas ultrawide */
+        height: 100vh !important;
+        display: grid;
+        /* Sidebar (Nav) | Contenido Principal */
+        grid-template-columns: 80px 1fr; 
+        grid-template-rows: 100%;
+        background: transparent;
+        box-shadow: none;
+        border: none;
+    }
+
+    /* 2. NAVEGACIÓN LATERAL (Convertimos la bottom-nav en sidebar) */
+    .bottom-nav {
+        position: relative;
+        transform: none !important;
+        left: auto; bottom: auto;
+        width: 100% !important;
+        height: 100% !important;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding-top: 40px;
+        gap: 30px;
+        border-radius: 0;
+        border: none;
+        border-right: 1px solid var(--c-outline);
+        background: rgba(10, 15, 20, 0.6);
+        backdrop-filter: blur(20px);
+    }
+
+    .bottom-nav__item {
+        height: auto;
+        width: 100%;
+        padding: 15px 0;
+        border-radius: 0;
+    }
     
-    /* El contenedor del panel se convierte en un Grid */
+    /* Ocultamos etiquetas en desktop para limpieza visual, mostramos tooltip al hover */
+    .bottom-nav__label { display: none !important; }
+    
+    /* El botón flotante "+" lo integramos en la sidebar */
+    #bottom-nav-add-btn {
+        margin-top: auto; /* Lo empuja al fondo */
+        margin-bottom: 20px;
+        width: 50px; height: 50px;
+        border: none;
+    }
+
+    /* 3. ÁREA PRINCIPAL (Panel) */
+    .app-layout__main {
+        padding: 20px 30px !important;
+        height: 100vh;
+        overflow: hidden; /* El contenedor principal NO hace scroll */
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Ocultamos la barra superior en Desktop (es redundante) */
+    .top-bar { display: none !important; }
+
+    /* 4. GRID DEL PANEL (LA CLAVE DEL "TODO EN UNA PANTALLA") */
     #panel-page.view--active {
         display: grid !important;
-        grid-template-columns: 300px 1fr 300px; /* Izq | Centro | Der */
-        grid-template-rows: auto 1fr; /* Fila Filtros | Fila Contenido */
+        grid-template-columns: repeat(4, 1fr); /* 4 Columnas */
+        grid-template-rows: auto 1fr 1.2fr; /* Filas automáticas según contenido */
         gap: 20px;
         height: 100%;
-        max-height: calc(100vh - 140px); /* Restamos header y footer */
-        overflow: hidden; /* ELIMINAMOS EL SCROLL GENERAL */
-        padding: 0 !important;
-        align-content: start;
+        padding-bottom: 0 !important;
     }
 
-    /* REORGANIZACIÓN VISUAL DE LOS ELEMENTOS DENTRO DEL PANEL */
-    /* Esto requiere que la estructura HTML en JS sea consistente. 
-       Usamos :nth-child para ubicar las tarjetas generadas por renderPanelPage */
-
-    /* 1. Fila Superior: Filtros y Totales Rápidos */
-    /* Forzamos al primer div (que contiene filtros y KPIs pequeños) a ocupar arriba */
+    /* --- REGLAS DE POSICIONAMIENTO DE TARJETAS (BENTO) --- */
+    
+    /* Fila 1: KPIs Rápidos (Ingresos, Gastos, Neto) */
+    /* Apuntamos al primer div que contiene los KPIs pequeños */
     #panel-page > div:first-child { 
-        grid-column: 1 / -1; /* Ocupa todo el ancho */
+        grid-column: 1 / 5; /* Ocupa todo el ancho superior */
+        grid-row: 1;
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        gap: 20px;
+        margin: 0 !important;
         padding: 0 !important;
-        margin-bottom: 10px;
-        background: transparent !important;
-        border: none !important;
     }
     
-    /* Hack para recolocar los KPIs pequeños (Ingresos/Gastos/Neto) en una fila horizontal */
-    #panel-page > div:first-child .kpi-grid, 
-    #panel-page > div:first-child > div[style*="display: grid"] {
-        display: flex !important;
-        gap: 20px;
+    /* Hacemos que las tarjetas internas se estiren */
+    #panel-page > div:first-child .clickable-kpi {
         flex: 1;
-        margin: 0 20px;
-    }
-
-    /* 2. Columna Izquierda: Patrimonio y Liquidez */
-    /* Apuntamos a la tarjeta "Patrimonio (Capital Total)" */
-    #panel-page > .hero-card:nth-of-type(1) {
-        grid-column: 1;
-        grid-row: 2;
-        margin: 0 !important;
-        height: 100%;
+        height: 100px; /* Altura fija compacta */
         display: flex;
         flex-direction: column;
         justify-content: center;
+        background: var(--c-surface); /* Fondo más sólido */
+        border: 1px solid var(--c-outline);
     }
 
-    /* 3. Columna Central: Gráfico de Evolución (Net Worth) o Principal */
-    /* Como el renderPanelPage actual no pinta el gráfico grande por defecto, 
-       vamos a expandir la tarjeta de Inversiones (P&L) al centro */
-    #panel-page > .hero-card:nth-of-type(2) {
-        grid-column: 2;
+    /* Fila 2: Patrimonio (Izquierda) y Salud Financiera (Derecha) */
+    
+    /* Tarjeta Patrimonio */
+    #panel-page > .hero-card:nth-of-type(1) {
+        grid-column: 1 / 3; /* Ocupa mitad izquierda */
         grid-row: 2;
         margin: 0 !important;
         height: 100%;
-        background: var(--c-surface); /* Hacerla destacar */
     }
 
-    /* 4. Columna Derecha: Salud Financiera (Cobertura/Libertad) */
+    /* Tarjeta Salud Financiera (Cobertura/Libertad) */
     #panel-page > .hero-card:nth-of-type(3) {
-        grid-column: 3;
+        grid-column: 3 / 5; /* Ocupa mitad derecha */
         grid-row: 2;
         margin: 0 !important;
         height: 100%;
     }
 
-    /* Ajustes finos para que el contenido quepa verticalmente */
-    .hero-card .skeleton, .hero-card .hero-value {
-        font-size: 2.5rem !important; /* Reducir un poco texto gigante */
+    /* Fila 3: Gráfico Principal / Inversiones (Abajo) */
+    /* Tarjeta P&L Inversiones */
+    #panel-page > .hero-card:nth-of-type(2) {
+        grid-column: 1 / 5; /* Todo el ancho inferior */
+        grid-row: 3;
+        margin: 0 !important;
+        height: 100%;
+        min-height: 0; /* Permite encogerse si falta espacio */
+    }
+
+    /* Ajustes generales para escritorio */
+    .hero-card, .card {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        background: var(--c-surface);
+        border: 1px solid rgba(255,255,255,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
     }
     
-    /* Ocultar botones de ayuda (?) en escritorio para limpiar la vista, 
-       o hacerlos aparecer solo en hover */
-    .help-btn { opacity: 0; transition: opacity 0.2s; }
-    .hero-card:hover .help-btn, .clickable-kpi:hover .help-btn { opacity: 1; }
+    .hero-card:hover, .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        border-color: rgba(255,255,255,0.1);
+    }
+
+    /* Hacemos los textos gigantes un poco más pequeños para que quepan */
+    .hero-value { font-size: 2.2rem !important; }
 }
