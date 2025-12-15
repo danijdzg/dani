@@ -5225,17 +5225,6 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     width: auto;
     flex-shrink: 0;
 }
-/* --- FAB MENÚ PRO (SPEED DIAL) --- */
-.fab-container {
-    position: fixed;
-    /* Ajustado para que flote justo encima de la barra inferior */
-    bottom: 90px; 
-    right: 20px;
-    z-index: 20000; /* Por encima de todo, incluso modales */
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-}
 
 /* Telón de fondo */
 .fab-backdrop {
@@ -5778,5 +5767,46 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     .login-view {
         justify-content: flex-start !important;
         padding-left: 50px !important;
+    }
+}
+/* =======================================================
+   FIX FINAL: FORZAR CENTRADO DEL BOTÓN (+)
+   ======================================================= */
+.fab-container {
+    position: fixed !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important; /* Centrado matemático exacto */
+    right: auto !important; /* Anula cualquier alineación a la derecha */
+    align-items: center !important; /* Alinea los hijos (iconos) al centro */
+    
+    /* Ajuste de altura para que encaje en el hueco de la barra */
+    bottom: 20px !important; 
+    
+    /* Aseguramos que se vea */
+    display: flex;
+    flex-direction: column;
+    z-index: 12000;
+    pointer-events: none; /* Permite pulsar a través del área vacía */
+}
+
+/* El botón principal debe ser pulsable */
+.fab-main-btn {
+    pointer-events: auto;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    /* Borde del mismo color que el fondo de la barra para crear efecto de "recorte" */
+    border: 4px solid var(--c-surface); 
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+}
+
+/* Ajuste para pantallas grandes (Escritorio) */
+@media (min-width: 1024px) {
+    .fab-container {
+        /* En modo escritorio tu app tiene un margen izquierdo de 50px */
+        /* y un ancho de 900px. El centro es 50px + 450px = 500px */
+        left: 500px !important;
+        transform: translateX(-50%) !important;
+        bottom: 30px !important;
     }
 }
