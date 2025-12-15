@@ -5621,7 +5621,7 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 }
 
 /* ================================================================= */
-/* === MODO ESCRITORIO: LAYOUT COMPACTO Y CENTRADO === */
+/* === MODO ESCRITORIO: CENTRADO ABSOLUTO (CORREGIDO) === */
 /* ================================================================= */
 @media (min-width: 1024px) {
     body {
@@ -5629,39 +5629,45 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         background-color: #09090b;
     }
 
+    /* El contenedor principal actúa como flexbox para centrar a su hijo */
     .app-layout__main {
-        /* 1. PEGADO AL ENCABEZADO: Reducimos padding-top a 75px (antes 90px) */
-        padding: 75px 40px 100px 40px !important;
+        /* Espacio para cabecera y pie */
+        padding-top: 80px !important; 
+        padding-bottom: 100px !important; 
         
         height: 100vh;
+        width: 100vw !important;
         
-        /* 2. TARJETAS CENTRADAS: Limitamos el ancho y centramos el bloque */
-        max-width: 1400px !important; /* Ancho máximo ideal para lectura */
-        margin: 0 auto !important;    /* Centrado horizontal automático */
-        
-        display: flex;
+        display: flex !important;
         flex-direction: column;
-        width: 100% !important;
+        align-items: center; /* Centrado Horizontal */
+        justify-content: center; /* Centrado Vertical */
     }
 
-    /* GRID DEL PANEL */
+    /* GRID DEL PANEL: Definimos ancho máximo y lo centramos */
     #panel-page.view--active {
         display: grid !important;
-        grid-template-columns: 2.5fr 1fr;
-        grid-template-rows: auto 1fr;
-        gap: 24px;
+        grid-template-columns: 2.5fr 1fr; /* Columna ancha | Columna estrecha */
+        grid-template-rows: auto 1fr;     /* Fila KPIs | Fila Gráficos */
+        gap: 30px; /* Más espacio entre tarjetas para elegancia */
+        
+        width: 100%;
+        max-width: 1400px; /* Tope de anchura para que no se desparrame */
         height: 100%;
-        padding: 0 !important;
-        align-content: start; /* Alinea el contenido arriba */
+        max-height: 800px; /* Tope de altura para que no se estire demasiado */
+        
+        padding: 0 40px !important; /* Margen lateral de seguridad */
+        margin: 0 auto !important;
+        align-content: center; /* Asegura centrado del grid interno */
     }
 
-    /* ZONA 1: KPIs */
+    /* ZONA 1: KPIs (Fila Superior) */
     .dashboard-kpi-row {
         grid-column: 1 / -1;
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 24px;
-        height: 110px; /* Un poco más compactos */
+        height: 130px;
     }
 
     /* ZONA 2: GRÁFICO PRINCIPAL */
@@ -5673,7 +5679,7 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         padding: 24px;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
     }
 
     /* ZONA 3: LATERAL */
@@ -5682,112 +5688,131 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         display: flex;
         flex-direction: column;
         gap: 24px;
+        height: 100%;
     }
     
+    /* Ajustes visuales de tarjetas */
     .hero-card, .clickable-kpi {
-        border-radius: 20px;
+        border-radius: 24px;
         border: 1px solid rgba(255,255,255,0.05);
+        background: var(--c-surface);
         transition: transform 0.2s, border-color 0.2s;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     }
+    
+    /* El gráfico principal debe ocupar todo su espacio */
+    .hero-card {
+        flex: 1;
+        margin: 0 !important;
+        justify-content: center;
+        padding: 20px !important;
+    }
+
+    .clickable-kpi {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 24px;
+    }
+    
     .clickable-kpi:hover {
-        transform: translateY(-3px);
+        transform: translateY(-5px);
         background: var(--c-surface-variant);
         border-color: var(--c-primary);
     }
     
-    .hero-value { font-size: 2.2rem !important; }
+    .hero-value { font-size: 2.8rem !important; }
 }
 /* ================================================================= */
-/* === FAB "PRO" (Efectos de Neón y Backdrop Cinemático) === */
+/* === SUPER FAB (Botón +) CORREGIDO & ETIQUETAS LIMPIAS === */
 /* ================================================================= */
 
 /* 1. EL TELÓN DE FONDO (BACKDROP) */
+/* Corrección de la franja: Usamos coordenadas fijas absolutas */
 .fab-backdrop {
-    /* Ajuste para NO tapar el pie de página (Bottom Nav) */
-    /* En escritorio la barra mide ~80px, dejamos 85px de margen */
-    bottom: 85px !important; 
-    height: calc(100vh - 85px) !important;
-    top: 0 !important;
     position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important; /* Forzar ancho total de ventana */
+    height: 100vh !important; /* Forzar alto total */
     
-    /* EFECTO OSCURECIMIENTO PROFUNDO */
-    background: rgba(5, 5, 10, 0.85) !important; /* Casi negro, muy elegante */
-    backdrop-filter: blur(6px); /* Desenfoca el contenido de atrás */
-    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Ajuste para no tapar el menú inferior */
+    /* Usamos clip-path para recortar la parte de abajo limpiamente si es necesario,
+       o simplemente z-index controlado */
+    z-index: 9000; /* Por debajo del botón (10001) y del menú (9000 es el menú) */
+    
+    /* Pero como queremos que el menú se vea, lo hacemos terminar antes */
+    /* En móvil la barra mide unos 70px + safe area */
+    height: calc(100vh - 80px) !important; 
+    
+    /* Efecto Visual */
+    background: rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(8px);
+    transition: opacity 0.3s ease;
+    
+    /* Corrección de márgenes fantasma */
+    margin: 0 !important;
+    transform: none !important;
 }
 
 /* 2. BOTÓN PRINCIPAL (+) */
 .fab-main-btn {
-    width: 68px !important;
-    height: 68px !important;
-    /* Gradiente Vertical Rico */
-    background: linear-gradient(180deg, #00E676 0%, #00B34D 100%) !important;
-    
-    /* Sombra de elevación y borde de "corte" */
+    width: 72px !important;
+    height: 72px !important;
+    background: linear-gradient(135deg, #00B34D, #39FF14) !important;
     box-shadow: 
-        0 10px 20px rgba(0, 179, 77, 0.4),
-        0 0 0 6px var(--c-background) !important; /* Borde del color de fondo para separarlo */
-        
-    transform: translateY(-8px); /* Elevado sobre la barra */
-    z-index: 10001; /* Por encima del backdrop */
+        0 0 20px rgba(0, 179, 77, 0.6), /* Resplandor intenso */
+        0 0 0 4px rgba(20, 20, 20, 1) !important; /* Anillo oscuro de separación */
+    transform: translateY(-5px);
+    z-index: 10005; /* Muy por encima */
 }
 
-/* Animación sutil de "estoy vivo" */
-@keyframes soft-pulse {
-    0% { box-shadow: 0 0 0 0 rgba(0, 179, 77, 0.4); }
-    70% { box-shadow: 0 0 0 15px rgba(0, 179, 77, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(0, 179, 77, 0); }
+/* 3. SUB-MENÚS (Pago, Traspaso, Ingreso) */
+.fab-options {
+    z-index: 10005; /* Asegurar que estén sobre el backdrop */
 }
 
-.fab-main-btn:not(:active) {
-    animation: soft-pulse 2s infinite;
-}
-
-/* Icono interior */
-.fab-main-btn .material-icons {
-    font-size: 36px !important;
-    text-shadow: 0 2px 2px rgba(0,0,0,0.15);
-}
-
-/* Estado Activo (X Roja) */
-.fab-container.active .fab-main-btn {
-    background: linear-gradient(180deg, #ff5f6d, #ffc371) !important;
-    animation: none; /* Paramos el pulso */
-    transform: translateY(-8px) rotate(135deg) scale(0.95);
-    box-shadow: 0 5px 15px rgba(255, 95, 109, 0.5);
-}
-
-/* 3. SUB-MENÚS (Las opciones) */
 .fab-option {
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
-    filter: drop-shadow(0 8px 15px rgba(0,0,0,0.5));
+    /* Quitamos filtros que puedan causar bordes raros */
+    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
 }
 
 .fab-icon-holder {
     width: 56px; height: 56px;
-    border: 2px solid rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.9); /* Borde blanco nítido */
+    font-size: 24px; /* Icono grande */
 }
 
+/* Colores Vibrantes */
 .fab-option--ingreso .fab-icon-holder { 
-    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    color: #064e3b; /* Icono oscuro */
+    background: linear-gradient(135deg, #00b09b, #96c93d);
 }
 .fab-option--gasto .fab-icon-holder { 
-    background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
+    background: linear-gradient(135deg, #ff416c, #ff4b2b);
 }
 .fab-option--traspaso .fab-icon-holder { 
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    color: #0c4a6e;
+    background: linear-gradient(135deg, #2193b0, #6dd5ed);
 }
 
-/* Etiquetas de texto mejoradas */
+/* 4. ETIQUETAS (Texto Limpio sin Fondo) */
 .fab-label {
-    background: rgba(255, 255, 255, 0.95);
-    color: #1a1a1a;
-    font-size: 0.8rem;
-    font-weight: 800;
-    padding: 6px 12px;
-    border-radius: 8px;
+    /* Eliminamos la caja blanca */
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    
+    /* Tipografía Limpia y Brillante */
+    color: #ffffff !important;
+    font-family: var(--font-family); /* Misma fuente que la app */
+    font-size: 1rem !important; /* Tamaño legible */
+    font-weight: 800 !important; /* Extra negrita */
     letter-spacing: 0.5px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    
+    /* Sombra de texto para legibilidad sobre fondo oscuro */
+    text-shadow: 
+        0 2px 4px rgba(0,0,0,0.8),
+        0 0 10px rgba(0,0,0,0.5);
+        
+    padding: 0 10px; /* Solo padding lateral */
+    margin-bottom: 2px; /* Pequeño ajuste vertical */
 }
