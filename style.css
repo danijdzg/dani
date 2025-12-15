@@ -6153,6 +6153,7 @@ input[type="date"].form-input {
     font-weight: 600 !important;
     font-size: 1rem !important;
 }
+
 /* ================================================================= */
 /* === MENÚ FLOTANTE "SPEED DIAL" (Animación Espectacular) === */
 /* ================================================================= */
@@ -6160,9 +6161,8 @@ input[type="date"].form-input {
 /* 1. Contenedor en la barra */
 .fab-container {
     position: relative;
-    /* Subimos el contenedor para que el botón principal rompa la línea */
-    margin-top: -30px; 
-    z-index: 2000; /* Por encima de todo */
+    margin-top: -35px; /* Sube el botón para romper la línea de la barra */
+    z-index: 2000;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -6170,12 +6170,12 @@ input[type="date"].form-input {
 
 /* 2. Botón Principal (+) */
 #bottom-nav-add-btn {
-    width: 64px;
-    height: 64px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     background: var(--c-primary);
     color: white;
-    border: 4px solid var(--c-background); /* Borde para "recortar" visualmente la barra */
+    border: 4px solid var(--c-background); /* Borde para recortar la barra */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -6185,13 +6185,12 @@ input[type="date"].form-input {
     z-index: 10;
 }
 
-/* Estado Activo: Rotación a 'X' y cambio de color */
+/* Estado Activo: Gira a 'X' */
 .fab-container.active #bottom-nav-add-btn {
-    transform: rotate(135deg) scale(0.9);
+    transform: rotate(135deg);
     background-color: var(--c-surface-variant);
     color: var(--c-danger);
     box-shadow: none;
-    border-color: transparent; /* Se integra con el overlay si lo hubiera */
 }
 
 #bottom-nav-add-btn .material-icons {
@@ -6199,21 +6198,20 @@ input[type="date"].form-input {
     font-weight: 700;
 }
 
-/* 3. El Menú Desplegable (Lista vertical) */
+/* 3. El Menú Desplegable */
 .fab-menu {
     position: absolute;
-    bottom: 75px; /* Empieza encima del botón principal */
+    bottom: 75px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    flex-direction: column-reverse; /* De abajo a arriba */
+    flex-direction: column-reverse; /* Se apilan de abajo arriba */
     gap: 15px;
     align-items: center;
-    pointer-events: none; /* Inactivo cuando está cerrado */
-    width: 200px; /* Ancho suficiente para las etiquetas */
+    pointer-events: none;
+    width: 200px;
 }
 
-/* Estado Activo del Menú */
 .fab-container.active .fab-menu {
     pointer-events: auto;
 }
@@ -6222,28 +6220,27 @@ input[type="date"].form-input {
 .fab-mini-btn {
     display: flex;
     align-items: center;
-    justify-content: flex-end; /* Icono a la derecha, texto a la izquierda */
+    justify-content: flex-end; /* Texto izquierda, Icono derecha */
     gap: 15px;
     background: transparent;
     border: none;
     cursor: pointer;
     width: 100%;
     
-    /* Estado Inicial: Oculto, desplazado abajo y pequeño */
+    /* Estado Inicial: Oculto y desplazado */
     opacity: 0;
     transform: translateY(20px) scale(0.5);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Animación de Entrada (Cuando se activa el contenedor) */
+/* Animación de Entrada */
 .fab-container.active .fab-mini-btn {
     opacity: 1;
     transform: translateY(0) scale(1);
-    /* El retardo variable (--delay) crea el efecto cascada */
     transition-delay: var(--delay); 
 }
 
-/* 5. Estilos de los Iconos Mini */
+/* 5. Iconos Mini */
 .fab-icon {
     width: 50px;
     height: 50px;
@@ -6253,18 +6250,10 @@ input[type="date"].form-input {
     justify-content: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     color: white;
-    transition: transform 0.2s;
     border: 1px solid rgba(255,255,255,0.1);
 }
 
-.fab-mini-btn:active .fab-icon {
-    transform: scale(0.9);
-    filter: brightness(1.2);
-}
-
-.fab-icon .material-icons { font-size: 24px; }
-
-/* Colores Específicos */
+/* Colores */
 .icon-expense { background: linear-gradient(135deg, #FF3B30, #FF9F0A); }
 .icon-income { background: linear-gradient(135deg, #30D158, #00B34D); }
 .icon-transfer { background: linear-gradient(135deg, #BF5AF2, #5E5CE6); }
@@ -6279,10 +6268,6 @@ input[type="date"].form-input {
     font-weight: 700;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     border: 1px solid var(--c-outline);
-    /* Sombra de texto para legibilidad */
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-    
-    /* Animación sutil de entrada */
     opacity: 0;
     transform: translateX(10px);
     transition: all 0.2s ease-out;
@@ -6291,16 +6276,16 @@ input[type="date"].form-input {
 .fab-container.active .fab-label {
     opacity: 1;
     transform: translateX(0);
-    transition-delay: calc(var(--delay) + 100ms); /* Aparece un poco después del icono */
+    transition-delay: calc(var(--delay) + 50ms);
 }
 
-/* 7. Fondo Oscuro (Backdrop) al abrir */
+/* 7. Fondo Oscuro (Backdrop) */
 .fab-backdrop {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.8); /* Oscuro fuerte */
     backdrop-filter: blur(4px);
-    z-index: 1999; /* Justo debajo del botón */
+    z-index: 1999;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s;

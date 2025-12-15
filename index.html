@@ -129,9 +129,37 @@
         
     </div>
 
+    <div class="fab-container">
+    
+    <div id="fab-menu" class="fab-menu">
+        
+        <button class="fab-mini-btn" data-action="open-movement-form" data-type="traspaso" style="--delay: 0ms;">
+            <span class="fab-label">Traspaso</span>
+            <div class="fab-icon icon-transfer">
+                <span class="material-icons">swap_horiz</span>
+            </div>
+        </button>
+
+        <button class="fab-mini-btn" data-action="open-movement-form" data-type="ingreso" style="--delay: 50ms;">
+            <span class="fab-label">Ingreso</span>
+            <div class="fab-icon icon-income">
+                <span class="material-icons">trending_up</span>
+            </div>
+        </button>
+
+        <button class="fab-mini-btn" data-action="open-movement-form" data-type="gasto" style="--delay: 100ms;">
+            <span class="fab-label">Gasto</span>
+            <div class="fab-icon icon-expense">
+                <span class="material-icons">trending_down</span>
+            </div>
+        </button>
+        
+    </div>
+
     <button id="bottom-nav-add-btn">
         <span class="material-icons">add</span>
     </button>
+</div>
 </div>
             
             <button data-action="navigate" data-page="patrimonio-page" class="bottom-nav__item">
@@ -369,42 +397,7 @@
 	<div id="irr-history-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="irr-history-title">
         <div class="modal"><div class="modal__grabber"></div><header class="modal__header"><h3 id="irr-history-title" class="modal__title">Evolución de la TIR</h3><button class="icon-btn" data-action="close-modal" data-modal-id="irr-history-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button></header><div id="irr-history-body" class="modal__body"><div class="chart-container" style="height: 100%;"><canvas id="irr-history-chart"></canvas></div></div></div>
 	</div> 
-    <div id="main-add-sheet" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="main-add-sheet-title">
-    <div class="modal" style="max-width: 400px; border-radius: 24px 24px 0 0;">
-        <div class="modal__grabber"></div>
-        
-        <header class="modal__header" style="justify-content: center; padding-bottom: 20px; border: none;">
-            <h3 id="main-add-sheet-title" class="modal__title" style="font-size: 1.1rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px;">Selecciona Operación</h3>
-        </header>
-        
-        <div class="modal__body" id="main-add-sheet-body" style="padding-bottom: 30px;">
-            <div class="quick-actions-grid">
-                
-                <button class="quick-action-btn" data-action="open-movement-form" data-type="gasto">
-                    <div class="quick-icon-circle expense-circle">
-                        <span class="material-icons">trending_down</span>
-                    </div>
-                    <span class="quick-label">Gasto</span>
-                </button>
-
-                <button class="quick-action-btn" data-action="open-movement-form" data-type="ingreso">
-                    <div class="quick-icon-circle income-circle">
-                        <span class="material-icons">trending_up</span>
-                    </div>
-                    <span class="quick-label">Ingreso</span>
-                </button>
-
-                <button class="quick-action-btn" data-action="open-movement-form" data-type="traspaso">
-                    <div class="quick-icon-circle transfer-circle">
-                        <span class="material-icons">swap_horiz</span>
-                    </div>
-                    <span class="quick-label">Traspaso</span>
-                </button>
-
-            </div>
-        </div>
-    </div>
-</div>
+    
     <div id="main-menu-popover" class="popover-menu">
     
     <button class="popover-menu__item" data-action="global-search">

@@ -8663,76 +8663,62 @@ const hideCalculator = () => {
 	document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
 };
 
+/* EN main.js - NUEVA LÓGICA SPEED DIAL */
+
 const setupFabInteractions = () => {
     const fabBtn = document.getElementById('bottom-nav-add-btn');
     const fabContainer = document.querySelector('.fab-container');
     
     if (!fabBtn || !fabContainer) return;
 
-    // 1. Crear el telón de fondo (Backdrop) si no existe
+    // 1. Crear el fondo oscuro si no existe
     let backdrop = document.querySelector('.fab-backdrop');
     if (!backdrop) {
         backdrop = document.createElement('div');
         backdrop.className = 'fab-backdrop';
         document.body.appendChild(backdrop);
         
-        // Al hacer clic en el fondo, cerrar menú
+        // Al tocar el fondo, cerrar menú
         backdrop.addEventListener('click', () => toggleFab(false));
     }
 
-    // Función para abrir/cerrar
+    // 2. Función para abrir/cerrar
     const toggleFab = (forceState = null) => {
         const isActive = forceState !== null ? forceState : !fabContainer.classList.contains('active');
         
         if (isActive) {
             fabContainer.classList.add('active');
             backdrop.classList.add('active');
-            hapticFeedback('light');
+            hapticFeedback('medium'); // Vibración al abrir
         } else {
             fabContainer.classList.remove('active');
             backdrop.classList.remove('active');
+            hapticFeedback('light'); // Vibración al cerrar
         }
     };
 
-    // 2. Listener del Botón Principal
-    // Eliminamos listeners anteriores clonando
+    // 3. Limpiar listeners antiguos clonando el botón
     const newBtn = fabBtn.cloneNode(true);
     fabBtn.parentNode.replaceChild(newBtn, fabBtn);
 
+    // Click en el botón principal (+)
     newBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleFab();
+        toggleFab(); // Alternar abierto/cerrado
     });
 
-    // 3. Listeners para los Botones del Menú (Gasto, Ingreso, Traspaso)
+    // 4. Click en las opciones (Gasto, Ingreso...)
     const options = document.querySelectorAll('.fab-mini-btn');
     options.forEach(btn => {
         btn.addEventListener('click', (e) => {
             // Cerramos el menú inmediatamente
             toggleFab(false);
-            
-            // La acción ya está definida en el listener global 'click' 
-            // que busca [data-action="open-movement-form"], así que no hace falta más.
-            // El evento burbujeará y será capturado por el manejador global.
+            // La acción real (abrir formulario) la maneja el listener global 'click' 
+            // que busca el atributo data-action="open-movement-form".
         });
     });
 };
-
-    const endPress = (e) => {
-    clearTimeout(longPressTimer);
-    fab.style.transform = "scale(1)";
-    fab.style.filter = "brightness(1)";
-
-        // Si NO fue una pulsación larga, es un CLIC normal
-        if (!isLongPress) {
-            e.preventDefault(); // Evita comportamientos dobles
-            
-            // Estrategia 1 (Entrada Directa): Abrimos directamente "Nuevo Gasto"
-            // Es la opción más común, ahorramos un clic.
-            startMovementForm(null, false, 'gasto');
-        }
-    };
 
  /* ========================================================= */
 /* === FUNCIONES DEL ESPEJO VISUAL (Números Bonitos)     === */
