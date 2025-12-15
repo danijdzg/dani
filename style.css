@@ -5481,119 +5481,189 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     transform: translate(75px, -85px) scale(1);
     transition-delay: 0.15s;
 }
-/* =========================================
-   MODO ESCRITORIO: ALINEACIÓN IZQUIERDA (DOBLE ANCHO)
-   ========================================= */
-@media (min-width: 1024px) {
-    
-    /* 1. Cuerpo Principal */
-    body { justify-content: flex-start; }
+/* =======================================================
+   FAB MENU (SPEED DIAL) - VERSIÓN FINAL CORREGIDA
+   ======================================================= */
 
-    .app-layout {
-        /* ANCHO DUPLICADO */
-        width: 900px;
-        max-width: 900px;
-        
-        margin: 0 !important;
-        margin-left: 50px !important;
-        box-shadow: 20px 0 40px rgba(0,0,0,0.3);
-        border-right: 1px solid var(--c-outline);
-        min-height: 100vh;
+/* --- 1. ESTILOS BASE (Comunes) --- */
+.fab-container {
+    position: fixed;
+    z-index: 12000; /* Por encima de todo */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Por defecto (cerrado), dejamos pasar los clics a través del contenedor */
+    pointer-events: none; 
+}
+
+/* El botón principal SIEMPRE debe recibir clics */
+.fab-main-btn {
+    pointer-events: auto;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--c-primary);
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 179, 77, 0.5);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* Importante para móviles: evita el highlight azul al pulsar */
+    -webkit-tap-highlight-color: transparent;
+}
+.fab-main-btn:active { transform: scale(0.9); }
+
+/* Iconos animados */
+.fab-icon-plus, .fab-icon-close {
+    position: absolute;
+    transition: all 0.3s ease;
+    font-size: 28px;
+}
+.fab-icon-close { opacity: 0; transform: rotate(-90deg); }
+
+/* ESTADO ACTIVO (Abierto) */
+.fab-container.active .fab-main-btn { background: #333; }
+.fab-container.active .fab-icon-plus { opacity: 0; transform: rotate(90deg); }
+.fab-container.active .fab-icon-close { opacity: 1; transform: rotate(0); }
+
+/* EL FONDO (BACKDROP) PARA CERRAR AL TOCAR FUERA */
+.fab-backdrop {
+    position: fixed;
+    top: 0; left: 0; 
+    width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.7); /* Oscuro */
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none; /* Invisible = no molesta */
+    transition: opacity 0.2s ease;
+    z-index: -1; /* Detrás de los botones */
+}
+/* Cuando está activo, el fondo atrapa todos los clics */
+.fab-container.active .fab-backdrop {
+    opacity: 1;
+    pointer-events: auto; 
+}
+
+/* OPCIONES */
+.fab-options {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    width: 0; height: 0;
+    pointer-events: none; /* Inicialmente no clickeables */
+}
+.fab-option {
+    position: absolute;
+    bottom: 0; left: 0;
+    margin-left: -25px; margin-bottom: -25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    -webkit-tap-highlight-color: transparent;
+}
+/* Cuando está activo, las opciones SÍ reciben clics */
+.fab-container.active .fab-option {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Icon Holders y Labels */
+.fab-icon-holder {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+.fab-label {
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.fab-option--ingreso .fab-icon-holder { background: var(--c-success); }
+.fab-option--traspaso .fab-icon-holder { background: var(--c-info); }
+.fab-option--gasto .fab-icon-holder { background: var(--c-danger); }
+
+/* ANIMACIÓN (Pago Izq | Traspaso Centro | Ingreso Der) */
+.fab-container.active .fab-option--gasto { transform: translate(-75px, -85px) scale(1); transition-delay: 0.05s; }
+.fab-container.active .fab-option--traspaso { transform: translate(0px, -110px) scale(1); transition-delay: 0.1s; }
+.fab-container.active .fab-option--ingreso { transform: translate(75px, -85px) scale(1); transition-delay: 0.15s; }
+
+
+/* --- 2. POSICIONAMIENTO MÓVIL (Pantallas < 1024px) --- */
+@media (max-width: 1023px) {
+    .fab-container {
+        /* Centrado respecto a la ventana del móvil */
+        position: fixed;
+        left: 50%;
+        bottom: 25px; 
+        transform: translateX(-50%);
+        right: auto;
     }
+    
+    /* El fondo debe cubrir toda la pantalla del móvil */
+    .fab-backdrop {
+        left: -50vw; /* Compensar el left 50% del padre */
+        width: 200vw; /* Asegurar cobertura total */
+    }
+}
 
-    /* 2. Barra Inferior */
-    .bottom-nav {
-        /* ANCHO DUPLICADO */
+
+/* --- 3. POSICIONAMIENTO ESCRITORIO (Pantallas >= 1024px) --- */
+@media (min-width: 1024px) {
+    /* Cuerpo App a la izquierda (Ancho 900px + Margen 50px) */
+    .app-layout, .top-bar, .bottom-nav, .login-view__card {
         width: 900px !important;
-        
+        max-width: 900px !important;
+        margin-left: 50px !important;
         left: 50px !important;
         right: auto !important;
         transform: none !important;
-        border-top-right-radius: 16px;
     }
+    
+    body, .login-view { justify-content: flex-start; }
 
-    /* 3. Botón Flotante (FAB) - RECALCULADO */
+    /* FAB Centrado respecto a la App de 900px */
     .fab-container {
-        /* Cálculo: Margen (50px) + Mitad del Ancho (450px) = 500px 
+        position: fixed;
+        /*
+           Cálculo del Centro:
+           Margen Izquierdo (50px) + Mitad del Ancho App (900px / 2 = 450px)
+           Total = 500px desde la izquierda de la pantalla.
         */
         left: 500px !important; 
-        
-        transform: translateX(-50%) !important;
+        bottom: 30px;
+        transform: translateX(-50%);
         right: auto !important;
     }
-    
-    /* Ajuste del telón de fondo */
+
+    /* Ajuste del fondo para escritorio */
     .fab-backdrop {
-        left: -500px !important; /* Compensamos el nuevo centro */
-        width: 100vw !important;
+        /* Tiene que cubrir todo el monitor, no solo la app */
+        left: -500px !important; /* Deshacer el offset del padre */
+        width: 200vw !important;
+        height: 200vh !important;
     }
     
-    /* 4. Pantallas de Login */
-    .login-view {
-        justify-content: flex-start;
-        padding-left: 50px;
-    }
-    .login-view__card {
-        width: 900px; /* También hacemos la tarjeta de login más ancha */
-        margin: 0;
-    }
-
-    /* 5. Encabezado (Top Bar) */
-    .top-bar {
-        /* ANCHO DUPLICADO */
-        width: 900px !important;
-        
-        left: 50px !important;
-        right: auto !important;
-        transform: none !important;
-        border-right: 1px solid var(--c-outline);
-        border-top-right-radius: 16px;
-    }
-
-    /* 6. Calculadora a la Derecha */
+    /* Calculadora a la derecha */
     #calculator-overlay {
         justify-content: flex-end !important;
         padding-right: 50px !important;
         pointer-events: none;
     }
-
-    #calculator-ui {
-        pointer-events: all;
-        box-shadow: -10px 10px 30px rgba(0,0,0,0.4);
-        border: 1px solid var(--c-outline);
-    }
-}
-/* --- CORRECCIÓN DE EMERGENCIA PARA MÓVILES --- */
-/* Esto asegura que el botón funcione en pantallas táctiles */
-@media (max-width: 1023px) {
-    .fab-container {
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        bottom: 25px !important; /* Un poco más abajo para que sea cómodo */
-        align-items: center !important;
-        z-index: 99999 !important; /* Capa suprema */
-        pointer-events: none; /* El contenedor no bloquea, solo los hijos */
-    }
-
-    .fab-main-btn {
-        pointer-events: auto !important; /* El botón SÍ bloquea y recibe clics */
-        width: 60px !important;
-        height: 60px !important;
-        /* Aseguramos que sea pulsable */
-        touch-action: manipulation; 
-        -webkit-tap-highlight-color: transparent;
-    }
-
-    /* Aseguramos que las opciones también sean pulsables */
-    .fab-container.active .fab-option {
-        pointer-events: auto !important;
-    }
-    
-    /* El fondo oscuro */
-    .fab-backdrop {
-        pointer-events: none; /* Por defecto no molesta */
-    }
-    .fab-container.active .fab-backdrop {
-        pointer-events: auto !important; /* Al abrirse, sí */
-    }
+    #calculator-ui { pointer-events: all; }
 }

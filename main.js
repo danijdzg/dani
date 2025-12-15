@@ -11238,7 +11238,7 @@ if ('serviceWorker' in navigator) {
       });
   });
  }
- const initSpeedDial = () => {
+const initSpeedDial = () => {
     const container = document.getElementById('fab-container');
     const trigger = document.getElementById('fab-trigger');
     const backdrop = document.getElementById('fab-backdrop');
@@ -11246,71 +11246,65 @@ if ('serviceWorker' in navigator) {
 
     if (!container || !trigger) return;
 
-    // --- Control de Estado ---
-    let isOpen = false;
-
+    // --- Funciones de Control ---
+    
     const openMenu = () => {
         container.classList.add('active');
-        isOpen = true;
         hapticFeedback('medium');
     };
 
     const closeMenu = () => {
         container.classList.remove('active');
-        isOpen = false;
     };
 
     const toggleMenu = (e) => {
-        // Prevenimos que el evento se dispare dos veces (touch + click)
-        if (e && e.cancelable) e.preventDefault(); 
+        // Detenemos la propagación para que no llegue al "document" y se cierre inmediatamente
         e.stopPropagation();
-
-        if (isOpen) closeMenu();
-        else openMenu();
+        
+        if (container.classList.contains('active')) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
     };
 
-    // --- EVENTOS DEL BOTÓN PRINCIPAL (TRIGGER) ---
-    // Usamos 'touchstart' para respuesta inmediata en móvil y 'click' para PC
-    // El { passive: false } es vital para poder usar preventDefault()
-    trigger.addEventListener('touchstart', toggleMenu, { passive: false });
-    trigger.addEventListener('click', (e) => {
-        // Si ya se disparó por touch, evitamos el click fantasma
-        if (!isOpen && e.isTrusted) toggleMenu(e); 
-        else e.stopPropagation();
-    });
+    // --- EVENTO 1: BOTÓN PRINCIPAL (+) ---
+    // Usamos 'click' estándar. Es compatible con Móvil y PC.
+    trigger.onclick = toggleMenu;
 
-    // --- EVENTOS DEL FONDO (CERRAR) ---
-    const handleBackdrop = (e) => {
-        if (e.cancelable) e.preventDefault();
-        e.stopPropagation();
-        closeMenu();
-    };
-    backdrop.addEventListener('touchstart', handleBackdrop, { passive: false });
-    backdrop.addEventListener('click', handleBackdrop);
-
-    // --- EVENTOS DE LAS OPCIONES (PAGO, TRASPASO, INGRESO) ---
-    options.forEach(btn => {
-        const handleOption = (e) => {
-            if (e.cancelable) e.preventDefault();
+    // --- EVENTO 2: FONDO OSCURO (Cerrar al tocar fuera) ---
+    // Esta es la clave para lo que pediste: si tocas lo oscuro, se cierra.
+    if (backdrop) {
+        backdrop.onclick = (e) => {
             e.stopPropagation();
+            closeMenu();
+        };
+    }
+
+    // --- EVENTO 3: LAS OPCIONES (Pago, Traspaso, Ingreso) ---
+    options.forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation(); // Evitar cerrar antes de tiempo
             
-            const type = btn.dataset.type;
+            const type = btn.dataset.type; // 'gasto', 'ingreso', 'traspaso'
             
-            // Feedback y Cierre Visual
+            // 1. Feedback y Cierre visual inmediato
             hapticFeedback('light');
             closeMenu();
 
-            // Ejecutar la acción tras breve pausa para ver la animación
+            // 2. Ejecutar la acción tras una micro-pausa (para que se vea la animación)
             setTimeout(() => {
-                if (typeof startMovementForm === 'function') {
-                    startMovementForm(null, false, type);
-                } else {
-                    console.error("Función startMovementForm no encontrada");
+                try {
+                    if (typeof startMovementForm === 'function') {
+                        startMovementForm(null, false, type);
+                    } else {
+                        console.error("Error: startMovementForm no encontrada");
+                        showToast("Error interno", "danger");
+                    }
+                } catch (err) {
+                    console.error(err);
                 }
             }, 75);
         };
-
-        btn.addEventListener('touchstart', handleOption, { passive: false });
-        btn.addEventListener('click', handleOption);
     });
 };
