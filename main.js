@@ -4762,7 +4762,7 @@ const renderPanelPage = async () => {
                         <span>FLUJO DE CAJA</span>
                     </div>
                     <div class="report-filters">
-                        <select id="filter-periodo" class="form-select compact-select">
+                        <select id="filter-periodo" class="form-select compact-select" style="padding: 2px 20px 2px 8px; height: 26px; font-size: 0.75rem;">
                             <option value="mes-actual">Este Mes</option>
                             <option value="año-actual">Este Año</option>
                             <option value="custom">Personalizado</option>
@@ -4844,7 +4844,7 @@ const renderPanelPage = async () => {
                 <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">health_and_safety</span>
-                        <span>SALUD</span>
+                        <span>SALUD FINANCIERA</span>
                     </div>
                     <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="salud">?</button>
                 </div>
