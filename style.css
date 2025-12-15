@@ -5622,17 +5622,52 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     }
 }
 
+
 /* ================================================================= */
-/* === MODO ESCRITORIO (PC/MAC) - >= 1024px                      === */
-/* === ALINEACIÓN IZQUIERDA & PANEL SIN SCROLL                   === */
+/* === 1. MÓVIL Y TABLET (< 1024px) - CENTRADO Y VERTICAL        === */
+/* ================================================================= */
+@media (max-width: 1023px) {
+    body {
+        justify-content: center; /* Centra el contenido en la pantalla */
+    }
+    .app-layout {
+        margin: 0 auto !important; /* Centrado horizontal */
+        width: 100%;
+        max-width: 500px; /* Ancho máximo de móvil */
+        left: auto !important;
+        transform: none !important;
+        border-radius: 0;
+        height: 100vh;
+        border: none;
+    }
+    .fab-container {
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        bottom: 25px !important;
+        right: auto !important;
+    }
+    
+    /* El panel en móvil debe tener scroll y ser una lista vertical */
+    #panel-page, #panel-page > div {
+        display: flex !important;
+        flex-direction: column !important;
+        overflow-y: auto !important;
+        height: auto !important;
+    }
+}
+
+/* ================================================================= */
+/* === 2. MODO ESCRITORIO (PC/MAC) - >= 1024px                   === */
+/* === ALINEACIÓN IZQUIERDA & DASHBOARD SIN SCROLL               === */
 /* ================================================================= */
 
 @media (min-width: 1024px) {
     
-    /* --- 1. ESTRUCTURA GENERAL: ALINEACIÓN IZQUIERDA --- */
+    /* --- ESTRUCTURA PRINCIPAL: ALINEADA A LA IZQUIERDA --- */
     body {
-        justify-content: flex-start !important; /* Fuerza inicio a la izquierda */
-        overflow: hidden; /* Evita scroll en el body principal */
+        justify-content: flex-start !important; /* Alineación izquierda */
+        overflow: hidden; /* Sin scroll en el body */
+        padding-left: 50px; /* Espacio de seguridad visual */
     }
 
     .app-layout {
@@ -5640,216 +5675,162 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         max-width: 900px !important;
         height: 100vh !important;
         
-        /* ALINEACIÓN: Pegado a la izquierda con margen de seguridad */
+        /* Posicionamiento Fijo a la Izquierda */
         margin: 0 !important;
-        margin-left: 50px !important;
+        position: relative !important;
+        left: 0 !important;
+        transform: none !important;
         
         border-right: 1px solid var(--c-outline);
-        box-shadow: 20px 0 50px rgba(0,0,0,0.5); /* Sombra hacia la derecha */
-        border-radius: 0 20px 20px 0; /* Redondeamos solo la derecha */
-        transform: none !important;
-        left: 0 !important;
+        box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+        border-radius: 0 20px 20px 0;
+        background-color: var(--c-background);
+        z-index: 10;
     }
 
-    /* --- 2. ELEMENTOS FIJOS (HEADER Y NAV) --- */
-    /* Deben coincidir exactamente con las coordenadas de .app-layout */
-    
+    /* --- ENCABEZADO Y NAVEGACIÓN --- */
     .top-bar {
         width: 900px !important;
-        left: 50px !important; /* 50px desde la izquierda */
-        transform: none !important;
+        left: 50px !important; /* Coincide con el padding del body */
         right: auto !important;
-        border-right: 1px solid var(--c-outline);
+        transform: none !important;
         border-top-right-radius: 20px;
     }
 
     .bottom-nav {
         width: 900px !important;
-        left: 50px !important; /* 50px desde la izquierda */
-        transform: none !important;
+        left: 50px !important;
         right: auto !important;
-        border-right: 1px solid var(--c-outline);
-        border-radius: 0 0 20px 0; /* Esquina inferior derecha */
+        transform: none !important;
+        border-radius: 0 0 20px 0;
         padding-bottom: 0 !important;
-        height: 70px !important;
-        background-color: var(--c-surface) !important;
     }
 
-    /* --- 3. BOTÓN FLOTANTE (+) --- */
-    /* Cálculo Matemático: Margen Izq (50px) + Mitad del Ancho (450px) = 500px */
+    /* --- BOTÓN FLOTANTE (+) --- */
     .fab-container {
+        /* Centro de la app (50px margen + 450px mitad = 500px) */
         left: 500px !important; 
         transform: translateX(-50%) !important;
         right: auto !important;
         bottom: 30px !important;
     }
     
-    /* El fondo oscuro debe cubrir TODA la pantalla, no solo la app */
+    /* Fondo oscuro cubre todo el monitor */
     .fab-backdrop {
-        left: -500px !important; /* Compensamos para llegar al borde 0 */
+        left: -500px !important;
         width: 200vw !important;
         height: 200vh !important;
     }
 
-    /* --- 4. PANEL DE CONTROL (DASHBOARD) SIN SCROLL --- */
-    /* Transformamos la lista vertical en un Grid de Mando */
+    /* --- PANEL DE CONTROL (GRID DASHBOARD) --- */
     
+    /* 1. Contenedor Principal del Panel */
     #panel-page.view--active {
-        display: grid !important;
-        /* Definimos áreas para colocar las tarjetas */
-        grid-template-columns: 1fr 1fr 1fr; /* 3 Columnas */
-        grid-template-rows: auto auto 1fr;  /* Filas automáticas */
-        gap: 20px;
-        padding: 20px 30px !important;
+        display: block !important; /* El contenedor padre es bloque */
         height: 100%;
-        overflow: hidden !important; /* PROHIBIDO EL SCROLL */
-        align-content: start;
+        overflow: hidden !important; /* Cero Scroll */
+        padding: 0 !important; /* Quitamos padding del padre */
     }
 
-    /* Regla de seguridad: Si no está activo, forzamos que se oculte en PC */
-    #panel-page:not(.view--active) {
-        display: none !important;
+    /* 2. El DIV interno que genera JS (Donde están las tarjetas) */
+    #panel-page.view--active > div {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr 1fr; /* 3 Columnas */
+        grid-template-rows: auto 1fr;       /* Fila superior auto, inferior llena el resto */
+        gap: 20px;
+        padding: 80px 30px 100px 30px !important; /* Padding ajustado para Header y Nav */
+        height: 100%;
+        box-sizing: border-box;
     }
 
-    /* A. Filtros y Fechas (Ocupan todo el ancho arriba) */
-    #panel-page > .hero-card:nth-of-type(1) {
-        grid-column: 1 / -1; /* De lado a lado */
+    /* 3. TARJETA 1: FLUJO DE CAJA (Arriba, ancho completo) */
+    #panel-page.view--active > div > .hero-card:nth-of-type(1) {
+        grid-column: 1 / -1; /* Ocupa las 3 columnas */
         display: flex;
-        flex-direction: row;
+        flex-direction: row; /* Horizontal */
         align-items: center;
         justify-content: space-between;
-        padding: 10px 20px !important;
+        padding: 15px 25px !important;
         margin-bottom: 0 !important;
-        height: 80px; /* Altura fija compacta */
+        height: auto;
+        min-height: 110px;
     }
-    /* Ajustes internos de la tarjeta de filtros para que quepa horizontal */
-    #panel-page > .hero-card:nth-of-type(1) > div {
+    
+    /* Ajustes internos de la Tarjeta 1 para que se vea bien en horizontal */
+    #panel-page > div > .hero-card:nth-of-type(1) > div:first-child {
+        /* El título y selector a la izquierda */
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        margin-right: 40px;
+    }
+    /* Ocultamos las líneas separadoras HR en escritorio */
+    #panel-page > div > .hero-card:nth-of-type(1) hr,
+    #panel-page > div > .hero-card:nth-of-type(1) div[style*="height: 1px"] {
+        display: none !important;
+    }
+    /* Los KPIs (Ingresos/Gastos/Neto) se ponen en fila */
+    #panel-page > div > .hero-card:nth-of-type(1) .clickable-kpi,
+    #panel-page > div > .hero-card:nth-of-type(1) > div[style*="display: grid"] {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 20px !important;
+        align-items: center;
+        width: auto !important;
         margin: 0 !important;
-        width: auto;
-    }
-    #panel-page > .hero-card:nth-of-type(1) .kpi-grid,
-    #panel-page > .hero-card:nth-of-type(1) > div[style*="display: grid"] {
-        display: flex !important; /* Convertimos grid interno a flex horizontal */
-        gap: 30px !important;
-        flex-grow: 1;
-        justify-content: flex-end;
-    }
-    /* Ocultamos elementos decorativos que ocupan espacio */
-    #panel-page > .hero-card:nth-of-type(1) hr,
-    #panel-page > .hero-card:nth-of-type(1) div[style*="height: 1px"] {
-        display: none;
     }
 
-    /* B. Tarjeta Patrimonio (Izquierda) */
-    #panel-page > .hero-card:nth-of-type(2) {
-        grid-column: 1 / 2; /* Columna 1 */
+    /* 4. TARJETA 2: PATRIMONIO (Abajo Izquierda) */
+    #panel-page.view--active > div > .hero-card:nth-of-type(2) {
+        grid-column: 1 / 2;
         margin: 0 !important;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        height: 100%; /* Llenar altura */
     }
 
-    /* C. Tarjeta Inversiones (Centro) */
-    #panel-page > .hero-card:nth-of-type(3) {
-        grid-column: 2 / 3; /* Columna 2 */
+    /* 5. TARJETA 3: INVERSIONES (Abajo Centro) */
+    #panel-page.view--active > div > .hero-card:nth-of-type(3) {
+        grid-column: 2 / 3;
         margin: 0 !important;
         background: var(--c-surface-variant) !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 100%;
     }
 
-    /* D. Tarjeta Salud Financiera (Derecha) */
-    #panel-page > .hero-card:nth-of-type(4) {
-        grid-column: 3 / 4; /* Columna 3 */
+    /* 6. TARJETA 4: SALUD (Abajo Derecha) */
+    #panel-page.view--active > div > .hero-card:nth-of-type(4) {
+        grid-column: 3 / 4;
         margin: 0 !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 100%;
     }
 
-    /* Ajuste general de tarjetas para que no sean gigantes */
-    #panel-page .hero-card {
-        box-shadow: none !important;
-        border: 1px solid var(--c-outline);
-        height: 100%; /* Llenar la celda del grid */
-    }
-    
-    /* Textos más grandes en PC */
-    .hero-value { font-size: 2.2rem !important; }
-	
-    /* --- 5. CALCULADORA A LA DERECHA (FUERA DE LA APP) --- */
-    #calculator-overlay, 
-    #calculator-iframe-modal {
+    /* Ajuste de textos grandes para aprovechar pantalla */
+    .hero-value { font-size: 2.5rem !important; }
+
+    /* --- CALCULADORA Y EXTRAS --- */
+    #calculator-overlay, #calculator-iframe-modal {
         justify-content: flex-end !important;
         padding-right: 50px !important;
         padding-left: 0 !important;
-        pointer-events: none; /* Permite clicks en la app */
-        background-color: transparent !important;
+        pointer-events: none;
+        background: transparent !important;
     }
-
-    #calculator-ui,
-    #calculator-iframe-modal .modal {
-        pointer-events: all;
-        box-shadow: -10px 10px 40px rgba(0,0,0,0.5) !important;
+    #calculator-ui, #calculator-iframe-modal .modal {
+        pointer-events: auto;
         border: 1px solid var(--c-outline);
-        margin-right: 0 !important;
+        box-shadow: -10px 10px 40px rgba(0,0,0,0.5);
     }
-
-    /* --- 6. MODALES Y FORMULARIOS (SOBRE LA APP A LA IZQUIERDA) --- */
-    /* Alineados exactamente sobre la app */
-    .modal-overlay:not(#calculator-overlay):not(#calculator-iframe-modal) {
-        justify-content: flex-start !important;
-        padding-left: 50px !important; /* Mismo margen que la app */
-        align-items: center !important;
-    }
-
-    .modal-overlay:not(#calculator-overlay):not(#calculator-iframe-modal) .modal {
-        width: 900px !important;
-        max-width: 900px !important;
-        border-radius: 20px !important;
-        margin: 0 !important;
-        box-shadow: 0 0 50px rgba(0,0,0,0.8);
-    }
-
-    /* Formulario de movimiento ajustado */
-    #movimiento-modal .dense-form-grid {
-        grid-template-columns: 1fr 1fr 1fr !important; /* 3 columnas para aprovechar ancho */
-        gap: 20px;
-    }
-    /* El importe ocupa la primera columna, resto se distribuye */
-    #movimiento-cantidad-form-group { grid-column: span 1 !important; }
     
-    /* Login y PIN a la izquierda */
+    /* Login alineado */
     .login-view {
         justify-content: flex-start !important;
         padding-left: 50px !important;
-        align-items: center !important;
-    }
-    .login-view__card {
-        width: 900px !important;
-        max-width: 900px !important;
-        margin: 0 !important;
-    }
-}
-
-/* ================================================================= */
-/* === MÓVIL Y TABLET (< 1024px) - MANTENER CENTRADO             === */
-/* ================================================================= */
-/* Aseguramos que nada de lo anterior rompa el móvil */
-
-@media (max-width: 1023px) {
-    body {
-        justify-content: center; /* Centrado clásico */
-    }
-    .app-layout {
-        margin: 0 auto; /* Centrado */
-        width: 100%;
-        max-width: 500px; /* Límite móvil */
-        left: auto;
-        border-radius: 0;
-    }
-    .fab-container {
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: 25px;
-    }
-    #panel-page {
-        display: flex !important; /* Vuelta a columna vertical */
-        overflow-y: auto !important; /* Scroll necesario en móvil */
     }
 }
