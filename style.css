@@ -5622,91 +5622,229 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     }
 }
 
+/* ================================================================= */
+/* === MODO ESCRITORIO (PC/MAC) - >= 1024px                      === */
+/* === ALINEACIÓN IZQUIERDA & PANEL SIN SCROLL                   === */
+/* ================================================================= */
 
-/* --- 3. POSICIONAMIENTO ESCRITORIO (Pantallas >= 1024px) --- */
 @media (min-width: 1024px) {
-    /* Cuerpo App a la izquierda (Ancho 900px + Margen 50px) */
-    .app-layout, .top-bar, .bottom-nav, .login-view__card {
+    
+    /* --- 1. ESTRUCTURA GENERAL: ALINEACIÓN IZQUIERDA --- */
+    body {
+        justify-content: flex-start !important; /* Fuerza inicio a la izquierda */
+        overflow: hidden; /* Evita scroll en el body principal */
+    }
+
+    .app-layout {
         width: 900px !important;
         max-width: 900px !important;
+        height: 100vh !important;
+        
+        /* ALINEACIÓN: Pegado a la izquierda con margen de seguridad */
+        margin: 0 !important;
         margin-left: 50px !important;
-        left: 50px !important;
-        right: auto !important;
+        
+        border-right: 1px solid var(--c-outline);
+        box-shadow: 20px 0 50px rgba(0,0,0,0.5); /* Sombra hacia la derecha */
+        border-radius: 0 20px 20px 0; /* Redondeamos solo la derecha */
         transform: none !important;
+        left: 0 !important;
+    }
+
+    /* --- 2. ELEMENTOS FIJOS (HEADER Y NAV) --- */
+    /* Deben coincidir exactamente con las coordenadas de .app-layout */
+    
+    .top-bar {
+        width: 900px !important;
+        left: 50px !important; /* 50px desde la izquierda */
+        transform: none !important;
+        right: auto !important;
+        border-right: 1px solid var(--c-outline);
+        border-top-right-radius: 20px;
+    }
+
+    .bottom-nav {
+        width: 900px !important;
+        left: 50px !important; /* 50px desde la izquierda */
+        transform: none !important;
+        right: auto !important;
+        border-right: 1px solid var(--c-outline);
+        border-radius: 0 0 20px 0; /* Esquina inferior derecha */
+        padding-bottom: 0 !important;
+        height: 70px !important;
+        background-color: var(--c-surface) !important;
+    }
+
+    /* --- 3. BOTÓN FLOTANTE (+) --- */
+    /* Cálculo Matemático: Margen Izq (50px) + Mitad del Ancho (450px) = 500px */
+    .fab-container {
+        left: 500px !important; 
+        transform: translateX(-50%) !important;
+        right: auto !important;
+        bottom: 30px !important;
     }
     
-    body, .login-view { justify-content: flex-start; }
-
-    /* FAB Centrado respecto a la App de 900px */
-    .fab-container {
-        position: fixed;
-        /*
-           Cálculo del Centro:
-           Margen Izquierdo (50px) + Mitad del Ancho App (900px / 2 = 450px)
-           Total = 500px desde la izquierda de la pantalla.
-        */
-        left: 500px !important; 
-        bottom: 30px;
-        transform: translateX(-50%);
-        right: auto !important;
-    }
-
-    /* Ajuste del fondo para escritorio */
+    /* El fondo oscuro debe cubrir TODA la pantalla, no solo la app */
     .fab-backdrop {
-        /* Tiene que cubrir todo el monitor, no solo la app */
-        left: -500px !important; /* Deshacer el offset del padre */
+        left: -500px !important; /* Compensamos para llegar al borde 0 */
         width: 200vw !important;
         height: 200vh !important;
     }
+
+    /* --- 4. PANEL DE CONTROL (DASHBOARD) SIN SCROLL --- */
+    /* Transformamos la lista vertical en un Grid de Mando */
     
-    /* --- 6. CALCULADORAS A LA DERECHA --- */
-    /* Afecta a la calculadora completa del header (#calculator-iframe-modal) */
-    
-    #calculator-iframe-modal {
-        justify-content: flex-end !important; /* Alineación Derecha */
-        padding-right: 50px !important;       /* Margen de seguridad */
-        padding-left: 0 !important;           /* Reset */
-        pointer-events: none;                 /* Permite hacer clic en la app mientras está abierta */
-        background-color: transparent !important; /* Fondo transparente para ver el escritorio */
+    #panel-page {
+        display: grid !important;
+        /* Definimos áreas para colocar las tarjetas */
+        grid-template-columns: 1fr 1fr 1fr; /* 3 Columnas */
+        grid-template-rows: auto auto 1fr;  /* Filas automáticas */
+        gap: 20px;
+        padding: 20px 30px !important;
+        height: 100%;
+        overflow: hidden !important; /* PROHIBIDO EL SCROLL */
+        align-content: start;
     }
 
-    /* Estilo de la ventana de la calculadora (Iframe) */
+    /* A. Filtros y Fechas (Ocupan todo el ancho arriba) */
+    #panel-page > .hero-card:nth-of-type(1) {
+        grid-column: 1 / -1; /* De lado a lado */
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 20px !important;
+        margin-bottom: 0 !important;
+        height: 80px; /* Altura fija compacta */
+    }
+    /* Ajustes internos de la tarjeta de filtros para que quepa horizontal */
+    #panel-page > .hero-card:nth-of-type(1) > div {
+        margin: 0 !important;
+        width: auto;
+    }
+    #panel-page > .hero-card:nth-of-type(1) .kpi-grid,
+    #panel-page > .hero-card:nth-of-type(1) > div[style*="display: grid"] {
+        display: flex !important; /* Convertimos grid interno a flex horizontal */
+        gap: 30px !important;
+        flex-grow: 1;
+        justify-content: flex-end;
+    }
+    /* Ocultamos elementos decorativos que ocupan espacio */
+    #panel-page > .hero-card:nth-of-type(1) hr,
+    #panel-page > .hero-card:nth-of-type(1) div[style*="height: 1px"] {
+        display: none;
+    }
+
+    /* B. Tarjeta Patrimonio (Izquierda) */
+    #panel-page > .hero-card:nth-of-type(2) {
+        grid-column: 1 / 2; /* Columna 1 */
+        margin: 0 !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    /* C. Tarjeta Inversiones (Centro) */
+    #panel-page > .hero-card:nth-of-type(3) {
+        grid-column: 2 / 3; /* Columna 2 */
+        margin: 0 !important;
+        background: var(--c-surface-variant) !important;
+    }
+
+    /* D. Tarjeta Salud Financiera (Derecha) */
+    #panel-page > .hero-card:nth-of-type(4) {
+        grid-column: 3 / 4; /* Columna 3 */
+        margin: 0 !important;
+    }
+
+    /* Ajuste general de tarjetas para que no sean gigantes */
+    #panel-page .hero-card {
+        box-shadow: none !important;
+        border: 1px solid var(--c-outline);
+        height: 100%; /* Llenar la celda del grid */
+    }
+    
+    /* Textos más grandes en PC */
+    .hero-value { font-size: 2.2rem !important; }
+
+    /* --- 5. CALCULADORA A LA DERECHA (FUERA DE LA APP) --- */
+    #calculator-overlay, 
+    #calculator-iframe-modal {
+        justify-content: flex-end !important;
+        padding-right: 50px !important;
+        padding-left: 0 !important;
+        pointer-events: none; /* Permite clicks en la app */
+        background-color: transparent !important;
+    }
+
+    #calculator-ui,
     #calculator-iframe-modal .modal {
         pointer-events: all;
-        width: 400px !important;  /* Ancho más estrecho tipo widget */
-        height: 80vh !important;  /* Altura cómoda */
-        max-height: 800px !important;
-        border-radius: 16px !important;
         box-shadow: -10px 10px 40px rgba(0,0,0,0.5) !important;
         border: 1px solid var(--c-outline);
-        margin-right: 0 !important; /* Asegurar que se pega al padding */
+        margin-right: 0 !important;
     }
 
-    /* Estilo del teclado numérico (Input) */
-    #calculator-ui {
-        pointer-events: all;
-        box-shadow: -10px 10px 40px rgba(0,0,0,0.5);
-        border: 1px solid var(--c-outline);
+    /* --- 6. MODALES Y FORMULARIOS (SOBRE LA APP A LA IZQUIERDA) --- */
+    /* Alineados exactamente sobre la app */
+    .modal-overlay:not(#calculator-overlay):not(#calculator-iframe-modal) {
+        justify-content: flex-start !important;
+        padding-left: 50px !important; /* Mismo margen que la app */
+        align-items: center !important;
     }
 
-    /* --- 7. FORMULARIO DE MOVIMIENTOS A LA IZQUIERDA --- */
-    /* Alineado perfectamente sobre la aplicación */
-    
-    #movimiento-modal {
-        justify-content: flex-start !important; /* Alineación Izquierda */
-        padding-left: 50px !important;          /* Mismo margen que la App */
-        padding-right: 0 !important;
-        background-color: rgba(0,0,0,0.6) !important; /* Fondo oscuro para enfocar */
-    }
-
-    #movimiento-modal .modal {
-        width: 900px !important;      /* MISMO ANCHO QUE LA APP */
+    .modal-overlay:not(#calculator-overlay):not(#calculator-iframe-modal) .modal {
+        width: 900px !important;
         max-width: 900px !important;
-        border-radius: 16px !important;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important;
-        margin: 0 !important;         /* Sin márgenes automáticos */
-        
-        /* Opcional: Si quieres que ocupe casi toda la altura para ver bien los campos */
-        max-height: 90vh !important;
-        height: auto !important;
+        border-radius: 20px !important;
+        margin: 0 !important;
+        box-shadow: 0 0 50px rgba(0,0,0,0.8);
     }
+
+    /* Formulario de movimiento ajustado */
+    #movimiento-modal .dense-form-grid {
+        grid-template-columns: 1fr 1fr 1fr !important; /* 3 columnas para aprovechar ancho */
+        gap: 20px;
+    }
+    /* El importe ocupa la primera columna, resto se distribuye */
+    #movimiento-cantidad-form-group { grid-column: span 1 !important; }
+    
+    /* Login y PIN a la izquierda */
+    .login-view {
+        justify-content: flex-start !important;
+        padding-left: 50px !important;
+        align-items: center !important;
+    }
+    .login-view__card {
+        width: 900px !important;
+        max-width: 900px !important;
+        margin: 0 !important;
+    }
+}
+
+/* ================================================================= */
+/* === MÓVIL Y TABLET (< 1024px) - MANTENER CENTRADO             === */
+/* ================================================================= */
+/* Aseguramos que nada de lo anterior rompa el móvil */
+
+@media (max-width: 1023px) {
+    body {
+        justify-content: center; /* Centrado clásico */
+    }
+    .app-layout {
+        margin: 0 auto; /* Centrado */
+        width: 100%;
+        max-width: 500px; /* Límite móvil */
+        left: auto;
+        border-radius: 0;
+    }
+    .fab-container {
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 25px;
+    }
+    #panel-page {
+        display: flex !important; /* Vuelta a columna vertical */
+        overflow-y: auto !important; /* Scroll necesario en móvil */
+    }
+}
