@@ -5895,11 +5895,3 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         z-index: 2000;
     }
     
-    /* El telón de fondo se limita a la app centrada */
-    .fab-backdrop {
-        width: 840px !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        border-radius: 0;
-    }
-}
