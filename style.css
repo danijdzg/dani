@@ -5694,7 +5694,7 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     /* --- 4. PANEL DE CONTROL (DASHBOARD) SIN SCROLL --- */
     /* Transformamos la lista vertical en un Grid de Mando */
     
-    #panel-page {
+    #panel-page.view--active {
         display: grid !important;
         /* Definimos áreas para colocar las tarjetas */
         grid-template-columns: 1fr 1fr 1fr; /* 3 Columnas */
@@ -5704,6 +5704,11 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         height: 100%;
         overflow: hidden !important; /* PROHIBIDO EL SCROLL */
         align-content: start;
+    }
+
+    /* Regla de seguridad: Si no está activo, forzamos que se oculte en PC */
+    #panel-page:not(.view--active) {
+        display: none !important;
     }
 
     /* A. Filtros y Fechas (Ocupan todo el ancho arriba) */
@@ -5766,7 +5771,7 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     
     /* Textos más grandes en PC */
     .hero-value { font-size: 2.2rem !important; }
-
+	
     /* --- 5. CALCULADORA A LA DERECHA (FUERA DE LA APP) --- */
     #calculator-overlay, 
     #calculator-iframe-modal {
