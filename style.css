@@ -5613,16 +5613,19 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 
 /* ================================================================= */
 /* === 2. MODO ESCRITORIO (PC/MAC) - >= 1024px                   === */
-/* === ALINEACIÓN IZQUIERDA PERFECTA                             === */
+/* === ALINEACIÓN CENTRADA PERFECTA                              === */
 /* ================================================================= */
 
 @media (min-width: 1024px) {
     
-    /* 1. EL BODY: Espacio reservado a la izquierda */
+    /* 1. EL BODY: Centrado Flex */
     body {
-        justify-content: flex-start !important;
+        justify-content: center !important; /* Centra el contenido horizontalmente */
+        padding-left: 0 !important; /* Eliminamos el margen izquierdo forzado */
         overflow: hidden; 
-        padding-left: 50px !important; /* Este es el margen de seguridad */
+        background-color: #050505;
+        /* Fondo elegante para rellenar los laterales vacíos */
+        background-image: radial-gradient(circle at 50% 50%, #1a202c 0%, #000000 100%);
     }
 
     /* 2. LA CAJA DE LA APP */
@@ -5631,51 +5634,49 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         max-width: 900px !important;
         height: 100vh !important;
         
-        /* Posición */
-        margin: 0 !important;
-        left: 0 !important;
+        /* Posicionamiento: Margen automático a los lados = Centrado */
+        margin: 0 auto !important; 
+        left: auto !important;
+        right: auto !important;
         transform: none !important;
         position: relative !important;
         
-        /* Estética */
+        /* Estética: Bordes a ambos lados para definir la app */
+        border-left: 1px solid var(--c-outline);
         border-right: 1px solid var(--c-outline);
-        box-shadow: 20px 0 50px rgba(0,0,0,0.5);
-        border-radius: 0 20px 20px 0;
+        border-radius: 0; /* Recto en PC */
+        box-shadow: 0 0 100px rgba(0,0,0,0.8); /* Sombra difusa centrada */
         background-color: var(--c-background);
         z-index: 10;
     }
 
-    /* 3. ELEMENTOS FIJOS (Coordenadas Absolutas) */
+    /* 3. ELEMENTOS FIJOS (Barras Superior e Inferior) */
+    /* Usamos left: 50% + translateX(-50%) para anclarlos al centro exacto */
     
-    /* Barra Superior */
     .top-bar {
         width: 900px !important;
-        left: 50px !important; /* 50px del borde de la pantalla */
+        left: 50% !important;
+        transform: translateX(-50%) !important;
         right: auto !important;
-        transform: none !important;
-        border-top-right-radius: 20px;
+        border-radius: 0;
     }
 
-    /* Barra Inferior */
     .bottom-nav {
         width: 900px !important;
-        left: 50px !important; /* 50px del borde de la pantalla */
+        left: 50% !important;
+        transform: translateX(-50%) !important;
         right: auto !important;
-        transform: none !important;
-        border-radius: 0 0 20px 0;
+        border-radius: 0;
         padding-bottom: 0 !important;
         z-index: 9000 !important;
     }
 
-    /* 4. EL BOTÓN (+) - CÁLCULO DE PRECISIÓN */
-    /* Matemática: 
-       Margen Izquierdo (50px) + Mitad del Ancho de App (450px) = 500px 
-    */
+    /* 4. EL BOTÓN (+) - CENTRADO PERFECTO */
     .fab-container {
         position: fixed !important;
-        left: 500px !important; /* Exactamente en el centro de la app */
+        left: 50% !important; /* Mitad de la pantalla */
+        transform: translateX(-50%) !important; /* Corrección de su propio ancho */
         bottom: 30px !important;
-        transform: translateX(-50%) !important; /* Centra el propio botón sobre el eje 500px */
         right: auto !important;
         width: auto !important;
         z-index: 20000 !important;
@@ -5684,129 +5685,69 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         align-items: center !important;
     }
     
-    /* Fondo oscuro (Telón) */
+    /* El fondo oscuro del menú también debe centrarse */
     .fab-backdrop {
-        left: -500px !important; /* Compensa el left del padre */
-        width: 200vw !important;
-        height: 200vh !important;
+        left: 50% !important;
+        transform: translateX(-50%);
+        width: 900px !important; /* Solo oscurece la app, no todo el monitor */
+        height: 100vh !important;
     }
 
-    /* --- PANEL DE CONTROL: UNA SOLA COLUMNA CON SCROLL --- */
-    
+    /* --- PANEL DE CONTROL: Ajuste de Grid --- */
     #panel-page.view--active {
         display: block !important;
         height: 100%;
-        overflow-y: auto !important; /* Scroll activado */
+        overflow-y: auto !important;
         padding: 0 !important;
         scrollbar-width: thin;
-        scrollbar-color: var(--c-outline) transparent;
     }
 
     #panel-page.view--active > div {
         display: grid !important;
-        grid-template-columns: 1fr !important; /* 1 Columna */
-        grid-template-rows: auto;
+        grid-template-columns: 1fr !important;
         gap: 20px;
-        padding: 80px 40px 120px 40px !important; /* Padding lateral generoso */
-        height: auto !important;
-        box-sizing: border-box;
-        width: 100% !important;
-        max-width: 900px !important; /* Asegura que no se desborde */
+        padding: 80px 40px 120px 40px !important;
+        max-width: 900px !important;
+        margin: 0 auto; /* Centrado interno */
     }
 
-    /* Tarjetas ocupan todo el ancho */
     #panel-page.view--active > div > .hero-card {
         grid-column: 1 / -1 !important;
-        margin: 0 !important;
         width: 100% !important;
-    }
-
-    /* Ajustes internos tarjeta 1 */
-    #panel-page > div > .hero-card:nth-of-type(1) {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        padding: 20px 30px !important;
-    }
-    #panel-page > div > .hero-card:nth-of-type(1) > div[style*="display: grid"] {
-        display: flex !important;
-        gap: 40px !important;
     }
 
     .hero-value { font-size: 3rem !important; }
 
-    /* --- CALCULADORA Y OTROS --- */
-    #calculator-overlay, #calculator-iframe-modal {
-        justify-content: flex-end !important;
-        padding-right: 50px !important;
+    /* --- MODALES Y CALCULADORA (Centrados en pantalla) --- */
+    
+    /* El overlay ocupa toda la pantalla */
+    .modal-overlay, #calculator-iframe-modal, #calculator-overlay {
+        justify-content: center !important; /* Centra el contenido horizontalmente */
+        align-items: center !important;     /* Centra el contenido verticalmente */
         padding-left: 0 !important;
-        pointer-events: none;
-        background: transparent !important;
-    }
-    #calculator-ui, #calculator-iframe-modal .modal {
-        pointer-events: auto;
-        border: 1px solid var(--c-outline);
-        box-shadow: -10px 10px 40px rgba(0,0,0,0.5);
-    }
-    
-    .modal-overlay:not(#calculator-overlay):not(#calculator-iframe-modal) {
-        justify-content: flex-start !important;
-        padding-left: 50px !important;
-        align-items: center !important;
+        left: 0 !important;
+        width: 100vw !important;
     }
 
-    .modal-overlay:not(#calculator-overlay):not(#calculator-iframe-modal) .modal {
-        width: 900px !important;
-        max-width: 900px !important;
-        border-radius: 20px !important;
-        margin: 0 !important;
-        box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    /* La ventana modal en sí */
+    .modal {
+        max-width: 600px !important; /* Ancho razonable para diálogo */
+        margin: 0 auto !important;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        border-radius: 20px;
     }
-    
-    .login-view {
-        justify-content: flex-start !important;
-        padding-left: 50px !important;
-    }
-}
-/* =======================================================
-   FIX FINAL: FORZAR CENTRADO DEL BOTÓN (+)
-   ======================================================= */
-.fab-container {
-    position: fixed !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important; /* Centrado matemático exacto */
-    right: auto !important; /* Anula cualquier alineación a la derecha */
-    align-items: center !important; /* Alinea los hijos (iconos) al centro */
-    
-    /* Ajuste de altura para que encaje en el hueco de la barra */
-    bottom: 20px !important; 
-    
-    /* Aseguramos que se vea */
-    display: flex;
-    flex-direction: column;
-    z-index: 12000;
-    pointer-events: none; /* Permite pulsar a través del área vacía */
-}
 
-/* El botón principal debe ser pulsable */
-.fab-main-btn {
-    pointer-events: auto;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    /* Borde del mismo color que el fondo de la barra para crear efecto de "recorte" */
-    border: 4px solid var(--c-surface); 
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
-}
-
-/* Ajuste para pantallas grandes (Escritorio) */
-@media (min-width: 1024px) {
-    .fab-container {
-        /* En modo escritorio tu app tiene un margen izquierdo de 50px */
-        /* y un ancho de 900px. El centro es 50px + 450px = 500px */
-        left: 500px !important;
+    /* Calculadora */
+    #calculator-ui {
+        /* Si la calculadora es flotante */
+        left: 50% !important;
         transform: translateX(-50%) !important;
-        bottom: 30px !important;
+        bottom: 0 !important;
+    }
+    
+    /* Pantalla de Login */
+    .login-view {
+        justify-content: center !important;
+        padding-left: 0 !important;
     }
 }
