@@ -5834,16 +5834,6 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     font-weight: 800 !important;   /* Extra negrita */
     letter-spacing: 0.5px;
     text-transform: capitalize;
-    
-    /* Sombra negra fuerte para que se lea sobre cualquier fondo */
-    text-shadow: 
-        0 2px 4px rgba(0,0,0,1),
-        0 0 10px rgba(0,0,0,0.8);
-        
-    /* Posicionamiento */
-    margin-right: 15px; /* Separado del icono */
-    pointer-events: none;
-}
 
 /* 3. BOTÓN PRINCIPAL (+) - MÁS GRANDE Y BRILLANTE */
 .fab-main-btn {
