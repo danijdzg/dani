@@ -5621,198 +5621,233 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 }
 
 /* ================================================================= */
-/* === MODO ESCRITORIO: CENTRADO ABSOLUTO (CORREGIDO) === */
+/* === MODO ESCRITORIO: CENTRADO MATEMÁTICO REAL === */
 /* ================================================================= */
 @media (min-width: 1024px) {
+    
+    /* 1. Reset del Cuerpo */
     body {
-        overflow: hidden;
-        background-color: #09090b;
-    }
-
-    /* El contenedor principal actúa como flexbox para centrar a su hijo */
-    .app-layout__main {
-        /* Espacio para cabecera y pie */
-        padding-top: 80px !important; 
-        padding-bottom: 100px !important; 
-        
+        background-color: #09090b; /* Fondo negro profundo */
+        overflow: hidden; /* Sin barras de scroll */
+        display: flex;
+        justify-content: center; /* Centrar la app horizontalmente */
+        width: 100vw;
         height: 100vh;
-        width: 100vw !important;
-        
-        display: flex !important;
-        flex-direction: column;
-        align-items: center; /* Centrado Horizontal */
-        justify-content: center; /* Centrado Vertical */
     }
 
-    /* GRID DEL PANEL: Definimos ancho máximo y lo centramos */
+    /* 2. El Contenedor de la App */
+    .app-layout {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        background: transparent;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* 3. Área Principal (Lienzo) */
+    .app-layout__main {
+        flex: 1; /* Ocupa todo el espacio disponible entre header y footer */
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* Centra el contenido verticalmente */
+        align-items: center;     /* Centra el contenido horizontalmente */
+        padding: 80px 0 100px 0 !important; /* Espacio para no chocar con las barras */
+        width: 100% !important;
+    }
+
+    /* 4. EL GRID DEL PANEL (Aquí está la magia del centrado) */
     #panel-page.view--active {
         display: grid !important;
-        grid-template-columns: 2.5fr 1fr; /* Columna ancha | Columna estrecha */
-        grid-template-rows: auto 1fr;     /* Fila KPIs | Fila Gráficos */
-        gap: 30px; /* Más espacio entre tarjetas para elegancia */
+        /* Definimos el ancho máximo del contenido para que no se desparrame */
+        width: 90% !important; 
+        max-width: 1400px !important;
+        height: 85% !important; /* Altura controlada */
+        max-height: 800px !important;
         
-        width: 100%;
-        max-width: 1400px; /* Tope de anchura para que no se desparrame */
-        height: 100%;
-        max-height: 800px; /* Tope de altura para que no se estire demasiado */
+        /* Layout: 3 Columnas */
+        grid-template-columns: 1.5fr 1fr 1fr; 
+        grid-template-rows: auto 1fr; /* Fila KPIs | Fila Principal */
+        gap: 30px;
         
-        padding: 0 40px !important; /* Margen lateral de seguridad */
-        margin: 0 auto !important;
-        align-content: center; /* Asegura centrado del grid interno */
+        margin: 0 auto !important; /* Centrado horizontal forzoso */
+        padding: 0 !important;
     }
 
-    /* ZONA 1: KPIs (Fila Superior) */
+    /* --- POSICIONAMIENTO DE LAS TARJETAS --- */
+
+    /* Fila 1: KPIs (Ocupa todo el ancho superior) */
     .dashboard-kpi-row {
         grid-column: 1 / -1;
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 24px;
-        height: 130px;
+        gap: 30px;
+        height: 140px; /* Tarjetas de KPI grandes y claras */
     }
 
-    /* ZONA 2: GRÁFICO PRINCIPAL */
+    /* Fila 2: Gráfico Principal (Izquierda grande) */
     .dashboard-main-chart-card {
         grid-column: 1 / 2;
         background: var(--c-surface);
-        border: 1px solid var(--c-outline);
+        border: 1px solid rgba(255,255,255,0.08);
         border-radius: 24px;
         padding: 24px;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
-    }
-
-    /* ZONA 3: LATERAL */
-    .dashboard-side-column {
-        grid-column: 2 / 3;
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
+        box-shadow: 0 20px 50px -10px rgba(0,0,0,0.5);
         height: 100%;
     }
-    
-    /* Ajustes visuales de tarjetas */
-    .hero-card, .clickable-kpi {
-        border-radius: 24px;
-        border: 1px solid rgba(255,255,255,0.05);
-        background: var(--c-surface);
-        transition: transform 0.2s, border-color 0.2s;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    }
-    
-    /* El gráfico principal debe ocupar todo su espacio */
-    .hero-card {
-        flex: 1;
-        margin: 0 !important;
-        justify-content: center;
-        padding: 20px !important;
+
+    /* Fila 2: Columnas Laterales (Patrimonio y Salud) */
+    .dashboard-side-column {
+        display: contents; /* Truco para usar los hijos directamente en el grid */
     }
 
-    .clickable-kpi {
+    /* Tarjeta Patrimonio (Centro) */
+    #panel-page > .hero-card:nth-of-type(1) {
+        grid-column: 2 / 3;
+        margin: 0 !important;
+        height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding: 0 24px;
+        background: linear-gradient(145deg, rgba(30,40,50,1), rgba(20,25,35,1));
+        border: 1px solid rgba(0, 179, 77, 0.3); /* Borde verde sutil */
+        box-shadow: 0 0 30px rgba(0, 179, 77, 0.1);
     }
-    
+
+    /* Tarjeta Salud (Derecha) */
+    #panel-page > .hero-card:nth-of-type(3) {
+        grid-column: 3 / 4;
+        margin: 0 !important;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: var(--c-surface);
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* El gráfico de Inversiones lo ocultamos o movemos si no cabe */
+    #panel-page > .hero-card:nth-of-type(2) { display: none; } 
+
+    /* Estilos de Texto Escritorio */
+    .hero-value { font-size: 3rem !important; }
+    .clickable-kpi {
+        justify-content: center;
+        padding: 0 30px;
+        background: var(--c-surface);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 20px;
+        transition: transform 0.2s;
+    }
     .clickable-kpi:hover {
         transform: translateY(-5px);
         background: var(--c-surface-variant);
         border-color: var(--c-primary);
     }
-    
-    .hero-value { font-size: 2.8rem !important; }
 }
 /* ================================================================= */
-/* === SUPER FAB (Botón +) CORREGIDO & ETIQUETAS LIMPIAS === */
+/* === FAB DELUXE (Sin Franja, Etiquetas Limpias, Resplandor) === */
 /* ================================================================= */
 
-/* 1. EL TELÓN DE FONDO (BACKDROP) */
-/* Corrección de la franja: Usamos coordenadas fijas absolutas */
+/* JERARQUÍA DE CAPAS (Z-INDEX) CRÍTICA */
+.bottom-nav { z-index: 2000 !important; } /* La barra siempre encima del oscurecimiento */
+.fab-backdrop { z-index: 1500 !important; } /* El oscurecimiento detrás de la barra */
+.fab-container { z-index: 3000 !important; } /* El botón y opciones encima de todo */
+
+/* 1. EL TELÓN DE FONDO (Pantalla completa pero detrás del menú) */
 .fab-backdrop {
     position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important; /* Forzar ancho total de ventana */
-    height: 100vh !important; /* Forzar alto total */
+    top: 0; left: 0; 
+    width: 100vw !important; 
+    height: 100vh !important;
     
-    /* Ajuste para no tapar el menú inferior */
-    /* Usamos clip-path para recortar la parte de abajo limpiamente si es necesario,
-       o simplemente z-index controlado */
-    z-index: 9000; /* Por debajo del botón (10001) y del menú (9000 es el menú) */
-    
-    /* Pero como queremos que el menú se vea, lo hacemos terminar antes */
-    /* En móvil la barra mide unos 70px + safe area */
-    height: calc(100vh - 80px) !important; 
-    
-    /* Efecto Visual */
+    /* Oscurecimiento elegante */
     background: rgba(0, 0, 0, 0.85) !important;
-    backdrop-filter: blur(8px);
-    transition: opacity 0.3s ease;
+    backdrop-filter: blur(8px); /* Efecto cristal desenfocado */
     
-    /* Corrección de márgenes fantasma */
-    margin: 0 !important;
-    transform: none !important;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
 }
 
-/* 2. BOTÓN PRINCIPAL (+) */
+/* Cuando se activa el botón */
+.fab-container.active .fab-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 2. ETIQUETAS DE TEXTO (Limpias, sin caja blanca) */
+.fab-label {
+    background: transparent !important; /* ADIÓS CAJA BLANCA */
+    box-shadow: none !important;
+    border: none !important;
+    
+    /* Tipografía igual a los botones */
+    font-family: var(--font-family);
+    color: #ffffff !important;
+    font-size: 1.1rem !important; /* Más grande y legible */
+    font-weight: 800 !important;   /* Extra negrita */
+    letter-spacing: 0.5px;
+    text-transform: capitalize;
+    
+    /* Sombra negra fuerte para que se lea sobre cualquier fondo */
+    text-shadow: 
+        0 2px 4px rgba(0,0,0,1),
+        0 0 10px rgba(0,0,0,0.8);
+        
+    /* Posicionamiento */
+    margin-right: 15px; /* Separado del icono */
+    pointer-events: none;
+}
+
+/* 3. BOTÓN PRINCIPAL (+) - MÁS GRANDE Y BRILLANTE */
 .fab-main-btn {
-    width: 72px !important;
-    height: 72px !important;
-    background: linear-gradient(135deg, #00B34D, #39FF14) !important;
-    box-shadow: 
-        0 0 20px rgba(0, 179, 77, 0.6), /* Resplandor intenso */
-        0 0 0 4px rgba(20, 20, 20, 1) !important; /* Anillo oscuro de separación */
-    transform: translateY(-5px);
-    z-index: 10005; /* Muy por encima */
+    width: 70px !important;
+    height: 70px !important;
+    /* Gradiente Neón Intenso */
+    background: linear-gradient(135deg, #00E676 0%, #00B34D 100%) !important;
+    
+    /* Resplandor Verde */
+    box-shadow: 0 0 25px rgba(0, 179, 77, 0.6) !important;
+    border: 4px solid #1a1a1a !important; /* Anillo oscuro para contraste */
+    
+    transform: translateY(-15px); /* Flota más alto */
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* 3. SUB-MENÚS (Pago, Traspaso, Ingreso) */
-.fab-options {
-    z-index: 10005; /* Asegurar que estén sobre el backdrop */
+/* Icono + */
+.fab-main-btn .material-icons {
+    font-size: 36px !important;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
-.fab-option {
-    /* Quitamos filtros que puedan causar bordes raros */
-    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
-}
-
+/* 4. LAS OPCIONES (Pago, Traspaso, Ingreso) - MÁS GRANDES */
 .fab-icon-holder {
-    width: 56px; height: 56px;
+    width: 58px; height: 58px; /* Círculos más grandes */
     border: 2px solid rgba(255,255,255,0.9); /* Borde blanco nítido */
-    font-size: 24px; /* Icono grande */
+    font-size: 26px;
+    
+    /* Transición de hover */
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-/* Colores Vibrantes */
+/* Colores brillantes */
 .fab-option--ingreso .fab-icon-holder { 
-    background: linear-gradient(135deg, #00b09b, #96c93d);
+    background: #00C853; /* Verde fuerte */
+    box-shadow: 0 0 20px rgba(0, 200, 83, 0.6);
 }
 .fab-option--gasto .fab-icon-holder { 
-    background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    background: #FF3D00; /* Rojo anaranjado fuerte */
+    box-shadow: 0 0 20px rgba(255, 61, 0, 0.6);
 }
 .fab-option--traspaso .fab-icon-holder { 
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
+    background: #2962FF; /* Azul eléctrico */
+    box-shadow: 0 0 20px rgba(41, 98, 255, 0.6);
 }
 
-/* 4. ETIQUETAS (Texto Limpio sin Fondo) */
-.fab-label {
-    /* Eliminamos la caja blanca */
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    
-    /* Tipografía Limpia y Brillante */
-    color: #ffffff !important;
-    font-family: var(--font-family); /* Misma fuente que la app */
-    font-size: 1rem !important; /* Tamaño legible */
-    font-weight: 800 !important; /* Extra negrita */
-    letter-spacing: 0.5px;
-    
-    /* Sombra de texto para legibilidad sobre fondo oscuro */
-    text-shadow: 
-        0 2px 4px rgba(0,0,0,0.8),
-        0 0 10px rgba(0,0,0,0.5);
-        
-    padding: 0 10px; /* Solo padding lateral */
-    margin-bottom: 2px; /* Pequeño ajuste vertical */
+/* Efecto al pasar el ratón */
+.fab-option:hover .fab-icon-holder {
+    transform: scale(1.15);
+    filter: brightness(1.2);
 }
