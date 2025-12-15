@@ -8673,7 +8673,7 @@ const setupFabInteractions = () => {
     // Cancelamos si el usuario mueve el dedo fuera del botón o ocurre un error
     fab.addEventListener('mouseleave', () => { clearTimeout(longPressTimer); fab.style.transform = "scale(1)"; });
     fab.addEventListener('touchcancel', () => { clearTimeout(longPressTimer); fab.style.transform = "scale(1)"; });
-};
+
 /* ========================================================= */
 /* === FUNCIONES DEL ESPEJO VISUAL (Números Bonitos)     === */
 /* ========================================================= */
