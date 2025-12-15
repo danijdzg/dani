@@ -9489,7 +9489,7 @@ const handleStart = (e) => {
         }); 
     }
     
-    setupFabInteractions();
+    initSpeedDial();
 };
 // ▲▲▲ FIN FUNCIÓN attachEventListeners ▲▲▲
 
@@ -11238,3 +11238,59 @@ if ('serviceWorker' in navigator) {
       });
   });
  }
+ const initSpeedDial = () => {
+    const container = document.getElementById('fab-container');
+    const trigger = document.getElementById('fab-trigger');
+    const backdrop = document.getElementById('fab-backdrop');
+    const options = document.querySelectorAll('.fab-option');
+
+    if (!container || !trigger) return;
+
+    // Función para abrir/cerrar
+    const toggleMenu = () => {
+        const isActive = container.classList.contains('active');
+        
+        if (isActive) {
+            container.classList.remove('active');
+        } else {
+            container.classList.add('active');
+            hapticFeedback('medium'); // Vibración satisfactoria al abrir
+        }
+    };
+
+    // Función para cerrar forzosamente
+    const closeMenu = () => {
+        container.classList.remove('active');
+    };
+
+    // 1. Clic en el botón principal (+)
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMenu();
+    });
+
+    // 2. Clic en el fondo oscuro (cerrar sin seleccionar)
+    backdrop.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeMenu();
+    });
+
+    // 3. Clic en una opción (Ingreso, Gasto, Traspaso)
+    options.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const type = btn.dataset.type; // 'gasto', 'ingreso', 'traspaso'
+            
+            // Feedback inmediato
+            hapticFeedback('light');
+            closeMenu();
+
+            // Pequeño retardo para que se vea la animación de cierre antes de abrir el modal
+            setTimeout(() => {
+                // Llamamos a tu función existente para abrir el formulario
+                // null = nuevo (sin ID), false = no es recurrente, type = tipo elegido
+                startMovementForm(null, false, type);
+            }, 150);
+        });
+    });
+};
