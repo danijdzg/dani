@@ -8665,16 +8665,7 @@ const setupFabInteractions = () => {
         }
     };
 
-    // Eventos para Móvil (Touch) y Ordenador (Mouse)
-    fab.addEventListener('touchstart', startPress, { passive: true });
-    fab.addEventListener('touchend', endPress);
-    fab.addEventListener('mousedown', startPress);
-    fab.addEventListener('mouseup', endPress);
-    // Cancelamos si el usuario mueve el dedo fuera del botón o ocurre un error
-    fab.addEventListener('mouseleave', () => { clearTimeout(longPressTimer); fab.style.transform = "scale(1)"; });
-    fab.addEventListener('touchcancel', () => { clearTimeout(longPressTimer); fab.style.transform = "scale(1)"; });
-
-/* ========================================================= */
+ /* ========================================================= */
 /* === FUNCIONES DEL ESPEJO VISUAL (Números Bonitos)     === */
 /* ========================================================= */
 
