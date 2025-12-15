@@ -5482,7 +5482,7 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     transition-delay: 0.15s;
 }
 /* =========================================
-   MODO ESCRITORIO: ALINEACIÓN A LA IZQUIERDA
+   MODO ESCRITORIO: ALINEACIÓN IZQUIERDA (DOBLE ANCHO)
    ========================================= */
 @media (min-width: 1024px) {
     
@@ -5490,8 +5490,10 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     body { justify-content: flex-start; }
 
     .app-layout {
-        width: 450px;
-        max-width: 450px;
+        /* ANCHO DUPLICADO */
+        width: 900px;
+        max-width: 900px;
+        
         margin: 0 !important;
         margin-left: 50px !important;
         box-shadow: 20px 0 40px rgba(0,0,0,0.3);
@@ -5501,21 +5503,28 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 
     /* 2. Barra Inferior */
     .bottom-nav {
-        width: 450px !important;
+        /* ANCHO DUPLICADO */
+        width: 900px !important;
+        
         left: 50px !important;
         right: auto !important;
         transform: none !important;
         border-top-right-radius: 16px;
     }
 
-    /* 3. Botón Flotante (FAB) */
+    /* 3. Botón Flotante (FAB) - RECALCULADO */
     .fab-container {
-        left: 275px !important; /* 50px margen + 225px mitad del ancho */
+        /* Cálculo: Margen (50px) + Mitad del Ancho (450px) = 500px 
+        */
+        left: 500px !important; 
+        
         transform: translateX(-50%) !important;
         right: auto !important;
     }
+    
+    /* Ajuste del telón de fondo */
     .fab-backdrop {
-        left: -275px !important;
+        left: -500px !important; /* Compensamos el nuevo centro */
         width: 100vw !important;
     }
     
@@ -5525,17 +5534,66 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         padding-left: 50px;
     }
     .login-view__card {
-        width: 450px;
+        width: 900px; /* También hacemos la tarjeta de login más ancha */
         margin: 0;
     }
 
-    /* 5. EL NUEVO CÓDIGO: Encabezado */
+    /* 5. Encabezado (Top Bar) */
     .top-bar {
-        width: 450px !important;
+        /* ANCHO DUPLICADO */
+        width: 900px !important;
+        
         left: 50px !important;
         right: auto !important;
         transform: none !important;
         border-right: 1px solid var(--c-outline);
         border-top-right-radius: 16px;
+    }
+
+    /* 6. Calculadora a la Derecha */
+    #calculator-overlay {
+        justify-content: flex-end !important;
+        padding-right: 50px !important;
+        pointer-events: none;
+    }
+
+    #calculator-ui {
+        pointer-events: all;
+        box-shadow: -10px 10px 30px rgba(0,0,0,0.4);
+        border: 1px solid var(--c-outline);
+    }
+}
+/* --- CORRECCIÓN DE EMERGENCIA PARA MÓVILES --- */
+/* Esto asegura que el botón funcione en pantallas táctiles */
+@media (max-width: 1023px) {
+    .fab-container {
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        bottom: 25px !important; /* Un poco más abajo para que sea cómodo */
+        align-items: center !important;
+        z-index: 99999 !important; /* Capa suprema */
+        pointer-events: none; /* El contenedor no bloquea, solo los hijos */
+    }
+
+    .fab-main-btn {
+        pointer-events: auto !important; /* El botón SÍ bloquea y recibe clics */
+        width: 60px !important;
+        height: 60px !important;
+        /* Aseguramos que sea pulsable */
+        touch-action: manipulation; 
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Aseguramos que las opciones también sean pulsables */
+    .fab-container.active .fab-option {
+        pointer-events: auto !important;
+    }
+    
+    /* El fondo oscuro */
+    .fab-backdrop {
+        pointer-events: none; /* Por defecto no molesta */
+    }
+    .fab-container.active .fab-backdrop {
+        pointer-events: auto !important; /* Al abrirse, sí */
     }
 }
