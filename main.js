@@ -8663,31 +8663,59 @@ const hideCalculator = () => {
 	document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
 };
 
-// =============================================================
-// === LÓGICA DEL BOTÓN FLOTANTE INTELIGENTE (FAB)           ===
-// =============================================================
 const setupFabInteractions = () => {
-    const fab = document.getElementById('bottom-nav-add-btn');
-    if (!fab) return;
+    const fabBtn = document.getElementById('bottom-nav-add-btn');
+    const fabContainer = document.querySelector('.fab-container');
+    
+    if (!fabBtn || !fabContainer) return;
 
-    // Clonamos el botón para eliminar cualquier listener antiguo (limpieza profunda)
-    const newFab = fab.cloneNode(true);
-    fab.parentNode.replaceChild(newFab, fab);
+    // 1. Crear el telón de fondo (Backdrop) si no existe
+    let backdrop = document.querySelector('.fab-backdrop');
+    if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.className = 'fab-backdrop';
+        document.body.appendChild(backdrop);
+        
+        // Al hacer clic en el fondo, cerrar menú
+        backdrop.addEventListener('click', () => toggleFab(false));
+    }
 
-    // Nuevo listener: Simple, Rápido y Directo
-    newFab.addEventListener('click', (e) => {
+    // Función para abrir/cerrar
+    const toggleFab = (forceState = null) => {
+        const isActive = forceState !== null ? forceState : !fabContainer.classList.contains('active');
+        
+        if (isActive) {
+            fabContainer.classList.add('active');
+            backdrop.classList.add('active');
+            hapticFeedback('light');
+        } else {
+            fabContainer.classList.remove('active');
+            backdrop.classList.remove('active');
+        }
+    };
+
+    // 2. Listener del Botón Principal
+    // Eliminamos listeners anteriores clonando
+    const newBtn = fabBtn.cloneNode(true);
+    fabBtn.parentNode.replaceChild(newBtn, fabBtn);
+
+    newBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        e.stopPropagation(); // Evita clics fantasmas
-        
-        // 1. Feedback Físico (Vibración)
-        if (typeof hapticFeedback === 'function') hapticFeedback('light');
-        
-        // 2. Feedback Visual (Pequeño rebote)
-        newFab.style.transform = "scale(0.9)";
-        setTimeout(() => newFab.style.transform = "scale(1)", 150);
+        e.stopPropagation();
+        toggleFab();
+    });
 
-        // 3. Acción: Abrir el menú de opciones directamente
-        showModal('main-add-sheet');
+    // 3. Listeners para los Botones del Menú (Gasto, Ingreso, Traspaso)
+    const options = document.querySelectorAll('.fab-mini-btn');
+    options.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Cerramos el menú inmediatamente
+            toggleFab(false);
+            
+            // La acción ya está definida en el listener global 'click' 
+            // que busca [data-action="open-movement-form"], así que no hace falta más.
+            // El evento burbujeará y será capturado por el manejador global.
+        });
     });
 };
 

@@ -102,12 +102,37 @@
                 <span class="bottom-nav__label">Diario</span>
             </button>
             
-            <!-- ▼▼▼ BOTÓN MODIFICADO PARA GESTIÓN INTELIGENTE ▼▼▼ -->
-            <!-- Le hemos quitado el 'data-action' para controlarlo manualmente en JS -->
-            <button id="bottom-nav-add-btn">
-                <span class="material-icons">add</span>
-            </button>
-            <!-- ▲▲▲ FIN BOTÓN MODIFICADO ▲▲▲ -->
+            <div class="fab-container">
+    
+    <div id="fab-menu" class="fab-menu">
+        
+        <button class="fab-mini-btn" data-action="open-movement-form" data-type="traspaso" style="--delay: 0ms;">
+            <span class="fab-label">Traspaso</span>
+            <div class="fab-icon icon-transfer">
+                <span class="material-icons">swap_horiz</span>
+            </div>
+        </button>
+
+        <button class="fab-mini-btn" data-action="open-movement-form" data-type="ingreso" style="--delay: 50ms;">
+            <span class="fab-label">Ingreso</span>
+            <div class="fab-icon icon-income">
+                <span class="material-icons">trending_up</span>
+            </div>
+        </button>
+
+        <button class="fab-mini-btn" data-action="open-movement-form" data-type="gasto" style="--delay: 100ms;">
+            <span class="fab-label">Gasto</span>
+            <div class="fab-icon icon-expense">
+                <span class="material-icons">trending_down</span>
+            </div>
+        </button>
+        
+    </div>
+
+    <button id="bottom-nav-add-btn">
+        <span class="material-icons">add</span>
+    </button>
+</div>
             
             <button data-action="navigate" data-page="patrimonio-page" class="bottom-nav__item">
                 <span class="material-icons">account_balance</span>
