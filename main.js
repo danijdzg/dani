@@ -4772,7 +4772,7 @@ const renderPanelPage = async () => {
 
                 <div id="custom-date-filters" class="hidden compact-date-bar">
                     <input type="date" id="filter-fecha-inicio" class="tiny-date-input">
-                    <span style="opacity:0.5">➜</span>
+                    <span style="opacity:0.5; font-size:0.8rem; display:flex; align-items:center;">➜</span>
                     <input type="date" id="filter-fecha-fin" class="tiny-date-input">
                 </div>
 
@@ -4844,7 +4844,7 @@ const renderPanelPage = async () => {
                 <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">health_and_safety</span>
-                        <span>SALUD FINANCIERA</span>
+                        <span>SALUD</span>
                     </div>
                     <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="salud">?</button>
                 </div>
@@ -8670,18 +8670,25 @@ const setupFabInteractions = () => {
     const fab = document.getElementById('bottom-nav-add-btn');
     if (!fab) return;
 
-    // Eliminamos lógica compleja. Clic = Acción inmediata.
-    fab.onclick = (e) => {
-        e.preventDefault();
-        hapticFeedback('light'); // Vibración inmediata
-        
-        // Animación visual de pulsación "rebote"
-        fab.style.transform = "scale(0.9)";
-        setTimeout(() => fab.style.transform = "scale(1)", 150);
+    // Clonamos el botón para eliminar cualquier listener antiguo (limpieza profunda)
+    const newFab = fab.cloneNode(true);
+    fab.parentNode.replaceChild(newFab, fab);
 
-        // Abrir directamente el Bottom Sheet con botones grandes
+    // Nuevo listener: Simple, Rápido y Directo
+    newFab.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation(); // Evita clics fantasmas
+        
+        // 1. Feedback Físico (Vibración)
+        if (typeof hapticFeedback === 'function') hapticFeedback('light');
+        
+        // 2. Feedback Visual (Pequeño rebote)
+        newFab.style.transform = "scale(0.9)";
+        setTimeout(() => newFab.style.transform = "scale(1)", 150);
+
+        // 3. Acción: Abrir el menú de opciones directamente
         showModal('main-add-sheet');
-    };
+    });
 };
 
     const endPress = (e) => {

@@ -5785,57 +5785,74 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     .card-flow, .card-patrimonio, .card-invest, .card-health { flex-grow: 1; } 
 }
 /* ================================================================= */
-/* === MEJORAS VISUALES UX (Botones Grandes, Calc Teclado, Panel) === */
+/* === MENÚ DE ACCIONES RÁPIDAS (Optimizado para el Pulgar) === */
 /* ================================================================= */
 
-/* --- 1. MENÚ DE ACCIONES RÁPIDAS (BOTONES GIGANTES) --- */
 #main-add-sheet-body {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    padding: 10px 0 30px 0;
+    gap: 12px; /* Separación clara entre opciones */
+    padding-bottom: 25px; /* Espacio extra abajo para comodidad */
 }
 
 .add-sheet-button {
     display: flex;
     align-items: center;
-    padding: 20px; /* Botón muy alto para pulsar fácil */
+    width: 100%;
+    padding: 18px 20px; /* Botones altos, fáciles de acertar */
     background-color: var(--c-surface-variant);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 24px;
-    width: 100%;
+    border-radius: 20px; /* Bordes muy redondeados y modernos */
     cursor: pointer;
     transition: transform 0.1s, background-color 0.2s;
     position: relative;
     overflow: hidden;
 }
 
+/* Efecto al pulsar */
 .add-sheet-button:active {
-    transform: scale(0.96);
+    transform: scale(0.97);
     background-color: var(--c-surface);
 }
 
-/* Iconos Gigantes dentro del botón */
-.add-sheet-button .material-icons {
-    font-size: 32px;
-    margin-right: 20px;
-    padding: 12px;
-    border-radius: 50%;
-    background-color: rgba(255,255,255,0.05);
-}
-
-/* Texto Grande */
+/* Estilo del Texto */
 .add-sheet-button span:last-child {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
-    letter-spacing: 0.5px;
+    color: var(--c-on-surface);
+    letter-spacing: 0.3px;
 }
 
-/* Colores por tipo */
-.add-sheet-button[data-type="gasto"] .material-icons { color: var(--c-danger); background-color: rgba(255, 59, 48, 0.1); }
-.add-sheet-button[data-type="ingreso"] .material-icons { color: var(--c-success); background-color: rgba(57, 255, 20, 0.1); }
-.add-sheet-button[data-type="traspaso"] .material-icons { color: var(--c-info); background-color: rgba(191, 90, 242, 0.1); }
+/* Estilo de los Iconos (Círculo de color) */
+.add-sheet-button .material-icons {
+    font-size: 28px;
+    margin-right: 16px;
+    padding: 10px;
+    border-radius: 50%; /* Icono dentro de un círculo */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
+/* --- COLORES SEMÁNTICOS (Intuitivo: Color = Acción) --- */
+
+/* GASTO (Rojo) */
+.add-sheet-button[data-type="gasto"] .material-icons {
+    color: #FF453A;
+    background-color: rgba(255, 69, 58, 0.15);
+}
+
+/* INGRESO (Verde) */
+.add-sheet-button[data-type="ingreso"] .material-icons {
+    color: #32D74B;
+    background-color: rgba(50, 215, 75, 0.15);
+}
+
+/* TRASPASO (Violeta) */
+.add-sheet-button[data-type="traspaso"] .material-icons {
+    color: #BF5AF2;
+    background-color: rgba(191, 90, 242, 0.15);
+}
 
 /* --- 2. CALCULADORA INTEGRADA (COMO TECLADO) --- */
 #calculator-overlay {
@@ -5939,7 +5956,14 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     }
     
     /* Ajustes de tipografía para aprovechar la nitidez del monitor */
-    .math-total-giant { font-size: 4.5rem; }
+    .math-total-giant { 
+        /* Ajustamos el rango para aprovechar pantalla sin pasarse */
+        font-size: clamp(3rem, 6vw, 4.5rem); 
+    }
+    
+    .invest-val-giant { font-size: 4rem; }
+    .flow-number { font-size: 1.8rem; }
+}
     .flow-number { font-size: 1.4rem; }
     
     /* Hacemos las tarjetas un poco más altas/homogéneas visualmente */
