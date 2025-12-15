@@ -4756,10 +4756,10 @@ const renderPanelPage = async () => {
         <div class="dashboard-stack-layout">
             
             <div class="stack-card card-flow">
-                <div class="stack-card-header" style="margin-bottom:15px;">
+                <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">sync_alt</span>
-                        <span>RESUMEN DEL MES</span>
+                        <span>FLUJO DE CAJA</span>
                     </div>
                     <div class="report-filters">
                         <select id="filter-periodo" class="form-select compact-select">
@@ -4772,28 +4772,24 @@ const renderPanelPage = async () => {
 
                 <div id="custom-date-filters" class="hidden compact-date-bar">
                     <input type="date" id="filter-fecha-inicio" class="tiny-date-input">
-                    <span>➜</span>
+                    <span style="opacity:0.5; font-size:0.8rem; display:flex; align-items:center;">➜</span>
                     <input type="date" id="filter-fecha-fin" class="tiny-date-input">
                 </div>
 
-                <div class="flow-display" style="display: flex; flex-direction: column; gap: 20px; text-align: center;">
-                    
-                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto" 
-                         style="background: rgba(255,255,255,0.05); border-radius: 16px; padding: 15px; border: 1px solid rgba(255,255,255,0.1);">
-                        <span class="flow-label text-warning" style="font-size: 0.8rem; letter-spacing: 1px;">AHORRO NETO</span>
-                        <div id="kpi-saldo-neto-value" class="flow-number-giant skeleton" style="margin-top: 5px;">...</div>
+                <div class="flow-display">
+                    <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
+                        <span class="flow-label text-success">INGRESOS</span>
+                        <span id="kpi-ingresos-value" class="flow-number skeleton">...</span>
                     </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
-                            <span class="flow-label text-success">INGRESOS</span>
-                            <div id="kpi-ingresos-value" class="flow-number skeleton" style="font-size: 1.2rem;">...</div>
-                        </div>
-                        
-                        <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
-                            <span class="flow-label text-danger">GASTOS</span>
-                            <div id="kpi-gastos-value" class="flow-number skeleton" style="font-size: 1.2rem;">...</div>
-                        </div>
+                    <div class="flow-sep"></div>
+                    <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
+                        <span class="flow-label text-danger">GASTOS</span>
+                        <span id="kpi-gastos-value" class="flow-number skeleton">...</span>
+                    </div>
+                    <div class="flow-sep"></div>
+                    <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
+                        <span class="flow-label text-warning">AHORRO</span>
+                        <span id="kpi-saldo-neto-value" class="flow-number skeleton">...</span>
                     </div>
                 </div>
             </div>
@@ -4802,12 +4798,15 @@ const renderPanelPage = async () => {
                 <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">account_balance</span>
-                        <span>PATRIMONIO</span>
+                        <span>PATRIMONIO NETO</span>
                     </div>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
                 </div>
+                
                 <div class="patrimonio-main">
                     <div id="kpi-patrimonio-neto-value" class="math-total-giant skeleton">0 €</div>
                 </div>
+
                 <div class="patrimonio-details">
                     <div class="p-detail"><span class="dot liquid"></span> Liq: <strong id="kpi-liquidez-value">...</strong></div>
                     <div class="p-detail"><span class="dot invest"></span> Inv: <strong id="kpi-capital-invertido-total">...</strong></div>
@@ -4820,16 +4819,51 @@ const renderPanelPage = async () => {
                         <span class="material-icons card-icon-font" style="color:#BF5AF2">trending_up</span>
                         <span style="color:#BF5AF2">INVERSIONES</span>
                     </div>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="inversiones">?</button>
                 </div>
+
                 <div class="invest-main">
                     <span class="invest-label-top">VALOR ACTUAL</span>
                     <div id="new-card-market-value" class="invest-val-giant skeleton">0 €</div>
                 </div>
+
                 <div class="invest-details-row">
-                    <div class="p-detail"><span style="opacity:0.7">Capital:</span> <strong id="new-card-capital">...</strong></div>
-                    <div class="p-detail"><span style="opacity:0.7">P&L:</span> <strong id="new-card-pnl">...</strong></div>
+                    <div class="p-detail">
+                        <span style="opacity:0.7">Invertido:</span> 
+                        <strong id="new-card-capital" style="color:#fff">...</strong>
+                    </div>
+                    <div style="width:1px; height:12px; background:rgba(255,255,255,0.2); align-self:center;"></div>
+                    <div class="p-detail">
+                        <span style="opacity:0.7">P&L:</span> 
+                        <strong id="new-card-pnl">...</strong>
+                    </div>
                 </div>
             </div>
+
+            <div class="stack-card card-health">
+                <div class="stack-card-header">
+                    <div class="header-title-row">
+                        <span class="material-icons card-icon-font">health_and_safety</span>
+                        <span>SALUD</span>
+                    </div>
+                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="salud">?</button>
+                </div>
+                
+                <div class="health-grid">
+                    <div class="health-item">
+                        <span class="health-label">Cobertura</span>
+                        <span id="health-runway-val" class="health-val skeleton" style="color:#FFD60A">...</span>
+                        <span class="health-sub">Meses</span>
+                    </div>
+                    <div class="health-divider-vert"></div>
+                    <div class="health-item">
+                        <span class="health-label">Libertad</span>
+                        <span id="health-fi-val" class="health-val skeleton" style="color:#39FF14">...</span>
+                        <span class="health-sub">Objetivo</span>
+                    </div>
+                </div>
+            </div>
+
         </div>`;
     
     populateAllDropdowns();
