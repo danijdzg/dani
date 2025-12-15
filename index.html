@@ -91,61 +91,50 @@
     </div>
     
     <div id="app-root" class="app-layout">
-        <!-- ▼▼▼ INICIO: NUEVA BARRA DE NAVEGACIÓN PRINCIPAL ▼▼▼ -->
-        <nav class="bottom-nav">
-            <button data-action="navigate" data-page="panel-page" class="bottom-nav__item">
-                <span class="material-icons">dashboard</span>
-                <span class="bottom-nav__label">Panel</span>
-            </button>
-            <button data-action="navigate" data-page="diario-page" class="bottom-nav__item">
-                <span class="material-icons">receipt_long</span>
-                <span class="bottom-nav__label">Diario</span>
-            </button>
-            
-    <div class="fab-container" id="fab-container">
+       <nav class="bottom-nav">
+    <button data-action="navigate" data-page="panel-page" class="bottom-nav__item">
+        <span class="material-icons">dashboard</span>
+        <span class="bottom-nav__label">Panel</span>
+    </button>
+    
+    <button data-action="navigate" data-page="diario-page" class="bottom-nav__item">
+        <span class="material-icons">receipt_long</span>
+        <span class="bottom-nav__label">Diario</span>
+    </button>
+    
+    <div class="bottom-nav__spacer"></div>
+    
+    <button data-action="navigate" data-page="patrimonio-page" class="bottom-nav__item">
+        <span class="material-icons">account_balance</span>
+        <span class="bottom-nav__label">Patrimonio</span>
+    </button>
+    
+    <button data-action="navigate" data-page="planificar-page" class="bottom-nav__item">
+        <span class="material-icons">edit_calendar</span>
+        <span class="bottom-nav__label">Planificar</span>
+    </button>
+</nav>
+		<div class="fab-container" id="fab-container">
     <div class="fab-backdrop" id="fab-backdrop"></div>
-
     <div class="fab-options">
-        
         <button class="fab-option fab-option--ingreso" data-type="ingreso">
             <span class="fab-label">Ingreso</span>
-            <div class="fab-icon-holder">
-                <span class="material-icons">arrow_upward</span>
-            </div>
+            <div class="fab-icon-holder"><span class="material-icons">arrow_upward</span></div>
         </button>
-
         <button class="fab-option fab-option--traspaso" data-type="traspaso">
             <span class="fab-label">Traspaso</span>
-            <div class="fab-icon-holder">
-                <span class="material-icons">swap_horiz</span>
-            </div>
+            <div class="fab-icon-holder"><span class="material-icons">swap_horiz</span></div>
         </button>
-
         <button class="fab-option fab-option--gasto" data-type="gasto">
             <span class="fab-label">Gasto</span>
-            <div class="fab-icon-holder">
-                <span class="material-icons">arrow_downward</span>
-            </div>
+            <div class="fab-icon-holder"><span class="material-icons">arrow_downward</span></div>
         </button>
     </div>
-
     <button class="fab-main-btn" id="fab-trigger">
         <span class="material-icons fab-icon-plus">add</span>
         <span class="material-icons fab-icon-close">close</span>
     </button>
 </div>
-            
-            <button data-action="navigate" data-page="patrimonio-page" class="bottom-nav__item">
-                <span class="material-icons">account_balance</span>
-                <span class="bottom-nav__label">Patrimonio</span>
-            </button>
-            <button data-action="navigate" data-page="planificar-page" class="bottom-nav__item">
-                <span class="material-icons">edit_calendar</span>
-                <span class="bottom-nav__label">Planificar</span>
-            </button>
-        </nav>
-        <!-- ▲▲▲ FIN: NUEVA BARRA DE NAVEGACIÓN PRINCIPAL ▲▲▲ -->
-
         <header id="app-top-bar" class="top-bar">
             <div class="top-bar__left-group">
                 <div id="top-bar-left-button" class="top-bar__left-button"></div>

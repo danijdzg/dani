@@ -5360,3 +5360,120 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     transform: translateX(-80px) scale(1);
     transition-delay: 0.15s;
 }
+/* --- 1. BARRA DE NAVEGACIÓN DE 5 COLUMNAS --- */
+.bottom-nav {
+    display: grid;
+    /* 5 columnas iguales: Item - Item - HUECO - Item - Item */
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr; 
+    align-items: center;
+    padding-bottom: env(safe-area-inset-bottom); /* Respetar iPhone X+ */
+    height: 65px; /* Altura fija para consistencia */
+    background: var(--c-surface); /* Asegura fondo sólido */
+    border-top: 1px solid var(--c-outline);
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 9000;
+}
+
+/* El hueco central */
+.bottom-nav__spacer {
+    pointer-events: none; /* Que no moleste a los clics */
+}
+
+/* --- 2. FAB CENTRADO (DOCKED) --- */
+.fab-container {
+    position: fixed;
+    /* CENTRADO HORIZONTAL PERFECTO */
+    left: 50%; 
+    transform: translateX(-50%); 
+    
+    /* Altura: Hacemos que sobresalga de la barra */
+    bottom: 30px; 
+    
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Alinear ítems al centro vertical */
+}
+
+/* Botón Principal Más Grande y Elevado */
+.fab-main-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--c-primary);
+    border: 4px solid var(--c-background); /* Borde del color de fondo de la app para efecto "recorte" */
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.1); /* Sombra suave hacia arriba */
+    color: white;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fab-main-btn:active { transform: scale(0.95); }
+
+/* --- 3. ANIMACIÓN EN ABANICO SIMÉTRICO --- */
+.fab-options {
+    position: absolute;
+    bottom: 10px; /* Salen desde el centro del botón */
+    left: 50%;
+    width: 0; height: 0;
+    pointer-events: none;
+}
+
+.fab-option {
+    position: absolute;
+    bottom: 0; left: 0; /* Punto de origen: centro */
+    /* Centramos el propio botón respecto a su punto 0,0 */
+    margin-left: -25px; 
+    margin-bottom: -25px; 
+    
+    display: flex;
+    flex-direction: column; /* Icono arriba, texto abajo */
+    align-items: center;
+    gap: 5px;
+    
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Etiquetas centradas debajo del icono */
+.fab-label {
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* COORDENADAS DEL DESPLIEGUE */
+.fab-container.active .fab-option { opacity: 1; pointer-events: all; }
+
+/* 1. Ingreso (Arriba Izquierda) */
+.fab-container.active .fab-option--ingreso {
+    transform: translate(-75px, -85px) scale(1);
+    transition-delay: 0.05s;
+}
+
+/* 2. Traspaso (Arriba Centro) */
+.fab-container.active .fab-option--traspaso {
+    transform: translate(0px, -110px) scale(1); /* El más alto */
+    transition-delay: 0.1s;
+}
+
+/* 3. Gasto (Arriba Derecha) */
+.fab-container.active .fab-option--gasto {
+    transform: translate(75px, -85px) scale(1);
+    transition-delay: 0.15s;
+}

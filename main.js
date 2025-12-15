@@ -11279,7 +11279,7 @@ if ('serviceWorker' in navigator) {
     options.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const type = btn.dataset.type; // 'gasto', 'ingreso', 'traspaso'
+            //const type = btn.dataset.type; // 'gasto', 'ingreso', 'traspaso'
             
             // Feedback inmediato
             hapticFeedback('light');
