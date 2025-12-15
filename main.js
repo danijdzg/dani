@@ -10319,8 +10319,8 @@ const handleAddAccount = async (btn) => {
 
          const exportObject = {
              meta: {
-                 appName: "DaniCtas",
-                 version: "3.0.0",
+                 appName: "aiDANaI-ctas",
+                 version: "2.0.0",
                  exportDate: new Date().toISOString()
              },
              data: dataPayload

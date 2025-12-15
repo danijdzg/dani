@@ -5611,134 +5611,163 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     }
 }
 /* ================================================================= */
-/* === 2. MODO ESCRITORIO (PC/MAC) - >= 1024px                   === */
-/* === ALINEACIÓN CENTRADA PERFECTA (CORREGIDO v2)               === */
+/* === MODO ESCRITORIO REAL (FULL SCREEN DASHBOARD) === */
 /* ================================================================= */
-
 @media (min-width: 1024px) {
     
-    /* 1. EL BODY: Centrado Flex */
+    /* 1. LIENZO Y FONDO */
     body {
-        justify-content: center !important; 
-        padding-left: 0 !important; 
-        overflow: hidden; 
+        justify-content: flex-start !important; /* Alinear arriba-izquierda */
         background-color: #050505;
         background-image: radial-gradient(circle at 50% 50%, #1a202c 0%, #000000 100%);
+        overflow: hidden; /* Evitar scroll en el body */
     }
 
-    /* 2. LA CAJA DE LA APP */
+    /* 2. LAYOUT PRINCIPAL EXPANDIDO */
     .app-layout {
-        width: 900px !important;
-        max-width: 900px !important;
+        width: 100% !important;
+        max-width: 100% !important;
         height: 100vh !important;
-        margin: 0 auto !important; 
-        left: auto !important;
-        right: auto !important;
-        transform: none !important; /* Reset de transformaciones previas */
-        position: relative !important;
-        border-left: 1px solid var(--c-outline);
-        border-right: 1px solid var(--c-outline);
-        border-radius: 0; 
-        box-shadow: 0 0 100px rgba(0,0,0,0.8); 
-        background-color: var(--c-background);
-        z-index: 10;
+        margin: 0 !important;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        display: flex;
+        flex-direction: column;
     }
 
-    /* 3. ELEMENTOS FIJOS (Barras) */
+    /* 3. BARRA SUPERIOR (HEADER) */
     .top-bar {
-        width: 900px !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        right: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        left: 0 !important;
+        transform: none !important;
         border-radius: 0;
+        padding: 0 40px; /* Más aire lateral */
+        height: 60px; /* Un poco más alta */
+        background-color: rgba(28, 42, 58, 0.95); /* Más opaca en escritorio */
     }
 
+    /* 4. BARRA INFERIOR (FOOTER) -> AHORA ES HEADER SECUNDARIO O STICKY BOTTOM */
+    /* Para aprovechar la pantalla, la dejamos abajo pero full-width */
     .bottom-nav {
-        width: 900px !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        right: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        left: 0 !important;
+        transform: none !important;
         border-radius: 0;
-        padding-bottom: 0 !important;
-        z-index: 9000 !important;
+        bottom: 0;
+        padding: 0 40px;
+        justify-content: center; /* Centramos los botones */
+        gap: 40px; /* Más separación entre iconos */
     }
 
-    /* 4. EL BOTÓN (+) */
-    .fab-container {
-        position: fixed !important;
-        left: 50% !important; 
-        transform: translateX(-50%) !important; 
-        bottom: 30px !important;
-        right: auto !important;
-        width: auto !important;
-        z-index: 20000 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-    }
-    
-    .fab-backdrop {
-        left: 50% !important;
-        transform: translateX(-50%);
-        width: 900px !important; 
-        height: 100vh !important;
+    /* Ajuste del contenido principal para que no quede tapado */
+    .app-layout__main {
+        padding-top: 80px !important; /* Espacio para el header */
+        padding-bottom: 80px !important; /* Espacio para el footer */
+        padding-left: 40px;
+        padding-right: 40px;
+        height: 100vh;
+        overflow-y: auto; /* Scroll interno solo si es necesario */
+        display: flex;
+        flex-direction: column;
     }
 
-    /* 5. CORRECCIÓN MODALES Y CALCULADORA */
-    /* LA SOLUCIÓN: forzamos transform: none para anular el desplazamiento lateral heredado */
-    .modal-overlay, #calculator-iframe-modal, #calculator-overlay {
-        justify-content: center !important; 
-        align-items: center !important;     
-        padding-left: 0 !important;
+    /* 5. MODALES Y CALCULADORA CENTRADOS */
+    .modal-overlay, #calculator-overlay {
         left: 0 !important;
         width: 100vw !important;
-        transform: none !important; /* <--- ESTA LÍNEA ARREGLA EL PROBLEMA */
-    }
-
-    .modal {
-        max-width: 600px !important; 
-        margin: 0 auto !important;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        border-radius: 20px;
-        position: relative !important;
         transform: none !important;
+        justify-content: center;
+        align-items: center;
     }
+    .modal {
+        max-width: 600px !important;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+}
 
-    /* Calculadora Flotante: Centrada en pantalla */
-    #calculator-ui {
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        bottom: 0 !important;
-        width: 100% !important;
-        max-width: 420px !important; /* Evita que la calculadora sea gigante en PC */
-    }
+/* DISEÑO DE PANEL "COCKPIT" PARA ESCRITORIO */
+@media (min-width: 1024px) {
     
-    /* Corrección de Login */
-    .login-view {
-        justify-content: center !important;
-        padding-left: 0 !important;
-    }
-    
-    /* Panel Grid: Asegurar que se vea bien en ancho completo */
+    /* El contenedor del panel se convierte en un Grid */
     #panel-page.view--active {
-        display: block !important;
-        height: 100%;
-        overflow-y: auto !important;
-        padding: 0 !important;
-        scrollbar-width: thin;
-    }
-
-    #panel-page.view--active > div {
         display: grid !important;
-        grid-template-columns: 1fr !important;
+        grid-template-columns: 300px 1fr 300px; /* Izq | Centro | Der */
+        grid-template-rows: auto 1fr; /* Fila Filtros | Fila Contenido */
         gap: 20px;
-        padding: 80px 40px 120px 40px !important;
-        max-width: 900px !important;
-        margin: 0 auto;
+        height: 100%;
+        max-height: calc(100vh - 140px); /* Restamos header y footer */
+        overflow: hidden; /* ELIMINAMOS EL SCROLL GENERAL */
+        padding: 0 !important;
+        align-content: start;
     }
 
-    #panel-page.view--active > div > .hero-card {
-        grid-column: 1 / -1 !important;
-        width: 100% !important;
+    /* REORGANIZACIÓN VISUAL DE LOS ELEMENTOS DENTRO DEL PANEL */
+    /* Esto requiere que la estructura HTML en JS sea consistente. 
+       Usamos :nth-child para ubicar las tarjetas generadas por renderPanelPage */
+
+    /* 1. Fila Superior: Filtros y Totales Rápidos */
+    /* Forzamos al primer div (que contiene filtros y KPIs pequeños) a ocupar arriba */
+    #panel-page > div:first-child { 
+        grid-column: 1 / -1; /* Ocupa todo el ancho */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 !important;
+        margin-bottom: 10px;
+        background: transparent !important;
+        border: none !important;
     }
+    
+    /* Hack para recolocar los KPIs pequeños (Ingresos/Gastos/Neto) en una fila horizontal */
+    #panel-page > div:first-child .kpi-grid, 
+    #panel-page > div:first-child > div[style*="display: grid"] {
+        display: flex !important;
+        gap: 20px;
+        flex: 1;
+        margin: 0 20px;
+    }
+
+    /* 2. Columna Izquierda: Patrimonio y Liquidez */
+    /* Apuntamos a la tarjeta "Patrimonio (Capital Total)" */
+    #panel-page > .hero-card:nth-of-type(1) {
+        grid-column: 1;
+        grid-row: 2;
+        margin: 0 !important;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    /* 3. Columna Central: Gráfico de Evolución (Net Worth) o Principal */
+    /* Como el renderPanelPage actual no pinta el gráfico grande por defecto, 
+       vamos a expandir la tarjeta de Inversiones (P&L) al centro */
+    #panel-page > .hero-card:nth-of-type(2) {
+        grid-column: 2;
+        grid-row: 2;
+        margin: 0 !important;
+        height: 100%;
+        background: var(--c-surface); /* Hacerla destacar */
+    }
+
+    /* 4. Columna Derecha: Salud Financiera (Cobertura/Libertad) */
+    #panel-page > .hero-card:nth-of-type(3) {
+        grid-column: 3;
+        grid-row: 2;
+        margin: 0 !important;
+        height: 100%;
+    }
+
+    /* Ajustes finos para que el contenido quepa verticalmente */
+    .hero-card .skeleton, .hero-card .hero-value {
+        font-size: 2.5rem !important; /* Reducir un poco texto gigante */
+    }
+    
+    /* Ocultar botones de ayuda (?) en escritorio para limpiar la vista, 
+       o hacerlos aparecer solo en hover */
+    .help-btn { opacity: 0; transition: opacity 0.2s; }
+    .hero-card:hover .help-btn, .clickable-kpi:hover .help-btn { opacity: 1; }
 }
