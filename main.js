@@ -11181,7 +11181,9 @@ const validateMovementForm = () => {
     let isValid = true;
     
     // Obtenemos el tipo de formulario a partir del botón activo
-    const selectedType = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
+    const typePill = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active');
+    // Si no hay pill activa (raro), asumimos gasto por defecto
+    const selectedType = typePill ? typePill.dataset.type : 'gasto';
 
     // Validamos los campos comunes
     if (!validateField('movimiento-cantidad')) isValid = false;
@@ -11192,20 +11194,19 @@ const validateMovementForm = () => {
         if (!validateField('movimiento-cuenta-origen')) isValid = false;
         if (!validateField('movimiento-cuenta-destino')) isValid = false;
     } else { // para 'gasto' e 'ingreso'
-        if (!validateField('movimiento-descripcion')) isValid = false;
+        // Descripción opcional si ya hay concepto, pero validamos si está vacío y no es autogenerado
+        // if (!validateField('movimiento-descripcion')) isValid = false; 
         if (!validateField('movimiento-concepto')) isValid = false;
         if (!validateField('movimiento-cuenta')) isValid = false;
     }
-    if (!isValid) { // <-- AÑADE ESTE BLOQUE IF AL FINAL
+    
+    if (!isValid) { 
         hapticFeedback('error'); 
     }
     return isValid;
 };
- 
 
 // --- REGISTRO DEL SERVICE WORKER ---
-// Comprobamos si el navegador soporta Service Workers
-// Registro del Service Worker para soporte Offline y PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js')
@@ -11216,4 +11217,4 @@ if ('serviceWorker' in navigator) {
         console.log('Fallo en el registro del Service Worker:', error);
       });
   });
- }
+}

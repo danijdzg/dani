@@ -5606,8 +5606,8 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 .dot.liquid { background: var(--c-primary); box-shadow: 0 0 5px var(--c-primary); }
 .dot.invest { background: #BF5AF2; box-shadow: 0 0 5px #BF5AF2; }
 
-/* ================================================================= */
-/* === PANEL VERTICAL "PERFECT FIT" (Sin Scroll, Espacio Optimizado) === */
+//* ================================================================= */
+/* === PANEL VERTICAL "PERFECT FIT" (4 Tarjetas, Cero Scroll) === */
 /* ================================================================= */
 
 .dashboard-stack-layout {
@@ -5615,66 +5615,75 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     flex-direction: column;
     height: 100%;
     width: 100%;
-    /* Padding inferior ajustado para no chocar con el menú */
-    padding: 10px 10px 90px 10px; 
+    /* Padding inferior ajustado para la barra de navegación */
+    padding: 8px 10px 90px 10px; 
     box-sizing: border-box;
-    overflow: hidden; /* CERO SCROLL */
-    gap: 8px; /* Separación equilibrada */
+    overflow: hidden; /* IMPORTANTE: Bloquea el scroll general */
+    gap: 6px; /* Espacio reducido para aprovechar altura */
     max-width: 550px;
     margin: 0 auto;
 }
 
-/* TARJETA BASE */
+/* --- TARJETA BASE FLEXIBLE --- */
 .stack-card {
-    /* Flexibilidad base para todas */
-    flex: 1; 
-    min-height: 0; /* Permite encogerse sin desbordar */
+    flex: 1; /* Todas intentan ocupar espacio */
+    min-height: 0; /* PERMITE ENCOGERSE: Vital para que no se corten */
     background: var(--c-surface);
     border: 1px solid var(--c-outline);
-    border-radius: 18px;
-    padding: 10px 14px;
+    border-radius: 16px;
+    padding: 8px 12px;
     
-    /* DISTRIBUCIÓN INTERNA MEJORADA */
     display: flex;
     flex-direction: column;
-    /* Esto es clave: reparte el espacio blanco entre los elementos */
-    justify-content: space-between; 
+    justify-content: center; /* Centrado vertical */
     
     position: relative;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    transition: flex-grow 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: flex-grow 0.3s ease; /* Animación si cambia de tamaño */
 }
 
-/* Cabeceras Compactas */
+/* Cabeceras Ultra-Compactas */
 .stack-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    /* Reducimos margen para ganar espacio para los datos */
-    margin-bottom: 2px; 
-    flex-shrink: 0;
-    min-height: 22px;
+    margin-bottom: 2px;
+    flex-shrink: 0; /* La cabecera nunca se aplasta */
+    min-height: 24px;
 }
 .header-title-row {
     display: flex; align-items: center; gap: 6px;
-    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px;
+    font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;
     color: var(--c-on-surface-tertiary); text-transform: uppercase;
 }
-.card-icon-font { font-size: 15px; color: var(--c-primary); }
+.card-icon-font { font-size: 14px; color: var(--c-primary); }
+
+/* Selector Compacto */
+.compact-select {
+    padding: 0 18px 0 6px !important;
+    height: 22px !important;
+    font-size: 0.65rem !important;
+    background-color: rgba(255,255,255,0.08) !important;
+    border-radius: 6px !important;
+    border: none !important;
+    color: var(--c-on-surface) !important;
+}
 
 /* --- 1. TARJETA FLUJO (Prioridad Alta) --- */
 .card-flow {
-    /* Le damos más importancia (1.4) para que quepan las fechas cómodamente */
-    flex-grow: 1.4; 
+    /* Le damos MÁS peso (1.8) para que quepan las fechas cómodamente */
+    flex-grow: 1.8; 
     background: linear-gradient(175deg, var(--c-surface) 0%, rgba(255,255,255,0.03) 100%);
-    gap: 2px;
+    gap: 4px; /* Espacio entre elementos internos */
+    justify-content: flex-start; /* Contenido arriba */
 }
 
-/* Barra de Fechas (Compacta) */
+/* Barra de Fechas (Aparece y empuja) */
 .compact-date-bar {
-    display: flex; justify-content: center; gap: 8px; 
+    display: flex; justify-content: center; gap: 6px; 
     background: rgba(0,0,0,0.25); padding: 4px; border-radius: 8px;
-    flex-shrink: 0; margin: 2px 0; border: 1px solid var(--c-outline);
+    flex-shrink: 0; /* No se deja aplastar */
+    margin-bottom: 2px; border: 1px solid var(--c-outline);
 }
 .tiny-date-input {
     background: transparent; border: none; color: #fff;
@@ -5682,13 +5691,14 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     width: 85px; text-align: center; padding: 0; margin: 0;
 }
 
-/* Display de Números (Se expande) */
+/* Display de Números (Elástico) */
 .flow-display {
     display: flex; justify-content: space-between; align-items: center;
     background: rgba(0,0,0,0.2); border-radius: 12px; padding: 0 8px;
-    /* Ocupa todo el espacio vertical disponible en la tarjeta */
-    flex-grow: 1; 
-    min-height: 0;
+    
+    /* MAGIA: Ocupa el espacio que sobre */
+    flex: 1; 
+    min-height: 0; /* Permite encogerse si salen las fechas */
 }
 .flow-col { 
     display: flex; flex-direction: column; 
@@ -5696,33 +5706,32 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     flex: 1; text-align: center; 
     height: 100%; /* Asegura centrado vertical */
 }
-.flow-label { font-size: 0.6rem; font-weight: 700; margin-bottom: 2px; opacity: 0.8; }
+.flow-label { font-size: 0.55rem; font-weight: 700; margin-bottom: 2px; opacity: 0.7; }
+/* Fuente adaptable: se hace pequeña si falta sitio */
 .flow-number { 
-    font-size: clamp(1rem, 3vh, 1.4rem); /* Texto grande y legible */
-    font-weight: 800; color: #fff; line-height: 1; white-space: nowrap;
+    font-size: clamp(0.9rem, 2.5vh, 1.3rem); 
+    font-weight: 700; line-height: 1; color: #fff; white-space: nowrap;
 }
-.flow-sep { width: 1px; height: 50%; background: rgba(255,255,255,0.1); }
+.flow-sep { width: 1px; height: 60%; background: rgba(255,255,255,0.1); }
 
-/* --- 2. TARJETA PATRIMONIO (Equilibrada) --- */
+/* --- 2. TARJETA PATRIMONIO (Importante) --- */
 .card-patrimonio {
-    flex-grow: 1.2; 
+    flex-grow: 1.4; 
     background: radial-gradient(circle at 50% 100%, rgba(0, 179, 77, 0.15) 0%, var(--c-surface) 80%);
     border: 1px solid rgba(0, 179, 77, 0.3);
 }
-/* El contenedor principal centra el número */
 .patrimonio-main { 
-    flex-grow: 1; display: flex; align-items: center; justify-content: center;
-    min-height: 0;
+    flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0;
 }
 .math-total-giant {
-    font-size: clamp(2.5rem, 6.5vh, 4rem); 
+    font-size: clamp(2.2rem, 6vh, 4rem); 
     font-weight: 800; color: #fff;
-    text-shadow: 0 0 25px rgba(0,179,77,0.3);
-    line-height: 1; letter-spacing: -1.5px; margin: 0;
+    text-shadow: 0 0 20px rgba(0,179,77,0.3);
+    line-height: 1; letter-spacing: -1.5px;
 }
 .patrimonio-details {
     display: flex; justify-content: center; gap: 12px;
-    background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 99px;
+    background: rgba(255,255,255,0.05); padding: 3px 10px; border-radius: 99px;
     margin: 0 auto; width: fit-content; flex-shrink: 0;
 }
 .p-detail { font-size: 0.7rem; color: var(--c-on-surface-tertiary); display: flex; align-items: center; gap: 4px; }
@@ -5730,47 +5739,51 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 .dot.liquid { background: var(--c-primary); color: var(--c-primary); } 
 .dot.invest { background: #BF5AF2; color: #BF5AF2; }
 
-/* --- 3. TARJETA INVERSIONES (Estilo Gigante) --- */
+/* --- 3. TARJETA INVERSIONES (Estándar) --- */
 .card-invest {
     flex-grow: 1.2;
-    background: radial-gradient(circle at 50% 100%, rgba(191, 90, 242, 0.12) 0%, var(--c-surface) 80%);
-    border: 1px solid rgba(191, 90, 242, 0.3);
+    background: rgba(191, 90, 242, 0.05); border-color: rgba(191, 90, 242, 0.2);
 }
 .invest-main {
-    flex-grow: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; min-height: 0;
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0;
 }
 .invest-label-top { 
-    font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; color: #BF5AF2; 
+    font-size: 0.6rem; font-weight: 700; color: #BF5AF2; 
     text-transform: uppercase; margin-bottom: 0; opacity: 0.9;
 }
 .invest-val-giant {
-    font-size: clamp(2rem, 5vh, 3.5rem); 
+    font-size: clamp(1.8rem, 5vh, 3.2rem); 
     font-weight: 800; color: #fff;
-    text-shadow: 0 0 20px rgba(191, 90, 242, 0.4);
+    text-shadow: 0 0 15px rgba(191, 90, 242, 0.4);
     line-height: 1; letter-spacing: -1px;
 }
 .invest-details-row {
-    display: flex; justify-content: center; gap: 12px;
-    background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 99px;
+    display: flex; justify-content: center; gap: 10px;
+    background: rgba(255,255,255,0.05); padding: 3px 10px; border-radius: 99px;
     margin: 0 auto; width: fit-content; flex-shrink: 0;
 }
 
 /* --- 4. TARJETA SALUD (Compacta) --- */
 .card-health { 
-    flex-grow: 0.9; /* Un poco más pequeña que el resto */
+    flex-grow: 0.9; /* La más pequeña para equilibrar */
     background: var(--c-surface); 
 }
 .health-grid { 
     display: flex; justify-content: space-around; align-items: center; 
-    flex-grow: 1; min-height: 0;
+    flex: 1; min-height: 0;
 }
 .health-item { text-align: center; display: flex; flex-direction: column; justify-content: center; }
-.health-label { font-size: 0.6rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 2px;}
-.health-val { font-size: clamp(1.2rem, 3.5vh, 1.8rem); font-weight: 800; line-height: 1; }
-.health-sub { font-size: 0.6rem; opacity: 0.6; }
+.health-label { font-size: 0.55rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 2px;}
+.health-val { font-size: clamp(1.1rem, 3vh, 1.6rem); font-weight: 800; line-height: 1; }
+.health-sub { font-size: 0.55rem; opacity: 0.6; }
 .health-divider-vert { width: 1px; height: 60%; background: var(--c-outline); }
 
+/* Ajuste PC: Mantenemos la columna única */
+@media (min-width: 840px) {
+    .dashboard-stack-layout { padding: 30px; gap: 15px; }
+    /* En PC hay más sitio, igualamos un poco los tamaños */
+    .card-flow, .card-patrimonio, .card-invest, .card-health { flex-grow: 1; } 
+}
 /* ================================================================= */
 /* === MEJORAS VISUALES UX (Botones Grandes, Calc Teclado, Panel) === */
 /* ================================================================= */
@@ -6026,4 +6039,84 @@ input[type="date"].form-input {
     filter: invert(1) opacity(0.6); /* Hacerlo blanco */
     width: 20px;
     height: 20px;
+}
+/* ================================================================= */
+/* === MEJORA VISUAL DE LEGIBILIDAD (HIGH CONTRAST) === */
+/* ================================================================= */
+
+/* 1. MENÚ "AÑADIR" (Bottom Sheet) - Más brillante y legible */
+.add-sheet-button {
+    /* Fondo más claro para que contraste con el modal negro */
+    background-color: rgba(255, 255, 255, 0.12) !important; 
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    padding: 22px 20px !important; /* Más altos */
+}
+
+/* Texto de los botones más grande y blanco puro */
+.add-sheet-button span:last-child {
+    font-size: 1.3rem !important; /* Letra más grande */
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    letter-spacing: 0.5px;
+}
+
+/* Iconos más brillantes */
+.add-sheet-button .material-icons {
+    font-size: 36px !important;
+    background-color: rgba(0,0,0,0.3) !important; /* Fondo oscuro para el icono */
+}
+
+/* Colores de iconos más vibrantes (Neón) */
+.add-sheet-button[data-type="gasto"] .material-icons { color: #FF453A !important; } /* Rojo iOS */
+.add-sheet-button[data-type="ingreso"] .material-icons { color: #32D74B !important; } /* Verde iOS */
+.add-sheet-button[data-type="traspaso"] .material-icons { color: #BF5AF2 !important; } /* Púrpura iOS */
+
+
+/* 2. FORMULARIO: CANTIDAD GIGANTE (Héroe) */
+/* Aseguramos que el número que escribes se lea increíblemente bien */
+.input-visual-mirror {
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    font-size: 3.5rem !important; /* Gigante */
+    font-weight: 800 !important;
+    letter-spacing: -1px;
+    z-index: 5;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.5); /* Sombra para separar del fondo */
+}
+
+/* Colores específicos para el número gigante */
+.is-gasto .input-visual-mirror { color: #FF453A !important; }
+.is-ingreso .input-visual-mirror { color: #32D74B !important; }
+.is-traspaso .input-visual-mirror { color: #BF5AF2 !important; }
+
+/* Placeholder (0,00) más visible */
+.input-visual-mirror.is-empty {
+    opacity: 0.5 !important; /* Gris más claro, no tan oscuro */
+    color: #ffffff !important;
+}
+
+/* 3. ETIQUETAS Y CAMPOS SECUNDARIOS */
+.form-label {
+    color: rgba(255, 255, 255, 0.9) !important; /* Casi blanco */
+    font-size: 0.85rem !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+/* Inputs secundarios (Concepto, Cuenta) más contrastados */
+.form-field-compact .input-wrapper,
+.custom-select__trigger {
+    background-color: rgba(255, 255, 255, 0.1) !important; /* Más claro */
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.custom-select__trigger, 
+.form-field-compact input {
+    color: #fff !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
 }
