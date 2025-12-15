@@ -5486,58 +5486,40 @@ body[data-theme="sunset-groove"] #filter-periodo option {
    ========================================= */
 @media (min-width: 1024px) {
     
-    /* 1. El Cuerpo Principal de la App */
-    body {
-        /* Aseguramos que el fondo cubra todo aunque la app esté a un lado */
-        justify-content: flex-start; 
-    }
+    /* 1. Cuerpo Principal */
+    body { justify-content: flex-start; }
 
     .app-layout {
-        /* Definimos el ancho de "móvil" fijo */
         width: 450px;
         max-width: 450px;
-        
-        /* ALINEACIÓN: 50px desde la izquierda */
         margin: 0 !important;
         margin-left: 50px !important;
-        
-        /* Bordes y Sombra para que destaque sobre el fondo */
         box-shadow: 20px 0 40px rgba(0,0,0,0.3);
         border-right: 1px solid var(--c-outline);
         min-height: 100vh;
     }
 
-    /* 2. La Barra de Navegación Inferior */
+    /* 2. Barra Inferior */
     .bottom-nav {
-        /* Tiene que coincidir exactamente con la posición de .app-layout */
         width: 450px !important;
         left: 50px !important;
         right: auto !important;
-        transform: none !important; /* Quitamos cualquier centrado anterior */
-        
-        /* Borde redondeado solo arriba-derecha para estética */
+        transform: none !important;
         border-top-right-radius: 16px;
     }
 
-    /* 3. El Botón Flotante (FAB) y su Menú */
+    /* 3. Botón Flotante (FAB) */
     .fab-container {
-        /* CÁLCULO MATEMÁTICO DEL CENTRO:
-           Margen Izquierdo (50px) + Mitad del Ancho (225px) = 275px
-        */
-        left: 275px !important; 
-        
-        /* Mantenemos el translateX(-50%) para que el botón esté centrado sobre ese punto */
+        left: 275px !important; /* 50px margen + 225px mitad del ancho */
         transform: translateX(-50%) !important;
         right: auto !important;
     }
-
-    /* Ajuste del telón de fondo para que siga cubriendo toda la pantalla */
     .fab-backdrop {
-        left: -275px !important; /* Compensamos el movimiento del contenedor */
+        left: -275px !important;
         width: 100vw !important;
     }
     
-    /* 4. Login / PIN Screen (Para que también salgan a la izquierda) */
+    /* 4. Pantallas de Login */
     .login-view {
         justify-content: flex-start;
         padding-left: 50px;
@@ -5545,5 +5527,15 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     .login-view__card {
         width: 450px;
         margin: 0;
+    }
+
+    /* 5. EL NUEVO CÓDIGO: Encabezado */
+    .top-bar {
+        width: 450px !important;
+        left: 50px !important;
+        right: auto !important;
+        transform: none !important;
+        border-right: 1px solid var(--c-outline);
+        border-top-right-radius: 16px;
     }
 }
