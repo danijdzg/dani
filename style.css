@@ -6158,14 +6158,37 @@ input[type="date"].form-input {
 /* === MENÚ FLOTANTE "SPEED DIAL" (Animación Espectacular) === */
 /* ================================================================= */
 
-/* 1. Contenedor en la barra */
+/* 1. El contenedor del botón debe estar POR ENCIMA del fondo oscuro */
 .fab-container {
     position: relative;
-    margin-top: -35px; /* Sube el botón para romper la línea de la barra */
-    z-index: 2000;
+    margin-top: -35px;
+    z-index: 2100 !important; /* <--- CAMBIO CRÍTICO: Mayor que 2000 */
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+/* 2. El fondo oscuro se queda debajo */
+.fab-backdrop {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(4px);
+    z-index: 2000; /* Alto, pero menor que el botón (2100) */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.fab-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Aseguramos que la barra de navegación no interfiera */
+.bottom-nav {
+    overflow: visible !important; /* Importante para que el menú salga hacia arriba */
+    z-index: 100;
 }
 
 /* 2. Botón Principal (+) */
