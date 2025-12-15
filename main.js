@@ -4772,7 +4772,7 @@ const renderPanelPage = async () => {
 
                 <div id="custom-date-filters" class="hidden compact-date-bar">
                     <input type="date" id="filter-fecha-inicio" class="tiny-date-input">
-                    <span style="opacity:0.5; font-size:0.8rem; display:flex; align-items:center;">➜</span>
+                    <span style="opacity:0.5">➜</span>
                     <input type="date" id="filter-fecha-fin" class="tiny-date-input">
                 </div>
 
@@ -4844,7 +4844,7 @@ const renderPanelPage = async () => {
                 <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">health_and_safety</span>
-                        <span>SALUD</span>
+                        <span>SALUD FINANCIERA</span>
                     </div>
                     <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="salud">?</button>
                 </div>
