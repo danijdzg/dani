@@ -9374,7 +9374,67 @@ const handleStart = (e) => {
     
     // 10. Listeners específicos (Importación, Calculadora, Búsqueda)
     const importFileInput = select('import-file-input'); if (importFileInput) importFileInput.addEventListener('change', (e) => { if(e.target.files) handleJSONFileSelect(e.target.files[0]); });
+    document.addEventListener('DOMContentLoaded', () => {
     
+    // Referencias
+    const fabContainer = document.getElementById('fab-container');
+    const fabTrigger = document.getElementById('fab-trigger');
+    const fabBackdrop = document.getElementById('fab-backdrop');
+    const fabOptions = document.querySelectorAll('.fab-option');
+
+    // 1. Función para alternar el menú
+    function toggleFab() {
+        fabContainer.classList.toggle('active');
+        // Feedback háptico suave si es móvil
+        if (navigator.vibrate) navigator.vibrate(10);
+    }
+
+    // 2. Función para cerrar el menú
+    function closeFab() {
+        fabContainer.classList.remove('active');
+    }
+
+    // 3. Event Listeners
+    
+    // Click en el botón principal (+)
+    fabTrigger.addEventListener('click', (e) => {
+        e.stopPropagation(); // Evitar que se propague
+        toggleFab();
+    });
+
+    // Click en el fondo oscuro (cerrar sin elegir)
+    fabBackdrop.addEventListener('click', closeFab);
+
+    // Click en cada opción (Ingreso, Gasto, Traspaso)
+    fabOptions.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Obtener el tipo de movimiento (ingreso, gasto, traspaso)
+            const type = btn.dataset.type;
+            
+            // Cerrar el abanico
+            closeFab();
+
+            // --- AQUÍ LLAMAS A TU LÓGICA EXISTENTE ---
+            // Basado en tu código, simularía abrir el modal configurando el tipo
+            console.log("Abriendo modal para:", type);
+            
+            // Ejemplo de integración (Reemplaza 'openModalLogic' con tu función real):
+            // setMovimientoType(type); // Si tienes una función que setea el tipo
+            // openMovimientoModal();   // Función que abre el modal
+            
+            // Si usas lógica directa de renderizado:
+            if (typeof renderMovimientoModal === 'function') {
+                renderMovimientoModal(type); 
+            } else {
+                // Fallback: Busca los botones ocultos del modal original y haz click en ellos
+                // Esto es un "truco" si no quieres reescribir tu lógica de modales
+                const hiddenTypeBtn = document.querySelector(`[data-type="${type}"]`);
+                if(hiddenTypeBtn) hiddenTypeBtn.click();
+            }
+        });
+    });
+});
+	
     // CALCULADORA: Clics en botones
     const calculatorGrid = select('calculator-grid'); 
     if (calculatorGrid) calculatorGrid.addEventListener('click', (e) => { 

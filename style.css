@@ -5225,3 +5225,133 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     width: auto;
     flex-shrink: 0;
 }
+/* --- FAB MENÚ EN ABANICO (SPEED DIAL) --- */
+.fab-container {
+    position: fixed;
+    bottom: 25px; /* Ajusta según tu barra de navegación */
+    right: 25px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+/* Fondo oscuro semitransparente */
+.fab-backdrop {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: -1; /* Detrás de los botones */
+}
+.fab-container.active .fab-backdrop {
+    opacity: 1;
+    pointer-events: all; /* Activa el click para cerrar */
+}
+
+/* Botón Principal Grande */
+.fab-main-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--c-primary, #00B34D); /* Tu verde corporativo */
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 179, 77, 0.4);
+    color: white;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fab-main-btn:active { transform: scale(0.90); }
+
+/* Animación del icono (+ a x) */
+.fab-icon-plus, .fab-icon-close {
+    position: absolute;
+    transition: all 0.3s ease;
+    font-size: 32px;
+}
+.fab-icon-close { opacity: 0; transform: rotate(-90deg); }
+
+.fab-container.active .fab-main-btn { background: #333; } /* Cambio color al abrir */
+.fab-container.active .fab-icon-plus { opacity: 0; transform: rotate(90deg); }
+.fab-container.active .fab-icon-close { opacity: 1; transform: rotate(0); }
+
+/* Opciones del menú */
+.fab-options {
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 0; height: 0; /* Punto cero */
+}
+
+.fab-option {
+    position: absolute;
+    bottom: 8px; right: 8px; /* Salen del centro del botón principal */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.fab-icon-holder {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+}
+
+.fab-label {
+    background: rgba(255,255,255,0.9);
+    color: #000;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    opacity: 0; /* Ocultamos etiqueta hasta que se abra */
+    transition: opacity 0.2s;
+}
+.fab-container.active .fab-label { opacity: 1; }
+
+/* Colores específicos */
+.fab-option--ingreso .fab-icon-holder { background: #00B34D; } /* Verde */
+.fab-option--gasto .fab-icon-holder { background: #FF3B30; }   /* Rojo */
+.fab-option--traspaso .fab-icon-holder { background: #007AFF; } /* Azul */
+
+/* --- COORDENADAS DEL ABANICO --- */
+.fab-container.active .fab-option {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* 1. Ingreso: Hacia Arriba */
+.fab-container.active .fab-option--ingreso {
+    transform: translateY(-90px) scale(1);
+}
+
+/* 2. Traspaso: Diagonal */
+.fab-container.active .fab-option--traspaso {
+    transform: translate(-65px, -65px) scale(1);
+}
+
+/* 3. Gasto: Hacia la Izquierda */
+.fab-container.active .fab-option--gasto {
+    transform: translateX(-90px) scale(1);
+}

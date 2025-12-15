@@ -102,12 +102,37 @@
                 <span class="bottom-nav__label">Diario</span>
             </button>
             
-            <!-- ▼▼▼ BOTÓN MODIFICADO PARA GESTIÓN INTELIGENTE ▼▼▼ -->
-            <!-- Le hemos quitado el 'data-action' para controlarlo manualmente en JS -->
-            <button id="bottom-nav-add-btn">
-                <span class="material-icons">add</span>
-            </button>
-            <!-- ▲▲▲ FIN BOTÓN MODIFICADO ▲▲▲ -->
+            <div class="fab-container" id="fab-container">
+    <div class="fab-backdrop" id="fab-backdrop"></div>
+
+    <div class="fab-options">
+        <button class="fab-option fab-option--ingreso" data-type="ingreso">
+            <span class="fab-label">Ingreso</span>
+            <div class="fab-icon-holder">
+                <span class="material-icons">arrow_upward</span>
+            </div>
+        </button>
+
+        <button class="fab-option fab-option--traspaso" data-type="traspaso">
+            <span class="fab-label">Traspaso</span>
+            <div class="fab-icon-holder">
+                <span class="material-icons">swap_horiz</span>
+            </div>
+        </button>
+
+        <button class="fab-option fab-option--gasto" data-type="gasto">
+            <span class="fab-label">Gasto</span>
+            <div class="fab-icon-holder">
+                <span class="material-icons">arrow_downward</span>
+            </div>
+        </button>
+    </div>
+
+    <button class="fab-main-btn" id="fab-trigger">
+        <span class="material-icons fab-icon-plus">add</span>
+        <span class="material-icons fab-icon-close">close</span>
+    </button>
+</div>
             
             <button data-action="navigate" data-page="patrimonio-page" class="bottom-nav__item">
                 <span class="material-icons">account_balance</span>
