@@ -5659,11 +5659,54 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         height: 200vh !important;
     }
     
-    /* Calculadora a la derecha */
-    #calculator-overlay {
-        justify-content: flex-end !important;
-        padding-right: 50px !important;
-        pointer-events: none;
+    /* --- 6. CALCULADORAS A LA DERECHA --- */
+    /* Afecta a la calculadora completa del header (#calculator-iframe-modal) */
+    
+    #calculator-iframe-modal {
+        justify-content: flex-end !important; /* Alineación Derecha */
+        padding-right: 50px !important;       /* Margen de seguridad */
+        padding-left: 0 !important;           /* Reset */
+        pointer-events: none;                 /* Permite hacer clic en la app mientras está abierta */
+        background-color: transparent !important; /* Fondo transparente para ver el escritorio */
     }
-    #calculator-ui { pointer-events: all; }
-}
+
+    /* Estilo de la ventana de la calculadora (Iframe) */
+    #calculator-iframe-modal .modal {
+        pointer-events: all;
+        width: 400px !important;  /* Ancho más estrecho tipo widget */
+        height: 80vh !important;  /* Altura cómoda */
+        max-height: 800px !important;
+        border-radius: 16px !important;
+        box-shadow: -10px 10px 40px rgba(0,0,0,0.5) !important;
+        border: 1px solid var(--c-outline);
+        margin-right: 0 !important; /* Asegurar que se pega al padding */
+    }
+
+    /* Estilo del teclado numérico (Input) */
+    #calculator-ui {
+        pointer-events: all;
+        box-shadow: -10px 10px 40px rgba(0,0,0,0.5);
+        border: 1px solid var(--c-outline);
+    }
+
+    /* --- 7. FORMULARIO DE MOVIMIENTOS A LA IZQUIERDA --- */
+    /* Alineado perfectamente sobre la aplicación */
+    
+    #movimiento-modal {
+        justify-content: flex-start !important; /* Alineación Izquierda */
+        padding-left: 50px !important;          /* Mismo margen que la App */
+        padding-right: 0 !important;
+        background-color: rgba(0,0,0,0.6) !important; /* Fondo oscuro para enfocar */
+    }
+
+    #movimiento-modal .modal {
+        width: 900px !important;      /* MISMO ANCHO QUE LA APP */
+        max-width: 900px !important;
+        border-radius: 16px !important;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important;
+        margin: 0 !important;         /* Sin márgenes automáticos */
+        
+        /* Opcional: Si quieres que ocupe casi toda la altura para ver bien los campos */
+        max-height: 90vh !important;
+        height: auto !important;
+    }
