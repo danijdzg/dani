@@ -5621,55 +5621,62 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 }
 
 /* ================================================================= */
-/* === MODO ESCRITORIO: DASHBOARD EJECUTIVO FULL-SCREEN === */
+/* === MODO ESCRITORIO: LAYOUT COMPACTO Y CENTRADO === */
 /* ================================================================= */
 @media (min-width: 1024px) {
     body {
-        overflow: hidden; /* Sin scroll */
-        background-color: #09090b; /* Fondo ultra oscuro */
+        overflow: hidden;
+        background-color: #09090b;
     }
 
     .app-layout__main {
-        padding: 90px 40px 100px 40px !important; /* Espacio para cabecera y pie */
+        /* 1. PEGADO AL ENCABEZADO: Reducimos padding-top a 75px (antes 90px) */
+        padding: 75px 40px 100px 40px !important;
+        
         height: 100vh;
-        max-width: 100% !important;
+        
+        /* 2. TARJETAS CENTRADAS: Limitamos el ancho y centramos el bloque */
+        max-width: 1400px !important; /* Ancho máximo ideal para lectura */
+        margin: 0 auto !important;    /* Centrado horizontal automático */
+        
         display: flex;
         flex-direction: column;
+        width: 100% !important;
     }
 
-    /* GRID DEL PANEL: Ocupa toda la pantalla */
+    /* GRID DEL PANEL */
     #panel-page.view--active {
         display: grid !important;
-        grid-template-columns: 2.5fr 1fr; /* Columna principal ancha | Columna lateral */
-        grid-template-rows: auto 1fr; /* Fila KPIs | Fila Gráficos */
+        grid-template-columns: 2.5fr 1fr;
+        grid-template-rows: auto 1fr;
         gap: 24px;
         height: 100%;
         padding: 0 !important;
+        align-content: start; /* Alinea el contenido arriba */
     }
 
-    /* ZONA 1: KPIs (Fila Superior Completa) */
+    /* ZONA 1: KPIs */
     .dashboard-kpi-row {
         grid-column: 1 / -1;
         display: grid;
-        grid-template-columns: repeat(4, 1fr); /* 4 Tarjetas iguales */
+        grid-template-columns: repeat(4, 1fr);
         gap: 24px;
-        height: 120px; /* Altura fija para KPIs */
+        height: 110px; /* Un poco más compactos */
     }
 
-    /* ZONA 2: GRÁFICO PRINCIPAL (Abajo Izquierda) */
+    /* ZONA 2: GRÁFICO PRINCIPAL */
     .dashboard-main-chart-card {
         grid-column: 1 / 2;
         background: var(--c-surface);
         border: 1px solid var(--c-outline);
         border-radius: 24px;
         padding: 24px;
-        position: relative;
         display: flex;
         flex-direction: column;
         box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     }
 
-    /* ZONA 3: LATERAL (Abajo Derecha - Patrimonio/Salud) */
+    /* ZONA 3: LATERAL */
     .dashboard-side-column {
         grid-column: 2 / 3;
         display: flex;
@@ -5677,26 +5684,10 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         gap: 24px;
     }
     
-    /* Estilos para tarjetas de escritorio */
-    .hero-card {
-        flex: 1;
-        margin: 0 !important;
-        border-radius: 24px;
-        justify-content: center;
-        padding: 20px !important;
-    }
-    
-    /* KPIs individuales más grandes */
-    .clickable-kpi {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 0 20px;
-        background: var(--c-surface);
-        border: 1px solid rgba(255,255,255,0.05);
+    .hero-card, .clickable-kpi {
         border-radius: 20px;
-        transition: transform 0.2s, background 0.2s;
+        border: 1px solid rgba(255,255,255,0.05);
+        transition: transform 0.2s, border-color 0.2s;
     }
     .clickable-kpi:hover {
         transform: translateY(-3px);
@@ -5704,71 +5695,99 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         border-color: var(--c-primary);
     }
     
-    /* Textos ajustados */
-    .hero-value { font-size: 2.5rem !important; }
+    .hero-value { font-size: 2.2rem !important; }
 }
-
 /* ================================================================= */
-/* === SUPER FAB (Botón +) & BACKDROP FIX === */
+/* === FAB "PRO" (Efectos de Neón y Backdrop Cinemático) === */
 /* ================================================================= */
 
-/* Corrección de la Franja Oscura: El fondo termina ANTES del pie de página */
+/* 1. EL TELÓN DE FONDO (BACKDROP) */
 .fab-backdrop {
-    /* En móvil suele ser ~65px + safe-area, en escritorio pusimos 80px */
-    /* Usamos un valor seguro para que no tape la barra de navegación */
-    bottom: 90px !important; 
-    height: calc(100vh - 90px) !important;
+    /* Ajuste para NO tapar el pie de página (Bottom Nav) */
+    /* En escritorio la barra mide ~80px, dejamos 85px de margen */
+    bottom: 85px !important; 
+    height: calc(100vh - 85px) !important;
     top: 0 !important;
     position: fixed !important;
+    
+    /* EFECTO OSCURECIMIENTO PROFUNDO */
+    background: rgba(5, 5, 10, 0.85) !important; /* Casi negro, muy elegante */
+    backdrop-filter: blur(6px); /* Desenfoca el contenido de atrás */
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* El Botón Principal: Más grande y Sobresaliente */
+/* 2. BOTÓN PRINCIPAL (+) */
 .fab-main-btn {
-    width: 72px !important; /* Más grande */
-    height: 72px !important;
-    background: linear-gradient(135deg, #00B34D, #39FF14) !important; /* Gradiente Neón */
+    width: 68px !important;
+    height: 68px !important;
+    /* Gradiente Vertical Rico */
+    background: linear-gradient(180deg, #00E676 0%, #00B34D 100%) !important;
+    
+    /* Sombra de elevación y borde de "corte" */
     box-shadow: 
-        0 10px 25px rgba(0, 179, 77, 0.5), /* Sombra verde difusa */
-        0 0 0 4px rgba(5, 5, 5, 1) !important; /* Borde negro para separarlo del fondo */
-    transform: translateY(-5px); /* Elevado */
+        0 10px 20px rgba(0, 179, 77, 0.4),
+        0 0 0 6px var(--c-background) !important; /* Borde del color de fondo para separarlo */
+        
+    transform: translateY(-8px); /* Elevado sobre la barra */
+    z-index: 10001; /* Por encima del backdrop */
 }
 
-/* Icono más grueso */
+/* Animación sutil de "estoy vivo" */
+@keyframes soft-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 179, 77, 0.4); }
+    70% { box-shadow: 0 0 0 15px rgba(0, 179, 77, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 179, 77, 0); }
+}
+
+.fab-main-btn:not(:active) {
+    animation: soft-pulse 2s infinite;
+}
+
+/* Icono interior */
 .fab-main-btn .material-icons {
-    font-size: 32px !important;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    font-size: 36px !important;
+    text-shadow: 0 2px 2px rgba(0,0,0,0.15);
 }
 
-/* Submenús Brillantes */
+/* Estado Activo (X Roja) */
+.fab-container.active .fab-main-btn {
+    background: linear-gradient(180deg, #ff5f6d, #ffc371) !important;
+    animation: none; /* Paramos el pulso */
+    transform: translateY(-8px) rotate(135deg) scale(0.95);
+    box-shadow: 0 5px 15px rgba(255, 95, 109, 0.5);
+}
+
+/* 3. SUB-MENÚS (Las opciones) */
 .fab-option {
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); /* Sombra profunda */
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+    filter: drop-shadow(0 8px 15px rgba(0,0,0,0.5));
 }
 
 .fab-icon-holder {
-    width: 52px; height: 52px;
-    border: 2px solid rgba(255,255,255,0.8); /* Borde blanco brillante */
+    width: 56px; height: 56px;
+    border: 2px solid rgba(255,255,255,0.1);
 }
 
-/* Colores Intensos para los Submenús */
 .fab-option--ingreso .fab-icon-holder { 
-    background: linear-gradient(135deg, #00b09b, #96c93d); /* Verde vibrante */
-    box-shadow: 0 0 15px rgba(150, 201, 61, 0.6); /* Resplandor */
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    color: #064e3b; /* Icono oscuro */
 }
 .fab-option--gasto .fab-icon-holder { 
-    background: linear-gradient(135deg, #ff5f6d, #ffc371); /* Naranja fuego */
-    box-shadow: 0 0 15px rgba(255, 95, 109, 0.6);
+    background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
 }
 .fab-option--traspaso .fab-icon-holder { 
-    background: linear-gradient(135deg, #36d1dc, #5b86e5); /* Azul eléctrico */
-    box-shadow: 0 0 15px rgba(91, 134, 229, 0.6);
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: #0c4a6e;
 }
 
-/* Etiquetas más legibles */
+/* Etiquetas de texto mejoradas */
 .fab-label {
-    background: rgba(255,255,255,0.95);
-    color: #000;
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a1a1a;
+    font-size: 0.8rem;
     font-weight: 800;
-    padding: 4px 10px;
-    border-radius: 6px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    padding: 6px 12px;
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
