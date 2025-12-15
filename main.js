@@ -1,50 +1,56 @@
 
 import { addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'https://cdn.jsdelivr.net/npm/date-fns@2.29.3/+esm';
 const KPI_EXPLANATIONS = {
-    'flujo': { 
-        title: 'Tu Motor Financiero (Flujo de Caja)',
-        text: `
-            <p>Aquí ves el movimiento de tu dinero en el periodo seleccionado:</p>
-            <ul style="list-style:none; padding:0; margin:10px 0;">
-                <li style="margin-bottom:8px;">🟢 <strong>INGRESOS:</strong> Dinero nuevo que entra (nómina, ventas). Es tu combustible.</li>
-                <li style="margin-bottom:8px;">🔴 <strong>GASTOS:</strong> Dinero que sale para no volver (facturas, ocio).</li>
-                <li>🟡 <strong>AHORRO (Neto):</strong> El resultado de <em>Ingresos - Gastos</em>. Si es positivo, te estás enriqueciendo. Si es negativo, estás consumiendo ahorros pasados.</li>
-            </ul>`
+    'ingresos': { 
+        title: 'Ingresos del Periodo', 
+        text: 'Dinero nuevo que ha entrado en tus bolsillos durante las fechas seleccionadas (nómina, ventas, regalos...).<br><br>No cuenta los movimientos entre tus propias cuentas (traspasos).' 
     },
-    'patrimonio': {
-        title: 'Tu Riqueza Total (Patrimonio Neto)',
-        text: `
-            <p>Es la "foto fija" de todo lo que tienes hoy. Se compone de:</p>
-            <ul style="list-style:none; padding:0; margin:10px 0;">
-                <li style="margin-bottom:8px;">💧 <strong>LÍQUIDO:</strong> Dinero en banco y efectivo. Es tu seguridad inmediata.</li>
-                <li style="margin-bottom:8px;">🚀 <strong>INVERTIDO:</strong> Dinero puesto en activos para que crezca.</li>
-                <li><strong>TOTAL:</strong> La suma de ambos. Es tu marcador en el juego financiero.</li>
-            </ul>`
+    'gastos': { 
+        title: 'Gastos del Periodo', 
+        text: 'Dinero que ha salido de tu bolsillo para no volver (compras, facturas, ocio...).' 
     },
-    'inversiones': {
-        title: 'Rendimiento de Inversiones',
-        text: `
-            <p>¿Qué tal lo están haciendo tus activos?</p>
-            <ul style="list-style:none; padding:0; margin:10px 0;">
-                <li style="margin-bottom:8px;">📈 <strong>VALOR MERCADO:</strong> Precio actual si vendieras todo hoy.</li>
-                <li style="margin-bottom:8px;">💼 <strong>CAPITAL PUESTO:</strong> Dinero real que salió de tu bolsillo.</li>
-                <li>📊 <strong>P&L (Ganancia):</strong> La diferencia. Si es <span style="color:#39FF14">Verde</span>, tu dinero ha trabajado por ti.</li>
-            </ul>`
+    'neto': { 
+        title: 'Flujo Neto (Ahorro del Periodo)', 
+        text: 'Es la resta simple: <strong>Lo que entró - Lo que salió</strong>.<br><br>Si es positivo (Verde), has gastado menos de lo que ganaste. Si es negativo (Rojo), has tenido que tirar de ahorros anteriores.' 
     },
-    'salud': {
-        title: 'Signos Vitales',
-        text: `
-            <ul style="list-style:none; padding:0; margin:0;">
-                <li style="margin-bottom:10px;">🛡️ <strong>COBERTURA:</strong> Si dejaras de ingresar hoy, ¿cuántos meses podrías vivir con tu liquidez actual? (Ideal > 6 meses).</li>
-                <li>🗽 <strong>LIBERTAD:</strong> Porcentaje de camino recorrido para poder vivir de tus rentas sin trabajar.</li>
-            </ul>`
+    'tasa_ahorro': { 
+        title: 'Tasa de Ahorro', 
+        text: 'Mide tu velocidad de acumulación de riqueza.<br><br>Si ganaste 1.000€ y te sobraron 200€, tu tasa es del 20%. Un porcentaje alto significa que vives muy por debajo de tus posibilidades (¡eso es bueno!).' 
+    },
+    'patrimonio': { 
+        title: 'Patrimonio (Capital Total)', 
+        text: 'Es la suma de todo tu dinero "contable".<br><br><strong>Fórmula:</strong> Liquidez + Capital Invertido.<br><br>Representa todo el dinero que tienes en el banco más todo el dinero que has enviado a tus cuentas de inversión. No tiene en cuenta si tus inversiones han subido o bajado, solo lo que tú pusiste.' 
+    },
+    'liquidez': { 
+        title: 'Liquidez Disponible', 
+        text: 'Tu oxígeno financiero. Es el dinero que tienes en cuentas corrientes, efectivo o huchas, listo para gastar hoy mismo si fuera necesario.' 
+    },
+    'capital_invertido': { 
+        title: 'Capital Invertido', 
+        text: 'El esfuerzo de tu bolsillo. Es la suma total de dinero que has transferido desde tus cuentas de banco a tus cuentas de inversión.<br><br>Es tu "coste base".' 
+    },
+    'posicion_real': { 
+        title: 'Posición Real de Mercado', 
+        text: 'La verdad actual. Es lo que valen tus inversiones si las vendieras todas hoy mismo.<br><br>Se calcula sumando tu <strong>Capital Invertido</strong> más tus <strong>Ganancias</strong> (o menos tus Pérdidas).' 
+    },
+    'pnl': { 
+        title: 'Ganancia / Pérdida (P&L)', 
+        text: 'Es el "examen de notas" de tus inversiones. Te dice cuánto dinero has ganado o perdido sobre lo que pusiste.<br><br><strong>Ejemplo Didáctico:</strong><br>Pones 100€ en una hucha (Capital). Si el mercado sube y ahora vale 110€, tu P&L es <strong>+10€ (+10%)</strong>.<br><br><strong>Fórmula:</strong> Valor Actual - Capital Invertido.' 
+    },
+    'cobertura': { 
+        title: 'Cobertura (Meses de Libertad)', 
+        text: 'Si hoy dejaras de ingresar dinero, ¿cuánto tiempo podrías sobrevivir con tu liquidez actual manteniendo tu nivel de gastos de los últimos 3 meses?' 
+    },
+    'libertad': { 
+        title: 'Independencia Financiera', 
+        text: 'Tu barra de progreso hacia la jubilación.<br><br>Se considera que eres libre cuando tienes acumulado 25 veces tus gastos anuales (o 300 veces tus gastos mensuales).' 
     }
 };
 
 const isCryptoType = (tipo) => {
     const t = (tipo || '').toLowerCase();
     // Detecta palabras clave comunes
-    return t.includes('criptomoneda') ;
+    return t.includes('cripto') || t.includes('btc') || t.includes('bitcoin') || t.includes('crypto') || t.includes('exchange') || t.includes('binance') || t.includes('coinbase');
 };
 
 const setupEnhancedFormNavigation = () => {
@@ -372,152 +378,81 @@ const renderInformeCuentaRow = (mov, cuentaId, allCuentas) => {
 };
 
 const handleGenerateInformeCuenta = async (form, btn = null) => {
-    if (btn) setButtonLoading(btn, true, 'Procesando...');
+    // 1. Solo activamos la animación del botón si se proporciona (ahora es opcional)
+    if (btn) setButtonLoading(btn, true, 'Imprimiendo...');
     
-    // 1. Recoger parámetros de la nueva interfaz
-    const cuentaId = select('informe-cuenta-select')?.value;
-    const fechaInicio = select('extracto-fecha-inicio')?.value;
-    const fechaFin = select('extracto-fecha-fin')?.value;
-    const textoBusqueda = select('extracto-search')?.value.toLowerCase().trim();
+    const cuentaId = select('informe-cuenta-select').value;
     const resultadoContainer = select('informe-resultado-container');
 
+    // 2. Si no hay cuenta seleccionada, limpiamos y salimos
     if (!cuentaId) {
+        resultadoContainer.innerHTML = '';
         if (btn) setButtonLoading(btn, false);
-        showToast("Por favor, selecciona una cuenta.", "warning");
         return;
     }
 
-    // Indicador de carga
-    if(resultadoContainer) {
-        resultadoContainer.innerHTML = `
-            <div style="text-align:center; padding: var(--sp-5);">
-                <span class="spinner" style="color:var(--c-primary); width: 24px; height:24px;"></span>
-                <p style="font-size:var(--fs-xs); margin-top:8px; color:var(--c-on-surface-secondary);">
-                    Analizando historial completo...
-                </p>
-            </div>`;
-    }
+    // 3. Mostramos un indicador de carga en el contenedor de resultados
+    resultadoContainer.innerHTML = `
+        <div style="text-align:center; padding: var(--sp-5);">
+            <span class="spinner" style="color:var(--c-primary); width: 24px; height:24px;"></span>
+            <p style="font-size:var(--fs-xs); margin-top:8px; color:var(--c-on-surface-secondary);">Cargando movimientos...</p>
+        </div>`;
 
     const cuenta = db.cuentas.find(c => c.id === cuentaId);
 
     try {
-        // 2. OBTENER TODO EL HISTORIAL (Necesario para calcular saldos exactos)
-        // Usamos AppStore para asegurar que tenemos todo, no solo lo reciente.
+        // --- Obtención y cálculo de datos (IGUAL QUE ANTES) ---
         const todosLosMovimientos = await AppStore.getAll();
         
-        let movimientosCuenta = todosLosMovimientos.filter(m =>
+        let movimientosDeLaCuenta = todosLosMovimientos.filter(m =>
             (m.cuentaId === cuentaId) || (m.cuentaOrigenId === cuentaId) || (m.cuentaDestinoId === cuentaId)
         );
 
-        // 3. CÁLCULO DE SALDOS (Retroceso desde el presente)
-        // Ordenamos del más reciente al más antiguo
-        movimientosCuenta.sort((a, b) => {
-            const dateDiff = new Date(b.fecha) - new Date(a.fecha);
-            if (dateDiff !== 0) return dateDiff;
-            return b.id.localeCompare(a.id);
-        });
-
-        // Partimos del saldo actual real de la cuenta
-        let saldoVolatil = cuenta.saldo;
-
-        // Recorremos todo el historial para asignar el saldo resultante a cada movimiento
-        const movimientosProcesados = movimientosCuenta.map(mov => {
-            // Clonamos el movimiento para no afectar la memoria global
-            const m = { ...mov };
-            
-            // El saldo DESPUÉS de este movimiento es el saldoVolatil actual
-            m.runningBalance = saldoVolatil;
-
-            // Deshacemos el movimiento para saber cuánto había antes
-            let impacto = 0;
-            if (m.tipo === 'traspaso') {
-                if (m.cuentaOrigenId === cuentaId) impacto = -m.cantidad;
-                else if (m.cuentaDestinoId === cuentaId) impacto = m.cantidad;
-            } else {
-                impacto = m.cantidad;
-            }
-            
-            // Retrocedemos el saldo
-            saldoVolatil -= impacto;
-            
-            // Guardamos también el saldo anterior a este movimiento (útil para el reporte)
-            m.previousBalance = saldoVolatil;
-            
-            return m;
-        });
-
-        // 4. FILTRADO (Ahora que tenemos los saldos correctos, filtramos qué mostrar)
-        let movimientosVisibles = movimientosProcesados.filter(m => {
-            const fechaMov = m.fecha.split('T')[0]; // "YYYY-MM-DD"
-            
-            // Filtro de Fecha
-            if (fechaInicio && fechaMov < fechaInicio) return false;
-            if (fechaFin && fechaMov > fechaFin) return false;
-            
-            // Filtro de Texto (Búsqueda)
-            if (textoBusqueda) {
-                const concepto = db.conceptos.find(c => c.id === m.conceptoId)?.nombre || '';
-                const matchTexto = 
-                    (m.descripcion || '').toLowerCase().includes(textoBusqueda) ||
-                    concepto.toLowerCase().includes(textoBusqueda) ||
-                    (m.cantidad / 100).toString().includes(textoBusqueda);
-                
-                if (!matchTexto) return false;
-            }
-            
-            return true;
-        });
-
-        if (movimientosVisibles.length === 0) {
-             resultadoContainer.innerHTML = `<div class="empty-state" style="background:transparent; border:none; padding:var(--sp-4);"><p>No se encontraron movimientos en este periodo/búsqueda.</p></div>`;
+        if (movimientosDeLaCuenta.length === 0) {
+             resultadoContainer.innerHTML = `<div class="empty-state" style="background:transparent; border:none; padding:var(--sp-4);"><p>Sin movimientos registrados.</p></div>`;
              if (btn) setButtonLoading(btn, false);
              return;
         }
 
-        // 5. DETERMINAR SALDO INICIAL DEL PERIODO MOSTRADO
-        // Es el "Saldo Anterior" del movimiento más antiguo que se muestra.
-        // Como están ordenados desc (reciente -> antiguo), el último es el más antiguo.
-        const ultimoMovimientoVisible = movimientosVisibles[movimientosVisibles.length - 1];
-        const saldoInicialPeriodo = ultimoMovimientoVisible.previousBalance;
+        movimientosDeLaCuenta.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-        // 6. RENDERIZADO
+        let saldoAcumulado = 0;
+        for (const mov of movimientosDeLaCuenta) {
+            let impacto = 0;
+            if (mov.tipo === 'traspaso') {
+                if (mov.cuentaOrigenId === cuentaId) impacto = -mov.cantidad;
+                if (mov.cuentaDestinoId === cuentaId) impacto = mov.cantidad;
+            } else {
+                impacto = mov.cantidad;
+            }
+            saldoAcumulado += impacto;
+            mov.runningBalance = saldoAcumulado;
+        }
+
+        movimientosDeLaCuenta.reverse(); 
+
+        // --- Renderizado HTML ---
         let html = `
             <div class="cartilla-container">
                 <div class="cartilla-header-info">
                     <h4>EXTRACTO DE CUENTA</h4>
                     <p><strong>Titular:</strong> ${escapeHTML(cuenta.nombre)}</p>
-                    <p class="cartilla-print-date">
-                        Periodo: ${fechaInicio ? new Date(fechaInicio).toLocaleDateString() : 'Inicio'} - ${fechaFin ? new Date(fechaFin).toLocaleDateString() : 'Hoy'}
-                    </p>
+                    <p class="cartilla-print-date">Fecha: ${new Date().toLocaleDateString()}</p>
                 </div>
-                
                 <div class="cartilla-table">
-                    <div class="informe-linea-resumen" style="background-color: rgba(0,0,0,0.05);">
-                        <span class="fecha">---</span>
-                        <span class="descripcion">SALDO ANTERIOR (Al inicio del periodo)</span>
-                        <span class="importe"></span>
-                        <span class="saldo">${formatCurrency(saldoInicialPeriodo)}</span>
+                    <div class="cartilla-row cartilla-head">
+                        <div class="cartilla-cell">FECHA</div>
+                        <div class="cartilla-cell">CONCEPTO</div>
+                        <div class="cartilla-cell text-right">CARGOS</div>
+                        <div class="cartilla-cell text-right">ABONOS</div>
+                        <div class="cartilla-cell text-right">SALDO</div>
                     </div>`;
-        
-        // Renderizamos las filas
-        for (const mov of movimientosVisibles) {
+                
+        for (const mov of movimientosDeLaCuenta) {
             html += renderInformeCuentaRow(mov, cuentaId, db.cuentas);
         }
         
-        // Saldo Final del Periodo (El saldo del movimiento más reciente mostrado)
-        const saldoFinalPeriodo = movimientosVisibles[0].runningBalance;
-
-        html += `
-                    <div class="informe-linea-resumen" style="border-top: 2px solid var(--c-on-surface); margin-top: 10px;">
-                        <span class="fecha">---</span>
-                        <span class="descripcion">SALDO FINAL (Al final del periodo)</span>
-                        <span class="importe"></span>
-                        <span class="saldo" style="font-weight: 800;">${formatCurrency(saldoFinalPeriodo)}</span>
-                    </div>
-                </div>
-                <div class="cartilla-footer">** FIN DEL EXTRACTO **</div>
-            </div>`;
-            
+        html += `</div><div class="cartilla-footer">** FIN DEL EXTRACTO **</div></div>`;
         resultadoContainer.innerHTML = html;
 
     } catch (error) {
@@ -1033,8 +968,38 @@ const clearDiarioFilters = async () => {
 			renderBuffer: 10, lastRenderedRange: { start: -1, end: -1 }, isScrolling: null
 		};
         
+ // ▼▼▼ COPIA Y PEGA ESTE BLOQUE ÚNICO EN LUGAR DEL CÓDIGO DE LA CALCULADORA QUE TENGAS ▼▼▼
 
+let calculatorState = {
+    displayValue: '0',
+    operand1: null,
+    operator: null,
+    waitingForNewValue: true,
+    targetInput: null,
+    isVisible: false, 
+    isResultDisplayed: false,
+    historyValue: '', // Guarda la operación en curso
+};
 
+// Actualiza el display del historial
+const updateCalculatorHistoryDisplay = () => {
+    const historyDisplay = select('calculator-history-display');
+    if (historyDisplay) historyDisplay.textContent = calculatorState.historyValue;
+};
+
+// Mapea las claves a los símbolos visuales
+const getOperatorSymbol = (key) => ({
+    'add': '+', 'subtract': '−', 'multiply': '×', 'divide': '÷'
+}[key] || '');
+
+// Gestiona qué botón de operador se ve activo
+const updateActiveOperatorButton = () => {
+    selectAll('.calculator-btn.btn-operator').forEach(btn => btn.classList.remove('btn-operator--active'));
+    if (calculatorState.operator) {
+        const activeBtn = document.querySelector(`.calculator-btn[data-key="${calculatorState.operator}"]`);
+        if (activeBtn) activeBtn.classList.add('btn-operator--active');
+    }
+};      
 const fetchBtcPrice = async () => {
     // Evitar llamadas excesivas (cache de 60 segundos)
     const now = Date.now();
@@ -1056,7 +1021,107 @@ const fetchBtcPrice = async () => {
     }
     return btcPriceData.price || 0; // Retorna 0 o el último precio conocido si falla
 };
+const handleCalculatorInput = (key) => {
+    hapticFeedback('light');
+    let { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue } = calculatorState;
+    
+    // Reset si venimos de un resultado y se escribe número
+    if (isResultDisplayed && !['add', 'subtract', 'multiply', 'divide', 'sign'].includes(key)) {
+        displayValue = '0';
+        isResultDisplayed = false;
+        historyValue = ''; 
+    }
 
+    const isOperator = ['add', 'subtract', 'multiply', 'divide'].includes(key);
+
+    if (isOperator) {
+        if (operand1 !== null && operator !== null && !waitingForNewValue) {
+            calculate();
+            displayValue = calculatorState.displayValue; 
+        }
+        operand1 = parseFloat(displayValue.replace(',', '.'));
+        operator = key;
+        // Mostramos la operación en la barrita pequeña de historial
+        historyValue = `${displayValue} ${getOperatorSymbol(operator)}`;
+        waitingForNewValue = true;
+        isResultDisplayed = false;
+    } else {
+        switch(key) {
+            case 'done':
+                hapticFeedback('medium');
+                // Calcular final si hay pendiente
+                if (operand1 !== null && operator !== null && !waitingForNewValue) {
+                    calculate();
+                    displayValue = calculatorState.displayValue;
+                }
+                
+                // Actualizar input final
+                updateTargetInput(displayValue);
+                
+                historyValue = '';
+                hideCalculator(); 
+
+                // --- AVANCE AUTOMÁTICO AL SIGUIENTE CAMPO ---
+                // Al dar OK, pasamos al concepto automáticamente
+                setTimeout(() => {
+                    const conceptoSelect = document.getElementById('movimiento-concepto');
+                    // Buscamos el trigger del custom select
+                    const wrapper = conceptoSelect?.closest('.custom-select-wrapper');
+                    const trigger = wrapper?.querySelector('.custom-select__trigger');
+                    
+                    if (trigger) {
+                        trigger.focus(); // Enfocar para navegación teclado
+                        trigger.click(); // Abrir el menú
+                    }
+                }, 100); 
+                return;
+
+            case 'comma':
+                if (waitingForNewValue) { displayValue = '0,'; waitingForNewValue = false; } 
+                else if (!displayValue.includes(',')) displayValue += ',';
+                break;
+
+            case 'clear': 
+                displayValue = '0'; waitingForNewValue = true; operand1 = null; operator = null; isResultDisplayed = false; historyValue = '';
+                break;
+
+            case 'backspace': 
+                displayValue = displayValue.length > 1 ? displayValue.slice(0, -1) : '0';
+                if (displayValue === '0') waitingForNewValue = true;
+                break;
+
+            case 'sign': 
+                if (displayValue !== '0') displayValue = displayValue.startsWith('-') ? displayValue.slice(1) : `-${displayValue}`; 
+                break;
+
+            default: // Dígitos (0-9)
+                if (waitingForNewValue || displayValue === '0') {
+                    displayValue = key;
+                    waitingForNewValue = false;
+                } else if (displayValue.length < 12) { 
+                    displayValue += key;
+                }
+                break;
+        }
+    }
+    
+    // Guardamos estado
+    Object.assign(calculatorState, { displayValue, waitingForNewValue, operand1, operator, isResultDisplayed, historyValue });
+    
+    // Actualizamos UI interna
+    updateCalculatorDisplay();
+    updateCalculatorHistoryDisplay();
+    updateActiveOperatorButton();
+
+    // === MEJORA 1: ACTUALIZACIÓN EN TIEMPO REAL ===
+    // Actualizamos el input objetivo SIEMPRE, no solo al dar OK.
+    // Excepto si estamos a mitad de una operación (ej. escribiendo el segundo número de una suma)
+    if (!operand1 || isResultDisplayed) {
+        updateTargetInput(displayValue);
+    }
+};
+
+// Función auxiliar para escribir en el input real
 const updateTargetInput = (val) => {
     if (calculatorState.targetInput) {
         // 1. Preparamos el número
@@ -1077,230 +1142,93 @@ const updateTargetInput = (val) => {
     }
 };
 
- /* ================================================================= */
-/* === MOTOR DE CALCULADORA V3 (Lógica Unificada y Blindada) === */
-/* ================================================================= */
+// --- INICIO: BLOQUE CALCULADORA REPARADO Y BLINDADO ---
 
-let calculatorState = {
-    displayValue: '0',
-    operand1: null,
-    operator: null,
-    waitingForNewValue: true,
-    targetInput: null,
-    isVisible: false, 
-    isResultDisplayed: false,
-    historyValue: '', 
-};
-
-// Helper: Convierte "1.200,50" -> 120050 (céntimos) de forma segura
+// Función auxiliar segura: Convierte cualquier entrada a CÉNTIMOS (entero)
 const parseCalculatorValue = (val) => {
-    if (val === null || val === undefined || val === '') return 0;
-    let stringVal = val.toString();
-    // 1. Quitamos puntos de miles (1.000 -> 1000)
-    stringVal = stringVal.replace(/\./g, '');
-    // 2. Cambiamos coma decimal por punto (12,50 -> 12.50)
-    stringVal = stringVal.replace(',', '.');
-    // 3. Parseamos y pasamos a céntimos
-    const num = parseFloat(stringVal);
-    return isNaN(num) ? 0 : Math.round(num * 100);
+    if (val === null || val === undefined || val === '') return NaN;
+    // Convierte a string, cambia coma por punto y multiplica por 100
+    const num = parseFloat(val.toString().replace(',', '.'));
+    return Math.round(num * 100);
 };
 
-// Actualiza el historial pequeño (ej: "50 + ")
-const updateCalculatorHistoryDisplay = () => {
-    const historyDisplay = document.getElementById('calculator-history-display');
-    if (historyDisplay) historyDisplay.textContent = calculatorState.historyValue;
-};
-
-// Resalta el botón del operador activo
-const updateActiveOperatorButton = () => {
-    document.querySelectorAll('.calculator-btn.btn-operator').forEach(btn => btn.classList.remove('btn-operator--active'));
-    if (calculatorState.operator) {
-        const activeBtn = document.querySelector(`.calculator-btn[data-key="${calculatorState.operator}"]`);
-        if (activeBtn) activeBtn.classList.add('btn-operator--active');
-    }
-};
-
-const getOperatorSymbol = (key) => ({
-    'add': '+', 'subtract': '−', 'multiply': '×', 'divide': '÷'
-}[key] || '');
-
-// Función Principal de Cálculo
 const calculate = () => {
-    const { operand1, displayValue, operator } = calculatorState;
-    if (operand1 === null || operator === null) return;
-
-    const val1 = parseCalculatorValue(operand1);
-    const val2 = parseCalculatorValue(displayValue);
+    // 1. Convertimos todo a enteros (céntimos)
+    const val1 = parseCalculatorValue(calculatorState.operand1);
+    const val2 = parseCalculatorValue(calculatorState.displayValue);
     
+    // 2. Seguridad
+    if (isNaN(val1) || isNaN(val2) || !calculatorState.operator) return;
+
     let resultInCents = 0;
     
-    switch (operator) {
+    // 3. Operamos en enteros para precisión perfecta
+    switch (calculatorState.operator) {
         case 'add': resultInCents = val1 + val2; break;
         case 'subtract': resultInCents = val1 - val2; break;
-        case 'multiply': resultInCents = Math.round((val1 * val2) / 100); break;
+        case 'multiply': resultInCents = Math.round((val1 * val2) / 100); break; 
         case 'divide':
             if (val2 === 0) { 
-                // Evitar error visual, resetear
-                calculatorState.displayValue = '0'; 
+                showToast("No se puede dividir por cero.", "danger"); 
+                calculatorState.displayValue = 'Error';
                 return; 
             }
             resultInCents = Math.round((val1 * 100) / val2); 
             break;
     }
 
-    // Convertir de nuevo a string con coma (120050 -> "1200,50")
+    // 4. Formateamos bonito para el usuario
     const result = resultInCents / 100;
-    calculatorState.displayValue = result.toString().replace('.', ',');
+    calculatorState.displayValue = result.toLocaleString('es-ES', { 
+        minimumFractionDigits: 0, 
+        maximumFractionDigits: 2,
+        useGrouping: false 
+    }); 
     
-    // Resetear estado de operación pendiente
+    // 5. Reset de estado
     calculatorState.operand1 = null;
     calculatorState.operator = null;
     calculatorState.waitingForNewValue = true;
     calculatorState.isResultDisplayed = true;
-};
-
-// Manejador de eventos (Clics y Teclado)
-const handleCalculatorInput = (key) => {
-    // Feedback táctil si está disponible
-    if (typeof hapticFeedback === 'function') hapticFeedback('light');
-    
-    let { displayValue, waitingForNewValue, operand1, operator } = calculatorState;
-    const isOperator = ['add', 'subtract', 'multiply', 'divide'].includes(key);
-
-    // --- 1. ES UN OPERADOR ---
-    if (isOperator) {
-        // Si ya había una operación a medio hacer (ej: "5 + 5" y pulsas "+"), calcula el total primero
-        if (operand1 !== null && operator !== null && !waitingForNewValue) {
-            calculate();
-            displayValue = calculatorState.displayValue;
-        }
-        
-        // Guardar el primer número y el operador
-        calculatorState.operand1 = displayValue;
-        calculatorState.operator = key;
-        calculatorState.waitingForNewValue = true;
-        calculatorState.isResultDisplayed = false;
-        
-        calculatorState.historyValue = `${displayValue} ${getOperatorSymbol(key)}`;
-    } 
-    // --- 2. OTRAS TECLAS ---
-    else {
-        switch(key) {
-            case 'done': // (=)
-                if (typeof hapticFeedback === 'function') hapticFeedback('medium');
-                
-                // A) Si hay operación pendiente -> CALCULAR Y MOSTRAR (No cerrar)
-                if (calculatorState.operator !== null) {
-                    calculate();
-                    updateCalculatorDisplay();
-                    updateCalculatorHistoryDisplay();
-                    updateActiveOperatorButton();
-                    return; 
-                } 
-                // B) Si NO hay operación -> CERRAR Y GUARDAR
-                else {
-                    updateTargetInput(calculatorState.displayValue);
-                    calculatorState.historyValue = '';
-                    hideCalculator();
-                    
-                    // Salto automático al siguiente campo
-                    setTimeout(() => {
-                        const conceptoSelect = document.getElementById('movimiento-concepto');
-                        const wrapper = conceptoSelect?.closest('.custom-select-wrapper');
-                        const trigger = wrapper?.querySelector('.custom-select__trigger');
-                        if (trigger) { trigger.focus(); trigger.click(); }
-                    }, 100); 
-                }
-                return;
-
-            case 'clear': // (AC)
-                calculatorState.displayValue = '0';
-                calculatorState.operand1 = null;
-                calculatorState.operator = null;
-                calculatorState.waitingForNewValue = true;
-                calculatorState.historyValue = '';
-                break;
-
-            case 'sign': // (+/-)
-                if (displayValue !== '0') {
-                    if (displayValue.startsWith('-')) calculatorState.displayValue = displayValue.slice(1);
-                    else calculatorState.displayValue = '-' + displayValue;
-                }
-                break;
-
-            case 'percent': // (%)
-                const val = parseFloat(displayValue.replace(/\./g, '').replace(',', '.'));
-                if (!isNaN(val)) {
-                    calculatorState.displayValue = (val / 100).toString().replace('.', ',');
-                }
-                break;
-
-            case 'backspace': // Borrar
-                if (waitingForNewValue) return;
-                if (displayValue.length > 1) calculatorState.displayValue = displayValue.slice(0, -1);
-                else {
-                    calculatorState.displayValue = '0';
-                    calculatorState.waitingForNewValue = true;
-                }
-                break;
-
-            case 'comma': // (,)
-                if (calculatorState.waitingForNewValue) {
-                    calculatorState.displayValue = '0,';
-                    calculatorState.waitingForNewValue = false;
-                } else if (!displayValue.includes(',')) {
-                    calculatorState.displayValue += ',';
-                }
-                break;
-
-            default: // NÚMEROS (0-9)
-                if (calculatorState.waitingForNewValue || displayValue === '0') {
-                    calculatorState.displayValue = key;
-                    calculatorState.waitingForNewValue = false;
-                } else {
-                    const plain = displayValue.replace(/\./g, '');
-                    if (plain.length < 12) calculatorState.displayValue += key;
-                }
-                calculatorState.isResultDisplayed = false;
-                break;
-        }
-    }
     
     updateCalculatorDisplay();
-    updateCalculatorHistoryDisplay();
-    updateActiveOperatorButton();
-    
-    // Reflejo en tiempo real en el formulario
-    if (!calculatorState.operator && !calculatorState.isResultDisplayed) {
-        updateTargetInput(calculatorState.displayValue);
-    }
 };
 
+// Mejora visual: Escala dinámica de fuente en el display
+/* Reemplaza updateCalculatorDisplay por esta versión */
 const updateCalculatorDisplay = () => {
-    const display = document.getElementById('calculator-display');
+    const display = select('calculator-display');
     if (!display) return;
     
-    let value = calculatorState.displayValue; 
+    const value = calculatorState.displayValue; // Es un string tipo "125,5"
+    
+    // Lógica de formateo manual para respetar lo que el usuario está escribiendo (incluyendo comas a medias)
     let html = '';
-    const parts = value.split(',');
     
-    // Formatear miles
-    let integerPart = parts[0].replace(/\./g, '');
-    if (!isNaN(parseFloat(integerPart))) {
-        integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    if (value === 'Error') {
+        html = 'Error';
+    } else {
+        const parts = value.split(',');
+        const integerPart = parts[0];
+        // Formateamos la parte entera con puntos de miles si es necesario
+        const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        
+        const decimalPart = parts.length > 1 ? ',' + parts[1] : '';
+        
+        // Aplicamos las clases CSS de estilo
+        html = `<span class="currency-major">${formattedInteger}</span><small class="currency-minor">${decimalPart}</small>`;
     }
-    
-    const decimalPart = parts.length > 1 ? ',' + parts[1] : '';
-    html = `<span class="currency-major">${integerPart}</span><span class="currency-minor">${decimalPart}</span>`;
 
-    display.innerHTML = html;
+    display.innerHTML = html; // Usamos innerHTML en lugar de textContent
     
-    // Ajuste de tamaño de fuente
-    const length = integerPart.length + decimalPart.length;
-    if (length > 10) display.style.fontSize = '2.5rem';
-    else if (length > 7) display.style.fontSize = '3.5rem';
-    else display.style.fontSize = '4.5rem';
-}; 
+    // Ajuste de tamaño dinámico
+    const length = value.length;
+    if (length > 9) display.style.fontSize = '2rem';
+    else if (length > 7) display.style.fontSize = '2.5rem';
+    else display.style.fontSize = '3rem';
+};
+// --- FIN: BLOQUE CALCULADORA ---
+                    
 
 		let isDashboardRendering = false;
 		let isDiarioPageRendering = false; // <-- AÑADE ESTA LÍNEA
@@ -4527,35 +4455,22 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
             const accountsInType = accountsByType[tipo];
             const typeBalance = accountsInType.reduce((sum, acc) => sum + (saldos[acc.id] || 0), 0);
             const porcentajeGlobal = totalFiltrado > 0 ? (typeBalance / totalFiltrado) * 100 : 0;
-            const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => {
-                
-                // LÓGICA DE MONEDA:
-                // Si el modo es BTC, tenemos precio, y la cuenta es cripto...
-                let balanceDisplay;
-                if (portfolioViewMode === 'BTC' && isCryptoType(c.tipo) && btcPriceData.price > 0) {
-                    // Convertir Saldo (céntimos) a Euros, y luego a BTC
-                    const btcValue = (saldos[c.id] / 100) / btcPriceData.price;
-                    balanceDisplay = `<span style="color:#F7931A; font-weight:700;">${formatBTC(btcValue)}</span>`;
-                } else {
-                    // Si no, mostrar en Euros normal
-                    balanceDisplay = formatCurrencyHTML(saldos[c.id] || 0);
-                }
-
-                return `<div class="modal__list-item" 
+            const accountsHtml = accountsInType.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => 
+                `<div class="modal__list-item" 
                      data-action="view-account-details" 
                      data-id="${c.id}" 
                      ${c.esInversion ? 'data-is-investment="true"' : ''}
                      style="cursor: pointer; padding: var(--sp-2) 0;">
                     <div>
-                        <span style="display: block;">${escapeHTML(c.nombre)}</span>
+                        <span style="display: block;">${c.nombre}</span>
                         <small style="color: var(--c-on-surface-secondary);">${(saldos[c.id] || 0) / typeBalance * 100 > 0 ? ((saldos[c.id] || 0) / typeBalance * 100).toFixed(1) + '% de ' + tipo : ''}</small>
                     </div>
                     <div style="display: flex; align-items: center; gap: var(--sp-2);">
-                        ${balanceDisplay}
+                        ${formatCurrencyHTML(saldos[c.id] || 0)}
                         <span class="material-icons" style="font-size: 18px;">chevron_right</span>
                     </div>
-                </div>`;
-            }).join('');
+                </div>`
+            ).join('');
 
             if (!accountsHtml) return '';
 
@@ -4747,22 +4662,24 @@ async function calculateHistoricalIrrForGroup(accountIds) {
             const userEmailEl = select('config-user-email'); 
             if (userEmailEl && currentUser) userEmailEl.textContent = currentUser.email;  			
         };
+/* EN main.js - REEMPLAZO DE renderPanelPage (SIN SALUDO, SIN GRÁFICOS DE SALUD, CON DRILLDOWN) */
 
 const renderPanelPage = async () => {
     const container = select(PAGE_IDS.PANEL);
     if (!container) return;
 
     container.innerHTML = `
-        <div class="dashboard-stack-layout">
+        <div style="padding: var(--sp-3) var(--sp-2) var(--sp-4);">
             
-            <div class="stack-card card-flow">
-                <div class="stack-card-header">
-                    <div class="header-title-row">
-                        <span class="material-icons card-icon-font">sync_alt</span>
-                        <span>FLUJO DE CAJA</span>
+            <div class="hero-card fade-in-up" style="padding: 20px; margin-bottom: var(--sp-3); border-color: rgba(255, 255, 255, 0.1);">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-on-surface); text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">
+                        Flujo de Caja
                     </div>
-                    <div class="report-filters">
-                        <select id="filter-periodo" class="form-select compact-select" style="padding: 2px 20px 2px 8px; height: 26px; font-size: 0.75rem;">
+                    
+                    <div class="report-filters" style="margin: 0;">
+                        <select id="filter-periodo" class="form-select report-period-selector" style="font-size: 0.75rem; padding: 4px 24px 4px 10px; height: auto; width: auto; background-color: rgba(255,255,255,0.05); border: 1px solid var(--c-outline); border-radius: 8px; color: var(--c-on-surface); cursor: pointer;">
                             <option value="mes-actual">Este Mes</option>
                             <option value="año-actual">Este Año</option>
                             <option value="custom">Personalizado</option>
@@ -4770,101 +4687,136 @@ const renderPanelPage = async () => {
                     </div>
                 </div>
 
-                <div id="custom-date-filters" class="hidden compact-date-bar">
-                    <input type="date" id="filter-fecha-inicio" class="tiny-date-input">
-                    <span style="opacity:0.5; font-size:0.8rem; display:flex; align-items:center;">➜</span>
-                    <input type="date" id="filter-fecha-fin" class="tiny-date-input">
-                </div>
-
-                <div class="flow-display">
-                    <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
-                        <span class="flow-label text-success">INGRESOS</span>
-                        <span id="kpi-ingresos-value" class="flow-number skeleton">...</span>
+                <div id="custom-date-filters" class="form-grid hidden" style="grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+                    <div style="display:flex; flex-direction:column;">
+                        <label style="font-size:0.6rem; color:var(--c-on-surface-secondary); margin-bottom:4px;">Desde</label>
+                        <input type="date" id="filter-fecha-inicio" class="form-input" style="font-size: 0.8rem; padding: 6px; background: var(--c-surface); border: 1px solid var(--c-outline); height:auto;">
                     </div>
-                    <div class="flow-sep"></div>
-                    <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
-                        <span class="flow-label text-danger">GASTOS</span>
-                        <span id="kpi-gastos-value" class="flow-number skeleton">...</span>
+                    <div style="display:flex; flex-direction:column;">
+                        <label style="font-size:0.6rem; color:var(--c-on-surface-secondary); margin-bottom:4px;">Hasta</label>
+                        <input type="date" id="filter-fecha-fin" class="form-input" style="font-size: 0.8rem; padding: 6px; background: var(--c-surface); border: 1px solid var(--c-outline); height:auto;">
                     </div>
-                    <div class="flow-sep"></div>
-                    <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
-                        <span class="flow-label text-warning">AHORRO</span>
-                        <span id="kpi-saldo-neto-value" class="flow-number skeleton">...</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="stack-card card-patrimonio clickable-kpi" data-action="show-kpi-drilldown" data-type="patrimonio">
-                <div class="stack-card-header">
-                    <div class="header-title-row">
-                        <span class="material-icons card-icon-font">account_balance</span>
-                        <span>PATRIMONIO NETO</span>
-                    </div>
-                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
                 </div>
                 
-                <div class="patrimonio-main">
-                    <div id="kpi-patrimonio-neto-value" class="math-total-giant skeleton">0 €</div>
-                </div>
-
-                <div class="patrimonio-details">
-                    <div class="p-detail"><span class="dot liquid"></span> Liq: <strong id="kpi-liquidez-value">...</strong></div>
-                    <div class="p-detail"><span class="dot invest"></span> Inv: <strong id="kpi-capital-invertido-total">...</strong></div>
-                </div>
-            </div>
-
-            <div class="stack-card card-invest">
-                <div class="stack-card-header">
-                    <div class="header-title-row">
-                        <span class="material-icons card-icon-font" style="color:#BF5AF2">trending_up</span>
-                        <span style="color:#BF5AF2">INVERSIONES</span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center;">
+                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos" style="background: rgba(0, 179, 77, 0.1); padding: 10px; border-radius: 12px; border: 1px solid rgba(0, 179, 77, 0.2);">
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-success); text-transform: uppercase; margin-bottom: 2px;">
+                            INGRESOS <button class="help-btn" data-action="show-kpi-help" data-kpi="ingresos">?</button>
+                        </div>
+                        <div id="kpi-ingresos-value" class="text-positive skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 800; color: var(--c-success);">+0,00 €</div>
                     </div>
-                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="inversiones">?</button>
-                </div>
 
-                <div class="invest-main">
-                    <span class="invest-label-top">VALOR ACTUAL</span>
-                    <div id="new-card-market-value" class="invest-val-giant skeleton">0 €</div>
-                </div>
-
-                <div class="invest-details-row">
-                    <div class="p-detail">
-                        <span style="opacity:0.7">Invertido:</span> 
-                        <strong id="new-card-capital" style="color:#fff">...</strong>
+                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos" style="background: rgba(255, 59, 48, 0.1); padding: 10px; border-radius: 12px; border: 1px solid rgba(255, 59, 48, 0.2);">
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-danger); text-transform: uppercase; margin-bottom: 2px;">
+                            GASTOS <button class="help-btn" data-action="show-kpi-help" data-kpi="gastos">?</button>
+                        </div>
+                        <div id="kpi-gastos-value" class="text-negative skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 800; color: var(--c-danger);">-0,00 €</div>
                     </div>
-                    <div style="width:1px; height:12px; background:rgba(255,255,255,0.2); align-self:center;"></div>
-                    <div class="p-detail">
-                        <span style="opacity:0.7">P&L:</span> 
-                        <strong id="new-card-pnl">...</strong>
+                </div>
+
+                <div style="height: 1px; background-color: var(--c-outline); margin: 15px 0; opacity: 0.5;"></div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center;">
+                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 2px;">
+                            NETO <button class="help-btn" data-action="show-kpi-help" data-kpi="neto">?</button>
+                        </div>
+                        <div id="kpi-saldo-neto-value" class="skeleton" data-current-value="0" style="font-size: 1.3rem; font-weight: 800;">0,00 €</div>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase; margin-bottom: 2px;">
+                            AHORRO <button class="help-btn" data-action="show-kpi-help" data-kpi="tasa_ahorro">?</button>
+                        </div>
+                        <div id="kpi-tasa-ahorro-value" class="skeleton" data-current-value="0" style="font-size: 1.3rem; font-weight: 800;">0.00%</div>
                     </div>
                 </div>
             </div>
 
-            <div class="stack-card card-health">
-                <div class="stack-card-header">
-                    <div class="header-title-row">
-                        <span class="material-icons card-icon-font">health_and_safety</span>
-                        <span>SALUD FINANCIERA</span>
-                    </div>
-                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="salud">?</button>
-                </div>
+            <div class="hero-card fade-in-up" style="padding: 25px 20px; text-align: center; margin-bottom: var(--sp-3); border-color: var(--c-primary); box-shadow: 0 8px 32px rgba(0, 179, 77, 0.15);">
                 
-                <div class="health-grid">
-                    <div class="health-item">
-                        <span class="health-label">Cobertura</span>
-                        <span id="health-runway-val" class="health-val skeleton" style="color:#FFD60A">...</span>
-                        <span class="health-sub">Meses</span>
+                <div style="margin-bottom: 20px;">
+                    <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--c-on-surface-secondary); letter-spacing: 2px; margin-bottom: 8px;">
+                        PATRIMONIO (CAPITAL TOTAL) <button class="help-btn" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
                     </div>
-                    <div class="health-divider-vert"></div>
-                    <div class="health-item">
-                        <span class="health-label">Libertad</span>
-                        <span id="health-fi-val" class="health-val skeleton" style="color:#39FF14">...</span>
-                        <span class="health-sub">Objetivo</span>
+                    <div id="kpi-patrimonio-neto-value" class="hero-value kpi-resaltado-azul skeleton" data-current-value="0" style="font-size: 2.8rem; line-height: 1; text-shadow: 0 0 20px rgba(0, 179, 77, 0.3);">0,00 €</div>
+                </div>
+
+                <div style="background-color: rgba(0,0,0,0.2); border-radius: 16px; padding: 15px; display: grid; grid-template-columns: 1fr 1px 1fr; align-items: center; border: 1px solid var(--c-outline);">
+                    
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-info); text-transform: uppercase; margin-bottom: 4px; display:flex; justify-content:center; gap:4px; align-items:center;">
+                            <span class="material-icons" style="font-size: 12px;">account_balance_wallet</span> Liquidez
+                            <button class="help-btn" data-action="show-kpi-help" data-kpi="liquidez">?</button>
+                        </div>
+                        <div id="kpi-liquidez-value" class="text-positive skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 700;">0,00 €</div>
                     </div>
+
+                    <div style="height: 30px; background-color: var(--c-outline);"></div>
+
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.65rem; font-weight: 700; color: #BF5AF2; text-transform: uppercase; margin-bottom: 4px; display:flex; justify-content:center; gap:4px; align-items:center;">
+                            <span class="material-icons" style="font-size: 12px;">savings</span> Capital Inv.
+                            <button class="help-btn" data-action="show-kpi-help" data-kpi="capital_invertido">?</button>
+                        </div>
+                        <div id="kpi-capital-invertido-total" class="text-positive skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 700;">0,00 €</div>
+                    </div>
+
                 </div>
             </div>
 
-        </div>`;
+            <div class="hero-card fade-in-up" style="padding: 20px; margin-bottom: var(--sp-4); background: linear-gradient(180deg, rgba(191, 90, 242, 0.1) 0%, rgba(0,0,0,0.2) 100%); border: 1px solid var(--c-info);">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 12px;">
+                    <div style="text-align: left;">
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom:4px;">Capital Invertido</div>
+                        <div id="new-card-capital" style="font-weight:700;">0,00 €</div>
+                    </div>
+                    <div style="text-align: center; font-weight:800; color:var(--c-on-surface-secondary);">
+                        +/-
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.7rem; color: var(--c-on-surface-secondary); margin-bottom:4px;">
+                            P&L <button class="help-btn" data-action="show-kpi-help" data-kpi="pnl" style="width:14px; height:14px; font-size:9px;">?</button>
+                        </div>
+                        <div id="new-card-pnl" style="font-weight:700;">0,00 €</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px; text-align: center;">
+                    <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--c-on-surface-tertiary); margin-bottom: 5px;">
+                        = Valor Real de Mercado <button class="help-btn" data-action="show-kpi-help" data-kpi="posicion_real">?</button>
+                    </div>
+                    <div id="new-card-market-value" class="skeleton" style="font-size: 1.8rem; font-weight: 800; line-height: 1;">0,00 €</div>
+                </div>
+            </div>
+
+            <div class="hero-card fade-in-up" style="padding: 15px; margin-bottom: var(--sp-4); background: linear-gradient(180deg, var(--c-surface) 0%, rgba(0,0,0,0.2) 100%); border: 1px solid var(--c-outline);">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="text-align: center;">
+                        <div style="display: flex; justify-content: center; align-items: center; gap: 6px; margin-bottom: 6px;">
+                            <span class="material-icons" style="color: #FFD60A; font-size: 18px;">shield</span>
+                            <span style="font-size: 0.7rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase;">COBERTURA</span>
+                            <button class="help-btn" data-action="show-kpi-help" data-kpi="cobertura" style="font-size: 10px; width: 14px; height: 14px;">?</button>
+                        </div>
+                        <div id="health-runway-val" class="skeleton" style="font-size: 1.3rem; font-weight: 800; color: #FFD60A;">0.0 Meses</div>
+                    </div>
+                    <div style="text-align: center; border-left: 1px solid var(--c-outline);">
+                        <div style="display: flex; justify-content: center; align-items: center; gap: 6px; margin-bottom: 6px;">
+                            <span class="material-icons" style="color: #39FF14; font-size: 18px;">flag</span>
+                            <span style="font-size: 0.7rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase;">LIBERTAD</span>
+                            <button class="help-btn" data-action="show-kpi-help" data-kpi="libertad" style="font-size: 10px; width: 14px; height: 14px;">?</button>
+                        </div>
+                        <div id="health-fi-val" class="skeleton" style="font-size: 1.3rem; font-weight: 800; color: #39FF14;">0.00%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="concepto-totals-list" style="display:none;"></div>
+        <canvas id="conceptos-chart" style="display:none;"></canvas>
+        <div id="net-worth-chart-container" style="display:none;"><canvas id="net-worth-chart"></canvas></div>
+    `;
     
     populateAllDropdowns();
     await Promise.all([loadPresupuestos(), loadInversiones()]);
@@ -5577,84 +5529,82 @@ async function renderInformeDetallado(informeId) {
 
     try {
         const reportRenderers = {
+            'extracto_cuenta': () => { 
+                // 1. HTML ACTUALIZADO (Con el botón TODO)
+                const content = `
+                    <div id="informe-cuenta-wrapper">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="informe-cuenta-select" class="form-label">Selecciona una cuenta:</label>
+                            
+                            <div style="display: flex; gap: 8px; align-items: stretch; width: 100%;">
+                                <div class="input-wrapper" style="flex-grow: 1; min-width: 0;">
+                                    <select id="informe-cuenta-select" class="form-select"></select>
+                                </div>
+                                <button id="btn-extracto-todo" class="btn btn--secondary" style="flex-shrink: 0; min-width: auto; padding: 0 16px; font-weight: 700; white-space: nowrap;" title="Ver todo ordenado por fecha">
+                                    TODO
+                                </button>
+                            </div>
+                            </div>
+                    </div>
+                    
+                    <div id="informe-resultado-container" style="margin-top: var(--sp-4);">
+                        <div class="empty-state" style="background:transparent; padding:var(--sp-2); border:none;">
+                            <p style="font-size:0.85rem;">Selecciona una cuenta o pulsa <strong>TODO</strong>.</p>
+                        </div>
+                    </div>`;
+                
+                container.innerHTML = content;
+
+                // 2. Lógica de activación
+                const selectEl = select('informe-cuenta-select');
+                if (selectEl) {
+                    const populate = (el, data) => {
+                        let opts = '<option value="">Seleccionar cuenta...</option>';
+                        [...data].sort((a,b) => a.nombre.localeCompare(b.nombre))
+                                 .forEach(cuenta => {
+                                     opts += `<option value="${cuenta.id}">${cuenta.nombre}</option>`;
+                                 });
+                        el.innerHTML = opts;
+                    };
+                    populate(selectEl, getVisibleAccounts());
+
+                    // Inicializamos el selector visual
+                    createCustomSelect(selectEl);
+
+                    // Evento al cambiar selección individual
+                    selectEl.addEventListener('change', () => {
+                        handleGenerateInformeCuenta(null, null);
+                        setTimeout(() => {
+                            if (document.activeElement) document.activeElement.blur();
+                            const wrapper = selectEl.closest('.custom-select-wrapper');
+                            if (wrapper) {
+                                wrapper.classList.remove('is-open');
+                                const trigger = wrapper.querySelector('.custom-select__trigger');
+                                if (trigger) trigger.blur();
+                            }
+                        }, 50);
+                    });
+                }
+
+                // 3. Lógica del Botón TODO (Crucial añadirla aquí también)
+                const btnTodo = select('btn-extracto-todo');
+                if (btnTodo) {
+                    // Clonamos para eliminar listeners previos por seguridad
+                    const newBtn = btnTodo.cloneNode(true);
+                    btnTodo.parentNode.replaceChild(newBtn, btnTodo);
+                    
+                    newBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.target.blur();
+                        // Llamamos a la función global que ordena por fecha
+                        if (typeof handleGenerateGlobalExtract === 'function') {
+                            handleGenerateGlobalExtract(e.target);
+                        }
+                    });
+                }
+            },
             
-'extracto_cuenta': () => { 
-    // 1. HTML ACTUALIZADO: Fechas + Búsqueda + Cuenta
-    const content = `
-        <div id="informe-cuenta-wrapper">
-            <div class="form-group" style="margin-bottom: var(--sp-3);">
-                <label for="informe-cuenta-select" class="form-label">Cuenta a consultar:</label>
-                <div class="input-wrapper">
-                    <select id="informe-cuenta-select" class="form-select"></select>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                <div>
-                    <label class="form-label" style="font-size:0.7rem;">Desde</label>
-                    <input type="date" id="extracto-fecha-inicio" class="form-input" style="padding: 8px;">
-                </div>
-                <div>
-                    <label class="form-label" style="font-size:0.7rem;">Hasta</label>
-                    <input type="date" id="extracto-fecha-fin" class="form-input" style="padding: 8px;">
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 8px; margin-bottom: var(--sp-4);">
-                <input type="search" id="extracto-search" class="form-input" placeholder="Buscar concepto o importe..." style="padding: 8px 12px; flex-grow: 1;">
-                <button id="btn-generar-extracto" class="btn btn--primary" style="padding: 0 20px;">
-                    <span class="material-icons">search</span>
-                </button>
-            </div>
-        </div>
-        
-        <div id="informe-resultado-container" style="margin-top: var(--sp-4);">
-            <div class="empty-state" style="background:transparent; padding:var(--sp-2); border:none;">
-                <p style="font-size:0.85rem;">Selecciona los criterios y pulsa la lupa.</p>
-            </div>
-        </div>`;
-    
-    container.innerHTML = content;
-
-    // 2. Inicialización de Fechas (Por defecto: Mes Actual)
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0,10);
-    
-    const startInput = select('extracto-fecha-inicio');
-    const endInput = select('extracto-fecha-fin');
-    if(startInput) startInput.value = firstDay;
-    if(endInput) endInput.value = lastDay;
-
-    // 3. Lógica de activación
-    const selectEl = select('informe-cuenta-select');
-    if (selectEl) {
-        const populate = (el, data) => {
-            let opts = '<option value="">Seleccionar cuenta...</option>';
-            [...data].sort((a,b) => a.nombre.localeCompare(b.nombre))
-                     .forEach(cuenta => {
-                         opts += `<option value="${cuenta.id}">${cuenta.nombre}</option>`;
-                     });
-            el.innerHTML = opts;
-        };
-        populate(selectEl, getVisibleAccounts());
-        createCustomSelect(selectEl);
-    }
-
-    // 4. Listener del Botón Generar
-    const btnGenerar = select('btn-generar-extracto');
-    if (btnGenerar) {
-        // Clonar para limpiar eventos antiguos por seguridad
-        const newBtn = btnGenerar.cloneNode(true);
-        btnGenerar.parentNode.replaceChild(newBtn, btnGenerar);
-        
-        newBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            // Llamamos a la función mejorada
-            handleGenerateInformeCuenta(null, e.target.closest('button'));
-        });
-    }
-},
             // Resto de informes (sin cambios)
             'flujo_caja': () => renderInformeFlujoCaja(container),
             'resumen_ejecutivo': () => renderInformeResumenEjecutivo(container),
@@ -6497,16 +6447,21 @@ const scheduleDashboardUpdate = () => {
             
             // --- CÁLCULOS ---
             const investmentAccounts = visibleAccounts.filter(c => c.esInversion);
-            let totalCapitalInvertido = 0;
-            let valorMercadoTotal = 0;
+            
+            let totalCapitalInvertido = 0; // Lo que has puesto de tu bolsillo (Saldos)
+            let valorMercadoTotal = 0;     // Lo que vale hoy (Valoraciones)
 
             if (investmentAccounts.length > 0) {
                 for (const cuenta of investmentAccounts) {
+                    // 1. Capital Invertido es el SALDO de la cuenta
                     const capitalCuenta = saldos[cuenta.id] || 0;
                     totalCapitalInvertido += capitalCuenta;
+
+                    // 2. Valor de Mercado es la última valoración
                     const valoraciones = (db.inversiones_historial || [])
                         .filter(v => v.cuentaId === cuenta.id)
                         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+                    
                     const valor = valoraciones.length > 0 ? valoraciones[0].valor : capitalCuenta;
                     valorMercadoTotal += valor;
                 }
@@ -6519,85 +6474,83 @@ const scheduleDashboardUpdate = () => {
                 }
             });
 
+            // Patrimonio Contable
             const patrimonioContable = liquidezTotal + totalCapitalInvertido;
-            const pnlTotal = valorMercadoTotal - totalCapitalInvertido;
 
+            // --- CÁLCULO P&L Y PORCENTAJE ---
+            const pnlTotal = valorMercadoTotal - totalCapitalInvertido;
+            let pnlPct = 0;
+            if (totalCapitalInvertido !== 0) {
+                pnlPct = (pnlTotal / totalCapitalInvertido) * 100;
+            }
+
+            // Datos de flujo
             const { current: currentMovs } = await getFilteredMovements(false);
             const visibleAccountIds = new Set(visibleAccounts.map(c => c.id));
             const { ingresos, gastos, saldoNeto } = calculateTotals(currentMovs, visibleAccountIds);
-            
+            const tasaAhorro = (ingresos > 0 && saldoNeto > 0) ? (saldoNeto / ingresos) * 100 : 0;
+
+            // Datos de salud (Usamos valor real de mercado para I.F.)
             const patrimonioRealParaCalculos = liquidezTotal + valorMercadoTotal;
             const efData = calculateEmergencyFund(saldos, db.cuentas, recentMovementsCache);
             const fiData = calculateFinancialIndependence(patrimonioRealParaCalculos, efData.gastoMensualPromedio);
 
-            // --- ACTUALIZACIÓN UI (BLINDADA CONTRA NULL) ---
-
-            const applyColor = (el, value, inverse = false) => {
-                if (!el) return;
-                el.classList.remove('text-positive', 'text-negative', 'text-neutral');
-                if (value > 0) el.classList.add(inverse ? 'text-negative' : 'text-positive');
-                else if (value < 0) el.classList.add(inverse ? 'text-positive' : 'text-negative');
-                else el.classList.add('text-neutral');
-            };
+            // --- ACTUALIZACIÓN UI ---
 
             // A. FLUJO
             const elIng = select('kpi-ingresos-value');
             if (elIng) {
-                [elIng, select('kpi-gastos-value'), select('kpi-saldo-neto-value')].forEach(el => el?.classList.remove('skeleton'));
+                [elIng, select('kpi-gastos-value'), select('kpi-saldo-neto-value'), select('kpi-tasa-ahorro-value')]
+                    .forEach(el => el?.classList.remove('skeleton'));
                 
                 animateCountUp(elIng, ingresos, 700, true, '+');
                 animateCountUp(select('kpi-gastos-value'), gastos, 700, true, '');
                 
                 const elNeto = select('kpi-saldo-neto-value');
-                animateCountUp(elNeto, saldoNeto, 700, true, saldoNeto > 0 ? '+' : '');
-                
-                // Corrección del error de clase
-                if(elNeto) {
-                    elNeto.className = 'flow-number ' + (saldoNeto >= 0 ? 'text-positive' : 'text-negative');
-                }
+                animateCountUp(elNeto, saldoNeto, 700, true, saldoNeto >= 0 ? '+' : '');
+                elNeto.className = saldoNeto >= 0 ? 'text-positive' : 'text-negative';
+
+                const elAhorro = select('kpi-tasa-ahorro-value');
+                animateCountUp(elAhorro, tasaAhorro * 100, 700, false, '', '%');
+                elAhorro.className = tasaAhorro >= 0 ? 'text-positive' : 'text-warning';
             }
 
             // B. PATRIMONIO
             const elPatrimonio = select('kpi-patrimonio-neto-value');
             if (elPatrimonio) {
-                elPatrimonio.classList.remove('skeleton');
-                select('kpi-liquidez-value')?.classList.remove('skeleton');
-                select('kpi-capital-invertido-total')?.classList.remove('skeleton');
+                [elPatrimonio, select('kpi-liquidez-value'), select('kpi-capital-invertido-total')]
+                    .forEach(el => el?.classList.remove('skeleton'));
 
                 animateCountUp(elPatrimonio, patrimonioContable);
                 animateCountUp(select('kpi-liquidez-value'), liquidezTotal);
                 animateCountUp(select('kpi-capital-invertido-total'), totalCapitalInvertido);
             }
 
-            // C. INVERSIONES
+            // C. NUEVA TARJETA (Inversiones Realidad) - AQUÍ ESTÁ EL CAMBIO CLAVE
             const elNewMarketVal = select('new-card-market-value');
             if (elNewMarketVal) {
                 elNewMarketVal.classList.remove('skeleton');
                 
-                const elCap = select('new-card-capital');
-                if (elCap) elCap.textContent = formatCurrency(totalCapitalInvertido);
+                // Capital
+                select('new-card-capital').textContent = formatCurrency(totalCapitalInvertido);
                 
+                // P&L con Porcentaje
                 const elPnl = select('new-card-pnl');
-                if (elPnl) {
-                    elPnl.classList.remove('skeleton');
-                    const sign = pnlTotal >= 0 ? '+' : '';
-                    const pnlPct = totalCapitalInvertido !== 0 ? (pnlTotal / totalCapitalInvertido) * 100 : 0;
-                    
-                    elPnl.innerHTML = `${sign}${formatCurrency(pnlTotal)} <small style="font-size:0.8em; opacity:0.8; margin-left:4px;">(${sign}${pnlPct.toFixed(2)}%)</small>`;
-                    elPnl.style.color = pnlTotal >= 0 ? '#39FF14' : '#FF3B30';
-                    elPnl.style.backgroundColor = pnlTotal >= 0 ? 'rgba(57, 255, 20, 0.1)' : 'rgba(255, 59, 48, 0.1)';
-                }
+                const sign = pnlTotal >= 0 ? '+' : '';
+                // Usamos innerHTML para formatear el porcentaje más pequeño
+                elPnl.innerHTML = `${sign}${formatCurrency(pnlTotal)} <small style="font-size:0.8em; opacity:0.9;">(${sign}${pnlPct.toFixed(2)}%)</small>`;
+                elPnl.className = pnlTotal >= 0 ? 'text-positive' : 'text-negative';
                 
+                // Resultado Total
                 animateCountUp(elNewMarketVal, valorMercadoTotal);
             }
 
-            // D. SALUD
+            // D. METAS
             const elRunway = select('health-runway-val');
             if (elRunway) {
                 elRunway.classList.remove('skeleton');
                 const meses = efData.mesesCobertura;
-                elRunway.textContent = isFinite(meses) ? (meses >= 100 ? '∞' : `${meses.toFixed(1)}`) : '∞';
-                elRunway.className = 'health-val ' + (meses >= 6 ? 'text-positive' : (meses >= 3 ? 'text-warning' : 'text-negative'));
+                elRunway.textContent = isFinite(meses) ? (meses >= 100 ? '∞' : `${meses.toFixed(1)} Meses`) : '∞';
             }
 
             const elFi = select('health-fi-val');
@@ -6607,12 +6560,13 @@ const scheduleDashboardUpdate = () => {
             }
 
         } catch (error) {
-            console.error("Error en panel:", error);
+            console.error("Error actualizando cockpit:", error);
         } finally {
             isDashboardRendering = false;
         }
     }, 300);
 };
+
 
 const updateDashboardData = async () => {
     const activePage = document.querySelector('.view--active');
@@ -8579,13 +8533,15 @@ function populateOptions(selectElement, optionsContainer, trigger, wrapper) {
     trigger.innerHTML = selectedHTML;
 }
 
+/* EN main.js - Reemplaza showCalculator */
+
 const showCalculator = (targetInput) => {
     const calculatorOverlay = select('calculator-overlay');
     const calculatorUi = select('calculator-ui');
     
     if (!calculatorOverlay) return;
     
-    // 1. Mostrar la UI
+    // 1. Mostrar la UI (sin bloquear scroll de fondo visualmente)
     calculatorOverlay.classList.add('modal-overlay--active');
     calculatorState.isVisible = true;
     calculatorState.targetInput = targetInput;
@@ -8595,38 +8551,10 @@ const showCalculator = (targetInput) => {
     calculatorState.displayValue = currentValue ? currentValue.toString().replace('.', ',') : '0';
     calculatorState.waitingForNewValue = true;
     
-    // Resetear operadores
-    calculatorState.operand1 = null;
-    calculatorState.operator = null;
-    calculatorState.historyValue = '';
-    
     updateCalculatorDisplay(); 
     updateCalculatorHistoryDisplay();
-    updateActiveOperatorButton();
 
-    // 3. Feedback Visual en el Input
-    document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
-    targetInput.classList.add('form-input--active-calc');
-    
-    // 4. SCROLL INTELIGENTE PARA MÓVIL
-    // Esperamos 300ms a que la calculadora suba (animación CSS)
-    setTimeout(() => {
-        // Altura de la calculadora (aprox 45% de la pantalla o altura fija)
-        const uiHeight = calculatorUi ? calculatorUi.offsetHeight : 350;
-        
-        // Dónde está el input en la pantalla
-        const inputRect = targetInput.getBoundingClientRect();
-        
-        // El espacio visible que nos queda arriba
-        const visibleHeight = window.innerHeight - uiHeight;
-        
-        // Si el input está cubierto o muy cerca del borde del teclado
-        if (inputRect.bottom > visibleHeight) {
-            targetInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }, 300);
-
-    // 5. Gestión de Teclado Físico (Solo PC)
+    // 3. Gestión de Teclado Físico (PC)
     if (calculatorKeyboardHandler) document.removeEventListener('keydown', calculatorKeyboardHandler);
     calculatorKeyboardHandler = (e) => {
         const key = e.key;
@@ -8641,6 +8569,37 @@ const showCalculator = (targetInput) => {
         else if (key === '/') { e.preventDefault(); handleCalculatorInput('divide'); }
     };
     document.addEventListener('keydown', calculatorKeyboardHandler);
+
+    // 4. Feedback Visual en el Input
+    document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
+    targetInput.classList.add('form-input--active-calc');
+    
+    // 5. === SCROLL INTELIGENTE PARA NO TAPAR ===
+    setTimeout(() => {
+        // Altura real del teclado (~260px con los nuevos estilos)
+        const uiHeight = calculatorUi ? calculatorUi.offsetHeight : 260;
+        
+        const inputRect = targetInput.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        
+        // Calculamos dónde termina el input visualmente
+        const inputBottom = inputRect.bottom;
+        // Calculamos dónde empieza el teclado
+        const keyboardTop = windowHeight - uiHeight;
+        
+        // Si el input está por debajo del inicio del teclado (tapado)
+        if (inputBottom > keyboardTop) {
+            // Calculamos cuánto hay que subir (con 20px de margen extra para que respire)
+            const scrollAmount = (inputBottom - keyboardTop) + 20;
+            
+            // Buscamos quién tiene el scroll (el modal o la página principal)
+            const scrollContainer = targetInput.closest('.modal__body') || selectOne('.app-layout__main');
+            
+            if (scrollContainer) {
+                scrollContainer.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+            }
+        }
+    }, 250); // Esperamos a que termine la animación de subida del teclado
 };
 
 const hideCalculator = () => {
@@ -8663,76 +8622,63 @@ const hideCalculator = () => {
 	document.querySelectorAll('.form-input--active-calc').forEach(el => el.classList.remove('form-input--active-calc'));
 };
 
-/* EN main.js - VERSIÓN ROBUSTA DE setupFabInteractions */
-
+// =============================================================
+// === LÓGICA DEL BOTÓN FLOTANTE INTELIGENTE (FAB)           ===
+// =============================================================
 const setupFabInteractions = () => {
-    const fabBtn = document.getElementById('bottom-nav-add-btn');
-    const fabContainer = document.querySelector('.fab-container');
+    const fab = document.getElementById('bottom-nav-add-btn');
+    if (!fab) return;
+
+    let longPressTimer;
+    let isLongPress = false;
+    // 500ms es un estándar cómodo para pulsación larga
+    const LONG_PRESS_DURATION = 500; 
+
+    const startPress = (e) => {
+    if (e.type === 'mousedown' && e.buttons !== 1) return;
     
-    if (!fabBtn || !fabContainer) return;
-
-    // 1. Crear el fondo oscuro si no existe
-    let backdrop = document.querySelector('.fab-backdrop');
-    if (!backdrop) {
-        backdrop = document.createElement('div');
-        backdrop.className = 'fab-backdrop';
-        document.body.appendChild(backdrop);
-        
-        // Al tocar el fondo, cerrar menú
-        backdrop.addEventListener('click', () => toggleFab(false));
-    }
-
-    // 2. Función para abrir/cerrar
-    const toggleFab = (forceState = null) => {
-        const isActive = forceState !== null ? forceState : !fabContainer.classList.contains('active');
-        
-        if (isActive) {
-            fabContainer.classList.add('active');
-            backdrop.classList.add('active');
+    isLongPress = false;
+    
+    // FEEDBACK VISUAL INSTANTÁNEO
+    fab.style.transform = "scale(0.90)"; 
+    fab.style.filter = "brightness(1.2)"; // Se ilumina al pulsar
+    fab.style.transition = "transform 0.1s, filter 0.1s";
+        longPressTimer = setTimeout(() => {
+            // ¡BINGO! Se ha mantenido pulsado: Abrimos el menú de selección
+            isLongPress = true;
             hapticFeedback('medium');
-        } else {
-            fabContainer.classList.remove('active');
-            backdrop.classList.remove('active');
-            hapticFeedback('light');
+            fab.style.transform = "scale(1)";
+            
+            // Estrategia 1 (Pulsación larga): Abrimos el Sheet para elegir (Traspaso, Ingreso, Gasto)
+            showModal('main-add-sheet'); 
+        }, LONG_PRESS_DURATION);
+    };
+
+    const endPress = (e) => {
+    clearTimeout(longPressTimer);
+    fab.style.transform = "scale(1)";
+    fab.style.filter = "brightness(1)";
+
+        // Si NO fue una pulsación larga, es un CLIC normal
+        if (!isLongPress) {
+            e.preventDefault(); // Evita comportamientos dobles
+            
+            // Estrategia 1 (Entrada Directa): Abrimos directamente "Nuevo Gasto"
+            // Es la opción más común, ahorramos un clic.
+            startMovementForm(null, false, 'gasto');
         }
     };
 
-    // 3. Listener del Botón Principal
-    const newBtn = fabBtn.cloneNode(true);
-    fabBtn.parentNode.replaceChild(newBtn, fabBtn);
-
-    newBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        toggleFab();
-    });
-
-    // 4. Listeners para los botones de opciones
-    const options = document.querySelectorAll('.fab-mini-btn');
-    options.forEach(btn => {
-        // Clonamos para eliminar listeners antiguos
-        const newOptionBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newOptionBtn, btn);
-
-        newOptionBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // 1. Cerramos el menú
-            toggleFab(false);
-            
-            // 2. Ejecutamos la acción manualmente para asegurar que funciona
-            const type = newOptionBtn.dataset.type;
-            console.log("Abriendo formulario para:", type); // Depuración
-            
-            // Pequeño retardo para la animación
-            setTimeout(() => {
-                startMovementForm(null, false, type);
-            }, 100);
-        });
-    });
+    // Eventos para Móvil (Touch) y Ordenador (Mouse)
+    fab.addEventListener('touchstart', startPress, { passive: true });
+    fab.addEventListener('touchend', endPress);
+    fab.addEventListener('mousedown', startPress);
+    fab.addEventListener('mouseup', endPress);
+    // Cancelamos si el usuario mueve el dedo fuera del botón o ocurre un error
+    fab.addEventListener('mouseleave', () => { clearTimeout(longPressTimer); fab.style.transform = "scale(1)"; });
+    fab.addEventListener('touchcancel', () => { clearTimeout(longPressTimer); fab.style.transform = "scale(1)"; });
 };
- /* ========================================================= */
+/* ========================================================= */
 /* === FUNCIONES DEL ESPEJO VISUAL (Números Bonitos)     === */
 /* ========================================================= */
 
@@ -8785,32 +8731,31 @@ const updateInputMirror = (input) => {
 const initAmountInput = () => {
     const amountInputs = document.querySelectorAll('.input-amount-calculator');
     
+    // Ocultar botón de calculadora antiguo si existe
+    const toggle = document.getElementById('calculator-toggle-btn');
+    if (toggle) toggle.style.display = 'none';
+
     amountInputs.forEach(input => {
-        // TRUCO PRO: inputmode='none' impide que el teclado nativo se abra en móvil
-        input.setAttribute('inputmode', 'none'); 
-        input.setAttribute('readonly', 'true'); // Refuerzo de seguridad
+        input.readOnly = true; 
+        input.setAttribute('inputmode', 'none');
         
-        // Limpieza de eventos previos
+        // Clonar para limpiar eventos viejos
         const newInput = input.cloneNode(true);
         input.parentNode.replaceChild(newInput, input);
     
-        // Inicializar espejo visual (números grandes)
+        // Inicializar visualización
         updateInputMirror(newInput); 
 
-        // Al tocar, abrir NUESTRA calculadora
+        // Listener para Click (Abrir calculadora)
         newInput.addEventListener('click', (e) => {
             e.preventDefault();
+            // Actualizar visual por si acaso
+            updateInputMirror(newInput);
             hapticFeedback('light');
-            
-            // Scroll suave para que el input se vea arriba y la calculadora abajo
-            setTimeout(() => {
-                newInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
-
             showCalculator(newInput);
         });
-        
-        // Mantener sincronizado si cambia por código
+
+        // Listener para cambios manuales (por si acaso)
         newInput.addEventListener('input', () => updateInputMirror(newInput));
     });
 };
@@ -9109,22 +9054,19 @@ const handleStart = (e) => {
         if (price > 0) {
             portfolioViewMode = 'BTC';
             if(btnIcon) {
-                btnIcon.textContent = 'euro'; // Icono para volver
+                btnIcon.textContent = 'euro'; // Muestra el símbolo de Euro para indicar "volver a Euro"
                 btnIcon.classList.add('btc-mode-active');
             }
-            // Recargamos AMBAS secciones
+            // Recargamos solo el contenido principal, no el gráfico (el gráfico se queda en EUR por coherencia)
             renderPortfolioMainContent('portfolio-main-content');
-            renderPatrimonioOverviewWidget('patrimonio-overview-container'); // <--- ¡NUEVA LÍNEA!
         }
     } else {
         portfolioViewMode = 'EUR';
         if(btnIcon) {
-            btnIcon.textContent = 'currency_bitcoin'; // Icono original
+            btnIcon.textContent = 'currency_bitcoin'; // Muestra el símbolo de Bitcoin para indicar "ir a Bitcoin"
             btnIcon.classList.remove('btc-mode-active');
         }
-        // Recargamos AMBAS secciones
         renderPortfolioMainContent('portfolio-main-content');
-        renderPatrimonioOverviewWidget('patrimonio-overview-container'); // <--- ¡NUEVA LÍNEA!
     }
 },
 			'rename-ledgers': showRenameLedgersModal,
@@ -9405,34 +9347,20 @@ const handleStart = (e) => {
     
     // 9. Cambios en filtros y selects
     document.addEventListener('change', e => {
-    const target = e.target;
-    // Detectar cambios en el selector de periodo
-    if (target.id === 'filter-periodo') {
-        const customDateFilters = select('custom-date-filters');
-        
-        // Si elige "Personalizado", quitamos la clase 'hidden'
-        if (customDateFilters) {
-            customDateFilters.classList.toggle('hidden', target.value !== 'custom');
+        const target = e.target;
+        if (target.id === 'filter-periodo' || target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
+            const panelPage = select('panel-page');
+            if (!panelPage || !panelPage.classList.contains('view--active')) return;
+            if (target.id === 'filter-periodo') {
+                const customDateFilters = select('custom-date-filters');
+                if (customDateFilters) customDateFilters.classList.toggle('hidden', target.value !== 'custom');
+                if (target.value !== 'custom') { hapticFeedback('light'); scheduleDashboardUpdate(); }
+            }
+            if (target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
+                const s = select('filter-fecha-inicio'), en = select('filter-fecha-fin');
+                if (s && en && s.value && en.value) { hapticFeedback('light'); scheduleDashboardUpdate(); }
+            }
         }
-        
-        // Si NO es personalizado, actualizamos datos inmediatamente
-        if (target.value !== 'custom') { 
-            hapticFeedback('light'); 
-            scheduleDashboardUpdate(); 
-        }
-    }
-    
-    // Detectar cambios en las fechas (Inicio o Fin)
-    if (target.id === 'filter-fecha-inicio' || target.id === 'filter-fecha-fin') {
-        const s = select('filter-fecha-inicio');
-        const en = select('filter-fecha-fin');
-        
-        // Solo actualizamos si ambas fechas tienen valor
-        if (s && en && s.value && en.value) { 
-            hapticFeedback('light'); 
-            scheduleDashboardUpdate(); 
-        }
-    }
         // Lógica opciones recurrentes
         if (target.id === 'movimiento-recurrente') {
             select('recurrent-options').classList.toggle('hidden', !target.checked);
@@ -11214,9 +11142,7 @@ const validateMovementForm = () => {
     let isValid = true;
     
     // Obtenemos el tipo de formulario a partir del botón activo
-    const typePill = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active');
-    // Si no hay pill activa (raro), asumimos gasto por defecto
-    const selectedType = typePill ? typePill.dataset.type : 'gasto';
+    const selectedType = document.querySelector('[data-action="set-movimiento-type"].filter-pill--active').dataset.type;
 
     // Validamos los campos comunes
     if (!validateField('movimiento-cantidad')) isValid = false;
@@ -11227,19 +11153,20 @@ const validateMovementForm = () => {
         if (!validateField('movimiento-cuenta-origen')) isValid = false;
         if (!validateField('movimiento-cuenta-destino')) isValid = false;
     } else { // para 'gasto' e 'ingreso'
-        // Descripción opcional si ya hay concepto, pero validamos si está vacío y no es autogenerado
-        // if (!validateField('movimiento-descripcion')) isValid = false; 
+        if (!validateField('movimiento-descripcion')) isValid = false;
         if (!validateField('movimiento-concepto')) isValid = false;
         if (!validateField('movimiento-cuenta')) isValid = false;
     }
-    
-    if (!isValid) { 
+    if (!isValid) { // <-- AÑADE ESTE BLOQUE IF AL FINAL
         hapticFeedback('error'); 
     }
     return isValid;
 };
+ 
 
 // --- REGISTRO DEL SERVICE WORKER ---
+// Comprobamos si el navegador soporta Service Workers
+// Registro del Service Worker para soporte Offline y PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js')
@@ -11250,4 +11177,4 @@ if ('serviceWorker' in navigator) {
         console.log('Fallo en el registro del Service Worker:', error);
       });
   });
-}
+ }

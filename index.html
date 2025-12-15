@@ -91,56 +91,34 @@
     </div>
     
     <div id="app-root" class="app-layout">
- <nav class="bottom-nav">
-    <button data-action="navigate" data-page="panel-page" class="bottom-nav__item">
-        <span class="material-icons">dashboard</span>
-        <span class="bottom-nav__label">Panel</span>
-    </button>
-    <button data-action="navigate" data-page="diario-page" class="bottom-nav__item">
-        <span class="material-icons">receipt_long</span>
-        <span class="bottom-nav__label">Diario</span>
-    </button>
-    
-    <div style="width: 60px; flex-shrink: 0;"></div>
-
-    <button data-action="navigate" data-page="patrimonio-page" class="bottom-nav__item">
-        <span class="material-icons">account_balance</span>
-        <span class="bottom-nav__label">Patrimonio</span>
-    </button>
-    <button data-action="navigate" data-page="planificar-page" class="bottom-nav__item">
-        <span class="material-icons">edit_calendar</span>
-        <span class="bottom-nav__label">Planificar</span>
-    </button>
-</nav>
-
-<div class="fab-container">
-    <div id="fab-menu" class="fab-menu">
-        <button class="fab-mini-btn" data-action="open-movement-form" data-type="traspaso" style="--delay: 0ms;">
-            <span class="fab-label">Traspaso</span>
-            <div class="fab-icon icon-transfer">
-                <span class="material-icons">swap_horiz</span>
-            </div>
-        </button>
-
-        <button class="fab-mini-btn" data-action="open-movement-form" data-type="ingreso" style="--delay: 50ms;">
-            <span class="fab-label">Ingreso</span>
-            <div class="fab-icon icon-income">
-                <span class="material-icons">trending_up</span>
-            </div>
-        </button>
-
-        <button class="fab-mini-btn" data-action="open-movement-form" data-type="gasto" style="--delay: 100ms;">
-            <span class="fab-label">Gasto</span>
-            <div class="fab-icon icon-expense">
-                <span class="material-icons">trending_down</span>
-            </div>
-        </button>
-    </div>
-
-    <button id="bottom-nav-add-btn">
-        <span class="material-icons">add</span>
-    </button>
-</div>
+        <!-- ▼▼▼ INICIO: NUEVA BARRA DE NAVEGACIÓN PRINCIPAL ▼▼▼ -->
+        <nav class="bottom-nav">
+            <button data-action="navigate" data-page="panel-page" class="bottom-nav__item">
+                <span class="material-icons">dashboard</span>
+                <span class="bottom-nav__label">Panel</span>
+            </button>
+            <button data-action="navigate" data-page="diario-page" class="bottom-nav__item">
+                <span class="material-icons">receipt_long</span>
+                <span class="bottom-nav__label">Diario</span>
+            </button>
+            
+            <!-- ▼▼▼ BOTÓN MODIFICADO PARA GESTIÓN INTELIGENTE ▼▼▼ -->
+            <!-- Le hemos quitado el 'data-action' para controlarlo manualmente en JS -->
+            <button id="bottom-nav-add-btn">
+                <span class="material-icons">add</span>
+            </button>
+            <!-- ▲▲▲ FIN BOTÓN MODIFICADO ▲▲▲ -->
+            
+            <button data-action="navigate" data-page="patrimonio-page" class="bottom-nav__item">
+                <span class="material-icons">account_balance</span>
+                <span class="bottom-nav__label">Patrimonio</span>
+            </button>
+            <button data-action="navigate" data-page="planificar-page" class="bottom-nav__item">
+                <span class="material-icons">edit_calendar</span>
+                <span class="bottom-nav__label">Planificar</span>
+            </button>
+        </nav>
+        <!-- ▲▲▲ FIN: NUEVA BARRA DE NAVEGACIÓN PRINCIPAL ▲▲▲ -->
 
         <header id="app-top-bar" class="top-bar">
             <div class="top-bar__left-group">
@@ -331,42 +309,65 @@
  
     <div id="calculator-overlay" class="modal-overlay" style="background: transparent;">
     <div id="calculator-ui" class="calculator-ui">
-    
-    <div class="calculator-screen-area">
-        <div id="calculator-history-display"></div> <div id="calculator-display">0</div>        </div>
-    
-    <div id="calculator-grid" class="calculator-grid ios-layout">
-    <button class="calculator-btn btn-function" data-key="clear">AC</button>
-<button class="calculator-btn btn-function" data-key="sign">+/-</button>
-<button class="calculator-btn btn-function" data-key="percent">%</button>
-<button class="calculator-btn btn-operator" data-key="divide">÷</button>
+        <div id="calculator-history-display" class="calculator-history-display"></div>
+        <div id="calculator-display" class="calculator-display">0</div>
+        
+        <div id="calculator-grid" class="calculator-grid">
+            <button class="calculator-btn" data-key="clear" style="color: var(--c-danger); font-weight:700;">AC</button>
+            <button class="calculator-btn" data-key="divide" style="font-size: 1.4rem;">÷</button>
+            <button class="calculator-btn" data-key="multiply" style="font-size: 1.4rem;">×</button>
+            <button class="calculator-btn" data-key="backspace"><span class="material-icons backspace-icon">backspace</span></button>
 
-<button class="calculator-btn" data-key="7">7</button>
-<button class="calculator-btn" data-key="8">8</button>
-<button class="calculator-btn" data-key="9">9</button>
-<button class="calculator-btn btn-operator" data-key="multiply">×</button>
+            <button class="calculator-btn" data-key="7">7</button>
+            <button class="calculator-btn" data-key="8">8</button>
+            <button class="calculator-btn" data-key="9">9</button>
+            <button class="calculator-btn" data-key="subtract" style="font-size: 1.8rem;">−</button>
 
-<button class="calculator-btn" data-key="4">4</button>
-<button class="calculator-btn" data-key="5">5</button>
-<button class="calculator-btn" data-key="6">6</button>
-<button class="calculator-btn btn-operator" data-key="subtract">−</button>
+            <button class="calculator-btn" data-key="4">4</button>
+            <button class="calculator-btn" data-key="5">5</button>
+            <button class="calculator-btn" data-key="6">6</button>
+            <button class="calculator-btn" data-key="add" style="font-size: 1.6rem;">+</button>
 
-<button class="calculator-btn" data-key="1">1</button>
-<button class="calculator-btn" data-key="2">2</button>
-<button class="calculator-btn" data-key="3">3</button>
-<button class="calculator-btn btn-operator" data-key="add">+</button>
+            <button class="calculator-btn" data-key="1">1</button>
+            <button class="calculator-btn" data-key="2">2</button>
+            <button class="calculator-btn" data-key="3">3</button>
+            <button class="btn btn--primary calculator-btn btn-confirm" id="calculator-btn-done" data-key="done" style="grid-row: span 2; background-color: var(--c-primary);">OK</button>
 
-<button class="calculator-btn zero" data-key="0">0</button>
-<button class="calculator-btn" data-key="comma">,</button>
-<button class="calculator-btn btn-operator" id="calculator-btn-done" data-key="done">=</button>
-</div>
-</div>
+            <button class="calculator-btn zero" data-key="0">0</button>
+            <button class="calculator-btn" data-key="comma">,</button>
+        </div>
+    </div>
 </div>
 	
 	<div id="irr-history-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="irr-history-title">
         <div class="modal"><div class="modal__grabber"></div><header class="modal__header"><h3 id="irr-history-title" class="modal__title">Evolución de la TIR</h3><button class="icon-btn" data-action="close-modal" data-modal-id="irr-history-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button></header><div id="irr-history-body" class="modal__body"><div class="chart-container" style="height: 100%;"><canvas id="irr-history-chart"></canvas></div></div></div>
 	</div> 
-    
+	<!-- ▼▼▼ INICIO: MEJORA 1 - Bottom Sheet para Acciones Rápidas ▼▼▼ -->
+    <div id="main-add-sheet" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="main-add-sheet-title">
+        <div class="modal">
+            <div class="modal__grabber"></div>
+            <header class="modal__header" style="padding-top: var(--sp-2);">
+                <h3 id="main-add-sheet-title" class="modal__title">¿Qué quieres añadir?</h3>
+                <button class="icon-btn" data-action="close-modal" data-modal-id="main-add-sheet" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button>
+            </header>
+            <div class="modal__body" id="main-add-sheet-body">
+                <button class="add-sheet-button" data-action="open-movement-form" data-type="gasto">
+                    <span class="material-icons" style="color: var(--c-danger);">trending_down</span>
+                    <span>Añadir Gasto</span>
+                </button>
+                <button class="add-sheet-button" data-action="open-movement-form" data-type="ingreso">
+                    <span class="material-icons" style="color: var(--c-success);">trending_up</span>
+                    <span>Añadir Ingreso</span>
+                </button>
+                <button class="add-sheet-button" data-action="open-movement-form" data-type="traspaso">
+                    <span class="material-icons" style="color: var(--c-info);">swap_horiz</span>
+                    <span>Hacer un Traspaso</span>
+                </button>
+            </div>
+        </div>
+    </div>
+	<!-- ▲▲▲ FIN: MEJORA 1 - Bottom Sheet para Acciones Rápidas ▲▲▲ -->
+	<!-- ▼▼▼ INICIO: NUEVO MENÚ DESPLEGABLE PRINCIPAL ▼▼▼ -->
     <div id="main-menu-popover" class="popover-menu">
     
     <button class="popover-menu__item" data-action="global-search">
