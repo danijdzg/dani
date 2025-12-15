@@ -5797,75 +5797,92 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     .health-val { font-size: 2.5rem; }
 }
 /* ================================================================= */
-/* === MENÚ DE ACCIONES RÁPIDAS (Optimizado para el Pulgar) === */
+/* === NUEVO MENÚ DE ACCIÓN RÁPIDA (Estilo Iconos Circulares) === */
 /* ================================================================= */
 
-#main-add-sheet-body {
+/* Contenedor Grid: Alinea los 3 botones horizontalmente */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr; /* 3 Columnas iguales */
+    gap: 15px;
+    width: 100%;
+    padding: 0 10px;
+}
+
+/* El Botón Completo (Icono + Texto) */
+.quick-action-btn {
     display: flex;
     flex-direction: column;
-    gap: 12px; /* Separación clara entre opciones */
-    padding-bottom: 25px; /* Espacio extra abajo para comodidad */
-}
-
-.add-sheet-button {
-    display: flex;
     align-items: center;
-    width: 100%;
-    padding: 18px 20px; /* Botones altos, fáciles de acertar */
-    background-color: var(--c-surface-variant);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 20px; /* Bordes muy redondeados y modernos */
+    justify-content: center;
+    background: transparent;
+    border: none;
     cursor: pointer;
-    transition: transform 0.1s, background-color 0.2s;
-    position: relative;
-    overflow: hidden;
+    gap: 10px;
+    transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Efecto al pulsar */
-.add-sheet-button:active {
-    transform: scale(0.97);
-    background-color: var(--c-surface);
+/* Animación al pulsar: se encoge un poco (efecto rebote) */
+.quick-action-btn:active {
+    transform: scale(0.9);
 }
 
-/* Estilo del Texto */
-.add-sheet-button span:last-child {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--c-on-surface);
-    letter-spacing: 0.3px;
-}
-
-/* Estilo de los Iconos (Círculo de color) */
-.add-sheet-button .material-icons {
-    font-size: 28px;
-    margin-right: 16px;
-    padding: 10px;
-    border-radius: 50%; /* Icono dentro de un círculo */
+/* El Círculo del Icono */
+.quick-icon-circle {
+    width: 70px;  /* Círculo Grande */
+    height: 70px;
+    border-radius: 50%; /* Perfectamente redondo */
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3); /* Sombra elevada */
+    border: 1px solid rgba(255,255,255,0.05); /* Borde sutil */
+    transition: filter 0.2s;
 }
 
-/* --- COLORES SEMÁNTICOS (Intuitivo: Color = Acción) --- */
-
-/* GASTO (Rojo) */
-.add-sheet-button[data-type="gasto"] .material-icons {
-    color: #FF453A;
-    background-color: rgba(255, 69, 58, 0.15);
+.quick-action-btn:active .quick-icon-circle {
+    filter: brightness(1.2); /* Brilla al tocar */
 }
 
-/* INGRESO (Verde) */
-.add-sheet-button[data-type="ingreso"] .material-icons {
-    color: #32D74B;
-    background-color: rgba(50, 215, 75, 0.15);
+/* Icono dentro del círculo */
+.quick-icon-circle .material-icons {
+    font-size: 32px;
+    color: #ffffff; /* Icono blanco para máximo contraste */
 }
 
-/* TRASPASO (Violeta) */
-.add-sheet-button[data-type="traspaso"] .material-icons {
-    color: #BF5AF2;
-    background-color: rgba(191, 90, 242, 0.15);
+/* Texto debajo del icono */
+.quick-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--c-on-surface);
+    letter-spacing: 0.5px;
 }
 
+/* --- COLORES ESPECÍFICOS (Vibrantes) --- */
+
+/* Gasto: Rojo Neón Suave */
+.expense-circle {
+    background: linear-gradient(145deg, rgba(255, 59, 48, 0.2), rgba(255, 59, 48, 0.1));
+    border-color: rgba(255, 59, 48, 0.3);
+    box-shadow: 0 0 15px rgba(255, 59, 48, 0.15);
+}
+.expense-circle .material-icons { color: #FF453A; text-shadow: 0 0 10px rgba(255, 69, 58, 0.6); }
+
+/* Ingreso: Verde Neón Suave */
+.income-circle {
+    background: linear-gradient(145deg, rgba(50, 215, 75, 0.2), rgba(50, 215, 75, 0.1));
+    border-color: rgba(50, 215, 75, 0.3);
+    box-shadow: 0 0 15px rgba(50, 215, 75, 0.15);
+}
+.income-circle .material-icons { color: #32D74B; text-shadow: 0 0 10px rgba(50, 215, 75, 0.6); }
+
+/* Traspaso: Violeta/Azul Neón */
+.transfer-circle {
+    background: linear-gradient(145deg, rgba(191, 90, 242, 0.2), rgba(191, 90, 242, 0.1));
+    border-color: rgba(191, 90, 242, 0.3);
+    box-shadow: 0 0 15px rgba(191, 90, 242, 0.15);
+}
+.transfer-circle .material-icons { color: #BF5AF2; text-shadow: 0 0 10px rgba(191, 90, 242, 0.6); }
 /* --- 2. CALCULADORA INTEGRADA (COMO TECLADO) --- */
 #calculator-overlay {
     background-color: transparent !important; /* Fondo transparente */
