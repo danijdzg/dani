@@ -5457,23 +5457,27 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* COORDENADAS DEL DESPLIEGUE */
-.fab-container.active .fab-option { opacity: 1; pointer-events: all; }
+/* --- COORDENADAS DEL DESPLIEGUE (Corregidas) --- */
+.fab-container.active .fab-option { 
+    opacity: 1; 
+    pointer-events: auto; /* ¡CRUCIAL! Esto asegura que el botón reciba el clic */
+    cursor: pointer;
+}
 
-/* 1. Ingreso (Arriba Izquierda) */
-.fab-container.active .fab-option--ingreso {
+/* 1. PAGO/GASTO: Hacia la Izquierda */
+.fab-container.active .fab-option--gasto {
     transform: translate(-75px, -85px) scale(1);
     transition-delay: 0.05s;
 }
 
-/* 2. Traspaso (Arriba Centro) */
+/* 2. TRASPASO: Hacia el Centro-Arriba */
 .fab-container.active .fab-option--traspaso {
-    transform: translate(0px, -110px) scale(1); /* El más alto */
+    transform: translate(0px, -110px) scale(1); 
     transition-delay: 0.1s;
 }
 
-/* 3. Gasto (Arriba Derecha) */
-.fab-container.active .fab-option--gasto {
+/* 3. INGRESO: Hacia la Derecha */
+.fab-container.active .fab-option--ingreso {
     transform: translate(75px, -85px) scale(1);
     transition-delay: 0.15s;
 }

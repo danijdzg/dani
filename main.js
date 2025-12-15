@@ -11242,55 +11242,65 @@ if ('serviceWorker' in navigator) {
     const container = document.getElementById('fab-container');
     const trigger = document.getElementById('fab-trigger');
     const backdrop = document.getElementById('fab-backdrop');
-    const options = document.querySelectorAll('.fab-option');
+    // Seleccionamos los botones explícitamente para asegurar que son los correctos
+    const options = container ? container.querySelectorAll('.fab-option') : [];
 
     if (!container || !trigger) return;
 
-    // Función para abrir/cerrar
+    // Abrir / Cerrar
     const toggleMenu = () => {
         const isActive = container.classList.contains('active');
-        
-        if (isActive) {
-            container.classList.remove('active');
-        } else {
-            container.classList.add('active');
-            hapticFeedback('medium'); // Vibración satisfactoria al abrir
-        }
+        if (isActive) closeMenu();
+        else openMenu();
     };
 
-    // Función para cerrar forzosamente
+    const openMenu = () => {
+        container.classList.add('active');
+        hapticFeedback('medium');
+    };
+
     const closeMenu = () => {
         container.classList.remove('active');
     };
 
-    // 1. Clic en el botón principal (+)
-    trigger.addEventListener('click', (e) => {
+    // Eventos del Trigger
+    trigger.onclick = (e) => {
         e.stopPropagation();
         toggleMenu();
-    });
+    };
 
-    // 2. Clic en el fondo oscuro (cerrar sin seleccionar)
-    backdrop.addEventListener('click', (e) => {
+    // Cerrar al tocar el fondo
+    backdrop.onclick = (e) => {
         e.stopPropagation();
         closeMenu();
-    });
+    };
 
-    // 3. Clic en una opción (Ingreso, Gasto, Traspaso)
+    // Eventos de las Opciones
     options.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            //const type = btn.dataset.type; // 'gasto', 'ingreso', 'traspaso'
+        btn.onclick = (e) => {
+            e.stopPropagation(); // Evitar que el evento suba y cierre el menú inmediatamente sin ejecutar la lógica
             
-            // Feedback inmediato
+            const type = btn.dataset.type; // 'gasto', 'ingreso', 'traspaso'
+            console.log("Opción pulsada:", type); // Para depuración
+
             hapticFeedback('light');
             closeMenu();
 
-            // Pequeño retardo para que se vea la animación de cierre antes de abrir el modal
+            // Pequeña pausa para la animación de cierre
             setTimeout(() => {
-                // Llamamos a tu función existente para abrir el formulario
-                // null = nuevo (sin ID), false = no es recurrente, type = tipo elegido
-                startMovementForm(null, false, type);
-            }, 150);
-        });
+                try {
+                    // Verificamos que la función existe antes de llamarla
+                    if (typeof startMovementForm === 'function') {
+                        // startMovementForm(id, isRecurrent, type)
+                        startMovementForm(null, false, type);
+                    } else {
+                        console.error("Error: startMovementForm no está definida");
+                        showToast("Error interno: reinicia la app", "danger");
+                    }
+                } catch (err) {
+                    console.error("Error al abrir formulario:", err);
+                }
+            }, 100);
+        };
     });
 };
