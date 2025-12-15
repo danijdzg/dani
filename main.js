@@ -4756,10 +4756,10 @@ const renderPanelPage = async () => {
         <div class="dashboard-stack-layout">
             
             <div class="stack-card card-flow">
-                <div class="stack-card-header">
+                <div class="stack-card-header" style="margin-bottom:10px;">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">sync_alt</span>
-                        <span>FLUJO DE CAJA</span>
+                        <span>FLUJO DEL PERIODO</span>
                     </div>
                     <div class="report-filters">
                         <select id="filter-periodo" class="form-select compact-select">
@@ -4772,24 +4772,25 @@ const renderPanelPage = async () => {
 
                 <div id="custom-date-filters" class="hidden compact-date-bar">
                     <input type="date" id="filter-fecha-inicio" class="tiny-date-input">
-                    <span style="opacity:0.5; font-size:0.8rem; display:flex; align-items:center;">➜</span>
+                    <span>➜</span>
                     <input type="date" id="filter-fecha-fin" class="tiny-date-input">
                 </div>
 
-                <div class="flow-display">
-                    <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
+                <div class="flow-display" style="display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 15px; text-align: center;">
+                    
+                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="ingresos">
                         <span class="flow-label text-success">INGRESOS</span>
-                        <span id="kpi-ingresos-value" class="flow-number skeleton">...</span>
+                        <div id="kpi-ingresos-value" class="flow-number skeleton">...</div>
                     </div>
-                    <div class="flow-sep"></div>
-                    <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
+                    
+                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="gastos">
                         <span class="flow-label text-danger">GASTOS</span>
-                        <span id="kpi-gastos-value" class="flow-number skeleton">...</span>
+                        <div id="kpi-gastos-value" class="flow-number skeleton">...</div>
                     </div>
-                    <div class="flow-sep"></div>
-                    <div class="flow-col clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto">
-                        <span class="flow-label text-warning">AHORRO</span>
-                        <span id="kpi-saldo-neto-value" class="flow-number skeleton">...</span>
+
+                    <div class="clickable-kpi" data-action="show-kpi-drilldown" data-type="saldoNeto" style="grid-column: 1 / -1; background: rgba(255,255,255,0.03); border-radius: 12px; padding: 10px;">
+                        <span class="flow-label text-warning" style="font-size: 0.75rem;">RESULTADO NETO (AHORRO)</span>
+                        <div id="kpi-saldo-neto-value" class="flow-number-giant skeleton">...</div>
                     </div>
                 </div>
             </div>
@@ -4800,13 +4801,10 @@ const renderPanelPage = async () => {
                         <span class="material-icons card-icon-font">account_balance</span>
                         <span>PATRIMONIO NETO</span>
                     </div>
-                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="patrimonio">?</button>
                 </div>
-                
                 <div class="patrimonio-main">
                     <div id="kpi-patrimonio-neto-value" class="math-total-giant skeleton">0 €</div>
                 </div>
-
                 <div class="patrimonio-details">
                     <div class="p-detail"><span class="dot liquid"></span> Liq: <strong id="kpi-liquidez-value">...</strong></div>
                     <div class="p-detail"><span class="dot invest"></span> Inv: <strong id="kpi-capital-invertido-total">...</strong></div>
@@ -4819,24 +4817,14 @@ const renderPanelPage = async () => {
                         <span class="material-icons card-icon-font" style="color:#BF5AF2">trending_up</span>
                         <span style="color:#BF5AF2">INVERSIONES</span>
                     </div>
-                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="inversiones">?</button>
                 </div>
-
                 <div class="invest-main">
                     <span class="invest-label-top">VALOR ACTUAL</span>
                     <div id="new-card-market-value" class="invest-val-giant skeleton">0 €</div>
                 </div>
-
                 <div class="invest-details-row">
-                    <div class="p-detail">
-                        <span style="opacity:0.7">Invertido:</span> 
-                        <strong id="new-card-capital" style="color:#fff">...</strong>
-                    </div>
-                    <div style="width:1px; height:12px; background:rgba(255,255,255,0.2); align-self:center;"></div>
-                    <div class="p-detail">
-                        <span style="opacity:0.7">P&L:</span> 
-                        <strong id="new-card-pnl">...</strong>
-                    </div>
+                    <div class="p-detail"><span style="opacity:0.7">Capital:</span> <strong id="new-card-capital">...</strong></div>
+                    <div class="p-detail"><span style="opacity:0.7">P&L:</span> <strong id="new-card-pnl">...</strong></div>
                 </div>
             </div>
 
@@ -4844,11 +4832,9 @@ const renderPanelPage = async () => {
                 <div class="stack-card-header">
                     <div class="header-title-row">
                         <span class="material-icons card-icon-font">health_and_safety</span>
-                        <span>SALUD FINANCIERA</span>
+                        <span>SALUD</span>
                     </div>
-                    <button class="help-btn-mini" data-action="show-kpi-help" data-kpi="salud">?</button>
                 </div>
-                
                 <div class="health-grid">
                     <div class="health-item">
                         <span class="health-label">Cobertura</span>
@@ -4863,7 +4849,6 @@ const renderPanelPage = async () => {
                     </div>
                 </div>
             </div>
-
         </div>`;
     
     populateAllDropdowns();
@@ -8670,30 +8655,19 @@ const setupFabInteractions = () => {
     const fab = document.getElementById('bottom-nav-add-btn');
     if (!fab) return;
 
-    let longPressTimer;
-    let isLongPress = false;
-    // 500ms es un estándar cómodo para pulsación larga
-    const LONG_PRESS_DURATION = 500; 
+    // Acción directa y rápida al pulsar
+    fab.onclick = (e) => {
+        e.preventDefault();
+        hapticFeedback('light'); // Vibración sutil inmediata
+        
+        // Animación visual de pulsación
+        fab.style.transform = "scale(0.9)";
+        setTimeout(() => fab.style.transform = "scale(1)", 100);
 
-    const startPress = (e) => {
-    if (e.type === 'mousedown' && e.buttons !== 1) return;
-    
-    isLongPress = false;
-    
-    // FEEDBACK VISUAL INSTANTÁNEO
-    fab.style.transform = "scale(0.90)"; 
-    fab.style.filter = "brightness(1.2)"; // Se ilumina al pulsar
-    fab.style.transition = "transform 0.1s, filter 0.1s";
-        longPressTimer = setTimeout(() => {
-            // ¡BINGO! Se ha mantenido pulsado: Abrimos el menú de selección
-            isLongPress = true;
-            hapticFeedback('medium');
-            fab.style.transform = "scale(1)";
-            
-            // Estrategia 1 (Pulsación larga): Abrimos el Sheet para elegir (Traspaso, Ingreso, Gasto)
-            showModal('main-add-sheet'); 
-        }, LONG_PRESS_DURATION);
+        // Abrir directamente el Bottom Sheet
+        showModal('main-add-sheet');
     };
+};
 
     const endPress = (e) => {
     clearTimeout(longPressTimer);
@@ -8772,31 +8746,32 @@ const updateInputMirror = (input) => {
 const initAmountInput = () => {
     const amountInputs = document.querySelectorAll('.input-amount-calculator');
     
-    // Ocultar botón de calculadora antiguo si existe
-    const toggle = document.getElementById('calculator-toggle-btn');
-    if (toggle) toggle.style.display = 'none';
-
     amountInputs.forEach(input => {
-        input.readOnly = true; 
-        input.setAttribute('inputmode', 'none');
+        // Truco para móviles: inputmode='none' evita que salga el teclado nativo
+        input.setAttribute('inputmode', 'none'); 
+        input.setAttribute('readonly', 'true'); // Refuerzo para algunos navegadores
         
-        // Clonar para limpiar eventos viejos
+        // Clonamos para limpiar eventos antiguos
         const newInput = input.cloneNode(true);
         input.parentNode.replaceChild(newInput, input);
     
-        // Inicializar visualización
+        // Inicializar el espejo visual (número grande)
         updateInputMirror(newInput); 
 
-        // Listener para Click (Abrir calculadora)
+        // Al hacer click, abrimos TU calculadora
         newInput.addEventListener('click', (e) => {
             e.preventDefault();
-            // Actualizar visual por si acaso
-            updateInputMirror(newInput);
             hapticFeedback('light');
+            
+            // Scroll suave para que el input quede visible arriba
+            setTimeout(() => {
+                newInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+
             showCalculator(newInput);
         });
-
-        // Listener para cambios manuales (por si acaso)
+        
+        // Sincronización visual
         newInput.addEventListener('input', () => updateInputMirror(newInput));
     });
 };

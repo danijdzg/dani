@@ -1,32 +1,51 @@
-
-/* --- Mejora 1: Bottom Sheet de Acciones Rápidas --- */
+/* Cuerpo del menú con botones grandes */
 #main-add-sheet-body {
     display: flex;
     flex-direction: column;
-    gap: var(--sp-2); /* Espacio entre los botones */
+    gap: 12px;
+    padding-bottom: 20px;
 }
+
+/* Botones Gigantes para el Pulgar */
 .add-sheet-button {
     display: flex;
     align-items: center;
-    gap: var(--sp-3); /* Espacio entre el icono y el texto */
-    padding: var(--sp-3); /* Espaciado interno generoso para un toque fácil */
+    padding: 20px; /* Mucho espacio táctil */
     background-color: var(--c-surface-variant);
-    border: none;
-    border-radius: var(--border-radius-lg);
-    font-size: var(--fs-base);
-    font-weight: 600;
-    color: var(--c-on-surface);
-    text-align: left;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px; /* Muy redondeado */
     width: 100%;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.2s;
+    transition: transform 0.1s, background-color 0.2s;
+    position: relative;
+    overflow: hidden;
 }
-.add-sheet-button:hover {
-    background-color: color-mix(in srgb, var(--c-primary) 10%, transparent);
-}
+
 .add-sheet-button:active {
-    transform: scale(0.98); /* Efecto de pulsación */
+    transform: scale(0.96);
+    background-color: rgba(255, 255, 255, 0.1);
 }
+
+/* Iconos Gigantes */
+.add-sheet-button .material-icons {
+    font-size: 32px; /* Icono grande */
+    margin-right: 16px;
+    padding: 10px;
+    border-radius: 50%;
+    background-color: rgba(255,255,255,0.05); /* Círculo suave detrás del icono */
+}
+
+/* Texto Grande y Claro */
+.add-sheet-button span:last-child {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* Colores específicos para ayuda visual rápida */
+.add-sheet-button[data-type="gasto"] .material-icons { color: var(--c-danger); background-color: rgba(255, 59, 48, 0.1); }
+.add-sheet-button[data-type="ingreso"] .material-icons { color: var(--c-success); background-color: rgba(57, 255, 20, 0.1); }
+.add-sheet-button[data-type="traspaso"] .material-icons { color: var(--c-info); background-color: rgba(191, 90, 242, 0.1); }
 
 /* ▼▼▼ PEGA ESTE BLOQUE COMPLETO EN LUGAR DEL ANTERIOR PARA EL EXTRACTO DE CUENTA ▼▼▼ */
 
@@ -5756,4 +5775,75 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 @media (min-width: 840px) {
     .dashboard-stack-layout { padding: 30px; gap: 15px; }
     .card-flow, .card-patrimonio, .card-invest, .card-health { flex-grow: 1; } 
+}
+/* ================================================================= */
+/* === 2. CALCULADORA COMO TECLADO (INTEGRACIÓN TOTAL) === */
+/* ================================================================= */
+
+/* Overlay transparente (para detectar clicks fuera y cerrar) */
+#calculator-overlay {
+    background-color: transparent !important; /* Sin oscurecer pantalla */
+}
+
+/* La calculadora actúa como un teclado nativo */
+#calculator-ui {
+    border-radius: 0 !important; /* Cuadrado arriba, como un teclado */
+    border-top: 1px solid var(--c-outline);
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+    padding-bottom: env(safe-area-inset-bottom);
+    background-color: #121212; /* Color teclado oscuro estándar */
+}
+
+/* Botones de calculadora más "táctiles" */
+.calculator-btn {
+    border-radius: 12px !important; /* Squircle en vez de redondo total */
+    background-color: rgba(255,255,255,0.08);
+    font-size: 1.5rem;
+    height: 55px; /* Altura fija cómoda */
+    aspect-ratio: auto !important; /* Quitamos la restricción 1:1 */
+}
+
+/* Botón OK (Verde) destacado */
+.calculator-btn[data-key="done"] {
+    background-color: var(--c-success) !important;
+    color: #000 !important;
+}
+
+
+/* ================================================================= */
+/* === 3. MEJORA VISUAL PANEL (JERARQUÍA CLARA) === */
+/* ================================================================= */
+
+/* Tarjetas más limpias y modernas */
+.stack-card {
+    border: 1px solid rgba(255, 255, 255, 0.05); /* Borde sutil */
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3); /* Sombra suave */
+    background: linear-gradient(145deg, rgba(30,40,50,0.95) 0%, rgba(20,25,30,0.98) 100%);
+}
+
+/* Valores numéricos con mejor tipografía */
+.flow-number, .kpi-item__value, .hero-val-big {
+    font-feature-settings: "tnum" on, "cv11" on; /* Números tabulares alineados */
+    letter-spacing: -0.5px;
+}
+
+/* Énfasis en el Ahorro (Neto) */
+.flow-number-giant {
+    font-size: clamp(1.5rem, 4vh, 2rem) !important;
+    font-weight: 800;
+    text-shadow: 0 0 20px rgba(255,255,255,0.1);
+}
+
+/* Input de cantidad (Héroe del formulario) */
+#movimiento-cantidad-form-group .input-wrapper {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid var(--c-primary) !important;
+    border-radius: 0 !important;
+    height: 70px !important;
+}
+
+.input-visual-mirror {
+    font-size: 2.5rem !important; /* Gigante */
+    justify-content: center;
 }
