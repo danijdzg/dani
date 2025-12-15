@@ -5481,3 +5481,69 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     transform: translate(75px, -85px) scale(1);
     transition-delay: 0.15s;
 }
+/* =========================================
+   MODO ESCRITORIO: ALINEACIÓN A LA IZQUIERDA
+   ========================================= */
+@media (min-width: 1024px) {
+    
+    /* 1. El Cuerpo Principal de la App */
+    body {
+        /* Aseguramos que el fondo cubra todo aunque la app esté a un lado */
+        justify-content: flex-start; 
+    }
+
+    .app-layout {
+        /* Definimos el ancho de "móvil" fijo */
+        width: 450px;
+        max-width: 450px;
+        
+        /* ALINEACIÓN: 50px desde la izquierda */
+        margin: 0 !important;
+        margin-left: 50px !important;
+        
+        /* Bordes y Sombra para que destaque sobre el fondo */
+        box-shadow: 20px 0 40px rgba(0,0,0,0.3);
+        border-right: 1px solid var(--c-outline);
+        min-height: 100vh;
+    }
+
+    /* 2. La Barra de Navegación Inferior */
+    .bottom-nav {
+        /* Tiene que coincidir exactamente con la posición de .app-layout */
+        width: 450px !important;
+        left: 50px !important;
+        right: auto !important;
+        transform: none !important; /* Quitamos cualquier centrado anterior */
+        
+        /* Borde redondeado solo arriba-derecha para estética */
+        border-top-right-radius: 16px;
+    }
+
+    /* 3. El Botón Flotante (FAB) y su Menú */
+    .fab-container {
+        /* CÁLCULO MATEMÁTICO DEL CENTRO:
+           Margen Izquierdo (50px) + Mitad del Ancho (225px) = 275px
+        */
+        left: 275px !important; 
+        
+        /* Mantenemos el translateX(-50%) para que el botón esté centrado sobre ese punto */
+        transform: translateX(-50%) !important;
+        right: auto !important;
+    }
+
+    /* Ajuste del telón de fondo para que siga cubriendo toda la pantalla */
+    .fab-backdrop {
+        left: -275px !important; /* Compensamos el movimiento del contenedor */
+        width: 100vw !important;
+    }
+    
+    /* 4. Login / PIN Screen (Para que también salgan a la izquierda) */
+    .login-view {
+        justify-content: flex-start;
+        padding-left: 50px;
+    }
+    .login-view__card {
+        width: 450px;
+        margin: 0;
+    }
+}
