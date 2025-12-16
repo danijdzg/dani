@@ -1886,19 +1886,13 @@ const createChartGradient = (ctx, colorHex) => {
 			return currencyFormatter.format(number);
 };
 const formatCurrencyHTML = (numInCents) => {
-    // 1. Obtenemos el string base (ej: "1.250,50 €")
     const formatted = formatCurrency(numInCents);
-    
-    // 2. Separamos por la coma decimal
+    // Separa la parte entera de los decimales (asumiendo formato 1.234,56 €)
     const parts = formatted.split(',');
-    
     if (parts.length === 2) {
-        // parts[0] es la parte entera (ej: "1.250")
-        // parts[1] son los decimales y el símbolo (ej: "50 €")
+        // parts[0] es "1.234" y parts[1] es "56 €"
         return `<span class="currency-major">${parts[0]}</span><small class="currency-minor">,${parts[1]}</small>`;
     }
-    
-    // Fallback por si acaso no hay decimales
     return `<span class="currency-major">${formatted}</span>`;
 };
 	const getLedgerName = (letter) => {
@@ -2053,15 +2047,14 @@ const animateCountUp = (el, end, duration = 700, formatAsCurrency = true, prefix
         if (progress < 1) {
             requestAnimationFrame(step);
         } else {
-            // Asegurar valor final exacto al terminar
             if (formatAsCurrency) {
                 el.innerHTML = prefix + formatCurrencyHTML(end) + suffix;
             } else {
-                el.textContent = `${prefix}${endValue.toFixed(2)}${suffix}`;
+                el.textContent = `${prefix}${(end / 100).toFixed(2)}${suffix}`;
             }
         }
     };
-
+    
     requestAnimationFrame(step);
 };
         const escapeHTML = str => (str || '').replace(/[&<>"']/g, match => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[match]);
@@ -3665,10 +3658,10 @@ const handleShowPnlBreakdown = async (accountId) => {
     showGenericModal(`Desglose P&L: ${cuenta.nombre}`, modalHtml);
 };
 
-
+/* --- renderVirtualListItem: VERSIÓN CORREGIDA (Fecha añadida a Traspasos) --- */
 const renderVirtualListItem = (item) => {
     
-    // 1. Header de Pendientes
+    // 1. Header de Pendientes (Amarillo)
     if (item.type === 'pending-header') {
         return `
         <div class="movimiento-date-header" style="background-color: var(--c-warning); color: #000; margin: 10px 16px;">
@@ -3680,8 +3673,8 @@ const renderVirtualListItem = (item) => {
     if (item.type === 'pending-item') {
         const r = item.recurrent;
         const date = new Date(r.nextDate).toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
+        const amountClass = r.cantidad >= 0 ? 'text-positive' : 'text-negative';
         
-        // CORRECCIÓN COLOR: Usamos formatCurrencyHTML directamente
         return `
         <div class="transaction-card" id="pending-recurrente-${r.id}" style="margin:0 16px; border-bottom:1px solid var(--c-outline); background-color: rgba(255, 214, 10, 0.05);">
             <div class="transaction-card__content">
@@ -3695,73 +3688,50 @@ const renderVirtualListItem = (item) => {
                     </div>
                 </div>
                 <div class="transaction-card__figures">
-                    <strong class="transaction-card__amount ${r.cantidad >= 0 ? 'text-positive' : 'text-negative'}">
-                        ${formatCurrencyHTML(r.cantidad)}
-                    </strong>
+                    <strong class="transaction-card__amount ${amountClass}">${formatCurrency(r.cantidad)}</strong>
                 </div>
             </div>
         </div>`;
     }
 
-    // 3. Header de Fecha (ESTILO CÁPSULA FLUIDA)
+    // 3. Header de Fecha Sticky
     if (item.type === 'date-header') {
         const dateObj = new Date(item.date + 'T12:00:00Z');
-        
-        const today = new Date(); 
-        const yesterday = new Date(); 
-        today.setHours(0,0,0,0);
-        yesterday.setDate(yesterday.getDate() - 1); yesterday.setHours(0,0,0,0);
-        
+        const today = new Date(); today.setHours(0,0,0,0);
+        const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1); yesterday.setHours(0,0,0,0);
         const itemDate = new Date(dateObj); itemDate.setHours(0,0,0,0);
         
-        let dayName = '';
-        let fullDate = '';
-        let isTodayClass = '';
+        let label = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+        if (itemDate.getTime() === today.getTime()) label = "Hoy";
+        else if (itemDate.getTime() === yesterday.getTime()) label = "Ayer";
 
-        if (itemDate.getTime() === today.getTime()) {
-            dayName = "HOY";
-            isTodayClass = 'is-today'; 
-            fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-        } else if (itemDate.getTime() === yesterday.getTime()) {
-            dayName = "AYER";
-            fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-        } else {
-            dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase().replace('.', '');
-            fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-        }
-
-        // LÓGICA DE COLORES SEMÁNTICOS (Verde, Rojo, Morado)
-        let totalClass = 'is-neutral'; 
-        if (item.total > 0) {
-            totalClass = 'is-positive';
-        } else if (item.total < 0) {
-            totalClass = 'is-negative';
-        }
-
-        const totalFormatted = formatCurrencyHTML(item.total); 
+        const totalClass = item.total >= 0 ? 'text-positive' : 'text-negative';
+        const totalSign = item.total > 0 ? '+' : '';
 
         return `
             <div class="sticky-date-header">
-                <div class="sticky-date-left">
-                    <span class="sticky-day-pill ${isTodayClass}">${dayName}</span>
-                    <span class="sticky-date-text">${fullDate}</span>
-                </div>
-                <span class="sticky-date-total ${totalClass}">${totalFormatted}</span>
+                <span class="sticky-date-label">${label}</span>
+                <span class="sticky-date-total ${totalClass}">${totalSign}${formatCurrencyHTML(item.total)}</span>
             </div>
         `;
     }
 
-    // 4. MOVIMIENTOS REALES (DIARIO)
+    // 4. MOVIMIENTOS REALES
     if (item.type === 'transaction') {
         const m = item.movement;
         const { cuentas, conceptos } = db;
-        const highlightClass = (m.id === newMovementIdToHighlight) ? 'list-item-animate' : '';
+        const highlightClass = (m.id === newMovementIdToHighlight) ? 'highlight-pulse' : '';
         
-        // Formatear fecha corta
+        // Formatear fecha: "12 oct"
         const dateObj = new Date(m.fecha);
         const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
 
         let iconHtml, line1, line2, amountClass, amountSign;
+
+        const formatCompact = (cents) => {
+            if (cents === undefined || cents === null) return '...';
+            return (cents / 100).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + '€';
+        };
 
         if (m.tipo === 'traspaso') {
             const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || 'Origen';
@@ -3769,8 +3739,12 @@ const renderVirtualListItem = (item) => {
             
             iconHtml = `<div class="t-icon t-icon--transfer"><span class="material-icons">sync_alt</span></div>`;
             
-            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:2px;">arrow_upward</span>${escapeHTML(origen)}</span>`;
-            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:2px;">arrow_downward</span>${escapeHTML(destino)}</span>`;
+            // --- CORRECCIÓN AQUÍ: Añadimos la fecha a la línea 1 ---
+            // LÍNEA 1: [Fecha] ↑ Origen (Saldo)
+            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:2px;">arrow_upward</span>${escapeHTML(origen)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceOrigen)})</span></span>`;
+            
+            // LÍNEA 2: ↓ Destino (Saldo) (Aquí dejamos un espacio vacío al inicio para alinear visualmente con el texto de arriba si se desea, o lo dejamos natural)
+            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:2px;">arrow_downward</span>${escapeHTML(destino)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceDestino)})</span></span>`;
             
             amountClass = 'text-info';
             amountSign = '';
@@ -3787,8 +3761,10 @@ const renderVirtualListItem = (item) => {
             const isGasto = m.cantidad < 0;
             iconHtml = `<div class="t-icon ${isGasto ? 't-icon--expense' : 't-icon--income'}">${avatarContent}</div>`;
             
+            // LÍNEA 1: Fecha y Concepto
             line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-concept">${escapeHTML(conceptoNombre)}</span>`;
             
+            // LÍNEA 2: Cuenta y Descripción
             const desc = m.descripcion && m.descripcion !== conceptoNombre ? m.descripcion : '';
             const separator = desc ? ' • ' : '';
             line2 = `<span class="t-account-badge">${escapeHTML(nombreCuenta)}</span>${separator}${escapeHTML(desc)}`;
@@ -3803,11 +3779,11 @@ const renderVirtualListItem = (item) => {
             <div class="t-content">
                 <div class="t-row-primary">
                     <div class="t-line-1">${line1}</div>
-                    <div class="t-amount ${amountClass}">${amountSign}${formatCurrencyHTML(m.cantidad)}</div>
+                    <div class="t-amount ${amountClass}">${amountSign}${formatCurrency(m.cantidad)}</div>
                 </div>
                 <div class="t-row-secondary">
                     <div class="t-line-2">${line2}</div>
-                    ${m.tipo !== 'traspaso' ? `<div class="t-running-balance">${formatCurrencyHTML(m.runningBalance)}</div>` : ''}
+                    ${m.tipo !== 'traspaso' ? `<div class="t-running-balance">${formatCurrency(m.runningBalance)}</div>` : ''}
                 </div>
             </div>
         </div>`;
@@ -3870,13 +3846,12 @@ const updateVirtualListUI = () => {
     vList.itemMap = [];
     let currentHeight = 0;
     
-    // 1. Recurrentes pendientes (Se mantiene igual - Parte Superior)
+    // 1. Recurrentes pendientes (Se mantiene igual)
     const pendingRecurrents = getPendingRecurrents();
     if (pendingRecurrents.length > 0) {
         vList.items.push({ type: 'pending-header', count: pendingRecurrents.length });
         vList.itemMap.push({ height: vList.heights.pendingHeader, offset: currentHeight });
         currentHeight += vList.heights.pendingHeader;
-        
         pendingRecurrents.forEach(recurrent => {
             vList.items.push({ type: 'pending-item', recurrent: recurrent });
             vList.itemMap.push({ height: vList.heights.pendingItem, offset: currentHeight });
@@ -3884,7 +3859,7 @@ const updateVirtualListUI = () => {
         });
     }
 
-    // 2. OBTENCIÓN Y FILTRADO DE MOVIMIENTOS
+    // 2. Lista de Movimientos PLANA (Sin separadores)
     const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
     const allMovements = [];
 
@@ -3901,70 +3876,19 @@ const updateVirtualListUI = () => {
         }
     });
 
-    // 3. AGRUPACIÓN POR DÍA (NUEVA LÓGICA)
-    const groupedByDate = {};
+    // Ordenamos por fecha descendente (más reciente arriba)
+    allMovements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id.localeCompare(a.id));
 
-    allMovements.forEach(mov => {
-        // Obtenemos la fecha en formato YYYY-MM-DD para usarla de clave
-        const dateKey = mov.fecha.split('T')[0];
-        
-        if (!groupedByDate[dateKey]) {
-            groupedByDate[dateKey] = {
-                movements: [],
-                totalDay: 0
-            };
-        }
-
-        // Añadimos el movimiento al grupo
-        groupedByDate[dateKey].movements.push(mov);
-
-        // Calculamos el impacto en el total del día
-        let amount = 0;
-        if (mov.tipo === 'traspaso') {
-            const origenVisible = visibleAccountIds.has(mov.cuentaOrigenId);
-            const destinoVisible = visibleAccountIds.has(mov.cuentaDestinoId);
-            // Si sale dinero de la vista actual
-            if (origenVisible && !destinoVisible) amount = -Math.abs(mov.cantidad);
-            // Si entra dinero a la vista actual
-            else if (!origenVisible && destinoVisible) amount = Math.abs(mov.cantidad);
-            // Si es interno (ambas visibles) el neto es 0
-        } else {
-            amount = mov.cantidad;
-        }
-        groupedByDate[dateKey].totalDay += amount;
-    });
-
-    // 4. ORDENACIÓN Y APLANADO A LA LISTA VIRTUAL
-    // Ordenamos las fechas de más reciente a más antigua
-    const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
-
-    sortedDates.forEach(dateKey => {
-        const group = groupedByDate[dateKey];
-
-        // A) Insertamos la CABECERA DE FECHA
-        // Altura estimada de cabecera: 45px (ajustar según CSS)
-        const headerHeight = 45; 
-        vList.items.push({ 
-            type: 'date-header', 
-            date: dateKey, 
-            total: group.totalDay 
-        });
-        vList.itemMap.push({ height: headerHeight, offset: currentHeight });
-        currentHeight += headerHeight;
-
-        // B) Insertamos los MOVIMIENTOS de ese día
-        // Ordenamos movimientos dentro del día (más reciente primero por ID si la hora es igual)
-        group.movements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id.localeCompare(a.id));
-
-        group.movements.forEach(mov => {
-            const itemHeight = 76; // Altura de la tarjeta
-            vList.items.push({ type: 'transaction', movement: mov });
-            vList.itemMap.push({ height: itemHeight, offset: currentHeight });
-            currentHeight += itemHeight;
-        });
-    });
+    // Generamos los items de la lista virtual
+    for (const mov of allMovements) {
+        // Altura fija un poco mayor para que quepan las dos líneas de texto cómodamente
+        const itemHeight = 76; 
+        vList.items.push({ type: 'transaction', movement: mov });
+        vList.itemMap.push({ height: itemHeight, offset: currentHeight });
+        currentHeight += itemHeight;
+    }
     
-    // 5. Renderizado final
+    // 3. Renderizado final
     vList.sizerEl.style.height = `${currentHeight}px`;
     vList.lastRenderedRange = { start: -1, end: -1 }; 
     renderVisibleItems();
@@ -5559,7 +5483,7 @@ async function renderInformeAsignacionActivos(container) {
             <tr>
                 <td style="padding: 8px; border-bottom: 1px solid var(--c-outline);">${perf.nombre}</td>
                 <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;">${formatCurrencyHTML(perf.valorActual)}</td>
-                <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;" class="${pnlClass}">${formatCurrencyHTML(perf.pnlAbsoluto)}</td>
+                <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;" class="${pnlClass}">${formatCurrency(perf.pnlAbsoluto)}</td>
                 <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;" class="${pnlClass}">${perf.pnlPorcentual.toFixed(2)}%</td>
                 <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;" class="${tirClass}">${(perf.irr * 100).toFixed(2)}%</td>
             </tr>`;
@@ -5834,7 +5758,7 @@ const renderSavingsRateGauge = (canvasId, percentage) => {
                     </div>
                 </div>
                 <div class="transaction-card__figures">
-                    <strong class="transaction-card__amount ${amountClass}">${formatCurrencyHTML(r.cantidad)}</strong>
+                    <strong class="transaction-card__amount ${amountClass}">${formatCurrency(r.cantidad)}</strong>
                 </div>
             </div>
         </div>`;
@@ -6247,7 +6171,7 @@ const renderRecurrentsListOnPage = () => {
 				    <small style="color: var(--c-on-surface-secondary); font-size: var(--fs-xs);">Próximo: ${nextDate} (${frequencyText})</small>
 			    </div>
 		    </div>
-		    <strong class="${amountClass}" style="margin-right: var(--sp-2);">${formatCurrencyHTML(r.cantidad)}</strong>
+		    <strong class="${amountClass}" style="margin-right: var(--sp-2);">${formatCurrency(r.cantidad)}</strong>
 	    </div>`;
     }).join('');
 };
@@ -7770,7 +7694,7 @@ const performGlobalSearch = async (query) => {
                         <p>${escapeHTML(m.descripcion)}</p>
                         <small>${new Date(m.fecha).toLocaleDateString('es-ES')} • ${escapeHTML(item.cuentaInfo)}</small>
                     </div>
-                    <strong class="search-result-item__amount ${amountClass}">${formatCurrencyHTML(m.cantidad)}</strong>
+                    <strong class="search-result-item__amount ${amountClass}">${formatCurrency(m.cantidad)}</strong>
                 </button>`;
         });
         resultsHtml += `</div>`;
@@ -8318,7 +8242,7 @@ const renderCuentasModalList = () => {
                     </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: var(--sp-1); flex-shrink: 0;">
-                    <strong class="${amountClass}" style="margin-right: var(--sp-2);">${formatCurrencyHTML(r.cantidad)}</strong>
+                    <strong class="${amountClass}" style="margin-right: var(--sp-2);">${formatCurrency(r.cantidad)}</strong>
                     <button class="icon-btn" data-action="edit-recurrente" data-id="${r.id}" title="Editar Recurrente"><span class="material-icons">edit</span></button>
                 </div>
             </div>`
@@ -10211,19 +10135,7 @@ const handleSaveMovement = async (form, btn) => {
 			}
             
             await batch.commit();
-            // Efecto Flash (Feedback visual sutil para escritorio/móvil)
-            const flash = document.createElement('div');
-            flash.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: white; opacity: 0.15; pointer-events: none; z-index: 2147483647;
-                transition: opacity 0.3s ease-out;
-            `;
-            document.body.appendChild(flash);
-            // Forzamos un reflow para que la transición funcione
-            requestAnimationFrame(() => { 
-                flash.style.opacity = '0'; 
-            });
-            setTimeout(() => flash.remove(), 300);
+            
             // 4.5. Efecto Confeti (Solo ingresos)
 			if (dataToSave.cantidad > 0 && dataToSave.tipo !== 'traspaso') {
 				confetti({
@@ -10407,8 +10319,8 @@ const handleAddAccount = async (btn) => {
 
          const exportObject = {
              meta: {
-                 appName: "aiDANaI-ctas",
-                 version: "2.0.0",
+                 appName: "DaniCtas",
+                 version: "3.0.0",
                  exportDate: new Date().toISOString()
              },
              data: dataPayload
@@ -11329,15 +11241,15 @@ if ('serviceWorker' in navigator) {
 const initSpeedDial = () => {
     const container = document.getElementById('fab-container');
     const trigger = document.getElementById('fab-trigger');
-    const backdrop = document.getElementById('fab-backdrop'); 
+    const backdrop = document.getElementById('fab-backdrop');
     const options = document.querySelectorAll('.fab-option');
 
     if (!container || !trigger) return;
 
-    const toggleMenu = (e) => {
-        e.stopPropagation();
-        container.classList.toggle('active');
-        // Pequeña vibración al abrir
+    // --- Funciones de Control ---
+    
+    const openMenu = () => {
+        container.classList.add('active');
         hapticFeedback('medium');
     };
 
@@ -11345,10 +11257,23 @@ const initSpeedDial = () => {
         container.classList.remove('active');
     };
 
-    // 1. Abrir/Cerrar con el botón principal
+    const toggleMenu = (e) => {
+        // Detenemos la propagación para que no llegue al "document" y se cierre inmediatamente
+        e.stopPropagation();
+        
+        if (container.classList.contains('active')) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    };
+
+    // --- EVENTO 1: BOTÓN PRINCIPAL (+) ---
+    // Usamos 'click' estándar. Es compatible con Móvil y PC.
     trigger.onclick = toggleMenu;
 
-    // 2. Cerrar al pulsar el fondo borroso (ESTO ARREGLA LA USABILIDAD)
+    // --- EVENTO 2: FONDO OSCURO (Cerrar al tocar fuera) ---
+    // Esta es la clave para lo que pediste: si tocas lo oscuro, se cierra.
     if (backdrop) {
         backdrop.onclick = (e) => {
             e.stopPropagation();
@@ -11356,7 +11281,7 @@ const initSpeedDial = () => {
         };
     }
 
-    // 3. Acción al pulsar una opción (Pago, Traspaso, Ingreso)
+    // --- EVENTO 3: LAS OPCIONES (Pago, Traspaso, Ingreso) ---
     options.forEach(btn => {
         btn.onclick = (e) => {
             e.stopPropagation(); // Evitar cerrar antes de tiempo
@@ -11367,12 +11292,90 @@ const initSpeedDial = () => {
             hapticFeedback('light');
             closeMenu();
 
-            // 2. Ejecutar la acción tras una micro-pausa (para que se vea la animación de cierre)
+            // 2. Ejecutar la acción tras una micro-pausa (para que se vea la animación)
             setTimeout(() => {
-                if (typeof startMovementForm === 'function') {
-                    startMovementForm(null, false, type);
+                try {
+                    if (typeof startMovementForm === 'function') {
+                        startMovementForm(null, false, type);
+                    } else {
+                        console.error("Error: startMovementForm no encontrada");
+                        showToast("Error interno", "danger");
+                    }
+                } catch (err) {
+                    console.error(err);
                 }
-            }, 100);
+            }, 75);
+        };
+    });
+};
+/* ================================================================= */
+/* === SISTEMA DE ALERTAS PERSONALIZADAS (aiDANaI dice) === */
+/* ================================================================= */
+
+const customConfirm = (message, title = "aiDANaI dice") => {
+    return new Promise((resolve) => {
+        // 1. Crear elementos HTML al vuelo
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-dialog-overlay';
+        
+        const card = document.createElement('div');
+        card.className = 'custom-dialog-card';
+        
+        card.innerHTML = `
+            <div class="custom-dialog-title">${title}</div>
+            <div class="custom-dialog-message">${message}</div>
+            <div class="custom-dialog-actions">
+                <button class="custom-dialog-btn btn-cancel">Cancelar</button>
+                <button class="custom-dialog-btn btn-confirm">Aceptar</button>
+            </div>
+        `;
+        
+        overlay.appendChild(card);
+        document.body.appendChild(overlay);
+        
+        // 2. Animación de entrada
+        requestAnimationFrame(() => {
+            overlay.style.opacity = '1';
+            card.style.transform = 'scale(1)';
+        });
+        
+        // 3. Manejar Cierre
+        const close = (result) => {
+            overlay.style.opacity = '0';
+            card.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                if(document.body.contains(overlay)) document.body.removeChild(overlay);
+                resolve(result);
+            }, 200);
+        };
+        
+        // 4. Eventos de Botones
+        card.querySelector('.btn-cancel').onclick = () => close(false);
+        card.querySelector('.btn-confirm').onclick = () => close(true);
+    });
+};
+
+/* Función para alertas simples (solo botón OK) */
+const customAlert = (message, title = "aiDANaI dice") => {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-dialog-overlay';
+        overlay.innerHTML = `
+            <div class="custom-dialog-card">
+                <div class="custom-dialog-title">${title}</div>
+                <div class="custom-dialog-message">${message}</div>
+                <div class="custom-dialog-actions">
+                    <button class="custom-dialog-btn btn-confirm">Entendido</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        
+        requestAnimationFrame(() => { overlay.style.opacity = '1'; overlay.children[0].style.transform = 'scale(1)'; });
+        
+        overlay.querySelector('button').onclick = () => {
+            overlay.style.opacity = '0';
+            setTimeout(() => { document.body.removeChild(overlay); resolve(); }, 200);
         };
     });
 };
