@@ -5910,3 +5910,77 @@ input, select, textarea {
         border: 1px solid rgba(255,255,255,0.08);
     }
 }
+/* ================================================================= */
+/* === OPTIMIZACIÓN PANEL: VERTICAL COMPACTO (AUTO-AJUSTABLE) === */
+/* ================================================================= */
+
+/* 1. OCULTAR BARRA DE DESPLAZAMIENTO (Estético) */
+.page-content, .view-container, body, html {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+.page-content::-webkit-scrollbar, 
+body::-webkit-scrollbar { 
+    display: none; /* Chrome, Safari */
+}
+
+/* 2. AJUSTES GENERALES DEL PANEL */
+#dashboard-page .page-content {
+    /* Quitamos padding excesivo superior */
+    padding-top: 5px !important; 
+    padding-bottom: 80px;
+}
+
+/* 3. LÓGICA ELÁSTICA PARA ORDENADOR (La clave para que quepa sin scroll) */
+@media (min-width: 600px) {
+    
+    /* Forzamos a que el contenedor ocupe EXACTAMENTE la altura disponible */
+    #dashboard-page .page-content {
+        height: calc(100vh - 70px); /* 100% pantalla menos la cabecera */
+        padding-bottom: 10px !important; /* Poco margen abajo */
+        overflow: hidden; /* Prohibido el scroll */
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* El contenedor de las tarjetas se convierte en una columna flexible */
+    #dashboard-kpi-container {
+        display: flex;
+        flex-direction: column; /* Mantenemos lista vertical */
+        height: 100%; /* Ocupa todo el alto disponible */
+        gap: 12px; /* Espacio entre tarjetas */
+        padding: 0 10px;
+    }
+
+    /* LAS TARJETAS MÁGICAS */
+    .kpi-card {
+        /* flex: 1 significa "Ocupa una fracción igual del espacio" */
+        /* Si hay 4 tarjetas, cada una ocupará exactamente el 25% del espacio */
+        flex: 1; 
+        
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* Centrar contenido verticalmente */
+        margin: 0 !important; /* Quitamos márgenes viejos */
+        min-height: 0; /* Permite encogerse si la pantalla es bajita */
+        padding: 0 20px !important; /* Ajuste de relleno lateral */
+    }
+
+    /* Compactamos un poco los textos solo en PC para que respiren */
+    .kpi-card h3 {
+        margin-top: 0;
+        margin-bottom: 5px !important;
+        font-size: 0.95rem;
+        opacity: 0.8;
+    }
+    
+    .kpi-value {
+        font-size: 1.6rem !important; /* Tamaño grande pero controlado */
+        margin: 0;
+    }
+    
+    .kpi-trend {
+        margin-top: 5px;
+        font-size: 0.85rem;
+    }
+}
