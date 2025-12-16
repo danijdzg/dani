@@ -1780,23 +1780,24 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 /* EN style.css - PEGA ESTE BLOQUE AL FINAL */
 /* === INICIO: Estilos para el Menú Desplegable === */
 .popover-menu {
-    position: fixed;
-    top: 52px; /* Justo debajo de la barra superior */
-    right: 12px;
-    z-index: 1100; /* Muy alto para que esté por encima de todo */
-    background-color: var(--c-surface-variant);
-    border-radius: var(--border-radius-md);
-    border: 1px solid var(--c-outline);
-    box-shadow: var(--shadow-md);
-    width: 220px;
-    padding: var(--sp-2);
+    position: fixed; /* Usar fixed para que flote sobre todo, independiente del scroll */
+    top: 60px;       /* Altura aproximada de tu barra superior */
+    right: 16px;     /* CORRECCIÓN: Anclado a la derecha con un pequeño margen */
+    left: auto;      /* CORRECCIÓN: Importante para evitar que intente alinearse a la izquierda */
     
-    /* Magia para ocultar/mostrar con una animación suave */
-    opacity: 0;
-    transform: translateY(-10px) scale(0.95);
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-outline);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4); /* Sombra para darle profundidad */
+    padding: 8px;
+    z-index: 10000;  /* Z-index alto para estar encima de todo */
+    
+    /* Control de tamaño */
+    min-width: 200px;
+    max-width: 90vw; /* Evita que sea más ancho que la pantalla del móvil */
+    
+    /* Animación de entrada (opcional, pero queda bien) */
     transform-origin: top right;
-    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-    pointer-events: none; /* No se puede hacer clic cuando está oculto */
 }
 
 .popover-menu--visible {
