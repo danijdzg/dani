@@ -5002,18 +5002,31 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     text-transform: capitalize;
 }
 
-/* El Total a la derecha */
+/* Colores Semánticos para el Total del Día */
+
 .sticky-date-total {
-    font-weight: 700;
+    font-weight: 800;
     font-family: var(--font-numeric);
     white-space: nowrap;
     font-size: 0.9rem;
     letter-spacing: -0.5px;
 }
 
-/* Colores para el total */
-.sticky-date-total.is-positive { color: var(--c-success); }
-.sticky-date-total.is-negative { color: var(--c-on-surface); opacity: 0.8; } /* Gasto en blanco suave */
+/* POSITIVO -> VERDE */
+.sticky-date-total.is-positive { 
+    color: var(--c-success); 
+}
+
+/* NEGATIVO -> ROJO */
+.sticky-date-total.is-negative { 
+    color: var(--c-danger); 
+}
+
+/* CERO -> MORADO */
+.sticky-date-total.is-neutral { 
+    color: var(--c-info); /* Usamos --c-info que es #BF5AF2 (Morado) en tu tema */
+    opacity: 0.9;
+}
 
 /* Icono Izquierdo */
 .t-icon {

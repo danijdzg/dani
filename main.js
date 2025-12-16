@@ -3693,7 +3693,7 @@ const renderVirtualListItem = (item) => {
         </div>`;
     }
 
-    // 3. Header de Fecha (ESTILO INTEGRADO)
+    // 3. Header de Fecha (ESTILO INTEGRADO CON COLOR SEMÁNTICO)
     if (item.type === 'date-header') {
         const dateObj = new Date(item.date + 'T12:00:00Z');
         
@@ -3710,7 +3710,7 @@ const renderVirtualListItem = (item) => {
 
         if (itemDate.getTime() === today.getTime()) {
             dayName = "HOY";
-            isTodayClass = 'is-today'; // Clase especial para resaltar HOY
+            isTodayClass = 'is-today'; 
             fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
         } else if (itemDate.getTime() === yesterday.getTime()) {
             dayName = "AYER";
@@ -3720,9 +3720,14 @@ const renderVirtualListItem = (item) => {
             fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
         }
 
-        // Formato de moneda para el total
-        // Si es positivo (ingreso neto en el día) verde, si es negativo o 0, neutro/blanco
-        const totalClass = item.total > 0 ? 'is-positive' : 'is-negative';
+        // Lógica de colores según el importe:
+        // > 0: Verde (is-positive)
+        // < 0: Rojo (is-negative)
+        // === 0: Morado (is-neutral)
+        let totalClass = 'is-neutral'; 
+        if (item.total > 0) totalClass = 'is-positive';
+        else if (item.total < 0) totalClass = 'is-negative';
+
         const totalFormatted = formatCurrencyHTML(item.total); 
 
         return `
