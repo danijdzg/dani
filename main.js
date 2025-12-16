@@ -11596,39 +11596,47 @@ const updateExtractoList = () => {
 };
 
 /* ================================================================= */
-/* === FIX MENÚ TRES PUNTOS (Para botones creados dinámicamente) === */
+/* === DIAGNÓSTICO DE MENÚ (Con Alertas) === */
 /* ================================================================= */
 
 document.addEventListener('click', (e) => {
-    // 1. Buscamos si el clic fue en el botón del menú (o en su icono interior)
-    const menuBtn = e.target.closest('#header-menu-btn'); 
-    const menuPopover = document.getElementById('main-menu-popover');
-    
-    // Si no hay menú en el HTML, no hacemos nada
-    if (!menuPopover) return;
+    // Intentamos localizar el botón o el icono interior
+    const btn = e.target.closest('#header-menu-btn');
 
-    // --- CASO A: CLIC EN EL BOTÓN (ABRIR/CERRAR) ---
-    if (menuBtn) {
-        e.stopPropagation(); // Evita que el evento siga subiendo
+    // Si hemos pulsado en el botón (o su icono)
+    if (btn) {
         e.preventDefault();
+        e.stopPropagation();
 
-        // Alternar clase visible
-        if (menuPopover.classList.contains('popover-menu--visible')) {
-            menuPopover.classList.remove('popover-menu--visible');
+        // PASO 1: Confirmar que el clic llega al botón
+        alert("PASO 1: ¡Clic detectado en el botón!");
+
+        // Buscamos el menú
+        const menu = document.getElementById('main-menu-popover');
+
+        if (menu) {
+            // PASO 2: Confirmar que el menú existe
+            alert("PASO 2: Menú encontrado en el HTML.");
+
+            // Intentamos abrirlo
+            menu.classList.toggle('popover-menu--visible');
+            
+            // PASO 3: Confirmar estado final
+            const estaVisible = menu.classList.contains('popover-menu--visible');
+            alert("PASO 3: Clase aplicada. ¿Está visible?: " + estaVisible);
+            
+            // Forzamos un estilo inline por si el CSS falla
+            if (estaVisible) {
+                menu.style.display = 'block';
+                menu.style.opacity = '1';
+                menu.style.zIndex = '99999';
+            } else {
+                menu.style.display = 'none';
+            }
+
         } else {
-            menuPopover.classList.add('popover-menu--visible');
-        }
-
-        // Feedback táctil (si la función existe en tu main.js)
-        if (typeof hapticFeedback === 'function') hapticFeedback('light');
-        return; 
-    }
-
-    // --- CASO B: CLIC FUERA (CERRAR) ---
-    // Si el menú está abierto y tocamos en cualquier otro sitio...
-    if (menuPopover.classList.contains('popover-menu--visible')) {
-        if (!e.target.closest('#main-menu-popover')) {
-            menuPopover.classList.remove('popover-menu--visible');
+            // ERROR: El menú no está en el HTML
+            alert("ERROR CRÍTICO: No encuentro el elemento con id='main-menu-popover' en index.html");
         }
     }
 });
