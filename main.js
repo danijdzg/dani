@@ -3760,10 +3760,19 @@ const renderVirtualListItem = (item) => {
             const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || 'Origen';
             const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || 'Destino';
             
+            // Formateamos los saldos resultantes que calculamos en updateVirtualListUI
+            const saldoOrigenHtml = m._saldoOrigenSnapshot !== undefined 
+                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoOrigenSnapshot)})</span>` 
+                : '';
+            const saldoDestinoHtml = m._saldoDestinoSnapshot !== undefined 
+                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoDestinoSnapshot)})</span>` 
+                : '';
+
             iconHtml = `<div class="t-icon t-icon--transfer"><span class="material-icons">sync_alt</span></div>`;
             
-            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:2px;">arrow_upward</span>${escapeHTML(origen)}</span>`;
-            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:2px;">arrow_downward</span>${escapeHTML(destino)}</span>`;
+            // Añadimos el saldo a cada línea
+            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:2px;">arrow_upward</span>${escapeHTML(origen)}${saldoOrigenHtml}</span>`;
+            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:2px;">arrow_downward</span>${escapeHTML(destino)}${saldoDestinoHtml}</span>`;
             
             amountClass = 'text-info';
             amountSign = '';
@@ -3856,31 +3865,25 @@ const updateLocalDataAndRefreshUI = async () => {
 
 };
  
-/* EN main.js - Sustituye la función updateVirtualListUI por esta: */
-
 const updateVirtualListUI = () => {
     if (!vList.sizerEl) return;
 
-    // 1. Limpiamos la lista virtual
     vList.items = [];
     vList.itemMap = [];
     let currentHeight = 0;
     
-    // 2. Definimos alturas fijas (Coherencia con CSS)
-    // Asegúrate de que coincidan con tu CSS real
-    const H_HEADER = 45;  // Altura de la cabecera de fecha
-    const H_ITEM = 65;    // Altura de la tarjeta de movimiento
-    const H_PENDING = 72; // Altura de recurrentes pendientes
+    // Constantes de altura (Coherencia visual)
+    const H_HEADER = 45;
+    const H_ITEM = 65;
+    const H_PENDING = 72;
 
-    // --- SECCIÓN A: RECURRENTES PENDIENTES (Siempre arriba) ---
+    // 1. Recurrentes Pendientes (Igual que antes)
     const pendingRecurrents = getPendingRecurrents();
     if (pendingRecurrents.length > 0) {
-        // Cabecera de pendientes
         vList.items.push({ type: 'pending-header', count: pendingRecurrents.length });
         vList.itemMap.push({ height: 40, offset: currentHeight });
         currentHeight += 40;
         
-        // Items pendientes
         pendingRecurrents.forEach(recurrent => {
             vList.items.push({ type: 'pending-item', recurrent: recurrent });
             vList.itemMap.push({ height: H_PENDING, offset: currentHeight });
@@ -3888,64 +3891,96 @@ const updateVirtualListUI = () => {
         });
     }
 
-    // --- SECCIÓN B: AGRUPACIÓN POR DÍAS (La lógica que faltaba) ---
+    // --- NUEVA LÓGICA: CÁLCULO DE SALDOS HISTÓRICOS ---
     
-    // 1. Agrupar movimientos por fecha (YYYY-MM-DD)
+    // A) Creamos un mapa con los saldos ACTUALES de todas las cuentas
+    // (Asumimos que db.cuentas tiene el saldo real actual)
+    const runningBalances = {};
+    if (db.cuentas) {
+        db.cuentas.forEach(c => runningBalances[c.id] = c.saldo || 0);
+    }
+
+    // B) Ordenamos TODOS los movimientos por fecha (Del más nuevo al más viejo)
+    // Usamos una copia para no alterar el orden original si fuera necesario
+    const allSortedMovs = [...(db.movimientos || [])].sort((a, b) => 
+        new Date(b.fecha) - new Date(a.fecha) || b.id.localeCompare(a.id)
+    );
+
+    // C) Recorremos hacia atrás en el tiempo para asignar saldos y revertirlos
+    allSortedMovs.forEach(mov => {
+        // 1. Guardamos el saldo que tenían las cuentas JUSTO DESPUÉS de este movimiento
+        // (que es el valor que tienen actualmente en el mapa runningBalances)
+        
+        if (mov.tipo === 'traspaso') {
+            // Guardamos la foto del saldo para mostrarla
+            mov._saldoOrigenSnapshot = runningBalances[mov.cuentaOrigenId] || 0;
+            mov._saldoDestinoSnapshot = runningBalances[mov.cuentaDestinoId] || 0;
+
+            // 2. Revertimos el efecto para el siguiente paso (ir al pasado)
+            // Si hubo un traspaso de A a B por 50€:
+            // A bajó 50 -> Para volver al pasado, le SUMAMOS 50
+            // B subió 50 -> Para volver al pasado, le RESTAMOS 50
+            const cantidad = Math.abs(mov.cantidad);
+            if (runningBalances[mov.cuentaOrigenId] !== undefined) runningBalances[mov.cuentaOrigenId] += cantidad;
+            if (runningBalances[mov.cuentaDestinoId] !== undefined) runningBalances[mov.cuentaDestinoId] -= cantidad;
+
+        } else {
+            // Movimiento normal (Ingreso/Gasto)
+            mov._saldoSnapshot = runningBalances[mov.cuentaId] || 0;
+
+            // Revertimos: Si fue gasto (-50), sumamos 50. Si fue ingreso (+50), restamos 50.
+            if (runningBalances[mov.cuentaId] !== undefined) {
+                runningBalances[mov.cuentaId] -= mov.cantidad;
+            }
+        }
+    });
+
+    // --- FIN LÓGICA DE CÁLCULO ---
+
+    // 2. Agrupación y Filtrado (Tu lógica visual)
     const groupedByDate = {};
     const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
 
-    // Usamos db.movimientos que ya está filtrado por la página del diario
-    (db.movimientos || []).forEach(mov => {
-        // Cortamos la fecha ISO para obtener solo el día
-        const dateKey = mov.fecha.split('T')[0];
-        
-        if (!groupedByDate[dateKey]) {
-            groupedByDate[dateKey] = {
-                movements: [],
-                totalDay: 0
-            };
-        }
+    allSortedMovs.forEach(mov => {
+        // Filtrado de visibilidad
+        let isVisible = false;
+        let amountForTotal = 0;
 
-        // Añadimos movimiento al grupo
-        groupedByDate[dateKey].movements.push(mov);
-
-        // Calculamos el impacto en el total del día (Solo sumamos si afecta a la vista actual)
-        let amount = 0;
         if (mov.tipo === 'traspaso') {
             const origenVisible = visibleAccountIds.has(mov.cuentaOrigenId);
             const destinoVisible = visibleAccountIds.has(mov.cuentaDestinoId);
+            isVisible = origenVisible || destinoVisible;
             
-            // Si sale de mi vista -> Resta. Si entra a mi vista -> Suma.
-            if (origenVisible && !destinoVisible) amount = -Math.abs(mov.cantidad);
-            else if (!origenVisible && destinoVisible) amount = Math.abs(mov.cantidad);
-            // Si es interno (ambas visibles) es neutro (0)
+            // Cálculo del neto para la cabecera del día
+            if (origenVisible && !destinoVisible) amountForTotal = -Math.abs(mov.cantidad);
+            else if (!origenVisible && destinoVisible) amountForTotal = Math.abs(mov.cantidad);
         } else {
-            // Si es ingreso/gasto normal
-            amount = mov.cantidad;
+            isVisible = visibleAccountIds.has(mov.cuentaId);
+            amountForTotal = mov.cantidad;
         }
-        groupedByDate[dateKey].totalDay += amount;
+
+        if (isVisible) {
+            const dateKey = mov.fecha.split('T')[0];
+            if (!groupedByDate[dateKey]) {
+                groupedByDate[dateKey] = { movements: [], totalDay: 0 };
+            }
+            groupedByDate[dateKey].movements.push(mov);
+            groupedByDate[dateKey].totalDay += amountForTotal;
+        }
     });
 
-    // 2. Ordenar las fechas (De más reciente a más antigua)
+    // 3. Construir la lista plana
     const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
-    // 3. Construir la lista plana intercalando cabeceras
     sortedDates.forEach(dateKey => {
         const group = groupedByDate[dateKey];
 
-        // A) Insertar CABECERA DE DÍA
-        vList.items.push({ 
-            type: 'date-header', 
-            date: dateKey, 
-            total: group.totalDay 
-        });
+        // Header
+        vList.items.push({ type: 'date-header', date: dateKey, total: group.totalDay });
         vList.itemMap.push({ height: H_HEADER, offset: currentHeight });
         currentHeight += H_HEADER;
 
-        // B) Insertar MOVIMIENTOS DEL DÍA
-        // Aseguramos orden por hora dentro del día
-        group.movements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
+        // Items (Ya están ordenados por el paso B)
         group.movements.forEach(mov => {
             vList.items.push({ type: 'transaction', movement: mov });
             vList.itemMap.push({ height: H_ITEM, offset: currentHeight });
@@ -3953,24 +3988,17 @@ const updateVirtualListUI = () => {
         });
     });
     
-    // 4. Actualizar el contenedor de scroll
     vList.sizerEl.style.height = `${currentHeight}px`;
-    
-    // 5. Forzar renderizado inmediato
     vList.lastRenderedRange = { start: -1, end: -1 }; 
     renderVisibleItems();
     
-    // 6. Gestionar mensaje de "Lista Vacía"
+    // Gestión de estado vacío
     const emptyState = document.getElementById('empty-movimientos');
     const listContainer = document.getElementById('movimientos-list-container');
+    const hasItems = vList.items.length > 0;
     
-    if (vList.items.length === 0) {
-        if (listContainer) listContainer.classList.add('hidden');
-        if (emptyState) emptyState.classList.remove('hidden');
-    } else {
-        if (listContainer) listContainer.classList.remove('hidden');
-        if (emptyState) emptyState.classList.add('hidden');
-    }
+    if (listContainer) listContainer.classList.toggle('hidden', !hasItems);
+    if (emptyState) emptyState.classList.toggle('hidden', hasItems);
 };
 
 

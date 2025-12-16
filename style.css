@@ -5657,3 +5657,12 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     .fab-container { bottom: 20px; }
     .fab-main-btn { margin-bottom: 40px; }
 }
+/* Estilo para el saldo resultante en traspasos */
+.t-transfer-balance {
+    font-size: 0.8em;          /* Un poco más pequeño que el nombre */
+    opacity: 0.7;              /* Color atenuado */
+    margin-left: 8px;          /* Separación del nombre */
+    font-weight: 400;
+    font-family: var(--font-numeric); /* Tu fuente numérica */
+    color: var(--c-on-surface);
+}
