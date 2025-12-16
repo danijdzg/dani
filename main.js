@@ -9129,6 +9129,20 @@ const handleStart = (e) => {
         
         // Mapa de acciones
         const actions = {
+		if (action === 'show-main-menu') {
+    // Evitamos que el clic se propague y cierre el menú inmediatamente
+    e.stopPropagation(); 
+    
+    const menu = document.getElementById('main-menu-popover');
+    if (menu) {
+        // Alternar la clase que lo hace visible
+        menu.classList.toggle('popover-menu--visible');
+        
+        // Feedback táctil para que se sienta bien
+        hapticFeedback('light');
+    }
+    return; // Terminamos aquí
+}	
 		'toggle-portfolio-currency': async () => {
     // Verificación de seguridad: Solo funciona si estamos en la página de Patrimonio
     const activePage = document.querySelector('.view--active');
