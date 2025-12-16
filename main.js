@@ -11596,46 +11596,39 @@ const updateExtractoList = () => {
 };
 
 /* ================================================================= */
-/* === FIX FORZADO: MENÚ DE TRES PUNTOS (HEADER) === */
+/* === FIX MENÚ TRES PUNTOS (Para botones creados dinámicamente) === */
 /* ================================================================= */
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. Localizamos los elementos por su ID único
-    const menuBtn = document.getElementById('header-menu-btn');
+
+document.addEventListener('click', (e) => {
+    // 1. Buscamos si el clic fue en el botón del menú (o en su icono interior)
+    const menuBtn = e.target.closest('#header-menu-btn'); 
     const menuPopover = document.getElementById('main-menu-popover');
+    
+    // Si no hay menú en el HTML, no hacemos nada
+    if (!menuPopover) return;
 
-    // 2. Verificamos que existen
-    if (menuBtn && menuPopover) {
-        console.log("✅ Sistema de menú detectado. Inicializando...");
+    // --- CASO A: CLIC EN EL BOTÓN (ABRIR/CERRAR) ---
+    if (menuBtn) {
+        e.stopPropagation(); // Evita que el evento siga subiendo
+        e.preventDefault();
 
-        // A. Evento para ABRIR/CERRAR al tocar el botón
-        menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Evita conflictos con otros clics
-            e.preventDefault();  // Evita comportamientos extraños
-            
-            // Alternar la clase visible
-            const isClosed = !menuPopover.classList.contains('popover-menu--visible');
-            
-            if (isClosed) {
-                menuPopover.classList.add('popover-menu--visible');
-            } else {
-                menuPopover.classList.remove('popover-menu--visible');
-            }
-            
-            // Feedback táctil (si está disponible)
-            if (typeof hapticFeedback === 'function') hapticFeedback('light');
-        });
+        // Alternar clase visible
+        if (menuPopover.classList.contains('popover-menu--visible')) {
+            menuPopover.classList.remove('popover-menu--visible');
+        } else {
+            menuPopover.classList.add('popover-menu--visible');
+        }
 
-        // B. Evento para CERRAR al tocar FUERA
-        document.addEventListener('click', (e) => {
-            // Si el menú está abierto...
-            if (menuPopover.classList.contains('popover-menu--visible')) {
-                // Y el clic NO fue en el menú NI en el botón...
-                if (!menuPopover.contains(e.target) && !menuBtn.contains(e.target)) {
-                    menuPopover.classList.remove('popover-menu--visible');
-                }
-            }
-        });
-    } else {
-        console.error("❌ ERROR: No se encuentra el botón 'header-menu-btn' o el menú 'main-menu-popover' en el HTML.");
+        // Feedback táctil (si la función existe en tu main.js)
+        if (typeof hapticFeedback === 'function') hapticFeedback('light');
+        return; 
+    }
+
+    // --- CASO B: CLIC FUERA (CERRAR) ---
+    // Si el menú está abierto y tocamos en cualquier otro sitio...
+    if (menuPopover.classList.contains('popover-menu--visible')) {
+        if (!e.target.closest('#main-menu-popover')) {
+            menuPopover.classList.remove('popover-menu--visible');
+        }
     }
 });
