@@ -5666,3 +5666,70 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     font-family: var(--font-numeric); /* Tu fuente numérica */
     color: var(--c-on-surface);
 }
+/* === FILTROS DE FECHA (Extracto Patrimonio) === */
+.extracto-filter-bar {
+    display: flex;
+    gap: 12px;
+    padding: 15px 20px;
+    background-color: var(--c-surface);
+    border-bottom: 1px solid var(--c-outline);
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.date-input-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.date-input-label {
+    font-size: 0.7rem;
+    color: var(--c-on-surface-variant);
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.styled-date-input {
+    background: var(--c-surface-variant);
+    border: 1px solid var(--c-outline);
+    color: var(--c-on-surface);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-family: var(--font-family);
+    font-size: 0.85rem;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.styled-date-input:focus {
+    border-color: var(--c-primary);
+}
+
+/* Icono de calendario interno (solo funciona en algunos navegadores, pero ayuda) */
+::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.6;
+    cursor: pointer;
+}
+/* Gestión de Vistas (SPA) */
+.view {
+    display: none; /* Por defecto ocultas */
+    width: 100%;
+    height: 100%;
+    overflow-y: auto; /* Scroll vertical */
+    padding-bottom: 100px; /* Espacio para el menú inferior */
+}
+
+.view.view--active {
+    display: block; /* Solo se muestra la activa */
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

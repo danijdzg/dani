@@ -11400,3 +11400,174 @@ const initSpeedDial = () => {
         };
     });
 };
+
+/* ================================================================= */
+/* === EXTRACTO PATRIMONIO (Global + Fechas) === */
+/* ================================================================= */
+
+// Variables de estado para el filtro (se reinician al salir)
+let extractoState = {
+    startDate: '', // Vacío = Sin límite
+    endDate: ''
+};
+
+// Función principal para renderizar la página/modal de extracto
+const renderPagePatrimonioExtracto = () => {
+    const container = document.getElementById('patrimonio-extracto-container'); // Asegúrate de tener este contenedor en tu HTML o créalo dinámicamente
+    if (!container) return; // O maneja la creación del modal aquí
+
+    // 1. HEADER DE FILTROS (HTML)
+    const filtersHtml = `
+        <div class="extracto-filter-bar">
+            <div class="date-input-group">
+                <label class="date-input-label">DESDE</label>
+                <input type="date" id="ext-date-start" class="styled-date-input" value="${extractoState.startDate}">
+            </div>
+            <div class="date-input-group">
+                <label class="date-input-label">HASTA</label>
+                <input type="date" id="ext-date-end" class="styled-date-input" value="${extractoState.endDate}">
+            </div>
+        </div>
+        <div id="extracto-list-content" style="padding-bottom: 80px;">
+            </div>
+    `;
+
+    container.innerHTML = filtersHtml;
+
+    // 2. LISTENERS PARA LOS INPUTS (Reactividad)
+    const startInput = document.getElementById('ext-date-start');
+    const endInput = document.getElementById('ext-date-end');
+
+    const handleFilterChange = () => {
+        extractoState.startDate = startInput.value;
+        extractoState.endDate = endInput.value;
+        updateExtractoList(); // Redibujar lista
+    };
+
+    startInput.addEventListener('change', handleFilterChange);
+    endInput.addEventListener('change', handleFilterChange);
+
+    // 3. RENDERIZADO INICIAL DE LA LISTA
+    updateExtractoList();
+};
+
+// Función auxiliar para filtrar y pintar la lista
+const updateExtractoList = () => {
+    const listContainer = document.getElementById('extracto-list-content');
+    if (!listContainer) return;
+
+    // A. OBTENER Y FILTRAR MOVIMIENTOS
+    // "Por defecto todos los movimientos de cualquier cuenta" -> Usamos db.movimientos completo
+    let movs = [...(db.movimientos || [])];
+
+    // Filtro por Fecha (Desde)
+    if (extractoState.startDate) {
+        movs = movs.filter(m => m.fecha.split('T')[0] >= extractoState.startDate);
+    }
+    
+    // Filtro por Fecha (Hasta)
+    if (extractoState.endDate) {
+        movs = movs.filter(m => m.fecha.split('T')[0] <= extractoState.endDate);
+    }
+
+    // Ordenar: Más reciente primero
+    movs.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    // B. GENERAR HTML DE LA LISTA
+    if (movs.length === 0) {
+        listContainer.innerHTML = `
+            <div style="text-align:center; padding: 40px; opacity: 0.5;">
+                <span class="material-icons" style="font-size: 48px; color: var(--c-outline);">event_busy</span>
+                <p>No hay movimientos en estas fechas.</p>
+            </div>`;
+        return;
+    }
+
+    let html = '';
+    let lastDate = '';
+
+    movs.forEach(m => {
+        // Cabecera de fecha (Agrupación simple)
+        const dateKey = m.fecha.split('T')[0];
+        if (dateKey !== lastDate) {
+            const dateObj = new Date(m.fecha);
+            const dateStr = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+            html += `
+                <div style="padding: 10px 20px; background: var(--c-background); color: var(--c-primary); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; position:sticky; top: 73px; z-index:5; border-bottom:1px solid var(--c-outline);">
+                    ${dateStr}
+                </div>`;
+            lastDate = dateKey;
+        }
+
+        // Renderizado de la Tarjeta (Reutilizando tu estilo existente)
+        // Nota: Usamos una versión simplificada de renderVirtualListItem para este contexto
+        const cantidadClass = m.cantidad < 0 ? 'text-negative' : 'text-positive';
+        const symbol = m.cantidad < 0 ? '' : '+';
+        
+        // Obtener nombres (Cuenta y Concepto)
+        const cuenta = db.cuentas.find(c => c.id === m.cuentaId)?.nombre || 'Cuenta';
+        const concepto = db.conceptos.find(c => c.id === m.conceptoId)?.nombre || 'Varios';
+
+        html += `
+            <div class="transaction-card" style="margin: 0; border-radius: 0; border-bottom: 1px solid var(--c-outline);">
+                <div class="transaction-card__content">
+                    <div class="transaction-card__details">
+                        <div class="transaction-card__row-1">${m.descripcion || concepto}</div>
+                        <div class="transaction-card__row-2" style="opacity:0.7;">${cuenta} • ${concepto}</div>
+                    </div>
+                    <div class="transaction-card__figures">
+                        <strong class="${cantidadClass}" style="font-size: 1rem;">
+                            ${symbol}${formatCurrencyHTML(m.cantidad)}
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    listContainer.innerHTML = html;
+};
+/* === LOGICA DE NAVEGACIÓN Y RENDERIZADO DE PATRIMONIO === */
+
+// 1. Función para cambiar de pantalla (Úsala en el botón 'Atrás' del HTML)
+window.navigateTo = (pageId) => {
+    // Ocultar todas las vistas
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('view--active'));
+    
+    // Mostrar la deseada
+    const target = document.getElementById(pageId);
+    if (target) {
+        target.classList.add('view--active');
+        
+        // Si vamos al panel, actualizamos datos
+        if (pageId === 'panel-page' && typeof updateDashboardData === 'function') {
+            updateDashboardData();
+        }
+    }
+};
+
+// 2. Función que detecta el clic en la tarjeta de Patrimonio del Panel
+// (Llámala una vez al iniciar la app, por ejemplo en initializeApp() o al final del archivo)
+const initPatrimonioNavigation = () => {
+    // Buscamos la tarjeta de Patrimonio en el Panel (la primera .hero-card)
+    // Asegúrate de que este selector coincida con tu tarjeta de Patrimonio
+    const patrimonioCard = document.querySelector('#panel-page .hero-card:nth-of-type(1)');
+    
+    if (patrimonioCard) {
+        // Le damos estilo de "clickable"
+        patrimonioCard.style.cursor = 'pointer';
+        
+        patrimonioCard.onclick = () => {
+            // A) Navegar a la nueva página creada en el Paso 1
+            navigateTo('patrimonio-page');
+            
+            // B) Renderizar el contenido (Tu función del Paso 2)
+            renderPagePatrimonioExtracto();
+        };
+    }
+};
+
+// IMPORTANTE: Ejecutar la inicialización
+// Si tienes un 'document.addEventListener("DOMContentLoaded"...', mételo ahí.
+// Si no, simplemente llama a la función al final del archivo:
+setTimeout(initPatrimonioNavigation, 1000); // Pequeño retraso para asegurar que el HTML existe
