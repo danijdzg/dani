@@ -4935,81 +4935,78 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         scrollbar-width: thin; /* Firefox */
     }
 }
-/* === CABECERA DE FECHA (Estilo Nativo Dark Mode - Sin Sticky) === */
+//* === CABECERA DE FECHA (Estilo "Separador Fluido") === */
 
 .sticky-date-header {
-    /* CAMBIO CLAVE: relative hace que se mueva con el scroll */
+    /* 1. MOVIMIENTO NATURAL (No se pega arriba) */
     position: relative; 
     z-index: 1;
+    
+    /* 2. ANCHO COMPLETO (De borde a borde) */
+    width: 100%;
+    margin: 24px 0 8px 0; /* Márgenes laterales a 0 */
+    
+    /* 3. ESTÉTICA REDONDEADA Y TEMA */
+    background-color: var(--c-surface-variant); /* Fondo del tema */
+    border-top: 1px solid var(--c-outline);
+    border-bottom: 1px solid var(--c-outline);
+    /* Quitamos bordes laterales para que se fusione con los lados */
+    border-left: none;
+    border-right: none;
+    
+    /* Mantenemos un redondeo suave en las esquinas interiores visualmente
+       o podemos dejarlo a 0 si prefieres una barra totalmente recta.
+       Aquí lo dejo sutil para cumplir con "manteniendo el redondeado" */
+    border-radius: 0; 
     
     /* Layout */
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 8px 20px; /* Un poco más de aire lateral */
     
-    /* Estética acorde a la App (Dark Mode) */
-    background-color: var(--c-surface-variant); /* Fondo oscuro azulado/gris */
-    border: 1px solid var(--c-outline);         /* Borde sutil */
-    color: var(--c-on-surface);                 /* Texto blanco/claro */
-    
-    /* Forma */
-    border-radius: 16px; /* Coincide con el radio de las tarjetas */
-    
-    /* Espaciado */
-    padding: 8px 16px;
-    /* Margen: Arriba amplio para separar días, Abajo pequeño para pegar a tarjeta */
-    margin: 24px 12px 8px 12px; 
-    
-    /* Sin sombra pesada, integración plana */
-    box-shadow: none;
+    /* Sombra sutil para separar del fondo */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-/* Parte Izquierda (Día y Fecha) */
+/* Parte Izquierda */
 .sticky-date-left {
     display: flex;
     align-items: center;
-    gap: 10px;
-    overflow: hidden;
+    gap: 12px;
 }
 
-/* La pastilla del día (LUN, MAR, HOY) */
+/* Pastilla del día (LUN, MAR...) */
 .sticky-day-pill {
     font-weight: 800;
     text-transform: uppercase;
     font-size: 0.75rem;
-    background-color: var(--c-surface); /* Un poco más oscuro que la barra */
-    padding: 2px 8px;
-    border-radius: 6px;
-    color: var(--c-primary); /* Color de acento (Verde) */
+    padding: 3px 10px;
+    border-radius: 20px; /* Muy redondeado */
+    background-color: var(--c-surface);
+    color: var(--c-primary);
     border: 1px solid var(--c-outline);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Estilo especial para HOY */
 .sticky-day-pill.is-today {
     background-color: var(--c-primary);
     color: var(--c-white);
     border-color: var(--c-primary);
 }
 
-/* El texto de la fecha (16 de diciembre...) */
+/* Fecha texto */
 .sticky-date-text {
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     font-size: 0.85rem;
-    color: var(--c-on-surface-secondary); /* Gris claro */
-    text-transform: capitalize;
+    color: var(--c-on-surface-secondary);
+    font-weight: 500;
 }
 
-/* Colores Semánticos para el Total del Día */
-
+/* Total a la derecha (Colores semánticos ya aplicados en el paso anterior) */
 .sticky-date-total {
-    font-weight: 800;
-    font-family: var(--font-numeric);
-    white-space: nowrap;
     font-size: 0.9rem;
-    letter-spacing: -0.5px;
+    font-weight: 700;
+    font-family: var(--font-numeric);
 }
 
 /* POSITIVO -> VERDE */
