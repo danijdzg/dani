@@ -5984,3 +5984,17 @@ body::-webkit-scrollbar {
         font-size: 0.85rem;
     }
 }
+/* ================================================================= */
+/* === ELIMINAR BARRA DE SCROLL EN PANEL (Invisible pero funcional) === */
+/* ================================================================= */
+/* 1. Para Chrome, Safari y Opera */
+#dashboard-page .page-content::-webkit-scrollbar {
+    display: none;
+}
+/* 2. Para Firefox, IE y Edge */
+#dashboard-page .page-content {
+    -ms-overflow-style: none;  /* IE y Edge */
+    scrollbar-width: none;  /* Firefox */ 
+    /* Aseguramos que el contenido fluya bien */
+    overflow-y: auto; 
+}
