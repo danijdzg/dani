@@ -4748,42 +4748,32 @@ body[data-theme="sunset-groove"] .hero-val-big {
     background-color: var(--c-success);
     box-shadow: 0 0 6px var(--c-success);
 }
-/* === ESTILOS DE MONEDA "FINTECH PRO" === */
+/* === TIPOGRAFÍA FINANCIERA (Global) === */
 
 /* Parte entera (Euros) */
 .currency-major {
-    font-weight: 700;
-    letter-spacing: -0.02em; /* Un poco más pegado para números pro */
+    font-weight: 700; /* Negrita sólida */
+    letter-spacing: -0.03em; /* Números más pegaditos (kerning) */
 }
 
-/* Parte decimal (Céntimos) */
+/* Parte decimal (Céntimos + Símbolo) */
 .currency-minor {
-    font-size: 0.75em; /* 65% del tamaño del número principal */
+    font-size: 0.75em; /* 75% del tamaño (lo que pediste) */
     font-weight: 600;
-    opacity: 0.8; /* Ligeramente más suave */
-    vertical-align: top; /* Lo eleva */
-	margin-top: 0.1em;
+    opacity: 0.85; /* Ligeramente más suave para dar jerarquía */
+    vertical-align: top; /* Lo eleva hacia la parte superior */
     position: relative;
-    top: 0.1em; /* Ajuste fino de altura */
+    top: 0.15em; /* Ajuste fino para alinearlo con la altura de la x */
     margin-left: 1px;
     display: inline-block;
 }
 
-/* El símbolo del Euro */
-.currency-symbol {
-    font-size: 0.65em;
-    font-weight: inherit;
-    opacity: 0.85;
-    vertical-align: top;
-    position: relative;
-    top: 0.1em;
-    margin-left: 2px;
-}
-
-/* Ajuste específico para cuando los números son negativos (Rojos) */
+/* Ajuste específico para números negativos (Rojos) */
+/* Aseguramos que la opacidad no haga que el rojo se vea rosa */
 .text-negative .currency-minor,
-.text-negative .currency-symbol {
-    opacity: 0.9; /* Un poco más visibles en rojo */
+.text-danger .currency-minor {
+    opacity: 0.9; 
+    font-weight: 700; /* Un poco más de peso en negativos para legibilidad */
 }
 /* MEJORA 2: Transiciones del Botón de Guardado */
 .btn {
@@ -5837,107 +5827,118 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 }
 
 /* ================================================================= */
-/* === FAB MENU (BOTÓN +) - CORREGIDO SIN FRANJAS Y CON BLUR === */
+/* === FAB SYSTEM V.FINAL (Centrado, Blur Total, Sin Errores) === */
 /* ================================================================= */
 
-/* 1. EL CONTENEDOR (Ocupa todo el ancho pero deja pasar clics) */
+/* 1. CONTENEDOR PRINCIPAL (Invisible y no bloqueante) */
 .fab-container {
     position: fixed;
-    /* CENTRADO SIN TRANSFORM (Soluciona el error de la franja) */
+    bottom: 30px; /* Ajuste para que flote sobre la barra */
     left: 0; 
-    right: 0; 
-    bottom: 30px; /* Altura base para móvil */
-    
-    z-index: 12000; /* Por encima de todo */
+    right: 0; /* Ocupa todo el ancho para evitar franjas laterales */
+    height: 0; /* Altura 0 para no bloquear clicks en la pantalla */
     
     display: flex;
-    flex-direction: column;
-    align-items: center; /* Esto centra el botón horizontalmente */
+    justify-content: center; /* Centrado horizontal automático */
+    align-items: flex-end;   /* Alineado abajo */
     
-    /* CRUCIAL: Permite hacer clic en la app a través de los espacios vacíos */
-    pointer-events: none; 
+    z-index: 12000; /* La capa más alta de la app */
 }
 
-/* 2. EL FONDO OSCURO Y BORROSO */
+/* 2. EL FONDO BORROSO (Cubre TODA la pantalla) */
 .fab-backdrop {
-    position: fixed; /* Se fija a la ventana del navegador */
-    top: 0; 
-    left: 0; 
+    position: fixed;
+    top: 0; left: 0; 
     width: 100vw; 
     height: 100vh;
     
-    /* Efecto de Emborronado y Oscurecimiento */
-    background: rgba(5, 5, 10, 0.85); /* Fondo muy oscuro para contraste */
-    backdrop-filter: blur(8px); /* DESENFOQUE FUERTE */
-    -webkit-backdrop-filter: blur(8px); /* Soporte para iPhone */
+    /* Efecto Cristal Oscuro */
+    background-color: rgba(5, 5, 10, 0.85); 
+    backdrop-filter: blur(12px); /* Blur intenso estilo iOS */
+    -webkit-backdrop-filter: blur(12px);
     
     opacity: 0;
-    pointer-events: none; /* Invisible = no molesta */
-    transition: opacity 0.3s ease;
-    z-index: -1; /* Se coloca detrás del botón */
+    visibility: hidden; /* Para que no bloquee cuando está cerrado */
+    transition: opacity 0.3s ease, visibility 0.3s;
+    
+    z-index: -1; /* Se coloca detrás de los botones del FAB */
+    pointer-events: auto; /* Captura clics para cerrar el menú */
 }
 
-/* Cuando se activa, el fondo aparece y bloquea los clics */
+/* Estado Activo del Fondo */
 .fab-container.active .fab-backdrop {
     opacity: 1;
-    pointer-events: auto; /* Atrapa el clic para cerrar el menú */
+    visibility: visible;
 }
 
-/* 3. BOTÓN PRINCIPAL (+) */
+/* 3. EL BOTÓN PRINCIPAL (+) */
 .fab-main-btn {
-    pointer-events: auto; /* Reactivamos clics solo para el botón */
-    width: 64px;
-    height: 64px;
+    width: 68px;
+    height: 68px;
     border-radius: 50%;
     
-    /* Gradiente y Sombra */
+    /* Gradiente Neón Vibrante */
     background: linear-gradient(135deg, #00E676 0%, #00B34D 100%);
-    box-shadow: 0 4px 20px rgba(0, 179, 77, 0.5);
-    border: 4px solid var(--c-background); /* Anillo de recorte */
     
+    /* Sombra Resplandeciente */
+    box-shadow: 
+        0 8px 20px rgba(0, 179, 77, 0.4),
+        0 0 0 5px var(--c-background); /* Anillo de "corte" contra la barra */
+        
+    border: none;
     color: white;
     cursor: pointer;
+    
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     
-    /* Evita el recuadro azul al pulsar en Android */
-    -webkit-tap-highlight-color: transparent; 
+    position: relative;
+    pointer-events: auto; /* Reactivamos clics en el botón */
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    
+    /* Corrección visual para subirlo respecto a la barra */
+    margin-bottom: 25px; 
 }
 
-.fab-main-btn:active { transform: scale(0.95); }
-
-/* Iconos animados */
+/* Iconos internos (Más y Cerrar) */
 .fab-icon-plus, .fab-icon-close {
     position: absolute;
-    transition: all 0.3s ease;
     font-size: 32px;
+    transition: all 0.3s ease;
 }
-.fab-icon-close { opacity: 0; transform: rotate(-90deg); }
+.fab-icon-close { 
+    opacity: 0; 
+    transform: rotate(-90deg); 
+    color: #ff4d4d; /* Rojo al cerrar */
+}
 
-/* ESTADO ACTIVO DEL BOTÓN */
-.fab-container.active .fab-main-btn { 
-    background: #222; /* Se vuelve oscuro al abrir */
-    box-shadow: none;
-    border-color: transparent;
+/* Estado Activo del Botón Principal */
+.fab-container.active .fab-main-btn {
+    transform: scale(1.1);
+    background: #1a1a1a; /* Se oscurece */
+    box-shadow: none; /* Quita el brillo verde */
+    border-color: rgba(255,255,255,0.1);
 }
 .fab-container.active .fab-icon-plus { opacity: 0; transform: rotate(90deg); }
-.fab-container.active .fab-icon-close { opacity: 1; transform: rotate(0); color: #ff4d4d; }
+.fab-container.active .fab-icon-close { opacity: 1; transform: rotate(0); }
 
-/* 4. LAS OPCIONES (Pago, Traspaso, Ingreso) */
+
+/* 4. LOS BOTONES DE OPCIÓN (Satélites) */
 .fab-options {
     position: absolute;
-    bottom: 10px; /* Salen desde el centro */
+    bottom: 35px; /* Salen desde el centro del botón principal */
     left: 50%;
     width: 0; height: 0;
-    pointer-events: none; /* No clickeables si están cerradas */
+    pointer-events: none; /* No clickeables si están cerrados */
 }
 
 .fab-option {
     position: absolute;
     bottom: 0; left: 0;
-    margin-left: -25px; margin-bottom: -25px; /* Centrado en el origen */
+    /* Centramos el elemento en el punto 0,0 */
+    margin-left: -30px; 
+    margin-bottom: -30px; 
     
     display: flex;
     flex-direction: column;
@@ -5947,65 +5948,73 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     background: transparent;
     border: none;
     cursor: pointer;
+    
     opacity: 0;
     transform: scale(0);
-    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); /* Efecto rebote */
-    -webkit-tap-highlight-color: transparent;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Cuando está activo, las opciones reciben clics */
+/* Habilitar clics al abrir */
 .fab-container.active .fab-option {
     opacity: 1;
     pointer-events: auto;
 }
 
-/* Círculos de Iconos */
+/* Estilo de los Círculos de Opción */
 .fab-icon-holder {
-    width: 56px; height: 56px;
+    width: 60px; height: 60px;
     border-radius: 50%;
-    color: white;
     display: flex; align-items: center; justify-content: center;
-    font-size: 24px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4); /* Sombra fuerte para destacar sobre el blur */
-    border: 2px solid rgba(255,255,255,0.1);
+    color: white;
+    font-size: 26px;
+    
+    /* Sombra fuerte para destacar sobre el blur */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.15);
 }
 
-/* Etiquetas de texto */
+/* Colores Muy Vistosos */
+.fab-option--gasto .fab-icon-holder { 
+    background: linear-gradient(135deg, #FF3B30, #FF9500); 
+}
+.fab-option--ingreso .fab-icon-holder { 
+    background: linear-gradient(135deg, #30D158, #39FF14); 
+    color: #004d00; /* Icono oscuro para contraste */
+}
+.fab-option--traspaso .fab-icon-holder { 
+    background: linear-gradient(135deg, #007AFF, #5AC8FA); 
+}
+
+/* Etiquetas de Texto */
 .fab-label {
     color: white;
-    font-size: 13px;
-    font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8); /* Sombra de texto para legibilidad */
-    background: transparent; /* Sin caja, texto limpio */
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    background: transparent;
 }
 
-/* Colores Neón Vibrantes */
-.fab-option--ingreso .fab-icon-holder { background: linear-gradient(135deg, #00b09b, #96c93d); }
-.fab-option--traspaso .fab-icon-holder { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-.fab-option--gasto .fab-icon-holder { background: linear-gradient(135deg, #ff0844, #ffb199); }
+/* --- ANIMACIONES DE DESPLIEGUE --- */
 
-/* --- COORDENADAS DE ANIMACIÓN (Despliegue en Abanico) --- */
-
-/* PAGO (Izquierda) */
-.fab-container.active .fab-option--gasto { 
-    transform: translate(-85px, -90px) scale(1); 
-    transition-delay: 0s; 
+/* GASTO (Izquierda) */
+.fab-container.active .fab-option--gasto {
+    transform: translate(-90px, -100px) scale(1);
+    transition-delay: 0s;
 }
+
 /* TRASPASO (Centro Arriba) */
-.fab-container.active .fab-option--traspaso { 
-    transform: translate(0px, -130px) scale(1); 
-    transition-delay: 0.05s; 
-}
-/* INGRESO (Derecha) */
-.fab-container.active .fab-option--ingreso { 
-    transform: translate(85px, -90px) scale(1); 
-    transition-delay: 0.1s; 
+.fab-container.active .fab-option--traspaso {
+    transform: translate(0px, -150px) scale(1);
+    transition-delay: 0.05s;
 }
 
-/* 5. AJUSTE PARA ESCRITORIO (Centrado y Elevado) */
+/* INGRESO (Derecha) */
+.fab-container.active .fab-option--ingreso {
+    transform: translate(90px, -100px) scale(1);
+    transition-delay: 0.1s;
+}
+
+/* Ajuste para escritorio */
 @media (min-width: 1024px) {
-    .fab-container {
-        /* Mantenemos el sistema left:0/right:0 para evitar el bug del transform */
-        bottom: 50px; 
-    }
+    .fab-container { bottom: 50px; }
 }

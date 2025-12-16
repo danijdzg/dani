@@ -1886,13 +1886,19 @@ const createChartGradient = (ctx, colorHex) => {
 			return currencyFormatter.format(number);
 };
 const formatCurrencyHTML = (numInCents) => {
+    // 1. Obtenemos el string base (ej: "1.250,50 €")
     const formatted = formatCurrency(numInCents);
-    // Separa la parte entera de los decimales (asumiendo formato 1.234,56 €)
+    
+    // 2. Separamos por la coma decimal
     const parts = formatted.split(',');
+    
     if (parts.length === 2) {
-        // parts[0] es "1.234" y parts[1] es "56 €"
+        // parts[0] es la parte entera (ej: "1.250")
+        // parts[1] son los decimales y el símbolo (ej: "50 €")
         return `<span class="currency-major">${parts[0]}</span><small class="currency-minor">,${parts[1]}</small>`;
     }
+    
+    // Fallback por si acaso no hay decimales
     return `<span class="currency-major">${formatted}</span>`;
 };
 	const getLedgerName = (letter) => {
@@ -2045,8 +2051,22 @@ const animateCountUp = (el, end, duration = 700, formatAsCurrency = true, prefix
         }
 
         if (progress < 1) {
-            requestAnimationFrame(step);
-        } else {
+    // Durante la animación, si prefieres rendimiento, puedes usar texto plano
+    // O usar HTML si quieres que los decimales bailen (más costoso pero más bonito)
+    if (formatAsCurrency) {
+        el.innerHTML = prefix + formatCurrencyHTML(currentInCents) + suffix;
+    } else {
+        el.textContent = `${prefix}${current.toFixed(2)}${suffix}`;
+    }
+    requestAnimationFrame(step);
+} else {
+    // AL FINALIZAR: ¡IMPORTANTE! Usar el formateador HTML
+    if (formatAsCurrency) {
+        el.innerHTML = prefix + formatCurrencyHTML(end) + suffix; // <--- ESTO ES CLAVE
+    } else {
+        el.textContent = `${prefix}${(end / 100).toFixed(2)}${suffix}`;
+    }
+} else {
             if (formatAsCurrency) {
                 el.innerHTML = prefix + formatCurrencyHTML(end) + suffix;
             } else {
@@ -3687,7 +3707,7 @@ const renderVirtualListItem = (item) => {
                     </div>
                 </div>
                 <div class="transaction-card__figures">
-                    <strong class="transaction-card__amount ${amountClass}">${formatCurrency(r.cantidad)}</strong>
+                    <strong class="transaction-card__amount ${amountClass}">${formatCurrencyHTML(r.cantidad)}</strong>
                 </div>
             </div>
         </div>`;
@@ -3804,11 +3824,11 @@ const renderVirtualListItem = (item) => {
             <div class="t-content">
                 <div class="t-row-primary">
                     <div class="t-line-1">${line1}</div>
-                    <div class="t-amount ${amountClass}">${amountSign}${formatCurrency(m.cantidad)}</div>
+                    <div class="t-amount ${amountClass}">${amountSign}${formatCurrencyHTML(m.cantidad)}</div>
                 </div>
                 <div class="t-row-secondary">
                     <div class="t-line-2">${line2}</div>
-                    ${m.tipo !== 'traspaso' ? `<div class="t-running-balance">${formatCurrency(m.runningBalance)}</div>` : ''}
+                    ${m.tipo !== 'traspaso' ? `<div class="t-running-balance">${formatCurrencyHTML(m.runningBalance)}</div>` : ''}
                 </div>
             </div>
         </div>`;
@@ -5560,7 +5580,7 @@ async function renderInformeAsignacionActivos(container) {
             <tr>
                 <td style="padding: 8px; border-bottom: 1px solid var(--c-outline);">${perf.nombre}</td>
                 <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;">${formatCurrencyHTML(perf.valorActual)}</td>
-                <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;" class="${pnlClass}">${formatCurrency(perf.pnlAbsoluto)}</td>
+                <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;" class="${pnlClass}">${formatCurrencyHTML(perf.pnlAbsoluto)}</td>
                 <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;" class="${pnlClass}">${perf.pnlPorcentual.toFixed(2)}%</td>
                 <td style="padding: 8px; border-bottom: 1px solid var(--c-outline); text-align: right;" class="${tirClass}">${(perf.irr * 100).toFixed(2)}%</td>
             </tr>`;
@@ -5835,7 +5855,7 @@ const renderSavingsRateGauge = (canvasId, percentage) => {
                     </div>
                 </div>
                 <div class="transaction-card__figures">
-                    <strong class="transaction-card__amount ${amountClass}">${formatCurrency(r.cantidad)}</strong>
+                    <strong class="transaction-card__amount ${amountClass}">${formatCurrencyHTML(r.cantidad)}</strong>
                 </div>
             </div>
         </div>`;
@@ -6248,7 +6268,7 @@ const renderRecurrentsListOnPage = () => {
 				    <small style="color: var(--c-on-surface-secondary); font-size: var(--fs-xs);">Próximo: ${nextDate} (${frequencyText})</small>
 			    </div>
 		    </div>
-		    <strong class="${amountClass}" style="margin-right: var(--sp-2);">${formatCurrency(r.cantidad)}</strong>
+		    <strong class="${amountClass}" style="margin-right: var(--sp-2);">${formatCurrencyHTML(r.cantidad)}</strong>
 	    </div>`;
     }).join('');
 };
@@ -7771,7 +7791,7 @@ const performGlobalSearch = async (query) => {
                         <p>${escapeHTML(m.descripcion)}</p>
                         <small>${new Date(m.fecha).toLocaleDateString('es-ES')} • ${escapeHTML(item.cuentaInfo)}</small>
                     </div>
-                    <strong class="search-result-item__amount ${amountClass}">${formatCurrency(m.cantidad)}</strong>
+                    <strong class="search-result-item__amount ${amountClass}">${formatCurrencyHTML(m.cantidad)}</strong>
                 </button>`;
         });
         resultsHtml += `</div>`;
@@ -8319,7 +8339,7 @@ const renderCuentasModalList = () => {
                     </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: var(--sp-1); flex-shrink: 0;">
-                    <strong class="${amountClass}" style="margin-right: var(--sp-2);">${formatCurrency(r.cantidad)}</strong>
+                    <strong class="${amountClass}" style="margin-right: var(--sp-2);">${formatCurrencyHTML(r.cantidad)}</strong>
                     <button class="icon-btn" data-action="edit-recurrente" data-id="${r.id}" title="Editar Recurrente"><span class="material-icons">edit</span></button>
                 </div>
             </div>`
@@ -11330,15 +11350,14 @@ if ('serviceWorker' in navigator) {
 const initSpeedDial = () => {
     const container = document.getElementById('fab-container');
     const trigger = document.getElementById('fab-trigger');
-    const backdrop = document.getElementById('fab-backdrop');
+    const backdrop = document.getElementById('fab-backdrop'); // <-- IMPORTANTE
     const options = document.querySelectorAll('.fab-option');
 
     if (!container || !trigger) return;
 
-    // --- Funciones de Control ---
-    
-    const openMenu = () => {
-        container.classList.add('active');
+    const toggleMenu = (e) => {
+        e.stopPropagation();
+        container.classList.toggle('active');
         hapticFeedback('medium');
     };
 
@@ -11346,23 +11365,10 @@ const initSpeedDial = () => {
         container.classList.remove('active');
     };
 
-    const toggleMenu = (e) => {
-        // Detenemos la propagación para que no llegue al "document" y se cierre inmediatamente
-        e.stopPropagation();
-        
-        if (container.classList.contains('active')) {
-            closeMenu();
-        } else {
-            openMenu();
-        }
-    };
-
-    // --- EVENTO 1: BOTÓN PRINCIPAL (+) ---
-    // Usamos 'click' estándar. Es compatible con Móvil y PC.
+    // 1. Abrir/Cerrar con el botón
     trigger.onclick = toggleMenu;
 
-    // --- EVENTO 2: FONDO OSCURO (Cerrar al tocar fuera) ---
-    // Esta es la clave para lo que pediste: si tocas lo oscuro, se cierra.
+    // 2. Cerrar al pulsar el fondo borroso (ESTO ARREGLA LA USABILIDAD)
     if (backdrop) {
         backdrop.onclick = (e) => {
             e.stopPropagation();
@@ -11370,30 +11376,21 @@ const initSpeedDial = () => {
         };
     }
 
-    // --- EVENTO 3: LAS OPCIONES (Pago, Traspaso, Ingreso) ---
+    // 3. Acción al pulsar una opción (Pago, Ingreso...)
     options.forEach(btn => {
         btn.onclick = (e) => {
-            e.stopPropagation(); // Evitar cerrar antes de tiempo
+            e.stopPropagation();
+            const type = btn.dataset.type;
             
-            const type = btn.dataset.type; // 'gasto', 'ingreso', 'traspaso'
-            
-            // 1. Feedback y Cierre visual inmediato
             hapticFeedback('light');
-            closeMenu();
+            closeMenu(); // Cerramos el menú y el blur
 
-            // 2. Ejecutar la acción tras una micro-pausa (para que se vea la animación)
+            // Pequeño retardo para que se vea la animación de cierre antes de abrir el modal
             setTimeout(() => {
-                try {
-                    if (typeof startMovementForm === 'function') {
-                        startMovementForm(null, false, type);
-                    } else {
-                        console.error("Error: startMovementForm no encontrada");
-                        showToast("Error interno", "danger");
-                    }
-                } catch (err) {
-                    console.error(err);
+                if (typeof startMovementForm === 'function') {
+                    startMovementForm(null, false, type);
                 }
-            }, 75);
+            }, 100);
         };
     });
 };
