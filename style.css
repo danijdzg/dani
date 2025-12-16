@@ -5711,52 +5711,61 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     opacity: 0.6;
     cursor: pointer;
 }
-/* Estilos del Menú Flotante */
+/* ================================================================= */
+/* === ESTILO FINAL MENÚ (Visibilidad Forzada) === */
+/* ================================================================= */
+
 .popover-menu {
-    position: fixed;
-    top: 60px;
-    right: 15px;
-    background-color: var(--c-surface, #1e1e1e);
-    border: 1px solid var(--c-outline, rgba(255,255,255,0.1));
-    border-radius: 16px;
-    padding: 8px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-    z-index: 20000 !important; /* Capa máxima */
-    min-width: 220px;
+    /* POSICIÓN FIJA (Independiente del scroll) */
+    position: fixed !important; 
+    top: 60px !important; 
+    right: 15px !important;
     
-    /* Estado Oculto */
-    opacity: 0;
-    transform: scale(0.9) translateY(-10px);
-    pointer-events: none;
+    /* APARIENCIA */
+    background-color: #222 !important; /* Fondo gris oscuro sólido */
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    border-radius: 12px !important;
+    padding: 10px !important;
+    min-width: 200px !important;
+    
+    /* CAPA SUPERIOR (Por encima de todo) */
+    z-index: 2147483647 !important; /* El valor más alto posible en CSS */
+    box-shadow: 0 0 50px rgba(0,0,0,0.8) !important;
+    
+    /* TRANSICIONES */
     transition: opacity 0.2s, transform 0.2s;
     transform-origin: top right;
+    
+    /* ESTADO INICIAL (Oculto) */
+    opacity: 0;
+    transform: scale(0.9);
+    pointer-events: none; /* No se puede tocar */
+    visibility: hidden;   /* Oculto del todo */
 }
 
-/* Estado Visible */
+/* CLASE QUE ACTIVA LA VISIBILIDAD */
 .popover-menu--visible {
+    /* ESTADO VISIBLE (Activado) */
     opacity: 1 !important;
-    transform: scale(1) translateY(0) !important;
-    pointer-events: auto !important;
+    transform: scale(1) !important;
+    pointer-events: auto !important; /* Se puede tocar */
+    visibility: visible !important;  /* Visible */
+    display: block !important;
 }
 
-/* Elementos */
+/* ITEMS DEL MENÚ */
 .popover-menu__item {
     display: flex;
     align-items: center;
     gap: 12px;
     width: 100%;
-    padding: 12px 16px;
+    padding: 12px;
     background: transparent;
     border: none;
-    color: var(--c-on-surface, white);
-    font-size: 0.95rem;
-    font-weight: 500;
-    border-radius: 8px;
+    color: white !important; /* Texto blanco forzado */
+    font-size: 16px;
     text-align: left;
 }
-.popover-menu__divider {
-    height: 1px;
-    background-color: var(--c-outline, rgba(255,255,255,0.1));
-    margin: 6px 0;
+.popover-menu__item:active {
+    background-color: rgba(255,255,255,0.1);
 }
-.popover-menu__item--danger { color: #ff4d4d; }
