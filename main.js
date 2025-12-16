@@ -9160,23 +9160,48 @@ const handleStart = (e) => {
 },
 			'rename-ledgers': showRenameLedgersModal,
             'swipe-show-irr-history': () => handleShowIrrHistory(type),
-            'show-main-menu': () => {
-                const menu = document.getElementById('main-menu-popover');
-                if (!menu) return;
-                hapticFeedback('light');
-                menu.classList.toggle('popover-menu--visible');
-                if (menu.classList.contains('popover-menu--visible')) {
-                    setTimeout(() => {
-                        const closeOnClickOutside = (event) => {
-                            if (!menu.contains(event.target) && !event.target.closest('[data-action="show-main-menu"]')) {
-                                menu.classList.remove('popover-menu--visible');
-                                document.removeEventListener('click', closeOnClickOutside);
-                            }
-                        };
-                        document.addEventListener('click', closeOnClickOutside);
-                    }, 0);
+            'show-main-menu': (e) => { // 1. IMPORTANTE: Añadir (e) aquí para recibir el evento
+    const menu = document.getElementById('main-menu-popover');
+    if (!menu) return;
+    
+    hapticFeedback('light');
+
+    // --- NUEVO CÓDIGO DE POSICIONAMIENTO ---
+    // Solo calculamos si vamos a ABRIR el menú
+    if (!menu.classList.contains('popover-menu--visible') && e) {
+        // Obtenemos el botón, asegurándonos de tener el elemento correcto aunque se pulse el icono
+        const button = e.currentTarget || e.target.closest('[data-action="show-main-menu"]');
+        
+        if (button) {
+            const rect = button.getBoundingClientRect();
+            
+            // Posición Vertical: Debajo del botón + 5px
+            menu.style.top = `${rect.bottom + 5}px`;
+            
+            // Posición Horizontal: Alineado a la derecha
+            const rightSpace = window.innerWidth - rect.right;
+            menu.style.right = `${Math.max(5, rightSpace)}px`;
+            
+            // Limpieza
+            menu.style.left = 'auto';
+        }
+    }
+    // ---------------------------------------
+
+    menu.classList.toggle('popover-menu--visible');
+
+    if (menu.classList.contains('popover-menu--visible')) {
+        setTimeout(() => {
+            const closeOnClickOutside = (event) => {
+                if (!menu.contains(event.target) && !event.target.closest('[data-action="show-main-menu"]')) {
+                    menu.classList.remove('popover-menu--visible');
+                    document.removeEventListener('click', closeOnClickOutside);
                 }
-            },
+            };
+            document.addEventListener('click', closeOnClickOutside);
+        }, 0);
+    }
+},
 			'open-external-calculator': () => {
                 // Cierra el menú si estaba abierto
                 const menu = document.getElementById('main-menu-popover');

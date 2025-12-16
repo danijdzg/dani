@@ -1781,8 +1781,6 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 #main-menu-popover {
     /* 1. Posicionamiento Fijo al Viewport (Pantalla) */
     position: fixed !important; 
-    top: 60px !important;    /* Altura aproximada de tu barra superior */
-    right: 16px !important;  /* Anclado a la derecha con margen seguro */
     left: auto !important;   /* ANULA cualquier intento de alinearlo a la izquierda */
     
     /* 2. Dimensiones Controladas */
