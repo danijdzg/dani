@@ -8890,18 +8890,19 @@ const attachEventListeners = () => {
 
         const action = btn.dataset.action;
 
-        // --- AQUÍ ESTÁ EL CÓDIGO QUE NECESITABAS ---
-        if (action === 'show-main-menu') {
-            e.stopPropagation(); // Evita que se cierre inmediatamente
-            if (menu) {
-                menu.classList.toggle('popover-menu--visible');
-                hapticFeedback('light');
-            }
-            return;
-        }
-        // ---------------------------------------------
-
-        // Otros botones comunes (Logout, Navegación, etc.)
+// ESTE ES EL BLOQUE QUE HACE LA MAGIA
+if (action === 'show-main-menu') {
+    e.stopPropagation(); // Evita que se cierre al instante
+    
+    const menu = document.getElementById('main-menu-popover');
+    if (menu) {
+        menu.classList.toggle('popover-menu--visible');
+        hapticFeedback('light');
+    } else {
+        console.error("Error: No encuentro el menú con id 'main-menu-popover'");
+    }
+    return;
+}
         if (action === 'logout') {
             if (confirm("¿Cerrar sesión?")) {
                 firebase.auth().signOut();

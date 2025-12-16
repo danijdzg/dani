@@ -429,5 +429,30 @@
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
 	
     <script type="module" src="main.js"></script>
+	<div id="main-menu-popover" class="popover-menu">
+    <button class="popover-menu__item" data-action="global-search">
+        <span class="material-icons">search</span>
+        <span>Buscar</span>
+    </button>
+    
+    <div class="popover-menu__divider"></div>
+
+    <button class="popover-menu__item" data-action="navigate" data-page="ajustes-page">
+        <span class="material-icons">settings</span>
+        <span>Ajustes</span>
+    </button>
+    
+    <button class="popover-menu__item" data-action="show-help-modal">
+        <span class="material-icons">help_outline</span>
+        <span>Ayuda / Manual</span>
+    </button>
+    
+    <div class="popover-menu__divider"></div>
+    
+    <button class="popover-menu__item popover-menu__item--danger" data-action="logout">
+        <span class="material-icons">logout</span>
+        <span>Cerrar Sesión</span>
+    </button>
+</div>
 </body>
 </html>
