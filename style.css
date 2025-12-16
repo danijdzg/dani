@@ -3677,7 +3677,6 @@ body[data-theme="default"] .cartilla-container {
 /* JERARQUÍA VISUAL ESTRICTA */
 .app-layout { z-index: 1; }
 .bottom-nav, .top-bar { z-index: 100; }
-.fab-container, #bottom-nav-add-btn { z-index: 110; }
 .modal-overlay { z-index: 1000; } /* Modales normales */
 .popover-menu { z-index: 1100; } 
 #calculator-overlay { z-index: 2000; } /* Calculadora sobre modales */
@@ -5271,129 +5270,6 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     flex-shrink: 0;
 }
 
-/* Telón de fondo */
-.fab-backdrop {
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(3px); /* Efecto cristal */
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    z-index: -1;
-}
-.fab-container.active .fab-backdrop {
-    opacity: 1;
-    pointer-events: all;
-}
-
-/* Botón Principal (Trigger) */
-.fab-main-btn {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: var(--c-primary);
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 179, 77, 0.5); /* Sombra verde neón */
-    color: white;
-    cursor: pointer;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.fab-main-btn:active { transform: scale(0.9); }
-
-/* Iconos animados dentro del botón */
-.fab-icon-plus, .fab-icon-close {
-    position: absolute;
-    transition: all 0.3s ease;
-    font-size: 28px;
-}
-.fab-icon-close { opacity: 0; transform: rotate(-90deg); }
-
-/* Estado Activo del Botón */
-.fab-container.active .fab-main-btn { background: #333; box-shadow: none; }
-.fab-container.active .fab-icon-plus { opacity: 0; transform: rotate(90deg); }
-.fab-container.active .fab-icon-close { opacity: 1; transform: rotate(0); }
-
-/* Opciones (Bolas pequeñas) */
-.fab-options {
-    position: absolute;
-    bottom: 5px; right: 5px;
-    width: 50px; height: 50px;
-    pointer-events: none; /* Dejar pasar clics cuando está cerrado */
-}
-
-.fab-option {
-    position: absolute;
-    bottom: 0; right: 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    opacity: 0;
-    transform: scale(0);
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    white-space: nowrap;
-}
-
-.fab-icon-holder {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-
-.fab-label {
-    background: rgba(255,255,255,0.9);
-    color: #000;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    opacity: 0;
-    transform: translateX(10px);
-    transition: all 0.2s;
-}
-
-/* Colores de las opciones */
-.fab-option--ingreso .fab-icon-holder { background: var(--c-success, #30D158); }
-.fab-option--gasto .fab-icon-holder { background: var(--c-danger, #FF3B30); }
-.fab-option--traspaso .fab-icon-holder { background: var(--c-info, #007AFF); }
-
-/* --- ANIMACIÓN DE APERTURA (COORDENADAS) --- */
-.fab-container.active .fab-option {
-    opacity: 1;
-    pointer-events: all;
-}
-.fab-container.active .fab-label { opacity: 1; transform: translateX(0); }
-
-/* Posición 1: GASTO (Más cercano, arriba) */
-.fab-container.active .fab-option--gasto {
-    transform: translateY(-80px) scale(1);
-    transition-delay: 0.05s;
-}
-
-/* Posición 2: TRASPASO (Diagonal) */
-.fab-container.active .fab-option--traspaso {
-    transform: translate(-60px, -60px) scale(1);
-    transition-delay: 0.1s;
-}
-
-/* Posición 3: INGRESO (Izquierda) */
-.fab-container.active .fab-option--ingreso {
-    transform: translateX(-80px) scale(1);
-    transition-delay: 0.15s;
-}
 /* --- 1. BARRA DE NAVEGACIÓN DE 5 COLUMNAS --- */
 .bottom-nav {
     display: grid;
@@ -5413,247 +5289,6 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 /* El hueco central */
 .bottom-nav__spacer {
     pointer-events: none; /* Que no moleste a los clics */
-}
-
-/* --- 2. FAB CENTRADO (DOCKED) --- */
-.fab-container {
-    position: fixed;
-    /* CENTRADO HORIZONTAL PERFECTO */
-    left: 50%; 
-    transform: translateX(-50%); 
-    
-    /* Altura: Hacemos que sobresalga de la barra */
-    bottom: 30px; 
-    
-    z-index: 10000;
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Alinear ítems al centro vertical */
-}
-
-/* Botón Principal Más Grande y Elevado */
-.fab-main-btn {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: var(--c-primary);
-    border: 4px solid var(--c-background); /* Borde del color de fondo de la app para efecto "recorte" */
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.1); /* Sombra suave hacia arriba */
-    color: white;
-    cursor: pointer;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.fab-main-btn:active { transform: scale(0.95); }
-
-/* --- 3. ANIMACIÓN EN ABANICO SIMÉTRICO --- */
-.fab-options {
-    position: absolute;
-    bottom: 10px; /* Salen desde el centro del botón */
-    left: 50%;
-    width: 0; height: 0;
-    pointer-events: none;
-}
-
-.fab-option {
-    position: absolute;
-    bottom: 0; left: 0; /* Punto de origen: centro */
-    /* Centramos el propio botón respecto a su punto 0,0 */
-    margin-left: -25px; 
-    margin-bottom: -25px; 
-    
-    display: flex;
-    flex-direction: column; /* Icono arriba, texto abajo */
-    align-items: center;
-    gap: 5px;
-    
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    opacity: 0;
-    transform: scale(0);
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-/* Etiquetas centradas debajo del icono */
-.fab-label {
-    background: rgba(0,0,0,0.8);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    white-space: nowrap;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-/* --- COORDENADAS DEL DESPLIEGUE (Corregidas) --- */
-.fab-container.active .fab-option { 
-    opacity: 1; 
-    pointer-events: auto; /* ¡CRUCIAL! Esto asegura que el botón reciba el clic */
-    cursor: pointer;
-}
-
-/* 1. PAGO/GASTO: Hacia la Izquierda */
-.fab-container.active .fab-option--gasto {
-    transform: translate(-75px, -85px) scale(1);
-    transition-delay: 0.05s;
-}
-
-/* 2. TRASPASO: Hacia el Centro-Arriba */
-.fab-container.active .fab-option--traspaso {
-    transform: translate(0px, -110px) scale(1); 
-    transition-delay: 0.1s;
-}
-
-/* 3. INGRESO: Hacia la Derecha */
-.fab-container.active .fab-option--ingreso {
-    transform: translate(75px, -85px) scale(1);
-    transition-delay: 0.15s;
-}
-/* =======================================================
-   FAB MENU (SPEED DIAL) - VERSIÓN FINAL CORREGIDA
-   ======================================================= */
-
-/* --- 1. ESTILOS BASE (Comunes) --- */
-.fab-container {
-    position: fixed;
-    z-index: 12000; /* Por encima de todo */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    /* Por defecto (cerrado), dejamos pasar los clics a través del contenedor */
-    pointer-events: none; 
-}
-
-/* El botón principal SIEMPRE debe recibir clics */
-.fab-main-btn {
-    pointer-events: auto;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: var(--c-primary);
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 179, 77, 0.5);
-    color: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    /* Importante para móviles: evita el highlight azul al pulsar */
-    -webkit-tap-highlight-color: transparent;
-}
-.fab-main-btn:active { transform: scale(0.9); }
-
-/* Iconos animados */
-.fab-icon-plus, .fab-icon-close {
-    position: absolute;
-    transition: all 0.3s ease;
-    font-size: 28px;
-}
-.fab-icon-close { opacity: 0; transform: rotate(-90deg); }
-
-/* ESTADO ACTIVO (Abierto) */
-.fab-container.active .fab-main-btn { background: #333; }
-.fab-container.active .fab-icon-plus { opacity: 0; transform: rotate(90deg); }
-.fab-container.active .fab-icon-close { opacity: 1; transform: rotate(0); }
-
-/* EL FONDO (BACKDROP) PARA CERRAR AL TOCAR FUERA */
-.fab-backdrop {
-    position: fixed;
-    top: 0; left: 0; 
-    width: 100vw; height: 100vh;
-    background: rgba(0, 0, 0, 0.7); /* Oscuro */
-    backdrop-filter: blur(2px);
-    opacity: 0;
-    pointer-events: none; /* Invisible = no molesta */
-    transition: opacity 0.2s ease;
-    z-index: -1; /* Detrás de los botones */
-}
-/* Cuando está activo, el fondo atrapa todos los clics */
-.fab-container.active .fab-backdrop {
-    opacity: 1;
-    pointer-events: auto; 
-}
-
-/* OPCIONES */
-.fab-options {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    width: 0; height: 0;
-    pointer-events: none; /* Inicialmente no clickeables */
-}
-.fab-option {
-    position: absolute;
-    bottom: 0; left: 0;
-    margin-left: -25px; margin-bottom: -25px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    opacity: 0;
-    transform: scale(0);
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    -webkit-tap-highlight-color: transparent;
-}
-/* Cuando está activo, las opciones SÍ reciben clics */
-.fab-container.active .fab-option {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-/* Icon Holders y Labels */
-.fab-icon-holder {
-    width: 48px; height: 48px;
-    border-radius: 50%;
-    color: white;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-.fab-label {
-    background: rgba(0,0,0,0.8);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-.fab-option--ingreso .fab-icon-holder { background: var(--c-success); }
-.fab-option--traspaso .fab-icon-holder { background: var(--c-info); }
-.fab-option--gasto .fab-icon-holder { background: var(--c-danger); }
-
-/* ANIMACIÓN (Pago Izq | Traspaso Centro | Ingreso Der) */
-.fab-container.active .fab-option--gasto { transform: translate(-75px, -85px) scale(1); transition-delay: 0.05s; }
-.fab-container.active .fab-option--traspaso { transform: translate(0px, -110px) scale(1); transition-delay: 0.1s; }
-.fab-container.active .fab-option--ingreso { transform: translate(75px, -85px) scale(1); transition-delay: 0.15s; }
-
-
-/* --- 2. POSICIONAMIENTO MÓVIL (Pantallas < 1024px) --- */
-@media (max-width: 1023px) {
-    .fab-container {
-        /* Centrado respecto a la ventana del móvil */
-        position: fixed;
-        left: 50%;
-        bottom: 25px; 
-        transform: translateX(-50%);
-        right: auto;
-    }
-    
-    /* El fondo debe cubrir toda la pantalla del móvil */
-    .fab-backdrop {
-        left: -50vw; /* Compensar el left 50% del padre */
-        width: 200vw; /* Asegurar cobertura total */
-    }
 }
 
 /* ================================================================= */
@@ -5827,41 +5462,42 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 }
 
 /* ================================================================= */
-/* === FAB SYSTEM V.FINAL (Centrado, Blur Total, Sin Errores) === */
+/* === SISTEMA FAB (BOTÓN +) - VERSIÓN FINAL DEFINITIVA === */
 /* ================================================================= */
 
-/* 1. CONTENEDOR PRINCIPAL (Invisible y no bloqueante) */
+/* 1. EL CONTENEDOR (Invisible, ocupa ancho completo para centrar sin 'transform') */
 .fab-container {
     position: fixed;
-    bottom: 30px; /* Ajuste para que flote sobre la barra */
+    bottom: 0;
     left: 0; 
-    right: 0; /* Ocupa todo el ancho para evitar franjas laterales */
-    height: 0; /* Altura 0 para no bloquear clicks en la pantalla */
+    right: 0;
+    height: 0; /* Altura cero para no bloquear clics en la pantalla */
     
     display: flex;
     justify-content: center; /* Centrado horizontal automático */
     align-items: flex-end;   /* Alineado abajo */
     
     z-index: 12000; /* La capa más alta de la app */
+    pointer-events: none; /* Deja pasar los clics por defecto */
 }
 
-/* 2. EL FONDO BORROSO (Cubre TODA la pantalla) */
+/* 2. EL FONDO DE DESENFOQUE (Cubre TODA la pantalla) */
 .fab-backdrop {
     position: fixed;
     top: 0; left: 0; 
     width: 100vw; 
     height: 100vh;
     
-    /* Efecto Cristal Oscuro */
+    /* Efecto Blur Intenso y Oscuro */
     background-color: rgba(5, 5, 10, 0.85); 
-    backdrop-filter: blur(12px); /* Blur intenso estilo iOS */
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px); /* Desenfoque tipo cristal */
+    -webkit-backdrop-filter: blur(12px); /* Soporte iOS */
     
     opacity: 0;
-    visibility: hidden; /* Para que no bloquee cuando está cerrado */
+    visibility: hidden; /* Oculto para rendimiento */
     transition: opacity 0.3s ease, visibility 0.3s;
     
-    z-index: -1; /* Se coloca detrás de los botones del FAB */
+    z-index: -1; /* Se coloca detrás de los botones del menú */
     pointer-events: auto; /* Captura clics para cerrar el menú */
 }
 
@@ -5873,17 +5509,18 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 
 /* 3. EL BOTÓN PRINCIPAL (+) */
 .fab-main-btn {
-    width: 68px;
-    height: 68px;
+    pointer-events: auto; /* Reactivamos clics solo en el botón */
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     
-    /* Gradiente Neón Vibrante */
+    /* Gradiente Neón Verde */
     background: linear-gradient(135deg, #00E676 0%, #00B34D 100%);
     
-    /* Sombra Resplandeciente */
+    /* Sombra y Borde de recorte visual */
     box-shadow: 
         0 8px 20px rgba(0, 179, 77, 0.4),
-        0 0 0 5px var(--c-background); /* Anillo de "corte" contra la barra */
+        0 0 0 5px var(--c-background); /* Anillo que crea el "hueco" visual en la barra */
         
     border: none;
     color: white;
@@ -5894,14 +5531,14 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     justify-content: center;
     
     position: relative;
-    pointer-events: auto; /* Reactivamos clics en el botón */
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    
-    /* Corrección visual para subirlo respecto a la barra */
+    /* Ajuste de altura para que flote en el hueco de la barra */
     margin-bottom: 25px; 
+    
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    -webkit-tap-highlight-color: transparent;
 }
 
-/* Iconos internos (Más y Cerrar) */
+/* Iconos animados (Cruz y Más) */
 .fab-icon-plus, .fab-icon-close {
     position: absolute;
     font-size: 32px;
@@ -5916,34 +5553,35 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 /* Estado Activo del Botón Principal */
 .fab-container.active .fab-main-btn {
     transform: scale(1.1);
-    background: #1a1a1a; /* Se oscurece */
-    box-shadow: none; /* Quita el brillo verde */
-    border-color: rgba(255,255,255,0.1);
+    background: #222; /* Se oscurece al abrir */
+    box-shadow: none;
+    border-color: rgba(255,255,255,0.1); /* Borde sutil */
 }
 .fab-container.active .fab-icon-plus { opacity: 0; transform: rotate(90deg); }
 .fab-container.active .fab-icon-close { opacity: 1; transform: rotate(0); }
 
 
-/* 4. LOS BOTONES DE OPCIÓN (Satélites) */
+/* 4. LOS BOTONES DE ACCIÓN (Despliegue en Abanico) */
 .fab-options {
     position: absolute;
-    bottom: 35px; /* Salen desde el centro del botón principal */
+    /* Salen desde el centro del botón principal */
+    bottom: 35px; 
     left: 50%;
     width: 0; height: 0;
-    pointer-events: none; /* No clickeables si están cerrados */
+    pointer-events: none;
 }
 
 .fab-option {
     position: absolute;
     bottom: 0; left: 0;
-    /* Centramos el elemento en el punto 0,0 */
+    /* Centramos cada botón satélite */
     margin-left: -30px; 
     margin-bottom: -30px; 
     
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     
     background: transparent;
     border: none;
@@ -5951,7 +5589,8 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     
     opacity: 0;
     transform: scale(0);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efecto rebote elástico */
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* Habilitar clics al abrir */
@@ -5967,13 +5606,12 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     display: flex; align-items: center; justify-content: center;
     color: white;
     font-size: 26px;
-    
-    /* Sombra fuerte para destacar sobre el blur */
+    /* Sombra fuerte para resaltar sobre el blur */
     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     border: 2px solid rgba(255,255,255,0.15);
 }
 
-/* Colores Muy Vistosos */
+/* Colores Distintivos */
 .fab-option--gasto .fab-icon-holder { 
     background: linear-gradient(135deg, #FF3B30, #FF9500); 
 }
@@ -5991,18 +5629,18 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     font-size: 0.85rem;
     font-weight: 800;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-    background: transparent;
+    background: transparent; /* Texto limpio sin caja */
 }
 
-/* --- ANIMACIONES DE DESPLIEGUE --- */
+/* --- ANIMACIONES DE POSICIÓN (Coordenadas) --- */
 
-/* GASTO (Izquierda) */
+/* PAGO (Izquierda) */
 .fab-container.active .fab-option--gasto {
     transform: translate(-90px, -100px) scale(1);
     transition-delay: 0s;
 }
 
-/* TRASPASO (Centro Arriba) */
+/* TRASPASO (Centro Arriba - Más alto) */
 .fab-container.active .fab-option--traspaso {
     transform: translate(0px, -150px) scale(1);
     transition-delay: 0.05s;
@@ -6014,7 +5652,8 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     transition-delay: 0.1s;
 }
 
-/* Ajuste para escritorio */
+/* Ajuste para escritorio (Lo subimos un poco más) */
 @media (min-width: 1024px) {
-    .fab-container { bottom: 50px; }
+    .fab-container { bottom: 20px; }
+    .fab-main-btn { margin-bottom: 40px; }
 }

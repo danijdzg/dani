@@ -11337,6 +11337,7 @@ const initSpeedDial = () => {
     const toggleMenu = (e) => {
         e.stopPropagation();
         container.classList.toggle('active');
+        // Pequeña vibración al abrir
         hapticFeedback('medium');
     };
 
@@ -11344,10 +11345,10 @@ const initSpeedDial = () => {
         container.classList.remove('active');
     };
 
-    // 1. Abrir/Cerrar con el botón
+    // 1. Abrir/Cerrar con el botón principal
     trigger.onclick = toggleMenu;
 
-    // 2. Cerrar al pulsar el fondo borroso
+    // 2. Cerrar al pulsar el fondo borroso (ESTO ARREGLA LA USABILIDAD)
     if (backdrop) {
         backdrop.onclick = (e) => {
             e.stopPropagation();
@@ -11355,15 +11356,18 @@ const initSpeedDial = () => {
         };
     }
 
-    // 3. Acción al pulsar una opción
+    // 3. Acción al pulsar una opción (Pago, Traspaso, Ingreso)
     options.forEach(btn => {
         btn.onclick = (e) => {
-            e.stopPropagation();
-            const type = btn.dataset.type;
+            e.stopPropagation(); // Evitar cerrar antes de tiempo
             
+            const type = btn.dataset.type; // 'gasto', 'ingreso', 'traspaso'
+            
+            // 1. Feedback y Cierre visual inmediato
             hapticFeedback('light');
-            closeMenu(); // Cerramos el menú
+            closeMenu();
 
+            // 2. Ejecutar la acción tras una micro-pausa (para que se vea la animación de cierre)
             setTimeout(() => {
                 if (typeof startMovementForm === 'function') {
                     startMovementForm(null, false, type);
