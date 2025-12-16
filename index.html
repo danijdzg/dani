@@ -395,7 +395,25 @@
             <iframe id="calculator-frame" style="width: 100%; height: 100%; border: none; flex-grow: 1;" loading="lazy"></iframe>
         </div>
     </div>
-
+	<div id="help-modal" class="modal-overlay">
+    <div class="modal" style="max-height: 85vh; display: flex; flex-direction: column;">
+        <div class="modal-header" style="flex-shrink: 0;">
+            <div style="flex-grow:1;"></div>
+            <button class="icon-btn" data-action="close-modal" data-modal-id="help-modal">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        
+        <div id="help-modal-content" style="overflow-y: auto; padding: 20px; color: var(--c-on-surface);">
+            </div>
+        
+        <div style="padding: 15px; border-top: 1px solid var(--c-outline); flex-shrink: 0;">
+            <button class="btn btn--primary" data-action="close-modal" data-modal-id="help-modal" style="width: 100%;">
+                ¡Entendido!
+            </button>
+        </div>
+    </div>
+</div>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
@@ -426,24 +444,6 @@
         <span>Cerrar Sesión</span>
     </button>
 </div>
-<div id="help-modal" class="modal-overlay" style="z-index: 15000;">
-    <div class="modal" style="max-height: 85vh; display: flex; flex-direction: column;">
-        <div class="modal-header" style="flex-shrink: 0;">
-            <h2 style="margin:0; font-size: 1.2rem;">Manual de Usuario</h2>
-            <button class="icon-btn" data-action="close-modal" data-modal-id="help-modal">
-                <span class="material-icons">close</span>
-            </button>
-        </div>
-        
-        <div id="help-modal-content" style="overflow-y: auto; padding: 20px; line-height: 1.6; color: var(--c-on-surface-variant);">
-            </div>
-        
-        <div style="padding: 15px; border-top: 1px solid var(--c-outline); text-align: center; flex-shrink: 0;">
-            <button class="btn btn--primary" data-action="close-modal" data-modal-id="help-modal" style="width: 100%;">
-                ¡Entendido, gracias!
-            </button>
-        </div>
-    </div>
-</div>
+
 </body>
 </html>

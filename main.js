@@ -11670,94 +11670,103 @@ document.addEventListener('click', (e) => {
 });
 
 /* ================================================================= */
-/* === LÓGICA DEL MANUAL DE AYUDA (Solución Z-Index) === */
+/* === MANUAL DE AYUDA (Versión Final corregida) === */
 /* ================================================================= */
 
+// 1. EL CONTENIDO
 const getManualContent = () => {
     return `
-        <div class="manual-section" style="margin-bottom: 20px;">
-            <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:15px;">
-                <span class="material-icons" style="color:#00B34D; font-size: 32px;">school</span>
-                <h2 style="margin:0; font-size:1.4rem;">Manual aiDANaI</h2>
+        <div class="manual-section" style="margin-bottom: 25px;">
+            <div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:20px;">
+                <div style="background:rgba(0, 179, 77, 0.2); padding:8px; border-radius:50%;">
+                    <span class="material-icons" style="color:#00B34D; font-size: 28px;">school</span>
+                </div>
+                <div>
+                    <h2 style="margin:0; font-size:1.3rem; color: white;">Manual aiDANaI</h2>
+                    <span style="font-size:0.8rem; opacity:0.7;">Tu guía financiera</span>
+                </div>
             </div>
             
-            <p class="manual-text"><strong>¡Hola!</strong> Aquí tienes las claves para dominar tus finanzas:</p>
+            <p class="manual-text" style="font-size: 1rem; line-height: 1.6;"><strong>¡Bienvenido!</strong> Esta app está diseñada para que controles tu dinero con el mínimo esfuerzo. Aquí tienes lo esencial:</p>
         </div>
 
-        <div class="manual-section">
-            <h3 class="manual-title" style="color:#00B34D; font-weight:bold; margin-top:15px;">1. El Botón Central (+)</h3>
-            <p>Es el corazón de la app. Úsalo para:</p>
-            <ul style="background: rgba(255,255,255,0.05); padding: 15px 20px; border-radius: 8px; list-style: none;">
-                <li style="margin-bottom:8px">🔴 <strong>Gasto:</strong> Dinero que pierdes.</li>
-                <li style="margin-bottom:8px">🟢 <strong>Ingreso:</strong> Dinero que ganas.</li>
-                <li>🔵 <strong>Traspaso:</strong> Mover dinero entre tus cuentas (sin perderlo).</li>
+        <div class="manual-section" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 class="manual-title" style="color:#00B34D; margin-top:0; display:flex; align-items:center; gap:8px;">
+                <span class="material-icons">add_circle</span> El Botón Central (+)
+            </h3>
+            <p style="margin-bottom:10px; font-size: 0.9rem; opacity: 0.9;">Al pulsarlo, despliegas las 3 acciones clave:</p>
+            <ul style="padding-left: 20px; line-height: 1.8; margin: 0;">
+                <li>🔴 <strong style="color: #ff6b6b;">Gasto:</strong> Dinero que pierdes (Supermercado, Ocio).</li>
+                <li>🟢 <strong style="color: #4cd964;">Ingreso:</strong> Dinero que ganas (Nómina, Ventas).</li>
+                <li>🔵 <strong style="color: #5ac8fa;">Traspaso:</strong> Movimiento neutro entre tus cuentas (ej: de Banco a Ahorro). No afecta a tu total.</li>
             </ul>
         </div>
 
-        <div class="manual-section">
-            <h3 class="manual-title" style="color:#00B34D; font-weight:bold; margin-top:15px;">2. Extracto Global</h3>
-            <p>Ve a la pestaña <strong>Patrimonio</strong> y pulsa la tarjeta superior. Verás una lista de TODOS tus movimientos históricos con filtros de fecha.</p>
+        <div class="manual-section" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px;">
+            <h3 class="manual-title" style="color:#00B34D; margin-top:0; display:flex; align-items:center; gap:8px;">
+                <span class="material-icons">query_stats</span> Extracto Global
+            </h3>
+            <p style="margin:0; font-size: 0.9rem; opacity: 0.9;">
+                ¿Quieres ver todo tu historial junto? Ve a la pestaña <strong>Patrimonio</strong> y pulsa sobre la <strong>Tarjeta de Patrimonio Neto</strong> (la grande de arriba).
+            </p>
         </div>
         
-        <div style="text-align:center; margin-top:30px; padding-top:20px; border-top:1px solid #333; color:#666;">
+        <div style="text-align:center; margin-top:30px; opacity:0.5; font-size:0.8rem;">
             aiDANaI-ctas v3.1
         </div>
     `;
 };
 
-// ESCUCHADOR DE EVENTOS PRIORITARIO
+// 2. ESCUCHADOR DE EVENTOS
 document.addEventListener('click', (e) => {
-    // Detectar botón de ayuda
+    // Detectamos clic en "Ayuda / Manual"
     const helpBtn = e.target.closest('[data-action="show-help-modal"]');
     
     if (helpBtn) {
-        // 1. PARAR TODO INMEDIATAMENTE
         e.preventDefault();
         e.stopPropagation();
-        e.stopImmediatePropagation();
+        e.stopImmediatePropagation(); // Detiene otros scripts duplicados
 
-        console.log("🚀 Lanzando Manual de Ayuda (Modo Prioridad)...");
-
-        // 2. MATAR EL MENÚ DE TRES PUNTOS
-        // Lo ocultamos a la fuerza para que no tape nada
+        // A. CERRAR EL MENÚ DE TRES PUNTOS (Ocultarlo visualmente)
         const menuPopover = document.getElementById('main-menu-popover');
         if (menuPopover) {
-            menuPopover.style.display = 'none'; 
             menuPopover.classList.remove('popover-menu--visible');
-            // Nota: Un timeout lo restaurará después por si acaso, pero ahora queremos que desaparezca
-            setTimeout(() => { menuPopover.style.display = ''; }, 500);
+            menuPopover.style.display = 'none'; // Forzamos desaparición
+            // Lo reactivamos discretamente después para que funcione la próxima vez
+            setTimeout(() => { menuPopover.style.display = ''; }, 300);
         }
 
-        // 3. ACTIVAR EL MODAL
+        // B. ABRIR EL MODAL DE AYUDA
         const modal = document.getElementById('help-modal');
         const content = document.getElementById('help-modal-content');
 
         if (modal && content) {
-            // Llenar contenido
+            // 1. Inyectar contenido
             content.innerHTML = getManualContent();
-
-            // APLICAR LA CLASE SUPREMA DEL PASO 1
-            modal.classList.add('active-manual');
             
-            // Forzar estilos inline por si el CSS falla
-            modal.style.display = 'flex';
-            modal.style.zIndex = '2147483647'; // Máximo valor permitido en navegadores
-            modal.style.opacity = '1';
+            // 2. FORZAR VISIBILIDAD (La clave es el Z-Index altísimo)
+            modal.style.cssText = `
+                display: flex !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                z-index: 99999 !important; /* POR ENCIMA DE TODO */
+                background-color: rgba(0,0,0,0.9) !important;
+            `;
+            
+            modal.classList.add('active');
             
         } else {
-            alert("Error: No se encuentra el contenedor del manual (id='help-modal')");
+            console.error("Falta el div id='help-modal' en index.html");
         }
     }
     
-    // DETECTAR EL BOTÓN DE CERRAR EL MANUAL
+    // DETECTAR CLIC EN CERRAR (X) o BOTÓN INFERIOR
     const closeBtn = e.target.closest('[data-action="close-modal"]');
     if (closeBtn && closeBtn.dataset.modalId === 'help-modal') {
         const modal = document.getElementById('help-modal');
         if (modal) {
-            // Quitar todas las clases y estilos forzados
-            modal.classList.remove('active-manual');
             modal.classList.remove('active');
-            modal.style.display = 'none';
+            modal.style.display = 'none'; // Ocultar
         }
     }
 });
