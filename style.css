@@ -4935,87 +4935,85 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         scrollbar-width: thin; /* Firefox */
     }
 }
-/* === NUEVOS ESTILOS CABECERA DIARIO (Tipo Agenda) === */
+/* === CABECERA DE FECHA (Estilo Nativo Dark Mode - Sin Sticky) === */
 
 .sticky-date-header {
-    position: sticky;
-    top: 0;
-    z-index: 10; /* Por encima de las tarjetas */
+    /* CAMBIO CLAVE: relative hace que se mueva con el scroll */
+    position: relative; 
+    z-index: 1;
     
-    /* Diseño Flexbox */
+    /* Layout */
     display: flex;
     justify-content: space-between;
     align-items: center;
     
-    /* Estilo de la barra gris estilo "cápsula" */
-    background-color: #a0a0a0; /* Gris base similar a la imagen */
-    background: linear-gradient(to bottom, #b0b0b0, #999999); /* Ligero degradado metálico */
+    /* Estética acorde a la App (Dark Mode) */
+    background-color: var(--c-surface-variant); /* Fondo oscuro azulado/gris */
+    border: 1px solid var(--c-outline);         /* Borde sutil */
+    color: var(--c-on-surface);                 /* Texto blanco/claro */
     
-    /* Bordes redondeados completos */
-    border-radius: 20px;
+    /* Forma */
+    border-radius: 16px; /* Coincide con el radio de las tarjetas */
     
-    /* Espaciado y Márgenes */
-    padding: 6px 16px;
-    margin: 12px 16px 4px 16px; /* Separación lateral y superior */
+    /* Espaciado */
+    padding: 8px 16px;
+    /* Margen: Arriba amplio para separar días, Abajo pequeño para pegar a tarjeta */
+    margin: 24px 12px 8px 12px; 
     
-    /* Sombra para dar efecto flotante sobre el fondo negro */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    
-    /* Texto */
-    color: #000000;
-    font-family: var(--font-family);
-    font-size: 0.85rem;
+    /* Sin sombra pesada, integración plana */
+    box-shadow: none;
 }
 
 /* Parte Izquierda (Día y Fecha) */
 .sticky-date-left {
     display: flex;
     align-items: center;
-    gap: 8px;
-    overflow: hidden; /* Por si la fecha es muy larga en móviles pequeños */
+    gap: 10px;
+    overflow: hidden;
 }
 
 /* La pastilla del día (LUN, MAR, HOY) */
 .sticky-day-pill {
     font-weight: 800;
     text-transform: uppercase;
-    font-size: 0.85rem;
-    opacity: 0.8; /* Un poco más suave que la fecha */
+    font-size: 0.75rem;
+    background-color: var(--c-surface); /* Un poco más oscuro que la barra */
+    padding: 2px 8px;
+    border-radius: 6px;
+    color: var(--c-primary); /* Color de acento (Verde) */
+    border: 1px solid var(--c-outline);
 }
 
-/* El texto de la fecha (16 de diciembre de 2025) */
+/* Estilo especial para HOY */
+.sticky-day-pill.is-today {
+    background-color: var(--c-primary);
+    color: var(--c-white);
+    border-color: var(--c-primary);
+}
+
+/* El texto de la fecha (16 de diciembre...) */
 .sticky-date-text {
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 0.85rem;
+    color: var(--c-on-surface-secondary); /* Gris claro */
+    text-transform: capitalize;
 }
 
 /* El Total a la derecha */
 .sticky-date-total {
-    font-weight: 800;
+    font-weight: 700;
     font-family: var(--font-numeric);
     white-space: nowrap;
     font-size: 0.9rem;
+    letter-spacing: -0.5px;
 }
 
-/* Opcional: Si el total es negativo, ponerlo en rojo oscuro (como en la imagen no parece, lo dejo negro, pero aquí tienes la opción) */
-/* .sticky-date-total.is-negative { color: #8b0000; } */
-
-/* Ajuste importante: Quitar el borde inferior de las tarjetas para que se vea más limpio */
-.transaction-card {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Muy sutil */
-    margin: 0 10px; /* Indentamos un poco las tarjetas respecto a la pantalla */
-    border-radius: 12px; /* Redondeamos las tarjetas */
-    margin-bottom: 4px; /* Separación entre tarjetas */
-    background-color: transparent; /* O color muy oscuro */
-}
-
-/* Ajuste para que la primera tarjeta no se pegue al sticky header */
-.sticky-date-header + .transaction-card {
-    margin-top: 4px;
-}
+/* Colores para el total */
+.sticky-date-total.is-positive { color: var(--c-success); }
+.sticky-date-total.is-negative { color: var(--c-on-surface); opacity: 0.8; } /* Gasto en blanco suave */
 
 /* Icono Izquierdo */
 .t-icon {

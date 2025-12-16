@@ -3693,12 +3693,10 @@ const renderVirtualListItem = (item) => {
         </div>`;
     }
 
-    // 3. Header de Fecha Sticky (ESTILO IMAGEN ADJUNTA)
+    // 3. Header de Fecha (ESTILO INTEGRADO)
     if (item.type === 'date-header') {
-        // Crear fecha segura al mediodía para evitar saltos de zona horaria
         const dateObj = new Date(item.date + 'T12:00:00Z');
         
-        // Calcular "Hoy" y "Ayer"
         const today = new Date(); 
         const yesterday = new Date(); 
         today.setHours(0,0,0,0);
@@ -3708,31 +3706,32 @@ const renderVirtualListItem = (item) => {
         
         let dayName = '';
         let fullDate = '';
+        let isTodayClass = '';
 
         if (itemDate.getTime() === today.getTime()) {
             dayName = "HOY";
+            isTodayClass = 'is-today'; // Clase especial para resaltar HOY
             fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
         } else if (itemDate.getTime() === yesterday.getTime()) {
             dayName = "AYER";
             fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
         } else {
-            // Formato: "MAR"
             dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase().replace('.', '');
-            // Formato: "16 de diciembre de 2025"
             fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
         }
 
         // Formato de moneda para el total
-        const totalClass = item.total >= 0 ? 'text-black' : 'text-black'; // Siempre negro/oscuro como en la imagen, o cambia según prefieras
+        // Si es positivo (ingreso neto en el día) verde, si es negativo o 0, neutro/blanco
+        const totalClass = item.total > 0 ? 'is-positive' : 'is-negative';
         const totalFormatted = formatCurrencyHTML(item.total); 
 
         return `
             <div class="sticky-date-header">
                 <div class="sticky-date-left">
-                    <span class="sticky-day-pill">${dayName}</span>
+                    <span class="sticky-day-pill ${isTodayClass}">${dayName}</span>
                     <span class="sticky-date-text">${fullDate}</span>
                 </div>
-                <span class="sticky-date-total ${item.total < 0 ? 'is-negative' : ''}">${totalFormatted}</span>
+                <span class="sticky-date-total ${totalClass}">${totalFormatted}</span>
             </div>
         `;
     }
