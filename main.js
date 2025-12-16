@@ -2051,30 +2051,17 @@ const animateCountUp = (el, end, duration = 700, formatAsCurrency = true, prefix
         }
 
         if (progress < 1) {
-    // Durante la animación, si prefieres rendimiento, puedes usar texto plano
-    // O usar HTML si quieres que los decimales bailen (más costoso pero más bonito)
-    if (formatAsCurrency) {
-        el.innerHTML = prefix + formatCurrencyHTML(currentInCents) + suffix;
-    } else {
-        el.textContent = `${prefix}${current.toFixed(2)}${suffix}`;
-    }
-    requestAnimationFrame(step);
-} else {
-    // AL FINALIZAR: ¡IMPORTANTE! Usar el formateador HTML
-    if (formatAsCurrency) {
-        el.innerHTML = prefix + formatCurrencyHTML(end) + suffix; // <--- ESTO ES CLAVE
-    } else {
-        el.textContent = `${prefix}${(end / 100).toFixed(2)}${suffix}`;
-    }
-} else {
+            requestAnimationFrame(step);
+        } else {
+            // Asegurar valor final exacto al terminar
             if (formatAsCurrency) {
                 el.innerHTML = prefix + formatCurrencyHTML(end) + suffix;
             } else {
-                el.textContent = `${prefix}${(end / 100).toFixed(2)}${suffix}`;
+                el.textContent = `${prefix}${endValue.toFixed(2)}${suffix}`;
             }
         }
     };
-    
+
     requestAnimationFrame(step);
 };
         const escapeHTML = str => (str || '').replace(/[&<>"']/g, match => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[match]);
