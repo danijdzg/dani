@@ -1777,73 +1777,70 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     border-width: 3px;
     color: var(--c-primary);
 }
-/* EN style.css - PEGA ESTE BLOQUE AL FINAL */
-/* === INICIO: Estilos para el Menú Desplegable === */
-.popover-menu {
-    position: fixed; /* Usar fixed para que flote sobre todo, independiente del scroll */
-    top: 60px;       /* Altura aproximada de tu barra superior */
-    right: 16px;     /* CORRECCIÓN: Anclado a la derecha con un pequeño margen */
-    left: auto;      /* CORRECCIÓN: Importante para evitar que intente alinearse a la izquierda */
+/* --- CORRECCIÓN DEFINITIVA DEL MENÚ --- */
+#main-menu-popover {
+    /* 1. Posicionamiento Fijo al Viewport (Pantalla) */
+    position: fixed !important; 
+    top: 60px !important;    /* Altura aproximada de tu barra superior */
+    right: 16px !important;  /* Anclado a la derecha con margen seguro */
+    left: auto !important;   /* ANULA cualquier intento de alinearlo a la izquierda */
     
-    background-color: var(--c-surface);
+    /* 2. Dimensiones Controladas */
+    width: 220px;            /* Ancho estándar cómodo */
+    max-width: 90vw;         /* Nunca más ancho que el 90% de la pantalla */
+    
+    /* 3. Estética (Aseguramos que se vea bien sobre fondo oscuro) */
+    background-color: var(--c-surface) !important;
     border: 1px solid var(--c-outline);
     border-radius: var(--border-radius-lg);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4); /* Sombra para darle profundidad */
-    padding: 8px;
-    z-index: 10000;  /* Z-index alto para estar encima de todo */
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5); /* Sombra fuerte para resaltar */
+    z-index: 12000 !important; /* Por encima de TODO (incluyendo modales y toasts) */
     
-    /* Control de tamaño */
-    min-width: 200px;
-    max-width: 90vw; /* Evita que sea más ancho que la pantalla del móvil */
-    
-    /* Animación de entrada (opcional, pero queda bien) */
-    transform-origin: top right;
+    /* 4. Estado Inicial (Oculto) */
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.95);
+    transform-origin: top right; /* La animación nace de la esquina superior derecha */
+    transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.2s;
 }
 
-.popover-menu--visible {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    pointer-events: auto;
+/* Estado Visible */
+#main-menu-popover.popover-menu--visible {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: scale(1) !important;
 }
 
+/* Estilo de los elementos del menú */
 .popover-menu__item {
     display: flex;
     align-items: center;
-    gap: var(--sp-3);
+    gap: 12px;
     width: 100%;
-    padding: var(--sp-2) var(--sp-3);
-    border-radius: 6px;
-    border: none;
+    padding: 12px 16px;
     background: none;
-    cursor: pointer;
-    text-align: left;
-    font-size: var(--fs-sm);
-    font-weight: 500;
+    border: none;
     color: var(--c-on-surface);
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
     transition: background-color 0.2s;
 }
 
 .popover-menu__item:hover {
-    background-color: var(--c-surface);
-}
-
-.popover-menu__item .material-icons {
-    color: var(--c-on-surface-secondary);
+    background-color: var(--c-surface-variant);
 }
 
 .popover-menu__item--danger {
-    color: var(--c-danger);
-}
-.popover-menu__item--danger .material-icons {
     color: var(--c-danger);
 }
 
 .popover-menu__divider {
     height: 1px;
     background-color: var(--c-outline);
-    margin: var(--sp-2) 0;
+    margin: 4px 0;
 }
-/* === FIN: Estilos para el Menú Desplegable === */
 
 @media (max-width: 380px) {
     /* --- Optimizaciones Generales para Pantallas Pequeñas --- */
