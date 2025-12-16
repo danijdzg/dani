@@ -11594,3 +11594,48 @@ const updateExtractoList = () => {
 
     listContainer.innerHTML = html;
 };
+
+/* ================================================================= */
+/* === FIX FORZADO: MENÚ DE TRES PUNTOS (HEADER) === */
+/* ================================================================= */
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Localizamos los elementos por su ID único
+    const menuBtn = document.getElementById('header-menu-btn');
+    const menuPopover = document.getElementById('main-menu-popover');
+
+    // 2. Verificamos que existen
+    if (menuBtn && menuPopover) {
+        console.log("✅ Sistema de menú detectado. Inicializando...");
+
+        // A. Evento para ABRIR/CERRAR al tocar el botón
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evita conflictos con otros clics
+            e.preventDefault();  // Evita comportamientos extraños
+            
+            // Alternar la clase visible
+            const isClosed = !menuPopover.classList.contains('popover-menu--visible');
+            
+            if (isClosed) {
+                menuPopover.classList.add('popover-menu--visible');
+            } else {
+                menuPopover.classList.remove('popover-menu--visible');
+            }
+            
+            // Feedback táctil (si está disponible)
+            if (typeof hapticFeedback === 'function') hapticFeedback('light');
+        });
+
+        // B. Evento para CERRAR al tocar FUERA
+        document.addEventListener('click', (e) => {
+            // Si el menú está abierto...
+            if (menuPopover.classList.contains('popover-menu--visible')) {
+                // Y el clic NO fue en el menú NI en el botón...
+                if (!menuPopover.contains(e.target) && !menuBtn.contains(e.target)) {
+                    menuPopover.classList.remove('popover-menu--visible');
+                }
+            }
+        });
+    } else {
+        console.error("❌ ERROR: No se encuentra el botón 'header-menu-btn' o el menú 'main-menu-popover' en el HTML.");
+    }
+});

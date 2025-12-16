@@ -3674,7 +3674,7 @@ body[data-theme="default"] .cartilla-container {
 .app-layout { z-index: 1; }
 .bottom-nav, .top-bar { z-index: 100; }
 .modal-overlay { z-index: 1000; } /* Modales normales */
-.popover-menu { z-index: 1100; } 
+.popover-menu { z-index: 20000; } 
 #calculator-overlay { z-index: 2000; } /* Calculadora sobre modales */
 .save-animation-bubble { z-index: 2100; } 
 .toast-container { z-index: 3000; } /* Notificaciones SIEMPRE encima */
@@ -5716,26 +5716,26 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 /* ================================================================= */
 .popover-menu {
     position: fixed;
-    top: 60px; /* Justo debajo de la barra superior */
-    right: 10px; /* Pegado a la derecha */
+    top: 60px; 
+    right: 15px; /* Un poco más de margen */
     background-color: var(--c-surface);
     border: 1px solid var(--c-outline);
     border-radius: 16px;
     padding: 8px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-    z-index: 2000; /* Por encima de todo */
-    min-width: 200px;
     
-    /* Animación de entrada */
+    /* SOMBRA FUERTE Y CAPA SUPERIOR */
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    z-index: 20000 !important; /* <--- IMPORTANTE: Por encima de todo */
+    
+    min-width: 200px;
     opacity: 0;
     transform: scale(0.9) translateY(-10px);
-    pointer-events: none; /* No se puede clicar si está oculto */
+    pointer-events: none;
     transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
     transform-origin: top right;
     
-    /* Efecto cristal */
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    /* Asegurar visibilidad del texto */
+    color: white; 
 }
 
 .popover-menu--visible {
