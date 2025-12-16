@@ -11670,9 +11670,10 @@ document.addEventListener('click', (e) => {
 });
 
 /* ================================================================= */
-/* === MANUAL DE AYUDA (Versión "Rompe-Caché") === */
+/* === MANUAL DE AYUDA (Solución Definitiva Z-Index) === */
 /* ================================================================= */
 
+// 1. EL CONTENIDO DEL MANUAL
 const getManualContent = () => {
     return `
         <div class="manual-section" style="margin-bottom: 25px;">
@@ -11685,65 +11686,93 @@ const getManualContent = () => {
                     <span style="font-size:0.8rem; opacity:0.7;">Tu guía financiera</span>
                 </div>
             </div>
-            <p class="manual-text" style="font-size: 1rem; line-height: 1.6;"><strong>¡Bienvenido!</strong> Aquí tienes lo esencial para controlar tu dinero:</p>
+            
+            <p class="manual-text" style="font-size: 1rem; line-height: 1.6;"><strong>¡Bienvenido!</strong> Esta app está diseñada para que controles tu dinero con el mínimo esfuerzo. Aquí tienes lo esencial:</p>
         </div>
 
         <div class="manual-section" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
             <h3 class="manual-title" style="color:#00B34D; margin-top:0; display:flex; align-items:center; gap:8px;">
-                <span class="material-icons">add_circle</span> Botón Central (+)
+                <span class="material-icons">add_circle</span> El Botón Central (+)
             </h3>
-            <ul style="padding-left: 20px; line-height: 1.8; margin: 0; margin-top:10px;">
-                <li>🔴 <strong style="color: #ff6b6b;">Gasto:</strong> Dinero que sale.</li>
-                <li>🟢 <strong style="color: #4cd964;">Ingreso:</strong> Dinero que entra.</li>
-                <li>🔵 <strong style="color: #5ac8fa;">Traspaso:</strong> Mover dinero entre cuentas.</li>
+            <p style="margin-bottom:10px; font-size: 0.9rem; opacity: 0.9;">Al pulsarlo, despliegas las 3 acciones clave:</p>
+            <ul style="padding-left: 20px; line-height: 1.8; margin: 0;">
+                <li>🔴 <strong style="color: #ff6b6b;">Gasto:</strong> Dinero que pierdes (Supermercado, Ocio).</li>
+                <li>🟢 <strong style="color: #4cd964;">Ingreso:</strong> Dinero que ganas (Nómina, Ventas).</li>
+                <li>🔵 <strong style="color: #5ac8fa;">Traspaso:</strong> Movimiento neutro entre tus cuentas (ej: de Banco a Ahorro). No afecta a tu total.</li>
             </ul>
         </div>
+
+        <div class="manual-section" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px;">
+            <h3 class="manual-title" style="color:#00B34D; margin-top:0; display:flex; align-items:center; gap:8px;">
+                <span class="material-icons">query_stats</span> Extracto Global
+            </h3>
+            <p style="margin:0; font-size: 0.9rem; opacity: 0.9;">
+                ¿Quieres ver todo tu historial junto? Ve a la pestaña <strong>Patrimonio</strong> y pulsa sobre la <strong>Tarjeta de Patrimonio Neto</strong> (la grande de arriba).
+            </p>
+        </div>
         
-        <div style="text-align:center; margin-top:30px; opacity:0.5; font-size:0.8rem;">aiDANaI-ctas v3.2</div>
+        <div style="text-align:center; margin-top:30px; opacity:0.5; font-size:0.8rem;">
+            aiDANaI-ctas v3.1
+        </div>
     `;
 };
 
-// Usamos 'window' para capturar el evento antes que nadie
-window.addEventListener('click', (e) => {
+// 2. ESCUCHADOR DE EVENTOS (Modo Prioridad)
+document.addEventListener('click', (e) => {
+    // Detectamos si el clic es en "Ayuda / Manual"
     const helpBtn = e.target.closest('[data-action="show-help-modal"]');
     
     if (helpBtn) {
+        // DETENER TODO para evitar conflictos
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
 
-        // 1. OCULTAR MENÚ
-        const menu = document.getElementById('main-menu-popover');
-        if (menu) menu.style.display = 'none';
+        console.log("📘 Abriendo Manual (Z-Index Override)...");
 
-        // 2. MOSTRAR MODAL
+        // A. CERRAR EL MENÚ DE TRES PUNTOS
+        const menuPopover = document.getElementById('main-menu-popover');
+        if (menuPopover) {
+            menuPopover.classList.remove('popover-menu--visible');
+            menuPopover.style.display = 'none'; // Lo ocultamos a la fuerza
+            // Lo restauramos discretamente después
+            setTimeout(() => { menuPopover.style.display = ''; }, 300);
+        }
+
+        // B. ABRIR EL MODAL DE AYUDA
         const modal = document.getElementById('help-modal');
         const content = document.getElementById('help-modal-content');
 
         if (modal && content) {
+            // 1. Inyectar contenido
             content.innerHTML = getManualContent();
             
-            // Forzar estilos directamente
-            modal.style.display = 'flex';
-            modal.style.zIndex = '9999999'; // Prioridad máxima
-            modal.style.opacity = '1';
-            modal.style.visibility = 'visible';
-            modal.style.backgroundColor = 'rgba(0,0,0,0.95)';
+            // 2. FORZAR VISIBILIDAD SUPREMA
+            // Aquí está la solución: Z-Index 99999 gana a 20000
+            modal.style.cssText = `
+                display: flex !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                z-index: 99999 !important; 
+                background-color: rgba(0,0,0,0.95) !important;
+                position: fixed !important;
+                top: 0; left: 0; width: 100%; height: 100%;
+            `;
+            
             modal.classList.add('active');
             
-            // Restaurar menú tras un segundo (invisible)
-            if (menu) setTimeout(() => { menu.style.display = ''; menu.classList.remove('popover-menu--visible'); }, 500);
         } else {
-            console.error("Falta estructura HTML del modal");
+            console.error("❌ Error: No encuentro el modal 'help-modal' en index.html");
         }
     }
     
-    // CERRAR
-    if (e.target.closest('[data-action="close-modal"]')) {
+    // LOGICA PARA CERRAR EL MODAL
+    const closeBtn = e.target.closest('[data-action="close-modal"]');
+    if (closeBtn && closeBtn.dataset.modalId === 'help-modal') {
         const modal = document.getElementById('help-modal');
-        if (modal && modal.classList.contains('active')) {
-            modal.style.display = 'none';
+        if (modal) {
             modal.classList.remove('active');
+            modal.style.display = 'none'; // Ocultar
         }
     }
-}, true); // El 'true' aquí da prioridad de captura
+});
