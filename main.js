@@ -8872,6 +8872,48 @@ const renderInversionesPage = async (containerId) => {
 
 // ▼▼▼ REEMPLAZA TU FUNCIÓN attachEventListeners CON ESTA VERSIÓN LIMPIA ▼▼▼
 const attachEventListeners = () => {
+	// --- GESTOR GLOBAL DE CLICS (El cerebro de los botones) ---
+    document.addEventListener('click', async (e) => {
+        
+        // 1. CERRAR MENÚ AL TOCAR FUERA
+        // Si el menú está abierto y tocamos fuera de él, lo cerramos
+        const menu = document.getElementById('main-menu-popover');
+        if (menu && menu.classList.contains('popover-menu--visible')) {
+            if (!e.target.closest('#main-menu-popover') && !e.target.closest('[data-action="show-main-menu"]')) {
+                menu.classList.remove('popover-menu--visible');
+            }
+        }
+
+        // 2. DETECTAR BOTONES CON ACCIÓN
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return; // Si no es un botón con acción, no hacemos nada
+
+        const action = btn.dataset.action;
+
+        // --- AQUÍ ESTÁ EL CÓDIGO QUE NECESITABAS ---
+        if (action === 'show-main-menu') {
+            e.stopPropagation(); // Evita que se cierre inmediatamente
+            if (menu) {
+                menu.classList.toggle('popover-menu--visible');
+                hapticFeedback('light');
+            }
+            return;
+        }
+        // ---------------------------------------------
+
+        // Otros botones comunes (Logout, Navegación, etc.)
+        if (action === 'logout') {
+            if (confirm("¿Cerrar sesión?")) {
+                firebase.auth().signOut();
+                location.reload();
+            }
+        }
+        
+        if (action === 'navigate') {
+            const page = btn.dataset.page;
+            if (page) navigateTo(page);
+        }
+    });
 	// --- LÓGICA DE MODO PRIVACIDAD ---
     // Al hacer clic en el valor del Patrimonio Neto (KPI principal), alternamos el modo.
     document.body.addEventListener('click', (e) => {
@@ -9129,20 +9171,6 @@ const handleStart = (e) => {
         
         // Mapa de acciones
         const actions = {
-		if (action === 'show-main-menu') {
-    // Evitamos que el clic se propague y cierre el menú inmediatamente
-    e.stopPropagation(); 
-    
-    const menu = document.getElementById('main-menu-popover');
-    if (menu) {
-        // Alternar la clase que lo hace visible
-        menu.classList.toggle('popover-menu--visible');
-        
-        // Feedback táctil para que se sienta bien
-        hapticFeedback('light');
-    }
-    return; // Terminamos aquí
-}	
 		'toggle-portfolio-currency': async () => {
     // Verificación de seguridad: Solo funciona si estamos en la página de Patrimonio
     const activePage = document.querySelector('.view--active');
