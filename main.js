@@ -11670,10 +11670,10 @@ document.addEventListener('click', (e) => {
 });
 
 /* ================================================================= */
-/* === MANUAL DE AYUDA (Versión Final corregida) === */
+/* === MANUAL DE AYUDA (Solución Definitiva Z-Index) === */
 /* ================================================================= */
 
-// 1. EL CONTENIDO
+// 1. EL CONTENIDO DEL MANUAL
 const getManualContent = () => {
     return `
         <div class="manual-section" style="margin-bottom: 25px;">
@@ -11717,22 +11717,25 @@ const getManualContent = () => {
     `;
 };
 
-// 2. ESCUCHADOR DE EVENTOS
+// 2. ESCUCHADOR DE EVENTOS (Modo Prioridad)
 document.addEventListener('click', (e) => {
-    // Detectamos clic en "Ayuda / Manual"
+    // Detectamos si el clic es en "Ayuda / Manual"
     const helpBtn = e.target.closest('[data-action="show-help-modal"]');
     
     if (helpBtn) {
+        // DETENER TODO para evitar conflictos
         e.preventDefault();
         e.stopPropagation();
-        e.stopImmediatePropagation(); // Detiene otros scripts duplicados
+        e.stopImmediatePropagation();
 
-        // A. CERRAR EL MENÚ DE TRES PUNTOS (Ocultarlo visualmente)
+        console.log("📘 Abriendo Manual (Z-Index Override)...");
+
+        // A. CERRAR EL MENÚ DE TRES PUNTOS
         const menuPopover = document.getElementById('main-menu-popover');
         if (menuPopover) {
             menuPopover.classList.remove('popover-menu--visible');
-            menuPopover.style.display = 'none'; // Forzamos desaparición
-            // Lo reactivamos discretamente después para que funcione la próxima vez
+            menuPopover.style.display = 'none'; // Lo ocultamos a la fuerza
+            // Lo restauramos discretamente después
             setTimeout(() => { menuPopover.style.display = ''; }, 300);
         }
 
@@ -11744,23 +11747,26 @@ document.addEventListener('click', (e) => {
             // 1. Inyectar contenido
             content.innerHTML = getManualContent();
             
-            // 2. FORZAR VISIBILIDAD (La clave es el Z-Index altísimo)
+            // 2. FORZAR VISIBILIDAD SUPREMA
+            // Aquí está la solución: Z-Index 99999 gana a 20000
             modal.style.cssText = `
                 display: flex !important;
                 opacity: 1 !important;
                 visibility: visible !important;
-                z-index: 99999 !important; /* POR ENCIMA DE TODO */
-                background-color: rgba(0,0,0,0.9) !important;
+                z-index: 99999 !important; 
+                background-color: rgba(0,0,0,0.95) !important;
+                position: fixed !important;
+                top: 0; left: 0; width: 100%; height: 100%;
             `;
             
             modal.classList.add('active');
             
         } else {
-            console.error("Falta el div id='help-modal' en index.html");
+            console.error("❌ Error: No encuentro el modal 'help-modal' en index.html");
         }
     }
     
-    // DETECTAR CLIC EN CERRAR (X) o BOTÓN INFERIOR
+    // LOGICA PARA CERRAR EL MODAL
     const closeBtn = e.target.closest('[data-action="close-modal"]');
     if (closeBtn && closeBtn.dataset.modalId === 'help-modal') {
         const modal = document.getElementById('help-modal');
