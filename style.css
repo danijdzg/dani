@@ -5837,107 +5837,175 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 }
 
 /* ================================================================= */
-/* === FAB DELUXE (Sin Franja, Etiquetas Limpias, Resplandor) === */
+/* === FAB MENU (BOTÓN +) - CORREGIDO SIN FRANJAS Y CON BLUR === */
 /* ================================================================= */
 
-/* JERARQUÍA DE CAPAS (Z-INDEX) CRÍTICA */
-.bottom-nav { z-index: 2000 !important; } /* La barra siempre encima del oscurecimiento */
-.fab-backdrop { z-index: 1500 !important; } /* El oscurecimiento detrás de la barra */
-.fab-container { z-index: 3000 !important; } /* El botón y opciones encima de todo */
-
-/* 1. EL TELÓN DE FONDO (Pantalla completa pero detrás del menú) */
-.fab-backdrop {
-    position: fixed !important;
-    top: 0; left: 0; 
-    width: 100vw !important; 
-    height: 100vh !important;
+/* 1. EL CONTENEDOR (Ocupa todo el ancho pero deja pasar clics) */
+.fab-container {
+    position: fixed;
+    /* CENTRADO SIN TRANSFORM (Soluciona el error de la franja) */
+    left: 0; 
+    right: 0; 
+    bottom: 30px; /* Altura base para móvil */
     
-    /* Oscurecimiento elegante */
-    background: rgba(0, 0, 0, 0.85) !important;
-    backdrop-filter: blur(8px); /* Efecto cristal desenfocado */
+    z-index: 12000; /* Por encima de todo */
     
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Esto centra el botón horizontalmente */
+    
+    /* CRUCIAL: Permite hacer clic en la app a través de los espacios vacíos */
+    pointer-events: none; 
 }
 
-/* Cuando se activa el botón */
+/* 2. EL FONDO OSCURO Y BORROSO */
+.fab-backdrop {
+    position: fixed; /* Se fija a la ventana del navegador */
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh;
+    
+    /* Efecto de Emborronado y Oscurecimiento */
+    background: rgba(5, 5, 10, 0.85); /* Fondo muy oscuro para contraste */
+    backdrop-filter: blur(8px); /* DESENFOQUE FUERTE */
+    -webkit-backdrop-filter: blur(8px); /* Soporte para iPhone */
+    
+    opacity: 0;
+    pointer-events: none; /* Invisible = no molesta */
+    transition: opacity 0.3s ease;
+    z-index: -1; /* Se coloca detrás del botón */
+}
+
+/* Cuando se activa, el fondo aparece y bloquea los clics */
 .fab-container.active .fab-backdrop {
+    opacity: 1;
+    pointer-events: auto; /* Atrapa el clic para cerrar el menú */
+}
+
+/* 3. BOTÓN PRINCIPAL (+) */
+.fab-main-btn {
+    pointer-events: auto; /* Reactivamos clics solo para el botón */
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    
+    /* Gradiente y Sombra */
+    background: linear-gradient(135deg, #00E676 0%, #00B34D 100%);
+    box-shadow: 0 4px 20px rgba(0, 179, 77, 0.5);
+    border: 4px solid var(--c-background); /* Anillo de recorte */
+    
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    
+    /* Evita el recuadro azul al pulsar en Android */
+    -webkit-tap-highlight-color: transparent; 
+}
+
+.fab-main-btn:active { transform: scale(0.95); }
+
+/* Iconos animados */
+.fab-icon-plus, .fab-icon-close {
+    position: absolute;
+    transition: all 0.3s ease;
+    font-size: 32px;
+}
+.fab-icon-close { opacity: 0; transform: rotate(-90deg); }
+
+/* ESTADO ACTIVO DEL BOTÓN */
+.fab-container.active .fab-main-btn { 
+    background: #222; /* Se vuelve oscuro al abrir */
+    box-shadow: none;
+    border-color: transparent;
+}
+.fab-container.active .fab-icon-plus { opacity: 0; transform: rotate(90deg); }
+.fab-container.active .fab-icon-close { opacity: 1; transform: rotate(0); color: #ff4d4d; }
+
+/* 4. LAS OPCIONES (Pago, Traspaso, Ingreso) */
+.fab-options {
+    position: absolute;
+    bottom: 10px; /* Salen desde el centro */
+    left: 50%;
+    width: 0; height: 0;
+    pointer-events: none; /* No clickeables si están cerradas */
+}
+
+.fab-option {
+    position: absolute;
+    bottom: 0; left: 0;
+    margin-left: -25px; margin-bottom: -25px; /* Centrado en el origen */
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); /* Efecto rebote */
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Cuando está activo, las opciones reciben clics */
+.fab-container.active .fab-option {
     opacity: 1;
     pointer-events: auto;
 }
 
-/* 2. ETIQUETAS DE TEXTO (Limpias, sin caja blanca) */
-.fab-label {
-    background: transparent !important; /* ADIÓS CAJA BLANCA */
-    box-shadow: none !important;
-    border: none !important;
-    
-    /* Tipografía igual a los botones */
-    font-family: var(--font-family);
-    color: #ffffff !important;
-    font-size: 1.1rem !important; /* Más grande y legible */
-    font-weight: 800 !important;   /* Extra negrita */
-    letter-spacing: 0.5px;
-    text-transform: capitalize;
-
-/* 3. BOTÓN PRINCIPAL (+) - MÁS GRANDE Y BRILLANTE */
-.fab-main-btn {
-    width: 70px !important;
-    height: 70px !important;
-    /* Gradiente Neón Intenso */
-    background: linear-gradient(135deg, #00E676 0%, #00B34D 100%) !important;
-    
-    /* Resplandor Verde */
-    box-shadow: 0 0 25px rgba(0, 179, 77, 0.6) !important;
-    border: 4px solid #1a1a1a !important; /* Anillo oscuro para contraste */
-    
-    transform: translateY(-15px); /* Flota más alto */
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-/* Icono + */
-.fab-main-btn .material-icons {
-    font-size: 36px !important;
-    text-shadow: 0 2px 5px rgba(0,0,0,0.3);
-}
-
-/* 4. LAS OPCIONES (Pago, Traspaso, Ingreso) - MÁS GRANDES */
+/* Círculos de Iconos */
 .fab-icon-holder {
-    width: 58px; height: 58px; /* Círculos más grandes */
-    border: 2px solid rgba(255,255,255,0.9); /* Borde blanco nítido */
-    font-size: 26px;
-    
-    /* Transición de hover */
-    transition: transform 0.2s, box-shadow 0.2s;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4); /* Sombra fuerte para destacar sobre el blur */
+    border: 2px solid rgba(255,255,255,0.1);
 }
 
-/* Colores brillantes */
-.fab-option--ingreso .fab-icon-holder { 
-    background: #00C853; /* Verde fuerte */
-    box-shadow: 0 0 20px rgba(0, 200, 83, 0.6);
-}
-.fab-option--gasto .fab-icon-holder { 
-    background: #FF3D00; /* Rojo anaranjado fuerte */
-    box-shadow: 0 0 20px rgba(255, 61, 0, 0.6);
-}
-.fab-option--traspaso .fab-icon-holder { 
-    background: #2962FF; /* Azul eléctrico */
-    box-shadow: 0 0 20px rgba(41, 98, 255, 0.6);
+/* Etiquetas de texto */
+.fab-label {
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8); /* Sombra de texto para legibilidad */
+    background: transparent; /* Sin caja, texto limpio */
 }
 
-/* Efecto al pasar el ratón */
-.fab-option:hover .fab-icon-holder {
-    transform: scale(1.15);
-    filter: brightness(1.2);
+/* Colores Neón Vibrantes */
+.fab-option--ingreso .fab-icon-holder { background: linear-gradient(135deg, #00b09b, #96c93d); }
+.fab-option--traspaso .fab-icon-holder { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.fab-option--gasto .fab-icon-holder { background: linear-gradient(135deg, #ff0844, #ffb199); }
+
+/* --- COORDENADAS DE ANIMACIÓN (Despliegue en Abanico) --- */
+
+/* PAGO (Izquierda) */
+.fab-container.active .fab-option--gasto { 
+    transform: translate(-85px, -90px) scale(1); 
+    transition-delay: 0s; 
 }
-/* Corrección de posición del menú FAB en escritorio */
+/* TRASPASO (Centro Arriba) */
+.fab-container.active .fab-option--traspaso { 
+    transform: translate(0px, -130px) scale(1); 
+    transition-delay: 0.05s; 
+}
+/* INGRESO (Derecha) */
+.fab-container.active .fab-option--ingreso { 
+    transform: translate(85px, -90px) scale(1); 
+    transition-delay: 0.1s; 
+}
+
+/* 5. AJUSTE PARA ESCRITORIO (Centrado y Elevado) */
 @media (min-width: 1024px) {
     .fab-container {
-        position: fixed;
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: 50px; /* Ajustado para salir desde la barra flotante */
-        z-index: 2000;
+        /* Mantenemos el sistema left:0/right:0 para evitar el bug del transform */
+        bottom: 50px; 
     }
-    
+}
