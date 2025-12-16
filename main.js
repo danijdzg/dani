@@ -11596,24 +11596,21 @@ const updateExtractoList = () => {
 };
 
 /* ================================================================= */
-/* === FIX FINAL: MENÚ TRES PUNTOS (Autogenerado) === */
+/* === MENÚ TRES PUNTOS (Posición Exacta Debajo del Botón) === */
 /* ================================================================= */
 
 document.addEventListener('click', (e) => {
     // 1. Detectar clic en el botón
     const btn = e.target.closest('#header-menu-btn');
-    
-    // Referencia al menú (por si ya existe)
     let menuPopover = document.getElementById('main-menu-popover');
 
-    // --- CASO A: Pulsamos el BOTÓN ---
+    // --- ABRIR MENÚ ---
     if (btn) {
         e.stopPropagation();
         e.preventDefault();
 
-        // 2. SI EL MENÚ NO EXISTE, LO CREAMOS AL VUELO
+        // 2. Autogeneración (Si no existe)
         if (!menuPopover) {
-            console.log("⚠️ Menú no encontrado. Creándolo automáticamente...");
             menuPopover = document.createElement('div');
             menuPopover.id = 'main-menu-popover';
             menuPopover.className = 'popover-menu';
@@ -11629,15 +11626,33 @@ document.addEventListener('click', (e) => {
                     <span class="material-icons">help_outline</span> <span>Ayuda</span>
                 </button>
                 <div class="popover-menu__divider"></div>
-                <button class="popover-menu__item popover-menu__item--danger" data-action="logout">
-                    <span class="material-icons">logout</span> <span>Cerrar Sesión</span>
+                <button class="popover-menu__item" style="color:#ff6b6b;" data-action="logout">
+                    <span class="material-icons" style="color:#ff6b6b;">logout</span> <span>Cerrar Sesión</span>
                 </button>
             `;
             document.body.appendChild(menuPopover);
         }
 
-        // 3. ABRIR / CERRAR
-        // Usamos un pequeño timeout para asegurar que el CSS pille el cambio si acabamos de crearlo
+        // 3. CÁLCULO DE POSICIÓN (LA CLAVE)
+        // Obtenemos el rectángulo del botón (coordenadas X, Y, ancho, alto)
+        const rect = btn.getBoundingClientRect();
+        
+        // Calculamos:
+        // TOP: La parte de abajo del botón + 10px de margen
+        const topPos = rect.bottom + 10;
+        
+        // RIGHT: El ancho de la pantalla menos la parte derecha del botón
+        // (Esto alinea el borde derecho del menú con el borde derecho del botón)
+        const rightPos = window.innerWidth - rect.right;
+
+        // Aplicamos coordenadas exactas
+        menuPopover.style.top = `${topPos}px`;
+        menuPopover.style.right = `${rightPos}px`;
+        
+        // (Opcional) Aseguramos que transform-origin sea la esquina superior derecha
+        menuPopover.style.transformOrigin = 'top right';
+
+        // 4. MOSTRAR
         requestAnimationFrame(() => {
             menuPopover.classList.toggle('popover-menu--visible');
         });
@@ -11646,7 +11661,7 @@ document.addEventListener('click', (e) => {
         return;
     }
 
-    // --- CASO B: Pulsamos FUERA (CERRAR) ---
+    // --- CERRAR MENÚ (Clic fuera) ---
     if (menuPopover && menuPopover.classList.contains('popover-menu--visible')) {
         if (!e.target.closest('#main-menu-popover')) {
             menuPopover.classList.remove('popover-menu--visible');

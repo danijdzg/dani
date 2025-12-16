@@ -5712,60 +5712,58 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     cursor: pointer;
 }
 /* ================================================================= */
-/* === ESTILO FINAL MENÚ (Visibilidad Forzada) === */
+/* === MENÚ FLOTANTE (Posición Dinámica) === */
 /* ================================================================= */
 
 .popover-menu {
-    /* POSICIÓN FIJA (Independiente del scroll) */
-    position: fixed !important; 
-    top: 60px !important; 
-    right: 15px !important;
+    position: fixed; /* Flota sobre la pantalla */
     
-    /* APARIENCIA */
-    background-color: #222 !important; /* Fondo gris oscuro sólido */
-    border: 1px solid rgba(255,255,255,0.2) !important;
-    border-radius: 12px !important;
-    padding: 10px !important;
-    min-width: 200px !important;
+    /* Nota: Quitamos top/right fijos para que JS los calcule */
+    top: 0; 
+    right: 0;
     
-    /* CAPA SUPERIOR (Por encima de todo) */
-    z-index: 2147483647 !important; /* El valor más alto posible en CSS */
-    box-shadow: 0 0 50px rgba(0,0,0,0.8) !important;
+    background-color: #222; 
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 200px;
     
-    /* TRANSICIONES */
-    transition: opacity 0.2s, transform 0.2s;
-    transform-origin: top right;
+    /* Z-INDEX MÁXIMO */
+    z-index: 2147483647 !important; 
+    box-shadow: 0 5px 25px rgba(0,0,0,0.8);
     
-    /* ESTADO INICIAL (Oculto) */
+    /* ANIMACIONES */
     opacity: 0;
-    transform: scale(0.9);
-    pointer-events: none; /* No se puede tocar */
-    visibility: hidden;   /* Oculto del todo */
+    transform: scale(0.95); /* Efecto sutil */
+    transform-origin: top right;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    
+    /* Oculto por defecto */
+    visibility: hidden;
 }
 
-/* CLASE QUE ACTIVA LA VISIBILIDAD */
+/* ESTADO VISIBLE */
 .popover-menu--visible {
-    /* ESTADO VISIBLE (Activado) */
     opacity: 1 !important;
     transform: scale(1) !important;
-    pointer-events: auto !important; /* Se puede tocar */
-    visibility: visible !important;  /* Visible */
-    display: block !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
 }
 
-/* ITEMS DEL MENÚ */
+/* ITEMS */
 .popover-menu__item {
     display: flex;
     align-items: center;
     gap: 12px;
     width: 100%;
-    padding: 12px;
+    padding: 12px 15px;
     background: transparent;
     border: none;
-    color: white !important; /* Texto blanco forzado */
-    font-size: 16px;
+    color: white;
+    font-size: 15px;
     text-align: left;
+    border-radius: 8px;
 }
-.popover-menu__item:active {
-    background-color: rgba(255,255,255,0.1);
-}
+.popover-menu__item:active { background-color: rgba(255,255,255,0.1); }
+.popover-menu__divider { height: 1px; background: rgba(255,255,255,0.1); margin: 4px 0; }
