@@ -5985,16 +5985,27 @@ body::-webkit-scrollbar {
     }
 }
 /* ================================================================= */
-/* === ELIMINAR BARRA DE SCROLL EN PANEL (Invisible pero funcional) === */
+/* === QUITAR BARRA DE SCROLL EN PANEL (Solución Definitiva) === */
 /* ================================================================= */
-/* 1. Para Chrome, Safari y Opera */
+
+/* 1. Ocultar en Chrome, Safari, Edge y Opera */
 #dashboard-page .page-content::-webkit-scrollbar {
-    display: none;
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
 }
-/* 2. Para Firefox, IE y Edge */
+
+/* 2. Ocultar en Firefox e Internet Explorer */
 #dashboard-page .page-content {
-    -ms-overflow-style: none;  /* IE y Edge */
-    scrollbar-width: none;  /* Firefox */ 
-    /* Aseguramos que el contenido fluya bien */
-    overflow-y: auto; 
+    scrollbar-width: none !important;  /* Firefox */
+    -ms-overflow-style: none !important;  /* IE y Edge antiguo */
+    
+    /* Aseguramos que se pueda deslizar aunque no se vea la barra */
+    overflow-y: scroll !important; 
+}
+
+/* 3. Asegurar que el contenedor padre no genere doble scroll */
+#dashboard-page {
+    overflow: hidden !important;
 }
