@@ -5911,101 +5911,85 @@ input, select, textarea {
     }
 }
 /* ================================================================= */
-/* === OPTIMIZACIÓN PANEL: VERTICAL COMPACTO (AUTO-AJUSTABLE) === */
+/* === PANEL (DASHBOARD) PERFECTO: SIN SCROLL Y AUTO-AJUSTABLE === */
 /* ================================================================= */
 
-/* 1. OCULTAR BARRA DE DESPLAZAMIENTO (Estético) */
-.page-content, .view-container, body, html {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
+/* 1. ELIMINAR BARRA DE SCROLL (Invisible en todos los navegadores) */
+#dashboard-page .page-content::-webkit-scrollbar {
+    display: none !important; /* Chrome, Safari */
 }
-.page-content::-webkit-scrollbar, 
-body::-webkit-scrollbar { 
-    display: none; /* Chrome, Safari */
-}
-
-/* 2. AJUSTES GENERALES DEL PANEL */
 #dashboard-page .page-content {
-    /* Quitamos padding excesivo superior */
-    padding-top: 5px !important; 
-    padding-bottom: 80px;
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* IE/Edge */
 }
 
-/* 3. LÓGICA ELÁSTICA PARA ORDENADOR (La clave para que quepa sin scroll) */
+/* 2. AJUSTES BASE (MÓVIL) */
+#dashboard-page .page-content {
+    padding-top: 10px !important;
+    padding-bottom: 80px; /* Espacio para menú inferior en móvil */
+}
+
+/* 3. MODO ORDENADOR (AJUSTE MATEMÁTICO A PANTALLA COMPLETA) */
 @media (min-width: 600px) {
     
-    /* Forzamos a que el contenedor ocupe EXACTAMENTE la altura disponible */
+    /* A. El contenedor principal ocupa EXACTAMENTE el hueco disponible */
     #dashboard-page .page-content {
-        height: calc(100vh - 70px); /* 100% pantalla menos la cabecera */
-        padding-bottom: 10px !important; /* Poco margen abajo */
-        overflow: hidden; /* Prohibido el scroll */
+        /* Altura total (100vh) MENOS Cabecera (60px) MENOS un margen (20px) */
+        height: calc(100vh - 80px) !important; 
+        overflow: hidden !important; /* PROHIBIDO EL SCROLL */
+        padding-bottom: 0 !important;
         display: flex;
         flex-direction: column;
+        justify-content: center; /* Centrar todo verticalmente */
     }
 
-    /* El contenedor de las tarjetas se convierte en una columna flexible */
+    /* B. El contenedor de tarjetas se estira para llenar ese hueco */
     #dashboard-kpi-container {
         display: flex;
-        flex-direction: column; /* Mantenemos lista vertical */
-        height: 100%; /* Ocupa todo el alto disponible */
-        gap: 12px; /* Espacio entre tarjetas */
-        padding: 0 10px;
+        flex-direction: column;
+        height: 100%; 
+        max-height: 100%;
+        gap: 10px; /* Espacio pequeño entre tarjetas */
+        padding: 10px 20px; /* Un poco de aire lateral */
     }
 
-    /* LAS TARJETAS MÁGICAS */
+    /* C. LAS TARJETAS (La clave es min-height: 0) */
     .kpi-card {
-        /* flex: 1 significa "Ocupa una fracción igual del espacio" */
-        /* Si hay 4 tarjetas, cada una ocupará exactamente el 25% del espacio */
-        flex: 1; 
+        flex: 1; /* "Ocupa todo el espacio que puedas repartiéndolo equitativamente" */
+        
+        /* ESTA ES LA CLAVE: Permite que la tarjeta se encoja más allá de su contenido si hace falta */
+        min-height: 0 !important; 
         
         display: flex;
         flex-direction: column;
-        justify-content: center; /* Centrar contenido verticalmente */
-        margin: 0 !important; /* Quitamos márgenes viejos */
-        min-height: 0; /* Permite encogerse si la pantalla es bajita */
-        padding: 0 20px !important; /* Ajuste de relleno lateral */
+        justify-content: center; /* Centrar textos verticalmente */
+        margin: 0 !important;
+        padding: 0 20px !important; /* Reducimos relleno vertical a 0, flex lo centrará */
+        
+        /* Sombra más suave para modo escritorio */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
 
-    /* Compactamos un poco los textos solo en PC para que respiren */
+    /* D. TEXTOS RESPONSIVOS (Se hacen más pequeños en PC para caber mejor) */
     .kpi-card h3 {
-        margin-top: 0;
+        font-size: 0.9rem !important; /* Título compacto */
         margin-bottom: 5px !important;
-        font-size: 0.95rem;
         opacity: 0.8;
     }
-    
+
     .kpi-value {
-        font-size: 1.6rem !important; /* Tamaño grande pero controlado */
-        margin: 0;
+        font-size: 1.8rem !important; /* Número grande */
+        line-height: 1.1;
     }
     
     .kpi-trend {
+        font-size: 0.75rem !important; /* Texto de tendencia pequeño */
         margin-top: 5px;
-        font-size: 0.85rem;
     }
-}
-/* ================================================================= */
-/* === QUITAR BARRA DE SCROLL EN PANEL (Solución Definitiva) === */
-/* ================================================================= */
-
-/* 1. Ocultar en Chrome, Safari, Edge y Opera */
-#dashboard-page .page-content::-webkit-scrollbar {
-    display: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    background: transparent !important;
-}
-
-/* 2. Ocultar en Firefox e Internet Explorer */
-#dashboard-page .page-content {
-    scrollbar-width: none !important;  /* Firefox */
-    -ms-overflow-style: none !important;  /* IE y Edge antiguo */
     
-    /* Aseguramos que se pueda deslizar aunque no se vea la barra */
-    overflow-y: scroll !important; 
-}
-
-/* 3. Asegurar que el contenedor padre no genere doble scroll */
-#dashboard-page {
-    overflow: hidden !important;
+    /* Ocultar iconos decorativos grandes si la pantalla es muy bajita */
+    .kpi-card .material-icons {
+        font-size: 24px !important; 
+        opacity: 0.5;
+    }
 }
