@@ -1792,7 +1792,7 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     border: 1px solid var(--c-outline);
     border-radius: var(--border-radius-lg);
     box-shadow: 0 10px 40px rgba(0,0,0,0.5); /* Sombra fuerte para resaltar */
-    z-index: 12000 !important; /* Por encima de TODO (incluyendo modales y toasts) */
+    z-index: 2000 !important; /* Por encima de TODO (incluyendo modales y toasts) */
     
     /* 4. Estado Inicial (Oculto) */
     opacity: 0;
@@ -5728,7 +5728,7 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     min-width: 200px;
     
     /* Z-INDEX MÁXIMO */
-    z-index: 2147483647 !important; 
+    z-index: 2000 !important; 
     box-shadow: 0 5px 25px rgba(0,0,0,0.8);
     
     /* ANIMACIONES */
