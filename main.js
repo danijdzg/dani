@@ -11727,3 +11727,70 @@ window.addEventListener('click', (e) => {
         }
     }
 });
+/* ================================================================= */
+/* === GENERADOR DE ESPACIO PROFUNDO (Deep Space Engine) === */
+/* ================================================================= */
+
+(function initSpaceBackground() {
+    // Solo ejecutar si estamos en pantalla grande (ahorro de recursos)
+    if (window.innerWidth < 600) return;
+
+    const container = document.getElementById('deep-space-background');
+    if (!container) return;
+
+    console.log("🌌 Iniciando motores de hiperespacio...");
+
+    // Función para crear una capa de estrellas
+    const createLayer = (count, size, duration, opacity) => {
+        const layer = document.createElement('div');
+        layer.className = 'star-layer';
+        
+        let shadows = [];
+        // Generamos coordenadas aleatorias basadas en el ancho TOTAL de la pantalla
+        for (let i = 0; i < count; i++) {
+            const x = Math.floor(Math.random() * window.innerWidth);
+            const y = Math.floor(Math.random() * window.innerHeight * 2); // *2 para el scroll
+            shadows.push(`${x}px ${y}px #FFF`);
+        }
+
+        // Aplicamos los estilos
+        layer.style.width = size;
+        layer.style.height = size;
+        layer.style.opacity = opacity;
+        layer.style.boxShadow = shadows.join(',');
+        layer.style.animation = `moveStars ${duration}s linear infinite`;
+
+        // Creamos el duplicado para el loop infinito (efecto parallax)
+        const after = document.createElement('div');
+        after.className = 'star-layer';
+        after.style.width = size;
+        after.style.height = size;
+        after.style.opacity = opacity;
+        after.style.boxShadow = shadows.join(',');
+        after.style.animation = `moveStars ${duration}s linear infinite`;
+        after.style.top = '2000px'; // Desplazamiento para el loop
+
+        container.appendChild(layer);
+        container.appendChild(after);
+    };
+
+    // CAPA 1: Estrellas lejanas (Muchas, pequeñas, lentas)
+    createLayer(700, '1px', 100, 0.6);
+
+    // CAPA 2: Estrellas medias (Menos, un poco más grandes)
+    createLayer(200, '2px', 70, 0.8);
+
+    // CAPA 3: Estrellas cercanas (Pocas, brillantes, rápidas)
+    createLayer(100, '3px', 40, 1);
+
+    // Recalcular si se cambia el tamaño de la ventana (Opcional, para perfeccionistas)
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 600) {
+            container.innerHTML = ''; // Limpiar
+            createLayer(700, '1px', 100, 0.6);
+            createLayer(200, '2px', 70, 0.8);
+            createLayer(100, '3px', 40, 1);
+        }
+    });
+
+})();
