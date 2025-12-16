@@ -3856,49 +3856,47 @@ const updateLocalDataAndRefreshUI = async () => {
 
 };
  
+/* EN main.js - Sustituye la función updateVirtualListUI por esta: */
+
 const updateVirtualListUI = () => {
     if (!vList.sizerEl) return;
 
+    // 1. Limpiamos la lista virtual
     vList.items = [];
     vList.itemMap = [];
     let currentHeight = 0;
     
-    // 1. Recurrentes pendientes (Se mantiene igual - Parte Superior)
+    // 2. Definimos alturas fijas (Coherencia con CSS)
+    // Asegúrate de que coincidan con tu CSS real
+    const H_HEADER = 45;  // Altura de la cabecera de fecha
+    const H_ITEM = 65;    // Altura de la tarjeta de movimiento
+    const H_PENDING = 72; // Altura de recurrentes pendientes
+
+    // --- SECCIÓN A: RECURRENTES PENDIENTES (Siempre arriba) ---
     const pendingRecurrents = getPendingRecurrents();
     if (pendingRecurrents.length > 0) {
+        // Cabecera de pendientes
         vList.items.push({ type: 'pending-header', count: pendingRecurrents.length });
-        vList.itemMap.push({ height: vList.heights.pendingHeader, offset: currentHeight });
-        currentHeight += vList.heights.pendingHeader;
+        vList.itemMap.push({ height: 40, offset: currentHeight });
+        currentHeight += 40;
         
+        // Items pendientes
         pendingRecurrents.forEach(recurrent => {
             vList.items.push({ type: 'pending-item', recurrent: recurrent });
-            vList.itemMap.push({ height: vList.heights.pendingItem, offset: currentHeight });
-            currentHeight += vList.heights.pendingItem;
+            vList.itemMap.push({ height: H_PENDING, offset: currentHeight });
+            currentHeight += H_PENDING;
         });
     }
 
-    // 2. OBTENCIÓN Y FILTRADO DE MOVIMIENTOS
-    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
-    const allMovements = [];
-
-    (db.movimientos || []).forEach(mov => {
-        let isVisible = false;
-        if (mov.tipo === 'traspaso') {
-            isVisible = visibleAccountIds.has(mov.cuentaOrigenId) || visibleAccountIds.has(mov.cuentaDestinoId);
-        } else {
-            isVisible = visibleAccountIds.has(mov.cuentaId);
-        }
-
-        if (isVisible) {
-            allMovements.push(mov);
-        }
-    });
-
-    // 3. AGRUPACIÓN POR DÍA (NUEVA LÓGICA)
+    // --- SECCIÓN B: AGRUPACIÓN POR DÍAS (La lógica que faltaba) ---
+    
+    // 1. Agrupar movimientos por fecha (YYYY-MM-DD)
     const groupedByDate = {};
+    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
 
-    allMovements.forEach(mov => {
-        // Obtenemos la fecha en formato YYYY-MM-DD para usarla de clave
+    // Usamos db.movimientos que ya está filtrado por la página del diario
+    (db.movimientos || []).forEach(mov => {
+        // Cortamos la fecha ISO para obtener solo el día
         const dateKey = mov.fecha.split('T')[0];
         
         if (!groupedByDate[dateKey]) {
@@ -3908,73 +3906,70 @@ const updateVirtualListUI = () => {
             };
         }
 
-        // Añadimos el movimiento al grupo
+        // Añadimos movimiento al grupo
         groupedByDate[dateKey].movements.push(mov);
 
-        // Calculamos el impacto en el total del día
+        // Calculamos el impacto en el total del día (Solo sumamos si afecta a la vista actual)
         let amount = 0;
         if (mov.tipo === 'traspaso') {
             const origenVisible = visibleAccountIds.has(mov.cuentaOrigenId);
             const destinoVisible = visibleAccountIds.has(mov.cuentaDestinoId);
-            // Si sale dinero de la vista actual
+            
+            // Si sale de mi vista -> Resta. Si entra a mi vista -> Suma.
             if (origenVisible && !destinoVisible) amount = -Math.abs(mov.cantidad);
-            // Si entra dinero a la vista actual
             else if (!origenVisible && destinoVisible) amount = Math.abs(mov.cantidad);
-            // Si es interno (ambas visibles) el neto es 0
+            // Si es interno (ambas visibles) es neutro (0)
         } else {
+            // Si es ingreso/gasto normal
             amount = mov.cantidad;
         }
         groupedByDate[dateKey].totalDay += amount;
     });
 
-    // 4. ORDENACIÓN Y APLANADO A LA LISTA VIRTUAL
-    // Ordenamos las fechas de más reciente a más antigua
+    // 2. Ordenar las fechas (De más reciente a más antigua)
     const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
+    // 3. Construir la lista plana intercalando cabeceras
     sortedDates.forEach(dateKey => {
         const group = groupedByDate[dateKey];
 
-        // A) Insertamos la CABECERA DE FECHA
-        // Altura estimada de cabecera: 45px (ajustar según CSS)
-        const headerHeight = 45; 
+        // A) Insertar CABECERA DE DÍA
         vList.items.push({ 
             type: 'date-header', 
             date: dateKey, 
             total: group.totalDay 
         });
-        vList.itemMap.push({ height: headerHeight, offset: currentHeight });
-        currentHeight += headerHeight;
+        vList.itemMap.push({ height: H_HEADER, offset: currentHeight });
+        currentHeight += H_HEADER;
 
-        // B) Insertamos los MOVIMIENTOS de ese día
-        // Ordenamos movimientos dentro del día (más reciente primero por ID si la hora es igual)
-        group.movements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id.localeCompare(a.id));
+        // B) Insertar MOVIMIENTOS DEL DÍA
+        // Aseguramos orden por hora dentro del día
+        group.movements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
         group.movements.forEach(mov => {
-            const itemHeight = 76; // Altura de la tarjeta
             vList.items.push({ type: 'transaction', movement: mov });
-            vList.itemMap.push({ height: itemHeight, offset: currentHeight });
-            currentHeight += itemHeight;
+            vList.itemMap.push({ height: H_ITEM, offset: currentHeight });
+            currentHeight += H_ITEM;
         });
     });
     
-    // 5. Renderizado final
+    // 4. Actualizar el contenedor de scroll
     vList.sizerEl.style.height = `${currentHeight}px`;
+    
+    // 5. Forzar renderizado inmediato
     vList.lastRenderedRange = { start: -1, end: -1 }; 
     renderVisibleItems();
     
-    // Gestión de estados vacíos
-    const loadMoreContainer = select('load-more-container');
-    const emptyContainer = select('empty-movimientos');
-    const listContainer = select('movimientos-list-container');
+    // 6. Gestionar mensaje de "Lista Vacía"
+    const emptyState = document.getElementById('empty-movimientos');
+    const listContainer = document.getElementById('movimientos-list-container');
     
     if (vList.items.length === 0) {
-        listContainer?.classList.add('hidden');
-        loadMoreContainer?.classList.add('hidden');
-        emptyContainer?.classList.remove('hidden');
+        if (listContainer) listContainer.classList.add('hidden');
+        if (emptyState) emptyState.classList.remove('hidden');
     } else {
-        listContainer?.classList.remove('hidden');
-        emptyContainer?.classList.add('hidden');
-        loadMoreContainer?.classList.toggle('hidden', allMovementsLoaded);
+        if (listContainer) listContainer.classList.remove('hidden');
+        if (emptyState) emptyState.classList.add('hidden');
     }
 };
 
