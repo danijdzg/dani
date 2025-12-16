@@ -3674,7 +3674,6 @@ body[data-theme="default"] .cartilla-container {
 .app-layout { z-index: 1; }
 .bottom-nav, .top-bar { z-index: 100; }
 .modal-overlay { z-index: 1000; } /* Modales normales */
-.popover-menu { z-index: 20000; } 
 #calculator-overlay { z-index: 2000; } /* Calculadora sobre modales */
 .save-animation-bubble { z-index: 2100; } 
 .toast-container { z-index: 3000; } /* Notificaciones SIEMPRE encima */
