@@ -11650,52 +11650,80 @@ document.addEventListener('click', (e) => {
 });
 
 /* ================================================================= */
-/* === GESTOR DE LA CALCULADORA (Iframe) === */
+/* === GESTOR MAESTRO V5 (Calculadora Independiente) === */
 /* ================================================================= */
 
 window.addEventListener('click', (e) => {
-    // 1. Detectar si pulsamos el botón de la calculadora
-    const calcBtn = e.target.closest('[data-action="open-calculator"]');
-    
-    if (calcBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        console.log("🧮 Abriendo calculadora...");
+    // 1. REGLA DE ORO: Si pulsamos DENTRO del iframe o su contenedor (y no es el botón cerrar)
+    // NO HACEMOS NADA. Dejamos que la calculadora gestione sus propios clics.
+    if (e.target.closest('#calculator-iframe-modal') && !e.target.closest('[data-action="close-modal"]')) {
+        return; 
+    }
 
-        // 2. Localizar el Modal y el Iframe
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+
+    // --- A. ABRIR CALCULADORA ---
+    if (action === 'open-calculator') {
+        e.preventDefault();
+        e.stopPropagation(); // Detenemos la propagación para aislar el evento
+        
         const modal = document.getElementById('calculator-iframe-modal');
         const iframe = document.getElementById('calculator-frame');
 
         if (modal && iframe) {
-            // A. CARGAR LA APP (Si no estaba cargada)
-            // Esto evita que consuma batería si no se usa
-            if (!iframe.getAttribute('src')) {
+            console.log("🧮 Iniciando App Calculadora...");
+            
+            // Cargar archivo si está vacío
+            if (!iframe.getAttribute('src') || iframe.getAttribute('src') === '') {
                 iframe.src = 'calculadora.html';
             }
 
-            // B. MOSTRAR EL MODAL
-            modal.classList.add('active');
-            
-            // Forzamos visibilidad y Z-Index alto
+            // ABRIR VISUALMENTE
             modal.style.display = 'flex';
-            modal.style.opacity = '1';
-            modal.style.visibility = 'visible';
-            modal.style.zIndex = '12000'; // Por encima del menú
-            
+            // Pequeño timeout para asegurar que el display:flex se aplica antes de la opacidad
+            setTimeout(() => {
+                modal.classList.add('active');
+                modal.style.opacity = '1';
+                modal.style.pointerEvents = 'auto'; // Forzamos interactividad JS
+                
+                // TRUCO FINAL: Darle el foco al iframe para que funcione el teclado
+                iframe.focus();
+                if (iframe.contentWindow) iframe.contentWindow.focus();
+            }, 10);
+
         } else {
-            alert("Error: No se encuentra el modal de la calculadora en el HTML.");
+            alert("Error: No se encuentra el modal de la calculadora.");
         }
         return;
     }
 
-    // 3. CERRAR CALCULADORA
-    const closeBtn = e.target.closest('[data-action="close-modal"]');
-    if (closeBtn && closeBtn.dataset.modalId === 'calculator-iframe-modal') {
-        const modal = document.getElementById('calculator-iframe-modal');
+    // --- B. CERRAR CALCULADORA ---
+    if (action === 'close-modal') {
+        const modalId = btn.dataset.modalId;
+        const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.remove('active');
-            modal.style.display = 'none';
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300); // Esperar a la animación de cierre
+        }
+        return;
+    }
+
+    // --- C. OTRAS ACCIONES (Header) ---
+    if (action === 'navigate') {
+        const page = btn.dataset.page;
+        if (typeof navigateTo === 'function') navigateTo(page);
+    }
+    
+    if (action === 'logout') {
+        if (confirm("¿Cerrar sesión?")) {
+            if (typeof firebase !== 'undefined') firebase.auth().signOut().then(() => window.location.reload());
+            else window.location.reload();
         }
     }
-}, true); // El 'true' da prioridad máxima al evento
+});

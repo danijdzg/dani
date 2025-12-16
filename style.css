@@ -5842,3 +5842,26 @@ input, select, textarea {
     background-color: var(--c-surface-variant);
     border-radius: 50%;
 }
+/* ================================================================= */
+/* === FIX CALCULADORA (Interactividad Total) === */
+/* ================================================================= */
+
+/* Forzamos que el contenedor acepte punteros/dedos */
+#calculator-iframe-modal {
+    pointer-events: auto !important; 
+    touch-action: auto !important;
+}
+
+/* El iframe debe ocupar todo y estar "vivo" */
+#calculator-frame {
+    pointer-events: auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    touch-action: manipulation !important; /* Mejora respuesta táctil */
+}
+
+/* Asegurar que el botón de cerrar siempre se pueda pulsar */
+#calculator-iframe-modal .icon-btn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
