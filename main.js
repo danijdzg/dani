@@ -11670,107 +11670,82 @@ document.addEventListener('click', (e) => {
 });
 
 /* ================================================================= */
-/* === LÓGICA DEL MANUAL DE AYUDA (Versión Corregida) === */
+/* === LÓGICA DEL MANUAL DE AYUDA (Solución Forzada v2) === */
 /* ================================================================= */
 
-// 1. EL CONTENIDO DEL MANUAL
+// 1. EL CONTENIDO
 const getManualContent = () => {
     return `
         <div class="manual-section">
-            <p class="manual-text">¡Hola! 👋 Bienvenido a <strong>aiDANaI-ctas</strong>. Soy tu asistente financiero personal.</p>
-            <div class="manual-highlight">
-                <strong>Filosofía:</strong> "Lo que no se mide, no se puede mejorar". Aquí medimos todo para que tú solo decidas.
-            </div>
+            <h3 class="manual-title" style="color:var(--c-primary); border-bottom:1px solid var(--c-outline); padding-bottom:5px; margin-bottom:10px;">
+                <span class="material-icons">waving_hand</span> Bienvenido
+            </h3>
+            <p class="manual-text">¡Hola! 👋 Soy tu asistente financiero en <strong>aiDANaI-ctas</strong>.</p>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" style="margin-top:20px;">
             <h3 class="manual-title"><span class="material-icons">add_circle</span> El Botón Mágico (+)</h3>
-            <p class="manual-text">Al pulsar el botón central <strong>(+)</strong>, la pantalla se desenfoca y tienes 3 opciones:</p>
-            <ul style="list-style: none; padding: 0;">
-                <li style="margin-bottom: 8px;">🔴 <strong>Pago (Gasto):</strong> Dinero que sale (Cine, Súper, Gasolina).</li>
-                <li style="margin-bottom: 8px;">🟢 <strong>Ingreso:</strong> Dinero que entra (Nómina, Ventas).</li>
-                <li style="margin-bottom: 8px;">🔵 <strong>Traspaso:</strong> Mover dinero entre tus propias cuentas. <br><em>No altera tu patrimonio total.</em></li>
+            <p class="manual-text">Pulsa el botón central para desplegar las 3 acciones principales:</p>
+            <ul style="padding-left: 20px; line-height: 1.8;">
+                <li>🔴 <strong>Gasto:</strong> Dinero que pierdes (Supermercado, Cine).</li>
+                <li>🟢 <strong>Ingreso:</strong> Dinero que ganas (Nómina, Ventas).</li>
+                <li>🔵 <strong>Traspaso:</strong> Mover dinero entre tus cuentas (No afecta a tu total).</li>
             </ul>
         </div>
 
-        <div class="manual-section">
-            <h3 class="manual-title"><span class="material-icons">dashboard</span> Panel Principal</h3>
-            <div class="manual-tip">
-                <span class="material-icons" style="color:var(--c-warning)">lightbulb</span>
-                <div>
-                    <strong>Tasa de Ahorro:</strong> Si ganas 1.000€ y ahorras 200€, tu tasa es del 20%. ¡Intenta mantenerla en verde!
-                </div>
-            </div>
-        </div>
-
-        <div class="manual-section">
-            <h3 class="manual-title"><span class="material-icons">account_balance</span> Patrimonio y Extracto</h3>
-            <p class="manual-text">Pulsa la tarjeta <strong>Patrimonio</strong> para ver el <strong>Extracto Global</strong> con todos tus movimientos históricos y filtros por fecha.</p>
-        </div>
-
-        <div class="manual-section">
-            <h3 class="manual-title"><span class="material-icons">event</span> Planificación</h3>
-            <p class="manual-text">Crea movimientos recurrentes (Alquiler, Netflix) para que la app te avise cada mes y no tengas que escribirlos de nuevo.</p>
+        <div class="manual-section" style="margin-top:20px;">
+             <h3 class="manual-title"><span class="material-icons">account_balance</span> Patrimonio</h3>
+             <p class="manual-text">Accede al <strong>Extracto Global</strong> pulsando la tarjeta de Patrimonio para ver todo tu historial filtrado por fechas.</p>
         </div>
         
-        <div class="manual-section">
-            <p class="manual-text" style="text-align: center; opacity: 0.7; margin-top: 20px;">
-                <em>v3.1 - aiDANaI Fusion</em>
-            </p>
+        <div style="text-align: center; margin-top: 30px; opacity: 0.6; font-size: 0.8rem;">
+            aiDANaI Fusion v3.0
         </div>
     `;
 };
 
-// 2. EVENTO ESPECÍFICO PARA ABRIR LA AYUDA
+// 2. EVENTO BLINDADO
 document.addEventListener('click', (e) => {
-    // Detectamos si el clic fue en el botón de ayuda (o en su icono/texto)
     const helpBtn = e.target.closest('[data-action="show-help-modal"]');
     
     if (helpBtn) {
-        // A. DETENER TODO LO DEMÁS
+        // A. DETENER TODO (Para que no se ejecute 2 veces ni interfieran otros clicks)
         e.preventDefault();
-        e.stopPropagation(); 
+        e.stopPropagation();
+        e.stopImmediatePropagation(); // <--- LA CLAVE PARA EVITAR CONFLICTOS
         
-        console.log("📘 Abriendo manual de ayuda...");
+        console.log("📘 INTENTO FORZADO: Abriendo manual...");
 
-        // B. CERRAR EL MENÚ FLOTANTE (Si existe y está abierto)
+        // B. CERRAR MENÚ (Lo ocultamos manualmente)
         const menuPopover = document.getElementById('main-menu-popover');
         if (menuPopover) {
+            menuPopover.style.opacity = '0';
+            menuPopover.style.pointerEvents = 'none';
             menuPopover.classList.remove('popover-menu--visible');
         }
 
-        // C. PREPARAR EL MODAL
+        // C. ABRIR MODAL (Fuerza Bruta de Estilos)
         const modal = document.getElementById('help-modal');
-        const contentContainer = document.getElementById('help-modal-content');
+        const content = document.getElementById('help-modal-content');
 
-        if (modal && contentContainer) {
+        if (modal && content) {
             // 1. Inyectar contenido
-            contentContainer.innerHTML = getManualContent();
+            content.innerHTML = getManualContent();
+
+            // 2. FORZAR VISIBILIDAD (Ignorando clases CSS rotas)
+            modal.style.display = 'flex';
+            modal.style.opacity = '1';
+            modal.style.visibility = 'visible';
+            modal.style.pointerEvents = 'auto';
+            modal.style.zIndex = '999999'; // Por encima de todo, incluido el menú
             
-            // 2. Asegurar que esté visible y encima de todo
-            modal.style.display = 'flex'; // Forzamos display flex
-            modal.style.zIndex = '22000'; // Superamos al menú (que tiene 2147...)
+            // 3. Añadir clase por si acaso (para animaciones futuras)
+            modal.classList.add('active');
             
-            // 3. Activar clase para animación CSS
-            // Usamos un pequeño timeout para permitir que el navegador procese el display:flex primero
-            requestAnimationFrame(() => {
-                modal.classList.add('active');
-            });
-            
-            // 4. Animación interna de la caja
-            const modalBox = modal.querySelector('.modal');
-            if (modalBox) {
-                modalBox.style.transform = 'translateY(20px)';
-                modalBox.style.opacity = '0';
-                
-                setTimeout(() => {
-                    modalBox.style.transition = 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                    modalBox.style.transform = 'translateY(0)';
-                    modalBox.style.opacity = '1';
-                }, 50);
-            }
+            console.log("✅ Modal visualizado forzosamente.");
         } else {
-            console.error("❌ Error: No se encuentra el modal #help-modal en el HTML");
+            console.error("❌ ERROR CRÍTICO: No encuentro <div id='help-modal'> en el HTML.");
+            alert("Error: Falta la estructura HTML del manual.");
         }
     }
 });
