@@ -11668,3 +11668,104 @@ document.addEventListener('click', (e) => {
         }
     }
 });
+
+/* ================================================================= */
+/* === LÓGICA DEL MANUAL DE AYUDA (Experto Financiero) === */
+/* ================================================================= */
+
+// 1. EL CONTENIDO DEL MANUAL (HTML Generado)
+const getManualContent = () => {
+    return `
+        <div class="manual-section">
+            <p class="manual-text">¡Hola! 👋 Bienvenido a <strong>aiDANaI-ctas</strong>. Soy tu asistente financiero. Esta aplicación no es solo una calculadora, es tu centro de mando para controlar tu destino económico.</p>
+            <div class="manual-highlight">
+                <strong>Filosofía:</strong> "Lo que no se mide, no se puede mejorar". Aquí medimos todo para que tú solo tengas que decidir.
+            </div>
+        </div>
+
+        <div class="manual-section">
+            <h3 class="manual-title"><span class="material-icons">add_circle</span> El Botón Mágico (+)</h3>
+            <p class="manual-text">Todo empieza aquí. Al pulsar el botón central <strong>(+)</strong>, la pantalla se desenfoca y tienes 3 opciones. ¡Úsalas bien!</p>
+            <ul style="list-style: none; padding: 0;">
+                <li style="margin-bottom: 8px;">🔴 <strong>Pago (Gasto):</strong> Dinero que se va para no volver (Cine, Súper, Gasolina).</li>
+                <li style="margin-bottom: 8px;">🟢 <strong>Ingreso:</strong> Dinero nuevo que entra (Nómina, Ventas, Regalos).</li>
+                <li style="margin-bottom: 8px;">🔵 <strong>Traspaso:</strong> ¡OJO AQUÍ! 👀 Usalo cuando mueves dinero entre tus propias cuentas (ej: del Banco a tu Hucha). <br><em>No es un gasto, porque el dinero sigue siendo tuyo.</em></li>
+            </ul>
+        </div>
+
+        <div class="manual-section">
+            <h3 class="manual-title"><span class="material-icons">dashboard</span> Panel Principal (Tu GPS)</h3>
+            <p class="manual-text">Aquí ves la salud de tu economía de un vistazo. Fíjate especialmente en:</p>
+            <div class="manual-tip">
+                <span class="material-icons" style="color:var(--c-warning)">lightbulb</span>
+                <div>
+                    <strong>Tasa de Ahorro:</strong> Es el dato más importante. Te dice qué porcentaje de tus ingresos logras retener. <br>
+                    <em>Ejemplo: Si ganas 1.000€ y ahorras 200€, tu tasa es del 20%. ¡Intenta mantenerla siempre en verde!</em>
+                </div>
+            </div>
+        </div>
+
+        <div class="manual-section">
+            <h3 class="manual-title"><span class="material-icons">account_balance</span> Patrimonio y Extracto</h3>
+            <p class="manual-text">En la pestaña <strong>Patrimonio</strong> ves "cuánto vales" sumando todas tus cuentas. </p>
+            <p class="manual-text"><strong>¡NUEVO! 🌟 Extracto Global:</strong> Pulsa sobre la tarjeta grande de Patrimonio para ver un listado de TODOS tus movimientos históricos. Puedes filtrar por fechas (Desde/Hasta) para encontrar ese gasto de hace 3 meses que no recuerdas.</p>
+        </div>
+
+        <div class="manual-section">
+            <h3 class="manual-title"><span class="material-icons">event</span> Planificación (Recurrentes)</h3>
+            <p class="manual-text">¿Cansado de meter el alquiler o Netflix todos los meses? Ve a <strong>Planificar</strong> y crea un movimiento recurrente.</p>
+            <p class="manual-text">Cada mes, la app te avisará en la parte superior del Diario. Solo tendrás que pulsar <span class="manual-key">Añadir</span> o <span class="manual-key">Omitir</span>. ¡Así no se te olvida nada!</p>
+        </div>
+        
+        <div class="manual-section">
+            <h3 class="manual-title"><span class="material-icons">calculate</span> Herramientas Extra</h3>
+            <p class="manual-text">
+                • <strong>Calculadora Pro:</strong> Pulsa el icono <span class="material-icons" style="font-size:14px; vertical-align:middle;">calculate</span> arriba a la derecha. Tiene historial gráfico y sonidos ASMR.<br>
+                • <strong>Buscador Global:</strong> ¿Dónde gasté en "Mercadona"? Usa la lupa en el menú de los tres puntos.
+            </p>
+        </div>
+
+        <div class="manual-section">
+            <p class="manual-text" style="text-align: center; opacity: 0.7;">
+                <em>Desarrollado con ❤️ por aiDANaI</em>
+            </p>
+        </div>
+    `;
+};
+
+// 2. CONECTAR EL BOTÓN DEL MENÚ
+// Esto escucha clicks globales, busca el botón de ayuda y abre el modal
+document.addEventListener('click', (e) => {
+    // Buscamos si el clic fue en el botón de ayuda del menú
+    const helpBtn = e.target.closest('[data-action="show-help-modal"]');
+    
+    if (helpBtn) {
+        // Cerramos el menú de 3 puntos si estaba abierto
+        const menuPopover = document.getElementById('main-menu-popover');
+        if (menuPopover) menuPopover.classList.remove('popover-menu--visible');
+
+        // Localizamos el modal
+        const modal = document.getElementById('help-modal');
+        const contentContainer = document.getElementById('help-modal-content');
+
+        if (modal && contentContainer) {
+            // Inyectamos el texto fresco
+            contentContainer.innerHTML = getManualContent();
+            
+            // Mostramos el modal
+            modal.classList.add('active');
+            
+            // Animación de entrada
+            const modalBox = modal.querySelector('.modal');
+            if (modalBox) {
+                modalBox.style.transform = 'translateY(20px)';
+                modalBox.style.opacity = '0';
+                setTimeout(() => {
+                    modalBox.style.transition = 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    modalBox.style.transform = 'translateY(0)';
+                    modalBox.style.opacity = '1';
+                }, 50);
+            }
+        }
+    }
+});
