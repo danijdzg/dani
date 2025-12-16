@@ -2443,9 +2443,9 @@ const navigateTo = async (pageId, isInitial = false) => {
         <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
             <span class="material-icons">calculate</span>
         </button>
-        <button data-action="show-main-menu" class="icon-btn">
-            <span class="material-icons">more_vert</span>
-        </button>
+        <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
+    <span class="material-icons">more_vert</span>
+</button>
     `;
     
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
@@ -9160,40 +9160,42 @@ const handleStart = (e) => {
 },
 			'rename-ledgers': showRenameLedgersModal,
             'swipe-show-irr-history': () => handleShowIrrHistory(type),
-            'show-main-menu': (e) => { // 1. IMPORTANTE: Añadir (e) aquí para recibir el evento
+            'show-main-menu': (e) => {
     const menu = document.getElementById('main-menu-popover');
     if (!menu) return;
-    
+
+    // Intentamos obtener el botón de 3 formas:
+    // 1. Por el evento directo (e.currentTarget)
+    // 2. Por el objetivo del evento (e.target)
+    // 3. FALLBACK: Por su ID directo (si todo lo anterior falla)
+    let button = (e && e.currentTarget) || 
+                 (e && e.target && e.target.closest('[data-action="show-main-menu"]')) ||
+                 document.getElementById('header-menu-btn');
+
     hapticFeedback('light');
 
-    // --- NUEVO CÓDIGO DE POSICIONAMIENTO ---
-    // Solo calculamos si vamos a ABRIR el menú
-    if (!menu.classList.contains('popover-menu--visible') && e) {
-        // Obtenemos el botón, asegurándonos de tener el elemento correcto aunque se pulse el icono
-        const button = e.currentTarget || e.target.closest('[data-action="show-main-menu"]');
+    // CÁLCULO DE POSICIÓN
+    if (!menu.classList.contains('popover-menu--visible') && button) {
+        const rect = button.getBoundingClientRect();
         
-        if (button) {
-            const rect = button.getBoundingClientRect();
-            
-            // Posición Vertical: Debajo del botón + 5px
-            menu.style.top = `${rect.bottom + 5}px`;
-            
-            // Posición Horizontal: Alineado a la derecha
-            const rightSpace = window.innerWidth - rect.right;
-            menu.style.right = `${Math.max(5, rightSpace)}px`;
-            
-            // Limpieza
-            menu.style.left = 'auto';
-        }
+        // Posición: Debajo del botón y alineado a la derecha
+        menu.style.top = `${rect.bottom + 5}px`;
+        
+        const rightSpace = window.innerWidth - rect.right;
+        menu.style.right = `${Math.max(5, rightSpace)}px`;
+        menu.style.left = 'auto'; // Limpiamos left por seguridad
     }
-    // ---------------------------------------
 
+    // MOSTRAR EL MENÚ
     menu.classList.toggle('popover-menu--visible');
 
+    // Lógica para cerrar al hacer clic fuera
     if (menu.classList.contains('popover-menu--visible')) {
         setTimeout(() => {
             const closeOnClickOutside = (event) => {
-                if (!menu.contains(event.target) && !event.target.closest('[data-action="show-main-menu"]')) {
+                const target = event.target;
+                // Si el clic NO es en el menú Y NO es en el botón que lo abre
+                if (!menu.contains(target) && !target.closest('[data-action="show-main-menu"]')) {
                     menu.classList.remove('popover-menu--visible');
                     document.removeEventListener('click', closeOnClickOutside);
                 }
