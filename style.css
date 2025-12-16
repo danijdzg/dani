@@ -4935,51 +4935,86 @@ body[data-theme="sunset-groove"] #filter-periodo option {
         scrollbar-width: thin; /* Firefox */
     }
 }
-/* === NUEVO DISEÑO DIARIO (Eficacia Visual) === */
+/* === NUEVOS ESTILOS CABECERA DIARIO (Tipo Agenda) === */
 
-/* Encabezado de fecha Sticky */
 .sticky-date-header {
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 10; /* Por encima de las tarjetas */
+    
+    /* Diseño Flexbox */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 16px;
-    background-color: var(--c-background); /* Opaco para tapar al hacer scroll */
-    border-bottom: 1px solid var(--c-outline);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    background-color: rgba(10, 18, 26, 0.85); /* Semitransparente con blur */
-    box-shadow: 0 1px 0 rgba(255,255,255,0.05);
-}
-
-.sticky-date-label {
+    
+    /* Estilo de la barra gris estilo "cápsula" */
+    background-color: #a0a0a0; /* Gris base similar a la imagen */
+    background: linear-gradient(to bottom, #b0b0b0, #999999); /* Ligero degradado metálico */
+    
+    /* Bordes redondeados completos */
+    border-radius: 20px;
+    
+    /* Espaciado y Márgenes */
+    padding: 6px 16px;
+    margin: 12px 16px 4px 16px; /* Separación lateral y superior */
+    
+    /* Sombra para dar efecto flotante sobre el fondo negro */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    
+    /* Texto */
+    color: #000000;
+    font-family: var(--font-family);
     font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--c-on-surface-secondary);
-    text-transform: capitalize;
 }
 
-.sticky-date-total {
-    font-size: 0.8rem;
-    font-weight: 600;
-    font-family: var(--font-numeric);
-}
-
-.t-card {
+/* Parte Izquierda (Día y Fecha) */
+.sticky-date-left {
     display: flex;
     align-items: center;
-    padding: 10px 16px; /* Padding equilibrado */
-    background-color: var(--c-surface);
-    border-bottom: 1px solid var(--c-outline);
-    height: 76px; /* Altura fija para consistencia */
-    cursor: pointer;
-    transition: background-color 0.2s;
+    gap: 8px;
+    overflow: hidden; /* Por si la fecha es muy larga en móviles pequeños */
 }
 
-.t-card:active {
-    background-color: var(--c-surface-variant);
+/* La pastilla del día (LUN, MAR, HOY) */
+.sticky-day-pill {
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    opacity: 0.8; /* Un poco más suave que la fecha */
+}
+
+/* El texto de la fecha (16 de diciembre de 2025) */
+.sticky-date-text {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.85rem;
+}
+
+/* El Total a la derecha */
+.sticky-date-total {
+    font-weight: 800;
+    font-family: var(--font-numeric);
+    white-space: nowrap;
+    font-size: 0.9rem;
+}
+
+/* Opcional: Si el total es negativo, ponerlo en rojo oscuro (como en la imagen no parece, lo dejo negro, pero aquí tienes la opción) */
+/* .sticky-date-total.is-negative { color: #8b0000; } */
+
+/* Ajuste importante: Quitar el borde inferior de las tarjetas para que se vea más limpio */
+.transaction-card {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Muy sutil */
+    margin: 0 10px; /* Indentamos un poco las tarjetas respecto a la pantalla */
+    border-radius: 12px; /* Redondeamos las tarjetas */
+    margin-bottom: 4px; /* Separación entre tarjetas */
+    background-color: transparent; /* O color muy oscuro */
+}
+
+/* Ajuste para que la primera tarjeta no se pegue al sticky header */
+.sticky-date-header + .transaction-card {
+    margin-top: 4px;
 }
 
 /* Icono Izquierdo */

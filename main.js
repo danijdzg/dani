@@ -3658,7 +3658,6 @@ const handleShowPnlBreakdown = async (accountId) => {
     showGenericModal(`Desglose P&L: ${cuenta.nombre}`, modalHtml);
 };
 
-/* --- renderVirtualListItem: VERSIÓN CORREGIDA (Fecha añadida a Traspasos) --- */
 const renderVirtualListItem = (item) => {
     
     // 1. Header de Pendientes (Amarillo)
@@ -3694,24 +3693,46 @@ const renderVirtualListItem = (item) => {
         </div>`;
     }
 
-    // 3. Header de Fecha Sticky
+    // 3. Header de Fecha Sticky (ESTILO IMAGEN ADJUNTA)
     if (item.type === 'date-header') {
+        // Crear fecha segura al mediodía para evitar saltos de zona horaria
         const dateObj = new Date(item.date + 'T12:00:00Z');
-        const today = new Date(); today.setHours(0,0,0,0);
-        const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1); yesterday.setHours(0,0,0,0);
+        
+        // Calcular "Hoy" y "Ayer"
+        const today = new Date(); 
+        const yesterday = new Date(); 
+        today.setHours(0,0,0,0);
+        yesterday.setDate(yesterday.getDate() - 1); yesterday.setHours(0,0,0,0);
+        
         const itemDate = new Date(dateObj); itemDate.setHours(0,0,0,0);
         
-        let label = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-        if (itemDate.getTime() === today.getTime()) label = "Hoy";
-        else if (itemDate.getTime() === yesterday.getTime()) label = "Ayer";
+        let dayName = '';
+        let fullDate = '';
 
-        const totalClass = item.total >= 0 ? 'text-positive' : 'text-negative';
-        const totalSign = item.total > 0 ? '+' : '';
+        if (itemDate.getTime() === today.getTime()) {
+            dayName = "HOY";
+            fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+        } else if (itemDate.getTime() === yesterday.getTime()) {
+            dayName = "AYER";
+            fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+        } else {
+            // Formato: "MAR"
+            dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase().replace('.', '');
+            // Formato: "16 de diciembre de 2025"
+            fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        // Formato de moneda para el total
+        const totalClass = item.total >= 0 ? 'text-black' : 'text-black'; // Siempre negro/oscuro como en la imagen, o cambia según prefieras
+        const totalFormatted = formatCurrencyHTML(item.total); 
 
         return `
             <div class="sticky-date-header">
-                <span class="sticky-date-label">${label}</span>
-                <span class="sticky-date-total ${totalClass}">${totalSign}${formatCurrencyHTML(item.total)}</span>
+                <div class="sticky-date-left">
+                    <span class="sticky-day-pill">${dayName}</span>
+                    <span class="sticky-date-text">${fullDate}</span>
+                </div>
+                <span class="sticky-date-total ${item.total < 0 ? 'is-negative' : ''}">${totalFormatted}</span>
             </div>
         `;
     }
@@ -3846,12 +3867,13 @@ const updateVirtualListUI = () => {
     vList.itemMap = [];
     let currentHeight = 0;
     
-    // 1. Recurrentes pendientes (Se mantiene igual)
+    // 1. Recurrentes pendientes (Se mantiene igual - Parte Superior)
     const pendingRecurrents = getPendingRecurrents();
     if (pendingRecurrents.length > 0) {
         vList.items.push({ type: 'pending-header', count: pendingRecurrents.length });
         vList.itemMap.push({ height: vList.heights.pendingHeader, offset: currentHeight });
         currentHeight += vList.heights.pendingHeader;
+        
         pendingRecurrents.forEach(recurrent => {
             vList.items.push({ type: 'pending-item', recurrent: recurrent });
             vList.itemMap.push({ height: vList.heights.pendingItem, offset: currentHeight });
@@ -3859,7 +3881,7 @@ const updateVirtualListUI = () => {
         });
     }
 
-    // 2. Lista de Movimientos PLANA (Sin separadores)
+    // 2. OBTENCIÓN Y FILTRADO DE MOVIMIENTOS
     const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
     const allMovements = [];
 
@@ -3876,19 +3898,70 @@ const updateVirtualListUI = () => {
         }
     });
 
-    // Ordenamos por fecha descendente (más reciente arriba)
-    allMovements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id.localeCompare(a.id));
+    // 3. AGRUPACIÓN POR DÍA (NUEVA LÓGICA)
+    const groupedByDate = {};
 
-    // Generamos los items de la lista virtual
-    for (const mov of allMovements) {
-        // Altura fija un poco mayor para que quepan las dos líneas de texto cómodamente
-        const itemHeight = 76; 
-        vList.items.push({ type: 'transaction', movement: mov });
-        vList.itemMap.push({ height: itemHeight, offset: currentHeight });
-        currentHeight += itemHeight;
-    }
+    allMovements.forEach(mov => {
+        // Obtenemos la fecha en formato YYYY-MM-DD para usarla de clave
+        const dateKey = mov.fecha.split('T')[0];
+        
+        if (!groupedByDate[dateKey]) {
+            groupedByDate[dateKey] = {
+                movements: [],
+                totalDay: 0
+            };
+        }
+
+        // Añadimos el movimiento al grupo
+        groupedByDate[dateKey].movements.push(mov);
+
+        // Calculamos el impacto en el total del día
+        let amount = 0;
+        if (mov.tipo === 'traspaso') {
+            const origenVisible = visibleAccountIds.has(mov.cuentaOrigenId);
+            const destinoVisible = visibleAccountIds.has(mov.cuentaDestinoId);
+            // Si sale dinero de la vista actual
+            if (origenVisible && !destinoVisible) amount = -Math.abs(mov.cantidad);
+            // Si entra dinero a la vista actual
+            else if (!origenVisible && destinoVisible) amount = Math.abs(mov.cantidad);
+            // Si es interno (ambas visibles) el neto es 0
+        } else {
+            amount = mov.cantidad;
+        }
+        groupedByDate[dateKey].totalDay += amount;
+    });
+
+    // 4. ORDENACIÓN Y APLANADO A LA LISTA VIRTUAL
+    // Ordenamos las fechas de más reciente a más antigua
+    const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
+
+    sortedDates.forEach(dateKey => {
+        const group = groupedByDate[dateKey];
+
+        // A) Insertamos la CABECERA DE FECHA
+        // Altura estimada de cabecera: 45px (ajustar según CSS)
+        const headerHeight = 45; 
+        vList.items.push({ 
+            type: 'date-header', 
+            date: dateKey, 
+            total: group.totalDay 
+        });
+        vList.itemMap.push({ height: headerHeight, offset: currentHeight });
+        currentHeight += headerHeight;
+
+        // B) Insertamos los MOVIMIENTOS de ese día
+        // Ordenamos movimientos dentro del día (más reciente primero por ID si la hora es igual)
+        group.movements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id.localeCompare(a.id));
+
+        group.movements.forEach(mov => {
+            const itemHeight = 76; // Altura de la tarjeta
+            vList.items.push({ type: 'transaction', movement: mov });
+            vList.itemMap.push({ height: itemHeight, offset: currentHeight });
+            currentHeight += itemHeight;
+        });
+    });
     
-    // 3. Renderizado final
+    // 5. Renderizado final
     vList.sizerEl.style.height = `${currentHeight}px`;
     vList.lastRenderedRange = { start: -1, end: -1 }; 
     renderVisibleItems();
