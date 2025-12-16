@@ -320,6 +320,13 @@
                         </div>
                         <div class="price-container"><p class="price-eur tabular-nums" id="ripple-price-eur">--</p><p class="price-usd tabular-nums" id="ripple-price-usd">--</p></div>
                     </div>
+					<div class="card glow-border" data-id="binancecoin" data-name="BNB">
+    <div class="coin-details">
+        <img src="https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png" class="coin-logo" onerror="this.style.display='none'">
+        <div class="coin-info"><h2>BNB</h2><p class="change-percentage tabular-nums" id="binancecoin-change">--</p></div>
+    </div>
+    <div class="price-container"><p class="price-eur tabular-nums" id="binancecoin-price-eur">--</p><p class="price-usd tabular-nums" id="binancecoin-price-usd">--</p></div>
+</div>
                 </div>
             </div>
         </div>
@@ -692,7 +699,7 @@
                 const timeText = document.getElementById('time-text');
                 timeText.innerText = 'Actualizando...';
                 
-                const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,ripple&vs_currencies=eur,usd&include_24hr_change=true');
+                const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,ripple,binancecoin&vs_currencies=eur,usd&include_24hr_change=true');
                 if(!res.ok) throw new Error();
                 const d = await res.json();
                 this.state.cryptoCache = d;
@@ -706,7 +713,7 @@
         },
         renderCryptoData(d) {
             const fmt = (v, c) => new Intl.NumberFormat('es-ES', {style:'currency', currency:c}).format(v);
-            ['bitcoin','ethereum','solana','ripple'].forEach(id => {
+            ['bitcoin','ethereum','solana','ripple','binancecoin'].forEach(id => {
                 if(d[id]) {
                     document.getElementById(`${id}-price-eur`).innerText = fmt(d[id].eur, 'EUR');
                     document.getElementById(`${id}-price-usd`).innerText = fmt(d[id].usd, 'USD');
