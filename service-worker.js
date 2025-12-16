@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'aiDANaI-ctas 3.0';
+const CACHE_NAME = 'aiDANaI-ctas 3.1';
 const URLS_TO_CACHE = [
   '.',
   'index.html',
