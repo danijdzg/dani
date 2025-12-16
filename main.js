@@ -11612,9 +11612,7 @@ document.addEventListener('click', (e) => {
         // Si no, mostramos un aviso temporal
         if (typeof showSearchModal === 'function') {
             showSearchModal();
-        } else {
-            alert("Funcionalidad de búsqueda en construcción 🚧");
-        }
+        } 
     }
 
     // --- ACCIÓN: AJUSTES ---
@@ -11650,3 +11648,54 @@ document.addEventListener('click', (e) => {
         }
     }
 });
+
+/* ================================================================= */
+/* === GESTOR DE LA CALCULADORA (Iframe) === */
+/* ================================================================= */
+
+window.addEventListener('click', (e) => {
+    // 1. Detectar si pulsamos el botón de la calculadora
+    const calcBtn = e.target.closest('[data-action="open-calculator"]');
+    
+    if (calcBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log("🧮 Abriendo calculadora...");
+
+        // 2. Localizar el Modal y el Iframe
+        const modal = document.getElementById('calculator-iframe-modal');
+        const iframe = document.getElementById('calculator-frame');
+
+        if (modal && iframe) {
+            // A. CARGAR LA APP (Si no estaba cargada)
+            // Esto evita que consuma batería si no se usa
+            if (!iframe.getAttribute('src')) {
+                iframe.src = 'calculadora.html';
+            }
+
+            // B. MOSTRAR EL MODAL
+            modal.classList.add('active');
+            
+            // Forzamos visibilidad y Z-Index alto
+            modal.style.display = 'flex';
+            modal.style.opacity = '1';
+            modal.style.visibility = 'visible';
+            modal.style.zIndex = '12000'; // Por encima del menú
+            
+        } else {
+            alert("Error: No se encuentra el modal de la calculadora en el HTML.");
+        }
+        return;
+    }
+
+    // 3. CERRAR CALCULADORA
+    const closeBtn = e.target.closest('[data-action="close-modal"]');
+    if (closeBtn && closeBtn.dataset.modalId === 'calculator-iframe-modal') {
+        const modal = document.getElementById('calculator-iframe-modal');
+        if (modal) {
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+        }
+    }
+}, true); // El 'true' da prioridad máxima al evento
