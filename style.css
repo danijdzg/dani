@@ -5820,3 +5820,26 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     color: var(--c-on-surface);
     border: 1px solid var(--c-outline);
 }
+/* === CORRECCIÓN VISUAL DE LA AYUDA === */
+.modal-overlay.active-manual {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    
+    /* TRUCO: Un Z-Index absurdo para ganar a todo */
+    z-index: 2147483647 !important; 
+    
+    background-color: rgba(0, 0, 0, 0.85) !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Ajuste para que el contenido también se vea */
+.modal-overlay.active-manual .modal {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+}
