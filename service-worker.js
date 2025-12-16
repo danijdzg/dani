@@ -1,7 +1,7 @@
 // service-worker.js
 // Versión: 3.1 (Sin caché de Firestore)
 
-const CACHE_NAME = 'aiDANaI-ctas 3';
+const CACHE_NAME = 'aiDANaI-ctas 4';
 const URLS_TO_CACHE = [
   '.',
   'index.html',

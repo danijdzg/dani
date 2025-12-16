@@ -5767,59 +5767,6 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 .popover-menu__item:active { background-color: rgba(255,255,255,0.1); }
 .popover-menu__divider { height: 1px; background: rgba(255,255,255,0.1); margin: 4px 0; }
 
-/* === ESTILOS DEL MANUAL DE AYUDA === */
-
-.manual-section {
-    margin-bottom: 30px;
-}
-
-.manual-title {
-    font-size: 1.1rem;
-    color: var(--c-primary);
-    font-weight: 800;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border-bottom: 1px solid var(--c-outline);
-    padding-bottom: 5px;
-}
-
-.manual-text {
-    font-size: 0.95rem;
-    margin-bottom: 10px;
-}
-
-.manual-highlight {
-    background-color: rgba(0, 179, 77, 0.1); /* Verde suave */
-    border-left: 3px solid var(--c-primary);
-    padding: 10px;
-    border-radius: 4px;
-    margin: 10px 0;
-    font-size: 0.9rem;
-}
-
-.manual-tip {
-    background-color: rgba(255, 214, 10, 0.1); /* Amarillo suave */
-    border-left: 3px solid var(--c-warning);
-    padding: 10px;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    display: flex;
-    gap: 10px;
-    align-items: start;
-}
-
-.manual-key {
-    background-color: var(--c-surface-variant);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-family: monospace;
-    font-weight: bold;
-    color: var(--c-on-surface);
-    border: 1px solid var(--c-outline);
-}
-/* === CORRECCIÓN VISUAL DE LA AYUDA === */
 .modal-overlay.active-manual {
     display: flex !important;
     visibility: visible !important;
