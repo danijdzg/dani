@@ -11596,73 +11596,57 @@ const updateExtractoList = () => {
 };
 
 /* ================================================================= */
-/* === MENÚ TRES PUNTOS (Posición Exacta Debajo del Botón) === */
+/* === GESTOR DE ACCIONES DE CABECERA (Iconos Directos) === */
 /* ================================================================= */
 
 document.addEventListener('click', (e) => {
-    // 1. Detectar clic en el botón
-    const btn = e.target.closest('#header-menu-btn');
-    let menuPopover = document.getElementById('main-menu-popover');
+    // Buscamos si se ha pulsado un botón con data-action
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
 
-    // --- ABRIR MENÚ ---
-    if (btn) {
-        e.stopPropagation();
-        e.preventDefault();
+    const action = btn.dataset.action;
 
-        // 2. Autogeneración (Si no existe)
-        if (!menuPopover) {
-            menuPopover = document.createElement('div');
-            menuPopover.id = 'main-menu-popover';
-            menuPopover.className = 'popover-menu';
-            menuPopover.innerHTML = `
-                <button class="popover-menu__item" data-action="global-search">
-                    <span class="material-icons">search</span> <span>Buscar</span>
-                </button>
-                <div class="popover-menu__divider"></div>
-                <button class="popover-menu__item" data-action="navigate" data-page="ajustes-page">
-                    <span class="material-icons">settings</span> <span>Ajustes</span>
-                </button>
-                <div class="popover-menu__divider"></div>
-                <button class="popover-menu__item" style="color:#ff6b6b;" data-action="logout">
-                    <span class="material-icons" style="color:#ff6b6b;">logout</span> <span>Cerrar Sesión</span>
-                </button>
-            `;
-            document.body.appendChild(menuPopover);
+    // --- ACCIÓN: BUSCAR ---
+    if (action === 'global-search') {
+        // Si tienes una función de búsqueda, llámala aquí.
+        // Si no, mostramos un aviso temporal
+        if (typeof showSearchModal === 'function') {
+            showSearchModal();
+        } else {
+            alert("Funcionalidad de búsqueda en construcción 🚧");
         }
-
-        // 3. CÁLCULO DE POSICIÓN (LA CLAVE)
-        // Obtenemos el rectángulo del botón (coordenadas X, Y, ancho, alto)
-        const rect = btn.getBoundingClientRect();
-        
-        // Calculamos:
-        // TOP: La parte de abajo del botón + 10px de margen
-        const topPos = rect.bottom + 10;
-        
-        // RIGHT: El ancho de la pantalla menos la parte derecha del botón
-        // (Esto alinea el borde derecho del menú con el borde derecho del botón)
-        const rightPos = window.innerWidth - rect.right;
-
-        // Aplicamos coordenadas exactas
-        menuPopover.style.top = `${topPos}px`;
-        menuPopover.style.right = `${rightPos}px`;
-        
-        // (Opcional) Aseguramos que transform-origin sea la esquina superior derecha
-        menuPopover.style.transformOrigin = 'top right';
-
-        // 4. MOSTRAR
-        requestAnimationFrame(() => {
-            menuPopover.classList.toggle('popover-menu--visible');
-        });
-
-        if (typeof hapticFeedback === 'function') hapticFeedback('light');
-        return;
     }
 
-    // --- CERRAR MENÚ (Clic fuera) ---
-    if (menuPopover && menuPopover.classList.contains('popover-menu--visible')) {
-        if (!e.target.closest('#main-menu-popover')) {
-            menuPopover.classList.remove('popover-menu--visible');
+    // --- ACCIÓN: AJUSTES ---
+    if (action === 'navigate') {
+        const pageId = btn.dataset.page;
+        if (typeof navigateTo === 'function') {
+            navigateTo(pageId);
+        }
+    }
+
+    // --- ACCIÓN: CALCULADORA ---
+    if (action === 'open-calculator') {
+        const modal = document.getElementById('calculator-iframe-modal');
+        if (modal) {
+            modal.style.display = 'flex'; // Asegurar visibilidad
+            modal.classList.add('active');
+            // Recargar iframe si es necesario
+            const iframe = document.getElementById('calculator-frame');
+            if(iframe && !iframe.src) iframe.src = 'calculadora.html';
+        }
+    }
+
+    // --- ACCIÓN: CERRAR SESIÓN ---
+    if (action === 'logout') {
+        if (confirm("¿Seguro que quieres cerrar sesión?")) {
+            if (typeof firebase !== 'undefined') {
+                firebase.auth().signOut().then(() => {
+                    window.location.reload();
+                });
+            } else {
+                window.location.reload();
+            }
         }
     }
 });
-

@@ -5815,3 +5815,30 @@ input, select, textarea {
 .z-maximo {
     z-index: 3000 !important;
 }
+/* Ajuste para la barra superior con múltiples iconos */
+.top-bar {
+    padding: 10px 15px; /* Un poco más de aire lateral */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+}
+
+/* Reducir ligeramente los botones del header si hay muchos */
+.top-bar-actions .icon-btn {
+    width: 38px;       /* Un poco más compactos */
+    height: 38px;
+    margin-left: 2px;  /* Pequeña separación */
+}
+
+/* Quitar fondo gris a los botones del header para que se vea más limpio */
+.top-bar-actions .icon-btn {
+    background-color: transparent;
+    border: none;
+}
+
+/* Efecto hover/active */
+.top-bar-actions .icon-btn:active {
+    background-color: var(--c-surface-variant);
+    border-radius: 50%;
+}
