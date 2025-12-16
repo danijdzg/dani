@@ -3673,7 +3673,7 @@ body[data-theme="default"] .cartilla-container {
 /* JERARQUÍA VISUAL ESTRICTA */
 .app-layout { z-index: 1; }
 .bottom-nav, .top-bar { z-index: 100; }
-.modal-overlay { z-index: 1000; } /* Modales normales */
+.modal-overlay { z-index: 2000; } /* Modales normales */
 #calculator-overlay { z-index: 2000; } /* Calculadora sobre modales */
 .save-animation-bubble { z-index: 2100; } 
 .toast-container { z-index: 3000; } /* Notificaciones SIEMPRE encima */
@@ -5841,4 +5841,30 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 .modal-overlay.active-manual .modal {
     transform: translateY(0) !important;
     opacity: 1 !important;
+}
+/* === FIX: Evitar Zoom en iPhone al escribir === */
+input, select, textarea {
+    font-size: 16px !important; /* Mínimo para evitar zoom en iOS */
+}
+
+/* === GESTIÓN DE CAPAS (Z-INDEX NORMALIZADO) === */
+/* Capa 1: Contenido normal: 1-10 */
+/* Capa 2: Barras fijas (Header/Bottom): 100 */
+/* Capa 3: Overlays oscuros: 1000 */
+/* Capa 4: Modales y Menús: 2000 */
+/* Capa 5: Alertas críticas / Toast: 3000 */
+
+.popover-menu {
+    /* ... tus otros estilos ... */
+    z-index: 2000 !important; /* Valor sensato */
+}
+
+/* Modal de Ayuda y Calculadora */
+.modal-overlay {
+    z-index: 2000 !important; /* Igual que el menú, el JS decide quién gana */
+}
+
+/* Clase especial para cuando algo debe estar ENCIMA de todo sí o sí */
+.z-maximo {
+    z-index: 3000 !important;
 }

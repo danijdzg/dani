@@ -11670,109 +11670,123 @@ document.addEventListener('click', (e) => {
 });
 
 /* ================================================================= */
-/* === MANUAL DE AYUDA (Solución Definitiva Z-Index) === */
+/* === GESTOR MAESTRO DE INTERACCIÓN (Menus & Modales) === */
 /* ================================================================= */
+/* Este bloque reemplaza a todos los parches anteriores */
 
-// 1. EL CONTENIDO DEL MANUAL
-const getManualContent = () => {
-    return `
-        <div class="manual-section" style="margin-bottom: 25px;">
-            <div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:20px;">
-                <div style="background:rgba(0, 179, 77, 0.2); padding:8px; border-radius:50%;">
-                    <span class="material-icons" style="color:#00B34D; font-size: 28px;">school</span>
-                </div>
-                <div>
-                    <h2 style="margin:0; font-size:1.3rem; color: white;">Manual aiDANaI</h2>
-                    <span style="font-size:0.8rem; opacity:0.7;">Tu guía financiera</span>
-                </div>
+// 1. Contenido del Manual (Optimizado)
+const getManualHTML = () => `
+    <div class="manual-section" style="margin-bottom: 20px;">
+        <div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:20px;">
+            <div style="background:rgba(0, 179, 77, 0.2); padding:8px; border-radius:50%;">
+                <span class="material-icons" style="color:#00B34D; font-size: 28px;">school</span>
             </div>
-            
-            <p class="manual-text" style="font-size: 1rem; line-height: 1.6;"><strong>¡Bienvenido!</strong> Esta app está diseñada para que controles tu dinero con el mínimo esfuerzo. Aquí tienes lo esencial:</p>
+            <div>
+                <h2 style="margin:0; font-size:1.3rem; color: white;">Manual aiDANaI</h2>
+                <span style="font-size:0.8rem; opacity:0.7;">v3.3 - Stable</span>
+            </div>
         </div>
+        <p class="manual-text" style="font-size: 1rem;">Bienvenido a tu control financiero.</p>
+    </div>
 
-        <div class="manual-section" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-            <h3 class="manual-title" style="color:#00B34D; margin-top:0; display:flex; align-items:center; gap:8px;">
-                <span class="material-icons">add_circle</span> El Botón Central (+)
-            </h3>
-            <p style="margin-bottom:10px; font-size: 0.9rem; opacity: 0.9;">Al pulsarlo, despliegas las 3 acciones clave:</p>
-            <ul style="padding-left: 20px; line-height: 1.8; margin: 0;">
-                <li>🔴 <strong style="color: #ff6b6b;">Gasto:</strong> Dinero que pierdes (Supermercado, Ocio).</li>
-                <li>🟢 <strong style="color: #4cd964;">Ingreso:</strong> Dinero que ganas (Nómina, Ventas).</li>
-                <li>🔵 <strong style="color: #5ac8fa;">Traspaso:</strong> Movimiento neutro entre tus cuentas (ej: de Banco a Ahorro). No afecta a tu total.</li>
-            </ul>
-        </div>
-
-        <div class="manual-section" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px;">
-            <h3 class="manual-title" style="color:#00B34D; margin-top:0; display:flex; align-items:center; gap:8px;">
-                <span class="material-icons">query_stats</span> Extracto Global
-            </h3>
-            <p style="margin:0; font-size: 0.9rem; opacity: 0.9;">
-                ¿Quieres ver todo tu historial junto? Ve a la pestaña <strong>Patrimonio</strong> y pulsa sobre la <strong>Tarjeta de Patrimonio Neto</strong> (la grande de arriba).
-            </p>
-        </div>
-        
-        <div style="text-align:center; margin-top:30px; opacity:0.5; font-size:0.8rem;">
-            aiDANaI-ctas v3.1
-        </div>
-    `;
-};
-
-// 2. ESCUCHADOR DE EVENTOS (Modo Prioridad)
-document.addEventListener('click', (e) => {
-    // Detectamos si el clic es en "Ayuda / Manual"
-    const helpBtn = e.target.closest('[data-action="show-help-modal"]');
+    <div class="manual-section" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+        <h3 class="manual-title" style="color:#00B34D; margin:0 0 10px 0; display:flex; align-items:center; gap:8px;">
+            <span class="material-icons">add_circle</span> Botón Central
+        </h3>
+        <ul style="padding-left: 20px; line-height: 1.6; margin: 0; font-size: 0.9rem;">
+            <li>🔴 <strong>Gasto:</strong> Salidas de dinero.</li>
+            <li>🟢 <strong>Ingreso:</strong> Entradas de dinero.</li>
+            <li>🔵 <strong>Traspaso:</strong> Movimiento entre cuentas (Neutro).</li>
+        </ul>
+    </div>
     
-    if (helpBtn) {
-        // DETENER TODO para evitar conflictos
+    <div class="manual-section" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px;">
+         <h3 class="manual-title" style="color:#00B34D; margin:0 0 10px 0; display:flex; align-items:center; gap:8px;">
+            <span class="material-icons">query_stats</span> Patrimonio
+        </h3>
+        <p style="margin:0; font-size: 0.9rem;">Pulsa la tarjeta superior en la pestaña Patrimonio para ver el <strong>Extracto Global</strong>.</p>
+    </div>
+`;
+
+// 2. Escuchador Global Unificado
+window.addEventListener('click', (e) => {
+    // Referencias DOM
+    const menuBtn = e.target.closest('#header-menu-btn');
+    const menuPopover = document.getElementById('main-menu-popover');
+    
+    // Botones de acción
+    const helpBtn = e.target.closest('[data-action="show-help-modal"]');
+    const closeBtn = e.target.closest('[data-action="close-modal"]');
+    const modalHelp = document.getElementById('help-modal');
+
+    // --- CASO 1: ABRIR/CERRAR MENÚ TRES PUNTOS ---
+    if (menuBtn) {
         e.preventDefault();
         e.stopPropagation();
-        e.stopImmediatePropagation();
+        
+        if (menuPopover) {
+            const isVisible = menuPopover.classList.contains('popover-menu--visible');
+            if (isVisible) {
+                menuPopover.classList.remove('popover-menu--visible');
+                setTimeout(() => menuPopover.style.display = 'none', 200); // Esperar animación
+            } else {
+                menuPopover.style.display = 'block';
+                // Pequeño delay para que la transición CSS funcione
+                requestAnimationFrame(() => menuPopover.classList.add('popover-menu--visible'));
+            }
+        }
+        return;
+    }
 
-        console.log("📘 Abriendo Manual (Z-Index Override)...");
-
-        // A. CERRAR EL MENÚ DE TRES PUNTOS
-        const menuPopover = document.getElementById('main-menu-popover');
+    // --- CASO 2: ABRIR AYUDA (Desde el menú) ---
+    if (helpBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // 1. Cerrar menú inmediatamente
         if (menuPopover) {
             menuPopover.classList.remove('popover-menu--visible');
-            menuPopover.style.display = 'none'; // Lo ocultamos a la fuerza
-            // Lo restauramos discretamente después
-            setTimeout(() => { menuPopover.style.display = ''; }, 300);
+            menuPopover.style.display = 'none';
         }
 
-        // B. ABRIR EL MODAL DE AYUDA
-        const modal = document.getElementById('help-modal');
+        // 2. Abrir Modal de Ayuda
         const content = document.getElementById('help-modal-content');
+        if (modalHelp && content) {
+            content.innerHTML = getManualHTML();
+            
+            // Usamos la clase z-maximo que definimos en CSS para asegurar prioridad
+            modalHelp.classList.add('z-maximo'); 
+            
+            modalHelp.style.display = 'flex';
+            modalHelp.style.opacity = '0'; // Preparar fade-in
+            
+            requestAnimationFrame(() => {
+                modalHelp.classList.add('active');
+                modalHelp.style.opacity = '1';
+            });
+        }
+        return;
+    }
 
-        if (modal && content) {
-            // 1. Inyectar contenido
-            content.innerHTML = getManualContent();
-            
-            // 2. FORZAR VISIBILIDAD SUPREMA
-            // Aquí está la solución: Z-Index 99999 gana a 20000
-            modal.style.cssText = `
-                display: flex !important;
-                opacity: 1 !important;
-                visibility: visible !important;
-                z-index: 99999 !important; 
-                background-color: rgba(0,0,0,0.95) !important;
-                position: fixed !important;
-                top: 0; left: 0; width: 100%; height: 100%;
-            `;
-            
-            modal.classList.add('active');
-            
-        } else {
-            console.error("❌ Error: No encuentro el modal 'help-modal' en index.html");
+    // --- CASO 3: CERRAR MODALES (Botón X o Botón "Entendido") ---
+    if (closeBtn) {
+        const modalId = closeBtn.dataset.modalId;
+        const targetModal = document.getElementById(modalId);
+        if (targetModal) {
+            targetModal.classList.remove('active');
+            targetModal.classList.remove('z-maximo'); // Quitar prioridad
+            setTimeout(() => targetModal.style.display = 'none', 300);
+        }
+        return;
+    }
+
+    // --- CASO 4: CLIC FUERA (Cerrar Menú si pulsamos en el contenido) ---
+    if (menuPopover && menuPopover.classList.contains('popover-menu--visible')) {
+        // Si el clic no fue dentro del menú, ciérralo
+        if (!e.target.closest('#main-menu-popover')) {
+            menuPopover.classList.remove('popover-menu--visible');
+            setTimeout(() => menuPopover.style.display = 'none', 200);
         }
     }
-    
-    // LOGICA PARA CERRAR EL MODAL
-    const closeBtn = e.target.closest('[data-action="close-modal"]');
-    if (closeBtn && closeBtn.dataset.modalId === 'help-modal') {
-        const modal = document.getElementById('help-modal');
-        if (modal) {
-            modal.classList.remove('active');
-            modal.style.display = 'none'; // Ocultar
-        }
-    }
-});
+
+}, true); // 'true' (Capture Phase) asegura que capturamos el evento antes que nadie.
