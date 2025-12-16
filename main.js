@@ -264,10 +264,11 @@ const cleanupAfterMovementSave = () => {
     // Reset del formulario
     select('movimiento-form')?.reset();
     
-    // Liberar memoria de la caché de movimientos
-    if (allDiarioMovementsCache.length > 1000) {
-        allDiarioMovementsCache = allDiarioMovementsCache.slice(-500);
-    }
+    // --- LÍNEAS A ELIMINAR O COMENTAR ---
+    // if (allDiarioMovementsCache.length > 1000) {
+    //    allDiarioMovementsCache = allDiarioMovementsCache.slice(-500);
+    // }
+    // ------------------------------------
     
     // Forzar recálculo de balances si hay muchos movimientos
     if (db.movimientos.length > 500) {
@@ -2774,9 +2775,7 @@ const getFilteredMovements = async (forComparison = false) => {
 		
 const calculatePortfolioPerformance = async (cuentaId = null) => {
     // 1. Carga de datos (igual que antes)
-    const allMovements = (typeof allDiarioMovementsCache !== 'undefined' && allDiarioMovementsCache.length > 0) 
-        ? allDiarioMovementsCache 
-        : await AppStore.getAll();
+    const allMovements = await AppStore.getAll();
     
     if (!dataLoaded.inversiones) await loadInversiones();
 
@@ -4226,12 +4225,10 @@ const renderDiarioPage = async () => {
 
             select('diario-filter-active-indicator').classList.remove('hidden');
             
-            if (allDiarioMovementsCache.length === 0) {
-                allDiarioMovementsCache = await AppStore.getAll();
-            }
+            const allMovements = await AppStore.getAll();
 
-            const { startDate, endDate, description, minAmount, maxAmount, cuentas, conceptos } = diarioActiveFilters;
-            db.movimientos = allDiarioMovementsCache.filter(m => {
+			const { startDate, endDate, description, minAmount, maxAmount, cuentas, conceptos } = diarioActiveFilters;
+			db.movimientos = allMovements.filter(m => {
                 if (startDate && m.fecha < startDate) return false;
                 if (endDate && m.fecha > endDate) return false;
                 if (description && !m.descripcion.toLowerCase().includes(description)) return false;
