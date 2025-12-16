@@ -3658,6 +3658,7 @@ const handleShowPnlBreakdown = async (accountId) => {
     showGenericModal(`Desglose P&L: ${cuenta.nombre}`, modalHtml);
 };
 
+/* --- renderVirtualListItem: VERSIÓN BLINDADA (Sin errores de sintaxis) --- */
 const renderVirtualListItem = (item) => {
     
     // 1. Header de Pendientes
