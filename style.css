@@ -5711,52 +5711,52 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     opacity: 0.6;
     cursor: pointer;
 }
-/* Menú Flotante (Popover) */
+/* Estilos del Menú Flotante */
 .popover-menu {
     position: fixed;
-    top: 60px; 
-    right: 10px;
-    background-color: var(--c-surface); /* O usa #1e1e1e si prefieres fijo */
-    border: 1px solid var(--c-outline);
+    top: 60px;
+    right: 15px;
+    background-color: var(--c-surface, #1e1e1e);
+    border: 1px solid var(--c-outline, rgba(255,255,255,0.1));
     border-radius: 16px;
     padding: 8px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    z-index: 20000 !important; /* Capa máxima */
+    min-width: 220px;
     
-    /* CRÍTICO: Asegura que esté por encima de todo */
-    z-index: 20000 !important; 
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-    
-    /* Estado inicial: Invisible y no bloquea clics */
+    /* Estado Oculto */
     opacity: 0;
     transform: scale(0.9) translateY(-10px);
-    pointer-events: none; 
-    
-    transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
     transform-origin: top right;
-    min-width: 200px;
 }
 
 /* Estado Visible */
 .popover-menu--visible {
     opacity: 1 !important;
     transform: scale(1) translateY(0) !important;
-    pointer-events: auto !important; /* Reactiva los clics */
+    pointer-events: auto !important;
 }
 
-/* Elementos del menú */
+/* Elementos */
 .popover-menu__item {
     display: flex;
     align-items: center;
     gap: 12px;
     width: 100%;
     padding: 12px 16px;
-    background: none;
+    background: transparent;
     border: none;
-    color: var(--c-on-surface);
+    color: var(--c-on-surface, white);
     font-size: 0.95rem;
     font-weight: 500;
     border-radius: 8px;
     text-align: left;
 }
-.popover-menu__item:active {
-    background-color: var(--c-surface-variant);
+.popover-menu__divider {
+    height: 1px;
+    background-color: var(--c-outline, rgba(255,255,255,0.1));
+    margin: 6px 0;
 }
+.popover-menu__item--danger { color: #ff4d4d; }

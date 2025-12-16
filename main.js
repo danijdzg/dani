@@ -11596,47 +11596,60 @@ const updateExtractoList = () => {
 };
 
 /* ================================================================= */
-/* === DIAGNÓSTICO DE MENÚ (Con Alertas) === */
+/* === FIX FINAL: MENÚ TRES PUNTOS (Autogenerado) === */
 /* ================================================================= */
 
 document.addEventListener('click', (e) => {
-    // Intentamos localizar el botón o el icono interior
+    // 1. Detectar clic en el botón
     const btn = e.target.closest('#header-menu-btn');
+    
+    // Referencia al menú (por si ya existe)
+    let menuPopover = document.getElementById('main-menu-popover');
 
-    // Si hemos pulsado en el botón (o su icono)
+    // --- CASO A: Pulsamos el BOTÓN ---
     if (btn) {
-        e.preventDefault();
         e.stopPropagation();
+        e.preventDefault();
 
-        // PASO 1: Confirmar que el clic llega al botón
-        alert("PASO 1: ¡Clic detectado en el botón!");
+        // 2. SI EL MENÚ NO EXISTE, LO CREAMOS AL VUELO
+        if (!menuPopover) {
+            console.log("⚠️ Menú no encontrado. Creándolo automáticamente...");
+            menuPopover = document.createElement('div');
+            menuPopover.id = 'main-menu-popover';
+            menuPopover.className = 'popover-menu';
+            menuPopover.innerHTML = `
+                <button class="popover-menu__item" data-action="global-search">
+                    <span class="material-icons">search</span> <span>Buscar</span>
+                </button>
+                <div class="popover-menu__divider"></div>
+                <button class="popover-menu__item" data-action="navigate" data-page="ajustes-page">
+                    <span class="material-icons">settings</span> <span>Ajustes</span>
+                </button>
+                <button class="popover-menu__item" data-action="show-help-modal">
+                    <span class="material-icons">help_outline</span> <span>Ayuda</span>
+                </button>
+                <div class="popover-menu__divider"></div>
+                <button class="popover-menu__item popover-menu__item--danger" data-action="logout">
+                    <span class="material-icons">logout</span> <span>Cerrar Sesión</span>
+                </button>
+            `;
+            document.body.appendChild(menuPopover);
+        }
 
-        // Buscamos el menú
-        const menu = document.getElementById('main-menu-popover');
+        // 3. ABRIR / CERRAR
+        // Usamos un pequeño timeout para asegurar que el CSS pille el cambio si acabamos de crearlo
+        requestAnimationFrame(() => {
+            menuPopover.classList.toggle('popover-menu--visible');
+        });
 
-        if (menu) {
-            // PASO 2: Confirmar que el menú existe
-            alert("PASO 2: Menú encontrado en el HTML.");
+        if (typeof hapticFeedback === 'function') hapticFeedback('light');
+        return;
+    }
 
-            // Intentamos abrirlo
-            menu.classList.toggle('popover-menu--visible');
-            
-            // PASO 3: Confirmar estado final
-            const estaVisible = menu.classList.contains('popover-menu--visible');
-            alert("PASO 3: Clase aplicada. ¿Está visible?: " + estaVisible);
-            
-            // Forzamos un estilo inline por si el CSS falla
-            if (estaVisible) {
-                menu.style.display = 'block';
-                menu.style.opacity = '1';
-                menu.style.zIndex = '99999';
-            } else {
-                menu.style.display = 'none';
-            }
-
-        } else {
-            // ERROR: El menú no está en el HTML
-            alert("ERROR CRÍTICO: No encuentro el elemento con id='main-menu-popover' en index.html");
+    // --- CASO B: Pulsamos FUERA (CERRAR) ---
+    if (menuPopover && menuPopover.classList.contains('popover-menu--visible')) {
+        if (!e.target.closest('#main-menu-popover')) {
+            menuPopover.classList.remove('popover-menu--visible');
         }
     }
 });
