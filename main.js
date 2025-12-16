@@ -3658,10 +3658,9 @@ const handleShowPnlBreakdown = async (accountId) => {
     showGenericModal(`Desglose P&L: ${cuenta.nombre}`, modalHtml);
 };
 
-/* --- renderVirtualListItem: VERSIÓN CORREGIDA (Fecha añadida a Traspasos) --- */
 const renderVirtualListItem = (item) => {
     
-    // 1. Header de Pendientes (Amarillo)
+    // 1. Header de Pendientes
     if (item.type === 'pending-header') {
         return `
         <div class="movimiento-date-header" style="background-color: var(--c-warning); color: #000; margin: 10px 16px;">
@@ -3673,8 +3672,8 @@ const renderVirtualListItem = (item) => {
     if (item.type === 'pending-item') {
         const r = item.recurrent;
         const date = new Date(r.nextDate).toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
-        const amountClass = r.cantidad >= 0 ? 'text-positive' : 'text-negative';
         
+        // CORRECCIÓN COLOR: Usamos formatCurrencyHTML directamente
         return `
         <div class="transaction-card" id="pending-recurrente-${r.id}" style="margin:0 16px; border-bottom:1px solid var(--c-outline); background-color: rgba(255, 214, 10, 0.05);">
             <div class="transaction-card__content">
@@ -3688,50 +3687,73 @@ const renderVirtualListItem = (item) => {
                     </div>
                 </div>
                 <div class="transaction-card__figures">
-                    <strong class="transaction-card__amount ${amountClass}">${formatCurrency(r.cantidad)}</strong>
+                    <strong class="transaction-card__amount ${r.cantidad >= 0 ? 'text-positive' : 'text-negative'}">
+                        ${formatCurrencyHTML(r.cantidad)}
+                    </strong>
                 </div>
             </div>
         </div>`;
     }
 
-    // 3. Header de Fecha Sticky
+    // 3. Header de Fecha (ESTILO CÁPSULA FLUIDA)
     if (item.type === 'date-header') {
         const dateObj = new Date(item.date + 'T12:00:00Z');
-        const today = new Date(); today.setHours(0,0,0,0);
-        const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1); yesterday.setHours(0,0,0,0);
+        
+        const today = new Date(); 
+        const yesterday = new Date(); 
+        today.setHours(0,0,0,0);
+        yesterday.setDate(yesterday.getDate() - 1); yesterday.setHours(0,0,0,0);
+        
         const itemDate = new Date(dateObj); itemDate.setHours(0,0,0,0);
         
-        let label = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-        if (itemDate.getTime() === today.getTime()) label = "Hoy";
-        else if (itemDate.getTime() === yesterday.getTime()) label = "Ayer";
+        let dayName = '';
+        let fullDate = '';
+        let isTodayClass = '';
 
-        const totalClass = item.total >= 0 ? 'text-positive' : 'text-negative';
-        const totalSign = item.total > 0 ? '+' : '';
+        if (itemDate.getTime() === today.getTime()) {
+            dayName = "HOY";
+            isTodayClass = 'is-today'; 
+            fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+        } else if (itemDate.getTime() === yesterday.getTime()) {
+            dayName = "AYER";
+            fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+        } else {
+            dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase().replace('.', '');
+            fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        // LÓGICA DE COLORES SEMÁNTICOS (Verde, Rojo, Morado)
+        let totalClass = 'is-neutral'; 
+        if (item.total > 0) {
+            totalClass = 'is-positive';
+        } else if (item.total < 0) {
+            totalClass = 'is-negative';
+        }
+
+        const totalFormatted = formatCurrencyHTML(item.total); 
 
         return `
             <div class="sticky-date-header">
-                <span class="sticky-date-label">${label}</span>
-                <span class="sticky-date-total ${totalClass}">${totalSign}${formatCurrencyHTML(item.total)}</span>
+                <div class="sticky-date-left">
+                    <span class="sticky-day-pill ${isTodayClass}">${dayName}</span>
+                    <span class="sticky-date-text">${fullDate}</span>
+                </div>
+                <span class="sticky-date-total ${totalClass}">${totalFormatted}</span>
             </div>
         `;
     }
 
-    // 4. MOVIMIENTOS REALES
+    // 4. MOVIMIENTOS REALES (DIARIO)
     if (item.type === 'transaction') {
         const m = item.movement;
         const { cuentas, conceptos } = db;
-        const highlightClass = (m.id === newMovementIdToHighlight) ? 'highlight-pulse' : '';
+        const highlightClass = (m.id === newMovementIdToHighlight) ? 'list-item-animate' : '';
         
-        // Formatear fecha: "12 oct"
+        // Formatear fecha corta
         const dateObj = new Date(m.fecha);
         const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
 
         let iconHtml, line1, line2, amountClass, amountSign;
-
-        const formatCompact = (cents) => {
-            if (cents === undefined || cents === null) return '...';
-            return (cents / 100).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + '€';
-        };
 
         if (m.tipo === 'traspaso') {
             const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || 'Origen';
@@ -3739,12 +3761,8 @@ const renderVirtualListItem = (item) => {
             
             iconHtml = `<div class="t-icon t-icon--transfer"><span class="material-icons">sync_alt</span></div>`;
             
-            // --- CORRECCIÓN AQUÍ: Añadimos la fecha a la línea 1 ---
-            // LÍNEA 1: [Fecha] ↑ Origen (Saldo)
-            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:2px;">arrow_upward</span>${escapeHTML(origen)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceOrigen)})</span></span>`;
-            
-            // LÍNEA 2: ↓ Destino (Saldo) (Aquí dejamos un espacio vacío al inicio para alinear visualmente con el texto de arriba si se desea, o lo dejamos natural)
-            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:2px;">arrow_downward</span>${escapeHTML(destino)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceDestino)})</span></span>`;
+            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:2px;">arrow_upward</span>${escapeHTML(origen)}</span>`;
+            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:2px;">arrow_downward</span>${escapeHTML(destino)}</span>`;
             
             amountClass = 'text-info';
             amountSign = '';
@@ -3761,10 +3779,8 @@ const renderVirtualListItem = (item) => {
             const isGasto = m.cantidad < 0;
             iconHtml = `<div class="t-icon ${isGasto ? 't-icon--expense' : 't-icon--income'}">${avatarContent}</div>`;
             
-            // LÍNEA 1: Fecha y Concepto
             line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-concept">${escapeHTML(conceptoNombre)}</span>`;
             
-            // LÍNEA 2: Cuenta y Descripción
             const desc = m.descripcion && m.descripcion !== conceptoNombre ? m.descripcion : '';
             const separator = desc ? ' • ' : '';
             line2 = `<span class="t-account-badge">${escapeHTML(nombreCuenta)}</span>${separator}${escapeHTML(desc)}`;
@@ -3779,11 +3795,11 @@ const renderVirtualListItem = (item) => {
             <div class="t-content">
                 <div class="t-row-primary">
                     <div class="t-line-1">${line1}</div>
-                    <div class="t-amount ${amountClass}">${amountSign}${formatCurrency(m.cantidad)}</div>
+                    <div class="t-amount ${amountClass}">${amountSign}${formatCurrencyHTML(m.cantidad)}</div>
                 </div>
                 <div class="t-row-secondary">
                     <div class="t-line-2">${line2}</div>
-                    ${m.tipo !== 'traspaso' ? `<div class="t-running-balance">${formatCurrency(m.runningBalance)}</div>` : ''}
+                    ${m.tipo !== 'traspaso' ? `<div class="t-running-balance">${formatCurrencyHTML(m.runningBalance)}</div>` : ''}
                 </div>
             </div>
         </div>`;
