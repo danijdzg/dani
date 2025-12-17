@@ -5876,20 +5876,21 @@ input, select, textarea {
     }
 }
 /* ================================================================= */
-/* === DISEÑO MINIMALISTA: SOLO FUENTE DE COLOR (A=AZUL, B=ROJO, C=VERDE) === */
+/* === DISEÑO MAESTRO: COLORES DE CAJA (Solo Fuente) === */
 /* ================================================================= */
 
-/* 1. FONDO OSCURO UNIFICADO (Encabezado y Pie) */
+/* 1. FONDO UNIFICADO (Encabezado y Pie) */
+/* Ambos tendrán el mismo color oscuro profesional */
 .top-bar, .bottom-nav {
     background-color: #121820 !important; 
     border-top: 1px solid rgba(255,255,255,0.05);
     border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
-/* 2. ESTRUCTURA DEL BOTÓN (Sin color todavía) */
+/* 2. BOTÓN DE CAJA (Base transparente) */
 .header-ledger-pill {
-    background: transparent !important; /* SIEMPRE transparente */
-    border: 1px solid currentColor; /* Borde fino del mismo color que la letra */
+    background: transparent !important; /* Fondo invisible */
+    border: 1px solid currentColor; /* El borde sigue al color del texto */
     border-radius: 20px;
     padding: 6px 16px;
     font-family: 'Inter', sans-serif;
@@ -5900,23 +5901,18 @@ input, select, textarea {
     align-items: center;
     gap: 6px;
     outline: none;
-    transition: color 0.3s ease, border-color 0.3s ease;
+    transition: color 0.3s ease; /* Transición suave de color */
 }
 
-/* Efecto sutil al pulsar (sin cambiar color) */
-.header-ledger-pill:active {
-    transform: scale(0.95);
-    opacity: 0.7;
-}
-
-/* 3. ASIGNACIÓN DE COLORES (Solo afecta al TEXTO y al BORDE) */
+/* 3. COLORES POR CAJA (A=Azul, B=Rojo, C=Verde) */
+/* Afecta al texto del botón superior Y al icono/texto de la pestaña inferior activa */
 
 /* --- CAJA A: AZUL (#00D4FF) --- */
 body[data-ledger-mode="A"] .header-ledger-pill,
 body[data-ledger-mode="A"] .nav-item.active {
-    color: #00D4FF !important; /* Solo la fuente es azul */
+    color: #00D4FF !important;
 }
-/* Iconos coinciden con la fuente */
+/* Aseguramos que el icono de la pestaña también se pinte */
 body[data-ledger-mode="A"] .nav-item.active .material-icons {
     color: #00D4FF !important;
 }
@@ -5924,7 +5920,7 @@ body[data-ledger-mode="A"] .nav-item.active .material-icons {
 /* --- CAJA B: ROJO (#ff4444) --- */
 body[data-ledger-mode="B"] .header-ledger-pill,
 body[data-ledger-mode="B"] .nav-item.active {
-    color: #ff4444 !important; /* Solo la fuente es roja */
+    color: #ff4444 !important;
 }
 body[data-ledger-mode="B"] .nav-item.active .material-icons {
     color: #ff4444 !important;
@@ -5933,13 +5929,13 @@ body[data-ledger-mode="B"] .nav-item.active .material-icons {
 /* --- CAJA C: VERDE (#00B34D) --- */
 body[data-ledger-mode="C"] .header-ledger-pill,
 body[data-ledger-mode="C"] .nav-item.active {
-    color: #00B34D !important; /* Solo la fuente es verde */
+    color: #00B34D !important;
 }
 body[data-ledger-mode="C"] .nav-item.active .material-icons {
     color: #00B34D !important;
 }
 
-/* 4. ELEMENTOS INACTIVOS (Gris neutro) */
+/* 4. PESTAÑAS INACTIVAS (Gris neutro) */
 .nav-item {
     color: #666666 !important;
     transition: color 0.3s;
