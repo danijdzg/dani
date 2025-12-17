@@ -6044,61 +6044,81 @@ body[data-ledger-mode="C"] .header-ledger-pill {
     .header-status-right span { display: none; }
 }
 /* =============================================================== */
-/* === MODO ESCRITORIO: PANEL COMPACTO (HUD) === */
+/* === AJUSTES DE ESCRITORIO (Compacto Vertical) === */
 /* =============================================================== */
 
-/* Se activa solo en pantallas de ordenador (más de 1000px de ancho) */
 @media (min-width: 1000px) {
 
-    /* 1. QUITAMOS EL ENCABEZADO (Como pediste) */
-    .top-bar {
-        display: none !important;
+    /* 1. Encabezado Ultra-Delgado */
+    .header {
+        padding: 5px 0 !important; /* Mínimo relleno */
+        height: 45px !important;   /* Forzamos altura mínima */
+    }
+    
+    .header-content {
+        height: 100% !important; /* Asegura que el contenido se centre */
     }
 
-    /* 2. RECUPERAMOS EL ESPACIO SUPERIOR */
-    /* Al no haber encabezado, quitamos el relleno de seguridad de arriba */
+    /* Reducimos el botón de selección de caja */
+    .header-ledger-pill {
+        padding: 2px 10px !important;
+        font-size: 0.85rem !important;
+        height: 28px !important;
+    }
+
+    /* Título más pequeño */
+    .header-title span {
+        font-size: 1rem !important;
+    }
+
+    /* Iconos un poco más pequeños para que encajen */
+    .material-icons {
+        font-size: 20px !important;
+    }
+}
+@media (min-width: 1000px) {
+    
+    /* 2. Área principal ajustada */
     .app-layout__main {
-        padding-top: 10px !important; /* Pegado al techo */
-        padding-bottom: 10px !important;
-        height: 100vh; /* Forzar altura de ventana completa */
-        overflow: hidden; /* Intentar bloquear el scroll si cabe todo */
+        padding-top: 10px !important; /* Menos espacio arriba */
+        padding-bottom: 60px !important; /* Espacio justo para el menú de abajo */
+        max-width: 600px; /* Evita que se estire demasiado a lo ancho */
+        margin: 0 auto;   /* Centra todo en la pantalla */
     }
 
-    /* 3. PATRIMONIO TOTAL MÁS PEQUEÑO */
-    /* Pasamos de 2.8rem (gigante) a 1.8rem (elegante) */
+    /* 3. Patrimonio Neto: Igualar tamaño a Valor Real */
+    /* Antes era gigante (2.8rem), ahora lo bajamos a 1.2rem aprox */
     #kpi-patrimonio-neto-value {
-        font-size: 1.8rem !important;
+        font-size: 1.4rem !important; /* Tamaño mediano/pequeño */
+        font-weight: 700 !important;
+        margin-bottom: 2px !important;
+        line-height: 1.2;
+    }
+    
+    /* Reducimos el subtítulo "Patrimonio Total" */
+    #panel-page .hero-card .label {
+        font-size: 0.75rem !important;
         margin-bottom: 5px !important;
     }
 
-    /* --- AJUSTES EXTRA PARA QUE QUEPA "PERFECTO" --- */
-    
-    /* Compactamos el contenedor principal del panel */
-    #panel-page > div {
-        padding: 10px 20px !important;
-        
-        /* TRUCO PRO: Usamos Grid para poner las tarjetas lado a lado si es necesario */
-        display: grid;
-        grid-template-columns: 1fr 1fr; /* Dos columnas */
-        gap: 15px;
-        align-items: start;
-    }
-
-    /* Hacemos que la tarjeta de Patrimonio (la grande) ocupe todo el ancho */
-    /* La tarjeta de patrimonio es la segunda hija directa (child 2) en tu HTML */
-    #panel-page > div > .hero-card:nth-child(2) {
-        grid-column: span 2; /* Ocupa las 2 columnas */
-        padding: 15px !important; /* Menos relleno interno */
-    }
-
-    /* Compactamos todas las tarjetas */
+    /* 4. Compactar las Tarjetas (Adelgazamiento extremo) */
     .hero-card {
-        margin-bottom: 0 !important; /* Quitamos márgenes inferiores */
-        padding: 15px !important;
+        padding: 10px 15px !important; /* Relleno interno mínimo */
+        margin-bottom: 8px !important; /* Espacio entre tarjetas reducido */
+        min-height: auto !important;   /* Permitir que se encojan */
+    }
+
+    /* Reducir espacios dentro de las filas de datos */
+    .kpi-row {
+        margin-bottom: 5px !important;
+        padding-bottom: 5px !important;
     }
     
-    /* Reducimos un poco la tarjeta de Flujo de Caja (la primera) */
-    #panel-page > div > .hero-card:first-child {
-        margin-bottom: 0 !important;
+    .kpi-item .value {
+        font-size: 1rem !important; /* Números un poco más compactos */
+    }
+    
+    .kpi-item .label {
+        font-size: 0.7rem !important;
     }
 }
