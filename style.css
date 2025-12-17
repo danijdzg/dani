@@ -5875,75 +5875,46 @@ input, select, textarea {
         opacity: 0.5;
     }
 }
-/* ================================================================= */
-/* === DISEÑO MAESTRO: COLORES DE CAJA (Solo Fuente) === */
-/* ================================================================= */
-/* 1. Base del Encabezado (SIEMPRE NEUTRO) */
-/* Esto asegura que el fondo y los iconos sean iguales al pie de página */
+/* =============================================================== */
+/* === ENCABEZADO FINAL: NEUTRO CON DETALLE DE COLOR === */
+/* =============================================================== */
+
+/* 1. Fondo y Textos Generales (NEUTROS) */
 .header {
-    background-color: var(--c-surface) !important; /* Color de fondo oscuro estándar */
-    color: var(--c-on-surface) !important;
-    border-bottom: 1px solid var(--c-outline); /* Opcional: separador sutil */
+    background-color: #121820 !important; /* Mismo color oscuro que el fondo general */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Separador sutil */
+    color: #ffffff !important;
 }
 
-/* 1. FONDO UNIFICADO (Encabezado y Pie) */
-/* Ambos tendrán el mismo color oscuro profesional */
-.top-bar, .bottom-nav {
-    background-color: #121820 !important; 
-    border-top: 1px solid rgba(255,255,255,0.05);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-/* 2. Iconos del Encabezado (Menu, Ayuda, Calc) - NEUTROS */
-.header .icon-btn, 
-.header .material-icons {
-    color: var(--c-on-surface) !important; /* Blanco/Gris, no hereda color de caja */
+/* Los iconos normales (Ayuda, Calc, Menú) serán blancos */
+.header .material-icons,
+.header .icon-btn {
+    color: rgba(255, 255, 255, 0.8) !important;
 }
 
-/* 3. EL ÚNICO ELEMENTO CON COLOR: El Botón Selector de Caja */
-/* Definimos el color SOLO para la clase .header-ledger-pill */
-
-/* --- CAJA A: AZUL --- */
+/* 2. EL ÚNICO ELEMENTO DE COLOR: Botón de Caja (Pill) */
+/* CAJA A (Azul) */
 body[data-ledger-mode="A"] .header-ledger-pill {
     color: #00D4FF !important;
     border: 1px solid #00D4FF !important;
-    background-color: rgba(0, 212, 255, 0.1); /* Fondo sutil para que destaque */
+    background-color: rgba(0, 212, 255, 0.15) !important;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.1);
 }
 
-/* --- CAJA B: ROJO --- */
+/* CAJA B (Rojo) */
 body[data-ledger-mode="B"] .header-ledger-pill {
     color: #ff4444 !important;
     border: 1px solid #ff4444 !important;
-    background-color: rgba(255, 68, 68, 0.1);
+    background-color: rgba(255, 68, 68, 0.15) !important;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.1);
 }
 
-/* --- CAJA C: VERDE --- */
+/* CAJA C (Verde) */
 body[data-ledger-mode="C"] .header-ledger-pill {
     color: #00e676 !important;
     border: 1px solid #00e676 !important;
-    background-color: rgba(0, 230, 118, 0.1);
-}
-/* 2. BOTÓN DE CAJA (Base transparente) */
-.header-ledger-pill {
-    background: transparent !important; /* Fondo invisible */
-    border: 1px solid currentColor; /* El borde sigue al color del texto */
-    border-radius: 20px;
-    padding: 6px 16px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 700;
-    font-size: 0.95rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    outline: none;
-    transition: color 0.3s ease; /* Transición suave de color */
-}
-
-
-/* 4. PESTAÑAS INACTIVAS (Gris neutro) */
-.nav-item {
-    color: #666666 !important;
-    transition: color 0.3s;
+    background-color: rgba(0, 230, 118, 0.15) !important;
+    box-shadow: 0 0 10px rgba(0, 230, 118, 0.1);
 }
 /* ========================================= */
 /* === ESTILOS AYUDA NINJA (Divertida) === */
@@ -6042,49 +6013,4 @@ body[data-ledger-mode="C"] .header-ledger-pill {
 
 @media (max-width: 360px) {
     .header-status-right span { display: none; }
-}
-/* =============================================================== */
-/* === MODO ESCRITORIO: ANCHO TOTAL Y ENCABEZADO NORMAL === */
-/* =============================================================== */
-
-@media (min-width: 1000px) {
-
-    /* 1. ANCHO TOTAL (Ocupamos toda la pantalla) */
-    .app-layout__main {
-        max-width: 98% !important; 
-        margin: 0 auto;
-        padding-top: 15px !important;    /* Más aire arriba (antes 5px) */
-        padding-bottom: 60px !important; /* Espacio cómodo abajo */
-    }
-
-    /* 2. ENCABEZADO: RESTAURADO */
-    /* Hemos borrado las reglas que reducían su altura. */
-    /* Ahora se verá grande y bonito como en el diseño original. */
-
-    /* 3. PATRIMONIO NETO (Ajustado pero legible) */
-    /* Mantenemos un tamaño equilibrado para que no descuadre */
-    #kpi-patrimonio-neto-value {
-        font-size: 1.5rem !important; /* Tamaño medio (similar a Valor Real) */
-        font-weight: 700 !important;
-        margin-bottom: 5px !important;
-        line-height: 1.2;
-    }
-    
-    /* 4. TARJETAS (Ancho total y separación normal) */
-    .hero-card {
-        width: 100% !important;        /* Usan todo el ancho */
-        margin-bottom: 12px !important; /* Separación cómoda entre tarjetas */
-        padding: 12px 20px !important;  /* Relleno equilibrado */
-    }
-
-    /* Ajuste de filas de datos */
-    .kpi-row {
-        margin-bottom: 5px !important;
-        padding-bottom: 5px !important;
-    }
-    
-    /* Menú inferior estándar */
-    .bottom-nav {
-        height: 60px !important; /* Altura cómoda estándar */
-    }
 }
