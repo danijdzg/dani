@@ -189,11 +189,38 @@ const handleSaveLedgerNames = async (btn) => {
     // Guardar en Firebase
     await fbDb.collection('users').doc(currentUser.uid).set({ config: db.config }, { merge: true });
 
-    // Actualizar el botón de la barra superior inmediatamente
-    const ledgerBtn = select('ledger-toggle-btn');
-    if (ledgerBtn) {
-        ledgerBtn.textContent = getLedgerName(currentLedger);
-    }
+ // Añade esto dentro de tu inicialización o setup de eventos
+const ledgerBtn = document.getElementById('ledger-selector-display');
+
+if (ledgerBtn) {
+    ledgerBtn.addEventListener('click', () => {
+        // Lógica existente para cambiar de caja (toggleLedgerMode)
+        // Asumo que tienes una función global o accesible para esto:
+        if (typeof toggleLedgerMode === 'function') {
+            toggleLedgerMode(); 
+        } else {
+            // Si no, simula el clic en el botón antiguo si existe oculto
+            const oldBtn = document.getElementById('ledger-toggle-btn');
+            if (oldBtn) oldBtn.click();
+        }
+    });
+}
+
+// DENTRO DE LA FUNCIÓN updateLedgerUI() (o donde actualices el estado A/B/C):
+// Actualiza el texto del nuevo botón
+const ledgerLabel = currentLedgerMode === 'A' ? 'CAJA A' : 
+                    currentLedgerMode === 'B' ? 'CAJA B' : 'CAJA C';
+
+if (ledgerBtn) {
+    ledgerBtn.textContent = ledgerLabel;
+    
+    // Animación de pulso al cambiar
+    ledgerBtn.animate([
+        { transform: 'scale(1)' },
+        { transform: 'scale(1.1)' },
+        { transform: 'scale(1)' }
+    ], { duration: 300 });
+}
 
     setButtonLoading(btn, false);
     hideModal('generic-modal');

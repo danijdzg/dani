@@ -6027,3 +6027,104 @@ input, select, textarea {
     scrollbar-width: none;  /* Firefox */
     -ms-overflow-style: none;  /* IE 10+ */
 }
+/* ========================================= */
+/* === ENCABEZADO "ISLA FLOTANTE" (Estilo Footer) === */
+/* ========================================= */
+
+.top-bar {
+    /* 1. Posicionamiento: Igual que el footer pero arriba */
+    position: fixed;
+    top: 20px; /* Separación del techo */
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* 2. Dimensiones y Forma */
+    width: calc(100% - 32px); /* Margen lateral igual que el footer */
+    max-width: 420px;
+    height: 64px; /* Misma altura que el footer */
+    border-radius: 32px; /* Forma de píldora completa */
+    
+    /* 3. Estilo Cristal (Igual que bottom-nav) */
+    background-color: var(--c-surface); 
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--c-outline);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    
+    /* 4. Reset de bordes antiguos */
+    border-bottom: 1px solid var(--c-outline); /* Mantenemos borde sutil */
+    
+    /* Alineación */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    z-index: 200;
+}
+
+/* Ajuste del padding del contenido principal para que no quede tapado por la nueva isla */
+.app-layout__main {
+    padding-top: 100px !important; /* Más espacio arriba */
+}
+
+/* ========================================= */
+/* === BOTÓN CENTRAL SELECTOR DE CAJA === */
+/* ========================================= */
+
+.ledger-selector-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.1rem;
+    font-weight: 800; /* Extra negrita */
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    
+    /* Transiciones suaves de color */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Sombra de texto inicial */
+    text-shadow: 0 0 15px rgba(255,255,255,0.1);
+    
+    /* Borde o fondo opcional estilo "pill" */
+    padding: 8px 16px;
+    border-radius: 20px;
+    background-color: rgba(255,255,255,0.03);
+}
+
+.ledger-selector-btn:active {
+    transform: scale(0.95);
+}
+
+/* === LÓGICA DE COLORES (COINCIDENCIA EXACTA CON FOOTER) === */
+
+/* CAJA A (Azul) */
+body[data-ledger-mode="A"] .ledger-selector-btn {
+    color: #007AFF; /* Azul iOS */
+    text-shadow: 0 0 12px rgba(0, 122, 255, 0.6);
+    background-color: rgba(0, 122, 255, 0.1); /* Fondo sutil */
+    border: 1px solid rgba(0, 122, 255, 0.2);
+}
+
+/* CAJA B (Rojo) */
+body[data-ledger-mode="B"] .ledger-selector-btn {
+    color: #FF3B30; /* Rojo iOS */
+    text-shadow: 0 0 12px rgba(255, 59, 48, 0.6);
+    background-color: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.2);
+}
+
+/* CAJA C (Verde) */
+body[data-ledger-mode="C"] .ledger-selector-btn {
+    color: #00B34D; /* Verde aiDANaI */
+    text-shadow: 0 0 12px rgba(0, 179, 77, 0.6);
+    background-color: rgba(0, 179, 77, 0.1);
+    border: 1px solid rgba(0, 179, 77, 0.2);
+}
+
+/* Asegurar que los botones laterales (Menú/Search) se vean bien en la nueva barra */
+.top-bar .icon-btn {
+    width: 40px;
+    height: 40px;
+    color: var(--c-on-surface-secondary);
+}
