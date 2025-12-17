@@ -3743,33 +3743,33 @@ const renderVirtualListItem = (item) => {
         `;
     }
 
-    // 4. MOVIMIENTOS REALES (DIARIO) - SIN ICONO
+    // 4. MOVIMIENTOS REALES (DIARIO) - CON MARCOS DE NEÓN
     if (item.type === 'transaction') {
         const m = item.movement;
         const { cuentas, conceptos } = db;
         const highlightClass = (m.id === newMovementIdToHighlight) ? 'list-item-animate' : '';
 
-        // Formatear fecha corta
+        // Formatear fecha
         const dateObj = new Date(m.fecha);
         const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
         
         let line1, line2, amountClass, amountSign;
+        
+        // VARIABLE NUEVA: Clase para el marco de color
+        let cardTypeClass = ''; 
 
         if (m.tipo === 'traspaso') {
+            cardTypeClass = 't-card--transfer'; // <--- CLASE MORADA
+
             const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || 'Origen';
             const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || 'Destino';
             
-            // Saldos snapshot
-            const saldoOrigenHtml = m._saldoOrigenSnapshot !== undefined ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoOrigenSnapshot)})</span>` : '';
-            const saldoDestinoHtml = m._saldoDestinoSnapshot !== undefined ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoDestinoSnapshot)})</span>` : '';
-
-            // Construcción de líneas (Sin iconos gráficos, solo flechas de texto simples)
-            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part" style="color: var(--c-on-surface); font-weight:600;">${escapeHTML(origen)}</span> <span style="color:var(--c-on-surface-tertiary);">→</span> <span class="t-transfer-part" style="color: var(--c-on-surface); font-weight:600;">${escapeHTML(destino)}</span>`;
+            // Línea 1: Origen -> Destino
+            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part" style="color:var(--c-on-surface); font-weight:700;">${escapeHTML(origen)}</span> <span style="color:var(--c-info);">➔</span> <span class="t-transfer-part" style="color:var(--c-on-surface); font-weight:700;">${escapeHTML(destino)}</span>`;
             
-            // En la línea 2 ponemos los saldos si existen
-            line2 = `<span class="t-transfer-part" style="font-size: 0.75rem; opacity: 0.7;">Traspaso interno</span>`;
+            line2 = `<span class="t-transfer-part" style="opacity: 0.8;">Traspaso interno</span>`;
             
-            amountClass = 'text-info';
+            amountClass = 'text-info'; // Texto morado
             amountSign = '';
         } else {
             const concepto = conceptos.find(c => c.id === m.conceptoId);
@@ -3779,10 +3779,15 @@ const renderVirtualListItem = (item) => {
             
             const isGasto = m.cantidad < 0;
 
-            // Línea 1: Fecha y Concepto (Más limpio)
+            // ASIGNAR CLASE SEGÚN GASTO O INGRESO
+            if (isGasto) {
+                cardTypeClass = 't-card--expense'; // <--- CLASE ROJA
+            } else {
+                cardTypeClass = 't-card--income';  // <--- CLASE VERDE
+            }
+
             line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-concept">${escapeHTML(conceptoNombre)}</span>`;
             
-            // Línea 2: Cuenta y Descripción
             const desc = m.descripcion && m.descripcion !== conceptoNombre ? m.descripcion : '';
             const separator = desc ? ' • ' : '';
             line2 = `<span class="t-account-badge">${escapeHTML(nombreCuenta)}</span>${separator}${escapeHTML(desc)}`;
@@ -3791,9 +3796,9 @@ const renderVirtualListItem = (item) => {
             amountSign = isGasto ? '' : '+';
         }
 
-        // HTML FINAL: Eliminada la variable ${iconHtml}
+        // AÑADIMOS ${cardTypeClass} AL DIV PRINCIPAL
         return `
-            <div class="t-card ${highlightClass}" data-id="${m.id}" data-action="edit-movement-from-list">
+            <div class="t-card ${cardTypeClass} ${highlightClass}" data-id="${m.id}" data-action="edit-movement-from-list">
                 <div class="t-content">
                     <div class="t-row-primary">
                         <div class="t-line-1">${line1}</div>

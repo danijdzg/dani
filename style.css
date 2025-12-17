@@ -6051,3 +6051,67 @@ input, select, textarea {
 .transaction-content {
     width: 100%;
 }
+/* ========================================= */
+/* === TARJETAS DIARIO: EFECTO NEÓN BOLD === */
+/* ========================================= */
+
+.t-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 16px 16px; /* Un poco más de aire */
+    margin-bottom: 12px; /* Separación entre tarjetas para que se vea el marco */
+    border-radius: 16px; /* Bordes muy redondeados */
+    
+    /* Fondo oscuro semitransparente para contraste */
+    background-color: rgba(10, 10, 10, 0.7); 
+    backdrop-filter: blur(5px);
+    
+    /* Borde base transparente para la transición */
+    border: 1px solid transparent; 
+    
+    /* Sombra suave por defecto */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    
+    transition: all 0.2s ease-in-out;
+}
+
+/* --- VARIANTES POR TIPO (LOS MARCOS) --- */
+
+/* 1. INGRESOS (Verde Radiactivo) */
+.t-card--income {
+    border-color: var(--c-success); /* Borde Verde */
+    box-shadow: 0 0 15px rgba(57, 255, 20, 0.15), inset 0 0 10px rgba(57, 255, 20, 0.05);
+}
+
+/* 2. GASTOS (Rojo Alerta) */
+.t-card--expense {
+    border-color: var(--c-danger); /* Borde Rojo */
+    box-shadow: 0 0 15px rgba(255, 59, 48, 0.15), inset 0 0 10px rgba(255, 59, 48, 0.05);
+}
+
+/* 3. TRASPASOS (Morado Etéreo) */
+.t-card--transfer {
+    border-color: var(--c-info); /* Borde Morado */
+    box-shadow: 0 0 15px rgba(191, 90, 242, 0.15), inset 0 0 10px rgba(191, 90, 242, 0.05);
+}
+
+/* Efecto al pulsar: El brillo se intensifica */
+.t-card:active {
+    transform: scale(0.98);
+    filter: brightness(1.2);
+}
+
+/* Ajuste de textos dentro de las tarjetas neón */
+.t-concept {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.t-amount {
+    font-size: 1.1rem;
+    font-weight: 800;
+    /* Sombra de texto para que el número también brille */
+    text-shadow: 0 0 5px currentColor; 
+}
