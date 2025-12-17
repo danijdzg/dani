@@ -1900,6 +1900,17 @@ const formatCurrencyHTML = (numInCents) => {
     // Intenta obtener el nombre personalizado, si no existe, usa "Caja X"
     return db.config?.ledgerNames?.[letter] || `Caja ${letter}`;
 };
+const updateLedgerButtonUI = () => {
+    const btn = select('ledger-toggle-btn');
+    if (btn) {
+        // Obtenemos el nombre usando tu función helper existente
+        const name = getLedgerName(currentLedger);
+        
+        // Actualizamos el texto y el título
+        btn.textContent = name;
+        btn.title = `Estás en: ${name}`;
+    }
+};
 /* --- HELPER: Convierte HEX a RGBA para los gradientes --- */
 const hexToRgba = (hex, alpha) => {
     let r = 0, g = 0, b = 0;
@@ -2427,20 +2438,7 @@ const navigateTo = async (pageId, isInitial = false) => {
     const actionsEl = select('top-bar-actions');
     const leftEl = select('top-bar-left-button');
     
-const standardActions = `
-        <button class="icon-btn" data-action="global-search" title="Buscar">
-            <span class="material-icons">search</span>
-        </button>
-
-        <button data-action="open-external-calculator" class="icon-btn" title="Calculadora">
-            <span class="material-icons">calculate</span>
-        </button>
         
-        <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
-            <span class="material-icons">more_vert</span>
-        </button>
-    `;
-    
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
     if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
 	const patrimonioActions = `
@@ -9363,8 +9361,10 @@ const handleStart = (e) => {
     // Ella se encarga de buscar el botón y cambiar el texto.
     updateLedgerButtonUI(); 
     // ▲▲▲ FIN DE LA CORRECCIÓN ▲▲▲
-  
- 
+    
+    // Mensaje informativo usando el nombre real
+    showToast(`Cambiado a ${getLedgerName(currentLedger)}.`, 'info');
+
     // 4. Actualizar datos y vistas
     populateAllDropdowns();
 
@@ -11612,13 +11612,6 @@ document.addEventListener('click', (e) => {
         if (typeof navigateTo === 'function') {
             navigateTo(pageId);
         }
-	// ▼▼▼ AÑADE ESTO AQUÍ ▼▼▼
-if (action === 'open-help') {
-    renderHelpContent(); // Generamos el contenido fresco
-    showModal('help-modal'); // Abrimos el modal existente en index.html
-    hapticFeedback('light'); // Vibración gustosa
-}
-// ▲▲▲ FIN DE AÑADIDO ▲▲▲	
     }
 
     // --- ACCIÓN: CALCULADORA ---
@@ -11632,7 +11625,146 @@ if (action === 'open-help') {
             if(iframe && !iframe.src) iframe.src = 'calculadora.html';
         }
     }
+/* ================================================================= */
+    /* === MANUAL DEL COMANDANTE (GUÍA DEFINITIVA LÚDICA) === */
+    /* ================================================================= */
+    if (action === 'open-help') {
+        const modal = document.getElementById('help-modal');
+        const contentDiv = document.getElementById('help-modal-content');
 
+        if (modal && contentDiv) {
+            contentDiv.innerHTML = `
+                <style>
+                    /* Estilos exclusivos para este manual */
+                    .academy-intro { text-align: center; margin-bottom: 30px; }
+                    .academy-badge { font-size: 50px; display: block; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
+                    .academy-module { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); }
+                    .module-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+                    .module-icon { font-size: 28px; color: #00B34D; }
+                    .module-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0; }
+                    .academy-text { font-size: 0.95rem; color: #ccc; line-height: 1.6; margin-bottom: 10px; }
+                    .academy-example { background: rgba(0, 179, 77, 0.1); border-left: 3px solid #00B34D; padding: 10px 15px; margin: 15px 0; font-size: 0.9rem; color: #ddd; border-radius: 0 8px 8px 0; }
+                    .key-feature { display: flex; align-items: start; gap: 10px; margin-top: 15px; }
+                    .key-icon { background: #222; border-radius: 50%; padding: 5px; font-size: 16px; color: #00B34D; min-width: 26px; text-align: center; }
+                    .academy-footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); color: #666; font-size: 0.8rem; }
+                    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+                </style>
+
+                <div class="manual-container">
+                    
+                    <div class="academy-intro">
+                        <span class="academy-badge">👨‍🚀</span>
+                        <h2 style="color: #00B34D; margin-bottom: 5px;">Academia aiDANaI</h2>
+                        <p class="academy-text">Manual de supervivencia financiera para astronautas modernos.</p>
+                    </div>
+
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">dashboard</span>
+                            <h3 class="module-title">Módulo 1: El Puente de Mando</h3>
+                        </div>
+                        <p class="academy-text">Al entrar, verás 4 tarjetas. Son tus constantes vitales. Si todas están en verde, la nave vuela sola. Si hay rojo... ¡peligro!</p>
+                        
+                        <div class="key-feature">
+                            <span class="material-icons key-icon">arrow_upward</span>
+                            <div>
+                                <strong style="color:white">Ingresos:</strong>
+                                <span style="font-size:0.9rem; color:#aaa">Todo el combustible que entra. Nóminas, bizums de amigos, lotería...</span>
+                            </div>
+                        </div>
+                        <div class="key-feature">
+                            <span class="material-icons key-icon" style="color:#ff4444">arrow_downward</span>
+                            <div>
+                                <strong style="color:white">Gastos:</strong>
+                                <span style="font-size:0.9rem; color:#aaa">Meteoritos que impactan en tu nave. Comida, luz, caprichos...</span>
+                            </div>
+                        </div>
+                        <div class="key-feature">
+                            <span class="material-icons key-icon" style="color:#00f2ff">savings</span>
+                            <div>
+                                <strong style="color:white">Tasa de Ahorro:</strong>
+                                <span style="font-size:0.9rem; color:#aaa">El dato más importante. Si ganas 1000€ y te sobran 200€, tu tasa es del 20%. ¡Intenta mantenerla siempre positiva!</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">add_circle</span>
+                            <h3 class="module-title">Módulo 2: Bitácora del Capitán</h3>
+                        </div>
+                        <p class="academy-text">¿Ves el botón flotante <strong>(+)</strong> abajo a la derecha? Es el botón que más vas a usar. Púlsalo para registrar movimientos.</p>
+                        
+                        <div class="academy-example">
+                            <strong>📝 Ejemplo Práctico:</strong><br>
+                            Acabas de comprar pan y leche. 
+                            1. Pulsas <strong>(+)</strong>.
+                            2. Eliges <strong>"Gasto"</strong> (rojo).
+                            3. Pones <strong>"3.50"</strong> en la cantidad.
+                            4. Escribes <strong>"Compra súper"</strong> en concepto.
+                            5. ¡Listo! Ya está restado de tu saldo.
+                        </div>
+
+                        <p class="academy-text" style="margin-top:15px"><strong>¿Qué es un Traspaso? 🔄</strong><br>
+                        Es mover dinero de tu bolsillo izquierdo al derecho. Por ejemplo: Sacar dinero del cajero. No eres más rico ni más pobre, solo has movido el dinero de sitio. Úsalo para eso.</p>
+                    </div>
+
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">rocket_launch</span>
+                            <h3 class="module-title">Módulo 3: Supercomputadora</h3>
+                        </div>
+                        <p class="academy-text">Arriba tienes un icono de calculadora <span class="material-icons" style="font-size:16px">calculate</span>. No es una calculadora normal, tiene conexión directa con los mercados interestelares.</p>
+                        <ul style="padding-left: 20px; color:#ccc; font-size:0.9rem; margin-top:5px;">
+                            <li>🧮 <strong>Modo Estándar:</strong> Sumar, restar... lo clásico.</li>
+                            <li>₿ <strong>Modo Crypto:</strong> Pulsa la pestaña "Crypto" y verás el precio en tiempo real de Bitcoin, Ethereum, Solana, XRP y BNB.</li>
+                        </ul>
+                        <div class="academy-example">
+                            <strong>💡 Truco:</strong> Toca cualquier criptomoneda para ver su gráfica de evolución de precios. ¡Siéntete como un lobo de Wall Street!
+                        </div>
+                    </div>
+
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">search</span>
+                            <h3 class="module-title">Módulo 4: El Radar (Buscador)</h3>
+                        </div>
+                        <p class="academy-text">¿No recuerdas si pagaste el seguro del coche? ¿Quieres saber cuánto te has gastado en "Cervezas" este año?</p>
+                        <p class="academy-text">Usa la lupa <span class="material-icons" style="font-size:16px">search</span> en el encabezado. Escribe cualquier palabra y la app rastreará todo tu historial en milisegundos para encontrar al culpable.</p>
+                    </div>
+
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">install_mobile</span>
+                            <h3 class="module-title">Módulo 5: Instalación en Nave</h3>
+                        </div>
+                        <p class="academy-text">Esta aplicación es una <strong>PWA</strong> (Progressive Web App). Significa que puedes instalarla como una app nativa sin pasar por la tienda.</p>
+                        <div class="key-feature">
+                            <span class="material-icons key-icon">android</span>
+                            <div><strong style="color:white">Android:</strong> Abre el menú de Chrome (3 puntos) y pulsa "Instalar aplicación" o "Añadir a pantalla de inicio".</div>
+                        </div>
+                        <div class="key-feature">
+                            <span class="material-icons key-icon">apple</span>
+                            <div><strong style="color:white">iPhone/iPad:</strong> Pulsa el botón "Compartir" de Safari (cuadrado con flecha) y busca "Añadir a la pantalla de inicio".</div>
+                        </div>
+                    </div>
+
+                    <div class="academy-footer">
+                        Fin de la transmisión.<br>
+                        ¡Buena suerte en tu viaje financiero, Capitán! 🚀
+                    </div>
+                </div>
+            `;
+
+            // Lógica de apertura (Mantenemos la que ya funcionaba)
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('active');
+                modal.style.opacity = '1';
+            }, 10);
+        }
+        return;
+    }
     // --- ACCIÓN: CERRAR SESIÓN ---
     if (action === 'logout') {
         if (confirm("¿Seguro que quieres cerrar sesión?")) {
@@ -11648,13 +11780,13 @@ if (action === 'open-help') {
 });
 
 /* ================================================================= */
-/* === GESTOR MAESTRO DE EVENTOS Y UI (Versión FINAL) === */
+/* === GESTOR MAESTRO V5 (Calculadora Independiente) === */
 /* ================================================================= */
 
 window.addEventListener('click', (e) => {
-    // 1. EXCEPCIONES: Permitir interacción en Ayuda y Calculadora
-    if ((e.target.closest('#calculator-iframe-modal') || e.target.closest('#help-modal')) 
-        && !e.target.closest('[data-action="close-modal"]')) {
+    // 1. REGLA DE ORO: Si pulsamos DENTRO del iframe o su contenedor (y no es el botón cerrar)
+    // NO HACEMOS NADA. Dejamos que la calculadora gestione sus propios clics.
+    if (e.target.closest('#calculator-iframe-modal') && !e.target.closest('[data-action="close-modal"]')) {
         return; 
     }
 
@@ -11663,140 +11795,67 @@ window.addEventListener('click', (e) => {
 
     const action = btn.dataset.action;
 
-   // --- CAMBIAR CAJA (Secuencia Estricta: A -> B -> C) ---
-    if (action === 'toggle-ledger') {
-        // 1. Definimos el orden EXACTO que quieres
-        const modes = ['A', 'B', 'C']; 
-        
-        // 2. Leemos la caja actual (si no hay, asumimos A)
-        let current = document.body.getAttribute('data-ledger-mode') || 'A';
-        
-        // 3. Calculamos la siguiente matemáticamente
-        // Si estoy en 0 (A) -> toca 1 (B)
-        // Si estoy en 1 (B) -> toca 2 (C)
-        // Si estoy en 2 (C) -> toca 0 (A)
-        let currentIndex = modes.indexOf(current);
-        if (currentIndex === -1) currentIndex = 0; // Protección contra errores
-        
-        let nextIndex = (currentIndex + 1) % modes.length;
-        let nextMode = modes[nextIndex];
-
-        // 4. Aplicar el cambio
-        document.body.setAttribute('data-ledger-mode', nextMode);
-        
-        // Actualizar variable global y UI
-        if (typeof currentLedger !== 'undefined') currentLedger = nextMode;
-        
-        updateLedgerButtonUI(); 
-        
-        if(typeof hapticFeedback === 'function') hapticFeedback('medium');
-        
-        // Recargar datos
-        if (typeof loadData === 'function') loadData(); 
-        else if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
-        
-        return;
-    }
-
-    // --- B. ABRIR AYUDA ---
-    if (action === 'open-help') {
-        const modal = document.getElementById('help-modal');
-        const contentDiv = document.getElementById('help-modal-content');
-        if (modal && contentDiv) {
-            // Contenido del manual
-            contentDiv.innerHTML = `
-                <style>
-                    .academy-module { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
-                    .academy-title { color: #fff; font-weight: bold; margin-bottom: 5px; display:flex; align-items:center; gap:10px;}
-                    .academy-text { color: #ccc; line-height: 1.5; font-size: 0.9rem; }
-                </style>
-                <div style="text-align:center; margin-bottom:20px;">
-                    <h2 style="color:#00B34D;">Manual de Vuelo 🚀</h2>
-                    <p style="color:#888;">Guía rápida de aiDANaI</p>
-                </div>
-                <div class="academy-module">
-                    <div class="academy-title"><span class="material-icons" style="color:#00D4FF">dns</span> Sistema de Cajas</div>
-                    <p class="academy-text">Pulsa el botón superior para cambiar de contabilidad:</p>
-                    <ul style="color:#ccc; margin-top:10px; padding-left:20px;">
-                        <li><strong style="color:#00D4FF">Caja A (Azul):</strong> Principal</li>
-                        <li><strong style="color:#ff4444">Caja B (Rojo):</strong> Secundaria</li>
-                        <li><strong style="color:#00B34D">Caja C (Verde):</strong> Extra</li>
-                    </ul>
-                </div>
-                <div class="academy-module">
-                    <div class="academy-title"><span class="material-icons" style="color:#FF9F00">calculate</span> Calculadora</div>
-                    <p class="academy-text">Tu calculadora financiera. Pulsa el icono arriba a la derecha. Incluye conversor Crypto.</p>
-                </div>
-            `;
-            modal.style.display = 'flex';
-            setTimeout(() => { modal.classList.add('active'); modal.style.opacity = '1'; }, 10);
-        }
-        return;
-    }
-
-    // --- C. ABRIR CALCULADORA ---
+    // --- A. ABRIR CALCULADORA ---
     if (action === 'open-calculator') {
+        e.preventDefault();
+        e.stopPropagation(); // Detenemos la propagación para aislar el evento
+        
         const modal = document.getElementById('calculator-iframe-modal');
         const iframe = document.getElementById('calculator-frame');
+
         if (modal && iframe) {
-            if (!iframe.getAttribute('src')) iframe.src = 'calculadora.html';
+            console.log("🧮 Iniciando App Calculadora...");
+            
+            // Cargar archivo si está vacío
+            if (!iframe.getAttribute('src') || iframe.getAttribute('src') === '') {
+                iframe.src = 'calculadora.html';
+            }
+
+            // ABRIR VISUALMENTE
             modal.style.display = 'flex';
-            setTimeout(() => { modal.classList.add('active'); modal.style.opacity = '1'; iframe.focus(); }, 10);
+            // Pequeño timeout para asegurar que el display:flex se aplica antes de la opacidad
+            setTimeout(() => {
+                modal.classList.add('active');
+                modal.style.opacity = '1';
+                modal.style.pointerEvents = 'auto'; // Forzamos interactividad JS
+                
+                // TRUCO FINAL: Darle el foco al iframe para que funcione el teclado
+                iframe.focus();
+                if (iframe.contentWindow) iframe.contentWindow.focus();
+            }, 10);
+
+        } else {
+            alert("Error: No se encuentra el modal de la calculadora.");
         }
         return;
     }
 
-    // --- D. CERRAR MODALES ---
+    // --- B. CERRAR CALCULADORA ---
     if (action === 'close-modal') {
         const modalId = btn.dataset.modalId;
         const modal = document.getElementById(modalId);
         if (modal) {
-            modal.classList.remove('active'); modal.style.opacity = '0';
-            setTimeout(() => modal.style.display = 'none', 300);
+            modal.classList.remove('active');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300); // Esperar a la animación de cierre
         }
         return;
     }
+
+    // --- C. OTRAS ACCIONES (Header) ---
+    if (action === 'navigate') {
+        const page = btn.dataset.page;
+        if (typeof navigateTo === 'function') navigateTo(page);
+    }
     
-    // --- E. OTROS (Navegación, Logout) ---
-    if (action === 'navigate' && typeof navigateTo === 'function') navigateTo(btn.dataset.page);
     if (action === 'logout') {
-        if(confirm("¿Cerrar sesión?")) window.location.reload();
+        if (confirm("¿Cerrar sesión?")) {
+            if (typeof firebase !== 'undefined') firebase.auth().signOut().then(() => window.location.reload());
+            else window.location.reload();
+        }
     }
-});
-
-/* ================================================================= */
-/* === FUNCIÓN ÚNICA: ACTUALIZAR BOTÓN CAJA === */
-/* ================================================================= */
-// Solo debe haber UNA definición de esta función en todo el archivo.
-
-function updateLedgerButtonUI() {
-    const btnText = document.getElementById('ledger-btn-text');
-    if (!btnText) return;
-
-    const mode = document.body.getAttribute('data-ledger-mode') || 'A';
-    
-    // Nombres por defecto (A=Azul, B=Rojo, C=Verde)
-    let names = { 
-        A: "Caja Principal",   // Azul
-        B: "Caja Secundaria",  // Rojo
-        C: "Caja Extra"        // Verde
-    };
-    
-    // Si tienes nombres personalizados guardados, los usamos
-    if (typeof db !== 'undefined' && db.config && db.config.ledgerNames) {
-        names = db.config.ledgerNames;
-    }
-
-    btnText.textContent = names[mode] || `Caja ${mode}`;
-}
-
-// Inicialización
-document.addEventListener('DOMContentLoaded', () => {
-    updateLedgerButtonUI();
-    
-    // Vigilante para detectar cambios
-    const observer = new MutationObserver(() => updateLedgerButtonUI());
-    observer.observe(document.body, { attributes: true, attributeFilter: ['data-ledger-mode'] });
 });
 /* ================================================================= */
 /* === GENERADOR DE ESPACIO PROFUNDO (Deep Space Engine) === */
@@ -11865,135 +11924,3 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 })();
-/* ========================================================= */
-/* === GENERADOR DE AYUDA DIVERTIDA (AI-DAN-AI HELP) === */
-/* ========================================================= */
-const renderHelpContent = () => {
-    const container = document.getElementById('help-modal-content');
-    if (!container) return;
-
-    // Reutilizamos tus explicaciones de KPIs existentes, ¡son oro puro!
-    // Pero las envolvemos en una estructura más visual.
-
-    const html = `
-        <div class="help-hero">
-            <span class="help-hero__emoji">🎓</span>
-            <h2>Academia aiDANaI</h2>
-            <p>Domina tus finanzas como un Ninja 🥷</p>
-        </div>
-
-        <div class="accordion-wrapper">
-            
-            <details class="accordion" open>
-                <summary>
-                    <div class="help-section-title">
-                        <span class="material-icons">savings</span>
-                        <span>Lo Básico: Tus KPIs</span>
-                    </div>
-                    <span class="material-icons accordion__icon">expand_more</span>
-                </summary>
-                <div class="accordion__content">
-                    <p style="margin-bottom:15px;">Bienvenido a tu cabina de mando. Aquí los números te hablan (si sabes escuchar). 👇</p>
-                    
-                    <div class="help-card">
-                        <strong>${KPI_EXPLANATIONS['neto'].title}</strong>
-                        <p>${KPI_EXPLANATIONS['neto'].text}</p>
-                        <div class="help-tip">💡 <strong>Tip Ninja:</strong> Si esto está en rojo, ¡cierra la cartera y corre! 🏃‍♂️</div>
-                    </div>
-
-                    <div class="help-card">
-                        <strong>${KPI_EXPLANATIONS['tasa_ahorro'].title}</strong>
-                        <p>${KPI_EXPLANATIONS['tasa_ahorro'].text}</p>
-                    </div>
-
-                    <div class="help-card">
-                        <strong>${KPI_EXPLANATIONS['cobertura'].title}</strong>
-                        <p>${KPI_EXPLANATIONS['cobertura'].text}</p>
-                        <div class="help-tip">🛡️ Es tu escudo antimisiles contra despidos o crisis. Intenta tener al menos 6 meses.</div>
-                    </div>
-                </div>
-            </details>
-
-            <details class="accordion">
-                <summary>
-                    <div class="help-section-title">
-                        <span class="material-icons">layers</span>
-                        <span>Multiverso: Cajas A, B y C</span>
-                    </div>
-                    <span class="material-icons accordion__icon">expand_more</span>
-                </summary>
-                <div class="accordion__content">
-                    <p>No mezcles churras con merinas. Tienes 3 universos paralelos para organizar tu dinero:</p>
-                    <ul style="list-style: none; padding: 0; margin-top: 10px;">
-                        <li class="help-card" style="border-left: 4px solid #007AFF;">
-                            <span class="help-tag tag-a">CAJA A</span> <strong>La Oficial</strong><br>
-                            Tu vida diaria. Nómina, súper, luz, agua. Lo que enseñas a Hacienda sin miedo.
-                        </li>
-                        <li class="help-card" style="border-left: 4px solid #FF3B30;">
-                            <span class="help-tag tag-b">CAJA B</span> <strong>El Búnker</strong><br>
-                            Ahorros intocables, "side hustles" o dinero para ese viaje a Japón. Lo que pasa en la Caja B, se queda en la Caja B. 🤫
-                        </li>
-                        <li class="help-card" style="border-left: 4px solid #28a745;">
-                            <span class="help-tag tag-c">CAJA C</span> <strong>El Laboratorio</strong><br>
-                            ¿Inversiones locas? ¿Proyectos compartidos? Úsala para lo que no encaja en las otras dos.
-                        </li>
-                    </ul>
-                    <div class="help-tip">👆 Toca el botón de arriba a la izquierda (donde pone tu Caja actual) para saltar entre universos.</div>
-                </div>
-            </details>
-
-            <details class="accordion">
-                <summary>
-                    <div class="help-section-title">
-                        <span class="material-icons">auto_fix_high</span>
-                        <span>Trucos de Hacker</span>
-                    </div>
-                    <span class="material-icons accordion__icon">expand_more</span>
-                </summary>
-                <div class="accordion__content">
-                    <div class="help-card">
-                        <strong>🕵️‍♂️ Modo Privacidad</strong><br>
-                        ¿Alguien mira tu pantalla? Haz clic encima de tu <strong>Patrimonio Total</strong> en el Panel. Los números se volverán borrosos. ¡Magia! ✨
-                    </div>
-                    
-                    <div class="help-card">
-                        <strong>➕ Añadir Rápido</strong><br>
-                        Mantén pulsado el botón flotante <span class="material-icons" style="font-size:1em; vertical-align:middle; background:var(--c-primary); color:white; border-radius:50%; padding:2px;">add</span> para abrir el menú secreto de acciones rápidas.
-                    </div>
-
-                    <div class="help-card">
-                        <strong>🧮 Calculadora Integrada</strong><br>
-                        En cualquier campo de importe, verás que se abre un teclado numérico especial. ¡Es una calculadora real! Puedes escribir <span class="keyboard-shortcut">50 + 20</span> y se guardará 70.
-                    </div>
-                </div>
-            </details>
-
-             <details class="accordion">
-                <summary>
-                    <div class="help-section-title">
-                        <span class="material-icons">rocket_launch</span>
-                        <span>Inversiones y Crypto</span>
-                    </div>
-                    <span class="material-icons accordion__icon">expand_more</span>
-                </summary>
-                <div class="accordion__content">
-                    <p>Aquí controlas tu imperio. 🏰</p>
-                    <div class="help-card">
-                        <strong>Rendimiento Real (TIR)</strong><br>
-                        Calculamos matemáticamente cuánto rinde tu dinero teniendo en cuenta cuándo lo metiste. No te engañes con números simples.
-                    </div>
-                    <div class="help-card">
-                        <strong>Modo BTC ₿</strong><br>
-                        En la pestaña Patrimonio, pulsa el icono de Bitcoin arriba a la derecha. Todo tu patrimonio se convertirá a BTC en tiempo real. ¡Hodl! 💎🙌
-                    </div>
-                </div>
-            </details>
-        </div>
-
-        <div style="text-align:center; margin-top:20px; font-size: 0.8em; opacity: 0.7;">
-            <p>aiDANaI v3.1 - Hecho con 💚 y mucho código.</p>
-        </div>
-    `;
-
-    container.innerHTML = html;
-};

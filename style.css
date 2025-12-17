@@ -5875,57 +5875,44 @@ input, select, textarea {
         opacity: 0.5;
     }
 }
-/* ================================================================= */
-/* === ESTILOS DEL MANUAL DE AYUDA (GUÍA DIDÁCTICA) === */
-/* ================================================================= */
+/* =============================================================== */
+/* === ENCABEZADO FINAL: NEUTRO CON DETALLE DE COLOR === */
+/* =============================================================== */
 
-.manual-container {
-    font-family: 'Inter', sans-serif;
-    line-height: 1.6;
-    color: var(--c-on-surface);
+/* 1. Fondo y Textos Generales (NEUTROS) */
+.header {
+    background-color: #121820 !important; /* Mismo color oscuro que el fondo general */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Separador sutil */
+    color: #ffffff !important;
 }
 
-.manual-intro {
-    background: rgba(0, 179, 77, 0.1);
-    border-left: 4px solid #00B34D;
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    font-size: 0.95rem;
+/* Los iconos normales (Ayuda, Calc, Menú) serán blancos */
+.header .material-icons,
+.header .icon-btn {
+    color: rgba(255, 255, 255, 0.8) !important;
 }
 
-.manual-section {
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+/* 2. EL ÚNICO ELEMENTO DE COLOR: Botón de Caja (Pill) */
+/* CAJA A (Azul) */
+body[data-ledger-mode="A"] .header-ledger-pill {
+    color: #00D4FF !important;
+    border: 1px solid #00D4FF !important;
+    background-color: rgba(0, 212, 255, 0.15) !important;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.1);
 }
 
-.manual-title {
-    color: #00B34D; /* Tu verde corporativo */
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+/* CAJA B (Rojo) */
+body[data-ledger-mode="B"] .header-ledger-pill {
+    color: #ff4444 !important;
+    border: 1px solid #ff4444 !important;
+    background-color: rgba(255, 68, 68, 0.15) !important;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.1);
 }
 
-.manual-text {
-    font-size: 0.9rem;
-    color: #cccccc;
-    margin-bottom: 10px;
-}
-
-.manual-tip {
-    font-size: 0.85rem;
-    background: #222;
-    padding: 8px 12px;
-    border-radius: 6px;
-    color: #aaa;
-    font-style: italic;
-}
-
-.manual-highlight {
-    color: white;
-    font-weight: 600;
+/* CAJA C (Verde) */
+body[data-ledger-mode="C"] .header-ledger-pill {
+    color: #00e676 !important;
+    border: 1px solid #00e676 !important;
+    background-color: rgba(0, 230, 118, 0.15) !important;
+    box-shadow: 0 0 10px rgba(0, 230, 118, 0.1);
 }
