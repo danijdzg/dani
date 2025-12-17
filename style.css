@@ -5950,147 +5950,95 @@ input, select, textarea {
     }
 }
 /* =========================================
-   FONDO CÓSMICO Y MODO ESCRITORIO (CORREGIDO)
+   FONDO CÓSMICO Y MODO ESCRITORIO (FIX DEFINITIVO)
    ========================================= */
 
-/* 1. Ocultar el fondo en móviles para ahorrar batería */
+/* 1. Estilos base del FONDO (Siempre detrás de todo) */
 #cosmic-background {
-    display: none;
+    display: none; /* Oculto en móvil */
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1; /* CLAVE: Z-index negativo lo manda al inframundo detrás del body */
+    pointer-events: none; /* CLAVE: Los clicks lo atraviesan */
+    background-color: #000000; /* Negro AMOLED puro */
+    overflow: hidden;
 }
 
-/* 2. Activar solo en pantallas grandes (Tablet/PC) */
+/* 2. El Marco de la App (Por defecto ocupa todo) */
+#app-frame {
+    width: 100%;
+    min-height: 100vh;
+    background-color: var(--c-surface); /* Asegura que la app tenga color de fondo */
+    position: relative;
+    z-index: 1; /* La app vive en el piso 1, encima del fondo */
+}
+
+/* 3. ACTIVACIÓN MODO ESCRITORIO (Solo PC/Tablet) */
 @media (min-width: 768px) {
     
-    /* --- AJUSTE DE LA APP (CENTRADO) --- */
+    /* Hacemos visible el fondo */
+    #cosmic-background { display: block; }
+    
+    /* Centramos la App como si fuera un móvil flotante */
     body {
+        background-color: #000; /* Fondo negro detrás de todo */
         display: flex;
         justify-content: center;
-        background-color: #000000; /* Fondo base NEGRO PURO */
-        min-height: 100vh;
+        align-items: flex-start; /* Alineado arriba */
         overflow-x: hidden;
     }
 
-    /* Forzamos que la barra superior y el contenido tengan ancho de móvil */
-    .top-bar, 
-    #main-scroll-container,
-    .bottom-nav {
+    #app-frame {
+        max-width: 480px; /* Ancho de móvil */
+        min-height: 100vh; /* Altura completa */
+        margin: 0 auto;    /* Centrado horizontal */
+        box-shadow: 0 0 50px rgba(255, 255, 255, 0.1); /* Resplandor suave borde app */
+        position: relative; 
+        /* Importante: Mantiene position:fixed de tus barras funcionando RELATIVO al frame */
+        transform: translateZ(0); 
+    }
+    
+    /* Ajuste para que las barras fijas no se salgan del ancho del móvil en PC */
+    .top-bar, .bottom-nav, .modal-overlay {
+        position: absolute !important; /* En PC cambian a absolute dentro del frame */
+        width: 100%;
         max-width: 480px;
-        left: 50% !important;
-        transform: translateX(-50%);
-        right: auto;
-        /* Sombra más sutil para destacar sobre el negro */
-        box-shadow: 0 0 80px rgba(255,255,255,0.05); 
+        left: 0; right: 0;
     }
     
-    /* Aseguramos que la App esté POR ENCIMA del fondo y sea interactiva */
-    #main-scroll-container {
-        width: 100%;
-        min-height: 100vh;
-        background-color: var(--c-surface);
-        position: relative;
-        z-index: 10; /* Nivel 10: App */
-    }
-    
-    .top-bar {
-        position: fixed;
-        width: 100%;
-        z-index: 20; /* Nivel 20: Barras */
-    }
-
-    .bottom-nav {
-        position: fixed;
-        width: 100%;
-        z-index: 20;
-    }
-
-    /* --- EL FONDO ESPACIAL (SOLUCIÓN AL BLOQUEO) --- */
-    #cosmic-background {
-        display: block;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1; /* Nivel 1: Fondo (detrás de la app) */
-        
-        /* ¡ESTA ES LA CLAVE! Permite que los clics atraviesen el fondo */
-        pointer-events: none; 
-        
-        /* Fondo Negro AMOLED Puro */
-        background-color: #000000;
-        overflow: hidden;
-    }
-
-    /* --- ENERGÍAS EN MOVIMIENTO (SUTIL Y ELEGANTE) --- */
-    /* Reducimos la opacidad para que resalte el negro negro */
-    .energy-nebula {
+    /* Corrección específica para que el menú flotante se posicione bien */
+    .popover-menu {
         position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        /* Colores más oscuros y misteriosos para respetar el AMOLED */
-        background: 
-            radial-gradient(circle at 50% 50%, rgba(40, 10, 80, 0.2), transparent 60%),
-            radial-gradient(circle at 80% 20%, rgba(10, 50, 80, 0.15), transparent 50%);
-        filter: blur(80px);
-        animation: rotate-energy 120s linear infinite; /* Movimiento muy lento */
-        opacity: 0.6;
-    }
-
-    /* --- CAPAS DE ESTRELLAS (AHORA MÁS BRILLANTES) --- */
-    .stars-layer {
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: transparent;
-    }
-
-    /* Capa 1: Estrellas lejanas (puntos finos blancos) */
-    .layer-1::after {
-        content: " "; position: absolute; top: 0;
-        width: 1px; height: 1px;
-        background: transparent;
-        /* Generamos muchas estrellas estáticas base */
-        box-shadow: 
-            10vw 10vh #FFF, 20vw 80vh #FFF, 30vw 30vh #FFF, 40vw 50vh #FFF, 
-            50vw 90vh #FFF, 60vw 20vh #FFF, 70vw 60vh #FFF, 80vw 10vh #FFF,
-            90vw 40vh #FFF, 15vw 70vh #FFF, 85vw 80vh #FFF, 55vw 15vh #FFF;
-        animation: animStar 200s linear infinite;
-        opacity: 0.8;
-    }
-
-    /* Capa 2: Estrellas medias (con brillo azulado) */
-    .layer-2::after {
-        content: " "; position: absolute; top: 0;
-        width: 2px; height: 2px;
-        background: transparent;
-        box-shadow: 
-            15vw 15vh #aabbee, 35vw 85vh #aabbee, 
-            55vw 35vh #ffffff, 75vw 55vh #aabbee;
-        animation: animStar 100s linear infinite;
-        opacity: 1;
-    }
-
-    /* Capa 3: Estrellas cercanas (Grandes y brillantes) */
-    .layer-3::after {
-        content: " "; position: absolute; top: 0;
-        width: 3px; height: 3px;
-        border-radius: 50%;
-        background: #FFF;
-        box-shadow: 
-            10vw 20vh #fff, 80vw 70vh #fff, 40vw 90vh #fff;
-        filter: blur(0.5px); /* Un ligero resplandor */
-        animation: animStar 50s linear infinite;
-    }
-
-    /* ANIMACIONES */
-    @keyframes rotate-energy {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-
-    @keyframes animStar {
-        from { transform: translateY(0px); }
-        to { transform: translateY(-100vh); } 
     }
 }
+
+/* --- EFECTOS VISUALES DEL ESPACIO (Copia idéntica mejorada) --- */
+
+.energy-nebula {
+    position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: 
+        radial-gradient(circle at 50% 50%, rgba(76, 29, 149, 0.25), transparent 60%),
+        radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.20), transparent 50%);
+    filter: blur(80px);
+    animation: rotate-energy 120s linear infinite;
+    opacity: 0.7;
+}
+
+.stars-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+/* Estrellas CSS (Base estática por si JS falla) */
+.layer-1::after {
+    content: " "; position: absolute; top: 0; width: 1px; height: 1px;
+    background: transparent;
+    box-shadow: 10vw 10vh #FFF, 50vw 50vh #FFF, 80vw 20vh #FFF;
+    animation: animStar 200s linear infinite;
+}
+.layer-2::after {
+    content: " "; position: absolute; top: 0; width: 2px; height: 2px;
+    background: transparent;
+    box-shadow: 20vw 80vh #FFF, 70vw 10vh #FFF;
+    animation: animStar 100s linear infinite;
+}
+
+@keyframes rotate-energy { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes animStar { from { transform: translateY(0px); } to { transform: translateY(-100vh); } }
