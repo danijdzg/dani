@@ -1408,7 +1408,7 @@ async function loadCoreData(uid) {
         db.config = doc.exists && doc.data().config ? doc.data().config : getInitialDb().config;
         localStorage.setItem('skipIntro', (db.config && db.config.skipIntro) || 'false');
         loadConfig();
-		updateLedgerButtonUI();
+		
     }, error => console.error("Error escuchando la configuración del usuario: ", error));
     unsubscribeListeners.push(unsubConfig);
     
@@ -1900,17 +1900,7 @@ const formatCurrencyHTML = (numInCents) => {
     // Intenta obtener el nombre personalizado, si no existe, usa "Caja X"
     return db.config?.ledgerNames?.[letter] || `Caja ${letter}`;
 };
-const updateLedgerButtonUI = () => {
-    const btn = select('ledger-toggle-btn');
-    if (btn) {
-        // Obtenemos el nombre usando tu función helper existente
-        const name = getLedgerName(currentLedger);
-        
-        // Actualizamos el texto y el título
-        btn.textContent = name;
-        btn.title = `Estás en: ${name}`;
-    }
-};
+
 /* --- HELPER: Convierte HEX a RGBA para los gradientes --- */
 const hexToRgba = (hex, alpha) => {
     let r = 0, g = 0, b = 0;
@@ -9365,12 +9355,7 @@ const handleStart = (e) => {
     // 3. Actualizar UI Visual
     document.body.dataset.ledgerMode = currentLedger;
     
-    // ▼▼▼ AQUÍ ESTABA EL ERROR (CORREGIDO) ▼▼▼
-    // Simplemente llamamos a la función auxiliar que ya creamos.
-    // Ella se encarga de buscar el botón y cambiar el texto.
-    updateLedgerButtonUI(); 
-    // ▲▲▲ FIN DE LA CORRECCIÓN ▲▲▲
-    
+       
     // Mensaje informativo usando el nombre real
     showToast(`Cambiado a ${getLedgerName(currentLedger)}.`, 'info');
 
@@ -11650,12 +11635,11 @@ document.addEventListener('click', (e) => {
 });
 
 /* ================================================================= */
-/* === GESTOR MAESTRO DE EVENTOS Y UI (Versión Limpia) === */
+/* === GESTOR MAESTRO DE EVENTOS Y UI (Versión FINAL) === */
 /* ================================================================= */
 
 window.addEventListener('click', (e) => {
-    // 1. REGLA DE ORO: EXCEPCIONES DE INTERACCIÓN
-    // Si pulsamos dentro de la Ayuda o Calculadora (y no es cerrar), NO hacemos nada.
+    // 1. EXCEPCIONES: Permitir interacción en Ayuda y Calculadora
     if ((e.target.closest('#calculator-iframe-modal') || e.target.closest('#help-modal')) 
         && !e.target.closest('[data-action="close-modal"]')) {
         return; 
@@ -11666,7 +11650,7 @@ window.addEventListener('click', (e) => {
 
     const action = btn.dataset.action;
 
-    // --- A. CAMBIAR CAJA (TOGGLE LEDGER) ---
+    // --- A. CAMBIAR CAJA (A -> B -> C) ---
     if (action === 'toggle-ledger') {
         const modes = ['A', 'B', 'C'];
         let current = document.body.getAttribute('data-ledger-mode') || 'A';
@@ -11674,60 +11658,52 @@ window.addEventListener('click', (e) => {
         let nextIndex = (currentIndex + 1) % modes.length;
         let nextMode = modes[nextIndex];
 
-        // Cambiar atributo y actualizar UI
+        // Aplicar el cambio
         document.body.setAttribute('data-ledger-mode', nextMode);
+        
+        // Actualizar variable global si existe
         if (typeof currentLedger !== 'undefined') currentLedger = nextMode;
         
-        updateLedgerButtonUI(); // Actualizar texto del botón
+        // Llamada a la función ÚNICA de actualización
+        updateLedgerButtonUI(); 
         
-        // Feedback
         if(typeof hapticFeedback === 'function') hapticFeedback('medium');
         
-        // Recargar datos (importante para que cambien los números)
+        // Recargar datos para ver los números de la nueva caja
         if (typeof loadData === 'function') loadData(); 
         else if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
         
         return;
     }
 
-    // --- B. ABRIR AYUDA (MANUAL) ---
+    // --- B. ABRIR AYUDA ---
     if (action === 'open-help') {
         const modal = document.getElementById('help-modal');
         const contentDiv = document.getElementById('help-modal-content');
-
         if (modal && contentDiv) {
+            // Contenido del manual
             contentDiv.innerHTML = `
                 <style>
-                    .academy-intro { text-align: center; margin-bottom: 30px; }
-                    .academy-badge { font-size: 50px; display: block; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
-                    .academy-module { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); }
-                    .module-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
-                    .module-icon { font-size: 28px; color: #00B34D; }
-                    .academy-text { font-size: 0.95rem; color: #ccc; line-height: 1.6; margin-bottom: 10px; }
-                    .academy-example { background: rgba(0, 179, 77, 0.1); border-left: 3px solid #00B34D; padding: 10px 15px; margin: 15px 0; font-size: 0.9rem; color: #ddd; border-radius: 0 8px 8px 0; }
-                    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+                    .academy-module { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+                    .academy-title { color: #fff; font-weight: bold; margin-bottom: 5px; display:flex; align-items:center; gap:10px;}
+                    .academy-text { color: #ccc; line-height: 1.5; font-size: 0.9rem; }
                 </style>
-
-                <div class="manual-container">
-                    <div class="academy-intro">
-                        <span class="academy-badge">👨‍🚀</span>
-                        <h2 style="color: #00B34D; margin-bottom: 5px;">Academia aiDANaI</h2>
-                        <p class="academy-text">Manual de supervivencia financiera.</p>
-                    </div>
-                    <div class="academy-module">
-                        <div class="module-header"><span class="material-icons module-icon">dashboard</span><h3 style="margin:0; color:white;">Panel de Mando</h3></div>
-                        <p class="academy-text">Controla tus Ingresos (verde) y Gastos (rojo). Mantén tu tasa de ahorro positiva.</p>
-                    </div>
-                    <div class="academy-module">
-                        <div class="module-header"><span class="material-icons module-icon">dns</span><h3 style="margin:0; color:white;">Sistema de Cajas</h3></div>
-                        <p class="academy-text">¡NUEVO! Pulsa el botón superior para cambiar de contabilidad:</p>
-                        <ul style="color:#ccc; padding-left:20px; margin-top:5px;">
-                            <li><strong style="color:#00B34D">Caja A:</strong> Personal / Principal</li>
-                            <li><strong style="color:#FF9F00">Caja B:</strong> Ahorros / Pareja</li>
-                            <li><strong style="color:#00D4FF">Caja C:</strong> Extra / Proyectos</li>
-                        </ul>
-                    </div>
-                    <div class="academy-footer" style="text-align:center; opacity:0.6; margin-top:30px;">Fin de la transmisión 🚀</div>
+                <div style="text-align:center; margin-bottom:20px;">
+                    <h2 style="color:#00B34D;">Manual de Vuelo 🚀</h2>
+                    <p style="color:#888;">Guía rápida de aiDANaI</p>
+                </div>
+                <div class="academy-module">
+                    <div class="academy-title"><span class="material-icons" style="color:#00D4FF">dns</span> Sistema de Cajas</div>
+                    <p class="academy-text">Pulsa el botón superior para cambiar de contabilidad:</p>
+                    <ul style="color:#ccc; margin-top:10px; padding-left:20px;">
+                        <li><strong style="color:#00D4FF">Caja A (Azul):</strong> Principal</li>
+                        <li><strong style="color:#ff4444">Caja B (Rojo):</strong> Secundaria</li>
+                        <li><strong style="color:#00B34D">Caja C (Verde):</strong> Extra</li>
+                    </ul>
+                </div>
+                <div class="academy-module">
+                    <div class="academy-title"><span class="material-icons" style="color:#FF9F00">calculate</span> Calculadora</div>
+                    <p class="academy-text">Tu calculadora financiera. Pulsa el icono arriba a la derecha. Incluye conversor Crypto.</p>
                 </div>
             `;
             modal.style.display = 'flex';
@@ -11736,16 +11712,14 @@ window.addEventListener('click', (e) => {
         return;
     }
 
-    // --- C. CALCULADORA ---
+    // --- C. ABRIR CALCULADORA ---
     if (action === 'open-calculator') {
         const modal = document.getElementById('calculator-iframe-modal');
         const iframe = document.getElementById('calculator-frame');
         if (modal && iframe) {
             if (!iframe.getAttribute('src')) iframe.src = 'calculadora.html';
             modal.style.display = 'flex';
-            setTimeout(() => {
-                modal.classList.add('active'); modal.style.opacity = '1'; iframe.focus();
-            }, 10);
+            setTimeout(() => { modal.classList.add('active'); modal.style.opacity = '1'; iframe.focus(); }, 10);
         }
         return;
     }
@@ -11760,37 +11734,46 @@ window.addEventListener('click', (e) => {
         }
         return;
     }
-
-    // --- E. NAVEGACIÓN Y OTROS ---
+    
+    // --- E. OTROS (Navegación, Logout) ---
     if (action === 'navigate' && typeof navigateTo === 'function') navigateTo(btn.dataset.page);
     if (action === 'logout') {
-        if(confirm("¿Cerrar sesión?")) typeof firebase!=='undefined' ? firebase.auth().signOut().then(()=>location.reload()) : location.reload();
+        if(confirm("¿Cerrar sesión?")) window.location.reload();
     }
 });
 
 /* ================================================================= */
-/* === FUNCIÓN ÚNICA: ACTUALIZAR BOTÓN DE CAJA === */
+/* === FUNCIÓN ÚNICA: ACTUALIZAR BOTÓN CAJA === */
 /* ================================================================= */
+// Solo debe haber UNA definición de esta función en todo el archivo.
+
 function updateLedgerButtonUI() {
     const btnText = document.getElementById('ledger-btn-text');
     if (!btnText) return;
 
     const mode = document.body.getAttribute('data-ledger-mode') || 'A';
     
-    // Nombres por defecto
-    let names = { A: "Caja Personal", B: "Caja Ahorros", C: "Caja Extra" };
+    // Nombres por defecto (Se pueden renombrar en ajustes)
+    let names = { 
+        A: "Caja Principal", 
+        B: "Caja Secundaria", 
+        C: "Caja Extra" 
+    };
     
-    // Intentar cargar nombres personalizados
+    // Intentar leer nombres personalizados de la base de datos
     if (typeof db !== 'undefined' && db.config && db.config.ledgerNames) {
         names = db.config.ledgerNames;
     }
 
+    // Actualizar SOLO el texto (el color lo pone el CSS automáticamente)
     btnText.textContent = names[mode] || `Caja ${mode}`;
 }
 
-// Inicializar botón y observador
+// Inicialización
 document.addEventListener('DOMContentLoaded', () => {
     updateLedgerButtonUI();
+    
+    // Vigilante para detectar cambios
     const observer = new MutationObserver(() => updateLedgerButtonUI());
     observer.observe(document.body, { attributes: true, attributeFilter: ['data-ledger-mode'] });
 });
