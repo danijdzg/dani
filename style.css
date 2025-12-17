@@ -6013,3 +6013,33 @@ body[data-ledger-mode="C"] .header-ledger-pill {
     border: 1px solid rgba(255,255,255,0.2);
     color: var(--c-warning);
 }
+/* ========================================= */
+/* === INDICADOR DE ESTADO (TOP RIGHT) === */
+/* ========================================= */
+
+/* Bórra la clase .header-status-left si la pusiste y usa esta: */
+
+.header-status-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--c-primary);
+    margin-right: 12px; /* Separación con los iconos de la derecha */
+    margin-left: auto;  /* Esto empuja el indicador hacia la derecha si está suelto */
+    animation: fadeIn 0.5s ease;
+}
+
+.header-status-right .material-icons {
+    font-size: 1.1rem;
+}
+
+/* Estado: Cargando/Guardando */
+.header-status-right.saving {
+    color: var(--c-warning);
+}
+
+@media (max-width: 360px) {
+    .header-status-right span { display: none; }
+}

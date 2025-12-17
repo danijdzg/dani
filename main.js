@@ -2427,8 +2427,11 @@ const navigateTo = async (pageId, isInitial = false) => {
     const actionsEl = select('top-bar-actions');
     const leftEl = select('top-bar-left-button');
     
-    // En la función navigateTo, busca la definición de standardActions:
 const standardActions = `
+    <button class="icon-btn" data-action="global-search" title="Buscar">
+        <span class="material-icons">search</span>
+    </button>
+
     <button data-action="open-help" class="icon-btn" title="Ayuda Ninja">
         <span class="material-icons">help_outline</span>
     </button>
@@ -9364,10 +9367,8 @@ const handleStart = (e) => {
     // Ella se encarga de buscar el botón y cambiar el texto.
     updateLedgerButtonUI(); 
     // ▲▲▲ FIN DE LA CORRECCIÓN ▲▲▲
-    
-    // Mensaje informativo usando el nombre real
-    showToast(`Cambiado a ${getLedgerName(currentLedger)}.`, 'info');
-
+  
+ 
     // 4. Actualizar datos y vistas
     populateAllDropdowns();
 
