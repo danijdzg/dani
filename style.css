@@ -5949,157 +5949,65 @@ input, select, textarea {
         opacity: 0.5;
     }
 }
-/* =========================================
-   FONDO CÓSMICO Y MODO ESCRITORIO
-   ========================================= */
+/* ========================================= */
+/* === MOTOR DE FONDO ESTRELLADO (V2.0) === */
+/* ========================================= */
 
-/* 1. Ocultar el fondo en móviles para ahorrar batería */
-#cosmic-background {
-    display: none;
+#deep-space-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Detrás de todo */
+    background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+    overflow: hidden;
+    pointer-events: none;
 }
 
-/* 2. Activar solo en pantallas grandes (Tablet/PC) */
-@media (min-width: 768px) {
-    
-    /* --- AJUSTE DE LA APP (CENTRADO) --- */
-    body {
-        display: flex;
-        justify-content: center;
-        background-color: #050505; /* Fondo negro profundo si falla la carga */
-        min-height: 100vh;
-        overflow-x: hidden; /* Evitar scroll horizontal por animaciones */
-    }
+/* Contenedor de cada capa para manejar la animación */
+.star-anim-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    animation: moveStars linear infinite;
+}
 
-    /* Forzamos que la barra superior y el contenido tengan ancho de móvil */
-    .top-bar, 
-    #main-scroll-container,
-    .bottom-nav {
-        max-width: 480px; /* Ancho típico de móvil grande */
-        left: 50% !important;
-        transform: translateX(-50%); /* Centrado perfecto */
-        right: auto;
-        box-shadow: 0 0 50px rgba(0,0,0,0.5); /* Sombra para separar del fondo */
-    }
-    
-    /* El contenedor de scroll debe respetar la altura */
-    #main-scroll-container {
-        width: 100%;
-        height: 100vh;
-        background-color: var(--c-surface); /* Mantiene el color de tu app */
-        position: relative;
-        z-index: 10; /* Por encima del espacio */
-    }
-    
-    .top-bar {
-        position: fixed;
-        width: 100%;
-        z-index: 20;
-    }
+@keyframes moveStars {
+    from { transform: translateY(0); }
+    to { transform: translateY(-100vh); }
+}
 
-    .bottom-nav {
-        position: fixed;
-        width: 100%;
-        z-index: 20;
-    }
+/* Estrella Fugaz */
+.shooting-star {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+    animation: shoot 4s linear infinite;
+    opacity: 0;
+}
 
-    /* --- EL FONDO ESPACIAL --- */
-    #cosmic-background {
-        display: block;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 0; /* Al fondo del todo */
-        background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
-        overflow: hidden;
-        pointer-events: none; /* Para que no bloquee clics */
-    }
+.shooting-star::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 150px;
+    height: 1px;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
+    right: 0;
+}
 
-    /* --- ENERGÍAS EN MOVIMIENTO (NEBULOSA) --- */
-    .energy-nebula {
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: 
-            radial-gradient(circle at 50% 50%, rgba(76, 29, 149, 0.4), transparent 60%),
-            radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.3), transparent 50%),
-            radial-gradient(circle at 20% 80%, rgba(236, 72, 153, 0.3), transparent 50%);
-        filter: blur(60px);
-        animation: rotate-energy 60s linear infinite;
-        opacity: 0.8;
-    }
-
-    /* --- ESTRELLAS GENERADAS CON BOX-SHADOW (Técnica ligera) --- */
-    .stars-layer {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: transparent;
-    }
-
-    /* CAPA 1: Lejanas (Pequeñas y Lentas) */
-    .layer-1::after {
-        content: " ";
-        position: absolute;
-        top: 0;
-        width: 1px;
-        height: 1px;
-        background: transparent;
-        /* Coordenadas aleatorias simuladas */
-        box-shadow: 
-            10vw 10vh #FFF, 20vw 80vh #FFF, 30vw 30vh #FFF, 40vw 50vh #FFF, 
-            50vw 90vh #FFF, 60vw 20vh #FFF, 70vw 60vh #FFF, 80vw 10vh #FFF,
-            90vw 40vh #FFF, 15vw 70vh #FFF, 85vw 80vh #FFF, 55vw 15vh #FFF,
-            5vw 5vh #FFF, 95vw 95vh #FFF, 45vw 45vh #FFF, 25vw 95vh #FFF;
-        animation: animStar 100s linear infinite;
-    }
-
-    /* CAPA 2: Medianas (Brillo azulado y velocidad media) */
-    .layer-2::after {
-        content: " ";
-        position: absolute;
-        top: 0;
-        width: 2px;
-        height: 2px;
-        background: transparent;
-        box-shadow: 
-            15vw 15vh rgba(200,200,255,0.8), 35vw 85vh rgba(200,200,255,0.8), 
-            55vw 35vh rgba(200,200,255,0.8), 75vw 55vh rgba(200,200,255,0.8), 
-            95vw 25vh rgba(200,200,255,0.8), 25vw 65vh rgba(200,200,255,0.8);
-        animation: animStar 50s linear infinite;
-        opacity: 0.8;
-    }
-
-    /* CAPA 3: Cercanas (Grandes, brillantes y rápidas) */
-    .layer-3::after {
-        content: " ";
-        position: absolute;
-        top: 0;
-        width: 3px;
-        height: 3px;
-        border-radius: 50%;
-        background: transparent;
-        box-shadow: 
-            10vw 20vh #fff, 80vw 70vh #fff, 40vw 90vh #fff;
-        filter: blur(1px);
-        animation: animStar 25s linear infinite;
-    }
-
-    /* ANIMACIONES */
-    @keyframes rotate-energy {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    @keyframes animStar {
-        from { transform: translateY(0px); }
-        to { transform: translateY(-100vh); } 
-        /* Truco: Al subir, el box-shadow debería repetirse verticalmente 
-           para un loop infinito perfecto, aquí simplificado */
-    }
+@keyframes shoot {
+    0% { transform: rotate(-45deg) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    20% { transform: rotate(-45deg) translateX(-1000px); opacity: 0; }
+    100% { transform: rotate(-45deg) translateX(-1000px); opacity: 0; }
 }

@@ -11730,67 +11730,86 @@ window.addEventListener('click', (e) => {
 /* ================================================================= */
 /* === GENERADOR DE ESPACIO PROFUNDO (Deep Space Engine) === */
 /* ================================================================= */
-
 (function initSpaceBackground() {
-    // Solo ejecutar si estamos en pantalla grande (ahorro de recursos)
-    if (window.innerWidth < 600) return;
-
+    // 1. Verificar existencia del contenedor
     const container = document.getElementById('deep-space-background');
     if (!container) return;
 
-    console.log("🌌 Iniciando motores de hiperespacio...");
+    console.log("🌌 Iniciando motores de hiperespacio v2.0...");
+    container.innerHTML = ''; // Limpiar cualquier residuo anterior
 
-    // Función para crear una capa de estrellas
+    // 2. Función para crear capas con bucle perfecto
     const createLayer = (count, size, duration, opacity) => {
-        const layer = document.createElement('div');
-        layer.className = 'star-layer';
-        
+        // Crear el contenedor que se animará
+        const layerContainer = document.createElement('div');
+        layerContainer.className = 'star-anim-container';
+        layerContainer.style.animationDuration = `${duration}s`;
+        layerContainer.style.opacity = opacity;
+
+        // Generar coordenadas de sombras (box-shadow) para las estrellas
         let shadows = [];
-        // Generamos coordenadas aleatorias basadas en el ancho TOTAL de la pantalla
         for (let i = 0; i < count; i++) {
-            const x = Math.floor(Math.random() * window.innerWidth);
-            const y = Math.floor(Math.random() * window.innerHeight * 2); // *2 para el scroll
-            shadows.push(`${x}px ${y}px #FFF`);
+            const x = Math.random() * 100; // Posición horizontal (vw)
+            const y = Math.random() * 100; // Posición vertical (vh)
+            shadows.push(`${x}vw ${y}vh #FFF`);
         }
+        const boxShadowString = shadows.join(',');
 
-        // Aplicamos los estilos
-        layer.style.width = size;
-        layer.style.height = size;
-        layer.style.opacity = opacity;
-        layer.style.boxShadow = shadows.join(',');
-        layer.style.animation = `moveStars ${duration}s linear infinite`;
+        // CREAR PARTE A (Pantalla actual)
+        const starsA = document.createElement('div');
+        starsA.style.position = 'absolute';
+        starsA.style.width = size;
+        starsA.style.height = size;
+        starsA.style.background = 'transparent';
+        starsA.style.borderRadius = '50%';
+        starsA.style.boxShadow = boxShadowString;
+        starsA.style.top = 0; // Empieza arriba
 
-        // Creamos el duplicado para el loop infinito (efecto parallax)
-        const after = document.createElement('div');
-        after.className = 'star-layer';
-        after.style.width = size;
-        after.style.height = size;
-        after.style.opacity = opacity;
-        after.style.boxShadow = shadows.join(',');
-        after.style.animation = `moveStars ${duration}s linear infinite`;
-        after.style.top = '2000px'; // Desplazamiento para el loop
+        // CREAR PARTE B (Clon para el bucle, empieza debajo)
+        const starsB = starsA.cloneNode(true);
+        starsB.style.top = '100vh'; // Empieza justo debajo de la pantalla
 
-        container.appendChild(layer);
-        container.appendChild(after);
+        // Añadir ambas partes al contenedor de animación
+        layerContainer.appendChild(starsA);
+        layerContainer.appendChild(starsB);
+        container.appendChild(layerContainer);
     };
 
-    // CAPA 1: Estrellas lejanas (Muchas, pequeñas, lentas)
-    createLayer(700, '1px', 100, 0.6);
+    // 3. Crear las 3 capas de profundidad
+    // Capa 1: Lejanas (Muchas, muy pequeñas, muy lentas)
+    createLayer(400, '1px', 150, 0.7);
 
-    // CAPA 2: Estrellas medias (Menos, un poco más grandes)
-    createLayer(200, '2px', 70, 0.8);
+    // Capa 2: Medianas (Menos, brillo medio, velocidad media)
+    createLayer(100, '2px', 100, 0.9);
 
-    // CAPA 3: Estrellas cercanas (Pocas, brillantes, rápidas)
-    createLayer(100, '3px', 40, 1);
+    // Capa 3: Cercanas (Pocas, grandes, rápidas)
+    createLayer(30, '3px', 60, 1);
 
-    // Recalcular si se cambia el tamaño de la ventana (Opcional, para perfeccionistas)
-    window.addEventListener('resize', () => {
-        if (window.innerWidth >= 600) {
-            container.innerHTML = ''; // Limpiar
-            createLayer(700, '1px', 100, 0.6);
-            createLayer(200, '2px', 70, 0.8);
-            createLayer(100, '3px', 40, 1);
-        }
-    });
+    // 4. Sistema de Estrellas Fugaces (Opcional, pero espectacular)
+    const spawnShootingStar = () => {
+        const star = document.createElement('div');
+        star.className = 'shooting-star';
+        
+        // Posición aleatoria
+        star.style.top = `${Math.random() * 50}%`; // Solo en la mitad superior
+        star.style.left = `${Math.random() * 100}%`;
+        
+        // Tamaño y duración aleatoria para variedad
+        const scale = 0.5 + Math.random(); 
+        star.style.transform = `scale(${scale}) rotate(-45deg)`;
+        star.style.animationDuration = `${2 + Math.random() * 3}s`;
+
+        container.appendChild(star);
+
+        // Limpieza automática al terminar la animación
+        setTimeout(() => {
+            star.remove();
+        }, 5000);
+    };
+
+    // Lanzar una estrella fugaz cada 4-10 segundos
+    setInterval(() => {
+        spawnShootingStar();
+    }, 4000 + Math.random() * 6000);
 
 })();
