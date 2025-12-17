@@ -139,11 +139,18 @@
         <span class="material-icons fab-icon-close">close</span>
     </button>
 </div>
- 
-<div id="top-bar-actions" style="display: flex; gap: 5px; align-items: center;">
-    </div>
-        <span id="sync-status-icon" class="material-icons" style="font-size: 18px; color: var(--c-on-surface-secondary); margin-right: 5px;">cloud_done</span>
-   
+        <div class="top-bar">
+    <div class="app-logo" style="flex-grow: 1; display: flex; align-items: center;">
+    <button id="header-ledger-btn" class="header-ledger-pill" data-action="toggle-ledger">
+        <span id="ledger-btn-text">Cargando...</span>
+        <span class="material-icons" style="font-size: 18px; opacity: 0.7;">expand_more</span>
+    </button>
+</div>
+
+    <div style="flex-grow: 1;"></div>
+
+    <div class="top-bar-actions" style="display: flex; gap: 5px; align-items: center;">
+        
         <button class="icon-btn" data-action="global-search" aria-label="Buscar">
             <span class="material-icons">search</span>
         </button>
