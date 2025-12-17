@@ -9211,10 +9211,7 @@ const handleStart = (e) => {
     // Ella se encarga de buscar el botón y cambiar el texto.
     updateLedgerButtonUI(); 
     // ▲▲▲ FIN DE LA CORRECCIÓN ▲▲▲
-    
-    // Mensaje informativo usando el nombre real
-    showToast(`Cambiado a ${getLedgerName(currentLedger)}.`, 'info');
-
+   
     // 4. Actualizar datos y vistas
     populateAllDropdowns();
 
@@ -11320,3 +11317,46 @@ const initSpeedDial = () => {
         };
     });
 };
+
+// --- GENERADOR DE FONDO ESTELAR (Solo PC) ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Solo ejecutar si es pantalla grande
+    if (window.innerWidth >= 600) {
+        createStars();
+    }
+});
+
+function createStars() {
+    const layers = [
+        { class: '.layer-1', size: 1, count: 200, duration: 150 }, // Lejanas
+        { class: '.layer-2', size: 2, count: 60, duration: 100 },  // Medias
+        { class: '.layer-3', size: 3, count: 20, duration: 50 }    // Cercanas
+    ];
+
+    layers.forEach(layer => {
+        const container = document.querySelector(layer.class);
+        if (!container) return;
+
+        let boxShadow = '';
+        for (let i = 0; i < layer.count; i++) {
+            const x = Math.floor(Math.random() * 100); // 0-100vw
+            const y = Math.floor(Math.random() * 100); // 0-100vh
+            const color = i % 10 === 0 ? '#b3e5fc' : '#FFF'; // Algunas azuladas
+            
+            boxShadow += `${x}vw ${y}vh ${color}`;
+            if (i < layer.count - 1) boxShadow += ', ';
+        }
+
+        // Creamos el pseudo-elemento dinámicamente inyectando estilo
+        const style = document.createElement('style');
+        style.textContent = `
+            ${layer.class}::after {
+                width: ${layer.size}px;
+                height: ${layer.size}px;
+                box-shadow: ${boxShadow};
+                animation: animStar ${layer.duration}s linear infinite;
+            }
+        `;
+        document.head.appendChild(style);
+    });
+}
