@@ -11600,12 +11600,6 @@ const updateExtractoList = () => {
 /* ================================================================= */
 
 document.addEventListener('click', (e) => {
-	// 1. EXCEPCIONES: Si pulsamos dentro de la Ayuda o la Calculadora (y no es cerrar)
-    // Dejamos que el evento fluya para poder hacer scroll o tocar botones internos.
-    if ((e.target.closest('#calculator-iframe-modal') || e.target.closest('#help-modal')) 
-        && !e.target.closest('[data-action="close-modal"]')) {
-        return; 
-    }
     // 1. Detectar clic en el botón
     const btn = e.target.closest('#header-menu-btn');
     let menuPopover = document.getElementById('main-menu-popover');
