@@ -2430,11 +2430,13 @@ const navigateTo = async (pageId, isInitial = false) => {
     // En la función navigateTo, busca la definición de standardActions:
 const standardActions = `
     <button data-action="open-help" class="icon-btn" title="Ayuda Ninja">
-        <span class="material-icons" style="color: var(--c-warning);">help_outline</span>
+        <span class="material-icons">help_outline</span>
     </button>
+    
     <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
         <span class="material-icons">calculate</span>
     </button>
+    
     <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
         <span class="material-icons">more_vert</span>
     </button>

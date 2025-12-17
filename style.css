@@ -5878,6 +5878,13 @@ input, select, textarea {
 /* ================================================================= */
 /* === DISEÑO MAESTRO: COLORES DE CAJA (Solo Fuente) === */
 /* ================================================================= */
+/* 1. Base del Encabezado (SIEMPRE NEUTRO) */
+/* Esto asegura que el fondo y los iconos sean iguales al pie de página */
+.header {
+    background-color: var(--c-surface) !important; /* Color de fondo oscuro estándar */
+    color: var(--c-on-surface) !important;
+    border-bottom: 1px solid var(--c-outline); /* Opcional: separador sutil */
+}
 
 /* 1. FONDO UNIFICADO (Encabezado y Pie) */
 /* Ambos tendrán el mismo color oscuro profesional */
@@ -5886,7 +5893,35 @@ input, select, textarea {
     border-top: 1px solid rgba(255,255,255,0.05);
     border-bottom: 1px solid rgba(255,255,255,0.05);
 }
+/* 2. Iconos del Encabezado (Menu, Ayuda, Calc) - NEUTROS */
+.header .icon-btn, 
+.header .material-icons {
+    color: var(--c-on-surface) !important; /* Blanco/Gris, no hereda color de caja */
+}
 
+/* 3. EL ÚNICO ELEMENTO CON COLOR: El Botón Selector de Caja */
+/* Definimos el color SOLO para la clase .header-ledger-pill */
+
+/* --- CAJA A: AZUL --- */
+body[data-ledger-mode="A"] .header-ledger-pill {
+    color: #00D4FF !important;
+    border: 1px solid #00D4FF !important;
+    background-color: rgba(0, 212, 255, 0.1); /* Fondo sutil para que destaque */
+}
+
+/* --- CAJA B: ROJO --- */
+body[data-ledger-mode="B"] .header-ledger-pill {
+    color: #ff4444 !important;
+    border: 1px solid #ff4444 !important;
+    background-color: rgba(255, 68, 68, 0.1);
+}
+
+/* --- CAJA C: VERDE --- */
+body[data-ledger-mode="C"] .header-ledger-pill {
+    color: #00e676 !important;
+    border: 1px solid #00e676 !important;
+    background-color: rgba(0, 230, 118, 0.1);
+}
 /* 2. BOTÓN DE CAJA (Base transparente) */
 .header-ledger-pill {
     background: transparent !important; /* Fondo invisible */
@@ -5904,36 +5939,6 @@ input, select, textarea {
     transition: color 0.3s ease; /* Transición suave de color */
 }
 
-/* 3. COLORES POR CAJA (A=Azul, B=Rojo, C=Verde) */
-/* Afecta al texto del botón superior Y al icono/texto de la pestaña inferior activa */
-
-/* --- CAJA A: AZUL (#00D4FF) --- */
-body[data-ledger-mode="A"] .header-ledger-pill,
-body[data-ledger-mode="A"] .nav-item.active {
-    color: #00D4FF !important;
-}
-/* Aseguramos que el icono de la pestaña también se pinte */
-body[data-ledger-mode="A"] .nav-item.active .material-icons {
-    color: #00D4FF !important;
-}
-
-/* --- CAJA B: ROJO (#ff4444) --- */
-body[data-ledger-mode="B"] .header-ledger-pill,
-body[data-ledger-mode="B"] .nav-item.active {
-    color: #ff4444 !important;
-}
-body[data-ledger-mode="B"] .nav-item.active .material-icons {
-    color: #ff4444 !important;
-}
-
-/* --- CAJA C: VERDE (#00B34D) --- */
-body[data-ledger-mode="C"] .header-ledger-pill,
-body[data-ledger-mode="C"] .nav-item.active {
-    color: #00B34D !important;
-}
-body[data-ledger-mode="C"] .nav-item.active .material-icons {
-    color: #00B34D !important;
-}
 
 /* 4. PESTAÑAS INACTIVAS (Gris neutro) */
 .nav-item {
