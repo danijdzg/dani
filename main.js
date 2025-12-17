@@ -11634,7 +11634,66 @@ document.addEventListener('click', (e) => {
             if(iframe && !iframe.src) iframe.src = 'calculadora.html';
         }
     }
+	/* ================================================================= */
+    /* === MANUAL DE AYUDA (NUEVO CÓDIGO) === */
+    /* ================================================================= */
+    if (action === 'open-help') {
+        const modal = document.getElementById('help-modal');
+        const contentDiv = document.getElementById('help-modal-content');
 
+        if (modal && contentDiv) {
+            // Contenido HTML del Manual
+            contentDiv.innerHTML = `
+                <div class="manual-container">
+                    <div class="manual-intro">
+                        <h3>👋 ¡Bienvenido a bordo, Capitán!</h3>
+                        <p>Estás en <strong>aiDANaI-ctas</strong>, tu nave espacial financiera. Aquí no solo apuntamos gastos, ¡construimos tu futuro! Relájate, que te explico cómo pilotar esto en 2 minutos.</p>
+                    </div>
+
+                    <div class="manual-section">
+                        <div class="manual-title">📊 El Panel de Mando (Tu Dashboard)</div>
+                        <p class="manual-text">Es la primera pantalla que ves. Aquí tienes la verdad, toda la verdad y nada más que la verdad:</p>
+                        <ul style="padding-left: 20px; font-size: 0.9rem; color:#ccc; list-style-type: disc;">
+                            <li><strong>Ingresos:</strong> Todo lo que entra en tu bolsillo (nóminas, regalos...).</li>
+                            <li><strong>Gastos:</strong> Doloroso, pero necesario. Lo que sale para no volver.</li>
+                            <li><strong>Tasa de Ahorro:</strong> <span class="manual-highlight">¡El dato estrella!</span> Si está en verde, ¡felicidades! Gastas menos de lo que ganas.</li>
+                        </ul>
+                    </div>
+
+                    <div class="manual-section">
+                        <div class="manual-title">💸 El Botón Mágico (+)</div>
+                        <p class="manual-text">¿Ves ese botón flotante con un <strong>+</strong> abajo a la derecha? Es tu mejor amigo.</p>
+                        <p class="manual-text">Úsalo para apuntar cualquier movimiento. Elige si es Ingreso, Gasto o Traspaso, pon la cantidad y ¡listo! La app hace el resto.</p>
+                        <div class="manual-tip">💡 <strong>Truco Pro:</strong> Usa las categorías para saber luego si gastas mucho en "Cenas" o "Ropa".</div>
+                    </div>
+
+                    <div class="manual-section">
+                        <div class="manual-title">🚀 La Calculadora Espacial</div>
+                        <p class="manual-text">Toca el icono de la calculadora <span class="material-icons" style="font-size:14px; vertical-align:middle;">calculate</span> arriba.</p>
+                        <p class="manual-text">No es una calculadora normal. Es una <strong>Super Computadora</strong> que también te dice el precio de Bitcoin, Ethereum y BNB en tiempo real.</p>
+                    </div>
+
+                    <div class="manual-section">
+                        <div class="manual-title">🕵️‍♂️ El Detective (Buscador)</div>
+                        <p class="manual-text">¿No recuerdas un pago? Dale a la lupa <span class="material-icons" style="font-size:14px; vertical-align:middle;">search</span>.</p>
+                        <p class="manual-text">Escribe "seguro" o "Mercadona" y aparecerán todos los movimientos al instante.</p>
+                    </div>
+
+                    <div style="text-align:center; margin-top:30px; font-size: 0.8rem; opacity: 0.6;">
+                        <em>Hecho con ❤️ para que tus cuentas cuadren.</em>
+                    </div>
+                </div>
+            `;
+
+            // Abrir el modal con animación
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('active');
+                modal.style.opacity = '1';
+            }, 10);
+        }
+        return; // Importante para que no siga ejecutando código
+    }
     // --- ACCIÓN: CERRAR SESIÓN ---
     if (action === 'logout') {
         if (confirm("¿Seguro que quieres cerrar sesión?")) {
