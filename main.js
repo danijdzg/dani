@@ -2496,8 +2496,8 @@ const pageRenderers = {
     if (actionsEl) {
         // Inyectamos los botones estándar (Lupa, Calc, Menú)
         // Asegúrate de que standardActions esté definido arriba como hicimos antes
-        actionsEl.innerHTML = standardActions;
-    } 
+        actionsEl.innerHTML = standardActions;})
+  
     }
     
     // Animaciones y Clases
