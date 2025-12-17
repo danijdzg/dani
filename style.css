@@ -5875,32 +5875,3 @@ input, select, textarea {
         opacity: 0.5;
     }
 }
-/* ================================================================= */
-/* === FIX TÍTULO: SIEMPRE EN UNA LÍNEA (RESPONSIVE) === */
-/* ================================================================= */
-
-/* 1. El contenedor del logo debe ser flexible pero contenido */
-.app-logo {
-    flex: 1; /* Ocupa el espacio disponible */
-    min-width: 0; /* TRUCO VITAL: Permite al flexbox encogerse si falta espacio */
-    margin-right: 10px; /* Separación con los iconos */
-}
-
-/* 2. El texto del título se adapta y nunca baja de línea */
-.app-title {
-    white-space: nowrap !important;      /* PROHIBIDO saltar de línea */
-    overflow: hidden !important;         /* Cortar lo que sobre */
-    text-overflow: ellipsis !important;  /* Poner "..." si es extremádamente largo */
-    display: block;
-    
-    /* TAMAÑO INTELIGENTE: */
-    /* Mínimo: 0.9rem (móvil pequeño) */
-    /* Preferido: 4vw (se adapta al ancho) */
-    /* Máximo: 1.15rem (lo que tienes ahora) */
-    font-size: clamp(0.9rem, 4vw, 1.15rem) !important; 
-}
-
-/* 3. Asegurar que los iconos de la derecha NUNCA se aplasten */
-.top-bar-actions {
-    flex-shrink: 0 !important; /* Los iconos mantienen su tamaño real siempre */
-}
