@@ -3743,49 +3743,51 @@ const renderVirtualListItem = (item) => {
         `;
     }
 
-    // 4. MOVIMIENTOS REALES (DIARIO) - CON MARCOS DE NEÓN
+    // 4. MOVIMIENTOS REALES (DIARIO)
     if (item.type === 'transaction') {
         const m = item.movement;
         const { cuentas, conceptos } = db;
         const highlightClass = (m.id === newMovementIdToHighlight) ? 'list-item-animate' : '';
-
-        // Formatear fecha
+        
+        // Formatear fecha corta
         const dateObj = new Date(m.fecha);
         const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-        
-        let line1, line2, amountClass, amountSign;
-        
-        // VARIABLE NUEVA: Clase para el marco de color
-        let cardTypeClass = ''; 
+
+        let iconHtml, line1, line2, amountClass, amountSign;
 
         if (m.tipo === 'traspaso') {
-            cardTypeClass = 't-card--transfer'; // <--- CLASE MORADA
-
             const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || 'Origen';
             const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || 'Destino';
             
-            // Línea 1: Origen -> Destino
-            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part" style="color:var(--c-on-surface); font-weight:700;">${escapeHTML(origen)}</span> <span style="color:var(--c-info);">➔</span> <span class="t-transfer-part" style="color:var(--c-on-surface); font-weight:700;">${escapeHTML(destino)}</span>`;
+            // Formateamos los saldos resultantes que calculamos en updateVirtualListUI
+            const saldoOrigenHtml = m._saldoOrigenSnapshot !== undefined 
+                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoOrigenSnapshot)})</span>` 
+                : '';
+            const saldoDestinoHtml = m._saldoDestinoSnapshot !== undefined 
+                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoDestinoSnapshot)})</span>` 
+                : '';
+
+            iconHtml = `<div class="t-icon t-icon--transfer"><span class="material-icons">sync_alt</span></div>`;
             
-            line2 = `<span class="t-transfer-part" style="opacity: 0.8;">Traspaso interno</span>`;
+            // Añadimos el saldo a cada línea
+            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:2px;">arrow_upward</span>${escapeHTML(origen)}${saldoOrigenHtml}</span>`;
+            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:2px;">arrow_downward</span>${escapeHTML(destino)}${saldoDestinoHtml}</span>`;
             
-            amountClass = 'text-info'; // Texto morado
+            amountClass = 'text-info';
             amountSign = '';
+            
         } else {
             const concepto = conceptos.find(c => c.id === m.conceptoId);
             const conceptoNombre = concepto ? concepto.nombre : 'Varios';
             const cuentaObj = cuentas.find(c => c.id === m.cuentaId);
             const nombreCuenta = cuentaObj ? cuentaObj.nombre : 'Cuenta';
             
+            const emojiMatch = conceptoNombre.match(/(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
+            const avatarContent = emojiMatch ? emojiMatch[0] : conceptoNombre.charAt(0).toUpperCase();
+            
             const isGasto = m.cantidad < 0;
-
-            // ASIGNAR CLASE SEGÚN GASTO O INGRESO
-            if (isGasto) {
-                cardTypeClass = 't-card--expense'; // <--- CLASE ROJA
-            } else {
-                cardTypeClass = 't-card--income';  // <--- CLASE VERDE
-            }
-
+            iconHtml = `<div class="t-icon ${isGasto ? 't-icon--expense' : 't-icon--income'}">${avatarContent}</div>`;
+            
             line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-concept">${escapeHTML(conceptoNombre)}</span>`;
             
             const desc = m.descripcion && m.descripcion !== conceptoNombre ? m.descripcion : '';
@@ -3796,20 +3798,20 @@ const renderVirtualListItem = (item) => {
             amountSign = isGasto ? '' : '+';
         }
 
-        // AÑADIMOS ${cardTypeClass} AL DIV PRINCIPAL
         return `
-            <div class="t-card ${cardTypeClass} ${highlightClass}" data-id="${m.id}" data-action="edit-movement-from-list">
-                <div class="t-content">
-                    <div class="t-row-primary">
-                        <div class="t-line-1">${line1}</div>
-                        <div class="t-amount ${amountClass}">${amountSign}${formatCurrencyHTML(m.cantidad)}</div>
-                    </div>
-                    <div class="t-row-secondary">
-                        <div class="t-line-2">${line2}</div>
-                        ${m.tipo !== 'traspaso' ? `<div class="t-running-balance">${formatCurrencyHTML(m.runningBalance)}</div>` : ''}
-                    </div>
+        <div class="t-card ${highlightClass}" data-id="${m.id}" data-action="edit-movement-from-list">
+            ${iconHtml}
+            <div class="t-content">
+                <div class="t-row-primary">
+                    <div class="t-line-1">${line1}</div>
+                    <div class="t-amount ${amountClass}">${amountSign}${formatCurrencyHTML(m.cantidad)}</div>
                 </div>
-            </div>`;
+                <div class="t-row-secondary">
+                    <div class="t-line-2">${line2}</div>
+                    ${m.tipo !== 'traspaso' ? `<div class="t-running-balance">${formatCurrencyHTML(m.runningBalance)}</div>` : ''}
+                </div>
+            </div>
+        </div>`;
     }
     return '';
 };
