@@ -6027,3 +6027,142 @@ input, select, textarea {
     scrollbar-width: none;  /* Firefox */
     -ms-overflow-style: none;  /* IE 10+ */
 }
+/* ========================================= */
+/* === PESTAÑA DIARIO: ESTILO CRISTAL === */
+/* ========================================= */
+
+/* 1. Contenedor de la lista: Limpieza total */
+#movimientos-list-container {
+    padding: 0 var(--sp-2) 100px var(--sp-2); /* Padding inferior para no chocar con el menú */
+    background: transparent !important; /* Para ver las estrellas */
+}
+
+/* 2. Cabecera de Fecha (Sticky Header) */
+.sticky-date-header {
+    position: sticky;
+    top: 0;
+    z-index: 10; /* Por encima de los movimientos */
+    
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    /* Efecto Cristal Oscuro */
+    background-color: rgba(20, 20, 20, 0.85); 
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
+    margin: 0 -8px; /* Expandir para tocar bordes si es necesario */
+    padding: 12px 16px;
+    
+    color: var(--c-on-surface);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3); /* Sombra para separar del contenido al hacer scroll */
+}
+
+/* El día (LUN, MAR...) */
+.sticky-day-pill {
+    background-color: var(--c-primary);
+    color: #000; /* Texto negro para contraste con verde neón */
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 800;
+    margin-right: 8px;
+    font-size: 0.75rem;
+}
+
+/* El total del día a la derecha */
+.sticky-date-total {
+    font-family: var(--font-numeric);
+    font-weight: 700;
+    opacity: 0.9;
+}
+
+/* 3. Tarjeta de Transacción (El movimiento en sí) */
+.transaction-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 16px 12px;
+    margin-bottom: 1px; /* Separación mínima */
+    
+    /* Fondo transparente para ver estrellas */
+    background-color: rgba(30, 35, 45, 0.4); 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    
+    transition: background-color 0.2s;
+}
+
+/* Efecto al tocar/pasar ratón */
+.transaction-card:active,
+.transaction-card:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* Se ilumina un poco */
+}
+
+/* Icono del movimiento */
+.t-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-right: 12px;
+    
+    /* Fondo del icono semitransparente */
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--c-on-surface);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Colores específicos para los iconos */
+.t-icon--income { color: var(--c-success); background-color: rgba(57, 255, 20, 0.1); border-color: rgba(57, 255, 20, 0.2); }
+.t-icon--expense { color: var(--c-danger); background-color: rgba(255, 59, 48, 0.1); border-color: rgba(255, 59, 48, 0.2); }
+.t-icon--transfer { color: var(--c-info); background-color: rgba(191, 90, 242, 0.1); border-color: rgba(191, 90, 242, 0.2); }
+
+/* Textos */
+.t-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.t-line-1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.t-concept {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--c-white);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.t-amount {
+    font-family: var(--font-numeric);
+    font-weight: 700;
+    font-size: 1rem;
+    white-space: nowrap;
+}
+
+.t-line-2 {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--c-on-surface-secondary);
+}
+
+/* Colores de importes */
+.text-positive { color: var(--c-success); text-shadow: 0 0 10px rgba(57, 255, 20, 0.3); }
+.text-negative { color: var(--c-white); } /* Los gastos en blanco se leen mejor en dark mode */
+.text-neutral { color: var(--c-info); }
