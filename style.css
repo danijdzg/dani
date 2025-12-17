@@ -6014,33 +6014,3 @@ body[data-ledger-mode="C"] .header-ledger-pill {
 @media (max-width: 360px) {
     .header-status-right span { display: none; }
 }
-/* =============================================================== */
-/* === CORRECCIÓN URGENTE: DESBLOQUEO DEL MODAL DE AYUDA === */
-/* =============================================================== */
-
-/* 1. Forzamos que el fondo oscuro del modal esté ENCIMA de todo (incluso del encabezado) */
-.modal-overlay {
-    z-index: 999999 !important; /* Un número absurdamente alto */
-    pointer-events: auto !important; /* Asegura que detecte el ratón */
-}
-
-/* 2. Forzamos que la tarjeta blanca de la ayuda acepte clics */
-.modal {
-    z-index: 1000000 !important; /* Un poco más alto que el fondo */
-    pointer-events: auto !important; /* ¡IMPORTANTE! Habilita la interacción */
-    position: relative !important;
-}
-
-/* 3. Aseguramos que los desplegables (acordeones) reaccionen */
-details > summary {
-    cursor: pointer !important; /* Que salga la manita al pasar el ratón */
-    user-select: none; /* Que no se seleccione el texto al hacer clic rápido */
-    position: relative;
-    z-index: 1000001; /* Asegurar que el título es clicable */
-}
-
-/* 4. Asegurar que el contenido dentro de la ayuda no esté bloqueado */
-.accordion__content {
-    cursor: text; /* Cursor normal para leer texto */
-    pointer-events: auto !important;
-}
