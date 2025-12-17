@@ -6027,3 +6027,27 @@ input, select, textarea {
     scrollbar-width: none;  /* Firefox */
     -ms-overflow-style: none;  /* IE 10+ */
 }
+/* ========================================= */
+/* === ELIMINACIÓN GLOBAL DE ICONOS === */
+/* ========================================= */
+
+/* 1. Ocultar el icono en todas partes */
+.t-icon,
+.transaction-avatar,
+.search-result-icon {
+    display: none !important;
+}
+
+/* 2. Ajustar el espaciado de las tarjetas para que no queden pegadas al borde */
+.t-card,
+.transaction-card,
+.search-result-item {
+    padding-left: 16px !important; /* Espacio a la izquierda */
+    padding-right: 16px !important;
+}
+
+/* 3. Asegurar que el contenido ocupe todo el ancho */
+.t-content,
+.transaction-content {
+    width: 100%;
+}
