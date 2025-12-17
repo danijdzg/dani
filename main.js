@@ -2435,7 +2435,20 @@ const navigateTo = async (pageId, isInitial = false) => {
     const oldIndex = oldView ? navItems.findIndex(item => item.dataset.page === oldView.id) : -1;
     const newIndex = navItems.findIndex(item => item.dataset.page === newView.id);
     const isForward = newIndex > oldIndex;
+	// 1. DEFINIMOS LOS BOTONES (Esto es lo que faltaba)
+    const standardActions = `
+        <button class="icon-btn" data-action="global-search" title="Buscar"><span class="material-icons">search</span></button>
+        <button data-action="open-external-calculator" class="icon-btn" title="Calculadora"><span class="material-icons">calculate</span></button>
+        <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>
+    `;
 
+    // 2. BUSCAMOS EL LUGAR DONDE PONERLOS
+    const actionsEl = document.getElementById('top-bar-actions') || document.querySelector('.top-bar-actions');
+
+    // 3. LOS INSERTAMOS
+    if (actionsEl) {
+        actionsEl.innerHTML = standardActions;
+    }
     // Barra Superior
     const actionsEl = select('top-bar-actions');
     const leftEl = select('top-bar-left-button');
@@ -7943,102 +7956,6 @@ const handleSaveValoracion = async (form, btn) => {
         setButtonLoading(btn, false);
     }
 };
-/* ================================================================= */
-/* === AYUDA DEFINITIVA: EL MANIFIESTO DE aiDANaI ================== */
-/* ================================================================= */
-
-const showHelpModal = () => {
-    const titleEl = select('help-modal-title');
-    const bodyEl = select('help-modal-body');
-
-    // Título limpio, dejamos que el contenido hable
-    if (titleEl) titleEl.innerHTML = ''; 
-
-    if (bodyEl) {
-        bodyEl.innerHTML = `
-            <div class="aidanai-scroll-container">
-                
-                <div class="aidanai-hero">
-                    <span class="material-icons" style="font-size: 48px; color: var(--c-primary); margin-bottom: 10px; filter: drop-shadow(0 0 10px var(--c-primary));">psychology</span>
-                    <h2 class="aidanai-title">Yo soy aiDANaI</h2>
-                    <p style="color: var(--c-on-surface); font-weight: 500;">
-                        No soy una simple "app de cuentas". Soy una obra maestra de la ingeniería financiera diseñada para que dejes de perder dinero (y tiempo).
-                    </p>
-                </div>
-
-                <div class="aidanai-section" style="border-left-color: #007AFF;">
-                    <h4><span class="material-icons" style="color: #007AFF;">inventory_2</span> El Multiverso Financiero</h4>
-                    <p>
-                        Los humanos sois caóticos. Mezcláis el dinero del alquiler con el de las cervezas. Yo he solucionado eso creando <strong>Tres Dimensiones (Cajas)</strong> para tu dinero.
-                        <br><br>
-                        Toca el botón de arriba a la izquierda para viajar entre ellas:
-                        <br>🔵 <strong>Caja A:</strong> La vida aburrida (Nómina, facturas).
-                        <br>🔴 <strong>Caja B:</strong> La vida secreta (Dinero B, ahorros ocultos).
-                        <br>🟢 <strong>Caja C:</strong> Los sueños (Viajes, proyectos).
-                    </p>
-                </div>
-
-                <div class="aidanai-section finance-pro">
-                    <h4><span class="material-icons" style="color: #FFD60A;">calculate</span> Calculadora Integrada (Porque odias sumar)</h4>
-                    <p>
-                        He notado que te da pereza salir de la app para calcular cuánto debe pagar cada uno en la cena.
-                        <br><br>
-                        <strong>Solución:</strong> En el campo de importe, simplemente escribe <code>50 / 2</code> o <code>12 + 15 + 8</code>. Yo hago la matemática al instante. De nada.
-                    </p>
-                </div>
-
-                <div class="aidanai-section tech-flex">
-                    <h4><span class="material-icons" style="color: #BF5AF2;">speed</span> Velocidad Absurda</h4>
-                    <p>
-                        ¿Notas lo rápido que hago scroll en tu Diario aunque tengas 5.000 movimientos? 
-                        No es magia, es mi motor de <strong>Virtual Scrolling</strong>.
-                        <br><br>
-                        A diferencia de otras apps que se bloquean, yo solo "pinto" en tu pantalla lo que tus ojos ven. Reciclo los elementos del DOM milisegundo a milisegundo. Soy ecológica digitalmente.
-                        <br>
-                        <span class="aidanai-tag">TECH: DOM RECYCLING</span> <span class="aidanai-tag">TECH: 60 FPS</span>
-                    </p>
-                </div>
-
-                <div class="aidanai-section tech-flex">
-                    <h4><span class="material-icons" style="color: #39FF14;">trending_up</span> Inversiones: No es solo sumar</h4>
-                    <p>
-                        Cualquier calculadora barata sabe sumar. Yo calculo tu rentabilidad real usando el algoritmo <strong>Newton-Raphson</strong> para resolver la TIR (Tasa Interna de Retorno).
-                        <br><br>
-                        Tengo en cuenta <em>cuándo</em> metiste el dinero y <em>cuándo</em> lo sacaste para darte tu porcentaje de beneficio anualizado exacto. Básicamente, hago lo que hace un fondo de inversión de Wall Street, pero en tu bolsillo.
-                        <br>
-                        <span class="aidanai-tag">MATH: XIRR</span> <span class="aidanai-tag">MATH: MWRR</span>
-                    </p>
-                </div>
-
-                <div class="aidanai-section" style="border-left-color: #FF3B30;">
-                    <h4><span class="material-icons" style="color: #FF3B30;">visibility_off</span> Modo "Metro de Madrid"</h4>
-                    <p>
-                        Hay gente muy cotilla. Si tocas tu <strong>Patrimonio Total</strong> en el panel, desenfocaré (blur) todos los números sensibles de la aplicación.
-                        <br><br>
-                        Puedes enseñar la app para fardar de mi diseño sin revelar que eres millonario (o que estás en la ruina).
-                    </p>
-                </div>
-
-                <div class="aidanai-section tech-flex">
-                    <h4><span class="material-icons" style="color: #00E5FF;">cloud_off</span> Inmortalidad (Offline-First)</h4>
-                    <p>
-                        ¿Se ha caído internet? Me da igual. Yo vivo en tu dispositivo (IndexedDB).
-                        Guardo todo localmente primero para que la interfaz vuele, y cuando recuperas la conexión, me sincronizo silenciosamente con la nube. Soy imparable.
-                        <br>
-                        <span class="aidanai-tag">ARCH: LOCAL-FIRST</span> <span class="aidanai-tag">ARCH: PWA</span>
-                    </p>
-                </div>
-
-                <div style="text-align: center; margin-top: 30px; opacity: 0.7; font-size: 0.8rem;">
-                    <p>aiDANaI v3.5 • Diseñada para la excelencia.</p>
-                </div>
-            </div>
-        `;
-    }
-
-    showModal('help-modal');
-};
-
 
 const calculateEmergencyFund = (saldos, cuentas, recentMovements) => {
     const LIQUIDO_TYPES = ['BANCO', 'AHORRO', 'EFECTIVO'];
