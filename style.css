@@ -6044,81 +6044,47 @@ body[data-ledger-mode="C"] .header-ledger-pill {
     .header-status-right span { display: none; }
 }
 /* =============================================================== */
-/* === AJUSTES DE ESCRITORIO (Compacto Vertical) === */
+/* === MODO ESCRITORIO: ANCHO TOTAL Y ENCABEZADO NORMAL === */
 /* =============================================================== */
 
 @media (min-width: 1000px) {
 
-    /* 1. Encabezado Ultra-Delgado */
-    .header {
-        padding: 5px 0 !important; /* Mínimo relleno */
-        height: 45px !important;   /* Forzamos altura mínima */
-    }
-    
-    .header-content {
-        height: 100% !important; /* Asegura que el contenido se centre */
-    }
-
-    /* Reducimos el botón de selección de caja */
-    .header-ledger-pill {
-        padding: 2px 10px !important;
-        font-size: 0.85rem !important;
-        height: 28px !important;
-    }
-
-    /* Título más pequeño */
-    .header-title span {
-        font-size: 1rem !important;
-    }
-
-    /* Iconos un poco más pequeños para que encajen */
-    .material-icons {
-        font-size: 20px !important;
-    }
-}
-@media (min-width: 1000px) {
-    
-    /* 2. Área principal ajustada */
+    /* 1. ANCHO TOTAL (Ocupamos toda la pantalla) */
     .app-layout__main {
-        padding-top: 10px !important; /* Menos espacio arriba */
-        padding-bottom: 60px !important; /* Espacio justo para el menú de abajo */
-        max-width: 600px; /* Evita que se estire demasiado a lo ancho */
-        margin: 0 auto;   /* Centra todo en la pantalla */
+        max-width: 98% !important; 
+        margin: 0 auto;
+        padding-top: 15px !important;    /* Más aire arriba (antes 5px) */
+        padding-bottom: 60px !important; /* Espacio cómodo abajo */
     }
 
-    /* 3. Patrimonio Neto: Igualar tamaño a Valor Real */
-    /* Antes era gigante (2.8rem), ahora lo bajamos a 1.2rem aprox */
+    /* 2. ENCABEZADO: RESTAURADO */
+    /* Hemos borrado las reglas que reducían su altura. */
+    /* Ahora se verá grande y bonito como en el diseño original. */
+
+    /* 3. PATRIMONIO NETO (Ajustado pero legible) */
+    /* Mantenemos un tamaño equilibrado para que no descuadre */
     #kpi-patrimonio-neto-value {
-        font-size: 1.4rem !important; /* Tamaño mediano/pequeño */
+        font-size: 1.5rem !important; /* Tamaño medio (similar a Valor Real) */
         font-weight: 700 !important;
-        margin-bottom: 2px !important;
+        margin-bottom: 5px !important;
         line-height: 1.2;
     }
     
-    /* Reducimos el subtítulo "Patrimonio Total" */
-    #panel-page .hero-card .label {
-        font-size: 0.75rem !important;
-        margin-bottom: 5px !important;
-    }
-
-    /* 4. Compactar las Tarjetas (Adelgazamiento extremo) */
+    /* 4. TARJETAS (Ancho total y separación normal) */
     .hero-card {
-        padding: 10px 15px !important; /* Relleno interno mínimo */
-        margin-bottom: 8px !important; /* Espacio entre tarjetas reducido */
-        min-height: auto !important;   /* Permitir que se encojan */
+        width: 100% !important;        /* Usan todo el ancho */
+        margin-bottom: 12px !important; /* Separación cómoda entre tarjetas */
+        padding: 12px 20px !important;  /* Relleno equilibrado */
     }
 
-    /* Reducir espacios dentro de las filas de datos */
+    /* Ajuste de filas de datos */
     .kpi-row {
         margin-bottom: 5px !important;
         padding-bottom: 5px !important;
     }
     
-    .kpi-item .value {
-        font-size: 1rem !important; /* Números un poco más compactos */
-    }
-    
-    .kpi-item .label {
-        font-size: 0.7rem !important;
+    /* Menú inferior estándar */
+    .bottom-nav {
+        height: 60px !important; /* Altura cómoda estándar */
     }
 }
