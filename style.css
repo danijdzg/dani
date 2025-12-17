@@ -273,7 +273,24 @@
         justify-content: flex-end; 
         margin-top: 4px; 
     }
-
+	
+/* === INICIO: Estilos para la nueva Guía de Ayuda === */
+#help-modal-body h3 { 
+    margin-top: 1.5em; 
+    margin-bottom: 0.8em; 
+    color: var(--c-primary); 
+    font-weight: 700; 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    border-bottom: 1px solid var(--c-outline); 
+    padding-bottom: 8px;
+}
+#help-modal-body h4 {
+    color: var(--c-on-surface);
+    margin-top: 1.2em;
+    margin-bottom: 0.5em;
+}
 /* Le damos un estilo más prominente a los títulos de las secciones principales */
 #help-modal-body .accordion > summary {
     font-size: 1.1em;
@@ -3761,7 +3778,108 @@ input, select, textarea, .form-input, .form-select {
         transform: translateY(0); /* Termina en su sitio */
     }
 }
+/* ================================================================= */
+/* === ESTILOS AYUDA PREMIUM (MANUAL DEL PILOTO) === */
+/* ================================================================= */
 
+.help-hero {
+    text-align: center;
+    padding: 20px 0 30px;
+    background: linear-gradient(180deg, var(--c-surface-variant) 0%, transparent 100%);
+    border-radius: var(--border-radius-lg);
+    margin-bottom: 20px;
+}
+
+.help-hero__icon {
+    font-size: 64px;
+    color: var(--c-primary);
+    filter: drop-shadow(0 4px 10px rgba(0, 179, 77, 0.3));
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.help-section-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--c-on-surface);
+    margin: 30px 0 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--c-outline);
+    padding-bottom: 10px;
+}
+
+.help-card {
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-outline);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.help-card__icon {
+    font-size: 28px;
+    padding: 10px;
+    background-color: var(--c-surface-variant);
+    border-radius: 12px;
+    color: var(--c-primary);
+    flex-shrink: 0;
+}
+
+.help-card__content h4 {
+    margin: 0 0 6px 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--c-on-surface);
+}
+
+.help-card__content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--c-on-surface-secondary);
+    line-height: 1.5;
+}
+
+.help-pro-tip {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background-color: color-mix(in srgb, var(--c-warning) 10%, transparent);
+    border-left: 3px solid var(--c-warning);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: var(--c-on-surface);
+}
+
+.help-pro-tip strong {
+    color: var(--c-warning);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    margin-right: 5px;
+}
+
+/* Ajustes para acordeones dentro de la ayuda */
+.help-accordion summary {
+    background-color: var(--c-surface-variant);
+    border-radius: 8px;
+    margin-bottom: 5px;
+    list-style: none;
+}
+.kpi-grid:last-child, 
+.card:last-child,
+#movimientos-list-container {
+    padding-bottom: 20px; /* Un poco de respiro al final */
+}
 /* ================================================================= */
 /* === MODO PRIVACIDAD (Blur Effect) === */
 /* ================================================================= */
@@ -5874,45 +5992,4 @@ input, select, textarea {
         font-size: 24px !important; 
         opacity: 0.5;
     }
-}
-/* =============================================================== */
-/* === ENCABEZADO FINAL: NEUTRO CON DETALLE DE COLOR === */
-/* =============================================================== */
-
-/* 1. Fondo y Textos Generales (NEUTROS) */
-.header {
-    background-color: #121820 !important; /* Mismo color oscuro que el fondo general */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Separador sutil */
-    color: #ffffff !important;
-}
-
-/* Los iconos normales (Ayuda, Calc, Menú) serán blancos */
-.header .material-icons,
-.header .icon-btn {
-    color: rgba(255, 255, 255, 0.8) !important;
-}
-
-/* 2. EL ÚNICO ELEMENTO DE COLOR: Botón de Caja (Pill) */
-/* CAJA A (Azul) */
-body[data-ledger-mode="A"] .header-ledger-pill {
-    color: #00D4FF !important;
-    border: 1px solid #00D4FF !important;
-    background-color: rgba(0, 212, 255, 0.15) !important;
-    box-shadow: 0 0 10px rgba(0, 212, 255, 0.1);
-}
-
-/* CAJA B (Rojo) */
-body[data-ledger-mode="B"] .header-ledger-pill {
-    color: #ff4444 !important;
-    border: 1px solid #ff4444 !important;
-    background-color: rgba(255, 68, 68, 0.15) !important;
-    box-shadow: 0 0 10px rgba(255, 68, 68, 0.1);
-}
-
-/* CAJA C (Verde) */
-body[data-ledger-mode="C"] .header-ledger-pill {
-    color: #00e676 !important;
-    border: 1px solid #00e676 !important;
-    background-color: rgba(0, 230, 118, 0.15) !important;
-    box-shadow: 0 0 10px rgba(0, 230, 118, 0.1);
 }
