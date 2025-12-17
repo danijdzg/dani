@@ -273,24 +273,7 @@
         justify-content: flex-end; 
         margin-top: 4px; 
     }
-	
-/* === INICIO: Estilos para la nueva Guía de Ayuda === */
-#help-modal-body h3 { 
-    margin-top: 1.5em; 
-    margin-bottom: 0.8em; 
-    color: var(--c-primary); 
-    font-weight: 700; 
-    display: flex; 
-    align-items: center; 
-    gap: 8px; 
-    border-bottom: 1px solid var(--c-outline); 
-    padding-bottom: 8px;
-}
-#help-modal-body h4 {
-    color: var(--c-on-surface);
-    margin-top: 1.2em;
-    margin-bottom: 0.5em;
-}
+
 /* Le damos un estilo más prominente a los títulos de las secciones principales */
 #help-modal-body .accordion > summary {
     font-size: 1.1em;
@@ -1777,72 +1760,68 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
     border-width: 3px;
     color: var(--c-primary);
 }
-/* EN style.css - PEGA ESTE BLOQUE AL FINAL */
-/* === INICIO: Estilos para el Menú Desplegable === */
-.popover-menu {
-    position: fixed;
-    top: 52px; /* Justo debajo de la barra superior */
-    right: 12px;
-    z-index: 1100; /* Muy alto para que esté por encima de todo */
-    background-color: var(--c-surface-variant);
-    border-radius: var(--border-radius-md);
-    border: 1px solid var(--c-outline);
-    box-shadow: var(--shadow-md);
-    width: 220px;
-    padding: var(--sp-2);
+/* --- CORRECCIÓN DEFINITIVA DEL MENÚ --- */
+#main-menu-popover {
+    /* 1. Posicionamiento Fijo al Viewport (Pantalla) */
+    position: fixed !important; 
+    left: auto !important;   /* ANULA cualquier intento de alinearlo a la izquierda */
     
-    /* Magia para ocultar/mostrar con una animación suave */
+    /* 2. Dimensiones Controladas */
+    width: 220px;            /* Ancho estándar cómodo */
+    max-width: 90vw;         /* Nunca más ancho que el 90% de la pantalla */
+    
+    /* 3. Estética (Aseguramos que se vea bien sobre fondo oscuro) */
+    background-color: var(--c-surface) !important;
+    border: 1px solid var(--c-outline);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5); /* Sombra fuerte para resaltar */
+    z-index: 2000 !important; /* Por encima de TODO (incluyendo modales y toasts) */
+    
+    /* 4. Estado Inicial (Oculto) */
     opacity: 0;
-    transform: translateY(-10px) scale(0.95);
-    transform-origin: top right;
-    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-    pointer-events: none; /* No se puede hacer clic cuando está oculto */
+    visibility: hidden;
+    transform: scale(0.95);
+    transform-origin: top right; /* La animación nace de la esquina superior derecha */
+    transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.2s;
 }
 
-.popover-menu--visible {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    pointer-events: auto;
+/* Estado Visible */
+#main-menu-popover.popover-menu--visible {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: scale(1) !important;
 }
 
+/* Estilo de los elementos del menú */
 .popover-menu__item {
     display: flex;
     align-items: center;
-    gap: var(--sp-3);
+    gap: 12px;
     width: 100%;
-    padding: var(--sp-2) var(--sp-3);
-    border-radius: 6px;
-    border: none;
+    padding: 12px 16px;
     background: none;
-    cursor: pointer;
-    text-align: left;
-    font-size: var(--fs-sm);
-    font-weight: 500;
+    border: none;
     color: var(--c-on-surface);
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
     transition: background-color 0.2s;
 }
 
 .popover-menu__item:hover {
-    background-color: var(--c-surface);
-}
-
-.popover-menu__item .material-icons {
-    color: var(--c-on-surface-secondary);
+    background-color: var(--c-surface-variant);
 }
 
 .popover-menu__item--danger {
-    color: var(--c-danger);
-}
-.popover-menu__item--danger .material-icons {
     color: var(--c-danger);
 }
 
 .popover-menu__divider {
     height: 1px;
     background-color: var(--c-outline);
-    margin: var(--sp-2) 0;
+    margin: 4px 0;
 }
-/* === FIN: Estilos para el Menú Desplegable === */
 
 @media (max-width: 380px) {
     /* --- Optimizaciones Generales para Pantallas Pequeñas --- */
@@ -3677,8 +3656,7 @@ body[data-theme="default"] .cartilla-container {
 /* JERARQUÍA VISUAL ESTRICTA */
 .app-layout { z-index: 1; }
 .bottom-nav, .top-bar { z-index: 100; }
-.modal-overlay { z-index: 1000; } /* Modales normales */
-.popover-menu { z-index: 1100; } 
+.modal-overlay { z-index: 2000; } /* Modales normales */
 #calculator-overlay { z-index: 2000; } /* Calculadora sobre modales */
 .save-animation-bubble { z-index: 2100; } 
 .toast-container { z-index: 3000; } /* Notificaciones SIEMPRE encima */
@@ -3783,108 +3761,7 @@ input, select, textarea, .form-input, .form-select {
         transform: translateY(0); /* Termina en su sitio */
     }
 }
-/* ================================================================= */
-/* === ESTILOS AYUDA PREMIUM (MANUAL DEL PILOTO) === */
-/* ================================================================= */
 
-.help-hero {
-    text-align: center;
-    padding: 20px 0 30px;
-    background: linear-gradient(180deg, var(--c-surface-variant) 0%, transparent 100%);
-    border-radius: var(--border-radius-lg);
-    margin-bottom: 20px;
-}
-
-.help-hero__icon {
-    font-size: 64px;
-    color: var(--c-primary);
-    filter: drop-shadow(0 4px 10px rgba(0, 179, 77, 0.3));
-    animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
-}
-
-.help-section-title {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--c-on-surface);
-    margin: 30px 0 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-bottom: 1px solid var(--c-outline);
-    padding-bottom: 10px;
-}
-
-.help-card {
-    background-color: var(--c-surface);
-    border: 1px solid var(--c-outline);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-    display: flex;
-    gap: 15px;
-    align-items: flex-start;
-}
-
-.help-card__icon {
-    font-size: 28px;
-    padding: 10px;
-    background-color: var(--c-surface-variant);
-    border-radius: 12px;
-    color: var(--c-primary);
-    flex-shrink: 0;
-}
-
-.help-card__content h4 {
-    margin: 0 0 6px 0;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--c-on-surface);
-}
-
-.help-card__content p {
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--c-on-surface-secondary);
-    line-height: 1.5;
-}
-
-.help-pro-tip {
-    margin-top: 10px;
-    padding: 10px 12px;
-    background-color: color-mix(in srgb, var(--c-warning) 10%, transparent);
-    border-left: 3px solid var(--c-warning);
-    border-radius: 4px;
-    font-size: 0.85rem;
-    color: var(--c-on-surface);
-}
-
-.help-pro-tip strong {
-    color: var(--c-warning);
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    margin-right: 5px;
-}
-
-/* Ajustes para acordeones dentro de la ayuda */
-.help-accordion summary {
-    background-color: var(--c-surface-variant);
-    border-radius: 8px;
-    margin-bottom: 5px;
-    list-style: none;
-}
-.kpi-grid:last-child, 
-.card:last-child,
-#movimientos-list-container {
-    padding-bottom: 20px; /* Un poco de respiro al final */
-}
 /* ================================================================= */
 /* === MODO PRIVACIDAD (Blur Effect) === */
 /* ================================================================= */
@@ -5656,4 +5533,399 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 @media (min-width: 1024px) {
     .fab-container { bottom: 20px; }
     .fab-main-btn { margin-bottom: 40px; }
+}
+/* Estilo para el saldo resultante en traspasos */
+.t-transfer-balance {
+    font-size: 0.8em;          /* Un poco más pequeño que el nombre */
+    opacity: 0.7;              /* Color atenuado */
+    margin-left: 8px;          /* Separación del nombre */
+    font-weight: 400;
+    font-family: var(--font-numeric); /* Tu fuente numérica */
+    color: var(--c-on-surface);
+}
+/* === FILTROS DE FECHA (Extracto Patrimonio) === */
+.extracto-filter-bar {
+    display: flex;
+    gap: 12px;
+    padding: 15px 20px;
+    background-color: var(--c-surface);
+    border-bottom: 1px solid var(--c-outline);
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.date-input-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.date-input-label {
+    font-size: 0.7rem;
+    color: var(--c-on-surface-variant);
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.styled-date-input {
+    background: var(--c-surface-variant);
+    border: 1px solid var(--c-outline);
+    color: var(--c-on-surface);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-family: var(--font-family);
+    font-size: 0.85rem;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.styled-date-input:focus {
+    border-color: var(--c-primary);
+}
+
+/* Icono de calendario interno (solo funciona en algunos navegadores, pero ayuda) */
+::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.6;
+    cursor: pointer;
+}
+/* ================================================================= */
+/* === MENÚ FLOTANTE (Posición Dinámica) === */
+/* ================================================================= */
+
+.popover-menu {
+    position: fixed; /* Flota sobre la pantalla */
+    
+    /* Nota: Quitamos top/right fijos para que JS los calcule */
+    top: 0; 
+    right: 0;
+    
+    background-color: #222; 
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 200px;
+    
+    /* Z-INDEX MÁXIMO */
+    z-index: 2000 !important; 
+    box-shadow: 0 5px 25px rgba(0,0,0,0.8);
+    
+    /* ANIMACIONES */
+    opacity: 0;
+    transform: scale(0.95); /* Efecto sutil */
+    transform-origin: top right;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    
+    /* Oculto por defecto */
+    visibility: hidden;
+}
+
+/* ESTADO VISIBLE */
+.popover-menu--visible {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+}
+
+/* ITEMS */
+.popover-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 15px;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 15px;
+    text-align: left;
+    border-radius: 8px;
+}
+.popover-menu__item:active { background-color: rgba(255,255,255,0.1); }
+.popover-menu__divider { height: 1px; background: rgba(255,255,255,0.1); margin: 4px 0; }
+
+.modal-overlay.active-manual {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    
+    /* TRUCO: Un Z-Index absurdo para ganar a todo */
+    z-index: 2147483647 !important; 
+    
+    background-color: rgba(0, 0, 0, 0.85) !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Ajuste para que el contenido también se vea */
+.modal-overlay.active-manual .modal {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+}
+/* === FIX: Evitar Zoom en iPhone al escribir === */
+input, select, textarea {
+    font-size: 16px !important; /* Mínimo para evitar zoom en iOS */
+}
+
+/* === GESTIÓN DE CAPAS (Z-INDEX NORMALIZADO) === */
+/* Capa 1: Contenido normal: 1-10 */
+/* Capa 2: Barras fijas (Header/Bottom): 100 */
+/* Capa 3: Overlays oscuros: 1000 */
+/* Capa 4: Modales y Menús: 2000 */
+/* Capa 5: Alertas críticas / Toast: 3000 */
+
+.popover-menu {
+    /* ... tus otros estilos ... */
+    z-index: 2000 !important; /* Valor sensato */
+}
+
+/* Modal de Ayuda y Calculadora */
+.modal-overlay {
+    z-index: 2000 !important; /* Igual que el menú, el JS decide quién gana */
+}
+
+/* Clase especial para cuando algo debe estar ENCIMA de todo sí o sí */
+.z-maximo {
+    z-index: 3000 !important;
+}
+/* Ajuste para la barra superior con múltiples iconos */
+.top-bar {
+    padding: 10px 15px; /* Un poco más de aire lateral */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+}
+
+/* Reducir ligeramente los botones del header si hay muchos */
+.top-bar-actions .icon-btn {
+    width: 38px;       /* Un poco más compactos */
+    height: 38px;
+    margin-left: 2px;  /* Pequeña separación */
+}
+
+/* Quitar fondo gris a los botones del header para que se vea más limpio */
+.top-bar-actions .icon-btn {
+    background-color: transparent;
+    border: none;
+}
+
+/* Efecto hover/active */
+.top-bar-actions .icon-btn:active {
+    background-color: var(--c-surface-variant);
+    border-radius: 50%;
+}
+/* ================================================================= */
+/* === FIX CALCULADORA (Interactividad Total) === */
+/* ================================================================= */
+
+/* Forzamos que el contenedor acepte punteros/dedos */
+#calculator-iframe-modal {
+    pointer-events: auto !important; 
+    touch-action: auto !important;
+}
+
+/* El iframe debe ocupar todo y estar "vivo" */
+#calculator-frame {
+    pointer-events: auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    touch-action: manipulation !important; /* Mejora respuesta táctil */
+}
+
+/* Asegurar que el botón de cerrar siempre se pueda pulsar */
+#calculator-iframe-modal .icon-btn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+/* ================================================================= */
+/* === FONDO ESPACIAL "DEEP SPACE" (V2 - ESPECTACULAR) === */
+/* ================================================================= */
+
+#deep-space-background {
+    display: none; /* Oculto en móvil para ahorrar batería */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at bottom, #0d1219 0%, #000000 100%);
+    z-index: -1;
+    overflow: hidden;
+}
+
+/* Las estrellas serán generadas por JS, aquí definimos su movimiento */
+.star-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    background: transparent;
+}
+
+/* Animación de ascenso infinito */
+@keyframes moveStars {
+    from { transform: translateY(0px); }
+    to { transform: translateY(-2000px); }
+}
+
+/* SOLO ACTIVAR EN PC / TABLET */
+@media (min-width: 600px) {
+    #deep-space-background {
+        display: block;
+    }
+    
+    /* Aseguramos que la calculadora tenga fondo sólido para no ser transparente */
+    .view-container, .calculator-body {
+        background-color: #121820; 
+        box-shadow: 0 0 60px rgba(0,0,0,0.9);
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+}
+/* ================================================================= */
+/* === PANEL (DASHBOARD) PERFECTO: SIN SCROLL Y AUTO-AJUSTABLE === */
+/* ================================================================= */
+
+/* 1. ELIMINAR BARRA DE SCROLL (Invisible en todos los navegadores) */
+#dashboard-page .page-content::-webkit-scrollbar {
+    display: none !important; /* Chrome, Safari */
+}
+#dashboard-page .page-content {
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* IE/Edge */
+}
+
+/* 2. AJUSTES BASE (MÓVIL) */
+#dashboard-page .page-content {
+    padding-top: 10px !important;
+    padding-bottom: 80px; /* Espacio para menú inferior en móvil */
+}
+
+/* 3. MODO ORDENADOR (AJUSTE MATEMÁTICO A PANTALLA COMPLETA) */
+@media (min-width: 600px) {
+    
+    /* A. El contenedor principal ocupa EXACTAMENTE el hueco disponible */
+    #dashboard-page .page-content {
+        /* Altura total (100vh) MENOS Cabecera (60px) MENOS un margen (20px) */
+        height: calc(100vh - 80px) !important; 
+        overflow: hidden !important; /* PROHIBIDO EL SCROLL */
+        padding-bottom: 0 !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* Centrar todo verticalmente */
+    }
+
+    /* B. El contenedor de tarjetas se estira para llenar ese hueco */
+    #dashboard-kpi-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%; 
+        max-height: 100%;
+        gap: 10px; /* Espacio pequeño entre tarjetas */
+        padding: 10px 20px; /* Un poco de aire lateral */
+    }
+
+    /* C. LAS TARJETAS (La clave es min-height: 0) */
+    .kpi-card {
+        flex: 1; /* "Ocupa todo el espacio que puedas repartiéndolo equitativamente" */
+        
+        /* ESTA ES LA CLAVE: Permite que la tarjeta se encoja más allá de su contenido si hace falta */
+        min-height: 0 !important; 
+        
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* Centrar textos verticalmente */
+        margin: 0 !important;
+        padding: 0 20px !important; /* Reducimos relleno vertical a 0, flex lo centrará */
+        
+        /* Sombra más suave para modo escritorio */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    /* D. TEXTOS RESPONSIVOS (Se hacen más pequeños en PC para caber mejor) */
+    .kpi-card h3 {
+        font-size: 0.9rem !important; /* Título compacto */
+        margin-bottom: 5px !important;
+        opacity: 0.8;
+    }
+
+    .kpi-value {
+        font-size: 1.8rem !important; /* Número grande */
+        line-height: 1.1;
+    }
+    
+    .kpi-trend {
+        font-size: 0.75rem !important; /* Texto de tendencia pequeño */
+        margin-top: 5px;
+    }
+    
+    /* Ocultar iconos decorativos grandes si la pantalla es muy bajita */
+    .kpi-card .material-icons {
+        font-size: 24px !important; 
+        opacity: 0.5;
+    }
+}
+/* ================================================================= */
+/* === ESTILOS DEL MANUAL DE AYUDA (GUÍA DIDÁCTICA) === */
+/* ================================================================= */
+
+.manual-container {
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    color: var(--c-on-surface);
+}
+
+.manual-intro {
+    background: rgba(0, 179, 77, 0.1);
+    border-left: 4px solid #00B34D;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.manual-section {
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.manual-title {
+    color: #00B34D; /* Tu verde corporativo */
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.manual-text {
+    font-size: 0.9rem;
+    color: #cccccc;
+    margin-bottom: 10px;
+}
+
+.manual-tip {
+    font-size: 0.85rem;
+    background: #222;
+    padding: 8px 12px;
+    border-radius: 6px;
+    color: #aaa;
+    font-style: italic;
+}
+
+.manual-highlight {
+    color: white;
+    font-weight: 600;
 }
