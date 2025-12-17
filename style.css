@@ -5993,3 +5993,21 @@ input, select, textarea {
         opacity: 0.5;
     }
 }
+/* ================================================================= */
+/* === BODY LIMPIO (Sin animaciones propias) === */
+/* ================================================================= */
+
+body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    font-family: 'Inter', sans-serif;
+    
+    /* ESTO ES LO IMPORTANTE: */
+    background-color: #121820; /* Color base oscuro */
+    background-image: none !important; /* Quitamos cualquier imagen/gradiente */
+    animation: none !important; /* APAGAMOS el movimiento antiguo */
+    
+    overflow: hidden; /* Evita barras de scroll dobles */
+}
