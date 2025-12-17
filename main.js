@@ -11596,177 +11596,201 @@ const updateExtractoList = () => {
 };
 
 /* ================================================================= */
-/* === MENÚ TRES PUNTOS (Posición Exacta Debajo del Botón) === */
+/* === GESTOR DE ACCIONES DE CABECERA (Iconos Directos) === */
 /* ================================================================= */
 
 document.addEventListener('click', (e) => {
-    // 1. Detectar clic en el botón
-    const btn = e.target.closest('#header-menu-btn');
-    let menuPopover = document.getElementById('main-menu-popover');
+    // Buscamos si se ha pulsado un botón con data-action
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
 
-    // --- ABRIR MENÚ ---
-    if (btn) {
-        e.stopPropagation();
-        e.preventDefault();
+    const action = btn.dataset.action;
 
-        // 2. Autogeneración (Si no existe)
-        if (!menuPopover) {
-            menuPopover = document.createElement('div');
-            menuPopover.id = 'main-menu-popover';
-            menuPopover.className = 'popover-menu';
-            menuPopover.innerHTML = `
-                <button class="popover-menu__item" data-action="global-search">
-                    <span class="material-icons">search</span> <span>Buscar</span>
-                </button>
-                <div class="popover-menu__divider"></div>
-                <button class="popover-menu__item" data-action="navigate" data-page="ajustes-page">
-                    <span class="material-icons">settings</span> <span>Ajustes</span>
-                </button>
-                <button class="popover-menu__item" data-action="show-help-modal">
-                    <span class="material-icons">help_outline</span> <span>Ayuda</span>
-                </button>
-                <div class="popover-menu__divider"></div>
-                <button class="popover-menu__item" style="color:#ff6b6b;" data-action="logout">
-                    <span class="material-icons" style="color:#ff6b6b;">logout</span> <span>Cerrar Sesión</span>
-                </button>
-            `;
-            document.body.appendChild(menuPopover);
+    // --- ACCIÓN: BUSCAR ---
+    if (action === 'global-search') {
+        // Si tienes una función de búsqueda, llámala aquí.
+        // Si no, mostramos un aviso temporal
+        if (typeof showSearchModal === 'function') {
+            showSearchModal();
+        } 
+    }
+
+    // --- ACCIÓN: AJUSTES ---
+    if (action === 'navigate') {
+        const pageId = btn.dataset.page;
+        if (typeof navigateTo === 'function') {
+            navigateTo(pageId);
         }
+    }
 
-        // 3. CÁLCULO DE POSICIÓN (LA CLAVE)
-        // Obtenemos el rectángulo del botón (coordenadas X, Y, ancho, alto)
-        const rect = btn.getBoundingClientRect();
+    // --- ACCIÓN: CALCULADORA ---
+    if (action === 'open-calculator') {
+        const modal = document.getElementById('calculator-iframe-modal');
+        if (modal) {
+            modal.style.display = 'flex'; // Asegurar visibilidad
+            modal.classList.add('active');
+            // Recargar iframe si es necesario
+            const iframe = document.getElementById('calculator-frame');
+            if(iframe && !iframe.src) iframe.src = 'calculadora.html';
+        }
+    }
+
+    // --- ACCIÓN: CERRAR SESIÓN ---
+    if (action === 'logout') {
+        if (confirm("¿Seguro que quieres cerrar sesión?")) {
+            if (typeof firebase !== 'undefined') {
+                firebase.auth().signOut().then(() => {
+                    window.location.reload();
+                });
+            } else {
+                window.location.reload();
+            }
+        }
+    }
+});
+
+/* ================================================================= */
+/* === GESTOR MAESTRO V5 (Calculadora Independiente) === */
+/* ================================================================= */
+
+window.addEventListener('click', (e) => {
+    // 1. REGLA DE ORO: Si pulsamos DENTRO del iframe o su contenedor (y no es el botón cerrar)
+    // NO HACEMOS NADA. Dejamos que la calculadora gestione sus propios clics.
+    if (e.target.closest('#calculator-iframe-modal') && !e.target.closest('[data-action="close-modal"]')) {
+        return; 
+    }
+
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+
+    // --- A. ABRIR CALCULADORA ---
+    if (action === 'open-calculator') {
+        e.preventDefault();
+        e.stopPropagation(); // Detenemos la propagación para aislar el evento
         
-        // Calculamos:
-        // TOP: La parte de abajo del botón + 10px de margen
-        const topPos = rect.bottom + 10;
-        
-        // RIGHT: El ancho de la pantalla menos la parte derecha del botón
-        // (Esto alinea el borde derecho del menú con el borde derecho del botón)
-        const rightPos = window.innerWidth - rect.right;
+        const modal = document.getElementById('calculator-iframe-modal');
+        const iframe = document.getElementById('calculator-frame');
 
-        // Aplicamos coordenadas exactas
-        menuPopover.style.top = `${topPos}px`;
-        menuPopover.style.right = `${rightPos}px`;
-        
-        // (Opcional) Aseguramos que transform-origin sea la esquina superior derecha
-        menuPopover.style.transformOrigin = 'top right';
+        if (modal && iframe) {
+            console.log("🧮 Iniciando App Calculadora...");
+            
+            // Cargar archivo si está vacío
+            if (!iframe.getAttribute('src') || iframe.getAttribute('src') === '') {
+                iframe.src = 'calculadora.html';
+            }
 
-        // 4. MOSTRAR
-        requestAnimationFrame(() => {
-            menuPopover.classList.toggle('popover-menu--visible');
-        });
+            // ABRIR VISUALMENTE
+            modal.style.display = 'flex';
+            // Pequeño timeout para asegurar que el display:flex se aplica antes de la opacidad
+            setTimeout(() => {
+                modal.classList.add('active');
+                modal.style.opacity = '1';
+                modal.style.pointerEvents = 'auto'; // Forzamos interactividad JS
+                
+                // TRUCO FINAL: Darle el foco al iframe para que funcione el teclado
+                iframe.focus();
+                if (iframe.contentWindow) iframe.contentWindow.focus();
+            }, 10);
 
-        if (typeof hapticFeedback === 'function') hapticFeedback('light');
+        } else {
+            alert("Error: No se encuentra el modal de la calculadora.");
+        }
         return;
     }
 
-    // --- CERRAR MENÚ (Clic fuera) ---
-    if (menuPopover && menuPopover.classList.contains('popover-menu--visible')) {
-        if (!e.target.closest('#main-menu-popover')) {
-            menuPopover.classList.remove('popover-menu--visible');
-        }
-    }
-});
-
-/* ================================================================= */
-/* === MANUAL DE AYUDA (Versión Final corregida) === */
-/* ================================================================= */
-
-// 1. EL CONTENIDO
-const getManualContent = () => {
-    return `
-        <div class="manual-section" style="margin-bottom: 25px;">
-            <div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:20px;">
-                <div style="background:rgba(0, 179, 77, 0.2); padding:8px; border-radius:50%;">
-                    <span class="material-icons" style="color:#00B34D; font-size: 28px;">school</span>
-                </div>
-                <div>
-                    <h2 style="margin:0; font-size:1.3rem; color: white;">Manual aiDANaI</h2>
-                    <span style="font-size:0.8rem; opacity:0.7;">Tu guía financiera</span>
-                </div>
-            </div>
-            
-            <p class="manual-text" style="font-size: 1rem; line-height: 1.6;"><strong>¡Bienvenido!</strong> Esta app está diseñada para que controles tu dinero con el mínimo esfuerzo. Aquí tienes lo esencial:</p>
-        </div>
-
-        <div class="manual-section" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-            <h3 class="manual-title" style="color:#00B34D; margin-top:0; display:flex; align-items:center; gap:8px;">
-                <span class="material-icons">add_circle</span> El Botón Central (+)
-            </h3>
-            <p style="margin-bottom:10px; font-size: 0.9rem; opacity: 0.9;">Al pulsarlo, despliegas las 3 acciones clave:</p>
-            <ul style="padding-left: 20px; line-height: 1.8; margin: 0;">
-                <li>🔴 <strong style="color: #ff6b6b;">Gasto:</strong> Dinero que pierdes (Supermercado, Ocio).</li>
-                <li>🟢 <strong style="color: #4cd964;">Ingreso:</strong> Dinero que ganas (Nómina, Ventas).</li>
-                <li>🔵 <strong style="color: #5ac8fa;">Traspaso:</strong> Movimiento neutro entre tus cuentas (ej: de Banco a Ahorro). No afecta a tu total.</li>
-            </ul>
-        </div>
-
-        <div class="manual-section" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px;">
-            <h3 class="manual-title" style="color:#00B34D; margin-top:0; display:flex; align-items:center; gap:8px;">
-                <span class="material-icons">query_stats</span> Extracto Global
-            </h3>
-            <p style="margin:0; font-size: 0.9rem; opacity: 0.9;">
-                ¿Quieres ver todo tu historial junto? Ve a la pestaña <strong>Patrimonio</strong> y pulsa sobre la <strong>Tarjeta de Patrimonio Neto</strong> (la grande de arriba).
-            </p>
-        </div>
-        
-        <div style="text-align:center; margin-top:30px; opacity:0.5; font-size:0.8rem;">
-            aiDANaI-ctas v3.1
-        </div>
-    `;
-};
-
-// 2. ESCUCHADOR DE EVENTOS
-document.addEventListener('click', (e) => {
-    // Detectamos clic en "Ayuda / Manual"
-    const helpBtn = e.target.closest('[data-action="show-help-modal"]');
-    
-    if (helpBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation(); // Detiene otros scripts duplicados
-
-        // A. CERRAR EL MENÚ DE TRES PUNTOS (Ocultarlo visualmente)
-        const menuPopover = document.getElementById('main-menu-popover');
-        if (menuPopover) {
-            menuPopover.classList.remove('popover-menu--visible');
-            menuPopover.style.display = 'none'; // Forzamos desaparición
-            // Lo reactivamos discretamente después para que funcione la próxima vez
-            setTimeout(() => { menuPopover.style.display = ''; }, 300);
-        }
-
-        // B. ABRIR EL MODAL DE AYUDA
-        const modal = document.getElementById('help-modal');
-        const content = document.getElementById('help-modal-content');
-
-        if (modal && content) {
-            // 1. Inyectar contenido
-            content.innerHTML = getManualContent();
-            
-            // 2. FORZAR VISIBILIDAD (La clave es el Z-Index altísimo)
-            modal.style.cssText = `
-                display: flex !important;
-                opacity: 1 !important;
-                visibility: visible !important;
-                z-index: 99999 !important; /* POR ENCIMA DE TODO */
-                background-color: rgba(0,0,0,0.9) !important;
-            `;
-            
-            modal.classList.add('active');
-            
-        } else {
-            console.error("Falta el div id='help-modal' en index.html");
-        }
-    }
-    
-    // DETECTAR CLIC EN CERRAR (X) o BOTÓN INFERIOR
-    const closeBtn = e.target.closest('[data-action="close-modal"]');
-    if (closeBtn && closeBtn.dataset.modalId === 'help-modal') {
-        const modal = document.getElementById('help-modal');
+    // --- B. CERRAR CALCULADORA ---
+    if (action === 'close-modal') {
+        const modalId = btn.dataset.modalId;
+        const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.remove('active');
-            modal.style.display = 'none'; // Ocultar
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300); // Esperar a la animación de cierre
+        }
+        return;
+    }
+
+    // --- C. OTRAS ACCIONES (Header) ---
+    if (action === 'navigate') {
+        const page = btn.dataset.page;
+        if (typeof navigateTo === 'function') navigateTo(page);
+    }
+    
+    if (action === 'logout') {
+        if (confirm("¿Cerrar sesión?")) {
+            if (typeof firebase !== 'undefined') firebase.auth().signOut().then(() => window.location.reload());
+            else window.location.reload();
         }
     }
 });
+/* ================================================================= */
+/* === GENERADOR DE ESPACIO PROFUNDO (Deep Space Engine) === */
+/* ================================================================= */
+
+(function initSpaceBackground() {
+    // Solo ejecutar si estamos en pantalla grande (ahorro de recursos)
+    if (window.innerWidth < 600) return;
+
+    const container = document.getElementById('deep-space-background');
+    if (!container) return;
+
+    console.log("🌌 Iniciando motores de hiperespacio...");
+
+    // Función para crear una capa de estrellas
+    const createLayer = (count, size, duration, opacity) => {
+        const layer = document.createElement('div');
+        layer.className = 'star-layer';
+        
+        let shadows = [];
+        // Generamos coordenadas aleatorias basadas en el ancho TOTAL de la pantalla
+        for (let i = 0; i < count; i++) {
+            const x = Math.floor(Math.random() * window.innerWidth);
+            const y = Math.floor(Math.random() * window.innerHeight * 2); // *2 para el scroll
+            shadows.push(`${x}px ${y}px #FFF`);
+        }
+
+        // Aplicamos los estilos
+        layer.style.width = size;
+        layer.style.height = size;
+        layer.style.opacity = opacity;
+        layer.style.boxShadow = shadows.join(',');
+        layer.style.animation = `moveStars ${duration}s linear infinite`;
+
+        // Creamos el duplicado para el loop infinito (efecto parallax)
+        const after = document.createElement('div');
+        after.className = 'star-layer';
+        after.style.width = size;
+        after.style.height = size;
+        after.style.opacity = opacity;
+        after.style.boxShadow = shadows.join(',');
+        after.style.animation = `moveStars ${duration}s linear infinite`;
+        after.style.top = '2000px'; // Desplazamiento para el loop
+
+        container.appendChild(layer);
+        container.appendChild(after);
+    };
+
+    // CAPA 1: Estrellas lejanas (Muchas, pequeñas, lentas)
+    createLayer(700, '1px', 100, 0.6);
+
+    // CAPA 2: Estrellas medias (Menos, un poco más grandes)
+    createLayer(200, '2px', 70, 0.8);
+
+    // CAPA 3: Estrellas cercanas (Pocas, brillantes, rápidas)
+    createLayer(100, '3px', 40, 1);
+
+    // Recalcular si se cambia el tamaño de la ventana (Opcional, para perfeccionistas)
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 600) {
+            container.innerHTML = ''; // Limpiar
+            createLayer(700, '1px', 100, 0.6);
+            createLayer(200, '2px', 70, 0.8);
+            createLayer(100, '3px', 40, 1);
+        }
+    });
+
+})();
