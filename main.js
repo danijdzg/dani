@@ -1408,7 +1408,7 @@ async function loadCoreData(uid) {
         db.config = doc.exists && doc.data().config ? doc.data().config : getInitialDb().config;
         localStorage.setItem('skipIntro', (db.config && db.config.skipIntro) || 'false');
         loadConfig();
-		
+		updateLedgerButtonUI();
     }, error => console.error("Error escuchando la configuración del usuario: ", error));
     unsubscribeListeners.push(unsubConfig);
     
@@ -1900,7 +1900,6 @@ const formatCurrencyHTML = (numInCents) => {
     // Intenta obtener el nombre personalizado, si no existe, usa "Caja X"
     return db.config?.ledgerNames?.[letter] || `Caja ${letter}`;
 };
-
 /* --- HELPER: Convierte HEX a RGBA para los gradientes --- */
 const hexToRgba = (hex, alpha) => {
     let r = 0, g = 0, b = 0;
@@ -9355,7 +9354,12 @@ const handleStart = (e) => {
     // 3. Actualizar UI Visual
     document.body.dataset.ledgerMode = currentLedger;
     
-       
+    // ▼▼▼ AQUÍ ESTABA EL ERROR (CORREGIDO) ▼▼▼
+    // Simplemente llamamos a la función auxiliar que ya creamos.
+    // Ella se encarga de buscar el botón y cambiar el texto.
+    updateLedgerButtonUI(); 
+    // ▲▲▲ FIN DE LA CORRECCIÓN ▲▲▲
+    
     // Mensaje informativo usando el nombre real
     showToast(`Cambiado a ${getLedgerName(currentLedger)}.`, 'info');
 
@@ -11777,33 +11781,70 @@ document.addEventListener('DOMContentLoaded', () => {
     const observer = new MutationObserver(() => updateLedgerButtonUI());
     observer.observe(document.body, { attributes: true, attributeFilter: ['data-ledger-mode'] });
 });
+/* ================================================================= */
+/* === GENERADOR DE ESPACIO PROFUNDO (Deep Space Engine) === */
+/* ================================================================= */
 
-/* ================================================================= */
-/* === FONDO ESPACIAL (DEEP SPACE) === */
-/* ================================================================= */
 (function initSpaceBackground() {
+    // Solo ejecutar si estamos en pantalla grande (ahorro de recursos)
     if (window.innerWidth < 600) return;
+
     const container = document.getElementById('deep-space-background');
     if (!container) return;
 
+    console.log("🌌 Iniciando motores de hiperespacio...");
+
+    // Función para crear una capa de estrellas
     const createLayer = (count, size, duration, opacity) => {
         const layer = document.createElement('div');
         layer.className = 'star-layer';
+        
         let shadows = [];
+        // Generamos coordenadas aleatorias basadas en el ancho TOTAL de la pantalla
         for (let i = 0; i < count; i++) {
             const x = Math.floor(Math.random() * window.innerWidth);
-            const y = Math.floor(Math.random() * window.innerHeight * 2);
+            const y = Math.floor(Math.random() * window.innerHeight * 2); // *2 para el scroll
             shadows.push(`${x}px ${y}px #FFF`);
         }
-        layer.style.width = size; layer.style.height = size; layer.style.opacity = opacity;
+
+        // Aplicamos los estilos
+        layer.style.width = size;
+        layer.style.height = size;
+        layer.style.opacity = opacity;
         layer.style.boxShadow = shadows.join(',');
         layer.style.animation = `moveStars ${duration}s linear infinite`;
-        
-        const after = layer.cloneNode(true);
-        after.style.top = '2000px';
-        container.appendChild(layer); container.appendChild(after);
+
+        // Creamos el duplicado para el loop infinito (efecto parallax)
+        const after = document.createElement('div');
+        after.className = 'star-layer';
+        after.style.width = size;
+        after.style.height = size;
+        after.style.opacity = opacity;
+        after.style.boxShadow = shadows.join(',');
+        after.style.animation = `moveStars ${duration}s linear infinite`;
+        after.style.top = '2000px'; // Desplazamiento para el loop
+
+        container.appendChild(layer);
+        container.appendChild(after);
     };
+
+    // CAPA 1: Estrellas lejanas (Muchas, pequeñas, lentas)
     createLayer(700, '1px', 100, 0.6);
+
+    // CAPA 2: Estrellas medias (Menos, un poco más grandes)
     createLayer(200, '2px', 70, 0.8);
+
+    // CAPA 3: Estrellas cercanas (Pocas, brillantes, rápidas)
     createLayer(100, '3px', 40, 1);
+
+    // Recalcular si se cambia el tamaño de la ventana (Opcional, para perfeccionistas)
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 600) {
+            container.innerHTML = ''; // Limpiar
+            createLayer(700, '1px', 100, 0.6);
+            createLayer(200, '2px', 70, 0.8);
+            createLayer(100, '3px', 40, 1);
+        }
+    });
+
 })();
