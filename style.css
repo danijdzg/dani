@@ -1780,29 +1780,28 @@ body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
 /* EN style.css - PEGA ESTE BLOQUE AL FINAL */
 /* === INICIO: Estilos para el Menú Desplegable === */
 .popover-menu {
-    position: fixed;
-    top: 52px; /* Justo debajo de la barra superior */
-    right: 12px;
-    z-index: 1100; /* Muy alto para que esté por encima de todo */
-    background-color: var(--c-surface-variant);
-    border-radius: var(--border-radius-md);
-    border: 1px solid var(--c-outline);
-    box-shadow: var(--shadow-md);
-    width: 220px;
-    padding: var(--sp-2);
+    position: absolute;
+    top: 100%; /* Empieza justo donde termina el encabezado */
+    right: 8px; /* Un pequeño margen desde la derecha para que no se pegue al borde */
     
-    /* Magia para ocultar/mostrar con una animación suave */
-    opacity: 0;
-    transform: translateY(-10px) scale(0.95);
-    transform-origin: top right;
-    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-    pointer-events: none; /* No se puede hacer clic cuando está oculto */
+    /* Aseguramos que esté encima de todo */
+    z-index: 1000;
+    
+    /* Estilos visuales (mantén los que ya tengas, esto es un ejemplo base) */
+    background-color: var(--c-surface); /* O el color de fondo de tus menús */
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    min-width: 180px;
+    
+    /* Estado inicial oculto */
+    display: none; 
+    flex-direction: column;
 }
 
+/* Esta clase ya deberías tenerla o la usa el JS para mostrarlo */
 .popover-menu--visible {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    pointer-events: auto;
+    display: flex;
+    animation: pop-in 0.2s ease-out forwards;
 }
 
 .popover-menu__item {
