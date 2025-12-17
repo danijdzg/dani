@@ -11650,13 +11650,14 @@ document.addEventListener('click', (e) => {
 });
 
 /* ================================================================= */
-/* === GESTOR MAESTRO V5 (Calculadora Independiente) === */
+/* === GESTOR MAESTRO DE EVENTOS Y UI (Versión Limpia) === */
 /* ================================================================= */
 
 window.addEventListener('click', (e) => {
-    // 1. REGLA DE ORO: Si pulsamos DENTRO del iframe o su contenedor (y no es el botón cerrar)
-    // NO HACEMOS NADA. Dejamos que la calculadora gestione sus propios clics.
-    if (e.target.closest('#calculator-iframe-modal') && !e.target.closest('[data-action="close-modal"]')) {
+    // 1. REGLA DE ORO: EXCEPCIONES DE INTERACCIÓN
+    // Si pulsamos dentro de la Ayuda o Calculadora (y no es cerrar), NO hacemos nada.
+    if ((e.target.closest('#calculator-iframe-modal') || e.target.closest('#help-modal')) 
+        && !e.target.closest('[data-action="close-modal"]')) {
         return; 
     }
 
@@ -11664,190 +11665,162 @@ window.addEventListener('click', (e) => {
     if (!btn) return;
 
     const action = btn.dataset.action;
-	// --- NUEVO: CAMBIAR CAJA AL PULSAR EL BOTÓN ---
+
+    // --- A. CAMBIAR CAJA (TOGGLE LEDGER) ---
     if (action === 'toggle-ledger') {
-        // 1. Calcular la siguiente caja
         const modes = ['A', 'B', 'C'];
         let current = document.body.getAttribute('data-ledger-mode') || 'A';
         let currentIndex = modes.indexOf(current);
         let nextIndex = (currentIndex + 1) % modes.length;
         let nextMode = modes[nextIndex];
 
-        // 2. Aplicar el cambio
+        // Cambiar atributo y actualizar UI
         document.body.setAttribute('data-ledger-mode', nextMode);
-        
-        // 3. Guardar en variable global (si la usas en otros sitios)
         if (typeof currentLedger !== 'undefined') currentLedger = nextMode;
-
-        // 4. Actualizar interfaz
-        updateLedgerButtonUI();
         
-        // 5. Feedback al usuario
-        hapticFeedback('medium');
+        updateLedgerButtonUI(); // Actualizar texto del botón
         
-        // 6. Recargar datos (IMPORTANTE: Llama a tu función de recarga)
+        // Feedback
+        if(typeof hapticFeedback === 'function') hapticFeedback('medium');
+        
+        // Recargar datos (importante para que cambien los números)
         if (typeof loadData === 'function') loadData(); 
         else if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
         
         return;
     }
 
-    // --- A. ABRIR CALCULADORA ---
-    if (action === 'open-calculator') {
-        e.preventDefault();
-        e.stopPropagation(); // Detenemos la propagación para aislar el evento
-        
-        const modal = document.getElementById('calculator-iframe-modal');
-        const iframe = document.getElementById('calculator-frame');
+    // --- B. ABRIR AYUDA (MANUAL) ---
+    if (action === 'open-help') {
+        const modal = document.getElementById('help-modal');
+        const contentDiv = document.getElementById('help-modal-content');
 
-        if (modal && iframe) {
-            console.log("🧮 Iniciando App Calculadora...");
-            
-            // Cargar archivo si está vacío
-            if (!iframe.getAttribute('src') || iframe.getAttribute('src') === '') {
-                iframe.src = 'calculadora.html';
-            }
+        if (modal && contentDiv) {
+            contentDiv.innerHTML = `
+                <style>
+                    .academy-intro { text-align: center; margin-bottom: 30px; }
+                    .academy-badge { font-size: 50px; display: block; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
+                    .academy-module { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); }
+                    .module-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+                    .module-icon { font-size: 28px; color: #00B34D; }
+                    .academy-text { font-size: 0.95rem; color: #ccc; line-height: 1.6; margin-bottom: 10px; }
+                    .academy-example { background: rgba(0, 179, 77, 0.1); border-left: 3px solid #00B34D; padding: 10px 15px; margin: 15px 0; font-size: 0.9rem; color: #ddd; border-radius: 0 8px 8px 0; }
+                    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+                </style>
 
-            // ABRIR VISUALMENTE
+                <div class="manual-container">
+                    <div class="academy-intro">
+                        <span class="academy-badge">👨‍🚀</span>
+                        <h2 style="color: #00B34D; margin-bottom: 5px;">Academia aiDANaI</h2>
+                        <p class="academy-text">Manual de supervivencia financiera.</p>
+                    </div>
+                    <div class="academy-module">
+                        <div class="module-header"><span class="material-icons module-icon">dashboard</span><h3 style="margin:0; color:white;">Panel de Mando</h3></div>
+                        <p class="academy-text">Controla tus Ingresos (verde) y Gastos (rojo). Mantén tu tasa de ahorro positiva.</p>
+                    </div>
+                    <div class="academy-module">
+                        <div class="module-header"><span class="material-icons module-icon">dns</span><h3 style="margin:0; color:white;">Sistema de Cajas</h3></div>
+                        <p class="academy-text">¡NUEVO! Pulsa el botón superior para cambiar de contabilidad:</p>
+                        <ul style="color:#ccc; padding-left:20px; margin-top:5px;">
+                            <li><strong style="color:#00B34D">Caja A:</strong> Personal / Principal</li>
+                            <li><strong style="color:#FF9F00">Caja B:</strong> Ahorros / Pareja</li>
+                            <li><strong style="color:#00D4FF">Caja C:</strong> Extra / Proyectos</li>
+                        </ul>
+                    </div>
+                    <div class="academy-footer" style="text-align:center; opacity:0.6; margin-top:30px;">Fin de la transmisión 🚀</div>
+                </div>
+            `;
             modal.style.display = 'flex';
-            // Pequeño timeout para asegurar que el display:flex se aplica antes de la opacidad
-            setTimeout(() => {
-                modal.classList.add('active');
-                modal.style.opacity = '1';
-                modal.style.pointerEvents = 'auto'; // Forzamos interactividad JS
-                
-                // TRUCO FINAL: Darle el foco al iframe para que funcione el teclado
-                iframe.focus();
-                if (iframe.contentWindow) iframe.contentWindow.focus();
-            }, 10);
-
-        } else {
-            alert("Error: No se encuentra el modal de la calculadora.");
+            setTimeout(() => { modal.classList.add('active'); modal.style.opacity = '1'; }, 10);
         }
         return;
     }
 
-    // --- B. CERRAR CALCULADORA ---
+    // --- C. CALCULADORA ---
+    if (action === 'open-calculator') {
+        const modal = document.getElementById('calculator-iframe-modal');
+        const iframe = document.getElementById('calculator-frame');
+        if (modal && iframe) {
+            if (!iframe.getAttribute('src')) iframe.src = 'calculadora.html';
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('active'); modal.style.opacity = '1'; iframe.focus();
+            }, 10);
+        }
+        return;
+    }
+
+    // --- D. CERRAR MODALES ---
     if (action === 'close-modal') {
         const modalId = btn.dataset.modalId;
         const modal = document.getElementById(modalId);
         if (modal) {
-            modal.classList.remove('active');
-            modal.style.opacity = '0';
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300); // Esperar a la animación de cierre
+            modal.classList.remove('active'); modal.style.opacity = '0';
+            setTimeout(() => modal.style.display = 'none', 300);
         }
         return;
     }
 
-    // --- C. OTRAS ACCIONES (Header) ---
-    if (action === 'navigate') {
-        const page = btn.dataset.page;
-        if (typeof navigateTo === 'function') navigateTo(page);
-    }
-    
+    // --- E. NAVEGACIÓN Y OTROS ---
+    if (action === 'navigate' && typeof navigateTo === 'function') navigateTo(btn.dataset.page);
     if (action === 'logout') {
-        if (confirm("¿Cerrar sesión?")) {
-            if (typeof firebase !== 'undefined') firebase.auth().signOut().then(() => window.location.reload());
-            else window.location.reload();
-        }
+        if(confirm("¿Cerrar sesión?")) typeof firebase!=='undefined' ? firebase.auth().signOut().then(()=>location.reload()) : location.reload();
     }
 });
-/* ================================================================= */
-/* === FUNCIÓN PARA ACTUALIZAR EL BOTÓN DEL ENCABEZADO === */
-/* ================================================================= */
 
+/* ================================================================= */
+/* === FUNCIÓN ÚNICA: ACTUALIZAR BOTÓN DE CAJA === */
+/* ================================================================= */
 function updateLedgerButtonUI() {
     const btnText = document.getElementById('ledger-btn-text');
     if (!btnText) return;
 
-    // 1. Detectar modo actual
     const mode = document.body.getAttribute('data-ledger-mode') || 'A';
-
-    // 2. Definir nombres (Intenta leer de la configuración guardada si existe)
+    
+    // Nombres por defecto
     let names = { A: "Caja Personal", B: "Caja Ahorros", C: "Caja Extra" };
     
+    // Intentar cargar nombres personalizados
     if (typeof db !== 'undefined' && db.config && db.config.ledgerNames) {
         names = db.config.ledgerNames;
     }
 
-    // 3. Poner el texto
     btnText.textContent = names[mode] || `Caja ${mode}`;
 }
 
-// Inicializar al cargar la página
+// Inicializar botón y observador
 document.addEventListener('DOMContentLoaded', () => {
     updateLedgerButtonUI();
-    
-    // Vigilante por si el modo cambia desde otro sitio (ej: Ajustes)
     const observer = new MutationObserver(() => updateLedgerButtonUI());
     observer.observe(document.body, { attributes: true, attributeFilter: ['data-ledger-mode'] });
 });
-/* ================================================================= */
-/* === GENERADOR DE ESPACIO PROFUNDO (Deep Space Engine) === */
-/* ================================================================= */
 
+/* ================================================================= */
+/* === FONDO ESPACIAL (DEEP SPACE) === */
+/* ================================================================= */
 (function initSpaceBackground() {
-    // Solo ejecutar si estamos en pantalla grande (ahorro de recursos)
     if (window.innerWidth < 600) return;
-
     const container = document.getElementById('deep-space-background');
     if (!container) return;
 
-    console.log("🌌 Iniciando motores de hiperespacio...");
-
-    // Función para crear una capa de estrellas
     const createLayer = (count, size, duration, opacity) => {
         const layer = document.createElement('div');
         layer.className = 'star-layer';
-        
         let shadows = [];
-        // Generamos coordenadas aleatorias basadas en el ancho TOTAL de la pantalla
         for (let i = 0; i < count; i++) {
             const x = Math.floor(Math.random() * window.innerWidth);
-            const y = Math.floor(Math.random() * window.innerHeight * 2); // *2 para el scroll
+            const y = Math.floor(Math.random() * window.innerHeight * 2);
             shadows.push(`${x}px ${y}px #FFF`);
         }
-
-        // Aplicamos los estilos
-        layer.style.width = size;
-        layer.style.height = size;
-        layer.style.opacity = opacity;
+        layer.style.width = size; layer.style.height = size; layer.style.opacity = opacity;
         layer.style.boxShadow = shadows.join(',');
         layer.style.animation = `moveStars ${duration}s linear infinite`;
-
-        // Creamos el duplicado para el loop infinito (efecto parallax)
-        const after = document.createElement('div');
-        after.className = 'star-layer';
-        after.style.width = size;
-        after.style.height = size;
-        after.style.opacity = opacity;
-        after.style.boxShadow = shadows.join(',');
-        after.style.animation = `moveStars ${duration}s linear infinite`;
-        after.style.top = '2000px'; // Desplazamiento para el loop
-
-        container.appendChild(layer);
-        container.appendChild(after);
+        
+        const after = layer.cloneNode(true);
+        after.style.top = '2000px';
+        container.appendChild(layer); container.appendChild(after);
     };
-
-    // CAPA 1: Estrellas lejanas (Muchas, pequeñas, lentas)
     createLayer(700, '1px', 100, 0.6);
-
-    // CAPA 2: Estrellas medias (Menos, un poco más grandes)
     createLayer(200, '2px', 70, 0.8);
-
-    // CAPA 3: Estrellas cercanas (Pocas, brillantes, rápidas)
     createLayer(100, '3px', 40, 1);
-
-    // Recalcular si se cambia el tamaño de la ventana (Opcional, para perfeccionistas)
-    window.addEventListener('resize', () => {
-        if (window.innerWidth >= 600) {
-            container.innerHTML = ''; // Limpiar
-            createLayer(700, '1px', 100, 0.6);
-            createLayer(200, '2px', 70, 0.8);
-            createLayer(100, '3px', 40, 1);
-        }
-    });
-
 })();
