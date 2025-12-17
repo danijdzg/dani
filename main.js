@@ -11634,65 +11634,145 @@ document.addEventListener('click', (e) => {
             if(iframe && !iframe.src) iframe.src = 'calculadora.html';
         }
     }
-	/* ================================================================= */
-    /* === MANUAL DE AYUDA (NUEVO CÓDIGO) === */
+/* ================================================================= */
+    /* === MANUAL DEL COMANDANTE (GUÍA DEFINITIVA LÚDICA) === */
     /* ================================================================= */
     if (action === 'open-help') {
         const modal = document.getElementById('help-modal');
         const contentDiv = document.getElementById('help-modal-content');
 
         if (modal && contentDiv) {
-            // Contenido HTML del Manual
             contentDiv.innerHTML = `
+                <style>
+                    /* Estilos exclusivos para este manual */
+                    .academy-intro { text-align: center; margin-bottom: 30px; }
+                    .academy-badge { font-size: 50px; display: block; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
+                    .academy-module { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); }
+                    .module-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+                    .module-icon { font-size: 28px; color: #00B34D; }
+                    .module-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0; }
+                    .academy-text { font-size: 0.95rem; color: #ccc; line-height: 1.6; margin-bottom: 10px; }
+                    .academy-example { background: rgba(0, 179, 77, 0.1); border-left: 3px solid #00B34D; padding: 10px 15px; margin: 15px 0; font-size: 0.9rem; color: #ddd; border-radius: 0 8px 8px 0; }
+                    .key-feature { display: flex; align-items: start; gap: 10px; margin-top: 15px; }
+                    .key-icon { background: #222; border-radius: 50%; padding: 5px; font-size: 16px; color: #00B34D; min-width: 26px; text-align: center; }
+                    .academy-footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); color: #666; font-size: 0.8rem; }
+                    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+                </style>
+
                 <div class="manual-container">
-                    <div class="manual-intro">
-                        <h3>👋 ¡Bienvenido a bordo, Capitán!</h3>
-                        <p>Estás en <strong>aiDANaI-ctas</strong>, tu nave espacial financiera. Aquí no solo apuntamos gastos, ¡construimos tu futuro! Relájate, que te explico cómo pilotar esto en 2 minutos.</p>
+                    
+                    <div class="academy-intro">
+                        <span class="academy-badge">👨‍🚀</span>
+                        <h2 style="color: #00B34D; margin-bottom: 5px;">Academia aiDANaI</h2>
+                        <p class="academy-text">Manual de supervivencia financiera para astronautas modernos.</p>
                     </div>
 
-                    <div class="manual-section">
-                        <div class="manual-title">📊 El Panel de Mando (Tu Dashboard)</div>
-                        <p class="manual-text">Es la primera pantalla que ves. Aquí tienes la verdad, toda la verdad y nada más que la verdad:</p>
-                        <ul style="padding-left: 20px; font-size: 0.9rem; color:#ccc; list-style-type: disc;">
-                            <li><strong>Ingresos:</strong> Todo lo que entra en tu bolsillo (nóminas, regalos...).</li>
-                            <li><strong>Gastos:</strong> Doloroso, pero necesario. Lo que sale para no volver.</li>
-                            <li><strong>Tasa de Ahorro:</strong> <span class="manual-highlight">¡El dato estrella!</span> Si está en verde, ¡felicidades! Gastas menos de lo que ganas.</li>
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">dashboard</span>
+                            <h3 class="module-title">Módulo 1: El Puente de Mando</h3>
+                        </div>
+                        <p class="academy-text">Al entrar, verás 4 tarjetas. Son tus constantes vitales. Si todas están en verde, la nave vuela sola. Si hay rojo... ¡peligro!</p>
+                        
+                        <div class="key-feature">
+                            <span class="material-icons key-icon">arrow_upward</span>
+                            <div>
+                                <strong style="color:white">Ingresos:</strong>
+                                <span style="font-size:0.9rem; color:#aaa">Todo el combustible que entra. Nóminas, bizums de amigos, lotería...</span>
+                            </div>
+                        </div>
+                        <div class="key-feature">
+                            <span class="material-icons key-icon" style="color:#ff4444">arrow_downward</span>
+                            <div>
+                                <strong style="color:white">Gastos:</strong>
+                                <span style="font-size:0.9rem; color:#aaa">Meteoritos que impactan en tu nave. Comida, luz, caprichos...</span>
+                            </div>
+                        </div>
+                        <div class="key-feature">
+                            <span class="material-icons key-icon" style="color:#00f2ff">savings</span>
+                            <div>
+                                <strong style="color:white">Tasa de Ahorro:</strong>
+                                <span style="font-size:0.9rem; color:#aaa">El dato más importante. Si ganas 1000€ y te sobran 200€, tu tasa es del 20%. ¡Intenta mantenerla siempre positiva!</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">add_circle</span>
+                            <h3 class="module-title">Módulo 2: Bitácora del Capitán</h3>
+                        </div>
+                        <p class="academy-text">¿Ves el botón flotante <strong>(+)</strong> abajo a la derecha? Es el botón que más vas a usar. Púlsalo para registrar movimientos.</p>
+                        
+                        <div class="academy-example">
+                            <strong>📝 Ejemplo Práctico:</strong><br>
+                            Acabas de comprar pan y leche. 
+                            1. Pulsas <strong>(+)</strong>.
+                            2. Eliges <strong>"Gasto"</strong> (rojo).
+                            3. Pones <strong>"3.50"</strong> en la cantidad.
+                            4. Escribes <strong>"Compra súper"</strong> en concepto.
+                            5. ¡Listo! Ya está restado de tu saldo.
+                        </div>
+
+                        <p class="academy-text" style="margin-top:15px"><strong>¿Qué es un Traspaso? 🔄</strong><br>
+                        Es mover dinero de tu bolsillo izquierdo al derecho. Por ejemplo: Sacar dinero del cajero. No eres más rico ni más pobre, solo has movido el dinero de sitio. Úsalo para eso.</p>
+                    </div>
+
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">rocket_launch</span>
+                            <h3 class="module-title">Módulo 3: Supercomputadora</h3>
+                        </div>
+                        <p class="academy-text">Arriba tienes un icono de calculadora <span class="material-icons" style="font-size:16px">calculate</span>. No es una calculadora normal, tiene conexión directa con los mercados interestelares.</p>
+                        <ul style="padding-left: 20px; color:#ccc; font-size:0.9rem; margin-top:5px;">
+                            <li>🧮 <strong>Modo Estándar:</strong> Sumar, restar... lo clásico.</li>
+                            <li>₿ <strong>Modo Crypto:</strong> Pulsa la pestaña "Crypto" y verás el precio en tiempo real de Bitcoin, Ethereum, Solana, XRP y BNB.</li>
                         </ul>
+                        <div class="academy-example">
+                            <strong>💡 Truco:</strong> Toca cualquier criptomoneda para ver su gráfica de evolución de precios. ¡Siéntete como un lobo de Wall Street!
+                        </div>
                     </div>
 
-                    <div class="manual-section">
-                        <div class="manual-title">💸 El Botón Mágico (+)</div>
-                        <p class="manual-text">¿Ves ese botón flotante con un <strong>+</strong> abajo a la derecha? Es tu mejor amigo.</p>
-                        <p class="manual-text">Úsalo para apuntar cualquier movimiento. Elige si es Ingreso, Gasto o Traspaso, pon la cantidad y ¡listo! La app hace el resto.</p>
-                        <div class="manual-tip">💡 <strong>Truco Pro:</strong> Usa las categorías para saber luego si gastas mucho en "Cenas" o "Ropa".</div>
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">search</span>
+                            <h3 class="module-title">Módulo 4: El Radar (Buscador)</h3>
+                        </div>
+                        <p class="academy-text">¿No recuerdas si pagaste el seguro del coche? ¿Quieres saber cuánto te has gastado en "Cervezas" este año?</p>
+                        <p class="academy-text">Usa la lupa <span class="material-icons" style="font-size:16px">search</span> en el encabezado. Escribe cualquier palabra y la app rastreará todo tu historial en milisegundos para encontrar al culpable.</p>
                     </div>
 
-                    <div class="manual-section">
-                        <div class="manual-title">🚀 La Calculadora Espacial</div>
-                        <p class="manual-text">Toca el icono de la calculadora <span class="material-icons" style="font-size:14px; vertical-align:middle;">calculate</span> arriba.</p>
-                        <p class="manual-text">No es una calculadora normal. Es una <strong>Super Computadora</strong> que también te dice el precio de Bitcoin, Ethereum y BNB en tiempo real.</p>
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">install_mobile</span>
+                            <h3 class="module-title">Módulo 5: Instalación en Nave</h3>
+                        </div>
+                        <p class="academy-text">Esta aplicación es una <strong>PWA</strong> (Progressive Web App). Significa que puedes instalarla como una app nativa sin pasar por la tienda.</p>
+                        <div class="key-feature">
+                            <span class="material-icons key-icon">android</span>
+                            <div><strong style="color:white">Android:</strong> Abre el menú de Chrome (3 puntos) y pulsa "Instalar aplicación" o "Añadir a pantalla de inicio".</div>
+                        </div>
+                        <div class="key-feature">
+                            <span class="material-icons key-icon">apple</span>
+                            <div><strong style="color:white">iPhone/iPad:</strong> Pulsa el botón "Compartir" de Safari (cuadrado con flecha) y busca "Añadir a la pantalla de inicio".</div>
+                        </div>
                     </div>
 
-                    <div class="manual-section">
-                        <div class="manual-title">🕵️‍♂️ El Detective (Buscador)</div>
-                        <p class="manual-text">¿No recuerdas un pago? Dale a la lupa <span class="material-icons" style="font-size:14px; vertical-align:middle;">search</span>.</p>
-                        <p class="manual-text">Escribe "seguro" o "Mercadona" y aparecerán todos los movimientos al instante.</p>
-                    </div>
-
-                    <div style="text-align:center; margin-top:30px; font-size: 0.8rem; opacity: 0.6;">
-                        <em>Hecho con ❤️ para que tus cuentas cuadren.</em>
+                    <div class="academy-footer">
+                        Fin de la transmisión.<br>
+                        ¡Buena suerte en tu viaje financiero, Capitán! 🚀
                     </div>
                 </div>
             `;
 
-            // Abrir el modal con animación
+            // Lógica de apertura (Mantenemos la que ya funcionaba)
             modal.style.display = 'flex';
             setTimeout(() => {
                 modal.classList.add('active');
                 modal.style.opacity = '1';
             }, 10);
         }
-        return; // Importante para que no siga ejecutando código
+        return;
     }
     // --- ACCIÓN: CERRAR SESIÓN ---
     if (action === 'logout') {
