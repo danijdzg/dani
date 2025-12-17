@@ -2428,22 +2428,22 @@ const navigateTo = async (pageId, isInitial = false) => {
     const leftEl = select('top-bar-left-button');
     
 const standardActions = `
-    <button class="icon-btn" data-action="global-search" title="Buscar">
-        <span class="material-icons">search</span>
-    </button>
+        <button class="icon-btn" data-action="global-search" title="Buscar">
+            <span class="material-icons">search</span>
+        </button>
 
-    <button data-action="open-help" class="icon-btn" title="Ayuda Ninja">
-        <span class="material-icons">help_outline</span>
-    </button>
-    
-    <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
-        <span class="material-icons">calculate</span>
-    </button>
-    
-    <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
-        <span class="material-icons">more_vert</span>
-    </button>
-`;
+        <button data-action="open-help" class="icon-btn" title="Ayuda Ninja">
+            <span class="material-icons">help_outline</span>
+        </button>
+        
+        <button data-action="open-external-calculator" class="icon-btn" title="Calculadora">
+            <span class="material-icons">calculate</span>
+        </button>
+        
+        <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
+            <span class="material-icons">more_vert</span>
+        </button>
+    `;
     
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
     if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
