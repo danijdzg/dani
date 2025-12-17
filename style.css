@@ -6052,66 +6052,48 @@ input, select, textarea {
     width: 100%;
 }
 /* ========================================= */
-/* === TARJETAS DIARIO: EFECTO NEÓN BOLD === */
+/* === TARJETAS DIARIO: TRANSPARENTES + NEÓN === */
 /* ========================================= */
 
 .t-card {
     position: relative;
     display: flex;
     align-items: center;
-    padding: 16px 16px; /* Un poco más de aire */
-    margin-bottom: 12px; /* Separación entre tarjetas para que se vea el marco */
-    border-radius: 16px; /* Bordes muy redondeados */
+    padding: 16px 16px;
+    margin-bottom: 12px;
+    border-radius: 16px;
     
-    /* Fondo oscuro semitransparente para contraste */
-    background-color: rgba(10, 10, 10, 0.7); 
-    backdrop-filter: blur(5px);
+    /* CAMBIO PRINCIPAL: Fondo transparente para que se vea el fondo de la pestaña */
+    background-color: transparent; 
     
-    /* Borde base transparente para la transición */
+    /* Mantenemos el borde base para la estructura */
     border: 1px solid transparent; 
     
-    /* Sombra suave por defecto */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    /* Eliminamos la sombra de caja fuerte, dejamos solo el brillo del borde */
+    box-shadow: none; 
     
     transition: all 0.2s ease-in-out;
 }
 
-/* --- VARIANTES POR TIPO (LOS MARCOS) --- */
-
-/* 1. INGRESOS (Verde Radiactivo) */
+/* Mantenemos los colores de los bordes (Ingreso, Gasto, Traspaso) */
 .t-card--income {
-    border-color: var(--c-success); /* Borde Verde */
-    box-shadow: 0 0 15px rgba(57, 255, 20, 0.15), inset 0 0 10px rgba(57, 255, 20, 0.05);
+    border-color: var(--c-success); 
+    /* Brillo sutil solo en el borde */
+    box-shadow: inset 0 0 15px rgba(57, 255, 20, 0.05); 
 }
 
-/* 2. GASTOS (Rojo Alerta) */
 .t-card--expense {
-    border-color: var(--c-danger); /* Borde Rojo */
-    box-shadow: 0 0 15px rgba(255, 59, 48, 0.15), inset 0 0 10px rgba(255, 59, 48, 0.05);
+    border-color: var(--c-danger);
+    box-shadow: inset 0 0 15px rgba(255, 59, 48, 0.05);
 }
 
-/* 3. TRASPASOS (Morado Etéreo) */
 .t-card--transfer {
-    border-color: var(--c-info); /* Borde Morado */
-    box-shadow: 0 0 15px rgba(191, 90, 242, 0.15), inset 0 0 10px rgba(191, 90, 242, 0.05);
+    border-color: var(--c-info);
+    box-shadow: inset 0 0 15px rgba(191, 90, 242, 0.05);
 }
 
-/* Efecto al pulsar: El brillo se intensifica */
+/* Efecto al tocar */
 .t-card:active {
+    background-color: rgba(255, 255, 255, 0.05); /* Ligerísimo destello al tocar */
     transform: scale(0.98);
-    filter: brightness(1.2);
-}
-
-/* Ajuste de textos dentro de las tarjetas neón */
-.t-concept {
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-}
-
-.t-amount {
-    font-size: 1.1rem;
-    font-weight: 800;
-    /* Sombra de texto para que el número también brille */
-    text-shadow: 0 0 5px currentColor; 
 }
