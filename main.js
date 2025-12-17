@@ -2432,10 +2432,6 @@ const standardActions = `
             <span class="material-icons">search</span>
         </button>
 
-        <button data-action="open-help" class="icon-btn" title="Ayuda Ninja">
-            <span class="material-icons">help_outline</span>
-        </button>
-        
         <button data-action="open-external-calculator" class="icon-btn" title="Calculadora">
             <span class="material-icons">calculate</span>
         </button>
