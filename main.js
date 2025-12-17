@@ -11664,6 +11664,33 @@ window.addEventListener('click', (e) => {
     if (!btn) return;
 
     const action = btn.dataset.action;
+	// --- NUEVO: CAMBIAR CAJA AL PULSAR EL BOTÓN ---
+    if (action === 'toggle-ledger') {
+        // 1. Calcular la siguiente caja
+        const modes = ['A', 'B', 'C'];
+        let current = document.body.getAttribute('data-ledger-mode') || 'A';
+        let currentIndex = modes.indexOf(current);
+        let nextIndex = (currentIndex + 1) % modes.length;
+        let nextMode = modes[nextIndex];
+
+        // 2. Aplicar el cambio
+        document.body.setAttribute('data-ledger-mode', nextMode);
+        
+        // 3. Guardar en variable global (si la usas en otros sitios)
+        if (typeof currentLedger !== 'undefined') currentLedger = nextMode;
+
+        // 4. Actualizar interfaz
+        updateLedgerButtonUI();
+        
+        // 5. Feedback al usuario
+        hapticFeedback('medium');
+        
+        // 6. Recargar datos (IMPORTANTE: Llama a tu función de recarga)
+        if (typeof loadData === 'function') loadData(); 
+        else if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
+        
+        return;
+    }
 
     // --- A. ABRIR CALCULADORA ---
     if (action === 'open-calculator') {
@@ -11726,6 +11753,36 @@ window.addEventListener('click', (e) => {
             else window.location.reload();
         }
     }
+});
+/* ================================================================= */
+/* === FUNCIÓN PARA ACTUALIZAR EL BOTÓN DEL ENCABEZADO === */
+/* ================================================================= */
+
+function updateLedgerButtonUI() {
+    const btnText = document.getElementById('ledger-btn-text');
+    if (!btnText) return;
+
+    // 1. Detectar modo actual
+    const mode = document.body.getAttribute('data-ledger-mode') || 'A';
+
+    // 2. Definir nombres (Intenta leer de la configuración guardada si existe)
+    let names = { A: "Caja Personal", B: "Caja Ahorros", C: "Caja Extra" };
+    
+    if (typeof db !== 'undefined' && db.config && db.config.ledgerNames) {
+        names = db.config.ledgerNames;
+    }
+
+    // 3. Poner el texto
+    btnText.textContent = names[mode] || `Caja ${mode}`;
+}
+
+// Inicializar al cargar la página
+document.addEventListener('DOMContentLoaded', () => {
+    updateLedgerButtonUI();
+    
+    // Vigilante por si el modo cambia desde otro sitio (ej: Ajustes)
+    const observer = new MutationObserver(() => updateLedgerButtonUI());
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-ledger-mode'] });
 });
 /* ================================================================= */
 /* === GENERADOR DE ESPACIO PROFUNDO (Deep Space Engine) === */
