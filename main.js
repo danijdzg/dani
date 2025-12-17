@@ -189,38 +189,11 @@ const handleSaveLedgerNames = async (btn) => {
     // Guardar en Firebase
     await fbDb.collection('users').doc(currentUser.uid).set({ config: db.config }, { merge: true });
 
- // Añade esto dentro de tu inicialización o setup de eventos
-const ledgerBtn = document.getElementById('ledger-selector-display');
-
-if (ledgerBtn) {
-    ledgerBtn.addEventListener('click', () => {
-        // Lógica existente para cambiar de caja (toggleLedgerMode)
-        // Asumo que tienes una función global o accesible para esto:
-        if (typeof toggleLedgerMode === 'function') {
-            toggleLedgerMode(); 
-        } else {
-            // Si no, simula el clic en el botón antiguo si existe oculto
-            const oldBtn = document.getElementById('ledger-toggle-btn');
-            if (oldBtn) oldBtn.click();
-        }
-    });
-}
-
-// DENTRO DE LA FUNCIÓN updateLedgerUI() (o donde actualices el estado A/B/C):
-// Actualiza el texto del nuevo botón
-const ledgerLabel = currentLedgerMode === 'A' ? 'CAJA A' : 
-                    currentLedgerMode === 'B' ? 'CAJA B' : 'CAJA C';
-
-if (ledgerBtn) {
-    ledgerBtn.textContent = ledgerLabel;
-    
-    // Animación de pulso al cambiar
-    ledgerBtn.animate([
-        { transform: 'scale(1)' },
-        { transform: 'scale(1.1)' },
-        { transform: 'scale(1)' }
-    ], { duration: 300 });
-}
+    // Actualizar el botón de la barra superior inmediatamente
+    const ledgerBtn = select('ledger-toggle-btn');
+    if (ledgerBtn) {
+        ledgerBtn.textContent = getLedgerName(currentLedger);
+    }
 
     setButtonLoading(btn, false);
     hideModal('generic-modal');
@@ -11757,86 +11730,67 @@ window.addEventListener('click', (e) => {
 /* ================================================================= */
 /* === GENERADOR DE ESPACIO PROFUNDO (Deep Space Engine) === */
 /* ================================================================= */
+
 (function initSpaceBackground() {
-    // 1. Verificar existencia del contenedor
+    // Solo ejecutar si estamos en pantalla grande (ahorro de recursos)
+    if (window.innerWidth < 600) return;
+
     const container = document.getElementById('deep-space-background');
     if (!container) return;
 
-    console.log("🌌 Iniciando motores de hiperespacio v2.0...");
-    container.innerHTML = ''; // Limpiar cualquier residuo anterior
+    console.log("🌌 Iniciando motores de hiperespacio...");
 
-    // 2. Función para crear capas con bucle perfecto
+    // Función para crear una capa de estrellas
     const createLayer = (count, size, duration, opacity) => {
-        // Crear el contenedor que se animará
-        const layerContainer = document.createElement('div');
-        layerContainer.className = 'star-anim-container';
-        layerContainer.style.animationDuration = `${duration}s`;
-        layerContainer.style.opacity = opacity;
-
-        // Generar coordenadas de sombras (box-shadow) para las estrellas
+        const layer = document.createElement('div');
+        layer.className = 'star-layer';
+        
         let shadows = [];
+        // Generamos coordenadas aleatorias basadas en el ancho TOTAL de la pantalla
         for (let i = 0; i < count; i++) {
-            const x = Math.random() * 100; // Posición horizontal (vw)
-            const y = Math.random() * 100; // Posición vertical (vh)
-            shadows.push(`${x}vw ${y}vh #FFF`);
+            const x = Math.floor(Math.random() * window.innerWidth);
+            const y = Math.floor(Math.random() * window.innerHeight * 2); // *2 para el scroll
+            shadows.push(`${x}px ${y}px #FFF`);
         }
-        const boxShadowString = shadows.join(',');
 
-        // CREAR PARTE A (Pantalla actual)
-        const starsA = document.createElement('div');
-        starsA.style.position = 'absolute';
-        starsA.style.width = size;
-        starsA.style.height = size;
-        starsA.style.background = 'transparent';
-        starsA.style.borderRadius = '50%';
-        starsA.style.boxShadow = boxShadowString;
-        starsA.style.top = 0; // Empieza arriba
+        // Aplicamos los estilos
+        layer.style.width = size;
+        layer.style.height = size;
+        layer.style.opacity = opacity;
+        layer.style.boxShadow = shadows.join(',');
+        layer.style.animation = `moveStars ${duration}s linear infinite`;
 
-        // CREAR PARTE B (Clon para el bucle, empieza debajo)
-        const starsB = starsA.cloneNode(true);
-        starsB.style.top = '100vh'; // Empieza justo debajo de la pantalla
+        // Creamos el duplicado para el loop infinito (efecto parallax)
+        const after = document.createElement('div');
+        after.className = 'star-layer';
+        after.style.width = size;
+        after.style.height = size;
+        after.style.opacity = opacity;
+        after.style.boxShadow = shadows.join(',');
+        after.style.animation = `moveStars ${duration}s linear infinite`;
+        after.style.top = '2000px'; // Desplazamiento para el loop
 
-        // Añadir ambas partes al contenedor de animación
-        layerContainer.appendChild(starsA);
-        layerContainer.appendChild(starsB);
-        container.appendChild(layerContainer);
+        container.appendChild(layer);
+        container.appendChild(after);
     };
 
-    // 3. Crear las 3 capas de profundidad
-    // Capa 1: Lejanas (Muchas, muy pequeñas, muy lentas)
-    createLayer(400, '1px', 150, 0.7);
+    // CAPA 1: Estrellas lejanas (Muchas, pequeñas, lentas)
+    createLayer(700, '1px', 100, 0.6);
 
-    // Capa 2: Medianas (Menos, brillo medio, velocidad media)
-    createLayer(100, '2px', 100, 0.9);
+    // CAPA 2: Estrellas medias (Menos, un poco más grandes)
+    createLayer(200, '2px', 70, 0.8);
 
-    // Capa 3: Cercanas (Pocas, grandes, rápidas)
-    createLayer(30, '3px', 60, 1);
+    // CAPA 3: Estrellas cercanas (Pocas, brillantes, rápidas)
+    createLayer(100, '3px', 40, 1);
 
-    // 4. Sistema de Estrellas Fugaces (Opcional, pero espectacular)
-    const spawnShootingStar = () => {
-        const star = document.createElement('div');
-        star.className = 'shooting-star';
-        
-        // Posición aleatoria
-        star.style.top = `${Math.random() * 50}%`; // Solo en la mitad superior
-        star.style.left = `${Math.random() * 100}%`;
-        
-        // Tamaño y duración aleatoria para variedad
-        const scale = 0.5 + Math.random(); 
-        star.style.transform = `scale(${scale}) rotate(-45deg)`;
-        star.style.animationDuration = `${2 + Math.random() * 3}s`;
-
-        container.appendChild(star);
-
-        // Limpieza automática al terminar la animación
-        setTimeout(() => {
-            star.remove();
-        }, 5000);
-    };
-
-    // Lanzar una estrella fugaz cada 4-10 segundos
-    setInterval(() => {
-        spawnShootingStar();
-    }, 4000 + Math.random() * 6000);
+    // Recalcular si se cambia el tamaño de la ventana (Opcional, para perfeccionistas)
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 600) {
+            container.innerHTML = ''; // Limpiar
+            createLayer(700, '1px', 100, 0.6);
+            createLayer(200, '2px', 70, 0.8);
+            createLayer(100, '3px', 40, 1);
+        }
+    });
 
 })();
