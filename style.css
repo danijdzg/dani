@@ -5929,3 +5929,18 @@ input, select, textarea {
     color: white;
     font-weight: 600;
 }
+/* ================================================================= */
+/* === FIX INTERACTIVIDAD TOTAL (Ayuda y Calculadora) === */
+/* ================================================================= */
+
+/* Habilitar clics en el modal de ayuda */
+#help-modal, #help-modal .modal, #help-modal-content {
+    pointer-events: auto !important;
+    touch-action: pan-y !important; /* Permite deslizar el dedo */
+}
+
+/* Asegurar que el texto se pueda seleccionar */
+#help-modal-content {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+}

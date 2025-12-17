@@ -11596,206 +11596,196 @@ const updateExtractoList = () => {
 };
 
 /* ================================================================= */
-/* === GESTOR DE ACCIONES DE CABECERA (Iconos Directos) === */
+/* === MENÚ TRES PUNTOS (Posición Exacta Debajo del Botón) === */
 /* ================================================================= */
 
 document.addEventListener('click', (e) => {
-    // Buscamos si se ha pulsado un botón con data-action
-    const btn = e.target.closest('[data-action]');
-    if (!btn) return;
-
-    const action = btn.dataset.action;
-
-    // --- ACCIÓN: BUSCAR ---
-    if (action === 'global-search') {
-        // Si tienes una función de búsqueda, llámala aquí.
-        // Si no, mostramos un aviso temporal
-        if (typeof showSearchModal === 'function') {
-            showSearchModal();
-        } 
+	// 1. EXCEPCIONES: Si pulsamos dentro de la Ayuda o la Calculadora (y no es cerrar)
+    // Dejamos que el evento fluya para poder hacer scroll o tocar botones internos.
+    if ((e.target.closest('#calculator-iframe-modal') || e.target.closest('#help-modal')) 
+        && !e.target.closest('[data-action="close-modal"]')) {
+        return; 
     }
+    // 1. Detectar clic en el botón
+    const btn = e.target.closest('#header-menu-btn');
+    let menuPopover = document.getElementById('main-menu-popover');
 
-    // --- ACCIÓN: AJUSTES ---
-    if (action === 'navigate') {
-        const pageId = btn.dataset.page;
-        if (typeof navigateTo === 'function') {
-            navigateTo(pageId);
-        }
-    }
+    // --- ABRIR MENÚ ---
+    if (btn) {
+        e.stopPropagation();
+        e.preventDefault();
 
-    // --- ACCIÓN: CALCULADORA ---
-    if (action === 'open-calculator') {
-        const modal = document.getElementById('calculator-iframe-modal');
-        if (modal) {
-            modal.style.display = 'flex'; // Asegurar visibilidad
-            modal.classList.add('active');
-            // Recargar iframe si es necesario
-            const iframe = document.getElementById('calculator-frame');
-            if(iframe && !iframe.src) iframe.src = 'calculadora.html';
-        }
-    }
-/* ================================================================= */
-    /* === MANUAL DEL COMANDANTE (GUÍA DEFINITIVA LÚDICA) === */
-    /* ================================================================= */
-    if (action === 'open-help') {
-        const modal = document.getElementById('help-modal');
-        const contentDiv = document.getElementById('help-modal-content');
-
-        if (modal && contentDiv) {
-            contentDiv.innerHTML = `
-                <style>
-                    /* Estilos exclusivos para este manual */
-                    .academy-intro { text-align: center; margin-bottom: 30px; }
-                    .academy-badge { font-size: 50px; display: block; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
-                    .academy-module { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); }
-                    .module-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
-                    .module-icon { font-size: 28px; color: #00B34D; }
-                    .module-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0; }
-                    .academy-text { font-size: 0.95rem; color: #ccc; line-height: 1.6; margin-bottom: 10px; }
-                    .academy-example { background: rgba(0, 179, 77, 0.1); border-left: 3px solid #00B34D; padding: 10px 15px; margin: 15px 0; font-size: 0.9rem; color: #ddd; border-radius: 0 8px 8px 0; }
-                    .key-feature { display: flex; align-items: start; gap: 10px; margin-top: 15px; }
-                    .key-icon { background: #222; border-radius: 50%; padding: 5px; font-size: 16px; color: #00B34D; min-width: 26px; text-align: center; }
-                    .academy-footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); color: #666; font-size: 0.8rem; }
-                    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
-                </style>
-
-                <div class="manual-container">
-                    
-                    <div class="academy-intro">
-                        <span class="academy-badge">👨‍🚀</span>
-                        <h2 style="color: #00B34D; margin-bottom: 5px;">Academia aiDANaI</h2>
-                        <p class="academy-text">Manual de supervivencia financiera para astronautas modernos.</p>
-                    </div>
-
-                    <div class="academy-module">
-                        <div class="module-header">
-                            <span class="material-icons module-icon">dashboard</span>
-                            <h3 class="module-title">Módulo 1: El Puente de Mando</h3>
-                        </div>
-                        <p class="academy-text">Al entrar, verás 4 tarjetas. Son tus constantes vitales. Si todas están en verde, la nave vuela sola. Si hay rojo... ¡peligro!</p>
-                        
-                        <div class="key-feature">
-                            <span class="material-icons key-icon">arrow_upward</span>
-                            <div>
-                                <strong style="color:white">Ingresos:</strong>
-                                <span style="font-size:0.9rem; color:#aaa">Todo el combustible que entra. Nóminas, bizums de amigos, lotería...</span>
-                            </div>
-                        </div>
-                        <div class="key-feature">
-                            <span class="material-icons key-icon" style="color:#ff4444">arrow_downward</span>
-                            <div>
-                                <strong style="color:white">Gastos:</strong>
-                                <span style="font-size:0.9rem; color:#aaa">Meteoritos que impactan en tu nave. Comida, luz, caprichos...</span>
-                            </div>
-                        </div>
-                        <div class="key-feature">
-                            <span class="material-icons key-icon" style="color:#00f2ff">savings</span>
-                            <div>
-                                <strong style="color:white">Tasa de Ahorro:</strong>
-                                <span style="font-size:0.9rem; color:#aaa">El dato más importante. Si ganas 1000€ y te sobran 200€, tu tasa es del 20%. ¡Intenta mantenerla siempre positiva!</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="academy-module">
-                        <div class="module-header">
-                            <span class="material-icons module-icon">add_circle</span>
-                            <h3 class="module-title">Módulo 2: Bitácora del Capitán</h3>
-                        </div>
-                        <p class="academy-text">¿Ves el botón flotante <strong>(+)</strong> abajo a la derecha? Es el botón que más vas a usar. Púlsalo para registrar movimientos.</p>
-                        
-                        <div class="academy-example">
-                            <strong>📝 Ejemplo Práctico:</strong><br>
-                            Acabas de comprar pan y leche. 
-                            1. Pulsas <strong>(+)</strong>.
-                            2. Eliges <strong>"Gasto"</strong> (rojo).
-                            3. Pones <strong>"3.50"</strong> en la cantidad.
-                            4. Escribes <strong>"Compra súper"</strong> en concepto.
-                            5. ¡Listo! Ya está restado de tu saldo.
-                        </div>
-
-                        <p class="academy-text" style="margin-top:15px"><strong>¿Qué es un Traspaso? 🔄</strong><br>
-                        Es mover dinero de tu bolsillo izquierdo al derecho. Por ejemplo: Sacar dinero del cajero. No eres más rico ni más pobre, solo has movido el dinero de sitio. Úsalo para eso.</p>
-                    </div>
-
-                    <div class="academy-module">
-                        <div class="module-header">
-                            <span class="material-icons module-icon">rocket_launch</span>
-                            <h3 class="module-title">Módulo 3: Supercomputadora</h3>
-                        </div>
-                        <p class="academy-text">Arriba tienes un icono de calculadora <span class="material-icons" style="font-size:16px">calculate</span>. No es una calculadora normal, tiene conexión directa con los mercados interestelares.</p>
-                        <ul style="padding-left: 20px; color:#ccc; font-size:0.9rem; margin-top:5px;">
-                            <li>🧮 <strong>Modo Estándar:</strong> Sumar, restar... lo clásico.</li>
-                            <li>₿ <strong>Modo Crypto:</strong> Pulsa la pestaña "Crypto" y verás el precio en tiempo real de Bitcoin, Ethereum, Solana, XRP y BNB.</li>
-                        </ul>
-                        <div class="academy-example">
-                            <strong>💡 Truco:</strong> Toca cualquier criptomoneda para ver su gráfica de evolución de precios. ¡Siéntete como un lobo de Wall Street!
-                        </div>
-                    </div>
-
-                    <div class="academy-module">
-                        <div class="module-header">
-                            <span class="material-icons module-icon">search</span>
-                            <h3 class="module-title">Módulo 4: El Radar (Buscador)</h3>
-                        </div>
-                        <p class="academy-text">¿No recuerdas si pagaste el seguro del coche? ¿Quieres saber cuánto te has gastado en "Cervezas" este año?</p>
-                        <p class="academy-text">Usa la lupa <span class="material-icons" style="font-size:16px">search</span> en el encabezado. Escribe cualquier palabra y la app rastreará todo tu historial en milisegundos para encontrar al culpable.</p>
-                    </div>
-
-                    <div class="academy-module">
-                        <div class="module-header">
-                            <span class="material-icons module-icon">install_mobile</span>
-                            <h3 class="module-title">Módulo 5: Instalación en Nave</h3>
-                        </div>
-                        <p class="academy-text">Esta aplicación es una <strong>PWA</strong> (Progressive Web App). Significa que puedes instalarla como una app nativa sin pasar por la tienda.</p>
-                        <div class="key-feature">
-                            <span class="material-icons key-icon">android</span>
-                            <div><strong style="color:white">Android:</strong> Abre el menú de Chrome (3 puntos) y pulsa "Instalar aplicación" o "Añadir a pantalla de inicio".</div>
-                        </div>
-                        <div class="key-feature">
-                            <span class="material-icons key-icon">apple</span>
-                            <div><strong style="color:white">iPhone/iPad:</strong> Pulsa el botón "Compartir" de Safari (cuadrado con flecha) y busca "Añadir a la pantalla de inicio".</div>
-                        </div>
-                    </div>
-
-                    <div class="academy-footer">
-                        Fin de la transmisión.<br>
-                        ¡Buena suerte en tu viaje financiero, Capitán! 🚀
-                    </div>
-                </div>
+        // 2. Autogeneración (Si no existe)
+        if (!menuPopover) {
+            menuPopover = document.createElement('div');
+            menuPopover.id = 'main-menu-popover';
+            menuPopover.className = 'popover-menu';
+            menuPopover.innerHTML = `
+                <button class="popover-menu__item" data-action="global-search">
+                    <span class="material-icons">search</span> <span>Buscar</span>
+                </button>
+                <div class="popover-menu__divider"></div>
+                <button class="popover-menu__item" data-action="navigate" data-page="ajustes-page">
+                    <span class="material-icons">settings</span> <span>Ajustes</span>
+                </button>
+                <button class="popover-menu__item" data-action="show-help-modal">
+                    <span class="material-icons">help_outline</span> <span>Ayuda</span>
+                </button>
+                <div class="popover-menu__divider"></div>
+                <button class="popover-menu__item" style="color:#ff6b6b;" data-action="logout">
+                    <span class="material-icons" style="color:#ff6b6b;">logout</span> <span>Cerrar Sesión</span>
+                </button>
             `;
-
-            // Lógica de apertura (Mantenemos la que ya funcionaba)
-            modal.style.display = 'flex';
-            setTimeout(() => {
-                modal.classList.add('active');
-                modal.style.opacity = '1';
-            }, 10);
+            document.body.appendChild(menuPopover);
         }
+
+        // 3. CÁLCULO DE POSICIÓN (LA CLAVE)
+        // Obtenemos el rectángulo del botón (coordenadas X, Y, ancho, alto)
+        const rect = btn.getBoundingClientRect();
+        
+        // Calculamos:
+        // TOP: La parte de abajo del botón + 10px de margen
+        const topPos = rect.bottom + 10;
+        
+        // RIGHT: El ancho de la pantalla menos la parte derecha del botón
+        // (Esto alinea el borde derecho del menú con el borde derecho del botón)
+        const rightPos = window.innerWidth - rect.right;
+
+        // Aplicamos coordenadas exactas
+        menuPopover.style.top = `${topPos}px`;
+        menuPopover.style.right = `${rightPos}px`;
+        
+        // (Opcional) Aseguramos que transform-origin sea la esquina superior derecha
+        menuPopover.style.transformOrigin = 'top right';
+
+        // 4. MOSTRAR
+        requestAnimationFrame(() => {
+            menuPopover.classList.toggle('popover-menu--visible');
+        });
+
+        if (typeof hapticFeedback === 'function') hapticFeedback('light');
         return;
     }
-    // --- ACCIÓN: CERRAR SESIÓN ---
-    if (action === 'logout') {
-        if (confirm("¿Seguro que quieres cerrar sesión?")) {
-            if (typeof firebase !== 'undefined') {
-                firebase.auth().signOut().then(() => {
-                    window.location.reload();
-                });
-            } else {
-                window.location.reload();
-            }
+
+    // --- CERRAR MENÚ (Clic fuera) ---
+    if (menuPopover && menuPopover.classList.contains('popover-menu--visible')) {
+        if (!e.target.closest('#main-menu-popover')) {
+            menuPopover.classList.remove('popover-menu--visible');
         }
     }
 });
 
 /* ================================================================= */
-/* === GESTOR MAESTRO V5 (Calculadora Independiente) === */
+/* === MANUAL DE AYUDA (Versión Final corregida) === */
+/* ================================================================= */
+
+// 1. EL CONTENIDO
+const getManualContent = () => {
+    return `
+        <div class="manual-section" style="margin-bottom: 25px;">
+            <div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:20px;">
+                <div style="background:rgba(0, 179, 77, 0.2); padding:8px; border-radius:50%;">
+                    <span class="material-icons" style="color:#00B34D; font-size: 28px;">school</span>
+                </div>
+                <div>
+                    <h2 style="margin:0; font-size:1.3rem; color: white;">Manual aiDANaI</h2>
+                    <span style="font-size:0.8rem; opacity:0.7;">Tu guía financiera</span>
+                </div>
+            </div>
+            
+            <p class="manual-text" style="font-size: 1rem; line-height: 1.6;"><strong>¡Bienvenido!</strong> Esta app está diseñada para que controles tu dinero con el mínimo esfuerzo. Aquí tienes lo esencial:</p>
+        </div>
+
+        <div class="manual-section" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 class="manual-title" style="color:#00B34D; margin-top:0; display:flex; align-items:center; gap:8px;">
+                <span class="material-icons">add_circle</span> El Botón Central (+)
+            </h3>
+            <p style="margin-bottom:10px; font-size: 0.9rem; opacity: 0.9;">Al pulsarlo, despliegas las 3 acciones clave:</p>
+            <ul style="padding-left: 20px; line-height: 1.8; margin: 0;">
+                <li>🔴 <strong style="color: #ff6b6b;">Gasto:</strong> Dinero que pierdes (Supermercado, Ocio).</li>
+                <li>🟢 <strong style="color: #4cd964;">Ingreso:</strong> Dinero que ganas (Nómina, Ventas).</li>
+                <li>🔵 <strong style="color: #5ac8fa;">Traspaso:</strong> Movimiento neutro entre tus cuentas (ej: de Banco a Ahorro). No afecta a tu total.</li>
+            </ul>
+        </div>
+
+        <div class="manual-section" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px;">
+            <h3 class="manual-title" style="color:#00B34D; margin-top:0; display:flex; align-items:center; gap:8px;">
+                <span class="material-icons">query_stats</span> Extracto Global
+            </h3>
+            <p style="margin:0; font-size: 0.9rem; opacity: 0.9;">
+                ¿Quieres ver todo tu historial junto? Ve a la pestaña <strong>Patrimonio</strong> y pulsa sobre la <strong>Tarjeta de Patrimonio Neto</strong> (la grande de arriba).
+            </p>
+        </div>
+        
+        <div style="text-align:center; margin-top:30px; opacity:0.5; font-size:0.8rem;">
+            aiDANaI-ctas v3.1
+        </div>
+    `;
+};
+
+// 2. ESCUCHADOR DE EVENTOS
+document.addEventListener('click', (e) => {
+    // Detectamos clic en "Ayuda / Manual"
+    const helpBtn = e.target.closest('[data-action="show-help-modal"]');
+    
+    if (helpBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation(); // Detiene otros scripts duplicados
+
+        // A. CERRAR EL MENÚ DE TRES PUNTOS (Ocultarlo visualmente)
+        const menuPopover = document.getElementById('main-menu-popover');
+        if (menuPopover) {
+            menuPopover.classList.remove('popover-menu--visible');
+            menuPopover.style.display = 'none'; // Forzamos desaparición
+            // Lo reactivamos discretamente después para que funcione la próxima vez
+            setTimeout(() => { menuPopover.style.display = ''; }, 300);
+        }
+
+        // B. ABRIR EL MODAL DE AYUDA
+        const modal = document.getElementById('help-modal');
+        const content = document.getElementById('help-modal-content');
+
+        if (modal && content) {
+            // 1. Inyectar contenido
+            content.innerHTML = getManualContent();
+            
+            // 2. FORZAR VISIBILIDAD (La clave es el Z-Index altísimo)
+            modal.style.cssText = `
+                display: flex !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                z-index: 99999 !important; /* POR ENCIMA DE TODO */
+                background-color: rgba(0,0,0,0.9) !important;
+            `;
+            
+            modal.classList.add('active');
+            
+        } else {
+            console.error("Falta el div id='help-modal' en index.html");
+        }
+    }
+    
+    // DETECTAR CLIC EN CERRAR (X) o BOTÓN INFERIOR
+    const closeBtn = e.target.closest('[data-action="close-modal"]');
+    if (closeBtn && closeBtn.dataset.modalId === 'help-modal') {
+        const modal = document.getElementById('help-modal');
+        if (modal) {
+            modal.classList.remove('active');
+            modal.style.display = 'none'; // Ocultar
+        }
+    }
+});
+/* ================================================================= */
+/* === GESTOR MAESTRO DE EVENTOS Y UI (Versión Definitiva) === */
 /* ================================================================= */
 
 window.addEventListener('click', (e) => {
-    // 1. REGLA DE ORO: Si pulsamos DENTRO del iframe o su contenedor (y no es el botón cerrar)
-    // NO HACEMOS NADA. Dejamos que la calculadora gestione sus propios clics.
-    if (e.target.closest('#calculator-iframe-modal') && !e.target.closest('[data-action="close-modal"]')) {
+    // 1. REGLA DE ORO: EXCEPCIONES DE INTERACCIÓN
+    // Si pulsamos dentro de la Ayuda o Calculadora (y no es cerrar), NO hacemos nada.
+    // Esto permite seleccionar texto, hacer scroll y pulsar botones internos.
+    if ((e.target.closest('#calculator-iframe-modal') || e.target.closest('#help-modal')) 
+        && !e.target.closest('[data-action="close-modal"]')) {
         return; 
     }
 
@@ -11804,132 +11794,137 @@ window.addEventListener('click', (e) => {
 
     const action = btn.dataset.action;
 
-    // --- A. ABRIR CALCULADORA ---
-    if (action === 'open-calculator') {
-        e.preventDefault();
-        e.stopPropagation(); // Detenemos la propagación para aislar el evento
-        
-        const modal = document.getElementById('calculator-iframe-modal');
-        const iframe = document.getElementById('calculator-frame');
+    // --- A. ABRIR AYUDA (NUEVO) ---
+    if (action === 'open-help') {
+        const modal = document.getElementById('help-modal');
+        const contentDiv = document.getElementById('help-modal-content');
 
-        if (modal && iframe) {
-            console.log("🧮 Iniciando App Calculadora...");
+        if (modal && contentDiv) {
+            // Contenido del Manual (Aquí pegamos el HTML que diseñamos antes)
+            contentDiv.innerHTML = `
+                <style>
+                    .academy-intro { text-align: center; margin-bottom: 30px; }
+                    .academy-badge { font-size: 50px; display: block; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
+                    .academy-module { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); }
+                    .module-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+                    .module-icon { font-size: 28px; color: #00B34D; }
+                    .module-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0; }
+                    .academy-text { font-size: 0.95rem; color: #ccc; line-height: 1.6; margin-bottom: 10px; }
+                    .academy-example { background: rgba(0, 179, 77, 0.1); border-left: 3px solid #00B34D; padding: 10px 15px; margin: 15px 0; font-size: 0.9rem; color: #ddd; border-radius: 0 8px 8px 0; }
+                    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+                </style>
+
+                <div class="manual-container">
+                    <div class="academy-intro">
+                        <span class="academy-badge">👨‍🚀</span>
+                        <h2 style="color: #00B34D; margin-bottom: 5px;">Academia aiDANaI</h2>
+                        <p class="academy-text">Manual de supervivencia financiera para astronautas modernos.</p>
+                    </div>
+
+                    <div class="academy-module">
+                        <div class="module-header"><span class="material-icons module-icon">dashboard</span><h3 class="module-title">El Puente de Mando</h3></div>
+                        <p class="academy-text">Aquí controlas tus constantes vitales: <strong>Ingresos</strong> (combustible), <strong>Gastos</strong> (meteoritos) y tu <strong>Tasa de Ahorro</strong>.</p>
+                    </div>
+
+                    <div class="academy-module">
+                        <div class="module-header"><span class="material-icons module-icon">add_circle</span><h3 class="module-title">Añadir Movimientos</h3></div>
+                        <p class="academy-text">Usa el botón flotante <strong>(+)</strong>. Elige si es Gasto (Rojo), Ingreso (Verde) o Traspaso (Amarillo).</p>
+                        <div class="academy-example">📝 <strong>Ejemplo:</strong> Compra en Súper -> Botón (+) -> Gasto -> 35€ -> Concepto "Comida".</div>
+                    </div>
+                    
+                    <div class="academy-footer" style="text-align:center; opacity:0.6; margin-top:30px;">Fin de la transmisión 🚀</div>
+                </div>
+            `;
             
-            // Cargar archivo si está vacío
-            if (!iframe.getAttribute('src') || iframe.getAttribute('src') === '') {
-                iframe.src = 'calculadora.html';
-            }
-
-            // ABRIR VISUALMENTE
             modal.style.display = 'flex';
-            // Pequeño timeout para asegurar que el display:flex se aplica antes de la opacidad
-            setTimeout(() => {
-                modal.classList.add('active');
-                modal.style.opacity = '1';
-                modal.style.pointerEvents = 'auto'; // Forzamos interactividad JS
-                
-                // TRUCO FINAL: Darle el foco al iframe para que funcione el teclado
-                iframe.focus();
-                if (iframe.contentWindow) iframe.contentWindow.focus();
-            }, 10);
-
-        } else {
-            alert("Error: No se encuentra el modal de la calculadora.");
+            setTimeout(() => { modal.classList.add('active'); modal.style.opacity = '1'; }, 10);
         }
         return;
     }
 
-    // --- B. CERRAR CALCULADORA ---
+    // --- B. ABRIR CALCULADORA ---
+    if (action === 'open-calculator') {
+        const modal = document.getElementById('calculator-iframe-modal');
+        const iframe = document.getElementById('calculator-frame');
+        if (modal && iframe) {
+            if (!iframe.getAttribute('src')) iframe.src = 'calculadora.html';
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('active');
+                modal.style.opacity = '1';
+                iframe.focus();
+            }, 10);
+        }
+        return;
+    }
+
+    // --- C. CERRAR MODALES ---
     if (action === 'close-modal') {
         const modalId = btn.dataset.modalId;
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.remove('active');
             modal.style.opacity = '0';
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300); // Esperar a la animación de cierre
+            setTimeout(() => modal.style.display = 'none', 300);
         }
         return;
     }
 
-    // --- C. OTRAS ACCIONES (Header) ---
-    if (action === 'navigate') {
-        const page = btn.dataset.page;
-        if (typeof navigateTo === 'function') navigateTo(page);
-    }
-    
+    // --- D. NAVEGACIÓN Y LOGOUT ---
+    if (action === 'navigate' && typeof navigateTo === 'function') navigateTo(btn.dataset.page);
     if (action === 'logout') {
-        if (confirm("¿Cerrar sesión?")) {
-            if (typeof firebase !== 'undefined') firebase.auth().signOut().then(() => window.location.reload());
-            else window.location.reload();
+        if(confirm("¿Cerrar sesión?")) {
+            typeof firebase!=='undefined' ? firebase.auth().signOut().then(()=>location.reload()) : location.reload();
         }
     }
 });
+
 /* ================================================================= */
-/* === GENERADOR DE ESPACIO PROFUNDO (Deep Space Engine) === */
+/* === SISTEMA DE TÍTULO DINÁMICO (Cajas de Colores) === */
 /* ================================================================= */
 
-(function initSpaceBackground() {
-    // Solo ejecutar si estamos en pantalla grande (ahorro de recursos)
-    if (window.innerWidth < 600) return;
+function updateAppTitle() {
+    const titleEl = document.querySelector('.app-title');
+    if (!titleEl) return;
 
-    const container = document.getElementById('deep-space-background');
-    if (!container) return;
-
-    console.log("🌌 Iniciando motores de hiperespacio...");
-
-    // Función para crear una capa de estrellas
-    const createLayer = (count, size, duration, opacity) => {
-        const layer = document.createElement('div');
-        layer.className = 'star-layer';
-        
-        let shadows = [];
-        // Generamos coordenadas aleatorias basadas en el ancho TOTAL de la pantalla
-        for (let i = 0; i < count; i++) {
-            const x = Math.floor(Math.random() * window.innerWidth);
-            const y = Math.floor(Math.random() * window.innerHeight * 2); // *2 para el scroll
-            shadows.push(`${x}px ${y}px #FFF`);
-        }
-
-        // Aplicamos los estilos
-        layer.style.width = size;
-        layer.style.height = size;
-        layer.style.opacity = opacity;
-        layer.style.boxShadow = shadows.join(',');
-        layer.style.animation = `moveStars ${duration}s linear infinite`;
-
-        // Creamos el duplicado para el loop infinito (efecto parallax)
-        const after = document.createElement('div');
-        after.className = 'star-layer';
-        after.style.width = size;
-        after.style.height = size;
-        after.style.opacity = opacity;
-        after.style.boxShadow = shadows.join(',');
-        after.style.animation = `moveStars ${duration}s linear infinite`;
-        after.style.top = '2000px'; // Desplazamiento para el loop
-
-        container.appendChild(layer);
-        container.appendChild(after);
+    // Detectar qué caja estamos usando leyendo el atributo del body
+    const mode = document.body.getAttribute('data-ledger-mode') || 'A';
+    
+    // Configuración de Cajas (Nombres y Colores)
+    const ledgers = {
+        'A': { name: 'Caja Personal', color: '#00B34D' },   // Verde
+        'B': { name: 'Caja Ahorros', color: '#FF9F00' },     // Naranja
+        'C': { name: 'Caja Extra', color: '#00D4FF' }        // Azul
     };
+    
+    // Si tenemos nombres personalizados guardados, los usamos
+    if (typeof db !== 'undefined' && db.config && db.config.ledgerNames) {
+        if(db.config.ledgerNames.A) ledgers.A.name = db.config.ledgerNames.A;
+        if(db.config.ledgerNames.B) ledgers.B.name = db.config.ledgerNames.B;
+        if(db.config.ledgerNames.C) ledgers.C.name = db.config.ledgerNames.C;
+    }
 
-    // CAPA 1: Estrellas lejanas (Muchas, pequeñas, lentas)
-    createLayer(700, '1px', 100, 0.6);
+    const current = ledgers[mode] || ledgers['A'];
 
-    // CAPA 2: Estrellas medias (Menos, un poco más grandes)
-    createLayer(200, '2px', 70, 0.8);
+    // Aplicar cambios visuales
+    titleEl.textContent = current.name;
+    titleEl.style.color = current.color;
+    titleEl.style.textShadow = `0 0 15px ${current.color}66`; // Brillo suave
+}
 
-    // CAPA 3: Estrellas cercanas (Pocas, brillantes, rápidas)
-    createLayer(100, '3px', 40, 1);
-
-    // Recalcular si se cambia el tamaño de la ventana (Opcional, para perfeccionistas)
-    window.addEventListener('resize', () => {
-        if (window.innerWidth >= 600) {
-            container.innerHTML = ''; // Limpiar
-            createLayer(700, '1px', 100, 0.6);
-            createLayer(200, '2px', 70, 0.8);
-            createLayer(100, '3px', 40, 1);
+// "Vigilante" que detecta cuando cambias de caja automáticamente
+const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'data-ledger-mode') {
+            updateAppTitle();
         }
     });
+});
 
-})();
+// Iniciar el vigilante y actualizar título al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    observer.observe(document.body, { attributes: true });
+    setTimeout(updateAppTitle, 500); // Pequeño retraso para asegurar carga de datos
+});
+
+/* AQUÍ DEBAJO SIGUE TU CÓDIGO DEL FONDO ESPACIAL (initSpaceBackground)... */
