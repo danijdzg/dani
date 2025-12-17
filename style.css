@@ -5950,7 +5950,7 @@ input, select, textarea {
     }
 }
 /* ========================================= */
-/* === MOTOR DE FONDO ESTRELLADO (V2.0) === */
+/* === MOTOR DE FONDO ESTRELLADO (V3.0 AMOLED) === */
 /* ========================================= */
 
 #deep-space-background {
@@ -5959,13 +5959,14 @@ input, select, textarea {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1; /* Detrás de todo */
-    background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+    z-index: -1;
+    /* CAMBIO CLAVE: Negro puro para pantallas AMOLED */
+    background-color: #000000; 
     overflow: hidden;
     pointer-events: none;
 }
 
-/* Contenedor de cada capa para manejar la animación */
+/* Contenedor de cada capa para manejar la animación vertical */
 .star-anim-container {
     position: absolute;
     top: 0;
@@ -5987,10 +5988,11 @@ input, select, textarea {
     left: 50%;
     width: 4px;
     height: 4px;
+    /* Gradiente ajustado para contrastar con el negro puro */
     background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
     border-radius: 50%;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
-    animation: shoot 4s linear infinite;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.6); /* Brillo más intenso */
+    animation: shoot 3s linear infinite; /* Un poco más rápido */
     opacity: 0;
 }
 
@@ -5999,7 +6001,7 @@ input, select, textarea {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 150px;
+    width: 200px; /* Cola más larga */
     height: 1px;
     background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
     right: 0;
@@ -6008,6 +6010,20 @@ input, select, textarea {
 @keyframes shoot {
     0% { transform: rotate(-45deg) translateX(0); opacity: 0; }
     10% { opacity: 1; }
-    20% { transform: rotate(-45deg) translateX(-1000px); opacity: 0; }
-    100% { transform: rotate(-45deg) translateX(-1000px); opacity: 0; }
+    20% { transform: rotate(-45deg) translateX(-1500px); opacity: 0; }
+    100% { transform: rotate(-45deg) translateX(-1500px); opacity: 0; }
+}
+/* ========================================= */
+/* === Ocultar Scrollbar (Estilo App) === */
+/* ========================================= */
+
+/* Ocultar barra en Chrome, Safari y Edge */
+.app-layout__main::-webkit-scrollbar {
+    display: none;
+}
+
+/* Ocultar barra en Firefox e IE */
+.app-layout__main {
+    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;  /* IE 10+ */
 }
