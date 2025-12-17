@@ -11757,19 +11757,18 @@ function updateLedgerButtonUI() {
 
     const mode = document.body.getAttribute('data-ledger-mode') || 'A';
     
-    // Nombres por defecto (Se pueden renombrar en ajustes)
+    // Nombres por defecto (A=Azul, B=Rojo, C=Verde)
     let names = { 
-        A: "Caja Principal", 
-        B: "Caja Secundaria", 
-        C: "Caja Extra" 
+        A: "Caja Principal",   // Azul
+        B: "Caja Secundaria",  // Rojo
+        C: "Caja Extra"        // Verde
     };
     
-    // Intentar leer nombres personalizados de la base de datos
+    // Si tienes nombres personalizados guardados, los usamos
     if (typeof db !== 'undefined' && db.config && db.config.ledgerNames) {
         names = db.config.ledgerNames;
     }
 
-    // Actualizar SOLO el texto (el color lo pone el CSS automáticamente)
     btnText.textContent = names[mode] || `Caja ${mode}`;
 }
 

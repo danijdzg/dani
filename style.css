@@ -5876,20 +5876,20 @@ input, select, textarea {
     }
 }
 /* ================================================================= */
-/* === DISEÑO UNIFICADO: ENCABEZADO, PIE Y COLORES DINÁMICOS === */
+/* === DISEÑO UNIFICADO: ENCABEZADO, PIE Y COLORES (CORREGIDO) === */
 /* ================================================================= */
 
 /* 1. FONDO IGUAL PARA ENCABEZADO Y PIE DE PÁGINA */
 .top-bar, .bottom-nav {
-    background-color: #121820 !important; /* El mismo color oscuro para ambos */
-    border-top: 1px solid rgba(255,255,255,0.05); /* Separador sutil */
+    background-color: #121820 !important; /* Fondo oscuro unificado */
+    border-top: 1px solid rgba(255,255,255,0.05);
     border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
-/* 2. ESTILO BASE DEL BOTÓN CAJA (Sin colores todavía) */
+/* 2. ESTILO BASE DEL BOTÓN CAJA */
 .header-ledger-pill {
     background: transparent !important; /* Fondo transparente */
-    border: 1px solid currentColor; /* El borde toma el color del texto */
+    border: 1px solid currentColor; /* El borde sigue al color del texto */
     border-radius: 20px;
     padding: 6px 16px;
     font-family: 'Inter', sans-serif;
@@ -5903,26 +5903,24 @@ input, select, textarea {
     transition: all 0.3s ease;
 }
 
-/* Efecto al pulsar */
 .header-ledger-pill:active {
     transform: scale(0.95);
     background: rgba(255,255,255,0.05) !important;
 }
 
-/* 3. COLORES DINÁMICOS (Afectan al Botón y al Pie de Página) */
+/* 3. COLORES DINÁMICOS (A=AZUL, B=ROJO, C=VERDE) */
 
-/* --- MODO A: AZUL (#00D4FF) --- */
+/* --- CAJA A: AZUL (#00D4FF) --- */
 body[data-ledger-mode="A"] .header-ledger-pill,
 body[data-ledger-mode="A"] .nav-item.active {
     color: #00D4FF !important;
-    text-shadow: 0 0 10px rgba(0, 212, 255, 0.3); /* Brillo suave */
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
 }
-/* El icono dentro de la navegación también se pinta */
 body[data-ledger-mode="A"] .nav-item.active .material-icons {
     color: #00D4FF !important;
 }
 
-/* --- MODO B: ROJO (#ff4444) --- */
+/* --- CAJA B: ROJO (#ff4444) --- */
 body[data-ledger-mode="B"] .header-ledger-pill,
 body[data-ledger-mode="B"] .nav-item.active {
     color: #ff4444 !important;
@@ -5932,7 +5930,7 @@ body[data-ledger-mode="B"] .nav-item.active .material-icons {
     color: #ff4444 !important;
 }
 
-/* --- MODO C: VERDE (#00B34D) --- */
+/* --- CAJA C: VERDE (#00B34D) --- */
 body[data-ledger-mode="C"] .header-ledger-pill,
 body[data-ledger-mode="C"] .nav-item.active {
     color: #00B34D !important;
@@ -5942,8 +5940,8 @@ body[data-ledger-mode="C"] .nav-item.active .material-icons {
     color: #00B34D !important;
 }
 
-/* 4. AJUSTE EXTRA: Asegurar que los iconos inactivos sean grises */
+/* 4. ELEMENTOS INACTIVOS (Gris) */
 .nav-item {
-    color: #888888 !important; /* Gris apagado cuando no está seleccionado */
+    color: #888888 !important;
     transition: color 0.3s;
 }
