@@ -5940,3 +5940,71 @@ body[data-ledger-mode="C"] .nav-item.active .material-icons {
     color: #666666 !important;
     transition: color 0.3s;
 }
+/* ========================================= */
+/* === ESTILOS AYUDA NINJA (Divertida) === */
+/* ========================================= */
+
+.help-hero {
+    text-align: center;
+    padding: 20px 0;
+    background: linear-gradient(180deg, rgba(0, 179, 77, 0.1) 0%, transparent 100%);
+    border-radius: var(--border-radius-lg);
+    margin-bottom: 20px;
+}
+
+.help-hero__emoji {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 10px;
+    animation: pop-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.help-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    color: var(--c-primary);
+}
+
+.help-card {
+    background-color: var(--c-surface-variant);
+    border-radius: var(--border-radius-md);
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid var(--c-outline);
+}
+
+.help-tip {
+    background-color: rgba(255, 214, 10, 0.1); /* Fondo amarillo sutil */
+    border-left: 4px solid var(--c-warning);
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-style: italic;
+    color: var(--c-on-surface-secondary);
+}
+
+.help-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-right: 5px;
+}
+
+.tag-a { background: rgba(0, 86, 179, 0.3); color: #4dabf7; border: 1px solid #4dabf7; }
+.tag-b { background: rgba(200, 35, 51, 0.3); color: #ff6b6b; border: 1px solid #ff6b6b; }
+.tag-c { background: rgba(33, 136, 56, 0.3); color: #69db7c; border: 1px solid #69db7c; }
+
+.keyboard-shortcut {
+    font-family: monospace;
+    background: rgba(255,255,255,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--c-warning);
+}

@@ -2427,15 +2427,18 @@ const navigateTo = async (pageId, isInitial = false) => {
     const actionsEl = select('top-bar-actions');
     const leftEl = select('top-bar-left-button');
     
-    // Acciones por defecto (Menú de 3 puntos)
-    const standardActions = `
-        <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
-            <span class="material-icons">calculate</span>
-        </button>
-        <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
-    <span class="material-icons">more_vert</span>
-</button>
-    `;
+    // En la función navigateTo, busca la definición de standardActions:
+const standardActions = `
+    <button data-action="open-help" class="icon-btn" title="Ayuda Ninja">
+        <span class="material-icons" style="color: var(--c-warning);">help_outline</span>
+    </button>
+    <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
+        <span class="material-icons">calculate</span>
+    </button>
+    <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
+        <span class="material-icons">more_vert</span>
+    </button>
+`;
     
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
     if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
@@ -11610,6 +11613,13 @@ document.addEventListener('click', (e) => {
         if (typeof navigateTo === 'function') {
             navigateTo(pageId);
         }
+	// ▼▼▼ AÑADE ESTO AQUÍ ▼▼▼
+if (action === 'open-help') {
+    renderHelpContent(); // Generamos el contenido fresco
+    showModal('help-modal'); // Abrimos el modal existente en index.html
+    hapticFeedback('light'); // Vibración gustosa
+}
+// ▲▲▲ FIN DE AÑADIDO ▲▲▲	
     }
 
     // --- ACCIÓN: CALCULADORA ---
@@ -11654,26 +11664,35 @@ window.addEventListener('click', (e) => {
 
     const action = btn.dataset.action;
 
-    // --- A. CAMBIAR CAJA (A -> B -> C) ---
+   // --- CAMBIAR CAJA (Secuencia Estricta: A -> B -> C) ---
     if (action === 'toggle-ledger') {
-        const modes = ['A', 'B', 'C'];
+        // 1. Definimos el orden EXACTO que quieres
+        const modes = ['A', 'B', 'C']; 
+        
+        // 2. Leemos la caja actual (si no hay, asumimos A)
         let current = document.body.getAttribute('data-ledger-mode') || 'A';
+        
+        // 3. Calculamos la siguiente matemáticamente
+        // Si estoy en 0 (A) -> toca 1 (B)
+        // Si estoy en 1 (B) -> toca 2 (C)
+        // Si estoy en 2 (C) -> toca 0 (A)
         let currentIndex = modes.indexOf(current);
+        if (currentIndex === -1) currentIndex = 0; // Protección contra errores
+        
         let nextIndex = (currentIndex + 1) % modes.length;
         let nextMode = modes[nextIndex];
 
-        // Aplicar el cambio
+        // 4. Aplicar el cambio
         document.body.setAttribute('data-ledger-mode', nextMode);
         
-        // Actualizar variable global si existe
+        // Actualizar variable global y UI
         if (typeof currentLedger !== 'undefined') currentLedger = nextMode;
         
-        // Llamada a la función ÚNICA de actualización
         updateLedgerButtonUI(); 
         
         if(typeof hapticFeedback === 'function') hapticFeedback('medium');
         
-        // Recargar datos para ver los números de la nueva caja
+        // Recargar datos
         if (typeof loadData === 'function') loadData(); 
         else if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
         
@@ -11847,3 +11866,135 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 })();
+/* ========================================================= */
+/* === GENERADOR DE AYUDA DIVERTIDA (AI-DAN-AI HELP) === */
+/* ========================================================= */
+const renderHelpContent = () => {
+    const container = document.getElementById('help-modal-content');
+    if (!container) return;
+
+    // Reutilizamos tus explicaciones de KPIs existentes, ¡son oro puro!
+    // Pero las envolvemos en una estructura más visual.
+
+    const html = `
+        <div class="help-hero">
+            <span class="help-hero__emoji">🎓</span>
+            <h2>Academia aiDANaI</h2>
+            <p>Domina tus finanzas como un Ninja 🥷</p>
+        </div>
+
+        <div class="accordion-wrapper">
+            
+            <details class="accordion" open>
+                <summary>
+                    <div class="help-section-title">
+                        <span class="material-icons">savings</span>
+                        <span>Lo Básico: Tus KPIs</span>
+                    </div>
+                    <span class="material-icons accordion__icon">expand_more</span>
+                </summary>
+                <div class="accordion__content">
+                    <p style="margin-bottom:15px;">Bienvenido a tu cabina de mando. Aquí los números te hablan (si sabes escuchar). 👇</p>
+                    
+                    <div class="help-card">
+                        <strong>${KPI_EXPLANATIONS['neto'].title}</strong>
+                        <p>${KPI_EXPLANATIONS['neto'].text}</p>
+                        <div class="help-tip">💡 <strong>Tip Ninja:</strong> Si esto está en rojo, ¡cierra la cartera y corre! 🏃‍♂️</div>
+                    </div>
+
+                    <div class="help-card">
+                        <strong>${KPI_EXPLANATIONS['tasa_ahorro'].title}</strong>
+                        <p>${KPI_EXPLANATIONS['tasa_ahorro'].text}</p>
+                    </div>
+
+                    <div class="help-card">
+                        <strong>${KPI_EXPLANATIONS['cobertura'].title}</strong>
+                        <p>${KPI_EXPLANATIONS['cobertura'].text}</p>
+                        <div class="help-tip">🛡️ Es tu escudo antimisiles contra despidos o crisis. Intenta tener al menos 6 meses.</div>
+                    </div>
+                </div>
+            </details>
+
+            <details class="accordion">
+                <summary>
+                    <div class="help-section-title">
+                        <span class="material-icons">layers</span>
+                        <span>Multiverso: Cajas A, B y C</span>
+                    </div>
+                    <span class="material-icons accordion__icon">expand_more</span>
+                </summary>
+                <div class="accordion__content">
+                    <p>No mezcles churras con merinas. Tienes 3 universos paralelos para organizar tu dinero:</p>
+                    <ul style="list-style: none; padding: 0; margin-top: 10px;">
+                        <li class="help-card" style="border-left: 4px solid #007AFF;">
+                            <span class="help-tag tag-a">CAJA A</span> <strong>La Oficial</strong><br>
+                            Tu vida diaria. Nómina, súper, luz, agua. Lo que enseñas a Hacienda sin miedo.
+                        </li>
+                        <li class="help-card" style="border-left: 4px solid #FF3B30;">
+                            <span class="help-tag tag-b">CAJA B</span> <strong>El Búnker</strong><br>
+                            Ahorros intocables, "side hustles" o dinero para ese viaje a Japón. Lo que pasa en la Caja B, se queda en la Caja B. 🤫
+                        </li>
+                        <li class="help-card" style="border-left: 4px solid #28a745;">
+                            <span class="help-tag tag-c">CAJA C</span> <strong>El Laboratorio</strong><br>
+                            ¿Inversiones locas? ¿Proyectos compartidos? Úsala para lo que no encaja en las otras dos.
+                        </li>
+                    </ul>
+                    <div class="help-tip">👆 Toca el botón de arriba a la izquierda (donde pone tu Caja actual) para saltar entre universos.</div>
+                </div>
+            </details>
+
+            <details class="accordion">
+                <summary>
+                    <div class="help-section-title">
+                        <span class="material-icons">auto_fix_high</span>
+                        <span>Trucos de Hacker</span>
+                    </div>
+                    <span class="material-icons accordion__icon">expand_more</span>
+                </summary>
+                <div class="accordion__content">
+                    <div class="help-card">
+                        <strong>🕵️‍♂️ Modo Privacidad</strong><br>
+                        ¿Alguien mira tu pantalla? Haz clic encima de tu <strong>Patrimonio Total</strong> en el Panel. Los números se volverán borrosos. ¡Magia! ✨
+                    </div>
+                    
+                    <div class="help-card">
+                        <strong>➕ Añadir Rápido</strong><br>
+                        Mantén pulsado el botón flotante <span class="material-icons" style="font-size:1em; vertical-align:middle; background:var(--c-primary); color:white; border-radius:50%; padding:2px;">add</span> para abrir el menú secreto de acciones rápidas.
+                    </div>
+
+                    <div class="help-card">
+                        <strong>🧮 Calculadora Integrada</strong><br>
+                        En cualquier campo de importe, verás que se abre un teclado numérico especial. ¡Es una calculadora real! Puedes escribir <span class="keyboard-shortcut">50 + 20</span> y se guardará 70.
+                    </div>
+                </div>
+            </details>
+
+             <details class="accordion">
+                <summary>
+                    <div class="help-section-title">
+                        <span class="material-icons">rocket_launch</span>
+                        <span>Inversiones y Crypto</span>
+                    </div>
+                    <span class="material-icons accordion__icon">expand_more</span>
+                </summary>
+                <div class="accordion__content">
+                    <p>Aquí controlas tu imperio. 🏰</p>
+                    <div class="help-card">
+                        <strong>Rendimiento Real (TIR)</strong><br>
+                        Calculamos matemáticamente cuánto rinde tu dinero teniendo en cuenta cuándo lo metiste. No te engañes con números simples.
+                    </div>
+                    <div class="help-card">
+                        <strong>Modo BTC ₿</strong><br>
+                        En la pestaña Patrimonio, pulsa el icono de Bitcoin arriba a la derecha. Todo tu patrimonio se convertirá a BTC en tiempo real. ¡Hodl! 💎🙌
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <div style="text-align:center; margin-top:20px; font-size: 0.8em; opacity: 0.7;">
+            <p>aiDANaI v3.1 - Hecho con 💚 y mucho código.</p>
+        </div>
+    `;
+
+    container.innerHTML = html;
+};
