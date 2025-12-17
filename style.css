@@ -273,24 +273,7 @@
         justify-content: flex-end; 
         margin-top: 4px; 
     }
-	
-/* === INICIO: Estilos para la nueva Guía de Ayuda === */
-#help-modal-body h3 { 
-    margin-top: 1.5em; 
-    margin-bottom: 0.8em; 
-    color: var(--c-primary); 
-    font-weight: 700; 
-    display: flex; 
-    align-items: center; 
-    gap: 8px; 
-    border-bottom: 1px solid var(--c-outline); 
-    padding-bottom: 8px;
-}
-#help-modal-body h4 {
-    color: var(--c-on-surface);
-    margin-top: 1.2em;
-    margin-bottom: 0.5em;
-}
+
 /* Le damos un estilo más prominente a los títulos de las secciones principales */
 #help-modal-body .accordion > summary {
     font-size: 1.1em;
@@ -3778,108 +3761,7 @@ input, select, textarea, .form-input, .form-select {
         transform: translateY(0); /* Termina en su sitio */
     }
 }
-/* ================================================================= */
-/* === ESTILOS AYUDA PREMIUM (MANUAL DEL PILOTO) === */
-/* ================================================================= */
 
-.help-hero {
-    text-align: center;
-    padding: 20px 0 30px;
-    background: linear-gradient(180deg, var(--c-surface-variant) 0%, transparent 100%);
-    border-radius: var(--border-radius-lg);
-    margin-bottom: 20px;
-}
-
-.help-hero__icon {
-    font-size: 64px;
-    color: var(--c-primary);
-    filter: drop-shadow(0 4px 10px rgba(0, 179, 77, 0.3));
-    animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
-}
-
-.help-section-title {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--c-on-surface);
-    margin: 30px 0 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-bottom: 1px solid var(--c-outline);
-    padding-bottom: 10px;
-}
-
-.help-card {
-    background-color: var(--c-surface);
-    border: 1px solid var(--c-outline);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-    display: flex;
-    gap: 15px;
-    align-items: flex-start;
-}
-
-.help-card__icon {
-    font-size: 28px;
-    padding: 10px;
-    background-color: var(--c-surface-variant);
-    border-radius: 12px;
-    color: var(--c-primary);
-    flex-shrink: 0;
-}
-
-.help-card__content h4 {
-    margin: 0 0 6px 0;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--c-on-surface);
-}
-
-.help-card__content p {
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--c-on-surface-secondary);
-    line-height: 1.5;
-}
-
-.help-pro-tip {
-    margin-top: 10px;
-    padding: 10px 12px;
-    background-color: color-mix(in srgb, var(--c-warning) 10%, transparent);
-    border-left: 3px solid var(--c-warning);
-    border-radius: 4px;
-    font-size: 0.85rem;
-    color: var(--c-on-surface);
-}
-
-.help-pro-tip strong {
-    color: var(--c-warning);
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    margin-right: 5px;
-}
-
-/* Ajustes para acordeones dentro de la ayuda */
-.help-accordion summary {
-    background-color: var(--c-surface-variant);
-    border-radius: 8px;
-    margin-bottom: 5px;
-    list-style: none;
-}
-.kpi-grid:last-child, 
-.card:last-child,
-#movimientos-list-container {
-    padding-bottom: 20px; /* Un poco de respiro al final */
-}
 /* ================================================================= */
 /* === MODO PRIVACIDAD (Blur Effect) === */
 /* ================================================================= */
@@ -5994,20 +5876,31 @@ input, select, textarea {
     }
 }
 /* ================================================================= */
-/* === BODY LIMPIO (Sin animaciones propias) === */
+/* === FIX TÍTULO: SIEMPRE EN UNA LÍNEA (RESPONSIVE) === */
 /* ================================================================= */
 
-body {
-    margin: 0;
-    padding: 0;
-    width: 100vw;
-    height: 100vh;
-    font-family: 'Inter', sans-serif;
+/* 1. El contenedor del logo debe ser flexible pero contenido */
+.app-logo {
+    flex: 1; /* Ocupa el espacio disponible */
+    min-width: 0; /* TRUCO VITAL: Permite al flexbox encogerse si falta espacio */
+    margin-right: 10px; /* Separación con los iconos */
+}
+
+/* 2. El texto del título se adapta y nunca baja de línea */
+.app-title {
+    white-space: nowrap !important;      /* PROHIBIDO saltar de línea */
+    overflow: hidden !important;         /* Cortar lo que sobre */
+    text-overflow: ellipsis !important;  /* Poner "..." si es extremádamente largo */
+    display: block;
     
-    /* ESTO ES LO IMPORTANTE: */
-    background-color: #121820; /* Color base oscuro */
-    background-image: none !important; /* Quitamos cualquier imagen/gradiente */
-    animation: none !important; /* APAGAMOS el movimiento antiguo */
-    
-    overflow: hidden; /* Evita barras de scroll dobles */
+    /* TAMAÑO INTELIGENTE: */
+    /* Mínimo: 0.9rem (móvil pequeño) */
+    /* Preferido: 4vw (se adapta al ancho) */
+    /* Máximo: 1.15rem (lo que tienes ahora) */
+    font-size: clamp(0.9rem, 4vw, 1.15rem) !important; 
+}
+
+/* 3. Asegurar que los iconos de la derecha NUNCA se aplasten */
+.top-bar-actions {
+    flex-shrink: 0 !important; /* Los iconos mantienen su tamaño real siempre */
 }
