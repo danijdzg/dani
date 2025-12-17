@@ -139,19 +139,33 @@
         <span class="material-icons fab-icon-close">close</span>
     </button>
 </div>
-        <div class="top-bar">
-   <div class="app-logo" style="flex-grow: 1; display: flex; align-items: center;">
-    <button id="header-ledger-btn" class="header-ledger-pill" data-action="toggle-ledger">
-        <span id="ledger-btn-text">Cargando...</span>
-        <span class="material-icons" style="font-size: 18px; opacity: 0.7;">expand_more</span>
-    </button>
-</div>
+    <header class="header">
+            <div class="header-content" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                
+                <div style="flex: 1; display: flex; justify-content: flex-start;">
+                    <button id="ledger-selector-btn" class="header-ledger-pill" data-action="toggle-ledger-mode">
+                        <span id="current-ledger-indicator">A</span>
+                        <span class="material-icons" style="font-size: 16px;">expand_more</span>
+                    </button>
+                </div>
 
-    <div style="flex-grow: 1;"></div>
+                <div class="header-title" style="flex: 0 0 auto; text-align: center;">
+                    <span>aiDANaI</span>
+                </div>
 
-    <div style="display: flex; align-items: center; margin-right: 5px;">
-    <span id="sync-status-icon" class="material-icons" style="font-size: 18px; color: var(--c-on-surface-secondary);" title="Estado">cloud_done</span>
-</div>
+                <div style="flex: 1; display: flex; justify-content: flex-end; align-items: center;">
+                    
+                    <div style="margin-right: 8px; display: flex; align-items: center;">
+                        <span id="sync-status-icon" class="material-icons" style="font-size: 18px; color: var(--c-on-surface-secondary);" title="Estado">cloud_done</span>
+                    </div>
+
+                    <div id="top-bar-actions" style="display: flex; gap: 5px; align-items: center;">
+                    </div>
+
+                </div>
+
+            </div>
+        </header>
 
 <div id="top-bar-actions" style="display: flex; gap: 5px; align-items: center;">
     </div>
