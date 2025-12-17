@@ -5876,19 +5876,22 @@ input, select, textarea {
     }
 }
 /* ================================================================= */
-/* === BOTÓN DE CAJA EN ENCABEZADO === */
+/* === DISEÑO UNIFICADO: ENCABEZADO, PIE Y COLORES DINÁMICOS === */
 /* ================================================================= */
 
-/* ================================================================= */
-/* === BOTÓN DE CAJA (COLORES NUEVOS) === */
-/* ================================================================= */
+/* 1. FONDO IGUAL PARA ENCABEZADO Y PIE DE PÁGINA */
+.top-bar, .bottom-nav {
+    background-color: #121820 !important; /* El mismo color oscuro para ambos */
+    border-top: 1px solid rgba(255,255,255,0.05); /* Separador sutil */
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
 
+/* 2. ESTILO BASE DEL BOTÓN CAJA (Sin colores todavía) */
 .header-ledger-pill {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: transparent !important; /* Fondo transparente */
+    border: 1px solid currentColor; /* El borde toma el color del texto */
     border-radius: 20px;
     padding: 6px 16px;
-    color: white;
     font-family: 'Inter', sans-serif;
     font-weight: 700;
     font-size: 0.95rem;
@@ -5896,36 +5899,51 @@ input, select, textarea {
     display: flex;
     align-items: center;
     gap: 6px;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     outline: none;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
 }
 
 /* Efecto al pulsar */
 .header-ledger-pill:active {
     transform: scale(0.95);
+    background: rgba(255,255,255,0.05) !important;
 }
 
-/* CAJA A: AZUL (Personalizable) */
-body[data-ledger-mode="A"] .header-ledger-pill {
-    border-color: #00D4FF;
-    color: #00D4FF;
-    background: rgba(0, 212, 255, 0.15);
-    text-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
+/* 3. COLORES DINÁMICOS (Afectan al Botón y al Pie de Página) */
+
+/* --- MODO A: AZUL (#00D4FF) --- */
+body[data-ledger-mode="A"] .header-ledger-pill,
+body[data-ledger-mode="A"] .nav-item.active {
+    color: #00D4FF !important;
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.3); /* Brillo suave */
+}
+/* El icono dentro de la navegación también se pinta */
+body[data-ledger-mode="A"] .nav-item.active .material-icons {
+    color: #00D4FF !important;
 }
 
-/* CAJA B: ROJO (Personalizable) */
-body[data-ledger-mode="B"] .header-ledger-pill {
-    border-color: #ff4444;
-    color: #ff4444;
-    background: rgba(255, 68, 68, 0.15);
-    text-shadow: 0 0 10px rgba(255, 68, 68, 0.4);
+/* --- MODO B: ROJO (#ff4444) --- */
+body[data-ledger-mode="B"] .header-ledger-pill,
+body[data-ledger-mode="B"] .nav-item.active {
+    color: #ff4444 !important;
+    text-shadow: 0 0 10px rgba(255, 68, 68, 0.3);
+}
+body[data-ledger-mode="B"] .nav-item.active .material-icons {
+    color: #ff4444 !important;
 }
 
-/* CAJA C: VERDE (Personalizable) */
-body[data-ledger-mode="C"] .header-ledger-pill {
-    border-color: #00B34D;
-    color: #00B34D;
-    background: rgba(0, 179, 77, 0.15);
-    text-shadow: 0 0 10px rgba(0, 179, 77, 0.4);
+/* --- MODO C: VERDE (#00B34D) --- */
+body[data-ledger-mode="C"] .header-ledger-pill,
+body[data-ledger-mode="C"] .nav-item.active {
+    color: #00B34D !important;
+    text-shadow: 0 0 10px rgba(0, 179, 77, 0.3);
+}
+body[data-ledger-mode="C"] .nav-item.active .material-icons {
+    color: #00B34D !important;
+}
+
+/* 4. AJUSTE EXTRA: Asegurar que los iconos inactivos sean grises */
+.nav-item {
+    color: #888888 !important; /* Gris apagado cuando no está seleccionado */
+    transition: color 0.3s;
 }
