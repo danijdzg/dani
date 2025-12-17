@@ -264,10 +264,11 @@ const cleanupAfterMovementSave = () => {
     // Reset del formulario
     select('movimiento-form')?.reset();
     
-    // Liberar memoria de la caché de movimientos
-    if (allDiarioMovementsCache.length > 1000) {
-        allDiarioMovementsCache = allDiarioMovementsCache.slice(-500);
-    }
+    // --- LÍNEAS A ELIMINAR O COMENTAR ---
+    // if (allDiarioMovementsCache.length > 1000) {
+    //    allDiarioMovementsCache = allDiarioMovementsCache.slice(-500);
+    // }
+    // ------------------------------------
     
     // Forzar recálculo de balances si hay muchos movimientos
     if (db.movimientos.length > 500) {
@@ -2442,9 +2443,9 @@ const navigateTo = async (pageId, isInitial = false) => {
         <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
             <span class="material-icons">calculate</span>
         </button>
-        <button data-action="show-main-menu" class="icon-btn">
-            <span class="material-icons">more_vert</span>
-        </button>
+        <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
+    <span class="material-icons">more_vert</span>
+</button>
     `;
     
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
@@ -2774,9 +2775,7 @@ const getFilteredMovements = async (forComparison = false) => {
 		
 const calculatePortfolioPerformance = async (cuentaId = null) => {
     // 1. Carga de datos (igual que antes)
-    const allMovements = (typeof allDiarioMovementsCache !== 'undefined' && allDiarioMovementsCache.length > 0) 
-        ? allDiarioMovementsCache 
-        : await AppStore.getAll();
+    const allMovements = await AppStore.getAll();
     
     if (!dataLoaded.inversiones) await loadInversiones();
 
@@ -3658,10 +3657,10 @@ const handleShowPnlBreakdown = async (accountId) => {
     showGenericModal(`Desglose P&L: ${cuenta.nombre}`, modalHtml);
 };
 
-/* --- renderVirtualListItem: VERSIÓN CORREGIDA (Fecha añadida a Traspasos) --- */
+/* --- renderVirtualListItem: VERSIÓN BLINDADA (Sin errores de sintaxis) --- */
 const renderVirtualListItem = (item) => {
     
-    // 1. Header de Pendientes (Amarillo)
+    // 1. Header de Pendientes
     if (item.type === 'pending-header') {
         return `
         <div class="movimiento-date-header" style="background-color: var(--c-warning); color: #000; margin: 10px 16px;">
@@ -3673,8 +3672,8 @@ const renderVirtualListItem = (item) => {
     if (item.type === 'pending-item') {
         const r = item.recurrent;
         const date = new Date(r.nextDate).toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
-        const amountClass = r.cantidad >= 0 ? 'text-positive' : 'text-negative';
         
+        // CORRECCIÓN COLOR: Usamos formatCurrencyHTML directamente
         return `
         <div class="transaction-card" id="pending-recurrente-${r.id}" style="margin:0 16px; border-bottom:1px solid var(--c-outline); background-color: rgba(255, 214, 10, 0.05);">
             <div class="transaction-card__content">
@@ -3688,63 +3687,91 @@ const renderVirtualListItem = (item) => {
                     </div>
                 </div>
                 <div class="transaction-card__figures">
-                    <strong class="transaction-card__amount ${amountClass}">${formatCurrency(r.cantidad)}</strong>
+                    <strong class="transaction-card__amount ${r.cantidad >= 0 ? 'text-positive' : 'text-negative'}">
+                        ${formatCurrencyHTML(r.cantidad)}
+                    </strong>
                 </div>
             </div>
         </div>`;
     }
 
-    // 3. Header de Fecha Sticky
+    // 3. Header de Fecha (ESTILO INTEGRADO CON COLOR SEMÁNTICO)
     if (item.type === 'date-header') {
         const dateObj = new Date(item.date + 'T12:00:00Z');
-        const today = new Date(); today.setHours(0,0,0,0);
-        const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1); yesterday.setHours(0,0,0,0);
+        
+        const today = new Date(); 
+        const yesterday = new Date(); 
+        today.setHours(0,0,0,0);
+        yesterday.setDate(yesterday.getDate() - 1); yesterday.setHours(0,0,0,0);
+        
         const itemDate = new Date(dateObj); itemDate.setHours(0,0,0,0);
         
-        let label = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-        if (itemDate.getTime() === today.getTime()) label = "Hoy";
-        else if (itemDate.getTime() === yesterday.getTime()) label = "Ayer";
+        let dayName = '';
+        let fullDate = '';
+        let isTodayClass = '';
 
-        const totalClass = item.total >= 0 ? 'text-positive' : 'text-negative';
-        const totalSign = item.total > 0 ? '+' : '';
+        if (itemDate.getTime() === today.getTime()) {
+            dayName = "HOY";
+            isTodayClass = 'is-today'; 
+            fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+        } else if (itemDate.getTime() === yesterday.getTime()) {
+            dayName = "AYER";
+            fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+        } else {
+            dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase().replace('.', '');
+            fullDate = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        // Lógica de colores según el importe:
+        // > 0: Verde (is-positive)
+        // < 0: Rojo (is-negative)
+        // === 0: Morado (is-neutral)
+        let totalClass = 'is-neutral'; 
+        if (item.total > 0) totalClass = 'is-positive';
+        else if (item.total < 0) totalClass = 'is-negative';
+
+        const totalFormatted = formatCurrencyHTML(item.total); 
 
         return `
             <div class="sticky-date-header">
-                <span class="sticky-date-label">${label}</span>
-                <span class="sticky-date-total ${totalClass}">${totalSign}${formatCurrencyHTML(item.total)}</span>
+                <div class="sticky-date-left">
+                    <span class="sticky-day-pill ${isTodayClass}">${dayName}</span>
+                    <span class="sticky-date-text">${fullDate}</span>
+                </div>
+                <span class="sticky-date-total ${totalClass}">${totalFormatted}</span>
             </div>
         `;
     }
 
-    // 4. MOVIMIENTOS REALES
+    // 4. MOVIMIENTOS REALES (DIARIO)
     if (item.type === 'transaction') {
         const m = item.movement;
         const { cuentas, conceptos } = db;
-        const highlightClass = (m.id === newMovementIdToHighlight) ? 'highlight-pulse' : '';
+        const highlightClass = (m.id === newMovementIdToHighlight) ? 'list-item-animate' : '';
         
-        // Formatear fecha: "12 oct"
+        // Formatear fecha corta
         const dateObj = new Date(m.fecha);
         const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
 
         let iconHtml, line1, line2, amountClass, amountSign;
 
-        const formatCompact = (cents) => {
-            if (cents === undefined || cents === null) return '...';
-            return (cents / 100).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + '€';
-        };
-
         if (m.tipo === 'traspaso') {
             const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || 'Origen';
             const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || 'Destino';
             
+            // Formateamos los saldos resultantes que calculamos en updateVirtualListUI
+            const saldoOrigenHtml = m._saldoOrigenSnapshot !== undefined 
+                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoOrigenSnapshot)})</span>` 
+                : '';
+            const saldoDestinoHtml = m._saldoDestinoSnapshot !== undefined 
+                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoDestinoSnapshot)})</span>` 
+                : '';
+
             iconHtml = `<div class="t-icon t-icon--transfer"><span class="material-icons">sync_alt</span></div>`;
             
-            // --- CORRECCIÓN AQUÍ: Añadimos la fecha a la línea 1 ---
-            // LÍNEA 1: [Fecha] ↑ Origen (Saldo)
-            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:2px;">arrow_upward</span>${escapeHTML(origen)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceOrigen)})</span></span>`;
-            
-            // LÍNEA 2: ↓ Destino (Saldo) (Aquí dejamos un espacio vacío al inicio para alinear visualmente con el texto de arriba si se desea, o lo dejamos natural)
-            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:2px;">arrow_downward</span>${escapeHTML(destino)} <span class="t-balance-pill">(${formatCompact(m.runningBalanceDestino)})</span></span>`;
+            // Añadimos el saldo a cada línea
+            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:2px;">arrow_upward</span>${escapeHTML(origen)}${saldoOrigenHtml}</span>`;
+            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:2px;">arrow_downward</span>${escapeHTML(destino)}${saldoDestinoHtml}</span>`;
             
             amountClass = 'text-info';
             amountSign = '';
@@ -3761,10 +3788,8 @@ const renderVirtualListItem = (item) => {
             const isGasto = m.cantidad < 0;
             iconHtml = `<div class="t-icon ${isGasto ? 't-icon--expense' : 't-icon--income'}">${avatarContent}</div>`;
             
-            // LÍNEA 1: Fecha y Concepto
             line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-concept">${escapeHTML(conceptoNombre)}</span>`;
             
-            // LÍNEA 2: Cuenta y Descripción
             const desc = m.descripcion && m.descripcion !== conceptoNombre ? m.descripcion : '';
             const separator = desc ? ' • ' : '';
             line2 = `<span class="t-account-badge">${escapeHTML(nombreCuenta)}</span>${separator}${escapeHTML(desc)}`;
@@ -3779,11 +3804,11 @@ const renderVirtualListItem = (item) => {
             <div class="t-content">
                 <div class="t-row-primary">
                     <div class="t-line-1">${line1}</div>
-                    <div class="t-amount ${amountClass}">${amountSign}${formatCurrency(m.cantidad)}</div>
+                    <div class="t-amount ${amountClass}">${amountSign}${formatCurrencyHTML(m.cantidad)}</div>
                 </div>
                 <div class="t-row-secondary">
                     <div class="t-line-2">${line2}</div>
-                    ${m.tipo !== 'traspaso' ? `<div class="t-running-balance">${formatCurrency(m.runningBalance)}</div>` : ''}
+                    ${m.tipo !== 'traspaso' ? `<div class="t-running-balance">${formatCurrencyHTML(m.runningBalance)}</div>` : ''}
                 </div>
             </div>
         </div>`;
@@ -3846,67 +3871,133 @@ const updateVirtualListUI = () => {
     vList.itemMap = [];
     let currentHeight = 0;
     
-    // 1. Recurrentes pendientes (Se mantiene igual)
+    // Constantes de altura (Coherencia visual)
+    const H_HEADER = 45;
+    const H_ITEM = 65;
+    const H_PENDING = 72;
+
+    // 1. Recurrentes Pendientes (Igual que antes)
     const pendingRecurrents = getPendingRecurrents();
     if (pendingRecurrents.length > 0) {
         vList.items.push({ type: 'pending-header', count: pendingRecurrents.length });
-        vList.itemMap.push({ height: vList.heights.pendingHeader, offset: currentHeight });
-        currentHeight += vList.heights.pendingHeader;
+        vList.itemMap.push({ height: 40, offset: currentHeight });
+        currentHeight += 40;
+        
         pendingRecurrents.forEach(recurrent => {
             vList.items.push({ type: 'pending-item', recurrent: recurrent });
-            vList.itemMap.push({ height: vList.heights.pendingItem, offset: currentHeight });
-            currentHeight += vList.heights.pendingItem;
+            vList.itemMap.push({ height: H_PENDING, offset: currentHeight });
+            currentHeight += H_PENDING;
         });
     }
 
-    // 2. Lista de Movimientos PLANA (Sin separadores)
-    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
-    const allMovements = [];
+    // --- NUEVA LÓGICA: CÁLCULO DE SALDOS HISTÓRICOS ---
+    
+    // A) Creamos un mapa con los saldos ACTUALES de todas las cuentas
+    // (Asumimos que db.cuentas tiene el saldo real actual)
+    const runningBalances = {};
+    if (db.cuentas) {
+        db.cuentas.forEach(c => runningBalances[c.id] = c.saldo || 0);
+    }
 
-    (db.movimientos || []).forEach(mov => {
-        let isVisible = false;
+    // B) Ordenamos TODOS los movimientos por fecha (Del más nuevo al más viejo)
+    // Usamos una copia para no alterar el orden original si fuera necesario
+    const allSortedMovs = [...(db.movimientos || [])].sort((a, b) => 
+        new Date(b.fecha) - new Date(a.fecha) || b.id.localeCompare(a.id)
+    );
+
+    // C) Recorremos hacia atrás en el tiempo para asignar saldos y revertirlos
+    allSortedMovs.forEach(mov => {
+        // 1. Guardamos el saldo que tenían las cuentas JUSTO DESPUÉS de este movimiento
+        // (que es el valor que tienen actualmente en el mapa runningBalances)
+        
         if (mov.tipo === 'traspaso') {
-            isVisible = visibleAccountIds.has(mov.cuentaOrigenId) || visibleAccountIds.has(mov.cuentaDestinoId);
-        } else {
-            isVisible = visibleAccountIds.has(mov.cuentaId);
-        }
+            // Guardamos la foto del saldo para mostrarla
+            mov._saldoOrigenSnapshot = runningBalances[mov.cuentaOrigenId] || 0;
+            mov._saldoDestinoSnapshot = runningBalances[mov.cuentaDestinoId] || 0;
 
-        if (isVisible) {
-            allMovements.push(mov);
+            // 2. Revertimos el efecto para el siguiente paso (ir al pasado)
+            // Si hubo un traspaso de A a B por 50€:
+            // A bajó 50 -> Para volver al pasado, le SUMAMOS 50
+            // B subió 50 -> Para volver al pasado, le RESTAMOS 50
+            const cantidad = Math.abs(mov.cantidad);
+            if (runningBalances[mov.cuentaOrigenId] !== undefined) runningBalances[mov.cuentaOrigenId] += cantidad;
+            if (runningBalances[mov.cuentaDestinoId] !== undefined) runningBalances[mov.cuentaDestinoId] -= cantidad;
+
+        } else {
+            // Movimiento normal (Ingreso/Gasto)
+            mov._saldoSnapshot = runningBalances[mov.cuentaId] || 0;
+
+            // Revertimos: Si fue gasto (-50), sumamos 50. Si fue ingreso (+50), restamos 50.
+            if (runningBalances[mov.cuentaId] !== undefined) {
+                runningBalances[mov.cuentaId] -= mov.cantidad;
+            }
         }
     });
 
-    // Ordenamos por fecha descendente (más reciente arriba)
-    allMovements.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id.localeCompare(a.id));
+    // --- FIN LÓGICA DE CÁLCULO ---
 
-    // Generamos los items de la lista virtual
-    for (const mov of allMovements) {
-        // Altura fija un poco mayor para que quepan las dos líneas de texto cómodamente
-        const itemHeight = 76; 
-        vList.items.push({ type: 'transaction', movement: mov });
-        vList.itemMap.push({ height: itemHeight, offset: currentHeight });
-        currentHeight += itemHeight;
-    }
+    // 2. Agrupación y Filtrado (Tu lógica visual)
+    const groupedByDate = {};
+    const visibleAccountIds = new Set(getVisibleAccounts().map(c => c.id));
+
+    allSortedMovs.forEach(mov => {
+        // Filtrado de visibilidad
+        let isVisible = false;
+        let amountForTotal = 0;
+
+        if (mov.tipo === 'traspaso') {
+            const origenVisible = visibleAccountIds.has(mov.cuentaOrigenId);
+            const destinoVisible = visibleAccountIds.has(mov.cuentaDestinoId);
+            isVisible = origenVisible || destinoVisible;
+            
+            // Cálculo del neto para la cabecera del día
+            if (origenVisible && !destinoVisible) amountForTotal = -Math.abs(mov.cantidad);
+            else if (!origenVisible && destinoVisible) amountForTotal = Math.abs(mov.cantidad);
+        } else {
+            isVisible = visibleAccountIds.has(mov.cuentaId);
+            amountForTotal = mov.cantidad;
+        }
+
+        if (isVisible) {
+            const dateKey = mov.fecha.split('T')[0];
+            if (!groupedByDate[dateKey]) {
+                groupedByDate[dateKey] = { movements: [], totalDay: 0 };
+            }
+            groupedByDate[dateKey].movements.push(mov);
+            groupedByDate[dateKey].totalDay += amountForTotal;
+        }
+    });
+
+    // 3. Construir la lista plana
+    const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
+
+    sortedDates.forEach(dateKey => {
+        const group = groupedByDate[dateKey];
+
+        // Header
+        vList.items.push({ type: 'date-header', date: dateKey, total: group.totalDay });
+        vList.itemMap.push({ height: H_HEADER, offset: currentHeight });
+        currentHeight += H_HEADER;
+
+        // Items (Ya están ordenados por el paso B)
+        group.movements.forEach(mov => {
+            vList.items.push({ type: 'transaction', movement: mov });
+            vList.itemMap.push({ height: H_ITEM, offset: currentHeight });
+            currentHeight += H_ITEM;
+        });
+    });
     
-    // 3. Renderizado final
     vList.sizerEl.style.height = `${currentHeight}px`;
     vList.lastRenderedRange = { start: -1, end: -1 }; 
     renderVisibleItems();
     
-    // Gestión de estados vacíos
-    const loadMoreContainer = select('load-more-container');
-    const emptyContainer = select('empty-movimientos');
-    const listContainer = select('movimientos-list-container');
+    // Gestión de estado vacío
+    const emptyState = document.getElementById('empty-movimientos');
+    const listContainer = document.getElementById('movimientos-list-container');
+    const hasItems = vList.items.length > 0;
     
-    if (vList.items.length === 0) {
-        listContainer?.classList.add('hidden');
-        loadMoreContainer?.classList.add('hidden');
-        emptyContainer?.classList.remove('hidden');
-    } else {
-        listContainer?.classList.remove('hidden');
-        emptyContainer?.classList.add('hidden');
-        loadMoreContainer?.classList.toggle('hidden', allMovementsLoaded);
-    }
+    if (listContainer) listContainer.classList.toggle('hidden', !hasItems);
+    if (emptyState) emptyState.classList.toggle('hidden', hasItems);
 };
 
 
@@ -4134,12 +4225,10 @@ const renderDiarioPage = async () => {
 
             select('diario-filter-active-indicator').classList.remove('hidden');
             
-            if (allDiarioMovementsCache.length === 0) {
-                allDiarioMovementsCache = await AppStore.getAll();
-            }
+            const allMovements = await AppStore.getAll();
 
-            const { startDate, endDate, description, minAmount, maxAmount, cuentas, conceptos } = diarioActiveFilters;
-            db.movimientos = allDiarioMovementsCache.filter(m => {
+			const { startDate, endDate, description, minAmount, maxAmount, cuentas, conceptos } = diarioActiveFilters;
+			db.movimientos = allMovements.filter(m => {
                 if (startDate && m.fecha < startDate) return false;
                 if (endDate && m.fecha > endDate) return false;
                 if (description && !m.descripcion.toLowerCase().includes(description)) return false;
@@ -8783,6 +8872,49 @@ const renderInversionesPage = async (containerId) => {
 
 // ▼▼▼ REEMPLAZA TU FUNCIÓN attachEventListeners CON ESTA VERSIÓN LIMPIA ▼▼▼
 const attachEventListeners = () => {
+	// --- GESTOR GLOBAL DE CLICS (El cerebro de los botones) ---
+    document.addEventListener('click', async (e) => {
+        
+        // 1. CERRAR MENÚ AL TOCAR FUERA
+        // Si el menú está abierto y tocamos fuera de él, lo cerramos
+        const menu = document.getElementById('main-menu-popover');
+        if (menu && menu.classList.contains('popover-menu--visible')) {
+            if (!e.target.closest('#main-menu-popover') && !e.target.closest('[data-action="show-main-menu"]')) {
+                menu.classList.remove('popover-menu--visible');
+            }
+        }
+
+        // 2. DETECTAR BOTONES CON ACCIÓN
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return; // Si no es un botón con acción, no hacemos nada
+
+        const action = btn.dataset.action;
+
+// ESTE ES EL BLOQUE QUE HACE LA MAGIA
+if (action === 'show-main-menu') {
+    e.stopPropagation(); // Evita que se cierre al instante
+    
+    const menu = document.getElementById('main-menu-popover');
+    if (menu) {
+        menu.classList.toggle('popover-menu--visible');
+        hapticFeedback('light');
+    } else {
+        console.error("Error: No encuentro el menú con id 'main-menu-popover'");
+    }
+    return;
+}
+        if (action === 'logout') {
+            if (confirm("¿Cerrar sesión?")) {
+                firebase.auth().signOut();
+                location.reload();
+            }
+        }
+        
+        if (action === 'navigate') {
+            const page = btn.dataset.page;
+            if (page) navigateTo(page);
+        }
+    });
 	// --- LÓGICA DE MODO PRIVACIDAD ---
     // Al hacer clic en el valor del Patrimonio Neto (KPI principal), alternamos el modo.
     document.body.addEventListener('click', (e) => {
@@ -9071,23 +9203,50 @@ const handleStart = (e) => {
 },
 			'rename-ledgers': showRenameLedgersModal,
             'swipe-show-irr-history': () => handleShowIrrHistory(type),
-            'show-main-menu': () => {
-                const menu = document.getElementById('main-menu-popover');
-                if (!menu) return;
-                hapticFeedback('light');
-                menu.classList.toggle('popover-menu--visible');
-                if (menu.classList.contains('popover-menu--visible')) {
-                    setTimeout(() => {
-                        const closeOnClickOutside = (event) => {
-                            if (!menu.contains(event.target) && !event.target.closest('[data-action="show-main-menu"]')) {
-                                menu.classList.remove('popover-menu--visible');
-                                document.removeEventListener('click', closeOnClickOutside);
-                            }
-                        };
-                        document.addEventListener('click', closeOnClickOutside);
-                    }, 0);
+            'show-main-menu': (e) => {
+    const menu = document.getElementById('main-menu-popover');
+    if (!menu) return;
+
+    // Intentamos obtener el botón de 3 formas:
+    // 1. Por el evento directo (e.currentTarget)
+    // 2. Por el objetivo del evento (e.target)
+    // 3. FALLBACK: Por su ID directo (si todo lo anterior falla)
+    let button = (e && e.currentTarget) || 
+                 (e && e.target && e.target.closest('[data-action="show-main-menu"]')) ||
+                 document.getElementById('header-menu-btn');
+
+    hapticFeedback('light');
+
+    // CÁLCULO DE POSICIÓN
+    if (!menu.classList.contains('popover-menu--visible') && button) {
+        const rect = button.getBoundingClientRect();
+        
+        // Posición: Debajo del botón y alineado a la derecha
+        menu.style.top = `${rect.bottom + 5}px`;
+        
+        const rightSpace = window.innerWidth - rect.right;
+        menu.style.right = `${Math.max(5, rightSpace)}px`;
+        menu.style.left = 'auto'; // Limpiamos left por seguridad
+    }
+
+    // MOSTRAR EL MENÚ
+    menu.classList.toggle('popover-menu--visible');
+
+    // Lógica para cerrar al hacer clic fuera
+    if (menu.classList.contains('popover-menu--visible')) {
+        setTimeout(() => {
+            const closeOnClickOutside = (event) => {
+                const target = event.target;
+                // Si el clic NO es en el menú Y NO es en el botón que lo abre
+                if (!menu.contains(target) && !target.closest('[data-action="show-main-menu"]')) {
+                    menu.classList.remove('popover-menu--visible');
+                    document.removeEventListener('click', closeOnClickOutside);
                 }
-            },
+            };
+            document.addEventListener('click', closeOnClickOutside);
+        }, 0);
+    }
+},
 			'open-external-calculator': () => {
                 // Cierra el menú si estaba abierto
                 const menu = document.getElementById('main-menu-popover');
@@ -9211,7 +9370,10 @@ const handleStart = (e) => {
     // Ella se encarga de buscar el botón y cambiar el texto.
     updateLedgerButtonUI(); 
     // ▲▲▲ FIN DE LA CORRECCIÓN ▲▲▲
-   
+    
+    // Mensaje informativo usando el nombre real
+    showToast(`Cambiado a ${getLedgerName(currentLedger)}.`, 'info');
+
     // 4. Actualizar datos y vistas
     populateAllDropdowns();
 
@@ -10132,19 +10294,7 @@ const handleSaveMovement = async (form, btn) => {
 			}
             
             await batch.commit();
-            // Efecto Flash (Feedback visual sutil para escritorio/móvil)
-            const flash = document.createElement('div');
-            flash.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: white; opacity: 0.15; pointer-events: none; z-index: 2147483647;
-                transition: opacity 0.3s ease-out;
-            `;
-            document.body.appendChild(flash);
-            // Forzamos un reflow para que la transición funcione
-            requestAnimationFrame(() => { 
-                flash.style.opacity = '0'; 
-            });
-            setTimeout(() => flash.remove(), 300);
+            
             // 4.5. Efecto Confeti (Solo ingresos)
 			if (dataToSave.cantidad > 0 && dataToSave.tipo !== 'traspaso') {
 				confetti({
@@ -10328,8 +10478,8 @@ const handleAddAccount = async (btn) => {
 
          const exportObject = {
              meta: {
-                 appName: "aiDANaI-ctas",
-                 version: "2.0.0",
+                 appName: "DaniCtas",
+                 version: "3.0.0",
                  exportDate: new Date().toISOString()
              },
              data: dataPayload
@@ -11318,45 +11468,329 @@ const initSpeedDial = () => {
     });
 };
 
-// --- GENERADOR DE FONDO ESTELAR (Solo PC) ---
-document.addEventListener('DOMContentLoaded', () => {
-    // Solo ejecutar si es pantalla grande
-    if (window.innerWidth >= 600) {
-        createStars();
+/* ================================================================= */
+/* === EXTRACTO PATRIMONIO (Global + Fechas) === */
+/* ================================================================= */
+
+// Variables de estado para el filtro (se reinician al salir)
+let extractoState = {
+    startDate: '', // Vacío = Sin límite
+    endDate: ''
+};
+
+// Función principal para renderizar la página/modal de extracto
+const renderPagePatrimonioExtracto = () => {
+    const container = document.getElementById('patrimonio-extracto-container'); // Asegúrate de tener este contenedor en tu HTML o créalo dinámicamente
+    if (!container) return; // O maneja la creación del modal aquí
+
+    // 1. HEADER DE FILTROS (HTML)
+    const filtersHtml = `
+        <div class="extracto-filter-bar">
+            <div class="date-input-group">
+                <label class="date-input-label">DESDE</label>
+                <input type="date" id="ext-date-start" class="styled-date-input" value="${extractoState.startDate}">
+            </div>
+            <div class="date-input-group">
+                <label class="date-input-label">HASTA</label>
+                <input type="date" id="ext-date-end" class="styled-date-input" value="${extractoState.endDate}">
+            </div>
+        </div>
+        <div id="extracto-list-content" style="padding-bottom: 80px;">
+            </div>
+    `;
+
+    container.innerHTML = filtersHtml;
+
+    // 2. LISTENERS PARA LOS INPUTS (Reactividad)
+    const startInput = document.getElementById('ext-date-start');
+    const endInput = document.getElementById('ext-date-end');
+
+    const handleFilterChange = () => {
+        extractoState.startDate = startInput.value;
+        extractoState.endDate = endInput.value;
+        updateExtractoList(); // Redibujar lista
+    };
+
+    startInput.addEventListener('change', handleFilterChange);
+    endInput.addEventListener('change', handleFilterChange);
+
+    // 3. RENDERIZADO INICIAL DE LA LISTA
+    updateExtractoList();
+};
+
+// Función auxiliar para filtrar y pintar la lista
+const updateExtractoList = () => {
+    const listContainer = document.getElementById('extracto-list-content');
+    if (!listContainer) return;
+
+    // A. OBTENER Y FILTRAR MOVIMIENTOS
+    // "Por defecto todos los movimientos de cualquier cuenta" -> Usamos db.movimientos completo
+    let movs = [...(db.movimientos || [])];
+
+    // Filtro por Fecha (Desde)
+    if (extractoState.startDate) {
+        movs = movs.filter(m => m.fecha.split('T')[0] >= extractoState.startDate);
+    }
+    
+    // Filtro por Fecha (Hasta)
+    if (extractoState.endDate) {
+        movs = movs.filter(m => m.fecha.split('T')[0] <= extractoState.endDate);
+    }
+
+    // Ordenar: Más reciente primero
+    movs.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    // B. GENERAR HTML DE LA LISTA
+    if (movs.length === 0) {
+        listContainer.innerHTML = `
+            <div style="text-align:center; padding: 40px; opacity: 0.5;">
+                <span class="material-icons" style="font-size: 48px; color: var(--c-outline);">event_busy</span>
+                <p>No hay movimientos en estas fechas.</p>
+            </div>`;
+        return;
+    }
+
+    let html = '';
+    let lastDate = '';
+
+    movs.forEach(m => {
+        // Cabecera de fecha (Agrupación simple)
+        const dateKey = m.fecha.split('T')[0];
+        if (dateKey !== lastDate) {
+            const dateObj = new Date(m.fecha);
+            const dateStr = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+            html += `
+                <div style="padding: 10px 20px; background: var(--c-background); color: var(--c-primary); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; position:sticky; top: 73px; z-index:5; border-bottom:1px solid var(--c-outline);">
+                    ${dateStr}
+                </div>`;
+            lastDate = dateKey;
+        }
+
+        // Renderizado de la Tarjeta (Reutilizando tu estilo existente)
+        // Nota: Usamos una versión simplificada de renderVirtualListItem para este contexto
+        const cantidadClass = m.cantidad < 0 ? 'text-negative' : 'text-positive';
+        const symbol = m.cantidad < 0 ? '' : '+';
+        
+        // Obtener nombres (Cuenta y Concepto)
+        const cuenta = db.cuentas.find(c => c.id === m.cuentaId)?.nombre || 'Cuenta';
+        const concepto = db.conceptos.find(c => c.id === m.conceptoId)?.nombre || 'Varios';
+
+        html += `
+            <div class="transaction-card" style="margin: 0; border-radius: 0; border-bottom: 1px solid var(--c-outline);">
+                <div class="transaction-card__content">
+                    <div class="transaction-card__details">
+                        <div class="transaction-card__row-1">${m.descripcion || concepto}</div>
+                        <div class="transaction-card__row-2" style="opacity:0.7;">${cuenta} • ${concepto}</div>
+                    </div>
+                    <div class="transaction-card__figures">
+                        <strong class="${cantidadClass}" style="font-size: 1rem;">
+                            ${symbol}${formatCurrencyHTML(m.cantidad)}
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    listContainer.innerHTML = html;
+};
+
+/* ================================================================= */
+/* === GESTOR DE ACCIONES DE CABECERA (Iconos Directos) === */
+/* ================================================================= */
+
+document.addEventListener('click', (e) => {
+    // Buscamos si se ha pulsado un botón con data-action
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+
+    // --- ACCIÓN: BUSCAR ---
+    if (action === 'global-search') {
+        // Si tienes una función de búsqueda, llámala aquí.
+        // Si no, mostramos un aviso temporal
+        if (typeof showSearchModal === 'function') {
+            showSearchModal();
+        } 
+    }
+
+    // --- ACCIÓN: AJUSTES ---
+    if (action === 'navigate') {
+        const pageId = btn.dataset.page;
+        if (typeof navigateTo === 'function') {
+            navigateTo(pageId);
+        }
+    }
+
+    // --- ACCIÓN: CALCULADORA ---
+    if (action === 'open-calculator') {
+        const modal = document.getElementById('calculator-iframe-modal');
+        if (modal) {
+            modal.style.display = 'flex'; // Asegurar visibilidad
+            modal.classList.add('active');
+            // Recargar iframe si es necesario
+            const iframe = document.getElementById('calculator-frame');
+            if(iframe && !iframe.src) iframe.src = 'calculadora.html';
+        }
+    }
+
+    // --- ACCIÓN: CERRAR SESIÓN ---
+    if (action === 'logout') {
+        if (confirm("¿Seguro que quieres cerrar sesión?")) {
+            if (typeof firebase !== 'undefined') {
+                firebase.auth().signOut().then(() => {
+                    window.location.reload();
+                });
+            } else {
+                window.location.reload();
+            }
+        }
     }
 });
 
-function createStars() {
-    const layers = [
-        { class: '.layer-1', size: 1, count: 200, duration: 150 }, // Lejanas
-        { class: '.layer-2', size: 2, count: 60, duration: 100 },  // Medias
-        { class: '.layer-3', size: 3, count: 20, duration: 50 }    // Cercanas
-    ];
+/* ================================================================= */
+/* === GESTOR MAESTRO V5 (Calculadora Independiente) === */
+/* ================================================================= */
 
-    layers.forEach(layer => {
-        const container = document.querySelector(layer.class);
-        if (!container) return;
+window.addEventListener('click', (e) => {
+    // 1. REGLA DE ORO: Si pulsamos DENTRO del iframe o su contenedor (y no es el botón cerrar)
+    // NO HACEMOS NADA. Dejamos que la calculadora gestione sus propios clics.
+    if (e.target.closest('#calculator-iframe-modal') && !e.target.closest('[data-action="close-modal"]')) {
+        return; 
+    }
 
-        let boxShadow = '';
-        for (let i = 0; i < layer.count; i++) {
-            const x = Math.floor(Math.random() * 100); // 0-100vw
-            const y = Math.floor(Math.random() * 100); // 0-100vh
-            const color = i % 10 === 0 ? '#b3e5fc' : '#FFF'; // Algunas azuladas
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+
+    // --- A. ABRIR CALCULADORA ---
+    if (action === 'open-calculator') {
+        e.preventDefault();
+        e.stopPropagation(); // Detenemos la propagación para aislar el evento
+        
+        const modal = document.getElementById('calculator-iframe-modal');
+        const iframe = document.getElementById('calculator-frame');
+
+        if (modal && iframe) {
+            console.log("🧮 Iniciando App Calculadora...");
             
-            boxShadow += `${x}vw ${y}vh ${color}`;
-            if (i < layer.count - 1) boxShadow += ', ';
+            // Cargar archivo si está vacío
+            if (!iframe.getAttribute('src') || iframe.getAttribute('src') === '') {
+                iframe.src = 'calculadora.html';
+            }
+
+            // ABRIR VISUALMENTE
+            modal.style.display = 'flex';
+            // Pequeño timeout para asegurar que el display:flex se aplica antes de la opacidad
+            setTimeout(() => {
+                modal.classList.add('active');
+                modal.style.opacity = '1';
+                modal.style.pointerEvents = 'auto'; // Forzamos interactividad JS
+                
+                // TRUCO FINAL: Darle el foco al iframe para que funcione el teclado
+                iframe.focus();
+                if (iframe.contentWindow) iframe.contentWindow.focus();
+            }, 10);
+
+        } else {
+            alert("Error: No se encuentra el modal de la calculadora.");
+        }
+        return;
+    }
+
+    // --- B. CERRAR CALCULADORA ---
+    if (action === 'close-modal') {
+        const modalId = btn.dataset.modalId;
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300); // Esperar a la animación de cierre
+        }
+        return;
+    }
+
+    // --- C. OTRAS ACCIONES (Header) ---
+    if (action === 'navigate') {
+        const page = btn.dataset.page;
+        if (typeof navigateTo === 'function') navigateTo(page);
+    }
+    
+    if (action === 'logout') {
+        if (confirm("¿Cerrar sesión?")) {
+            if (typeof firebase !== 'undefined') firebase.auth().signOut().then(() => window.location.reload());
+            else window.location.reload();
+        }
+    }
+});
+/* ================================================================= */
+/* === GENERADOR DE ESPACIO PROFUNDO (Deep Space Engine) === */
+/* ================================================================= */
+
+(function initSpaceBackground() {
+    // Solo ejecutar si estamos en pantalla grande (ahorro de recursos)
+    if (window.innerWidth < 600) return;
+
+    const container = document.getElementById('deep-space-background');
+    if (!container) return;
+
+    console.log("🌌 Iniciando motores de hiperespacio...");
+
+    // Función para crear una capa de estrellas
+    const createLayer = (count, size, duration, opacity) => {
+        const layer = document.createElement('div');
+        layer.className = 'star-layer';
+        
+        let shadows = [];
+        // Generamos coordenadas aleatorias basadas en el ancho TOTAL de la pantalla
+        for (let i = 0; i < count; i++) {
+            const x = Math.floor(Math.random() * window.innerWidth);
+            const y = Math.floor(Math.random() * window.innerHeight * 2); // *2 para el scroll
+            shadows.push(`${x}px ${y}px #FFF`);
         }
 
-        // Creamos el pseudo-elemento dinámicamente inyectando estilo
-        const style = document.createElement('style');
-        style.textContent = `
-            ${layer.class}::after {
-                width: ${layer.size}px;
-                height: ${layer.size}px;
-                box-shadow: ${boxShadow};
-                animation: animStar ${layer.duration}s linear infinite;
-            }
-        `;
-        document.head.appendChild(style);
+        // Aplicamos los estilos
+        layer.style.width = size;
+        layer.style.height = size;
+        layer.style.opacity = opacity;
+        layer.style.boxShadow = shadows.join(',');
+        layer.style.animation = `moveStars ${duration}s linear infinite`;
+
+        // Creamos el duplicado para el loop infinito (efecto parallax)
+        const after = document.createElement('div');
+        after.className = 'star-layer';
+        after.style.width = size;
+        after.style.height = size;
+        after.style.opacity = opacity;
+        after.style.boxShadow = shadows.join(',');
+        after.style.animation = `moveStars ${duration}s linear infinite`;
+        after.style.top = '2000px'; // Desplazamiento para el loop
+
+        container.appendChild(layer);
+        container.appendChild(after);
+    };
+
+    // CAPA 1: Estrellas lejanas (Muchas, pequeñas, lentas)
+    createLayer(700, '1px', 100, 0.6);
+
+    // CAPA 2: Estrellas medias (Menos, un poco más grandes)
+    createLayer(200, '2px', 70, 0.8);
+
+    // CAPA 3: Estrellas cercanas (Pocas, brillantes, rápidas)
+    createLayer(100, '3px', 40, 1);
+
+    // Recalcular si se cambia el tamaño de la ventana (Opcional, para perfeccionistas)
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 600) {
+            container.innerHTML = ''; // Limpiar
+            createLayer(700, '1px', 100, 0.6);
+            createLayer(200, '2px', 70, 0.8);
+            createLayer(100, '3px', 40, 1);
+        }
     });
-}
+
+})();

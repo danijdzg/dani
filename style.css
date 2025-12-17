@@ -5950,95 +5950,156 @@ input, select, textarea {
     }
 }
 /* =========================================
-   FONDO CÓSMICO Y MODO ESCRITORIO (FIX DEFINITIVO)
+   FONDO CÓSMICO Y MODO ESCRITORIO
    ========================================= */
 
-/* 1. Estilos base del FONDO (Siempre detrás de todo) */
+/* 1. Ocultar el fondo en móviles para ahorrar batería */
 #cosmic-background {
-    display: none; /* Oculto en móvil */
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    z-index: -1; /* CLAVE: Z-index negativo lo manda al inframundo detrás del body */
-    pointer-events: none; /* CLAVE: Los clicks lo atraviesan */
-    background-color: #000000; /* Negro AMOLED puro */
-    overflow: hidden;
+    display: none;
 }
 
-/* 2. El Marco de la App (Por defecto ocupa todo) */
-#app-frame {
-    width: 100%;
-    min-height: 100vh;
-    background-color: var(--c-surface); /* Asegura que la app tenga color de fondo */
-    position: relative;
-    z-index: 1; /* La app vive en el piso 1, encima del fondo */
-}
-
-/* 3. ACTIVACIÓN MODO ESCRITORIO (Solo PC/Tablet) */
+/* 2. Activar solo en pantallas grandes (Tablet/PC) */
 @media (min-width: 768px) {
     
-    /* Hacemos visible el fondo */
-    #cosmic-background { display: block; }
-    
-    /* Centramos la App como si fuera un móvil flotante */
+    /* --- AJUSTE DE LA APP (CENTRADO) --- */
     body {
-        background-color: #000; /* Fondo negro detrás de todo */
         display: flex;
         justify-content: center;
-        align-items: flex-start; /* Alineado arriba */
-        overflow-x: hidden;
+        background-color: #050505; /* Fondo negro profundo si falla la carga */
+        min-height: 100vh;
+        overflow-x: hidden; /* Evitar scroll horizontal por animaciones */
     }
 
-    #app-frame {
-        max-width: 480px; /* Ancho de móvil */
-        min-height: 100vh; /* Altura completa */
-        margin: 0 auto;    /* Centrado horizontal */
-        box-shadow: 0 0 50px rgba(255, 255, 255, 0.1); /* Resplandor suave borde app */
-        position: relative; 
-        /* Importante: Mantiene position:fixed de tus barras funcionando RELATIVO al frame */
-        transform: translateZ(0); 
+    /* Forzamos que la barra superior y el contenido tengan ancho de móvil */
+    .top-bar, 
+    #main-scroll-container,
+    .bottom-nav {
+        max-width: 480px; /* Ancho típico de móvil grande */
+        left: 50% !important;
+        transform: translateX(-50%); /* Centrado perfecto */
+        right: auto;
+        box-shadow: 0 0 50px rgba(0,0,0,0.5); /* Sombra para separar del fondo */
     }
     
-    /* Ajuste para que las barras fijas no se salgan del ancho del móvil en PC */
-    .top-bar, .bottom-nav, .modal-overlay {
-        position: absolute !important; /* En PC cambian a absolute dentro del frame */
+    /* El contenedor de scroll debe respetar la altura */
+    #main-scroll-container {
         width: 100%;
-        max-width: 480px;
-        left: 0; right: 0;
+        height: 100vh;
+        background-color: var(--c-surface); /* Mantiene el color de tu app */
+        position: relative;
+        z-index: 10; /* Por encima del espacio */
     }
     
-    /* Corrección específica para que el menú flotante se posicione bien */
-    .popover-menu {
+    .top-bar {
+        position: fixed;
+        width: 100%;
+        z-index: 20;
+    }
+
+    .bottom-nav {
+        position: fixed;
+        width: 100%;
+        z-index: 20;
+    }
+
+    /* --- EL FONDO ESPACIAL --- */
+    #cosmic-background {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0; /* Al fondo del todo */
+        background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+        overflow: hidden;
+        pointer-events: none; /* Para que no bloquee clics */
+    }
+
+    /* --- ENERGÍAS EN MOVIMIENTO (NEBULOSA) --- */
+    .energy-nebula {
         position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: 
+            radial-gradient(circle at 50% 50%, rgba(76, 29, 149, 0.4), transparent 60%),
+            radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.3), transparent 50%),
+            radial-gradient(circle at 20% 80%, rgba(236, 72, 153, 0.3), transparent 50%);
+        filter: blur(60px);
+        animation: rotate-energy 60s linear infinite;
+        opacity: 0.8;
+    }
+
+    /* --- ESTRELLAS GENERADAS CON BOX-SHADOW (Técnica ligera) --- */
+    .stars-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: transparent;
+    }
+
+    /* CAPA 1: Lejanas (Pequeñas y Lentas) */
+    .layer-1::after {
+        content: " ";
+        position: absolute;
+        top: 0;
+        width: 1px;
+        height: 1px;
+        background: transparent;
+        /* Coordenadas aleatorias simuladas */
+        box-shadow: 
+            10vw 10vh #FFF, 20vw 80vh #FFF, 30vw 30vh #FFF, 40vw 50vh #FFF, 
+            50vw 90vh #FFF, 60vw 20vh #FFF, 70vw 60vh #FFF, 80vw 10vh #FFF,
+            90vw 40vh #FFF, 15vw 70vh #FFF, 85vw 80vh #FFF, 55vw 15vh #FFF,
+            5vw 5vh #FFF, 95vw 95vh #FFF, 45vw 45vh #FFF, 25vw 95vh #FFF;
+        animation: animStar 100s linear infinite;
+    }
+
+    /* CAPA 2: Medianas (Brillo azulado y velocidad media) */
+    .layer-2::after {
+        content: " ";
+        position: absolute;
+        top: 0;
+        width: 2px;
+        height: 2px;
+        background: transparent;
+        box-shadow: 
+            15vw 15vh rgba(200,200,255,0.8), 35vw 85vh rgba(200,200,255,0.8), 
+            55vw 35vh rgba(200,200,255,0.8), 75vw 55vh rgba(200,200,255,0.8), 
+            95vw 25vh rgba(200,200,255,0.8), 25vw 65vh rgba(200,200,255,0.8);
+        animation: animStar 50s linear infinite;
+        opacity: 0.8;
+    }
+
+    /* CAPA 3: Cercanas (Grandes, brillantes y rápidas) */
+    .layer-3::after {
+        content: " ";
+        position: absolute;
+        top: 0;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: transparent;
+        box-shadow: 
+            10vw 20vh #fff, 80vw 70vh #fff, 40vw 90vh #fff;
+        filter: blur(1px);
+        animation: animStar 25s linear infinite;
+    }
+
+    /* ANIMACIONES */
+    @keyframes rotate-energy {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @keyframes animStar {
+        from { transform: translateY(0px); }
+        to { transform: translateY(-100vh); } 
+        /* Truco: Al subir, el box-shadow debería repetirse verticalmente 
+           para un loop infinito perfecto, aquí simplificado */
     }
 }
-
-/* --- EFECTOS VISUALES DEL ESPACIO (Copia idéntica mejorada) --- */
-
-.energy-nebula {
-    position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-    background: 
-        radial-gradient(circle at 50% 50%, rgba(76, 29, 149, 0.25), transparent 60%),
-        radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.20), transparent 50%);
-    filter: blur(80px);
-    animation: rotate-energy 120s linear infinite;
-    opacity: 0.7;
-}
-
-.stars-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-
-/* Estrellas CSS (Base estática por si JS falla) */
-.layer-1::after {
-    content: " "; position: absolute; top: 0; width: 1px; height: 1px;
-    background: transparent;
-    box-shadow: 10vw 10vh #FFF, 50vw 50vh #FFF, 80vw 20vh #FFF;
-    animation: animStar 200s linear infinite;
-}
-.layer-2::after {
-    content: " "; position: absolute; top: 0; width: 2px; height: 2px;
-    background: transparent;
-    box-shadow: 20vw 80vh #FFF, 70vw 10vh #FFF;
-    animation: animStar 100s linear infinite;
-}
-
-@keyframes rotate-energy { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes animStar { from { transform: translateY(0px); } to { transform: translateY(-100vh); } }

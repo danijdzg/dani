@@ -25,31 +25,10 @@
 	<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>   
     <link rel="stylesheet" href="style.css">	
 </head>
-<body>
-    <div id="cosmic-background">
-        <div class="energy-nebula"></div>
-        <div class="stars-layer layer-1"></div>
-        <div class="stars-layer layer-2"></div>
-        <div class="stars-layer layer-3"></div>
-    </div>
 
-    <div id="app-frame">
-        <header id="app-top-bar" class="top-bar">
-            </header>
-
-        <div id="main-scroll-container">
-           </div>
-
-        <nav class="bottom-nav">
-           </nav>
-        
-        <div id="calculator-iframe-modal" ...></div>
-        
-    </div> <script src="main.js"></script>
-</body>
 <body data-ledger-mode="A">
     <noscript>You need to enable JavaScript to run this app.</noscript>
-     
+    <div id="deep-space-background"></div>
     <div id="login-screen" class="login-view">
         <div class="starry-background"></div>
         <div class="login-view__card">
@@ -160,41 +139,34 @@
         <span class="material-icons fab-icon-close">close</span>
     </button>
 </div>
-	
-        <header id="app-top-bar" class="top-bar">
-            <div class="top-bar__left-group">
-                <div id="top-bar-left-button" class="top-bar__left-button"></div>
-            </div>
-            <h1 id="top-bar-title" class="top-bar__title"></h1>
-            <div id="top-bar-actions" class="top-bar__actions"></div>
-			<span id="sync-status-icon" class="material-icons"></span>
-			<div id="main-menu-popover" class="popover-menu">
+        <div class="top-bar">
+    <div class="app-logo" style="display: flex; align-items: center; gap: 10px;">
+    <span class="material-icons" style="font-size: 40px; color: #00B34D;">account_balance_wallet</span>
     
-    <button class="popover-menu__item" data-action="global-search">
-        <span class="material-icons">search</span>
-        <span>Buscar</span>
-    </button>
-
-    
-    <div class="popover-menu__divider"></div>
-
-    <button class="popover-menu__item" data-action="navigate" data-page="ajustes-page">
-        <span class="material-icons">settings</span>
-        <span>Ajustes</span>
-    </button>
-    <button class="popover-menu__item" data-action="help">
-        <span class="material-icons">help_outline</span>
-        <span>Guía de Usuario</span>
-    </button>
-    
-    <div class="popover-menu__divider"></div>
-    
-    <button class="popover-menu__item popover-menu__item--danger" data-action="logout">
-        <span class="material-icons">logout</span>
-        <span>Cerrar Sesión</span>
-    </button>
+    <span class="app-title" style="font-weight: 700; font-size: 1.15rem; letter-spacing: -0.5px;">aiDANaI - ctas</span>
 </div>
-        </header>
+
+    <div style="flex-grow: 1;"></div>
+
+    <div class="top-bar-actions" style="display: flex; gap: 5px; align-items: center;">
+        
+        <button class="icon-btn" data-action="global-search" aria-label="Buscar">
+            <span class="material-icons">search</span>
+        </button>
+
+        <button class="icon-btn" data-action="open-calculator" aria-label="Calculadora">
+            <span class="material-icons">calculate</span>
+        </button>
+
+        <button class="icon-btn" data-action="navigate" data-page="ajustes-page" aria-label="Ajustes">
+            <span class="material-icons">settings</span>
+        </button>
+
+        <button class="icon-btn" data-action="logout" aria-label="Salir">
+            <span class="material-icons" style="color: #ff6b6b;">logout</span>
+        </button>
+    </div>
+</div>
 
         <main class="app-layout__main">
             <section id="panel-page" class="view"></section>
@@ -370,10 +342,7 @@
 
     <div id="exit-screen"><p>Finanzas al día ✅ Movimientos revisados 👀  <br>💰 aiDANaI simplifica tus cuentas 💰</p></div>
     
-    <div id="help-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
-        <div class="modal" style="max-width: 650px; max-height: 80vh;"><header class="modal__header"><h3 id="help-modal-title" class="modal__title"></h3><button class="icon-btn" data-action="close-modal" data-modal-id="help-modal" title="Cerrar" aria-label="Cerrar"><span class="material-icons">close</span></button></header><div id="help-modal-body" class="modal__body"></div></div>
-    </div>
- 
+    
     <div id="calculator-overlay" class="modal-overlay" style="background: transparent;">
     <div id="calculator-ui" class="calculator-ui">
         <div id="calculator-history-display" class="calculator-history-display"></div>
@@ -433,22 +402,49 @@
             </div>
         </div>
     </div>
-	<!-- ▲▲▲ FIN: MEJORA 1 - Bottom Sheet para Acciones Rápidas ▲▲▲ -->
 	
-	<div id="calculator-iframe-modal" class="modal-overlay" role="dialog" aria-modal="true" style="z-index: 11000;">
-        <div class="modal" style="padding: 0; height: 95dvh; max-height: 95dvh; background-color: #000; display: flex; flex-direction: column; overflow: hidden;">
-            <button class="icon-btn" data-action="close-modal" data-modal-id="calculator-iframe-modal" style="position: absolute; top: 60px; right: 15px; z-index: 100; background: rgba(50,50,50,0.8); color: white; border: 1px solid rgba(255,255,255,0.2); width: 36px; height: 36px;">
+	<div id="calculator-iframe-modal" class="modal-overlay" 
+     style="z-index: 20000 !important; background-color: #000; position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; pointer-events: auto;">
+    
+    <div class="modal" style="padding: 0; width: 100%; height: 100%; max-height: 100dvh; background-color: #000; display: flex; flex-direction: column; pointer-events: auto;">
+        
+        <button class="icon-btn" data-action="close-modal" data-modal-id="calculator-iframe-modal" 
+                style="position: absolute; top: 20px; right: 20px; z-index: 20010; background: rgba(50,50,50,0.8); color: white; border: 1px solid rgba(255,255,255,0.3); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: auto;">
+            <span class="material-icons" style="font-size: 24px;">close</span>
+        </button>
+        
+        <iframe id="calculator-frame" 
+                src="" 
+                style="width: 100%; height: 100%; border: none; flex-grow: 1; background-color: #000;" 
+                frameborder="0"
+                loading="eager">
+        </iframe>
+    </div>
+</div>
+	<div id="help-modal" class="modal-overlay">
+    <div class="modal" style="max-height: 85vh; display: flex; flex-direction: column;">
+        <div class="modal-header" style="flex-shrink: 0;">
+            <div style="flex-grow:1;"></div>
+            <button class="icon-btn" data-action="close-modal" data-modal-id="help-modal">
                 <span class="material-icons">close</span>
             </button>
-            
-            <iframe id="calculator-frame" style="width: 100%; height: 100%; border: none; flex-grow: 1;" loading="lazy"></iframe>
+        </div>
+        
+        <div id="help-modal-content" style="overflow-y: auto; padding: 20px; color: var(--c-on-surface);">
+            </div>
+        
+        <div style="padding: 15px; border-top: 1px solid var(--c-outline); flex-shrink: 0;">
+            <button class="btn btn--primary" data-action="close-modal" data-modal-id="help-modal" style="width: 100%;">
+                ¡Entendido!
+            </button>
         </div>
     </div>
-
+</div>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
 	
     <script type="module" src="main.js"></script>
+	
 </body>
 </html>
