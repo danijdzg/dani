@@ -4922,95 +4922,81 @@ body[data-theme="sunset-groove"] #filter-periodo option {
 /* === CABECERA DE FECHA (Estilo Nativo Dark Mode - Sin Sticky) === */
 
 .sticky-date-header {
-    /* CAMBIO CLAVE: relative hace que se mueva con el scroll */
-    position: relative; 
-    z-index: 1;
-    
-    /* Layout */
+    /* 1. Posicionamiento Sticky (Se pega al bajar) */
+    position: sticky;
+    top: 90px; /* Ajustado para quedar justo debajo de tu barra flotante superior */
+    z-index: 50; /* Por encima de los movimientos */
+
     display: flex;
     justify-content: space-between;
     align-items: center;
+
+    /* 2. TRUCO DE ANCHURA: Romper los márgenes del contenedor */
+    /* Hacemos que sea más ancho que las tarjetas de movimiento */
+    width: calc(100% + 24px); 
+    margin-left: -12px; 
+    margin-right: -12px;
     
-    /* Estética acorde a la App (Dark Mode) */
-    background-color: var(--c-surface-variant); /* Fondo oscuro azulado/gris */
-    border: 1px solid var(--c-outline);         /* Borde sutil */
-    color: var(--c-on-surface);                 /* Texto blanco/claro */
+    /* Espaciado vertical generoso */
+    margin-top: 30px; 
+    margin-bottom: 16px;
+
+    /* 3. ESTÉTICA "VISTOSA" */
+    /* Fondo sólido con degradado sutil para tapar las estrellas al pasar */
+    background: linear-gradient(90deg, #111 0%, #1a1a1a 100%);
     
-    /* Forma */
-    border-radius: 16px; /* Coincide con el radio de las tarjetas */
-    
-    /* Espaciado */
-    padding: 8px 16px;
-    /* Margen: Arriba amplio para separar días, Abajo pequeño para pegar a tarjeta */
-    margin: 24px 12px 8px 12px; 
-    
-    /* Sin sombra pesada, integración plana */
-    box-shadow: none;
+    /* BORDE GRUESO Y LLAMATIVO */
+    border: 2px solid var(--c-primary); /* Borde verde neón (o el color de tu tema) */
+    border-radius: 12px; /* Bordes ligeramente menos redondos para dar solidez */
+
+    /* RESPLANDOR EXTERIOR */
+    box-shadow: 0 0 20px rgba(0, 179, 77, 0.25); /* Glow del color principal */
+
+    padding: 12px 20px; /* Padding interno cómodo */
 }
 
-/* Parte Izquierda (Día y Fecha) */
+/* Estilo de la parte izquierda (Día y Fecha) */
 .sticky-date-left {
     display: flex;
     align-items: center;
-    gap: 10px;
-    overflow: hidden;
+    gap: 12px;
 }
 
-/* La pastilla del día (LUN, MAR, HOY) */
 .sticky-day-pill {
-    font-weight: 800;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    background-color: var(--c-surface); /* Un poco más oscuro que la barra */
-    padding: 2px 8px;
-    border-radius: 6px;
-    color: var(--c-primary); /* Color de acento (Verde) */
-    border: 1px solid var(--c-outline);
-}
-
-/* Estilo especial para HOY */
-.sticky-day-pill.is-today {
     background-color: var(--c-primary);
-    color: var(--c-white);
-    border-color: var(--c-primary);
-}
-
-/* El texto de la fecha (16 de diciembre...) */
-.sticky-date-text {
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    color: #ffffff; /* Texto blanco para máximo contraste */
+    font-weight: 900; /* Extra negrita */
     font-size: 0.85rem;
-    color: var(--c-on-surface-secondary); /* Gris claro */
-    text-transform: capitalize;
+    padding: 4px 10px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    text-transform: uppercase;
 }
 
-/* Colores Semánticos para el Total del Día */
+.sticky-date-text {
+    font-size: 1.1rem; /* Texto más grande */
+    font-weight: 700;
+    color: var(--c-white);
+    text-transform: capitalize;
+    letter-spacing: 0.5px;
+}
 
+/* Estilo del total a la derecha */
 .sticky-date-total {
+    font-size: 1.1rem;
     font-weight: 800;
     font-family: var(--font-numeric);
-    white-space: nowrap;
-    font-size: 0.9rem;
-    letter-spacing: -0.5px;
+    /* Un pequeño fondo oscuro para que el número se lea perfecto */
+    background: rgba(0,0,0,0.4); 
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
-/* POSITIVO -> VERDE */
-.sticky-date-total.is-positive { 
-    color: var(--c-success); 
-}
-
-/* NEGATIVO -> ROJO */
-.sticky-date-total.is-negative { 
-    color: var(--c-danger); 
-}
-
-/* CERO -> MORADO */
-.sticky-date-total.is-neutral { 
-    color: var(--c-info); /* Usamos --c-info que es #BF5AF2 (Morado) en tu tema */
-    opacity: 0.9;
-}
+/* Ajuste de colores para el total */
+.sticky-date-total.is-positive { color: var(--c-success); text-shadow: 0 0 10px rgba(57, 255, 20, 0.4); }
+.sticky-date-total.is-negative { color: var(--c-danger); text-shadow: 0 0 10px rgba(255, 59, 48, 0.4); }
+.sticky-date-total.is-neutral { color: var(--c-info); }
 
 /* Icono Izquierdo */
 .t-icon {
