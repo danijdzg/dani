@@ -1897,8 +1897,10 @@ const formatCurrencyHTML = (numInCents) => {
     return `<span class="currency-major">${formatted}</span>`;
 };
 	const getLedgerName = (letter) => {
-    // Intenta obtener el nombre personalizado, si no existe, usa "Caja X"
-    return db.config?.ledgerNames?.[letter] || `Caja ${letter}`;
+    // Mapeo directo: A->1, B->2, C->3
+    const defaultNum = letter === 'A' ? '1' : (letter === 'B' ? '2' : '3');
+    // Si el usuario puso nombre personalizado lo usa, si no, usa "Caja X"
+    return db.config?.ledgerNames?.[letter] || `Caja ${defaultNum}`;
 };
 const updateLedgerButtonUI = () => {
     const btn = select('ledger-toggle-btn');
@@ -2438,16 +2440,7 @@ const navigateTo = async (pageId, isInitial = false) => {
     const actionsEl = select('top-bar-actions');
     const leftEl = select('top-bar-left-button');
     
-    // Acciones por defecto (Menú de 3 puntos)
-    const standardActions = `
-        <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
-            <span class="material-icons">calculate</span>
-        </button>
-        <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
-    <span class="material-icons">more_vert</span>
-</button>
-    `;
-    
+        
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
     if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
 	const patrimonioActions = `
@@ -2468,16 +2461,16 @@ const pageRenderers = {
 };
 
     if (pageRenderers[pageId]) { 
-    if (leftEl) {
-        // Usamos la función getLedgerName para obtener el texto inicial correcto
-        const currentName = getLedgerName(currentLedger);
+        if (leftEl) {
+            const currentName = getLedgerName(currentLedger);
 
-        // Generamos el botón con el nombre YA puesto
-        let leftSideHTML = `
-            <button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Estás en: ${currentName}">
-                ${currentName}
-            </button>
-			<span id="page-title-display" style="text-decoration: none; color: inherit; cursor: default;">${pageRenderers[pageId].title}</span>`;
+            // AQUÍ ESTÁ EL CAMBIO: Añadimos el <span> con el icono y cambiamos la clase a 'header-ledger-pill'
+            let leftSideHTML = `
+                <button id="ledger-toggle-btn" class="header-ledger-pill" data-action="toggle-ledger" title="Cambiar Caja">
+                    <span class="material-icons">check_box_outline_blank</span>
+                    ${currentName}
+                </button>
+                <span id="page-title-display">${pageRenderers[pageId].title}</span>`;
             
             // CORRECCIÓN: Ya NO añadimos ningún botón extra si es PANEL.
             // Solo añadimos botones si es DIARIO.
@@ -11634,7 +11627,146 @@ document.addEventListener('click', (e) => {
             if(iframe && !iframe.src) iframe.src = 'calculadora.html';
         }
     }
+/* ================================================================= */
+    /* === MANUAL DEL COMANDANTE (GUÍA DEFINITIVA LÚDICA) === */
+    /* ================================================================= */
+    if (action === 'open-help') {
+        const modal = document.getElementById('help-modal');
+        const contentDiv = document.getElementById('help-modal-content');
 
+        if (modal && contentDiv) {
+            contentDiv.innerHTML = `
+                <style>
+                    /* Estilos exclusivos para este manual */
+                    .academy-intro { text-align: center; margin-bottom: 30px; }
+                    .academy-badge { font-size: 50px; display: block; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
+                    .academy-module { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); }
+                    .module-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+                    .module-icon { font-size: 28px; color: #00B34D; }
+                    .module-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0; }
+                    .academy-text { font-size: 0.95rem; color: #ccc; line-height: 1.6; margin-bottom: 10px; }
+                    .academy-example { background: rgba(0, 179, 77, 0.1); border-left: 3px solid #00B34D; padding: 10px 15px; margin: 15px 0; font-size: 0.9rem; color: #ddd; border-radius: 0 8px 8px 0; }
+                    .key-feature { display: flex; align-items: start; gap: 10px; margin-top: 15px; }
+                    .key-icon { background: #222; border-radius: 50%; padding: 5px; font-size: 16px; color: #00B34D; min-width: 26px; text-align: center; }
+                    .academy-footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); color: #666; font-size: 0.8rem; }
+                    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+                </style>
+
+                <div class="manual-container">
+                    
+                    <div class="academy-intro">
+                        <span class="academy-badge">👨‍🚀</span>
+                        <h2 style="color: #00B34D; margin-bottom: 5px;">Academia aiDANaI</h2>
+                        <p class="academy-text">Manual de supervivencia financiera para astronautas modernos.</p>
+                    </div>
+
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">dashboard</span>
+                            <h3 class="module-title">Módulo 1: El Puente de Mando</h3>
+                        </div>
+                        <p class="academy-text">Al entrar, verás 4 tarjetas. Son tus constantes vitales. Si todas están en verde, la nave vuela sola. Si hay rojo... ¡peligro!</p>
+                        
+                        <div class="key-feature">
+                            <span class="material-icons key-icon">arrow_upward</span>
+                            <div>
+                                <strong style="color:white">Ingresos:</strong>
+                                <span style="font-size:0.9rem; color:#aaa">Todo el combustible que entra. Nóminas, bizums de amigos, lotería...</span>
+                            </div>
+                        </div>
+                        <div class="key-feature">
+                            <span class="material-icons key-icon" style="color:#ff4444">arrow_downward</span>
+                            <div>
+                                <strong style="color:white">Gastos:</strong>
+                                <span style="font-size:0.9rem; color:#aaa">Meteoritos que impactan en tu nave. Comida, luz, caprichos...</span>
+                            </div>
+                        </div>
+                        <div class="key-feature">
+                            <span class="material-icons key-icon" style="color:#00f2ff">savings</span>
+                            <div>
+                                <strong style="color:white">Tasa de Ahorro:</strong>
+                                <span style="font-size:0.9rem; color:#aaa">El dato más importante. Si ganas 1000€ y te sobran 200€, tu tasa es del 20%. ¡Intenta mantenerla siempre positiva!</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">add_circle</span>
+                            <h3 class="module-title">Módulo 2: Bitácora del Capitán</h3>
+                        </div>
+                        <p class="academy-text">¿Ves el botón flotante <strong>(+)</strong> abajo a la derecha? Es el botón que más vas a usar. Púlsalo para registrar movimientos.</p>
+                        
+                        <div class="academy-example">
+                            <strong>📝 Ejemplo Práctico:</strong><br>
+                            Acabas de comprar pan y leche. 
+                            1. Pulsas <strong>(+)</strong>.
+                            2. Eliges <strong>"Gasto"</strong> (rojo).
+                            3. Pones <strong>"3.50"</strong> en la cantidad.
+                            4. Escribes <strong>"Compra súper"</strong> en concepto.
+                            5. ¡Listo! Ya está restado de tu saldo.
+                        </div>
+
+                        <p class="academy-text" style="margin-top:15px"><strong>¿Qué es un Traspaso? 🔄</strong><br>
+                        Es mover dinero de tu bolsillo izquierdo al derecho. Por ejemplo: Sacar dinero del cajero. No eres más rico ni más pobre, solo has movido el dinero de sitio. Úsalo para eso.</p>
+                    </div>
+
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">rocket_launch</span>
+                            <h3 class="module-title">Módulo 3: Supercomputadora</h3>
+                        </div>
+                        <p class="academy-text">Arriba tienes un icono de calculadora <span class="material-icons" style="font-size:16px">calculate</span>. No es una calculadora normal, tiene conexión directa con los mercados interestelares.</p>
+                        <ul style="padding-left: 20px; color:#ccc; font-size:0.9rem; margin-top:5px;">
+                            <li>🧮 <strong>Modo Estándar:</strong> Sumar, restar... lo clásico.</li>
+                            <li>₿ <strong>Modo Crypto:</strong> Pulsa la pestaña "Crypto" y verás el precio en tiempo real de Bitcoin, Ethereum, Solana, XRP y BNB.</li>
+                        </ul>
+                        <div class="academy-example">
+                            <strong>💡 Truco:</strong> Toca cualquier criptomoneda para ver su gráfica de evolución de precios. ¡Siéntete como un lobo de Wall Street!
+                        </div>
+                    </div>
+
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">search</span>
+                            <h3 class="module-title">Módulo 4: El Radar (Buscador)</h3>
+                        </div>
+                        <p class="academy-text">¿No recuerdas si pagaste el seguro del coche? ¿Quieres saber cuánto te has gastado en "Cervezas" este año?</p>
+                        <p class="academy-text">Usa la lupa <span class="material-icons" style="font-size:16px">search</span> en el encabezado. Escribe cualquier palabra y la app rastreará todo tu historial en milisegundos para encontrar al culpable.</p>
+                    </div>
+
+                    <div class="academy-module">
+                        <div class="module-header">
+                            <span class="material-icons module-icon">install_mobile</span>
+                            <h3 class="module-title">Módulo 5: Instalación en Nave</h3>
+                        </div>
+                        <p class="academy-text">Esta aplicación es una <strong>PWA</strong> (Progressive Web App). Significa que puedes instalarla como una app nativa sin pasar por la tienda.</p>
+                        <div class="key-feature">
+                            <span class="material-icons key-icon">android</span>
+                            <div><strong style="color:white">Android:</strong> Abre el menú de Chrome (3 puntos) y pulsa "Instalar aplicación" o "Añadir a pantalla de inicio".</div>
+                        </div>
+                        <div class="key-feature">
+                            <span class="material-icons key-icon">apple</span>
+                            <div><strong style="color:white">iPhone/iPad:</strong> Pulsa el botón "Compartir" de Safari (cuadrado con flecha) y busca "Añadir a la pantalla de inicio".</div>
+                        </div>
+                    </div>
+
+                    <div class="academy-footer">
+                        Fin de la transmisión.<br>
+                        ¡Buena suerte en tu viaje financiero, Capitán! 🚀
+                    </div>
+                </div>
+            `;
+
+            // Lógica de apertura (Mantenemos la que ya funcionaba)
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('active');
+                modal.style.opacity = '1';
+            }, 10);
+        }
+        return;
+    }
     // --- ACCIÓN: CERRAR SESIÓN ---
     if (action === 'logout') {
         if (confirm("¿Seguro que quieres cerrar sesión?")) {
