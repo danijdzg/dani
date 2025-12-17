@@ -2449,10 +2449,7 @@ const navigateTo = async (pageId, isInitial = false) => {
     if (actionsEl) {
         actionsEl.innerHTML = standardActions;
     }
-    // Barra Superior
-    const actionsEl = select('top-bar-actions');
-    const leftEl = select('top-bar-left-button');
-    
+     
         
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
     if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
