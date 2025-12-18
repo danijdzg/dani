@@ -572,8 +572,7 @@ const handleGenerateGlobalExtract = async (btn = null) => {
         </div>`;
 
         resultadoContainer.innerHTML = html;
-        showToast("Extracto Global generado.", "success");
-
+     
     } catch (error) {
         console.error(error);
         resultadoContainer.innerHTML = `<div class="empty-state text-danger"><p>Error al calcular.</p></div>`;
@@ -11724,7 +11723,7 @@ window.addEventListener('click', (e) => {
     }
 });
 /* ============================================== */
-/* === MOTOR DE FONDO AMOLED (main.js) === */
+/* === MOTOR DE FONDO 3D CORREGIDO (main.js) === */
 /* ============================================== */
 
 const createStarBackground = () => {
@@ -11740,51 +11739,56 @@ const createStarBackground = () => {
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    // --- GENERAR ESTRELLAS 3D ---
-    // Creamos 150 estrellas que viajarán continuamente
-    const starCount = 150; 
+    // --- 1. GENERADOR DE ESTRELLAS DE VIAJE (WARP) ---
+    // Aumentamos a 300 estrellas para más densidad
+    const starCount = 300; 
 
     for (let i = 0; i < starCount; i++) {
         const star = document.createElement('div');
         star.className = 'star';
         
-        // 1. Posición X/Y aleatoria en la pantalla
-        // (Esto define por dónde pasará la estrella al acercarse)
-        const x = Math.random() * width;
-        const y = Math.random() * height;
-        star.style.left = `${x}px`;
-        star.style.top = `${y}px`;
+        // MATEMÁTICAS 3D:
+        // En lugar de posición random, calculamos un ÁNGULO y una DISTANCIA
+        // Esto asegura que las estrellas viajen del centro hacia afuera en todas direcciones.
+        const angle = Math.random() * Math.PI * 2; // Ángulo aleatorio (0 a 360 grados)
+        const distance = 800 + Math.random() * 800; // Cuánto se alejan del centro al final
         
-        // 2. Tamaño variable (algunas son polvo cósmico, otras estrellas grandes)
-        const size = 1 + Math.random() * 2; // Entre 1px y 3px
-        star.style.width = `${size}px`;
-        star.style.height = `${size}px`;
+        // Convertimos polar a cartesiano para CSS
+        const destX = Math.cos(angle) * distance;
+        const destY = Math.sin(angle) * distance;
 
-        // 3. Velocidad del viaje (Profundidad)
-        // Entre 2s (muy rápido) y 6s (lento y majestuoso)
-        const speed = 2 + Math.random() * 4;
-        star.style.setProperty('--speed', `${speed}s`);
+        // Pasamos estas coordenadas al CSS
+        star.style.setProperty('--dest-x', `${destX}px`);
+        star.style.setProperty('--dest-y', `${destY}px`);
 
-        // 4. Retraso inicial
-        // Para que no salgan todas a la vez al cargar, las escalonamos
-        const delay = Math.random() * 5; // hasta 5 segundos de desfase
-        star.style.setProperty('--delay', `-${delay}s`); // Delay negativo para que ya estén en movimiento
+        // Velocidad: Algunas muy rápidas (0.5s) otras lentas (3s) para dar profundidad
+        const duration = 0.5 + Math.random() * 3;
+        star.style.setProperty('--duration', `${duration}s`);
+
+        // Retraso para que no salgan todas a la vez
+        const delay = Math.random() * 5;
+        star.style.setProperty('--delay', `-${delay}s`); // Negativo para empezar en movimiento
 
         container.appendChild(star);
     }
 
-    // --- SISTEMA DE ESTRELLAS FUGACES (EXTRA) ---
-    // Mantenemos esto porque queda genial ver una cruzar mientras viajas
+    // --- 2. GENERADOR DE ESTRELLAS FUGACES (INTENSIFICADO) ---
     if (window.shootingStarInterval) clearInterval(window.shootingStarInterval);
 
+    // Intervalo reducido a 800ms (Mucho más frecuente)
     window.shootingStarInterval = setInterval(() => {
         const shoot = document.createElement('div');
         shoot.className = 'shooting-star';
-        shoot.style.top = `${Math.random() * height * 0.6}px`;
-        shoot.style.left = `${width - (Math.random() * 200)}px`;
+        
+        // Posición aleatoria en la parte superior derecha
+        shoot.style.top = `${Math.random() * height * 0.5}px`;
+        shoot.style.left = `${width - (Math.random() * 300) + 100}px`;
+        
         container.appendChild(shoot);
-        setTimeout(() => { shoot.remove(); }, 3500);
-    }, 5000); 
+
+        // Limpieza rápida
+        setTimeout(() => { shoot.remove(); }, 2000);
+    }, 800); 
 };
 
 // Iniciar al cargar

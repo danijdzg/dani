@@ -5848,10 +5848,9 @@ input, select, textarea {
     }
 }
 /* ================================================================= */
-/* === FONDO CÓSMICO 3D (EFECTO HIPERESPACIO/NAVE) === */
+/* === FONDO CÓSMICO 3D: WARP SPEED (CORREGIDO) === */
 /* ================================================================= */
 
-/* Contenedor del Cosmos (Motor 3D) */
 #cosmos-container {
     position: fixed;
     top: 0;
@@ -5859,67 +5858,74 @@ input, select, textarea {
     width: 100%;
     height: 100%;
     z-index: -1;
-    background-color: #000000; /* Negro AMOLED Puro */
+    background-color: #000000; /* Negro Puro */
     overflow: hidden;
-    
-    /* ESTO CREA LA PROFUNDIDAD 3D */
-    perspective: 800px; 
-    transform-style: preserve-3d;
+    /* Profundidad de campo para el efecto 3D */
+    perspective: 600px; 
 }
 
-/* --- ESTRELLAS VIAJERAS --- */
+/* --- ESTRELLAS --- */
 .star {
     position: absolute;
+    /* Todas nacen en el centro exacto */
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 2px;
     background-color: white;
     border-radius: 50%;
-    /* Empezamos invisibles y lejos */
     opacity: 0;
+    box-shadow: 0 0 2px white;
     
-    /* El centro de fuga es el centro de la pantalla */
-    transform-origin: 50% 50%;
-    
-    /* La animación de viaje */
-    animation: warpSpeed var(--speed) linear infinite;
+    /* Esta animación controla todo el viaje */
+    animation: warpTravel var(--duration) linear infinite;
     animation-delay: var(--delay);
+    
+    /* Importante para rendimiento en móviles */
+    will-change: transform, opacity;
 }
 
-/* Animación: Las estrellas vienen desde el fondo (-1000px) hacia ti */
-@keyframes warpSpeed {
+/* ANIMACIÓN: Del fondo (-1000px) hacia el frente (+500px) */
+@keyframes warpTravel {
     0% {
-        transform: translateZ(-1000px);
+        /* Empieza lejos y en el centro */
+        transform: translate3d(0, 0, -1000px);
         opacity: 0;
     }
-    20% {
-        opacity: 0.8; /* Se hacen visibles lejos */
-    }
-    80% {
-        opacity: 1;
-        /* Al acercarse brillan más */
-        box-shadow: 0 0 6px white; 
+    10% {
+        opacity: 1; /* Se hace visible rápido */
     }
     100% {
-        /* Pasan "detrás" de la cámara (hacia ti) */
-        transform: translateZ(300px); 
-        opacity: 0;
+        /* Termina cerca de la cara y dispersa según sus variables X e Y */
+        transform: translate3d(var(--dest-x), var(--dest-y), 800px);
+        opacity: 0; /* Se desvanece al "pasarnos" */
     }
 }
 
-/* --- ESTRELLAS FUGACES (Capa superior decorativa) --- */
+/* --- ESTRELLAS FUGACES (Más grandes y frecuentes) --- */
 .shooting-star {
     position: absolute;
-    height: 2px;
-    background: linear-gradient(-45deg, rgba(255,255,255,1), rgba(255,255,255,0));
+    height: 3px; /* Un poco más gruesas para verse más */
+    background: linear-gradient(90deg, rgba(255,255,255,1), transparent);
     border-radius: 999px;
-    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
-    animation: shoot 3s linear;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9));
+    animation: shoot 1.5s ease-out forwards; /* Más rápida */
     opacity: 0;
     z-index: -1;
 }
 
 @keyframes shoot {
-    0% { transform: translateX(0) translateY(0) rotate(-45deg); opacity: 1; width: 0; }
-    15% { width: 120px; opacity: 1; }
-    100% { transform: translateX(-600px) translateY(600px) rotate(-45deg); opacity: 0; width: 0; }
+    0% { 
+        transform: translateX(0) translateY(0) rotate(-45deg) scale(0.5); 
+        opacity: 1; 
+        width: 0; 
+    }
+    20% { width: 150px; opacity: 1; }
+    100% { 
+        transform: translateX(-800px) translateY(800px) rotate(-45deg) scale(1); 
+        opacity: 0; 
+        width: 0; 
+    }
 }
 /* ================================================================= */
 /* === MODO COMPACTO & LIMPIEZA TOTAL DEL ENCABEZADO === */
