@@ -5994,49 +5994,76 @@ input, select, textarea {
     -ms-overflow-style: none;  /* IE 10+ */
 }
 /* ================================================================= */
-/* === COLORES DE CAJAS: TEXTO DE BOTÓN Y BARRA TRANSPARENTE === */
+/* === NUEVO DISEÑO: ENCABEZADO VIDRIO Y TEXTOS DE COLOR === */
 /* ================================================================= */
 
-/* 1. Barra Superior: SIEMPRE Estilo Vidrio (Quitamos fondos sólidos) */
+/* 1. Unificar Encabezado con el Pie de Página (Estilo Vidrio) */
+/* Aplicamos esto a TODOS los modos (A, B, C) para quitar fondos sólidos */
 body[data-ledger-mode="A"] .top-bar,
 body[data-ledger-mode="B"] .top-bar,
-body[data-ledger-mode="C"] .top-bar {
-    background-color: rgba(28, 42, 58, 0.75) !important;
+body[data-ledger-mode="C"] .top-bar,
+.top-bar {
+    background-color: rgba(28, 42, 58, 0.75) !important; /* Fondo semitransparente oscuro */
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--c-on-surface);
 }
 
-/* 2. Botón de la Caja: Fondo transparente y TEXTO de color */
+/* 2. Estilo Base del Botón de Caja (Transparente) */
 #ledger-toggle-btn {
-    background-color: transparent !important; /* Fondo invisible */
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background-color: transparent !important; /* Sin fondo de color */
+    box-shadow: none !important;
     font-weight: 800;
     letter-spacing: 0.5px;
-    box-shadow: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important; /* Borde sutil por defecto */
     transition: color 0.3s ease, border-color 0.3s ease;
 }
 
-/* --- CAJA A: TEXTO AZUL --- */
-body[data-ledger-mode="A"] #ledger-toggle-btn {
-    color: #007AFF !important; /* Azul igual que el pie de página */
-    border-color: rgba(0, 122, 255, 0.3) !important;
-}
-
-/* --- CAJA B: TEXTO ROJO --- */
-body[data-ledger-mode="B"] #ledger-toggle-btn {
-    color: #FF3B30 !important; /* Rojo igual que el pie de página */
-    border-color: rgba(255, 59, 48, 0.3) !important;
-}
-
-/* --- CAJA C: TEXTO VERDE --- */
-body[data-ledger-mode="C"] #ledger-toggle-btn {
-    color: #28a745 !important; /* Verde igual que el pie de página */
-    border-color: rgba(40, 167, 69, 0.3) !important;
-}
-
-/* Efecto al pulsar el botón */
+/* Efecto al pulsar */
 #ledger-toggle-btn:active {
     background-color: rgba(255, 255, 255, 0.05) !important;
     transform: scale(0.95);
+}
+
+/* ================================================================= */
+/* === REGLAS DE COLOR POR CAJA (TEXTO AZUL, ROJO, VERDE) === */
+/* ================================================================= */
+
+/* --- CAJA A (AZUL) --- */
+/* Botón del encabezado */
+body[data-ledger-mode="A"] #ledger-toggle-btn {
+    color: #007AFF !important; /* Fuente Azul */
+    border-color: rgba(0, 122, 255, 0.3) !important;
+}
+/* Pestaña del pie de página activa */
+body[data-ledger-mode="A"] .bottom-nav__item--active {
+    color: #007AFF !important; /* Fuente Azul */
+    background-color: transparent !important; /* Aseguramos que no tenga fondo sólido */
+}
+
+/* --- CAJA B (ROJA) --- */
+/* Botón del encabezado */
+body[data-ledger-mode="B"] #ledger-toggle-btn {
+    color: #FF3B30 !important; /* Fuente Roja */
+    border-color: rgba(255, 59, 48, 0.3) !important;
+}
+/* Pestaña del pie de página activa */
+body[data-ledger-mode="B"] .bottom-nav__item--active {
+    color: #FF3B30 !important; /* Fuente Roja */
+    background-color: transparent !important;
+}
+
+/* --- CAJA C (VERDE) --- */
+/* Botón del encabezado */
+body[data-ledger-mode="C"] #ledger-toggle-btn {
+    color: #28a745 !important; /* Fuente Verde */
+    border-color: rgba(40, 167, 69, 0.3) !important;
+}
+/* Pestaña del pie de página activa */
+body[data-ledger-mode="C"] .bottom-nav__item--active {
+    color: #28a745 !important; /* Fuente Verde */
+    background-color: transparent !important; /* Quitamos el fondo verde sólido que tenías antes */
+    box-shadow: none !important;
+    border-radius: 0 !important;
 }
