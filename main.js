@@ -11797,13 +11797,22 @@ window.addEventListener('click', (e) => {
 let currentLedgerMode = localStorage.getItem('selectedLedgerMode') || 'A';
 
 // Función principal de carga de datos
+// Función principal de carga de datos (VERSIÓN CORREGIDA)
 function initApp() {
+    // Leemos la caja actual
+    let currentLedgerMode = localStorage.getItem('selectedLedgerMode') || 'A';
+    
     console.log("Iniciando App en CAJA:", currentLedgerMode);
     
     // 1. Actualizar estética (Body y Botón)
     document.body.setAttribute('data-ledger-mode', currentLedgerMode);
     const btnHeader = document.getElementById('header-ledger-btn');
     if(btnHeader) btnHeader.textContent = `CAJA ${currentLedgerMode}`;
+
+    // --- CORRECCIÓN AQUÍ: Definimos 'db' explícitamente ---
+    // Esto conecta con la base de datos usando la librería que cargaste en index.html
+    const db = firebase.firestore();
+    // -----------------------------------------------------
 
     // 2. Conexión a Firebase con FILTRO
     db.collection("movimientos")
@@ -11825,7 +11834,7 @@ function initApp() {
             }
         });
 
-        // Renderizar (asegúrate de que esta función existe en tu código previo)
+        // Renderizar usando tu función existente
         if (typeof renderVirtualListItem === 'function') {
             renderVirtualListItem(movimientos);
         } else if (typeof renderList === 'function') {
