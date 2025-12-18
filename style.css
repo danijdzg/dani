@@ -6354,20 +6354,9 @@ html, body {
     overscroll-behavior-y: none; /* Evita el rebote blanco arriba/abajo */
 }
 /* ================================================================= */
-/* === CORRECCIONES FINALES: ESTRELLAS Y ESPACIOS (ZERO-GAP) === */
+/* === CORRECCIONES FINALES: ESPACIOS (ZERO-GAP) === */
 /* ================================================================= */
 
-/* 1. SOLUCIÓN ESTRELLAS: Hacer transparente el Body */
-/* Esto permite ver el canvas que está detrás (z-index: -2) */
-html, body {
-    background-color: transparent !important; /* CLAVE: Quita el negro sólido que tapa las estrellas */
-    background: transparent !important;
-    margin: 0 !important; /* CLAVE: Elimina los 8px de borde blanco/negro del navegador */
-    padding: 0 !important;
-    height: 100%;
-    width: 100%;
-    overscroll-behavior-y: none; /* Evita rebote elástico */
-}
 
 /* 2. SOLUCIÓN ESPACIO SUPERIOR: Ajuste quirúrgico del contenedor */
 #app-root.app-layout {
@@ -6391,18 +6380,3 @@ html, body {
     display: block !important;
 }
 
-/* 4. ASEGURAR QUE EL LIENZO OCUPE TODO (Incluso en PC) */
-#starfield, #galaxy-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw !important; /* Ancho de la ventana */
-    height: 100vh !important; /* Alto de la ventana */
-    z-index: -2;
-}
-
-/* 5. FONDO NEGRO DE SEGURIDAD (Solo para el Canvas) */
-/* El color negro debe darlo el canvas, no el body */
-#starfield {
-    background-color: #000000 !important;
-}
