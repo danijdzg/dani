@@ -6229,8 +6229,8 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
 
 /* 1. Sincronización Exacta: Encabezado y Cuerpo */
 .top-bar {
-    height: 50px !important;      /* Altura fija compacta */
-    min-height: 50px !important;
+    height: 10px !important;      /* Altura fija compacta */
+    min-height: 10px !important;
 }
 
 #app-root.app-layout {
