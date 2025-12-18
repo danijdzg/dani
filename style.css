@@ -6278,3 +6278,89 @@ h2, .section-title {
     margin-top: 0 !important;
     padding-top: 5px !important;
 }
+/* ================================================================= */
+/* === 1. BOTÓN (+) INCRUSTADO EN EL CENTRO DEL PIE DE PÁGINA === */
+/* ================================================================= */
+
+.fab-container {
+    /* Centrado Horizontal Absoluto */
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    right: auto !important;
+    
+    /* Posición Vertical: Lo subimos para que "rompa" la línea del pie de página */
+    /* Como el pie mide 60px, ponerlo a 30px hace que sobresalga la mitad */
+    bottom: 30px !important; 
+    
+    z-index: 1100 !important; /* Por encima del pie de página */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.fab {
+    width: 60px !important;  /* Un poco más grande para destacar */
+    height: 60px !important;
+    border-radius: 50%;
+    
+    /* Sombra de neón para separarlo visualmente de la barra */
+    box-shadow: 0 0 15px rgba(0, 179, 77, 0.5), 0 4px 10px rgba(0,0,0,0.3) !important;
+    
+    /* Aseguramos el color del tema */
+    background-color: var(--c-primary) !important; 
+    color: #fff !important;
+}
+
+/* Efecto al pulsar */
+.fab:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 20px rgba(0, 179, 77, 0.8) !important;
+}
+
+
+/* ================================================================= */
+/* === 2. FONDO CÓSMICO 3D (VIAJE ESPACIAL AMOLED) === */
+/* ================================================================= */
+
+#cosmos-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background-color: #000000; /* NEGRO AMOLED PURO */
+    overflow: hidden;
+    perspective: 800px; /* Profundidad 3D */
+}
+
+.star {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 2px;
+    background-color: white;
+    border-radius: 50%;
+    opacity: 0;
+    box-shadow: 0 0 3px white; /* Brillo estelar */
+    
+    /* Animación de viaje hacia la cámara */
+    animation: warpSpeed var(--duration) linear infinite;
+    animation-delay: var(--delay);
+}
+
+@keyframes warpSpeed {
+    0% {
+        transform: translate3d(0, 0, -1000px); /* Lejos en el fondo */
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        /* Viajan hacia ti expandiéndose hacia los lados */
+        transform: translate3d(var(--dest-x), var(--dest-y), 500px); 
+        opacity: 0;
+    }
+}
