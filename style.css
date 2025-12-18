@@ -6362,12 +6362,7 @@ html, body {
 #app-root.app-layout {
     /* El relleno superior debe ser EXACTAMENTE la altura de la barra (50px) */
     padding-top: 50px !important; 
-    
-    /* Aseguramos que el contenedor de la app no tenga fondo que tape las estrellas */
-    /* Si quieres que la app sea semitransparente, usa rgba(0,0,0,0.X) */
-    background-color: transparent !important; 
-    min-height: 100vh;
-}
+  
 
 /* 3. ELIMINAR HUECOS EN LA ESTRUCTURA INTERNA */
 /* Forzamos que la etiqueta MAIN y las VISTAS no tengan techo */
