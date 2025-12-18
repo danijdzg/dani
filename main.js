@@ -11728,73 +11728,64 @@ window.addEventListener('click', (e) => {
 /* ============================================== */
 
 const createStarBackground = () => {
-    // 1. Limpiar o crear contenedor
     let container = document.getElementById('cosmos-container');
     if (!container) {
         container = document.createElement('div');
         container.id = 'cosmos-container';
         document.body.prepend(container);
     } else {
-        container.innerHTML = ''; // Reiniciar para borrar planetas antiguos
+        container.innerHTML = '';
     }
 
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    // --- FUNCIÓN HELPER: CREAR ESTRELLAS ---
-    const addStars = (count, size, durationBase) => {
-        for (let i = 0; i < count; i++) {
-            const star = document.createElement('div');
-            star.className = 'star';
-            
-            // Posición aleatoria
-            const x = Math.random() * width;
-            const y = Math.random() * height;
-            
-            // Estilos dinámicos
-            star.style.left = `${x}px`;
-            star.style.top = `${y}px`;
-            star.style.width = `${size}px`;
-            star.style.height = `${size}px`;
-            
-            // Animación de parpadeo aleatoria (para que no parpadeen todas a la vez)
-            const duration = durationBase + (Math.random() * 3);
-            star.style.setProperty('--twinkle-duration', `${duration}s`);
-            
-            container.appendChild(star);
-        }
-    };
+    // --- GENERAR ESTRELLAS 3D ---
+    // Creamos 150 estrellas que viajarán continuamente
+    const starCount = 150; 
 
-    // 2. GENERAR CAPAS DE ESTRELLAS (Profundidad 3D)
-    // Fondo lejano (muchas, pequeñas, lentas)
-    addStars(200, 1, 3);   
-    // Capa media
-    addStars(100, 2, 4);  
-    // Capa cercana (pocas, brillantes)
-    addStars(30, 2.5, 5);    
+    for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        
+        // 1. Posición X/Y aleatoria en la pantalla
+        // (Esto define por dónde pasará la estrella al acercarse)
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        star.style.left = `${x}px`;
+        star.style.top = `${y}px`;
+        
+        // 2. Tamaño variable (algunas son polvo cósmico, otras estrellas grandes)
+        const size = 1 + Math.random() * 2; // Entre 1px y 3px
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
 
-    // Nota: HE ELIMINADO EL CÓDIGO DE LOS PLANETAS AQUÍ
+        // 3. Velocidad del viaje (Profundidad)
+        // Entre 2s (muy rápido) y 6s (lento y majestuoso)
+        const speed = 2 + Math.random() * 4;
+        star.style.setProperty('--speed', `${speed}s`);
 
-    // 3. SISTEMA DE ESTRELLAS FUGACES
-    // Limpiamos intervalos previos si existieran para no acumularlos
+        // 4. Retraso inicial
+        // Para que no salgan todas a la vez al cargar, las escalonamos
+        const delay = Math.random() * 5; // hasta 5 segundos de desfase
+        star.style.setProperty('--delay', `-${delay}s`); // Delay negativo para que ya estén en movimiento
+
+        container.appendChild(star);
+    }
+
+    // --- SISTEMA DE ESTRELLAS FUGACES (EXTRA) ---
+    // Mantenemos esto porque queda genial ver una cruzar mientras viajas
     if (window.shootingStarInterval) clearInterval(window.shootingStarInterval);
 
     window.shootingStarInterval = setInterval(() => {
         const shoot = document.createElement('div');
         shoot.className = 'shooting-star';
-        
-        // Aparecen en la mitad superior derecha aleatoriamente
         shoot.style.top = `${Math.random() * height * 0.6}px`;
         shoot.style.left = `${width - (Math.random() * 200)}px`;
-        
         container.appendChild(shoot);
-
-        // Limpieza automática del DOM
-        setTimeout(() => {
-            shoot.remove();
-        }, 3500);
-    }, 4000); // Frecuencia: una cada 4 segundos aprox.
+        setTimeout(() => { shoot.remove(); }, 3500);
+    }, 5000); 
 };
 
-// Asegúrate de llamar a esta función al iniciar
+// Iniciar al cargar
 document.addEventListener('DOMContentLoaded', createStarBackground);
