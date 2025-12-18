@@ -11809,3 +11809,32 @@ window.addEventListener('click', (e) => {
     });
 
 })();
+
+/* ================================================= */
+/* === LÓGICA PARA QUE EL BOTÓN DE CAJA FUNCIONE === */
+/* ================================================= */
+
+// 1. Cuando pulses el botón, cambiamos de caja
+document.addEventListener('click', function(e) {
+    // Si lo que pulsamos es el botón de la caja...
+    if (e.target && e.target.id === 'header-ledger-btn') {
+        // Llamamos a la función que cambia de modo (si existe)
+        if (typeof toggleLedgerMode === 'function') {
+            toggleLedgerMode();
+        }
+    }
+});
+
+// 2. Un pequeño truco para que el texto se actualice siempre
+// Esto vigila si cambias de caja y actualiza el botón de arriba automáticamente
+setInterval(() => {
+    const btn = document.getElementById('header-ledger-btn');
+    // Si el botón existe y tenemos una variable de modo actual...
+    if (btn && typeof currentLedgerMode !== 'undefined') {
+        // Ponemos el texto correcto: CAJA A, CAJA B o CAJA C
+        const textoDeseado = 'CAJA ' + currentLedgerMode;
+        if (btn.textContent.trim() !== textoDeseado) {
+            btn.textContent = textoDeseado;
+        }
+    }
+}, 500); // Se revisa cada medio segundo

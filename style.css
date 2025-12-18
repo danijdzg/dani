@@ -6104,3 +6104,79 @@ input, select, textarea {
     margin-left: 4px;
     font-family: var(--font-numeric);
 }
+
+/* ================================================= */
+/* === ESTILO DE LA BARRA SUPERIOR (GEMELA DEL PIE) === */
+/* ================================================= */
+
+.top-bar {
+    /* Hacemos que flote fija arriba */
+    position: fixed;
+    top: 20px; 
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+
+    /* Le damos forma de píldora (igual que el menú de abajo) */
+    width: calc(100% - 32px);
+    max-width: 500px;
+    height: 64px;
+    border-radius: 32px;
+
+    /* Efecto Cristal (Transparente y borroso) */
+    background-color: rgba(20, 20, 20, 0.6);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+    /* Alineamos los botones dentro */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+}
+
+/* Movemos el contenido de la app para que la barra no lo tape */
+.app-layout__main {
+    padding-top: 100px !important;
+}
+
+/* --- ESTILO DEL BOTÓN CENTRAL (CAJA) --- */
+.ledger-pill-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 1rem;
+    font-weight: 800; /* Letra gorda */
+    padding: 8px 24px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* COLORES NEÓN SEGÚN LA CAJA (Azul, Rojo, Verde) */
+
+/* Cuando es CAJA A (Azul) */
+body[data-ledger-mode="A"] .ledger-pill-btn {
+    color: #007AFF;
+    background: rgba(0, 122, 255, 0.15);
+    border-color: rgba(0, 122, 255, 0.3);
+    box-shadow: 0 0 15px rgba(0, 122, 255, 0.2);
+}
+
+/* Cuando es CAJA B (Rojo) */
+body[data-ledger-mode="B"] .ledger-pill-btn {
+    color: #FF3B30;
+    background: rgba(255, 59, 48, 0.15);
+    border-color: rgba(255, 59, 48, 0.3);
+    box-shadow: 0 0 15px rgba(255, 59, 48, 0.2);
+}
+
+/* Cuando es CAJA C (Verde) */
+body[data-ledger-mode="C"] .ledger-pill-btn {
+    color: #00B34D;
+    background: rgba(0, 179, 77, 0.15);
+    border-color: rgba(0, 179, 77, 0.3);
+    box-shadow: 0 0 15px rgba(0, 179, 77, 0.2);
+}
