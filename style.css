@@ -6235,7 +6235,7 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
 
 #app-root.app-layout {
     /* El relleno debe ser EXACTAMENTE la altura de la barra. Ni un px más. */
-    padding-top: 50px !important; 
+    padding-top: 10px !important; 
 }
 
 /* 2. Eliminación de Márgenes en Contenedores Principales */
