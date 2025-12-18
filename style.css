@@ -6156,7 +6156,7 @@ input, select, textarea {
 }
 
 /* ================================================= */
-/* === ENCABEZADO "GEMELO" (Versión Iconos Completos) === */
+/* === 1. ENCABEZADO CRISTAL (IGUAL QUE EL PIE) === */
 /* ================================================= */
 
 .top-bar {
@@ -6166,85 +6166,142 @@ input, select, textarea {
     transform: translateX(-50%);
     z-index: 1000;
 
-    /* Dimensiones */
+    /* Dimensiones idénticas al footer */
     width: calc(100% - 32px);
     max-width: 500px;
     height: 64px;
     border-radius: 32px;
 
-    /* Estilo Cristal Oscuro */
-    background-color: rgba(20, 20, 20, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    /* EFECTO CRISTAL REAL (Sin color sólido) */
+    background-color: rgba(20, 20, 20, 0.85); /* Negro muy transparente */
+    backdrop-filter: blur(15px); /* Desenfoque fuerte detrás */
+    -webkit-backdrop-filter: blur(15px);
+    
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 
-    /* Distribución Flexible */
+    /* Distribución: Izquierda y Derecha */
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 12px;
+    padding: 0 16px; /* Un poco más de aire */
 }
 
-/* --- SECCIONES INTERNAS --- */
-
-/* Izquierda (Menú) */
+/* Sección Izquierda */
 .top-bar__left {
     display: flex;
     align-items: center;
-    flex: 0 0 auto; /* No estirar */
 }
 
-/* Centro (Botón Caja) */
-.top-bar__center {
-    position: absolute; /* Truco para centrarlo perfectamente */
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    justify-content: center;
-}
-
-/* Derecha (Grupo de Iconos) */
+/* Sección Derecha */
 .top-bar__right {
     display: flex;
     align-items: center;
-    gap: 4px; /* Espacio entre la lupa, calculadora y puntos */
-    flex: 0 0 auto;
+    gap: 8px; /* Espacio entre iconos */
 }
 
-/* Ajuste de los botones icono */
+/* Iconos */
 .top-bar .icon-btn {
-    color: #ffffff;
-    opacity: 0.8;
-    width: 40px; /* Un poco más compactos para que quepan */
+    color: #fff;
+    opacity: 0.9;
+    width: 40px;
     height: 40px;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     background: transparent;
     border: none;
+    border-radius: 50%;
 }
+.top-bar .icon-btn:active { background: rgba(255,255,255,0.1); }
 
-.top-bar .icon-btn:active {
-    background-color: rgba(255,255,255,0.1);
-}
-
-/* --- BOTÓN CENTRAL (CAJA) --- */
-/* Mantenemos el estilo que ya te gustaba */
+/* ESTILO BOTÓN CAJA (Igual que antes) */
 .ledger-pill-btn {
     background: transparent;
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
     color: white;
-    font-size: 0.9rem; /* Un pelín más pequeño para ganar espacio */
     font-weight: 800;
     padding: 6px 16px;
     border-radius: 20px;
+    font-size: 0.9rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+}
+/* Colores Neón */
+body[data-ledger-mode="A"] .ledger-pill-btn { color: #007AFF; border-color: #007AFF; background: rgba(0, 122, 255, 0.15); }
+body[data-ledger-mode="B"] .ledger-pill-btn { color: #FF3B30; border-color: #FF3B30; background: rgba(255, 59, 48, 0.15); }
+body[data-ledger-mode="C"] .ledger-pill-btn { color: #00B34D; border-color: #00B34D; background: rgba(0, 179, 77, 0.15); }
+
+/* ================================================= */
+/* === 2. FONDO AMOLED + PLANETAS + METEORITOS === */
+/* ================================================= */
+
+#deep-space-background {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1;
+    /* NEGRO PURO AMOLED */
+    background-color: #000000; 
+    overflow: hidden;
+    pointer-events: none;
 }
 
-/* Colores Neón (Sin cambios) */
-body[data-ledger-mode="A"] .ledger-pill-btn { border-color: #007AFF; color: #007AFF; background: rgba(0, 122, 255, 0.15); box-shadow: 0 0 12px rgba(0, 122, 255, 0.3); }
-body[data-ledger-mode="B"] .ledger-pill-btn { border-color: #FF3B30; color: #FF3B30; background: rgba(255, 59, 48, 0.15); box-shadow: 0 0 12px rgba(255, 59, 48, 0.3); }
-body[data-ledger-mode="C"] .ledger-pill-btn { border-color: #00B34D; color: #00B34D; background: rgba(0, 179, 77, 0.15); box-shadow: 0 0 12px rgba(0, 179, 77, 0.3); }
+/* Contenedor de estrellas para la animación vertical */
+.star-anim-container {
+    position: absolute;
+    width: 100%; height: 100%;
+    animation: moveStarsVertical linear infinite;
+}
+
+@keyframes moveStarsVertical {
+    from { transform: translateY(0); }
+    to { transform: translateY(-100vh); }
+}
+
+/* --- PLANETAS --- */
+.space-planet {
+    position: absolute;
+    border-radius: 50%;
+    z-index: 2;
+    /* Sombras para dar volumen 3D */
+    box-shadow: inset -10px -10px 20px rgba(0,0,0,0.9);
+}
+.planet-gas { background: linear-gradient(135deg, #1e3c72, #2a5298); }
+.planet-mars { background: linear-gradient(135deg, #cb2d3e, #ef473a); }
+.planet-ice { background: linear-gradient(135deg, #E0EAFC, #CFDEF3); }
+
+/* Animación Diagonal Lenta de Planetas */
+@keyframes planetSlide {
+    0% { transform: translate(-200px, -100px); }
+    100% { transform: translate(120vw, 120vh); }
+}
+
+/* --- ESTRELLAS FUGACES (DIAGONALES) --- */
+.shooting-star {
+    position: absolute;
+    width: 150px; /* Longitud de la cola */
+    height: 1px;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
+    transform: rotate(-45deg); /* INCLINACIÓN DIAGONAL */
+    opacity: 0;
+    z-index: 1;
+    animation: shootDiagonal 2.5s linear infinite;
+}
+
+@keyframes shootDiagonal {
+    0% { transform: rotate(-45deg) translate(0, 0); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: rotate(-45deg) translate(-1000px, 1000px); opacity: 0; } /* Movimiento diagonal */
+}
+
+/* --- METEORITOS (ROCAS) --- */
+.space-meteor {
+    position: absolute;
+    background: #444;
+    border-radius: 40%;
+    z-index: 3;
+    animation: meteorFall 5s linear forwards;
+}
+@keyframes meteorFall {
+    0% { transform: translateY(-50px) rotate(0deg); }
+    100% { transform: translateY(120vh) rotate(360deg); }
+}

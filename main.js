@@ -11743,155 +11743,138 @@ window.addEventListener('click', (e) => {
     }
 });
 /* ========================================= */
-/* === MOTOR INTERESTELAR V4.0 (3D) === */
+/* === MOTOR DE FONDO (AMOLED + PLANETAS) === */
 /* ========================================= */
 
 (function initSpaceBackground() {
     const container = document.getElementById('deep-space-background');
     if (!container) return;
+    container.innerHTML = ''; 
 
-    container.innerHTML = ''; // Limpiar
-
-    // 1. GENERADOR DE ESTRELLAS (PARALLAX INFINITO)
-    const createStarLayer = (count, size, duration, opacity) => {
-        const layerContainer = document.createElement('div');
-        layerContainer.className = 'star-anim-container';
-        layerContainer.style.animationDuration = `${duration}s`;
-        layerContainer.style.opacity = opacity;
-
+    // 1. ESTRELLAS CLÁSICAS (Puntos blancos nítidos)
+    const createStarLayer = (count, size, duration) => {
+        const layer = document.createElement('div');
+        layer.className = 'star-anim-container';
+        layer.style.animationDuration = `${duration}s`;
+        
         let shadows = [];
         for (let i = 0; i < count; i++) {
             const x = Math.random() * 100;
             const y = Math.random() * 100;
-            // Variación sutil de color en las estrellas (blanco y azulado)
-            const color = Math.random() > 0.8 ? '#ADD8E6' : '#FFF'; 
-            shadows.push(`${x}vw ${y}vh ${size} ${color}`);
+            shadows.push(`${x}vw ${y}vh #FFF`); // Blanco puro
         }
         
-        // Parte A y Parte B para el bucle
-        const starsA = document.createElement('div');
-        starsA.style.position = 'absolute';
-        starsA.style.top = 0;
-        starsA.style.width = '1px'; starsA.style.height = '1px';
-        starsA.style.boxShadow = shadows.join(',');
+        const starSet = document.createElement('div');
+        starSet.style.position = 'absolute';
+        starSet.style.top = 0;
+        starSet.style.width = size; starSet.style.height = size;
+        starSet.style.background = 'transparent';
+        starSet.style.boxShadow = shadows.join(','); // Magia de box-shadow
         
-        const starsB = starsA.cloneNode(true);
-        starsB.style.top = '100vh';
+        // Copia para bucle
+        const starSetB = starSet.cloneNode(true);
+        starSetB.style.top = '100vh';
 
-        layerContainer.appendChild(starsA);
-        layerContainer.appendChild(starsB);
-        container.appendChild(layerContainer);
+        layer.appendChild(starSet);
+        layer.appendChild(starSetB);
+        container.appendChild(layer);
     };
 
-    // Crear 3 capas de profundidad
-    createStarLayer(300, '1px', 100, 0.8); // Fondo lejano
-    createStarLayer(100, '2px', 60, 0.9);  // Medio
-    createStarLayer(40, '2.5px', 40, 1);   // Cercano
+    createStarLayer(400, '1px', 100); // Lejanas
+    createStarLayer(150, '2px', 60);  // Medias
 
-    // 2. GENERADOR DE PLANETAS
+    // 2. PLANETAS (Pasando diagonalmente)
     const spawnPlanet = () => {
-        // Solo un planeta a la vez para no saturar
-        if (document.querySelectorAll('.space-planet').length > 0) return;
+        if (document.querySelectorAll('.space-planet').length > 0) return; // Solo uno a la vez
 
-        const planet = document.createElement('div');
-        planet.className = 'space-planet';
+        const p = document.createElement('div');
+        p.className = 'space-planet';
+        const types = ['planet-gas', 'planet-mars', 'planet-ice'];
+        p.classList.add(types[Math.floor(Math.random() * types.length)]);
         
-        // Tipos de planetas aleatorios
-        const types = ['planet-gas-giant', 'planet-ice', 'planet-mars', 'planet-moon'];
-        const randomType = types[Math.floor(Math.random() * types.length)];
-        planet.classList.add(randomType);
-
-        // Tamaño aleatorio (entre 40px y 120px)
-        const size = 40 + Math.random() * 80;
-        planet.style.width = `${size}px`;
-        planet.style.height = `${size}px`;
-
-        // Posición inicial vertical aleatoria (top 10% a 70%)
-        planet.style.top = `${10 + Math.random() * 60}%`;
-        planet.style.left = '-150px'; // Fuera de pantalla izquierda
-
-        // Velocidad lenta y majestuosa (20s a 40s)
-        const duration = 25 + Math.random() * 20;
-        planet.style.animation = `planetFloat ${duration}s linear forwards`;
-
-        container.appendChild(planet);
-
-        // Limpiar al terminar
-        setTimeout(() => { planet.remove(); }, duration * 1000);
+        const size = 50 + Math.random() * 100;
+        p.style.width = `${size}px`; p.style.height = `${size}px`;
+        
+        // Empiezan arriba a la izquierda aleatoriamente
+        p.style.left = `${Math.random() * 80}%`;
+        p.style.top = '-150px';
+        
+        const duration = 20 + Math.random() * 20;
+        p.style.animation = `planetSlide ${duration}s linear forwards`;
+        
+        container.appendChild(p);
+        setTimeout(() => p.remove(), duration * 1000);
     };
+    setInterval(() => { if(Math.random() > 0.5) spawnPlanet(); }, 10000);
 
-    // Intentar lanzar un planeta cada 15 segundos (probabilidad del 40%)
-    setInterval(() => {
-        if (Math.random() > 0.6) spawnPlanet();
-    }, 15000);
+    // 3. ESTRELLAS FUGACES (Diagonales)
+    const spawnShooting = () => {
+        const s = document.createElement('div');
+        s.className = 'shooting-star';
+        s.style.top = `${Math.random() * 50}%`;
+        s.style.left = `${50 + Math.random() * 50}%`; // Salen del lado derecho
+        container.appendChild(s);
+        setTimeout(() => s.remove(), 3000);
+    };
+    setInterval(() => { if(Math.random() > 0.6) spawnShooting(); }, 4000);
 
-    // 3. GENERADOR DE METEORITOS (ROCAS 3D)
+    // 4. METEORITOS
     const spawnMeteor = () => {
-        const meteor = document.createElement('div');
-        meteor.className = 'space-meteor';
-        
-        const size = 5 + Math.random() * 10; // Pequeños (5-15px)
-        meteor.style.width = `${size}px`;
-        meteor.style.height = `${size}px`;
-        
-        meteor.style.left = `${Math.random() * 100}%`;
-        meteor.style.top = '-50px';
-        
-        // Velocidad rápida
-        const duration = 3 + Math.random() * 5;
-        meteor.style.animation = `meteorFloat ${duration}s linear forwards`;
-
-        container.appendChild(meteor);
-        setTimeout(() => { meteor.remove(); }, duration * 1000);
+        const m = document.createElement('div');
+        m.className = 'space-meteor';
+        const s = 5 + Math.random() * 10;
+        m.style.width = `${s}px`; m.style.height = `${s}px`;
+        m.style.left = `${Math.random() * 100}%`;
+        m.style.top = '-50px';
+        m.style.animationDuration = `${3 + Math.random() * 4}s`;
+        container.appendChild(m);
+        setTimeout(() => m.remove(), 8000);
     };
+    setInterval(() => { if(Math.random() > 0.5) spawnMeteor(); }, 3000);
 
-    setInterval(() => {
-        if (Math.random() > 0.5) spawnMeteor();
-    }, 4000); // Meteoritos frecuentes
-
-    // 4. ESTRELLAS FUGACES RÁPIDAS
-    const spawnShootingStar = () => {
-        const star = document.createElement('div');
-        star.className = 'shooting-star';
-        star.style.top = `${Math.random() * 50}%`;
-        star.style.left = `${Math.random() * 80}%`;
-        star.style.animationDuration = `${1 + Math.random()}s`;
-        
-        container.appendChild(star);
-        setTimeout(() => star.remove(), 2000);
-    };
-
-    setInterval(() => {
-        if (Math.random() > 0.7) spawnShootingStar();
-    }, 3000);
-    
 })();
 
-/* ================================================= */
-/* === LÓGICA PARA QUE EL BOTÓN DE CAJA FUNCIONE === */
-/* ================================================= */
+/* ================================================ */
+/* === HACER FUNCIONAR LOS BOTONES DEL ENCABEZADO === */
+/* ================================================ */
 
-// 1. Cuando pulses el botón, cambiamos de caja
-document.addEventListener('click', function(e) {
-    // Si lo que pulsamos es el botón de la caja...
-    if (e.target && e.target.id === 'header-ledger-btn') {
-        // Llamamos a la función que cambia de modo (si existe)
-        if (typeof toggleLedgerMode === 'function') {
-            toggleLedgerMode();
-        }
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. CALCULADORA
+    const btnCalc = document.getElementById('btn-toggle-calculator');
+    const calcContainer = document.getElementById('calculator-container'); 
+    // ^ Asegúrate de que en index.html tienes un div con id="calculator-container" donde está el iframe
+    
+    if (btnCalc) {
+        btnCalc.addEventListener('click', () => {
+            if (calcContainer) {
+                // Alternar visibilidad
+                if (calcContainer.style.display === 'none' || calcContainer.classList.contains('hidden')) {
+                     calcContainer.style.display = 'flex'; // O 'block' según tu CSS
+                     calcContainer.classList.remove('hidden');
+                } else {
+                     calcContainer.style.display = 'none';
+                }
+            } else {
+                // Si no existe el contenedor, intentamos mostrar el iframe directamente si tiene ID
+                alert("Abriendo calculadora..."); 
+                // Aquí deberías poner la lógica si tu calculadora se abre de otra forma (ej. un modal)
+            }
+        });
+    }
+
+    // 2. TRES PUNTOS (OPCIONES)
+    const btnOptions = document.getElementById('btn-show-options');
+    if (btnOptions) {
+        btnOptions.addEventListener('click', () => {
+            // Opción A: ¿Tienes un menú desplegable ya creado?
+            const dropdown = document.getElementById('main-dropdown-menu');
+            if (dropdown) {
+                dropdown.classList.toggle('active'); // O la clase que uses para mostrarlo
+            } else {
+                // Opción B: Si no tienes menú, lanzamos un aviso por ahora
+                alert("Menú de opciones: \n1. Ajustes\n2. Exportar\n3. Ayuda");
+            }
+        });
     }
 });
-
-// 2. Un pequeño truco para que el texto se actualice siempre
-// Esto vigila si cambias de caja y actualiza el botón de arriba automáticamente
-setInterval(() => {
-    const btn = document.getElementById('header-ledger-btn');
-    // Si el botón existe y tenemos una variable de modo actual...
-    if (btn && typeof currentLedgerMode !== 'undefined') {
-        // Ponemos el texto correcto: CAJA A, CAJA B o CAJA C
-        const textoDeseado = 'CAJA ' + currentLedgerMode;
-        if (btn.textContent.trim() !== textoDeseado) {
-            btn.textContent = textoDeseado;
-        }
-    }
-}, 500); // Se revisa cada medio segundo
