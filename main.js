@@ -11724,89 +11724,110 @@ window.addEventListener('click', (e) => {
         }
     }
 });
-/* ================================================================= */
-/* === GENERADOR DE ESPACIO PROFUNDO (Deep Space Engine) === */
-/* ================================================================= */
-(function initSpaceBackground() {
-    // 1. Verificar existencia del contenedor
-    const container = document.getElementById('deep-space-background');
-    if (!container) return;
+/* ============================================== */
+/* === NUEVO MOTOR DE FONDO CÓSMICO (main.js) === */
+/* ============================================== */
 
-    console.log("🌌 Iniciando motores de hiperespacio v2.0...");
-    container.innerHTML = ''; // Limpiar cualquier residuo anterior
+const createStarBackground = () => {
+    // 1. Limpiar o crear contenedor
+    let container = document.getElementById('cosmos-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'cosmos-container';
+        document.body.prepend(container);
+    } else {
+        container.innerHTML = ''; // Reiniciar si ya existía
+    }
 
-    // 2. Función para crear capas con bucle perfecto
-    const createLayer = (count, size, duration, opacity) => {
-        // Crear el contenedor que se animará
-        const layerContainer = document.createElement('div');
-        layerContainer.className = 'star-anim-container';
-        layerContainer.style.animationDuration = `${duration}s`;
-        layerContainer.style.opacity = opacity;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
-        // Generar coordenadas de sombras (box-shadow) para las estrellas
-        let shadows = [];
+    // --- FUNCIÓN HELPER: CREAR ESTRELLAS ---
+    const addStars = (count, size, durationBase) => {
         for (let i = 0; i < count; i++) {
-            const x = Math.random() * 100; // Posición horizontal (vw)
-            const y = Math.random() * 100; // Posición vertical (vh)
-            shadows.push(`${x}vw ${y}vh #FFF`);
+            const star = document.createElement('div');
+            star.className = 'star';
+            
+            // Posición aleatoria
+            const x = Math.random() * width;
+            const y = Math.random() * height;
+            
+            // Estilos dinámicos
+            star.style.left = `${x}px`;
+            star.style.top = `${y}px`;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            
+            // Animación de parpadeo aleatoria
+            const duration = durationBase + (Math.random() * 3);
+            star.style.setProperty('--twinkle-duration', `${duration}s`);
+            
+            container.appendChild(star);
         }
-        const boxShadowString = shadows.join(',');
-
-        // CREAR PARTE A (Pantalla actual)
-        const starsA = document.createElement('div');
-        starsA.style.position = 'absolute';
-        starsA.style.width = size;
-        starsA.style.height = size;
-        starsA.style.background = 'transparent';
-        starsA.style.borderRadius = '50%';
-        starsA.style.boxShadow = boxShadowString;
-        starsA.style.top = 0; // Empieza arriba
-
-        // CREAR PARTE B (Clon para el bucle, empieza debajo)
-        const starsB = starsA.cloneNode(true);
-        starsB.style.top = '100vh'; // Empieza justo debajo de la pantalla
-
-        // Añadir ambas partes al contenedor de animación
-        layerContainer.appendChild(starsA);
-        layerContainer.appendChild(starsB);
-        container.appendChild(layerContainer);
     };
 
-    // 3. Crear las 3 capas de profundidad
-    // Capa 1: Lejanas (Muchas, muy pequeñas, muy lentas)
-    createLayer(400, '1px', 150, 0.7);
+    // 2. GENERAR 5 CAPAS DE ESTRELLAS (Mucha más profundidad)
+    addStars(150, 1, 3);   // Muy lejanas
+    addStars(80, 1.5, 4);  // Lejanas
+    addStars(40, 2, 5);    // Medias
+    addStars(20, 2.5, 6);  // Cercanas
+    addStars(10, 3, 7);    // Muy brillantes
 
-    // Capa 2: Medianas (Menos, brillo medio, velocidad media)
-    createLayer(100, '2px', 100, 0.9);
+    // 3. GENERAR LOS 7 PLANETAS
+    const planetsData = [
+        { type: 'mercury', size: 15, speed: 100 },
+        { type: 'venus',   size: 25, speed: 120 },
+        { type: 'mars',    size: 20, speed: 110 },
+        { type: 'jupiter', size: 55, speed: 180 }, // El más grande
+        { type: 'saturn',  size: 45, speed: 160 },
+        { type: 'uranus',  size: 30, speed: 140 },
+        { type: 'neptune', size: 28, speed: 130 }
+    ];
 
-    // Capa 3: Cercanas (Pocas, grandes, rápidas)
-    createLayer(30, '3px', 60, 1);
-
-    // 4. Sistema de Estrellas Fugaces (Opcional, pero espectacular)
-    const spawnShootingStar = () => {
-        const star = document.createElement('div');
-        star.className = 'shooting-star';
+    planetsData.forEach(p => {
+        const planet = document.createElement('div');
+        planet.classList.add('planet', `planet-${p.type}`);
         
-        // Posición aleatoria
-        star.style.top = `${Math.random() * 50}%`; // Solo en la mitad superior
-        star.style.left = `${Math.random() * 100}%`;
+        // Tamaño
+        planet.style.width = `${p.size}px`;
+        planet.style.height = `${p.size}px`;
         
-        // Tamaño y duración aleatoria para variedad
-        const scale = 0.5 + Math.random(); 
-        star.style.transform = `scale(${scale}) rotate(-45deg)`;
-        star.style.animationDuration = `${2 + Math.random() * 3}s`;
+        // Posición Inicial Aleatoria (evitando bordes extremos)
+        const startX = Math.random() * (width - 60);
+        const startY = Math.random() * (height - 60);
+        planet.style.left = `${startX}px`;
+        planet.style.top = `${startY}px`;
 
-        container.appendChild(star);
+        // Variables CSS para la animación de movimiento
+        // Hacemos que se muevan aleatoriamente entre -100px y +100px de su posición
+        const moveX = (Math.random() * 200) - 100; 
+        const moveY = (Math.random() * 200) - 100;
+        
+        planet.style.setProperty('--move-x', `${moveX}px`);
+        planet.style.setProperty('--move-y', `${moveY}px`);
+        planet.style.setProperty('--orbit-speed', `${p.speed}s`); // Muy lento
 
-        // Limpieza automática al terminar la animación
-        setTimeout(() => {
-            star.remove();
-        }, 5000);
-    };
+        container.appendChild(planet);
+    });
 
-    // Lanzar una estrella fugaz cada 4-10 segundos
+    // 4. SISTEMA DE ESTRELLAS FUGACES
     setInterval(() => {
-        spawnShootingStar();
-    }, 4000 + Math.random() * 6000);
+        const shoot = document.createElement('div');
+        shoot.className = 'shooting-star';
+        
+        // Aparecen en la mitad derecha superior aleatoriamente
+        shoot.style.top = `${Math.random() * height * 0.5}px`;
+        shoot.style.left = `${width - (Math.random() * 300)}px`;
+        
+        container.appendChild(shoot);
 
-})();
+        // Limpieza de DOM automática
+        setTimeout(() => {
+            shoot.remove();
+        }, 3500);
+    }, 4000); // Una estrella fugaz cada 4 segundos
+};
+
+// --- EJECUTAR ---
+// Asegúrate de llamar a esta función cuando cargue la página
+document.addEventListener('DOMContentLoaded', createStarBackground);

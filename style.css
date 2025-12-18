@@ -5865,69 +5865,90 @@ input, select, textarea {
         opacity: 0.5;
     }
 }
-/* ========================================= */
-/* === MOTOR DE FONDO ESTRELLADO (V3.0 AMOLED) === */
-/* ========================================= */
+/* ================================================================= */
+/* === FONDO CÓSMICO ESPECTACULAR (Estrellas, Fugaces y Planetas) === */
+/* ================================================================= */
 
-#deep-space-background {
+/* Contenedor del Cosmos (Fijo al fondo) */
+#cosmos-container {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1;
-    /* CAMBIO CLAVE: Negro puro para pantallas AMOLED */
-    background-color: #000000; 
+    z-index: -1; /* Detrás de todo */
+    background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%); /* Degradado profundo */
     overflow: hidden;
     pointer-events: none;
 }
 
-/* Contenedor de cada capa para manejar la animación vertical */
-.star-anim-container {
+/* --- ESTRELLAS (5 Capas de profundidad) --- */
+.star {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    animation: moveStars linear infinite;
+    background-color: white;
+    border-radius: 50%;
+    opacity: 0.8;
+    animation: twinkle var(--twinkle-duration) infinite ease-in-out alternate;
 }
 
-@keyframes moveStars {
-    from { transform: translateY(0); }
-    to { transform: translateY(-100vh); }
+@keyframes twinkle {
+    0% { opacity: 0.3; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1.2); }
 }
 
-/* Estrella Fugaz */
+/* --- ESTRELLAS FUGACES --- */
 .shooting-star {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 4px;
-    height: 4px;
-    /* Gradiente ajustado para contrastar con el negro puro */
-    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
-    border-radius: 50%;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.6); /* Brillo más intenso */
-    animation: shoot 3s linear infinite; /* Un poco más rápido */
+    height: 2px;
+    background: linear-gradient(-45deg, rgba(255,255,255,1), rgba(0,0,255,0));
+    border-radius: 999px;
+    filter: drop-shadow(0 0 6px rgba(105, 155, 255, 1));
+    animation: shoot 3s linear;
     opacity: 0;
 }
 
-.shooting-star::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 200px; /* Cola más larga */
-    height: 1px;
-    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
-    right: 0;
+@keyframes shoot {
+    0% { transform: translateX(0) translateY(0) rotate(-45deg); opacity: 1; width: 0; }
+    10% { width: 100px; } /* Estela larga */
+    100% { transform: translateX(-500px) translateY(500px) rotate(-45deg); opacity: 0; width: 0; }
 }
 
-@keyframes shoot {
-    0% { transform: rotate(-45deg) translateX(0); opacity: 0; }
-    10% { opacity: 1; }
-    20% { transform: rotate(-45deg) translateX(-1500px); opacity: 0; }
-    100% { transform: rotate(-45deg) translateX(-1500px); opacity: 0; }
+/* --- PLANETAS (Diseño CSS Puro) --- */
+.planet {
+    position: absolute;
+    border-radius: 50%;
+    box-shadow: inset -4px -4px 10px rgba(0,0,0,0.7); /* Sombra interna para volumen 3D */
+    animation: floatOrbit var(--orbit-speed) linear infinite alternate;
+    opacity: 0.9;
+}
+
+/* Estilos Específicos de Planetas */
+.planet-mercury { background: radial-gradient(circle at 30% 30%, #a5a5a5, #4e4e4e); }
+.planet-venus   { background: radial-gradient(circle at 30% 30%, #e6dbb3, #b89c56); box-shadow: 0 0 10px #e6dbb3; }
+.planet-mars    { background: radial-gradient(circle at 30% 30%, #ff6b6b, #8a1c1c); box-shadow: 0 0 8px #ff4500; }
+.planet-jupiter { 
+    background: repeating-linear-gradient(-45deg, #d4a373 0, #d4a373 10px, #faedcd 10px, #faedcd 20px); 
+    box-shadow: inset -6px -6px 15px rgba(0,0,0,0.5);
+}
+/* Saturno y sus anillos (usando ::after) */
+.planet-saturn  { background: #ead185; }
+.planet-saturn::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(20deg);
+    width: 160%; height: 40%;
+    border-radius: 50%;
+    border: 4px solid rgba(220, 200, 150, 0.6);
+    border-top: 4px solid rgba(220, 200, 150, 0.9); /* Parte trasera más oscura */
+}
+.planet-uranus  { background: radial-gradient(circle at 30% 30%, #a2d2ff, #3a86ff); }
+.planet-neptune { background: radial-gradient(circle at 30% 30%, #4cc9f0, #4361ee); }
+
+/* Movimiento flotante de los planetas */
+@keyframes floatOrbit {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(var(--move-x), var(--move-y)); }
 }
 /* ========================================= */
 /* === Ocultar Scrollbar (Estilo App) === */
