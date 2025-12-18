@@ -1084,7 +1084,7 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
 }
 .movimiento-month-header {
     position: sticky; /* La clave mágica */
-    top: 0;
+    top: 60;
     z-index: 5; 
     margin-top: 0; 
     border-radius: 0; 

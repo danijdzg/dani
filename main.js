@@ -2467,30 +2467,33 @@ const pageRenderers = {
     [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
 };
 
-    if (pageRenderers[pageId]) { 
-    if (leftEl) {
-        // Usamos la función getLedgerName para obtener el texto inicial correcto
-        const currentName = getLedgerName(currentLedger);
-
-        // Generamos el botón con el nombre YA puesto
-        let leftSideHTML = `
-            <button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Estás en: ${currentName}">
-                ${currentName}
-            </button>
-			<span id="page-title-display" style="text-decoration: none; color: inherit; cursor: default;">${pageRenderers[pageId].title}</span>`;
-            
-            // CORRECCIÓN: Ya NO añadimos ningún botón extra si es PANEL.
-            // Solo añadimos botones si es DIARIO.
-            if (pageId === PAGE_IDS.DIARIO) {
-                leftSideHTML += `
-                    <button data-action="show-diario-filters" class="icon-btn" style="margin-left: 8px;"><span class="material-icons">filter_list</span></button>
-                    <button data-action="toggle-diario-view" class="icon-btn"><span class="material-icons">${diarioViewMode === 'list' ? 'calendar_month' : 'list'}</span></button>
-                `;
-            }
-            leftEl.innerHTML = leftSideHTML;
+    if (pageRenderers[pageId]) {
+        // 1. Actualizar el Título (Limpiamos si es Panel o Diario)
+        const titleEl = document.getElementById('page-title-display');
+        if (titleEl) {
+            const rawTitle = pageRenderers[pageId].title;
+            // Si es Panel o Diario, dejamos el texto vacío. Si no, ponemos el título (ej: Ajustes)
+            titleEl.textContent = (pageId === PAGE_IDS.PANEL || pageId === PAGE_IDS.DIARIO) ? '' : rawTitle;
         }
-        if (actionsEl) actionsEl.innerHTML = pageRenderers[pageId].actions;
+
+        // 2. Botones extra del Diario (Filtro y Vista)
+        // Los inyectamos en la barra de acciones de la derecha si estamos en Diario
+        if (actionsEl) {
+            let actionsHTML = pageRenderers[pageId].actions;
+            
+            if (pageId === PAGE_IDS.DIARIO) {
+                // Añadimos los botones del diario al principio de las acciones
+                const diarioButtons = `
+                    <button data-action="toggle-diario-view" class="icon-btn" title="Cambiar Vista"><span class="material-icons">${diarioViewMode === 'list' ? 'calendar_month' : 'list'}</span></button>
+                    <button data-action="show-diario-filters" class="icon-btn" title="Filtrar"><span class="material-icons">filter_list</span></button>
+                `;
+                actionsHTML = diarioButtons + actionsHTML;
+            }
+            
+            actionsEl.innerHTML = actionsHTML;
+        }
         
+        // 3. Renderizar la página
         await pageRenderers[pageId].render();
     }
     
