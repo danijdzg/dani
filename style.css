@@ -5848,7 +5848,7 @@ input, select, textarea {
     }
 }
 /* ================================================================= */
-/* === FONDO CÓSMICO ESPECTACULAR (Estrellas, Fugaces y Planetas) === */
+/* === FONDO CÓSMICO AMOLED (Solo Estrellas y Fugaces) === */
 /* ================================================================= */
 
 /* Contenedor del Cosmos (Fijo al fondo) */
@@ -5859,94 +5859,49 @@ input, select, textarea {
     width: 100%;
     height: 100%;
     z-index: -1; /* Detrás de todo */
-    background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%); /* Degradado profundo */
+    
+    /* CAMBIO CLAVE: Negro Puro #000000 para efecto AMOLED */
+    background-color: #000000; 
+    
     overflow: hidden;
     pointer-events: none;
 }
 
-/* --- ESTRELLAS (5 Capas de profundidad) --- */
+/* --- ESTRELLAS (Varios tamaños y brillos) --- */
 .star {
     position: absolute;
     background-color: white;
     border-radius: 50%;
-    opacity: 0.8;
+    /* Opacidad variable para dar profundidad */
+    opacity: 0.8; 
+    box-shadow: 0 0 2px rgba(255, 255, 255, 0.8); /* Pequeño resplandor */
     animation: twinkle var(--twinkle-duration) infinite ease-in-out alternate;
 }
 
 @keyframes twinkle {
-    0% { opacity: 0.3; transform: scale(0.8); }
-    100% { opacity: 1; transform: scale(1.2); }
+    0% { opacity: 0.2; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 4px white; }
 }
 
-/* --- ESTRELLAS FUGACES --- */
+/* --- ESTRELLAS FUGACES (Espectaculares) --- */
 .shooting-star {
     position: absolute;
     height: 2px;
-    background: linear-gradient(-45deg, rgba(255,255,255,1), rgba(0,0,255,0));
+    background: linear-gradient(-45deg, rgba(255,255,255,1), rgba(255,255,255,0));
     border-radius: 999px;
-    filter: drop-shadow(0 0 6px rgba(105, 155, 255, 1));
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
     animation: shoot 3s linear;
     opacity: 0;
+    z-index: -1;
 }
 
+/* Animación de cruzar la pantalla */
 @keyframes shoot {
     0% { transform: translateX(0) translateY(0) rotate(-45deg); opacity: 1; width: 0; }
-    10% { width: 100px; } /* Estela larga */
-    100% { transform: translateX(-500px) translateY(500px) rotate(-45deg); opacity: 0; width: 0; }
+    15% { width: 120px; opacity: 1; } /* Cola larga y brillante */
+    100% { transform: translateX(-600px) translateY(600px) rotate(-45deg); opacity: 0; width: 0; }
 }
-
-// [MANTENER EL CÓDIGO ANTERIOR DE LAS ESTRELLAS AQUÍ...]
-
-    // 3. GENERAR LOS PLANETAS REALISTAS (Ahora incluye la Tierra)
-    // Aumentamos un poco los tamaños para que se aprecien las texturas
-    const planetsData = [
-        { type: 'mercury', size: 20 },
-        { type: 'venus',   size: 35 },
-        { type: 'earth',   size: 40 }, // ¡Tierra añadida!
-        { type: 'mars',    size: 28 },
-        { type: 'jupiter', size: 85 }, // Júpiter es enorme
-        { type: 'saturn',  size: 110 }, // Saturno ancho por los anillos
-        { type: 'uranus',  size: 50 },
-        { type: 'neptune', size: 48 }
-    ];
-
-    // Rutas de animación CSS disponibles (definidas en style.css)
-    const movementPaths = ['movePath1', 'movePath2', 'movePath3'];
-
-    planetsData.forEach((p, index) => {
-        const planet = document.createElement('div');
-        planet.classList.add('planet', `planet-${p.type}`);
-        
-        // Tamaño base
-        planet.style.width = `${p.size}px`;
-        planet.style.height = `${p.size}px`;
-        
-        // --- Asignación de Movimiento Realista ---
-
-        // 1. Elegir una ruta aleatoria
-        const randomPath = movementPaths[Math.floor(Math.random() * movementPaths.length)];
-        
-        // 2. Velocidad: Entre 100s y 300s (muy lento) para cruzar la pantalla
-        const duration = 100 + (Math.random() * 200); 
-        
-        // 3. Retraso inicial: Para que no entren todos a la vez al cargar la página.
-        // Espaciamos sus entradas entre 0s y 60s.
-        const delay = Math.random() * 60;
-
-        // Aplicar estilos de animación combinados
-        // Usamos dos animaciones: la trayectoria y el "fadeIn" para que aparezcan suavemente
-        planet.style.animationName = `${randomPath}, fadeInSpace`;
-        planet.style.animationDuration = `${duration}s, ${duration}s`;
-        planet.style.animationDelay = `-${delay}s, -${delay}s`; // Delay negativo para que algunos ya estén a mitad de camino al empezar
-
-        // Posición inicial base (fuera de pantalla, la animación controla el resto)
-        planet.style.left = '-100px';
-        planet.style.top = '0px';
-
-        container.appendChild(planet);
-    });
-
-    // [MANTENER EL CÓDIGO SIGUIENTE DE LAS ESTRELLAS FUGACES AQUÍ...]
+   
 /* ========================================= */
 /* === Ocultar Scrollbar (Estilo App) === */
 /* ========================================= */
@@ -6089,39 +6044,69 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
     padding-left: 12px !important;
 }
 /* ================================================================= */
-/* === NUEVAS TARJETAS CON BARRA LATERAL (CÓDIGO LIMPIO) === */
+/* === TARJETAS DE MOVIMIENTOS: ESTILO NEÓN & TRANSPARENTE === */
 /* ================================================================= */
 
-/* Base de la tarjeta */
+/* 1. Base de la tarjeta (FONDO TRANSPARENTE) */
 .t-card {
     position: relative;
     display: flex;
     align-items: center;
-    padding: 12px 16px; /* Espaciado interno cómodo */
-    background-color: var(--c-surface);
-    border-bottom: 1px solid var(--c-outline);
+    padding: 14px 16px; /* Un poco más de aire */
+    
+    /* CAMBIO CLAVE: Fondo transparente para que se funda con el cosmos */
+    background-color: transparent !important; 
+    
+    /* Separador muy sutil solo para guiar la vista */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    
     transition: background-color 0.2s;
-    overflow: hidden; /* Para que la barra no se salga si redondeas bordes */
+    overflow: visible; /* Necesario para que el brillo del neón no se corte */
 }
 
-/* --- LAS BARRAS DE COLOR (A la izquierda) --- */
-
-/* 1. GASTO -> ROJO */
-.t-type-expense {
-    border-left: 5px solid #FF3B30 !important;
+/* Efecto hover suave (opcional, para escritorio) */
+.t-card:active {
+    background-color: rgba(255, 255, 255, 0.03) !important;
 }
 
-/* 2. INGRESO -> VERDE */
-.t-type-income {
-    border-left: 5px solid #30D158 !important; /* Verde vibrante */
+/* 2. ELIMINAR BORDES ANTIGUOS */
+/* Quitamos los bordes sólidos que pusimos en el paso anterior */
+.t-type-expense, .t-type-income, .t-type-transfer {
+    border-left: none !important;
 }
 
-/* 3. TRASPASO -> MORADO */
-.t-type-transfer {
-    border-left: 5px solid #BF5AF2 !important; /* Púrpura iOS */
+/* 3. NUEVA LÍNEA "ESPECTACULAR" (Pseudo-elemento Neón) */
+.t-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    /* La línea no toca los bordes arriba/abajo, queda flotando centrada */
+    top: 15%; 
+    bottom: 15%;
+    width: 4px; /* Grosor de la línea */
+    border-radius: 4px; /* Puntas redondeadas */
+    
+    /* Transición suave del brillo */
+    transition: box-shadow 0.3s ease;
 }
 
-/* --- Limpieza de código antiguo (Opcional: puedes borrar esto del CSS si ya no existe) --- */
-.t-icon, .transaction-avatar, .transaction-card__indicator {
-    display: none !important; /* Asegura que nada antiguo se muestre */
+/* --- COLORES Y RESPLANDORES (GLOW) --- */
+
+/* GASTO (Rojo Neón) */
+.t-type-expense::before {
+    background-color: #FF453A;
+    /* Sombra difusa del mismo color para crear el brillo */
+    box-shadow: 0 0 12px rgba(255, 69, 58, 0.8); 
+}
+
+/* INGRESO (Verde Neón) */
+.t-type-income::before {
+    background-color: #32D74B;
+    box-shadow: 0 0 12px rgba(50, 215, 75, 0.8);
+}
+
+/* TRASPASO (Morado Neón) */
+.t-type-transfer::before {
+    background-color: #BF5AF2;
+    box-shadow: 0 0 12px rgba(191, 90, 242, 0.8);
 }
