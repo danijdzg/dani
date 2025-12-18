@@ -11797,53 +11797,53 @@ window.addEventListener('click', (e) => {
 let currentLedgerMode = localStorage.getItem('selectedLedgerMode') || 'A';
 
 // Función principal de carga de datos
-// Función principal de carga de datos (VERSIÓN CORREGIDA)
 function initApp() {
-    // Leemos la caja actual
+    // 1. Configuración Visual Inicial
     let currentLedgerMode = localStorage.getItem('selectedLedgerMode') || 'A';
+    console.log("Configurando App visualmente para CAJA:", currentLedgerMode);
     
-    console.log("Iniciando App en CAJA:", currentLedgerMode);
-    
-    // 1. Actualizar estética (Body y Botón)
     document.body.setAttribute('data-ledger-mode', currentLedgerMode);
     const btnHeader = document.getElementById('header-ledger-btn');
     if(btnHeader) btnHeader.textContent = `CAJA ${currentLedgerMode}`;
 
-    // --- CORRECCIÓN AQUÍ: Definimos 'db' explícitamente ---
-    // Esto conecta con la base de datos usando la librería que cargaste en index.html
-    const db = firebase.firestore();
-    // -----------------------------------------------------
-
-    // 2. Conexión a Firebase con FILTRO
-    db.collection("movimientos")
-      .orderBy("fecha", "desc")
-      .onSnapshot((snapshot) => {
-        
-        const movimientos = [];
-        
-        snapshot.forEach((doc) => {
-            const data = doc.data();
+    // 2. EL CAMBIO CLAVE: Esperar a la Autenticación
+    // Esto vigila si el usuario entra o sale de la app
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            // ¡USUARIO LOGUEADO! Ahora sí tenemos permiso para leer datos
+            console.log("Usuario detectado:", user.email);
             
-            // --- FILTRO DE CAJA ---
-            // Si el dato no tiene caja, asumimos 'A'.
-            const cajaDato = data.caja || 'A';
+            const db = firebase.firestore();
             
-            // Solo guardamos si coincide
-            if (cajaDato === currentLedgerMode) {
-                movimientos.push({ id: doc.id, ...data });
-            }
-        });
+            // Suscripción a los datos (Esto se mantiene igual que antes)
+            db.collection("movimientos")
+              .orderBy("fecha", "desc")
+              .onSnapshot((snapshot) => {
+                const movimientos = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    // Filtro de Caja
+                    const cajaDato = data.caja || 'A'; 
+                    if (cajaDato === currentLedgerMode) {
+                        movimientos.push({ id: doc.id, ...data });
+                    }
+                });
 
-        // Renderizar usando tu función existente
-        if (typeof renderVirtualListItem === 'function') {
-            renderVirtualListItem(movimientos);
-        } else if (typeof renderList === 'function') {
-            renderList(movimientos);
-        }
-        
-        // Actualizar KPIs si existe la función
-        if (typeof updateKPIs === 'function') {
-            updateKPIs(movimientos);
+                // Renderizar
+                if (typeof renderVirtualListItem === 'function') renderVirtualListItem(movimientos);
+                else if (typeof renderList === 'function') renderList(movimientos);
+                
+                if (typeof updateKPIs === 'function') updateKPIs(movimientos);
+
+            }, (error) => {
+                console.error("Error leyendo datos (incluso estando logueado):", error);
+            });
+
+        } else {
+            // NO HAY USUARIO LOGUEADO
+            console.warn("Nadie ha iniciado sesión. No se pueden cargar los datos.");
+            // Opcional: Si no estás logueado, redirigir al login o hacer login anónimo
+            // firebase.auth().signInAnonymously().catch(console.error);
         }
     });
 }
