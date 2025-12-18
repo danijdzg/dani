@@ -2190,18 +2190,7 @@ const animateCountUp = (el, end, duration = 700, formatAsCurrency = true, prefix
                 });
             });
         };
-    const initApp = async () => {
-    const procederConCargaDeApp = () => {
-        document.documentElement.lang = 'es';
-        setupTheme();
-        // Ya no necesitamos cargar tema, el CSS lo fuerza
-        attachEventListeners();
-        checkAuthState(); 
-    };
-
-    procederConCargaDeApp();
-};
-
+  
 		window.addEventListener('online', () => {
     console.log("Conexión recuperada. Sincronizando...");
     syncState = 'syncing';
