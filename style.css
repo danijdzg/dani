@@ -6229,13 +6229,13 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
 
 /* 1. Sincronización Exacta: Encabezado y Cuerpo */
 .top-bar {
-    height: 10px !important;      /* Altura fija compacta */
-    min-height: 10px !important;
+    height: 50px !important;      /* Altura fija compacta */
+    min-height: 50px !important;
 }
 
 #app-root.app-layout {
     /* El relleno debe ser EXACTAMENTE la altura de la barra. Ni un px más. */
-    padding-top: 10px !important; 
+    padding-top: 50px !important; 
 }
 
 /* 2. Eliminación de Márgenes en Contenedores Principales */
