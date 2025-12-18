@@ -11724,7 +11724,7 @@ window.addEventListener('click', (e) => {
     }
 });
 /* ============================================== */
-/* === NUEVO MOTOR DE FONDO CÓSMICO (main.js) === */
+/* === MOTOR DE FONDO AMOLED (main.js) === */
 /* ============================================== */
 
 const createStarBackground = () => {
@@ -11735,7 +11735,7 @@ const createStarBackground = () => {
         container.id = 'cosmos-container';
         document.body.prepend(container);
     } else {
-        container.innerHTML = ''; // Reiniciar si ya existía
+        container.innerHTML = ''; // Reiniciar para borrar planetas antiguos
     }
 
     const width = window.innerWidth;
@@ -11757,7 +11757,7 @@ const createStarBackground = () => {
             star.style.width = `${size}px`;
             star.style.height = `${size}px`;
             
-            // Animación de parpadeo aleatoria
+            // Animación de parpadeo aleatoria (para que no parpadeen todas a la vez)
             const duration = durationBase + (Math.random() * 3);
             star.style.setProperty('--twinkle-duration', `${duration}s`);
             
@@ -11765,68 +11765,36 @@ const createStarBackground = () => {
         }
     };
 
-    // 2. GENERAR 5 CAPAS DE ESTRELLAS (Mucha más profundidad)
-    addStars(150, 1, 3);   // Muy lejanas
-    addStars(80, 1.5, 4);  // Lejanas
-    addStars(40, 2, 5);    // Medias
-    addStars(20, 2.5, 6);  // Cercanas
-    addStars(10, 3, 7);    // Muy brillantes
+    // 2. GENERAR CAPAS DE ESTRELLAS (Profundidad 3D)
+    // Fondo lejano (muchas, pequeñas, lentas)
+    addStars(200, 1, 3);   
+    // Capa media
+    addStars(100, 2, 4);  
+    // Capa cercana (pocas, brillantes)
+    addStars(30, 2.5, 5);    
 
-    // 3. GENERAR LOS 7 PLANETAS
-    const planetsData = [
-        { type: 'mercury', size: 15, speed: 100 },
-        { type: 'venus',   size: 25, speed: 120 },
-        { type: 'mars',    size: 20, speed: 110 },
-        { type: 'jupiter', size: 55, speed: 180 }, // El más grande
-        { type: 'saturn',  size: 45, speed: 160 },
-        { type: 'uranus',  size: 30, speed: 140 },
-        { type: 'neptune', size: 28, speed: 130 }
-    ];
+    // Nota: HE ELIMINADO EL CÓDIGO DE LOS PLANETAS AQUÍ
 
-    planetsData.forEach(p => {
-        const planet = document.createElement('div');
-        planet.classList.add('planet', `planet-${p.type}`);
-        
-        // Tamaño
-        planet.style.width = `${p.size}px`;
-        planet.style.height = `${p.size}px`;
-        
-        // Posición Inicial Aleatoria (evitando bordes extremos)
-        const startX = Math.random() * (width - 60);
-        const startY = Math.random() * (height - 60);
-        planet.style.left = `${startX}px`;
-        planet.style.top = `${startY}px`;
+    // 3. SISTEMA DE ESTRELLAS FUGACES
+    // Limpiamos intervalos previos si existieran para no acumularlos
+    if (window.shootingStarInterval) clearInterval(window.shootingStarInterval);
 
-        // Variables CSS para la animación de movimiento
-        // Hacemos que se muevan aleatoriamente entre -100px y +100px de su posición
-        const moveX = (Math.random() * 200) - 100; 
-        const moveY = (Math.random() * 200) - 100;
-        
-        planet.style.setProperty('--move-x', `${moveX}px`);
-        planet.style.setProperty('--move-y', `${moveY}px`);
-        planet.style.setProperty('--orbit-speed', `${p.speed}s`); // Muy lento
-
-        container.appendChild(planet);
-    });
-
-    // 4. SISTEMA DE ESTRELLAS FUGACES
-    setInterval(() => {
+    window.shootingStarInterval = setInterval(() => {
         const shoot = document.createElement('div');
         shoot.className = 'shooting-star';
         
-        // Aparecen en la mitad derecha superior aleatoriamente
-        shoot.style.top = `${Math.random() * height * 0.5}px`;
-        shoot.style.left = `${width - (Math.random() * 300)}px`;
+        // Aparecen en la mitad superior derecha aleatoriamente
+        shoot.style.top = `${Math.random() * height * 0.6}px`;
+        shoot.style.left = `${width - (Math.random() * 200)}px`;
         
         container.appendChild(shoot);
 
-        // Limpieza de DOM automática
+        // Limpieza automática del DOM
         setTimeout(() => {
             shoot.remove();
         }, 3500);
-    }, 4000); // Una estrella fugaz cada 4 segundos
+    }, 4000); // Frecuencia: una cada 4 segundos aprox.
 };
 
-// --- EJECUTAR ---
-// Asegúrate de llamar a esta función cuando cargue la página
+// Asegúrate de llamar a esta función al iniciar
 document.addEventListener('DOMContentLoaded', createStarBackground);
