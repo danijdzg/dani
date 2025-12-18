@@ -2438,7 +2438,16 @@ const navigateTo = async (pageId, isInitial = false) => {
     const actionsEl = select('top-bar-actions');
     const leftEl = select('top-bar-left-button');
     
-       
+    // Acciones por defecto (Menú de 3 puntos)
+    const standardActions = `
+        <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
+            <span class="material-icons">calculate</span>
+        </button>
+        <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
+    <span class="material-icons">more_vert</span>
+</button>
+    `;
+    
     if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
     if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
 	const patrimonioActions = `
