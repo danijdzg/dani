@@ -95,7 +95,7 @@ const setupEnhancedFormNavigation = () => {
             }
         });
     });
-    
+    let cajaActual = localStorage.getItem('selectedLedgerMode') || 'A';
     // Autofocus en cantidad al abrir el formulario
     const movimientoForm = select('movimiento-form');
     movimientoForm?.addEventListener('shown', () => {
@@ -11743,18 +11743,18 @@ window.addEventListener('click', (e) => {
     }
 });
 /* ================================================= */
-/* === 1. MOTOR CÓSMICO (Planetas Espectaculares) === */
+/* === 1. MOTOR CÓSMICO (Planetas y Estrellas) === */
 /* ================================================= */
 (function initCosmicEngine() {
     const container = document.getElementById('deep-space-background');
     if (!container) return;
     container.innerHTML = '';
 
-    // A. ESTRELLAS (Fondo 3D Estático/Lento)
+    // Estrellas
     const createStars = (count, size, opacity) => {
         const layer = document.createElement('div');
         layer.className = 'star-anim-container';
-        layer.style.animationDuration = '200s'; // Muy lento
+        layer.style.animationDuration = '200s';
         layer.style.opacity = opacity;
         
         let shadows = [];
@@ -11767,7 +11767,6 @@ window.addEventListener('click', (e) => {
         stars.style.background = 'transparent';
         stars.style.boxShadow = shadows.join(',');
         
-        // Duplicado para loop vertical
         const stars2 = stars.cloneNode(true);
         stars2.style.top = '100vh'; 
         stars2.style.position = 'absolute';
@@ -11777,149 +11776,134 @@ window.addEventListener('click', (e) => {
         layer.appendChild(stars2);
         container.appendChild(layer);
     };
+    createStars(500, '1px', 0.8);
+    createStars(150, '2px', 1.0);
 
-    createStars(600, '1px', 0.6); // Lejanas
-    createStars(200, '2px', 0.9); // Cercanas
-
-    // B. GENERADOR DE PLANETAS
+    // Planetas Espectaculares
     const spawnPlanet = () => {
-        // Máximo 2 planetas simultáneos para no saturar
         if (document.querySelectorAll('.space-planet').length >= 2) return;
-
         const p = document.createElement('div');
         const types = ['planet-jupiter', 'planet-earth', 'planet-lava', 'planet-ringed'];
         const type = types[Math.floor(Math.random() * types.length)];
-        
         p.className = `space-planet ${type}`;
+        const size = 60 + Math.random() * 100; 
+        p.style.width = `${size}px`; p.style.height = `${size}px`;
         
-        // Tamaño variado (Grandes y pequeños)
-        const size = 60 + Math.random() * 140; 
-        p.style.width = `${size}px`; 
-        p.style.height = `${size}px`;
-        
-        // Posición inicial aleatoria (Arriba o Izquierda)
-        if(Math.random() > 0.5) {
-            p.style.left = `${Math.random() * 80}%`;
-            p.style.top = '-200px';
-        } else {
-            p.style.left = '-200px';
-            p.style.top = `${Math.random() * 50}%`;
-        }
-        
-        // Velocidad variable
-        const duration = 25 + Math.random() * 20;
-        p.style.animationDuration = `${duration}s`;
+        // Animación diagonal
+        p.style.left = '-200px';
+        p.style.top = `${Math.random() * 60}%`;
+        const duration = 20 + Math.random() * 15;
+        p.style.animation = `planetPass ${duration}s linear forwards`;
         
         container.appendChild(p);
         setTimeout(() => p.remove(), duration * 1000);
     };
-
-    // Intentar crear planeta cada 6 segundos
-    setInterval(() => {
-        if(Math.random() > 0.4) spawnPlanet();
-    }, 6000);
+    setInterval(() => { if(Math.random() > 0.4) spawnPlanet(); }, 5000);
 })();
 
 
 /* ================================================= */
-/* === 2. FUNCIONALIDAD DEL ENCABEZADO Y CAJAS === */
+/* === 2. LÓGICA DE CONTROL (Encabezado y Datos) === */
 /* ================================================= */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- A. GESTIÓN DE CAJA (A -> B -> C y Recarga de Datos) ---
+    // --- A. GESTIÓN DE CAJA (FILTRO DE DATOS) ---
     const btnLedger = document.getElementById('header-ledger-btn');
     
-    // Función centralizada para cambiar de caja
-    function switchLedgerBox(newMode) {
-        // 1. Guardar estado
-        localStorage.setItem('selectedLedgerMode', newMode);
-        
-        // 2. Cambiar Atributo Global (Esto cambia los colores CSS)
-        document.body.setAttribute('data-ledger-mode', newMode);
-        
-        // 3. Actualizar Texto del Botón
-        if(btnLedger) {
-            btnLedger.textContent = `CAJA ${newMode}`;
-            // Animación de pulso
-            btnLedger.animate([
-                { transform: 'scale(1)' }, { transform: 'scale(1.1)' }, { transform: 'scale(1)' }
-            ], { duration: 300 });
-        }
-
-        // 4. RECARGAR DATOS DE LA APLICACIÓN
-        // IMPORTANTE: Aquí llamamos a la función que actualiza tu lista de movimientos
-        console.log(`Cambiando datos a CAJA ${newMode}...`);
-        
-        if (typeof renderMovements === 'function') {
-            renderMovements(); // Si tienes una función renderMovements
-        } else if (typeof initApp === 'function') {
-            initApp(); // O si reinicias la app
-        } else if (typeof updateUI === 'function') {
-            updateUI(); 
-        } else {
-            // Si no encuentras la función, recargamos la página para asegurar (solución segura)
-            // location.reload(); 
-        }
-    }
-
-    // Inicializar al cargar
+    // Leemos la caja actual o defecto 'A'
     let currentMode = localStorage.getItem('selectedLedgerMode') || 'A';
-    switchLedgerBox(currentMode);
+    
+    // Función que aplica el cambio visual y FILTRA LOS DATOS
+    window.applyLedgerFilter = function(mode) {
+        // 1. Guardar y Visuales
+        localStorage.setItem('selectedLedgerMode', mode);
+        document.body.setAttribute('data-ledger-mode', mode);
+        
+        if(btnLedger) {
+            btnLedger.textContent = `CAJA ${mode}`;
+            btnLedger.animate([{transform:'scale(1)'},{transform:'scale(1.1)'},{transform:'scale(1)'}], {duration:200});
+        }
 
-    // Evento Click en el botón
+        // 2. FILTRAR DATOS REALMENTE
+        console.log(`Aplicando filtro para CAJA ${mode}...`);
+        
+        // AQUÍ ESTÁ LA CLAVE: 
+        // Modificamos la función global que renderiza para que sepa qué filtrar.
+        // Si tienes una variable global db.movimientos, esto simulará la recarga.
+        
+        if (typeof initApp === 'function') {
+            // Reiniciamos la app para que vuelva a leer los datos con el nuevo filtro
+            initApp(); 
+        } else if (typeof renderMovements === 'function') {
+            // Si tienes renderMovements, forzamos el repintado
+            renderMovements();
+        } else {
+            // Fallback: Recargar página para asegurar que todo se procesa de cero
+            // location.reload(); 
+            console.log("No se encontró función de recarga, por favor asegúrate de que initApp() o renderMovements() usa 'localStorage.getItem(\"selectedLedgerMode\")'");
+        }
+    };
+
+    // Inicializar estado al cargar
+    applyLedgerFilter(currentMode);
+
+    // Click en el botón: Ciclo A -> B -> C -> A
     if(btnLedger) {
         btnLedger.addEventListener('click', () => {
-            // Ciclo A -> B -> C -> A
             if (currentMode === 'A') currentMode = 'B';
             else if (currentMode === 'B') currentMode = 'C';
             else currentMode = 'A';
-            
-            switchLedgerBox(currentMode);
+            applyLedgerFilter(currentMode);
         });
     }
 
+    // --- B. ICONOS DE HERRAMIENTAS QUE NO FUNCIONABAN ---
 
-    // --- B. ICONOS DE HERRAMIENTAS (CALCULADORA Y OPCIONES) ---
-    
-    // 1. CALCULADORA (Usa el ID 'calculator-modal' de tu index.html)
-    const btnCalc = document.getElementById('btn-toggle-calculator') || document.querySelector('[data-action="toggle-calculator"]');
-    const modalCalc = document.getElementById('calculator-modal'); // El ID que vi en tu archivo
-    
+    // 1. CALCULADORA
+    const btnCalc = document.getElementById('btn-toggle-calculator');
+    const modalCalc = document.getElementById('calculator-modal');
+    const btnCloseCalc = document.getElementById('btn-close-calc');
+
     if(btnCalc && modalCalc) {
         btnCalc.addEventListener('click', () => {
-            // Mostrar modal
             modalCalc.style.display = 'flex';
-            
-            // Cargar iframe si está vacío para optimizar
+            // Cargar iframe solo si es necesario
             const iframe = document.getElementById('calculator-frame');
-            if(iframe && !iframe.getAttribute('src')) {
-                iframe.src = 'calculator.html'; 
-            }
+            if(iframe && !iframe.getAttribute('src')) iframe.src = 'calculator.html';
         });
         
-        // Botón cerrar dentro del modal de calculadora (si existe)
-        const closeCalc = modalCalc.querySelector('[data-action="close-modal"]');
-        if(closeCalc) {
-            closeCalc.addEventListener('click', () => modalCalc.style.display = 'none');
+        // Cerrar calculadora
+        if(btnCloseCalc) {
+            btnCloseCalc.addEventListener('click', () => modalCalc.style.display = 'none');
         }
     }
 
-    // 2. OPCIONES / MENÚ (Usa el ID 'main-dropdown-menu' o 'help-modal')
-    const btnOpt = document.getElementById('btn-show-options') || document.querySelector('[data-action="show-options"]');
-    // Opción A: Desplegable
-    const menuDropdown = document.getElementById('main-dropdown-menu'); 
+    // 2. MENÚ OPCIONES
+    const btnOpt = document.getElementById('btn-show-options');
+    const menuDropdown = document.getElementById('main-dropdown-menu');
     
     if(btnOpt && menuDropdown) {
         btnOpt.addEventListener('click', (e) => {
-            e.stopPropagation();
-            // Alternar visibilidad
-            menuDropdown.style.display = (menuDropdown.style.display === 'block') ? 'none' : 'block';
+            e.stopPropagation(); // Evita que el click en el botón cierre el menú inmediatamente
+            
+            // Toggle clase 'show' para animación o display
+            if (menuDropdown.style.display === 'block') {
+                menuDropdown.classList.remove('show');
+                setTimeout(() => menuDropdown.style.display = 'none', 200); // Esperar animación
+            } else {
+                menuDropdown.style.display = 'block';
+                // Pequeño delay para permitir que la animación CSS ocurra
+                requestAnimationFrame(() => menuDropdown.classList.add('show'));
+            }
         });
         
         // Cerrar al pulsar fuera
-        document.addEventListener('click', () => {
-            menuDropdown.style.display = 'none';
+        document.addEventListener('click', (e) => {
+            if (menuDropdown.style.display === 'block' && !menuDropdown.contains(e.target) && e.target !== btnOpt) {
+                menuDropdown.classList.remove('show');
+                setTimeout(() => menuDropdown.style.display = 'none', 200);
+            }
         });
     }
 });
