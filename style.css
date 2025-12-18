@@ -6223,3 +6223,58 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
     z-index: 900; /* Debajo del encabezado pero sobre los movimientos */
     background-color: #000000; /* O el color que prefieras para tapar al hacer scroll */
 }
+/* ================================================================= */
+/* === MODO "ULTRA COMPACTO" (CERO ESPACIO DESPERDICIADO) === */
+/* ================================================================= */
+
+/* 1. Sincronización Exacta: Encabezado y Cuerpo */
+.top-bar {
+    height: 50px !important;      /* Altura fija compacta */
+    min-height: 50px !important;
+}
+
+#app-root.app-layout {
+    /* El relleno debe ser EXACTAMENTE la altura de la barra. Ni un px más. */
+    padding-top: 50px !important; 
+}
+
+/* 2. Eliminación de Márgenes en Contenedores Principales */
+/* Esto quita el espacio blanco encima de las gráficas o la lista */
+.dashboard-view,
+.dashboard-container,
+.diario-container,
+.transactions-list-container {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* 3. Ajuste Fino: El primer elemento de cada vista */
+/* A veces el primer elemento tiene su propio margen. Lo reducimos al mínimo. */
+.dashboard-view > *:first-child,
+.diario-container > *:first-child {
+    margin-top: 2px !important; /* Solo 2px de separación visual */
+}
+
+/* 4. PESTAÑA DIARIO: Encabezado del Mes Pegado */
+/* El mes (ej: "Diciembre") se pega exactamente debajo de la barra superior */
+.movimiento-month-header {
+    top: 50px !important; /* Coincide con la altura del encabezado */
+    margin-top: 0 !important;
+    padding-top: 8px !important; /* Un poco de relleno interno para que el texto no toque el borde */
+    padding-bottom: 8px !important;
+    border-radius: 0 !important; /* Quitamos bordes redondos para que encaje como un bloque */
+}
+
+/* 5. PESTAÑA PANEL: Tarjetas KPI (Ingresos/Gastos) */
+/* Subimos las tarjetas de resumen para que estén arriba del todo */
+.kpi-grid,
+.summary-cards-container {
+    margin-top: 4px !important; /* Mínimo respiro */
+    margin-bottom: 10px !important;
+}
+
+/* 6. Ajuste de Títulos de Sección (si los hubiera) */
+h2, .section-title {
+    margin-top: 0 !important;
+    padding-top: 5px !important;
+}
