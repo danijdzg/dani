@@ -408,45 +408,6 @@ body[data-theme] .top-bar #page-title-display {
 }
 
 /* ================================================================= */
-/* === COLORES DE CAJAS (ENCABEZADOS Y NAVEGACIÓN) REVISADOS === */
-/* ================================================================= */
-
-
-body[data-ledger-mode="A"] #ledger-toggle-btn {
-    background-color: #007AFF !important; /* Azul Brillante */
-    border-color: #007AFF !important;
-    color: var(--c-white);
-    box-shadow: 0 0 10px rgba(0, 122, 255, 0.5);
-}
-
-body[data-ledger-mode="B"] #ledger-toggle-btn {
-    background-color: #a71d2a; /* Rojo más oscuro */
-    color: white;
-}
-
-body[data-ledger-mode="C"] #ledger-toggle-btn {
-    background-color: #1e7e34; /* Verde más oscuro */
-    color: white;
-}
-
-/* --- CORRECCIÓN ESPECÍFICA PARA PESTAÑAS DE CAJA C --- */
-/* En lugar de solo cambiar el color de la fuente, cambiamos el FONDO del botón */
-body[data-ledger-mode="C"] .tab-item--active,
-body[data-ledger-mode="C"] .bottom-nav__item--active {
-    background-color: #28a745 !important; /* Fondo Verde */
-    color: #ffffff !important; /* Texto Blanco */
-    border-radius: 8px; /* Bordes redondeados para parecer botón */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    /* Quitamos el borde inferior que se usa en los otros modos */
-    border-bottom: none !important; 
-}
-
-/* Ajuste pequeño para que el icono dentro del botón verde se vea blanco */
-body[data-ledger-mode="C"] .bottom-nav__item--active .material-icons,
-body[data-ledger-mode="C"] .tab-item--active .material-icons {
-    color: #ffffff !important;
-}
-/* ================================================================= */
 /* === ESTILOS BASE Y ESTRUCTURALES (COMUNES A AMBOS TEMAS)       === */
 /* ================================================================= */
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -1296,17 +1257,6 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
 
 /* Quitar bordes externos sobrantes */
 .calculator-grid .calculator-btn:nth-child(4n) { border-right: none; }
-
-/* --- Estilos de Contabilidad Dual (A/B) --- */
-body[data-ledger-mode="A"] #ledger-toggle-btn { background-color: var(--c-primary); border-color: var(--c-primary); color: var(--c-white); box-shadow: var(--shadow-sm); }
-body[data-ledger-mode="A"] #ledger-toggle-btn:hover {
-    background-color: #0056b3 !important; /* Azul más oscuro al pasar el ratón */
-    border-color: #0056b3 !important;
-}
-body[data-ledger-mode="B"] #ledger-toggle-btn { background-color: var(--c-danger); border-color: var(--c-danger); color: var(--c-white); box-shadow: var(--shadow-sm); }
-body[data-ledger-mode="B"] #ledger-toggle-btn:hover { background-color: color-mix(in srgb, var(--c-danger) 85%, black); border-color: color-mix(in srgb, var(--c-danger) 85%, black); box-shadow: var(--glow-red); }
-body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
-#ledger-toggle-btn { font-weight: 700; padding: 6px 10px; font-size: 0.8rem; min-width: 40px; text-align: center; }
 
 /* --- Iconos y Clases de Ayuda --- */
 .text-positive { color: var(--c-success); } .text-negative { color: var(--c-danger); } .text-warning { color: var(--c-warning); } .text-info { color: var(--c-info); }
