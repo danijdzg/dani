@@ -2190,7 +2190,18 @@ const animateCountUp = (el, end, duration = 700, formatAsCurrency = true, prefix
                 });
             });
         };
-  
+    const initApp = async () => {
+    const procederConCargaDeApp = () => {
+        document.documentElement.lang = 'es';
+        setupTheme();
+        // Ya no necesitamos cargar tema, el CSS lo fuerza
+        attachEventListeners();
+        checkAuthState(); 
+    };
+
+    procederConCargaDeApp();
+};
+
 		window.addEventListener('online', () => {
     console.log("Conexión recuperada. Sincronizando...");
     syncState = 'syncing';
@@ -3732,42 +3743,35 @@ const renderVirtualListItem = (item) => {
         `;
     }
 
-    // 4. MOVIMIENTOS REALES (DIARIO) - BARRA VERTICAL Y SALDOS
+    // 4. MOVIMIENTOS REALES (DIARIO)
     if (item.type === 'transaction') {
         const m = item.movement;
         const { cuentas, conceptos } = db;
         const highlightClass = (m.id === newMovementIdToHighlight) ? 'list-item-animate' : '';
-
-        // Formatear fecha
+        
+        // Formatear fecha corta
         const dateObj = new Date(m.fecha);
         const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-        
-        let line1, line2, amountClass, amountSign, cardTypeClass;
+
+        let iconHtml, line1, line2, amountClass, amountSign;
 
         if (m.tipo === 'traspaso') {
-            cardTypeClass = 't-card--transfer'; // Barra Morada
-
             const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || 'Origen';
             const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || 'Destino';
             
-            // Obtener saldos snapshot formateados (si existen)
-            const saldoOrigenStr = m._saldoOrigenSnapshot !== undefined 
-                ? `<span class="transfer-balance-snapshot">(${formatCurrencyHTML(m._saldoOrigenSnapshot)})</span>` 
+            // Formateamos los saldos resultantes que calculamos en updateVirtualListUI
+            const saldoOrigenHtml = m._saldoOrigenSnapshot !== undefined 
+                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoOrigenSnapshot)})</span>` 
                 : '';
-            const saldoDestinoStr = m._saldoDestinoSnapshot !== undefined 
-                ? `<span class="transfer-balance-snapshot">(${formatCurrencyHTML(m._saldoDestinoSnapshot)})</span>` 
+            const saldoDestinoHtml = m._saldoDestinoSnapshot !== undefined 
+                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoDestinoSnapshot)})</span>` 
                 : '';
 
-            // Línea 1: Nombres en MORADO + Saldos
-            // Estructura: [Fecha] Origen(Saldo) -> Destino(Saldo)
-            line1 = `
-                <span class="t-date-badge">${dateStr}</span> 
-                <span class="bank-name-transfer">${escapeHTML(origen)}</span>${saldoOrigenStr} 
-                <span style="color:var(--c-info); margin:0 4px;">➔</span> 
-                <span class="bank-name-transfer">${escapeHTML(destino)}</span>${saldoDestinoStr}
-            `;
+            iconHtml = `<div class="t-icon t-icon--transfer"><span class="material-icons">sync_alt</span></div>`;
             
-            line2 = `<span class="t-transfer-part" style="opacity: 0.8;">Traspaso interno</span>`;
+            // Añadimos el saldo a cada línea
+            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:2px;">arrow_upward</span>${escapeHTML(origen)}${saldoOrigenHtml}</span>`;
+            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:2px;">arrow_downward</span>${escapeHTML(destino)}${saldoDestinoHtml}</span>`;
             
             amountClass = 'text-info';
             amountSign = '';
@@ -3778,44 +3782,36 @@ const renderVirtualListItem = (item) => {
             const cuentaObj = cuentas.find(c => c.id === m.cuentaId);
             const nombreCuenta = cuentaObj ? cuentaObj.nombre : 'Cuenta';
             
+            const emojiMatch = conceptoNombre.match(/(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
+            const avatarContent = emojiMatch ? emojiMatch[0] : conceptoNombre.charAt(0).toUpperCase();
+            
             const isGasto = m.cantidad < 0;
-
-            // Determinar color de la barra y del texto del banco
-            if (isGasto) {
-                cardTypeClass = 't-card--expense'; // Barra Roja
-                // Nombre del banco en ROJO para gastos
-                var bankNameHtml = `<span class="bank-name-expense">${escapeHTML(nombreCuenta)}</span>`;
-                amountClass = 'text-negative';
-                amountSign = '';
-            } else {
-                cardTypeClass = 't-card--income'; // Barra Verde
-                // Nombre del banco en VERDE para ingresos
-                var bankNameHtml = `<span class="bank-name-income">${escapeHTML(nombreCuenta)}</span>`;
-                amountClass = 'text-positive';
-                amountSign = '+';
-            }
-
+            iconHtml = `<div class="t-icon ${isGasto ? 't-icon--expense' : 't-icon--income'}">${avatarContent}</div>`;
+            
             line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-concept">${escapeHTML(conceptoNombre)}</span>`;
             
-            // Línea 2: Banco Coloreado + Descripción
             const desc = m.descripcion && m.descripcion !== conceptoNombre ? m.descripcion : '';
             const separator = desc ? ' • ' : '';
-            line2 = `${bankNameHtml}${separator}<span style="color:var(--c-on-surface-secondary)">${escapeHTML(desc)}</span>`;
+            line2 = `<span class="t-account-badge">${escapeHTML(nombreCuenta)}</span>${separator}${escapeHTML(desc)}`;
+            
+            amountClass = isGasto ? 'text-negative' : 'text-positive';
+            amountSign = isGasto ? '' : '+';
         }
 
         return `
-            <div class="t-card ${cardTypeClass} ${highlightClass}" data-id="${m.id}" data-action="edit-movement-from-list">
-                <div class="t-content">
-                    <div class="t-row-primary">
-                        <div class="t-line-1">${line1}</div>
-                        <div class="t-amount ${amountClass}">${amountSign}${formatCurrencyHTML(m.cantidad)}</div>
-                    </div>
-                    <div class="t-row-secondary">
-                        <div class="t-line-2">${line2}</div>
-                        ${m.tipo !== 'traspaso' ? `<div class="t-running-balance">${formatCurrencyHTML(m.runningBalance)}</div>` : ''}
-                    </div>
+        <div class="t-card ${highlightClass}" data-id="${m.id}" data-action="edit-movement-from-list">
+            ${iconHtml}
+            <div class="t-content">
+                <div class="t-row-primary">
+                    <div class="t-line-1">${line1}</div>
+                    <div class="t-amount ${amountClass}">${amountSign}${formatCurrencyHTML(m.cantidad)}</div>
                 </div>
-            </div>`;
+                <div class="t-row-secondary">
+                    <div class="t-line-2">${line2}</div>
+                    ${m.tipo !== 'traspaso' ? `<div class="t-running-balance">${formatCurrencyHTML(m.runningBalance)}</div>` : ''}
+                </div>
+            </div>
+        </div>`;
     }
     return '';
 };
@@ -11731,190 +11727,89 @@ window.addEventListener('click', (e) => {
         }
     }
 });
-/* ================================================= */
-/* === 1. MOTOR CÓSMICO (FONDO) === */
-/* ================================================= */
-(function initCosmicEngine() {
+/* ================================================================= */
+/* === GENERADOR DE ESPACIO PROFUNDO (Deep Space Engine) === */
+/* ================================================================= */
+(function initSpaceBackground() {
+    // 1. Verificar existencia del contenedor
     const container = document.getElementById('deep-space-background');
     if (!container) return;
-    container.innerHTML = '';
 
-    // Estrellas
-    const createStars = (count, size, opacity) => {
-        const layer = document.createElement('div');
-        layer.className = 'star-anim-container';
-        layer.style.animationDuration = '200s';
-        layer.style.opacity = opacity;
-        
+    console.log("🌌 Iniciando motores de hiperespacio v2.0...");
+    container.innerHTML = ''; // Limpiar cualquier residuo anterior
+
+    // 2. Función para crear capas con bucle perfecto
+    const createLayer = (count, size, duration, opacity) => {
+        // Crear el contenedor que se animará
+        const layerContainer = document.createElement('div');
+        layerContainer.className = 'star-anim-container';
+        layerContainer.style.animationDuration = `${duration}s`;
+        layerContainer.style.opacity = opacity;
+
+        // Generar coordenadas de sombras (box-shadow) para las estrellas
         let shadows = [];
-        for(let i=0; i<count; i++) {
-            shadows.push(`${Math.random()*100}vw ${Math.random()*100}vh #FFF`);
+        for (let i = 0; i < count; i++) {
+            const x = Math.random() * 100; // Posición horizontal (vw)
+            const y = Math.random() * 100; // Posición vertical (vh)
+            shadows.push(`${x}vw ${y}vh #FFF`);
         }
-        
-        const stars = document.createElement('div');
-        stars.style.width = size; stars.style.height = size;
-        stars.style.background = 'transparent';
-        stars.style.boxShadow = shadows.join(',');
-        
-        const stars2 = stars.cloneNode(true);
-        stars2.style.top = '100vh'; 
-        stars2.style.position = 'absolute';
-        stars.style.position = 'absolute';
+        const boxShadowString = shadows.join(',');
 
-        layer.appendChild(stars);
-        layer.appendChild(stars2);
-        container.appendChild(layer);
-    };
-    createStars(500, '1px', 0.8);
-    createStars(150, '2px', 1.0);
+        // CREAR PARTE A (Pantalla actual)
+        const starsA = document.createElement('div');
+        starsA.style.position = 'absolute';
+        starsA.style.width = size;
+        starsA.style.height = size;
+        starsA.style.background = 'transparent';
+        starsA.style.borderRadius = '50%';
+        starsA.style.boxShadow = boxShadowString;
+        starsA.style.top = 0; // Empieza arriba
 
-    // Planetas
-    const spawnPlanet = () => {
-        if (document.querySelectorAll('.space-planet').length >= 2) return;
-        const p = document.createElement('div');
-        const types = ['planet-jupiter', 'planet-earth', 'planet-lava', 'planet-ringed'];
-        const type = types[Math.floor(Math.random() * types.length)];
-        p.className = `space-planet ${type}`;
-        const size = 60 + Math.random() * 100; 
-        p.style.width = `${size}px`; p.style.height = `${size}px`;
-        
-        p.style.left = '-200px';
-        p.style.top = `${Math.random() * 60}%`;
-        const duration = 20 + Math.random() * 15;
-        p.style.animation = `planetPass ${duration}s linear forwards`;
-        
-        container.appendChild(p);
-        setTimeout(() => p.remove(), duration * 1000);
+        // CREAR PARTE B (Clon para el bucle, empieza debajo)
+        const starsB = starsA.cloneNode(true);
+        starsB.style.top = '100vh'; // Empieza justo debajo de la pantalla
+
+        // Añadir ambas partes al contenedor de animación
+        layerContainer.appendChild(starsA);
+        layerContainer.appendChild(starsB);
+        container.appendChild(layerContainer);
     };
-    setInterval(() => { if(Math.random() > 0.4) spawnPlanet(); }, 5000);
+
+    // 3. Crear las 3 capas de profundidad
+    // Capa 1: Lejanas (Muchas, muy pequeñas, muy lentas)
+    createLayer(400, '1px', 150, 0.7);
+
+    // Capa 2: Medianas (Menos, brillo medio, velocidad media)
+    createLayer(100, '2px', 100, 0.9);
+
+    // Capa 3: Cercanas (Pocas, grandes, rápidas)
+    createLayer(30, '3px', 60, 1);
+
+    // 4. Sistema de Estrellas Fugaces (Opcional, pero espectacular)
+    const spawnShootingStar = () => {
+        const star = document.createElement('div');
+        star.className = 'shooting-star';
+        
+        // Posición aleatoria
+        star.style.top = `${Math.random() * 50}%`; // Solo en la mitad superior
+        star.style.left = `${Math.random() * 100}%`;
+        
+        // Tamaño y duración aleatoria para variedad
+        const scale = 0.5 + Math.random(); 
+        star.style.transform = `scale(${scale}) rotate(-45deg)`;
+        star.style.animationDuration = `${2 + Math.random() * 3}s`;
+
+        container.appendChild(star);
+
+        // Limpieza automática al terminar la animación
+        setTimeout(() => {
+            star.remove();
+        }, 5000);
+    };
+
+    // Lanzar una estrella fugaz cada 4-10 segundos
+    setInterval(() => {
+        spawnShootingStar();
+    }, 4000 + Math.random() * 6000);
+
 })();
-
-/* ================================================= */
-/* === 2. LÓGICA DE DATOS Y ENCABEZADO === */
-/* ================================================= */
-
-// Variable global para la caja actual
-let currentLedgerMode = localStorage.getItem('selectedLedgerMode') || 'A';
-
-// Función principal de carga de datos
-function initApp() {
-    // 1. Configuración Visual
-    let currentLedgerMode = localStorage.getItem('selectedLedgerMode') || 'A';
-    console.log("Iniciando App visualmente en CAJA:", currentLedgerMode);
-    
-    document.body.setAttribute('data-ledger-mode', currentLedgerMode);
-    const btnHeader = document.getElementById('header-ledger-btn');
-    if(btnHeader) btnHeader.textContent = `CAJA ${currentLedgerMode}`;
-
-    // 2. EL TRUCO: Escuchar el estado de la autenticación
-    firebase.auth().onAuthStateChanged((user) => {
-        if (user) {
-            // === CASO A: YA TIENES LA LLAVE (Estás logueado) ===
-            console.log("Usuario autenticado (ID):", user.uid);
-            cargarDatosFirestore(currentLedgerMode);
-        } else {
-            // === CASO B: NO TIENES LLAVE (No estás logueado) ===
-            console.warn("Usuario no detectado. Intentando entrar como Anónimo...");
-            
-            // Intentamos hacer login anónimo automático
-            firebase.auth().signInAnonymously()
-                .then(() => {
-                    console.log("Login anónimo exitoso.");
-                    // Al loguearse, se disparará de nuevo el 'if(user)' de arriba
-                })
-                .catch((error) => {
-                    console.error("Error en el Auto-Login:", error);
-                    alert("Error de seguridad: Firebase no permite la entrada. Revisa la consola.");
-                });
-        }
-    });
-}
-
-// Función auxiliar para leer los datos (se llama solo cuando ya tenemos permiso)
-function cargarDatosFirestore(modoCaja) {
-    const db = firebase.firestore(); // Conectamos ahora que tenemos permiso
-    
-    db.collection("movimientos")
-      .orderBy("fecha", "desc")
-      .onSnapshot((snapshot) => {
-        const movimientos = [];
-        
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            // Filtro de Caja
-            const cajaDato = data.caja || 'A'; 
-            if (cajaDato === modoCaja) {
-                movimientos.push({ id: doc.id, ...data });
-            }
-        });
-
-        // Renderizar
-        if (typeof renderVirtualListItem === 'function') renderVirtualListItem(movimientos);
-        else if (typeof renderList === 'function') renderList(movimientos);
-        
-        if (typeof updateKPIs === 'function') updateKPIs(movimientos);
-
-    }, (error) => {
-        console.error("Error leyendo datos:", error);
-        // Si sale permission-denied aquí, es que tus reglas de Firebase son muy estrictas
-        if (error.code === 'permission-denied') {
-            alert("AVISO: Tienes que habilitar el 'Login Anónimo' en tu consola de Firebase o cambiar las Reglas a 'allow read: if true'.");
-        }
-    });
-}
-
-// Eventos de botones (Calculadora, Menú y Cambio de Caja)
-document.addEventListener('DOMContentLoaded', () => {
-    
-    // Iniciar la carga de datos
-    initApp();
-
-    // A. BOTÓN CAMBIO DE CAJA
-    const btnLedger = document.getElementById('header-ledger-btn');
-    if(btnLedger) {
-        btnLedger.addEventListener('click', () => {
-            if (currentLedgerMode === 'A') currentLedgerMode = 'B';
-            else if (currentLedgerMode === 'B') currentLedgerMode = 'C';
-            else currentLedgerMode = 'A';
-
-            localStorage.setItem('selectedLedgerMode', currentLedgerMode);
-            // Recargar página para aplicar cambios limpiamente
-            location.reload(); 
-        });
-    }
-
-    // B. CALCULADORA
-    const btnCalc = document.getElementById('btn-toggle-calculator');
-    const modalCalc = document.getElementById('calculator-modal');
-    const btnCloseCalc = document.getElementById('btn-close-calc');
-
-    if(btnCalc && modalCalc) {
-        btnCalc.addEventListener('click', () => {
-            modalCalc.style.display = 'flex';
-            const iframe = document.getElementById('calculator-frame');
-            // Cargar iframe si está vacío (evita error 404 si no existe el archivo aún)
-            if(iframe && !iframe.getAttribute('src')) iframe.src = 'calculadora.html';
-        });
-        if(btnCloseCalc) {
-            btnCloseCalc.addEventListener('click', () => modalCalc.style.display = 'none');
-        }
-    }
-
-    // C. MENÚ DE OPCIONES
-    const btnOpt = document.getElementById('btn-show-options');
-    const menuDropdown = document.getElementById('main-dropdown-menu');
-    
-    if(btnOpt && menuDropdown) {
-        btnOpt.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (menuDropdown.style.display === 'block') {
-                menuDropdown.style.display = 'none';
-            } else {
-                menuDropdown.style.display = 'block';
-            }
-        });
-        document.addEventListener('click', () => {
-            menuDropdown.style.display = 'none';
-        });
-    }
-});
