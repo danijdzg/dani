@@ -6185,23 +6185,57 @@ input, select, textarea {
     position: absolute;
     border-radius: 50%;
     z-index: 2;
-    box-shadow: inset -10px -10px 25px rgba(0,0,0,0.95); /* Sombra 3D fuerte */
-    animation: planetPass 20s linear forwards;
+    /* Sombra interna para volumen 3D realista */
+    box-shadow: inset -12px -12px 30px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.3);
+    animation: planetPass linear forwards;
 }
 
-/* Tipos de planetas */
-.planet-gas { background: radial-gradient(circle at 30% 30%, #4b6cb7, #182848); }
-.planet-mars { background: radial-gradient(circle at 30% 30%, #ff7e5f, #8b0000); }
-.planet-ice { background: radial-gradient(circle at 30% 30%, #E0EAFC, #2575fc); }
-.planet-void { background: radial-gradient(circle at 30% 30%, #434343, #000000); border: 1px solid #333; }
+/* 1. GIGANTE GASEOSO (Bandas de nubes) */
+.planet-jupiter {
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent 30%),
+                linear-gradient(135deg, #d4a373 0%, #d4a373 20%, #9c6644 21%, #9c6644 40%, #e6ccb2 41%, #e6ccb2 60%, #7f5539 61%, #7f5539 100%);
+    background-size: 200% 200%;
+    filter: contrast(1.1);
+}
 
+/* 2. MUNDO DE AGUA (Brillo atmosférico) */
+.planet-earth {
+    background: radial-gradient(circle at 40% 40%, #4facfe 0%, #00f2fe 40%, #00468c 80%, #000 100%);
+    box-shadow: inset -10px -10px 20px rgba(0,0,0,0.8), 0 0 25px rgba(0, 150, 255, 0.4);
+}
+
+/* 3. PLANETA DE LAVA (Rojo intenso y grietas) */
+.planet-lava {
+    background: radial-gradient(circle at 30% 30%, #ff512f 0%, #dd2476 50%, #5c0000 100%);
+    box-shadow: inset -10px -10px 30px rgba(0,0,0,1), 0 0 30px rgba(255, 50, 50, 0.3);
+}
+
+/* 4. PLANETA CON ANILLOS (Saturno style) */
+.planet-ringed {
+    background: linear-gradient(30deg, #f3e7e9 0%, #e3eeff 99%, #e3eeff 100%);
+    /* Los anillos se hacen con pseudo-elementos */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.planet-ringed::after {
+    content: '';
+    position: absolute;
+    width: 160%;
+    height: 40%;
+    border-radius: 50%;
+    border: 8px solid rgba(255, 255, 255, 0.3);
+    border-top: 8px solid rgba(255, 255, 255, 0.8); /* Parte brillante */
+    border-bottom: 8px solid rgba(255, 255, 255, 0.1); /* Parte en sombra */
+    transform: rotate(-30deg);
+    z-index: -1; /* Detrás del planeta */
+}
+
+/* ANIMACIÓN DE CRUCE DIAGONAL */
 @keyframes planetPass {
-    0% { transform: translate(-150px, -150px); } 
-    100% { transform: translate(120vw, 120vh); }
+    0% { transform: translate(-200px, -200px) scale(0.8); } 
+    100% { transform: translate(120vw, 120vh) scale(1.2); }
 }
-
-/* (Eliminada la sección .shooting-star) */
-
 
 /* ================================================= */
 /* === 2. ENCABEZADO CRISTAL (SIN COLOR) === */

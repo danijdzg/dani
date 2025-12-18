@@ -11743,118 +11743,131 @@ window.addEventListener('click', (e) => {
     }
 });
 /* ================================================= */
-/* === 1. MOTOR DE FONDO AMOLED 3D (V5.0) === */
+/* === 1. MOTOR CÓSMICO (Planetas Espectaculares) === */
 /* ================================================= */
-(function initSpaceBackground() {
+(function initCosmicEngine() {
     const container = document.getElementById('deep-space-background');
     if (!container) return;
     container.innerHTML = '';
 
-    // A. ESTRELLAS 3D (Mucha densidad, 3 capas)
-    const createStars = (count, size, duration, opacity) => {
+    // A. ESTRELLAS (Fondo 3D Estático/Lento)
+    const createStars = (count, size, opacity) => {
         const layer = document.createElement('div');
         layer.className = 'star-anim-container';
-        layer.style.animationDuration = `${duration}s`;
+        layer.style.animationDuration = '200s'; // Muy lento
         layer.style.opacity = opacity;
         
         let shadows = [];
         for(let i=0; i<count; i++) {
-            // Estrellas blancas y algunas azuladas
-            const color = Math.random() > 0.9 ? '#AACCFF' : '#FFF';
-            shadows.push(`${Math.random()*100}vw ${Math.random()*100}vh ${color}`);
+            shadows.push(`${Math.random()*100}vw ${Math.random()*100}vh #FFF`);
         }
         
-        const starDiv = document.createElement('div');
-        starDiv.style.width = size; starDiv.style.height = size;
-        starDiv.style.background = 'transparent';
-        starDiv.style.boxShadow = shadows.join(',');
+        const stars = document.createElement('div');
+        stars.style.width = size; stars.style.height = size;
+        stars.style.background = 'transparent';
+        stars.style.boxShadow = shadows.join(',');
         
-        // Duplicado para bucle vertical perfecto
-        const starDiv2 = starDiv.cloneNode(true);
-        starDiv2.style.top = '100vh';
-        starDiv2.style.position = 'absolute';
-        starDiv.style.position = 'absolute';
+        // Duplicado para loop vertical
+        const stars2 = stars.cloneNode(true);
+        stars2.style.top = '100vh'; 
+        stars2.style.position = 'absolute';
+        stars.style.position = 'absolute';
 
-        layer.appendChild(starDiv);
-        layer.appendChild(starDiv2);
+        layer.appendChild(stars);
+        layer.appendChild(stars2);
         container.appendChild(layer);
     };
 
-    createStars(800, '1px', 150, 0.7); // Fondo muy lejano
-    createStars(300, '2px', 100, 0.9); // Medio
-    createStars(100, '3px', 60, 1.0);  // Frente
+    createStars(600, '1px', 0.6); // Lejanas
+    createStars(200, '2px', 0.9); // Cercanas
 
-    // B. PLANETAS (Tráfico intenso)
+    // B. GENERADOR DE PLANETAS
     const spawnPlanet = () => {
-        // Permitimos hasta 3 planetas simultáneos para que se crucen
-        if (document.querySelectorAll('.space-planet').length >= 3) return;
+        // Máximo 2 planetas simultáneos para no saturar
+        if (document.querySelectorAll('.space-planet').length >= 2) return;
 
         const p = document.createElement('div');
-        p.className = 'space-planet';
+        const types = ['planet-jupiter', 'planet-earth', 'planet-lava', 'planet-ringed'];
+        const type = types[Math.floor(Math.random() * types.length)];
         
-        // Seleccionar tipo aleatorio
-        const types = ['planet-gas', 'planet-mars', 'planet-ice', 'planet-void'];
-        p.classList.add(types[Math.floor(Math.random() * types.length)]);
+        p.className = `space-planet ${type}`;
         
-        // Tamaño variado
-        const s = 40 + Math.random() * 120;
-        p.style.width = `${s}px`; p.style.height = `${s}px`;
+        // Tamaño variado (Grandes y pequeños)
+        const size = 60 + Math.random() * 140; 
+        p.style.width = `${size}px`; 
+        p.style.height = `${size}px`;
         
-        // Posición aleatoria
-        p.style.left = `${Math.random() * 90}%`;
-        p.style.top = '-150px';
+        // Posición inicial aleatoria (Arriba o Izquierda)
+        if(Math.random() > 0.5) {
+            p.style.left = `${Math.random() * 80}%`;
+            p.style.top = '-200px';
+        } else {
+            p.style.left = '-200px';
+            p.style.top = `${Math.random() * 50}%`;
+        }
         
-        // Duración variable (velocidad)
-        const dur = 15 + Math.random() * 15;
-        p.style.animation = `planetPass ${dur}s linear forwards`;
+        // Velocidad variable
+        const duration = 25 + Math.random() * 20;
+        p.style.animationDuration = `${duration}s`;
         
         container.appendChild(p);
-        setTimeout(() => p.remove(), dur * 1000);
+        setTimeout(() => p.remove(), duration * 1000);
     };
 
-    // Lanzar planetas frecuentemente (cada 4 seg intento)
+    // Intentar crear planeta cada 6 segundos
     setInterval(() => {
-        if(Math.random() > 0.3) spawnPlanet();
-    }, 4000);
-
-    // NOTA: Se han eliminado las estrellas fugaces (Shooting Stars) como pediste.
+        if(Math.random() > 0.4) spawnPlanet();
+    }, 6000);
 })();
 
 
 /* ================================================= */
-/* === 2. LÓGICA DE INTERFAZ Y NAVEGACIÓN === */
+/* === 2. FUNCIONALIDAD DEL ENCABEZADO Y CAJAS === */
 /* ================================================= */
 
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // --- GESTIÓN DE CAJAS (A -> B -> C) ---
+
+    // --- A. GESTIÓN DE CAJA (A -> B -> C y Recarga de Datos) ---
     const btnLedger = document.getElementById('header-ledger-btn');
     
-    // Función para actualizar toda la UI (Botón y Colores Footer)
-    const updateLedgerVisuals = (mode) => {
-        // 1. Actualizar atributo en BODY (Esto activa el CSS de colores)
-        document.body.setAttribute('data-ledger-mode', mode);
+    // Función centralizada para cambiar de caja
+    function switchLedgerBox(newMode) {
+        // 1. Guardar estado
+        localStorage.setItem('selectedLedgerMode', newMode);
         
-        // 2. Actualizar Texto del Botón
+        // 2. Cambiar Atributo Global (Esto cambia los colores CSS)
+        document.body.setAttribute('data-ledger-mode', newMode);
+        
+        // 3. Actualizar Texto del Botón
         if(btnLedger) {
-            btnLedger.textContent = `CAJA ${mode}`;
-            // Animación pulsación
+            btnLedger.textContent = `CAJA ${newMode}`;
+            // Animación de pulso
             btnLedger.animate([
-                { transform: 'scale(1)' }, { transform: 'scale(0.95)' }, { transform: 'scale(1)' }
-            ], { duration: 200 });
+                { transform: 'scale(1)' }, { transform: 'scale(1.1)' }, { transform: 'scale(1)' }
+            ], { duration: 300 });
         }
+
+        // 4. RECARGAR DATOS DE LA APLICACIÓN
+        // IMPORTANTE: Aquí llamamos a la función que actualiza tu lista de movimientos
+        console.log(`Cambiando datos a CAJA ${newMode}...`);
         
-        // 3. Guardar en memoria (opcional, para persistencia)
-        localStorage.setItem('selectedLedgerMode', mode);
-    };
+        if (typeof renderMovements === 'function') {
+            renderMovements(); // Si tienes una función renderMovements
+        } else if (typeof initApp === 'function') {
+            initApp(); // O si reinicias la app
+        } else if (typeof updateUI === 'function') {
+            updateUI(); 
+        } else {
+            // Si no encuentras la función, recargamos la página para asegurar (solución segura)
+            // location.reload(); 
+        }
+    }
 
-    // Inicializar (leer de memoria o defecto A)
+    // Inicializar al cargar
     let currentMode = localStorage.getItem('selectedLedgerMode') || 'A';
-    // Asegurar que es válido
-    if(!['A','B','C'].includes(currentMode)) currentMode = 'A';
-    updateLedgerVisuals(currentMode);
+    switchLedgerBox(currentMode);
 
-    // Evento Click en el botón CAJA
+    // Evento Click en el botón
     if(btnLedger) {
         btnLedger.addEventListener('click', () => {
             // Ciclo A -> B -> C -> A
@@ -11862,38 +11875,51 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (currentMode === 'B') currentMode = 'C';
             else currentMode = 'A';
             
-            updateLedgerVisuals(currentMode);
-            
-            // AQUÍ: Llamar a tu función de recargar datos (si existe)
-            if(typeof loadMovements === 'function') loadMovements(); 
-            // O emitir evento personalizado si usas otra arquitectura
+            switchLedgerBox(currentMode);
         });
     }
 
-    // --- GESTIÓN DE HERRAMIENTAS (ENCABEZADO) ---
+
+    // --- B. ICONOS DE HERRAMIENTAS (CALCULADORA Y OPCIONES) ---
     
-    // 1. CALCULADORA
-    const btnCalc = document.getElementById('btn-toggle-calculator');
-    const modalCalc = document.getElementById('calculator-modal');
+    // 1. CALCULADORA (Usa el ID 'calculator-modal' de tu index.html)
+    const btnCalc = document.getElementById('btn-toggle-calculator') || document.querySelector('[data-action="toggle-calculator"]');
+    const modalCalc = document.getElementById('calculator-modal'); // El ID que vi en tu archivo
     
     if(btnCalc && modalCalc) {
         btnCalc.addEventListener('click', () => {
-            modalCalc.style.display = (modalCalc.style.display === 'none' || modalCalc.style.display === '') ? 'flex' : 'none';
+            // Mostrar modal
+            modalCalc.style.display = 'flex';
+            
+            // Cargar iframe si está vacío para optimizar
+            const iframe = document.getElementById('calculator-frame');
+            if(iframe && !iframe.getAttribute('src')) {
+                iframe.src = 'calculator.html'; 
+            }
         });
+        
+        // Botón cerrar dentro del modal de calculadora (si existe)
+        const closeCalc = modalCalc.querySelector('[data-action="close-modal"]');
+        if(closeCalc) {
+            closeCalc.addEventListener('click', () => modalCalc.style.display = 'none');
+        }
     }
 
-    // 2. OPCIONES (TRES PUNTOS)
-    const btnOpt = document.getElementById('btn-show-options');
-    const menuOpt = document.getElementById('main-dropdown-menu');
+    // 2. OPCIONES / MENÚ (Usa el ID 'main-dropdown-menu' o 'help-modal')
+    const btnOpt = document.getElementById('btn-show-options') || document.querySelector('[data-action="show-options"]');
+    // Opción A: Desplegable
+    const menuDropdown = document.getElementById('main-dropdown-menu'); 
     
-    if(btnOpt && menuOpt) {
+    if(btnOpt && menuDropdown) {
         btnOpt.addEventListener('click', (e) => {
             e.stopPropagation();
-            menuOpt.style.display = (menuOpt.style.display === 'none' || menuOpt.style.display === '') ? 'block' : 'none';
+            // Alternar visibilidad
+            menuDropdown.style.display = (menuDropdown.style.display === 'block') ? 'none' : 'block';
         });
-        // Cerrar al hacer click fuera
+        
+        // Cerrar al pulsar fuera
         document.addEventListener('click', () => {
-            menuOpt.style.display = 'none';
+            menuDropdown.style.display = 'none';
         });
     }
 });
