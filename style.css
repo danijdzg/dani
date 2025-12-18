@@ -6155,8 +6155,8 @@ input, select, textarea {
     font-family: var(--font-numeric);
 }
 
-/* ================================================= */
-/* === 1. ENCABEZADO CRISTAL (IGUAL QUE EL PIE) === */
+//* ================================================= */
+/* === 1. ENCABEZADO CRISTAL REAL (SIN AZUL) === */
 /* ================================================= */
 
 .top-bar {
@@ -6166,142 +6166,100 @@ input, select, textarea {
     transform: translateX(-50%);
     z-index: 1000;
 
-    /* Dimensiones idénticas al footer */
     width: calc(100% - 32px);
     max-width: 500px;
     height: 64px;
     border-radius: 32px;
 
-    /* EFECTO CRISTAL REAL (Sin color sólido) */
-    background-color: rgba(20, 20, 20, 0.85); /* Negro muy transparente */
-    backdrop-filter: blur(15px); /* Desenfoque fuerte detrás */
+    /* FONDO: Negro muy transparente (Glassmorphism) */
+    /* Importante: Si tenías algún background azul, esto lo sobrescribe */
+    background-color: rgba(10, 10, 10, 0.65) !important; 
+    
+    /* Desenfoque para el efecto cristal */
+    backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 
-    /* Distribución: Izquierda y Derecha */
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px; /* Un poco más de aire */
+    padding: 0 16px;
 }
 
-/* Sección Izquierda */
-.top-bar__left {
-    display: flex;
-    align-items: center;
-}
-
-/* Sección Derecha */
-.top-bar__right {
-    display: flex;
-    align-items: center;
-    gap: 8px; /* Espacio entre iconos */
-}
-
-/* Iconos */
+/* Iconos del encabezado en blanco puro */
 .top-bar .icon-btn {
-    color: #fff;
-    opacity: 0.9;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
+    color: #ffffff !important;
+    background: transparent !important;
     border: none;
-    border-radius: 50%;
+    opacity: 0.9;
 }
-.top-bar .icon-btn:active { background: rgba(255,255,255,0.1); }
-
-/* ESTILO BOTÓN CAJA (Igual que antes) */
-.ledger-pill-btn {
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.3);
-    color: white;
-    font-weight: 800;
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    cursor: pointer;
-}
-/* Colores Neón */
-body[data-ledger-mode="A"] .ledger-pill-btn { color: #007AFF; border-color: #007AFF; background: rgba(0, 122, 255, 0.15); }
-body[data-ledger-mode="B"] .ledger-pill-btn { color: #FF3B30; border-color: #FF3B30; background: rgba(255, 59, 48, 0.15); }
-body[data-ledger-mode="C"] .ledger-pill-btn { color: #00B34D; border-color: #00B34D; background: rgba(0, 179, 77, 0.15); }
 
 /* ================================================= */
-/* === 2. FONDO AMOLED + PLANETAS + METEORITOS === */
+/* === 2. FONDO AMOLED Y ANIMACIONES DIAGONALES === */
 /* ================================================= */
 
 #deep-space-background {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
     z-index: -1;
-    /* NEGRO PURO AMOLED */
-    background-color: #000000; 
+    /* NEGRO AMOLED PURO */
+    background-color: #000000 !important;
     overflow: hidden;
     pointer-events: none;
 }
 
-/* Contenedor de estrellas para la animación vertical */
-.star-anim-container {
+/* --- ESTRELLAS FUGACES ESPECTACULARES (DIAGONALES) --- */
+.shooting-star {
     position: absolute;
-    width: 100%; height: 100%;
-    animation: moveStarsVertical linear infinite;
+    height: 2px;
+    /* Cola larga y brillante con degradado */
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
+    opacity: 0;
+    z-index: 1;
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
+    animation: shootDiagonal 2s ease-out infinite;
 }
 
-@keyframes moveStarsVertical {
-    from { transform: translateY(0); }
-    to { transform: translateY(-100vh); }
+/* Animación: Cruza de arriba-izquierda a abajo-derecha (o viceversa según rotación) */
+@keyframes shootDiagonal {
+    0% { transform: translate(0, 0) rotate(-45deg) scaleX(0.5); opacity: 0; }
+    10% { opacity: 1; transform: translate(50px, 50px) rotate(-45deg) scaleX(1); }
+    100% { transform: translate(800px, 800px) rotate(-45deg) scaleX(1); opacity: 0; }
 }
 
-/* --- PLANETAS --- */
+/* --- METEORITOS (ROCAS 3D) DIAGONALES --- */
+.space-meteor {
+    position: absolute;
+    background: #3a3a3a;
+    border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; /* Forma irregular */
+    z-index: 3;
+    /* Sombra interna para volumen 3D */
+    box-shadow: inset 4px 4px 10px rgba(0,0,0,1), inset -2px -2px 5px rgba(255,255,255,0.1);
+    animation: meteorDiagonal 6s linear forwards;
+}
+
+@keyframes meteorDiagonal {
+    0% { transform: translate(-100px, -100px) rotate(0deg); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translate(120vw, 120vh) rotate(720deg); opacity: 0; }
+}
+
+/* --- PLANETAS (DIAGONALES) --- */
 .space-planet {
     position: absolute;
     border-radius: 50%;
     z-index: 2;
-    /* Sombras para dar volumen 3D */
-    box-shadow: inset -10px -10px 20px rgba(0,0,0,0.9);
+    box-shadow: inset -15px -15px 30px rgba(0,0,0,0.95); /* Sombra de esfera */
+    animation: planetPass 25s linear forwards;
 }
-.planet-gas { background: linear-gradient(135deg, #1e3c72, #2a5298); }
-.planet-mars { background: linear-gradient(135deg, #cb2d3e, #ef473a); }
-.planet-ice { background: linear-gradient(135deg, #E0EAFC, #CFDEF3); }
+/* Tipos de planetas */
+.planet-gas { background: radial-gradient(circle at 30% 30%, #4b6cb7, #182848); }
+.planet-mars { background: radial-gradient(circle at 30% 30%, #ff7e5f, #feb47b); }
+.planet-ice { background: radial-gradient(circle at 30% 30%, #E0EAFC, #CFDEF3); }
 
-/* Animación Diagonal Lenta de Planetas */
-@keyframes planetSlide {
-    0% { transform: translate(-200px, -100px); }
-    100% { transform: translate(120vw, 120vh); }
-}
-
-/* --- ESTRELLAS FUGACES (DIAGONALES) --- */
-.shooting-star {
-    position: absolute;
-    width: 150px; /* Longitud de la cola */
-    height: 1px;
-    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
-    transform: rotate(-45deg); /* INCLINACIÓN DIAGONAL */
-    opacity: 0;
-    z-index: 1;
-    animation: shootDiagonal 2.5s linear infinite;
-}
-
-@keyframes shootDiagonal {
-    0% { transform: rotate(-45deg) translate(0, 0); opacity: 0; }
-    10% { opacity: 1; }
-    100% { transform: rotate(-45deg) translate(-1000px, 1000px); opacity: 0; } /* Movimiento diagonal */
-}
-
-/* --- METEORITOS (ROCAS) --- */
-.space-meteor {
-    position: absolute;
-    background: #444;
-    border-radius: 40%;
-    z-index: 3;
-    animation: meteorFall 5s linear forwards;
-}
-@keyframes meteorFall {
-    0% { transform: translateY(-50px) rotate(0deg); }
-    100% { transform: translateY(120vh) rotate(360deg); }
+@keyframes planetPass {
+    0% { transform: translate(-200px, -200px); } /* Empieza fuera arriba-izq */
+    100% { transform: translate(120vw, 120vh); } /* Termina fuera abajo-der */
 }

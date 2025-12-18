@@ -11834,47 +11834,153 @@ window.addEventListener('click', (e) => {
 
 })();
 
-/* ================================================ */
-/* === HACER FUNCIONAR LOS BOTONES DEL ENCABEZADO === */
-/* ================================================ */
+/* ================================================= */
+/* === MOTOR DE FONDO NEGRO AMOLED + FUNCIONES === */
+/* ================================================= */
 
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. CALCULADORA
-    const btnCalc = document.getElementById('btn-toggle-calculator');
-    const calcContainer = document.getElementById('calculator-container'); 
-    // ^ Asegúrate de que en index.html tienes un div con id="calculator-container" donde está el iframe
+    // --- 1. LÓGICA DE BOTONES DEL ENCABEZADO ---
+
+    // A) CALCULADORA
+    // Busca el botón por ID o atributo data-action
+    const btnCalc = document.querySelector('button[data-action="toggle-calculator"]') || document.getElementById('btn-toggle-calculator');
+    const calcFrame = document.getElementById('calculator-frame'); // El iframe
     
-    if (btnCalc) {
+    if (btnCalc && calcFrame) {
+        // Buscamos el contenedor padre del iframe (normalmente un div modal o contenedor flex)
+        const calcContainer = calcFrame.parentElement; 
+        
         btnCalc.addEventListener('click', () => {
-            if (calcContainer) {
-                // Alternar visibilidad
-                if (calcContainer.style.display === 'none' || calcContainer.classList.contains('hidden')) {
-                     calcContainer.style.display = 'flex'; // O 'block' según tu CSS
-                     calcContainer.classList.remove('hidden');
-                } else {
-                     calcContainer.style.display = 'none';
+            // Alternar visibilidad
+            const isHidden = calcContainer.style.display === 'none' || calcContainer.classList.contains('hidden');
+            
+            if (isHidden) {
+                calcContainer.style.display = 'flex'; // O 'block'
+                calcContainer.classList.remove('hidden');
+                // Si el iframe no tiene src cargado, cárgalo ahora
+                if (!calcFrame.getAttribute('src')) {
+                    calcFrame.setAttribute('src', 'calculator.html');
                 }
             } else {
-                // Si no existe el contenedor, intentamos mostrar el iframe directamente si tiene ID
-                alert("Abriendo calculadora..."); 
-                // Aquí deberías poner la lógica si tu calculadora se abre de otra forma (ej. un modal)
+                calcContainer.style.display = 'none';
+            }
+        });
+        
+        // Opcional: Cerrar calculadora al hacer clic fuera (en el fondo oscuro)
+        calcContainer.addEventListener('click', (e) => {
+            if (e.target === calcContainer) {
+                calcContainer.style.display = 'none';
             }
         });
     }
 
-    // 2. TRES PUNTOS (OPCIONES)
-    const btnOptions = document.getElementById('btn-show-options');
+    // B) MENÚ DE TRES PUNTOS (OPCIONES)
+    const btnOptions = document.querySelector('button[data-action="show-options"]') || document.getElementById('btn-show-options');
+    // Buscamos el menú desplegable (asegúrate de que en index.html existe un div con id "dropdown-menu" o similar)
+    const optionsMenu = document.getElementById('dropdown-menu') || document.querySelector('.dropdown-menu');
+
     if (btnOptions) {
-        btnOptions.addEventListener('click', () => {
-            // Opción A: ¿Tienes un menú desplegable ya creado?
-            const dropdown = document.getElementById('main-dropdown-menu');
-            if (dropdown) {
-                dropdown.classList.toggle('active'); // O la clase que uses para mostrarlo
+        btnOptions.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evitar que se cierre inmediatamente
+            if (optionsMenu) {
+                // Alternar clase 'show' o 'active' para mostrarlo
+                optionsMenu.classList.toggle('show');
+                
+                // Si usas estilos inline display: none/block
+                if(optionsMenu.style.display === 'block') {
+                    optionsMenu.style.display = 'none';
+                } else {
+                    optionsMenu.style.display = 'block';
+                }
             } else {
-                // Opción B: Si no tienes menú, lanzamos un aviso por ahora
-                alert("Menú de opciones: \n1. Ajustes\n2. Exportar\n3. Ayuda");
+                console.warn("No se encontró el elemento del menú desplegable en index.html");
+            }
+        });
+        
+        // Cerrar menú al hacer clic en cualquier otro lado
+        document.addEventListener('click', () => {
+            if (optionsMenu) {
+                optionsMenu.classList.remove('show');
+                optionsMenu.style.display = 'none';
             }
         });
     }
+
+    // --- 2. MOTOR DE FONDO CÓSMICO (DIAGONAL) ---
+    initCosmicBackground();
 });
+
+function initCosmicBackground() {
+    const container = document.getElementById('deep-space-background');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // A. Estrellas Fijas (Fondo)
+    const createStars = (count, size) => {
+        const layer = document.createElement('div');
+        layer.className = 'star-anim-container'; // Moverse verticalmente lento (parallax base)
+        layer.style.animationDuration = '150s';
+        
+        let shadows = [];
+        for(let i=0; i<count; i++) {
+            shadows.push(`${Math.random()*100}vw ${Math.random()*100}vh #FFF`);
+        }
+        
+        const starDiv = document.createElement('div');
+        starDiv.style.width = size; starDiv.style.height = size;
+        starDiv.style.background = 'transparent';
+        starDiv.style.boxShadow = shadows.join(',');
+        
+        const starDiv2 = starDiv.cloneNode(true);
+        starDiv2.style.top = '100vh';
+        starDiv2.style.position = 'absolute';
+        starDiv.style.position = 'absolute';
+
+        layer.appendChild(starDiv);
+        layer.appendChild(starDiv2);
+        container.appendChild(layer);
+    };
+    createStars(300, '1px'); // Estrellas finas
+
+    // B. Elementos Diagonales (Planetas, Meteoritos, Fugaces)
+    
+    // 1. Planetas
+    setInterval(() => {
+        if(Math.random() > 0.6 && document.querySelectorAll('.space-planet').length === 0) {
+            const el = document.createElement('div');
+            el.className = 'space-planet ' + ['planet-gas','planet-mars','planet-ice'][Math.floor(Math.random()*3)];
+            const s = 60 + Math.random()*80;
+            el.style.width = s+'px'; el.style.height = s+'px';
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 25000);
+        }
+    }, 8000);
+
+    // 2. Meteoritos (Rocas rápidas)
+    setInterval(() => {
+        if(Math.random() > 0.4) {
+            const el = document.createElement('div');
+            el.className = 'space-meteor';
+            const s = 10 + Math.random()*15;
+            el.style.width = s+'px'; el.style.height = s+'px';
+            el.style.left = Math.random()*80 + '%'; // Posición aleatoria inicio
+            el.style.top = '-50px';
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 6000);
+        }
+    }, 2000);
+
+    // 3. Estrellas Fugaces (Luz espectacular)
+    setInterval(() => {
+        if(Math.random() > 0.5) {
+            const el = document.createElement('div');
+            el.className = 'shooting-star';
+            el.style.top = (Math.random()*50) + '%';
+            el.style.left = (Math.random()*50) + '%';
+            el.style.width = (100 + Math.random()*200) + 'px'; // Longitud variable
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 2000);
+        }
+    }, 2500);
+}
