@@ -6265,58 +6265,35 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
 
 
 /* ================================================================= */
-/* === 2. FONDO CÓSMICO 3D (VIAJE ESPACIAL AMOLED) === */
+/* === NUEVO FONDO ESTRELLADO (CANVAS) === */
 /* ================================================================= */
 
-#cosmos-container {
+/* 1. El Lienzo de Estrellas */
+#starfield {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1;
-    background-color: #000000; /* NEGRO AMOLED PURO */
-    overflow: hidden;
-    perspective: 800px; /* Profundidad 3D */
+    z-index: -2; /* Al fondo del todo */
+    background-color: #000000; /* Fondo base negro */
 }
 
-/* --- ESTRELLAS MÁS GRANDES Y BRILLANTES --- */
-.star {
-    position: absolute;
-    top: 50%;
-    left: 50%;
+/* 2. La Nebulosa / Galaxia (Efecto de color sutil) */
+#galaxy-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Encima de las estrellas pero detrás de la app */
+    pointer-events: none;
     
-    /* CAMBIO 1: Tamaño más grande (antes 2px) */
-    width: 6 px; 
-    height: 6 px;
-    
-    background-color: white;
-    border-radius: 50%;
-    opacity: 0;
-    
-    /* CAMBIO 2: Mucho más resplandor (efecto neón blanco) */
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.9); 
-    
-    animation: warpSpeed var(--duration) linear infinite;
-    animation-delay: var(--delay);
-}
-
-@keyframes warpSpeed {
-    0% {
-        transform: translate3d(0, 0, -1000px);
-        opacity: 0;
-    }
-    10% {
-        opacity: 1; /* Alcanzan el brillo máximo rápido */
-    }
-    90% {
-        /* CAMBIO 3: Se mantienen visibles casi hasta el final */
-        opacity: 1; 
-    }
-    100% {
-        transform: translate3d(var(--dest-x), var(--dest-y), 500px);
-        opacity: 0;
-    }
+    /* Gradientes sutiles rojizos/espaciales tomados de tu ejemplo */
+    background: 
+        radial-gradient(ellipse at 30% 50%, rgba(229, 57, 53, 0.15) 0%, rgba(229, 57, 53, 0.05) 20%, transparent 50%), 
+        radial-gradient(ellipse at 70% 50%, rgba(211, 47, 47, 0.12) 0%, rgba(211, 47, 47, 0.03) 25%, transparent 50%), 
+        radial-gradient(ellipse at 50% 30%, rgba(239, 83, 80, 0.1) 0%, transparent 40%);
 }
 /* ================================================================= */
 /* === ELIMINACIÓN TOTAL DE MÁRGENES SUPERIORES (ZERO-GAP) === */
@@ -6375,4 +6352,57 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
 /* 6. Corrección para evitar scroll elástico blanco en iOS/Android */
 html, body {
     overscroll-behavior-y: none; /* Evita el rebote blanco arriba/abajo */
+}
+/* ================================================================= */
+/* === CORRECCIONES FINALES: ESTRELLAS Y ESPACIOS (ZERO-GAP) === */
+/* ================================================================= */
+
+/* 1. SOLUCIÓN ESTRELLAS: Hacer transparente el Body */
+/* Esto permite ver el canvas que está detrás (z-index: -2) */
+html, body {
+    background-color: transparent !important; /* CLAVE: Quita el negro sólido que tapa las estrellas */
+    background: transparent !important;
+    margin: 0 !important; /* CLAVE: Elimina los 8px de borde blanco/negro del navegador */
+    padding: 0 !important;
+    height: 100%;
+    width: 100%;
+    overscroll-behavior-y: none; /* Evita rebote elástico */
+}
+
+/* 2. SOLUCIÓN ESPACIO SUPERIOR: Ajuste quirúrgico del contenedor */
+#app-root.app-layout {
+    /* El relleno superior debe ser EXACTAMENTE la altura de la barra (50px) */
+    padding-top: 50px !important; 
+    
+    /* Aseguramos que el contenedor de la app no tenga fondo que tape las estrellas */
+    /* Si quieres que la app sea semitransparente, usa rgba(0,0,0,0.X) */
+    background-color: transparent !important; 
+    min-height: 100vh;
+}
+
+/* 3. ELIMINAR HUECOS EN LA ESTRUCTURA INTERNA */
+/* Forzamos que la etiqueta MAIN y las VISTAS no tengan techo */
+.app-layout__main,
+.view,
+.dashboard-container,
+.diario-container {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    display: block !important;
+}
+
+/* 4. ASEGURAR QUE EL LIENZO OCUPE TODO (Incluso en PC) */
+#starfield, #galaxy-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw !important; /* Ancho de la ventana */
+    height: 100vh !important; /* Alto de la ventana */
+    z-index: -2;
+}
+
+/* 5. FONDO NEGRO DE SEGURIDAD (Solo para el Canvas) */
+/* El color negro debe darlo el canvas, no el body */
+#starfield {
+    background-color: #000000 !important;
 }
