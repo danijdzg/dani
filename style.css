@@ -6334,33 +6334,41 @@ h2, .section-title {
     perspective: 800px; /* Profundidad 3D */
 }
 
+/* --- ESTRELLAS MÁS GRANDES Y BRILLANTES --- */
 .star {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 2px;
-    height: 2px;
+    
+    /* CAMBIO 1: Tamaño más grande (antes 2px) */
+    width: 6 px; 
+    height: 6 px;
+    
     background-color: white;
     border-radius: 50%;
     opacity: 0;
-    box-shadow: 0 0 3px white; /* Brillo estelar */
     
-    /* Animación de viaje hacia la cámara */
+    /* CAMBIO 2: Mucho más resplandor (efecto neón blanco) */
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.9); 
+    
     animation: warpSpeed var(--duration) linear infinite;
     animation-delay: var(--delay);
 }
 
 @keyframes warpSpeed {
     0% {
-        transform: translate3d(0, 0, -1000px); /* Lejos en el fondo */
+        transform: translate3d(0, 0, -1000px);
         opacity: 0;
     }
     10% {
-        opacity: 1;
+        opacity: 1; /* Alcanzan el brillo máximo rápido */
+    }
+    90% {
+        /* CAMBIO 3: Se mantienen visibles casi hasta el final */
+        opacity: 1; 
     }
     100% {
-        /* Viajan hacia ti expandiéndose hacia los lados */
-        transform: translate3d(var(--dest-x), var(--dest-y), 500px); 
+        transform: translate3d(var(--dest-x), var(--dest-y), 500px);
         opacity: 0;
     }
 }
