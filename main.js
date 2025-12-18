@@ -11802,61 +11802,78 @@ window.addEventListener('click', (e) => {
 })();
 
 
-/* ================================================= */
-/* === 2. LÓGICA DE CONTROL (Encabezado y Datos) === */
-/* ================================================= */
+/* ================================================================ */
+/* === LECTURA DE DATOS CON FILTRO DE CAJA (A, B o C) === */
+/* ================================================================ */
 
+// 1. Variable para saber en qué caja estamos (leída de memoria o A por defecto)
+let currentLedgerMode = localStorage.getItem('selectedLedgerMode') || 'A';
+
+// Función para inicializar la escucha de datos
+function initApp() {
+    console.log("Cargando datos para CAJA:", currentLedgerMode);
+    
+    // Actualizar colores visuales
+    document.body.setAttribute('data-ledger-mode', currentLedgerMode);
+    const btn = document.getElementById('header-ledger-btn');
+    if(btn) btn.textContent = `CAJA ${currentLedgerMode}`;
+
+    // --- ESCUCHA DE FIREBASE CON FILTRO ---
+    db.collection("movimientos")
+      .orderBy("fecha", "desc")
+      .onSnapshot((snapshot) => {
+        
+        const movimientos = [];
+        let totalIngresos = 0;
+        let totalGastos = 0;
+
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            
+            // >>> EL FILTRO MAESTRO <<<
+            // Si el movimiento NO tiene campo 'caja', asumimos que es 'A'
+            const cajaMovimiento = data.caja || 'A';
+            
+            // SOLO procesamos el movimiento si coincide con la caja actual
+            if (cajaMovimiento === currentLedgerMode) {
+                movimientos.push({ id: doc.id, ...data });
+                
+                // Calcular totales aquí mismo para asegurar consistencia
+                if (data.tipo === 'ingreso') totalIngresos += parseFloat(data.cantidad);
+                if (data.tipo === 'gasto') totalGastos += parseFloat(data.cantidad);
+            }
+        });
+
+        // Renderizar la lista con los datos YA FILTRADOS
+        renderVirtualListItem(movimientos); 
+        // Actualizar KPIs (si tienes función updateKPIs)
+        if(typeof updateKPIs === 'function') updateKPIs(movimientos);
+    });
+}
+
+// 2. Lógica del Botón de Cambio de Caja
 document.addEventListener('DOMContentLoaded', () => {
+    // Iniciar app
+    initApp();
 
-    // --- A. GESTIÓN DE CAJA (FILTRO DE DATOS) ---
     const btnLedger = document.getElementById('header-ledger-btn');
-    
-    // Leemos la caja actual o defecto 'A'
-    let currentMode = localStorage.getItem('selectedLedgerMode') || 'A';
-    
-    // Función que aplica el cambio visual y FILTRA LOS DATOS
-    window.applyLedgerFilter = function(mode) {
-        // 1. Guardar y Visuales
-        localStorage.setItem('selectedLedgerMode', mode);
-        document.body.setAttribute('data-ledger-mode', mode);
-        
-        if(btnLedger) {
-            btnLedger.textContent = `CAJA ${mode}`;
-            btnLedger.animate([{transform:'scale(1)'},{transform:'scale(1.1)'},{transform:'scale(1)'}], {duration:200});
-        }
-
-        // 2. FILTRAR DATOS REALMENTE
-        console.log(`Aplicando filtro para CAJA ${mode}...`);
-        
-        // AQUÍ ESTÁ LA CLAVE: 
-        // Modificamos la función global que renderiza para que sepa qué filtrar.
-        // Si tienes una variable global db.movimientos, esto simulará la recarga.
-        
-        if (typeof initApp === 'function') {
-            // Reiniciamos la app para que vuelva a leer los datos con el nuevo filtro
-            initApp(); 
-        } else if (typeof renderMovements === 'function') {
-            // Si tienes renderMovements, forzamos el repintado
-            renderMovements();
-        } else {
-            // Fallback: Recargar página para asegurar que todo se procesa de cero
-            // location.reload(); 
-            console.log("No se encontró función de recarga, por favor asegúrate de que initApp() o renderMovements() usa 'localStorage.getItem(\"selectedLedgerMode\")'");
-        }
-    };
-
-    // Inicializar estado al cargar
-    applyLedgerFilter(currentMode);
-
-    // Click en el botón: Ciclo A -> B -> C -> A
     if(btnLedger) {
         btnLedger.addEventListener('click', () => {
-            if (currentMode === 'A') currentMode = 'B';
-            else if (currentMode === 'B') currentMode = 'C';
-            else currentMode = 'A';
-            applyLedgerFilter(currentMode);
+            // Ciclo A -> B -> C -> A
+            if (currentLedgerMode === 'A') currentLedgerMode = 'B';
+            else if (currentLedgerMode === 'B') currentLedgerMode = 'C';
+            else currentLedgerMode = 'A';
+
+            // Guardar en memoria
+            localStorage.setItem('selectedLedgerMode', currentLedgerMode);
+            
+            // REINICIAR LA APP PARA APLICAR EL NUEVO FILTRO
+            // Esto cancelará la suscripción anterior y cargará los datos de la nueva caja
+            // (La forma más simple es recargar la página para limpiar todo)
+            location.reload(); 
         });
     }
+});
 
     // --- B. ICONOS DE HERRAMIENTAS QUE NO FUNCIONABAN ---
 
@@ -11904,6 +11921,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 menuDropdown.classList.remove('show');
                 setTimeout(() => menuDropdown.style.display = 'none', 200);
             }
+        });
+    }
+});
+/* ============================================================== */
+/* === REACTIVAR ICONOS DEL ENCABEZADO (CALCULADORA Y MENÚ) === */
+/* ============================================================== */
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. CALCULADORA
+    const btnCalc = document.getElementById('btn-toggle-calculator');
+    const modalCalc = document.getElementById('calculator-modal');
+    const btnCloseCalc = document.getElementById('btn-close-calc');
+    
+    if (btnCalc && modalCalc) {
+        btnCalc.addEventListener('click', () => {
+            modalCalc.style.display = 'flex'; // Mostrar
+        });
+        if(btnCloseCalc) {
+            btnCloseCalc.addEventListener('click', () => {
+                modalCalc.style.display = 'none'; // Ocultar
+            });
+        }
+    }
+
+    // 2. MENÚ DE OPCIONES (3 PUNTOS)
+    const btnOpt = document.getElementById('btn-show-options');
+    const menu = document.getElementById('main-dropdown-menu');
+
+    if (btnOpt && menu) {
+        btnOpt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Alternar: Si se ve, lo oculto. Si no, lo muestro.
+            if (menu.style.display === 'block') {
+                menu.style.display = 'none';
+            } else {
+                menu.style.display = 'block';
+            }
+        });
+        // Cerrar si clicamos fuera
+        document.addEventListener('click', () => {
+            menu.style.display = 'none';
         });
     }
 });
