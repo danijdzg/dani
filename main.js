@@ -11742,72 +11742,129 @@ window.addEventListener('click', (e) => {
         }
     }
 });
-/* ================================================================= */
-/* === GENERADOR DE ESPACIO PROFUNDO (Deep Space Engine) === */
-/* ================================================================= */
+/* ========================================= */
+/* === MOTOR INTERESTELAR V4.0 (3D) === */
+/* ========================================= */
 
 (function initSpaceBackground() {
-    // Solo ejecutar si estamos en pantalla grande (ahorro de recursos)
-    if (window.innerWidth < 600) return;
-
     const container = document.getElementById('deep-space-background');
     if (!container) return;
 
-    console.log("🌌 Iniciando motores de hiperespacio...");
+    container.innerHTML = ''; // Limpiar
 
-    // Función para crear una capa de estrellas
-    const createLayer = (count, size, duration, opacity) => {
-        const layer = document.createElement('div');
-        layer.className = 'star-layer';
-        
+    // 1. GENERADOR DE ESTRELLAS (PARALLAX INFINITO)
+    const createStarLayer = (count, size, duration, opacity) => {
+        const layerContainer = document.createElement('div');
+        layerContainer.className = 'star-anim-container';
+        layerContainer.style.animationDuration = `${duration}s`;
+        layerContainer.style.opacity = opacity;
+
         let shadows = [];
-        // Generamos coordenadas aleatorias basadas en el ancho TOTAL de la pantalla
         for (let i = 0; i < count; i++) {
-            const x = Math.floor(Math.random() * window.innerWidth);
-            const y = Math.floor(Math.random() * window.innerHeight * 2); // *2 para el scroll
-            shadows.push(`${x}px ${y}px #FFF`);
+            const x = Math.random() * 100;
+            const y = Math.random() * 100;
+            // Variación sutil de color en las estrellas (blanco y azulado)
+            const color = Math.random() > 0.8 ? '#ADD8E6' : '#FFF'; 
+            shadows.push(`${x}vw ${y}vh ${size} ${color}`);
         }
+        
+        // Parte A y Parte B para el bucle
+        const starsA = document.createElement('div');
+        starsA.style.position = 'absolute';
+        starsA.style.top = 0;
+        starsA.style.width = '1px'; starsA.style.height = '1px';
+        starsA.style.boxShadow = shadows.join(',');
+        
+        const starsB = starsA.cloneNode(true);
+        starsB.style.top = '100vh';
 
-        // Aplicamos los estilos
-        layer.style.width = size;
-        layer.style.height = size;
-        layer.style.opacity = opacity;
-        layer.style.boxShadow = shadows.join(',');
-        layer.style.animation = `moveStars ${duration}s linear infinite`;
-
-        // Creamos el duplicado para el loop infinito (efecto parallax)
-        const after = document.createElement('div');
-        after.className = 'star-layer';
-        after.style.width = size;
-        after.style.height = size;
-        after.style.opacity = opacity;
-        after.style.boxShadow = shadows.join(',');
-        after.style.animation = `moveStars ${duration}s linear infinite`;
-        after.style.top = '2000px'; // Desplazamiento para el loop
-
-        container.appendChild(layer);
-        container.appendChild(after);
+        layerContainer.appendChild(starsA);
+        layerContainer.appendChild(starsB);
+        container.appendChild(layerContainer);
     };
 
-    // CAPA 1: Estrellas lejanas (Muchas, pequeñas, lentas)
-    createLayer(700, '1px', 100, 0.6);
+    // Crear 3 capas de profundidad
+    createStarLayer(300, '1px', 100, 0.8); // Fondo lejano
+    createStarLayer(100, '2px', 60, 0.9);  // Medio
+    createStarLayer(40, '2.5px', 40, 1);   // Cercano
 
-    // CAPA 2: Estrellas medias (Menos, un poco más grandes)
-    createLayer(200, '2px', 70, 0.8);
+    // 2. GENERADOR DE PLANETAS
+    const spawnPlanet = () => {
+        // Solo un planeta a la vez para no saturar
+        if (document.querySelectorAll('.space-planet').length > 0) return;
 
-    // CAPA 3: Estrellas cercanas (Pocas, brillantes, rápidas)
-    createLayer(100, '3px', 40, 1);
+        const planet = document.createElement('div');
+        planet.className = 'space-planet';
+        
+        // Tipos de planetas aleatorios
+        const types = ['planet-gas-giant', 'planet-ice', 'planet-mars', 'planet-moon'];
+        const randomType = types[Math.floor(Math.random() * types.length)];
+        planet.classList.add(randomType);
 
-    // Recalcular si se cambia el tamaño de la ventana (Opcional, para perfeccionistas)
-    window.addEventListener('resize', () => {
-        if (window.innerWidth >= 600) {
-            container.innerHTML = ''; // Limpiar
-            createLayer(700, '1px', 100, 0.6);
-            createLayer(200, '2px', 70, 0.8);
-            createLayer(100, '3px', 40, 1);
-        }
-    });
+        // Tamaño aleatorio (entre 40px y 120px)
+        const size = 40 + Math.random() * 80;
+        planet.style.width = `${size}px`;
+        planet.style.height = `${size}px`;
 
+        // Posición inicial vertical aleatoria (top 10% a 70%)
+        planet.style.top = `${10 + Math.random() * 60}%`;
+        planet.style.left = '-150px'; // Fuera de pantalla izquierda
+
+        // Velocidad lenta y majestuosa (20s a 40s)
+        const duration = 25 + Math.random() * 20;
+        planet.style.animation = `planetFloat ${duration}s linear forwards`;
+
+        container.appendChild(planet);
+
+        // Limpiar al terminar
+        setTimeout(() => { planet.remove(); }, duration * 1000);
+    };
+
+    // Intentar lanzar un planeta cada 15 segundos (probabilidad del 40%)
+    setInterval(() => {
+        if (Math.random() > 0.6) spawnPlanet();
+    }, 15000);
+
+    // 3. GENERADOR DE METEORITOS (ROCAS 3D)
+    const spawnMeteor = () => {
+        const meteor = document.createElement('div');
+        meteor.className = 'space-meteor';
+        
+        const size = 5 + Math.random() * 10; // Pequeños (5-15px)
+        meteor.style.width = `${size}px`;
+        meteor.style.height = `${size}px`;
+        
+        meteor.style.left = `${Math.random() * 100}%`;
+        meteor.style.top = '-50px';
+        
+        // Velocidad rápida
+        const duration = 3 + Math.random() * 5;
+        meteor.style.animation = `meteorFloat ${duration}s linear forwards`;
+
+        container.appendChild(meteor);
+        setTimeout(() => { meteor.remove(); }, duration * 1000);
+    };
+
+    setInterval(() => {
+        if (Math.random() > 0.5) spawnMeteor();
+    }, 4000); // Meteoritos frecuentes
+
+    // 4. ESTRELLAS FUGACES RÁPIDAS
+    const spawnShootingStar = () => {
+        const star = document.createElement('div');
+        star.className = 'shooting-star';
+        star.style.top = `${Math.random() * 50}%`;
+        star.style.left = `${Math.random() * 80}%`;
+        star.style.animationDuration = `${1 + Math.random()}s`;
+        
+        container.appendChild(star);
+        setTimeout(() => star.remove(), 2000);
+    };
+
+    setInterval(() => {
+        if (Math.random() > 0.7) spawnShootingStar();
+    }, 3000);
+    
 })();
 
 /* ================================================= */
