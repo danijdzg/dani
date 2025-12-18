@@ -95,7 +95,7 @@ const setupEnhancedFormNavigation = () => {
             }
         });
     });
-    let cajaActual = localStorage.getItem('selectedLedgerMode') || 'A';
+    
     // Autofocus en cantidad al abrir el formulario
     const movimientoForm = select('movimiento-form');
     movimientoForm?.addEventListener('shown', () => {
