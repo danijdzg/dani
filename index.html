@@ -464,6 +464,22 @@
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
 	
     <script type="module" src="main.js"></script>
-	
+	<div id="calculator-modal" class="modal-overlay" style="display:none; z-index: 2000;">
+    <div class="modal" style="height: 70vh; display: flex; flex-direction: column; background: #000;">
+        <div class="modal-header">
+            <h3>Calculadora</h3>
+            <button class="icon-btn" onclick="document.getElementById('calculator-modal').style.display='none'">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        <iframe id="calculator-frame" src="calculator.html" style="flex:1; border:none;"></iframe>
+    </div>
+</div>
+
+<div id="main-dropdown-menu" class="dropdown-menu" style="display:none; position: fixed; top: 80px; right: 20px; background: #222; padding: 10px; border-radius: 10px; z-index: 2000; border: 1px solid #444;">
+    <div class="menu-item" style="padding: 10px; color: white;">Configuración</div>
+    <div class="menu-item" style="padding: 10px; color: white;">Exportar Datos</div>
+    <div class="menu-item" style="padding: 10px; color: white;">Ayuda</div>
+</div>
 </body>
 </html>

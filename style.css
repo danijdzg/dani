@@ -6155,8 +6155,56 @@ input, select, textarea {
     font-family: var(--font-numeric);
 }
 
-//* ================================================= */
-/* === 1. ENCABEZADO CRISTAL REAL (SIN AZUL) === */
+/* ================================================= */
+/* === 1. FONDO CÓSMICO AMOLED (SIN FUGACES) === */
+/* ================================================= */
+
+#deep-space-background {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1;
+    background-color: #000000 !important; /* Negro Puro AMOLED */
+    overflow: hidden;
+    pointer-events: none;
+}
+
+/* Estrellas: Más densidad y brillo */
+.star-anim-container {
+    position: absolute;
+    width: 100%; height: 100%;
+    animation: moveStarsVertical linear infinite;
+}
+
+@keyframes moveStarsVertical {
+    from { transform: translateY(0); }
+    to { transform: translateY(-100vh); }
+}
+
+/* Planetas cruzando diagonalmente (Más frecuentes) */
+.space-planet {
+    position: absolute;
+    border-radius: 50%;
+    z-index: 2;
+    box-shadow: inset -10px -10px 25px rgba(0,0,0,0.95); /* Sombra 3D fuerte */
+    animation: planetPass 20s linear forwards;
+}
+
+/* Tipos de planetas */
+.planet-gas { background: radial-gradient(circle at 30% 30%, #4b6cb7, #182848); }
+.planet-mars { background: radial-gradient(circle at 30% 30%, #ff7e5f, #8b0000); }
+.planet-ice { background: radial-gradient(circle at 30% 30%, #E0EAFC, #2575fc); }
+.planet-void { background: radial-gradient(circle at 30% 30%, #434343, #000000); border: 1px solid #333; }
+
+@keyframes planetPass {
+    0% { transform: translate(-150px, -150px); } 
+    100% { transform: translate(120vw, 120vh); }
+}
+
+/* (Eliminada la sección .shooting-star) */
+
+
+/* ================================================= */
+/* === 2. ENCABEZADO CRISTAL (SIN COLOR) === */
 /* ================================================= */
 
 .top-bar {
@@ -6165,21 +6213,16 @@ input, select, textarea {
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
-
     width: calc(100% - 32px);
     max-width: 500px;
     height: 64px;
     border-radius: 32px;
 
-    /* FONDO: Negro muy transparente (Glassmorphism) */
-    /* Importante: Si tenías algún background azul, esto lo sobrescribe */
-    background-color: rgba(10, 10, 10, 0.65) !important; 
-    
-    /* Desenfoque para el efecto cristal */
+    /* Fondo Negro Transparente (Sin azul) */
+    background-color: rgba(0, 0, 0, 0.7) !important; 
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
-    
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 
     display: flex;
@@ -6188,78 +6231,66 @@ input, select, textarea {
     padding: 0 16px;
 }
 
-/* Iconos del encabezado en blanco puro */
+/* Botón Caja (Izquierda) */
+.ledger-pill-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    font-weight: 800;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 90px; /* Para que no baile el tamaño al cambiar letra */
+    text-align: center;
+}
+
+/* Iconos Derecha */
 .top-bar .icon-btn {
-    color: #ffffff !important;
-    background: transparent !important;
+    color: #fff !important;
+    background: transparent;
     border: none;
     opacity: 0.9;
+    padding: 8px;
 }
 
 /* ================================================= */
-/* === 2. FONDO AMOLED Y ANIMACIONES DIAGONALES === */
+/* === 3. SISTEMA DE COLORES DINÁMICOS (HEADER Y FOOTER) === */
 /* ================================================= */
 
-#deep-space-background {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    z-index: -1;
-    /* NEGRO AMOLED PURO */
-    background-color: #000000 !important;
-    overflow: hidden;
-    pointer-events: none;
+/* --- CAJA A (AZUL) --- */
+body[data-ledger-mode="A"] .ledger-pill-btn { 
+    color: #007AFF; border-color: #007AFF; background: rgba(0, 122, 255, 0.15); 
+}
+/* Iconos activos del Footer en AZUL */
+body[data-ledger-mode="A"] .bottom-nav__item--active {
+    color: #007AFF !important;
+}
+body[data-ledger-mode="A"] .bottom-nav__item--active .material-icons {
+    text-shadow: 0 0 10px rgba(0, 122, 255, 0.4);
 }
 
-/* --- ESTRELLAS FUGACES ESPECTACULARES (DIAGONALES) --- */
-.shooting-star {
-    position: absolute;
-    height: 2px;
-    /* Cola larga y brillante con degradado */
-    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
-    opacity: 0;
-    z-index: 1;
-    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
-    animation: shootDiagonal 2s ease-out infinite;
+/* --- CAJA B (ROJO) --- */
+body[data-ledger-mode="B"] .ledger-pill-btn { 
+    color: #FF3B30; border-color: #FF3B30; background: rgba(255, 59, 48, 0.15); 
+}
+/* Iconos activos del Footer en ROJO */
+body[data-ledger-mode="B"] .bottom-nav__item--active {
+    color: #FF3B30 !important;
+}
+body[data-ledger-mode="B"] .bottom-nav__item--active .material-icons {
+    text-shadow: 0 0 10px rgba(255, 59, 48, 0.4);
 }
 
-/* Animación: Cruza de arriba-izquierda a abajo-derecha (o viceversa según rotación) */
-@keyframes shootDiagonal {
-    0% { transform: translate(0, 0) rotate(-45deg) scaleX(0.5); opacity: 0; }
-    10% { opacity: 1; transform: translate(50px, 50px) rotate(-45deg) scaleX(1); }
-    100% { transform: translate(800px, 800px) rotate(-45deg) scaleX(1); opacity: 0; }
+/* --- CAJA C (VERDE) --- */
+body[data-ledger-mode="C"] .ledger-pill-btn { 
+    color: #00B34D; border-color: #00B34D; background: rgba(0, 179, 77, 0.15); 
 }
-
-/* --- METEORITOS (ROCAS 3D) DIAGONALES --- */
-.space-meteor {
-    position: absolute;
-    background: #3a3a3a;
-    border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; /* Forma irregular */
-    z-index: 3;
-    /* Sombra interna para volumen 3D */
-    box-shadow: inset 4px 4px 10px rgba(0,0,0,1), inset -2px -2px 5px rgba(255,255,255,0.1);
-    animation: meteorDiagonal 6s linear forwards;
+/* Iconos activos del Footer en VERDE */
+body[data-ledger-mode="C"] .bottom-nav__item--active {
+    color: #00B34D !important;
 }
-
-@keyframes meteorDiagonal {
-    0% { transform: translate(-100px, -100px) rotate(0deg); opacity: 0; }
-    10% { opacity: 1; }
-    100% { transform: translate(120vw, 120vh) rotate(720deg); opacity: 0; }
-}
-
-/* --- PLANETAS (DIAGONALES) --- */
-.space-planet {
-    position: absolute;
-    border-radius: 50%;
-    z-index: 2;
-    box-shadow: inset -15px -15px 30px rgba(0,0,0,0.95); /* Sombra de esfera */
-    animation: planetPass 25s linear forwards;
-}
-/* Tipos de planetas */
-.planet-gas { background: radial-gradient(circle at 30% 30%, #4b6cb7, #182848); }
-.planet-mars { background: radial-gradient(circle at 30% 30%, #ff7e5f, #feb47b); }
-.planet-ice { background: radial-gradient(circle at 30% 30%, #E0EAFC, #CFDEF3); }
-
-@keyframes planetPass {
-    0% { transform: translate(-200px, -200px); } /* Empieza fuera arriba-izq */
-    100% { transform: translate(120vw, 120vh); } /* Termina fuera abajo-der */
+body[data-ledger-mode="C"] .bottom-nav__item--active .material-icons {
+    text-shadow: 0 0 10px rgba(0, 179, 77, 0.4);
 }

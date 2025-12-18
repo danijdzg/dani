@@ -11742,189 +11742,26 @@ window.addEventListener('click', (e) => {
         }
     }
 });
-/* ========================================= */
-/* === MOTOR DE FONDO (AMOLED + PLANETAS) === */
-/* ========================================= */
-
+/* ================================================= */
+/* === 1. MOTOR DE FONDO AMOLED 3D (V5.0) === */
+/* ================================================= */
 (function initSpaceBackground() {
-    const container = document.getElementById('deep-space-background');
-    if (!container) return;
-    container.innerHTML = ''; 
-
-    // 1. ESTRELLAS CLÁSICAS (Puntos blancos nítidos)
-    const createStarLayer = (count, size, duration) => {
-        const layer = document.createElement('div');
-        layer.className = 'star-anim-container';
-        layer.style.animationDuration = `${duration}s`;
-        
-        let shadows = [];
-        for (let i = 0; i < count; i++) {
-            const x = Math.random() * 100;
-            const y = Math.random() * 100;
-            shadows.push(`${x}vw ${y}vh #FFF`); // Blanco puro
-        }
-        
-        const starSet = document.createElement('div');
-        starSet.style.position = 'absolute';
-        starSet.style.top = 0;
-        starSet.style.width = size; starSet.style.height = size;
-        starSet.style.background = 'transparent';
-        starSet.style.boxShadow = shadows.join(','); // Magia de box-shadow
-        
-        // Copia para bucle
-        const starSetB = starSet.cloneNode(true);
-        starSetB.style.top = '100vh';
-
-        layer.appendChild(starSet);
-        layer.appendChild(starSetB);
-        container.appendChild(layer);
-    };
-
-    createStarLayer(400, '1px', 100); // Lejanas
-    createStarLayer(150, '2px', 60);  // Medias
-
-    // 2. PLANETAS (Pasando diagonalmente)
-    const spawnPlanet = () => {
-        if (document.querySelectorAll('.space-planet').length > 0) return; // Solo uno a la vez
-
-        const p = document.createElement('div');
-        p.className = 'space-planet';
-        const types = ['planet-gas', 'planet-mars', 'planet-ice'];
-        p.classList.add(types[Math.floor(Math.random() * types.length)]);
-        
-        const size = 50 + Math.random() * 100;
-        p.style.width = `${size}px`; p.style.height = `${size}px`;
-        
-        // Empiezan arriba a la izquierda aleatoriamente
-        p.style.left = `${Math.random() * 80}%`;
-        p.style.top = '-150px';
-        
-        const duration = 20 + Math.random() * 20;
-        p.style.animation = `planetSlide ${duration}s linear forwards`;
-        
-        container.appendChild(p);
-        setTimeout(() => p.remove(), duration * 1000);
-    };
-    setInterval(() => { if(Math.random() > 0.5) spawnPlanet(); }, 10000);
-
-    // 3. ESTRELLAS FUGACES (Diagonales)
-    const spawnShooting = () => {
-        const s = document.createElement('div');
-        s.className = 'shooting-star';
-        s.style.top = `${Math.random() * 50}%`;
-        s.style.left = `${50 + Math.random() * 50}%`; // Salen del lado derecho
-        container.appendChild(s);
-        setTimeout(() => s.remove(), 3000);
-    };
-    setInterval(() => { if(Math.random() > 0.6) spawnShooting(); }, 4000);
-
-    // 4. METEORITOS
-    const spawnMeteor = () => {
-        const m = document.createElement('div');
-        m.className = 'space-meteor';
-        const s = 5 + Math.random() * 10;
-        m.style.width = `${s}px`; m.style.height = `${s}px`;
-        m.style.left = `${Math.random() * 100}%`;
-        m.style.top = '-50px';
-        m.style.animationDuration = `${3 + Math.random() * 4}s`;
-        container.appendChild(m);
-        setTimeout(() => m.remove(), 8000);
-    };
-    setInterval(() => { if(Math.random() > 0.5) spawnMeteor(); }, 3000);
-
-})();
-
-/* ================================================= */
-/* === MOTOR DE FONDO NEGRO AMOLED + FUNCIONES === */
-/* ================================================= */
-
-document.addEventListener('DOMContentLoaded', () => {
-    
-    // --- 1. LÓGICA DE BOTONES DEL ENCABEZADO ---
-
-    // A) CALCULADORA
-    // Busca el botón por ID o atributo data-action
-    const btnCalc = document.querySelector('button[data-action="toggle-calculator"]') || document.getElementById('btn-toggle-calculator');
-    const calcFrame = document.getElementById('calculator-frame'); // El iframe
-    
-    if (btnCalc && calcFrame) {
-        // Buscamos el contenedor padre del iframe (normalmente un div modal o contenedor flex)
-        const calcContainer = calcFrame.parentElement; 
-        
-        btnCalc.addEventListener('click', () => {
-            // Alternar visibilidad
-            const isHidden = calcContainer.style.display === 'none' || calcContainer.classList.contains('hidden');
-            
-            if (isHidden) {
-                calcContainer.style.display = 'flex'; // O 'block'
-                calcContainer.classList.remove('hidden');
-                // Si el iframe no tiene src cargado, cárgalo ahora
-                if (!calcFrame.getAttribute('src')) {
-                    calcFrame.setAttribute('src', 'calculator.html');
-                }
-            } else {
-                calcContainer.style.display = 'none';
-            }
-        });
-        
-        // Opcional: Cerrar calculadora al hacer clic fuera (en el fondo oscuro)
-        calcContainer.addEventListener('click', (e) => {
-            if (e.target === calcContainer) {
-                calcContainer.style.display = 'none';
-            }
-        });
-    }
-
-    // B) MENÚ DE TRES PUNTOS (OPCIONES)
-    const btnOptions = document.querySelector('button[data-action="show-options"]') || document.getElementById('btn-show-options');
-    // Buscamos el menú desplegable (asegúrate de que en index.html existe un div con id "dropdown-menu" o similar)
-    const optionsMenu = document.getElementById('dropdown-menu') || document.querySelector('.dropdown-menu');
-
-    if (btnOptions) {
-        btnOptions.addEventListener('click', (e) => {
-            e.stopPropagation(); // Evitar que se cierre inmediatamente
-            if (optionsMenu) {
-                // Alternar clase 'show' o 'active' para mostrarlo
-                optionsMenu.classList.toggle('show');
-                
-                // Si usas estilos inline display: none/block
-                if(optionsMenu.style.display === 'block') {
-                    optionsMenu.style.display = 'none';
-                } else {
-                    optionsMenu.style.display = 'block';
-                }
-            } else {
-                console.warn("No se encontró el elemento del menú desplegable en index.html");
-            }
-        });
-        
-        // Cerrar menú al hacer clic en cualquier otro lado
-        document.addEventListener('click', () => {
-            if (optionsMenu) {
-                optionsMenu.classList.remove('show');
-                optionsMenu.style.display = 'none';
-            }
-        });
-    }
-
-    // --- 2. MOTOR DE FONDO CÓSMICO (DIAGONAL) ---
-    initCosmicBackground();
-});
-
-function initCosmicBackground() {
     const container = document.getElementById('deep-space-background');
     if (!container) return;
     container.innerHTML = '';
 
-    // A. Estrellas Fijas (Fondo)
-    const createStars = (count, size) => {
+    // A. ESTRELLAS 3D (Mucha densidad, 3 capas)
+    const createStars = (count, size, duration, opacity) => {
         const layer = document.createElement('div');
-        layer.className = 'star-anim-container'; // Moverse verticalmente lento (parallax base)
-        layer.style.animationDuration = '150s';
+        layer.className = 'star-anim-container';
+        layer.style.animationDuration = `${duration}s`;
+        layer.style.opacity = opacity;
         
         let shadows = [];
         for(let i=0; i<count; i++) {
-            shadows.push(`${Math.random()*100}vw ${Math.random()*100}vh #FFF`);
+            // Estrellas blancas y algunas azuladas
+            const color = Math.random() > 0.9 ? '#AACCFF' : '#FFF';
+            shadows.push(`${Math.random()*100}vw ${Math.random()*100}vh ${color}`);
         }
         
         const starDiv = document.createElement('div');
@@ -11932,6 +11769,7 @@ function initCosmicBackground() {
         starDiv.style.background = 'transparent';
         starDiv.style.boxShadow = shadows.join(',');
         
+        // Duplicado para bucle vertical perfecto
         const starDiv2 = starDiv.cloneNode(true);
         starDiv2.style.top = '100vh';
         starDiv2.style.position = 'absolute';
@@ -11941,46 +11779,121 @@ function initCosmicBackground() {
         layer.appendChild(starDiv2);
         container.appendChild(layer);
     };
-    createStars(300, '1px'); // Estrellas finas
 
-    // B. Elementos Diagonales (Planetas, Meteoritos, Fugaces)
+    createStars(800, '1px', 150, 0.7); // Fondo muy lejano
+    createStars(300, '2px', 100, 0.9); // Medio
+    createStars(100, '3px', 60, 1.0);  // Frente
+
+    // B. PLANETAS (Tráfico intenso)
+    const spawnPlanet = () => {
+        // Permitimos hasta 3 planetas simultáneos para que se crucen
+        if (document.querySelectorAll('.space-planet').length >= 3) return;
+
+        const p = document.createElement('div');
+        p.className = 'space-planet';
+        
+        // Seleccionar tipo aleatorio
+        const types = ['planet-gas', 'planet-mars', 'planet-ice', 'planet-void'];
+        p.classList.add(types[Math.floor(Math.random() * types.length)]);
+        
+        // Tamaño variado
+        const s = 40 + Math.random() * 120;
+        p.style.width = `${s}px`; p.style.height = `${s}px`;
+        
+        // Posición aleatoria
+        p.style.left = `${Math.random() * 90}%`;
+        p.style.top = '-150px';
+        
+        // Duración variable (velocidad)
+        const dur = 15 + Math.random() * 15;
+        p.style.animation = `planetPass ${dur}s linear forwards`;
+        
+        container.appendChild(p);
+        setTimeout(() => p.remove(), dur * 1000);
+    };
+
+    // Lanzar planetas frecuentemente (cada 4 seg intento)
+    setInterval(() => {
+        if(Math.random() > 0.3) spawnPlanet();
+    }, 4000);
+
+    // NOTA: Se han eliminado las estrellas fugaces (Shooting Stars) como pediste.
+})();
+
+
+/* ================================================= */
+/* === 2. LÓGICA DE INTERFAZ Y NAVEGACIÓN === */
+/* ================================================= */
+
+document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. Planetas
-    setInterval(() => {
-        if(Math.random() > 0.6 && document.querySelectorAll('.space-planet').length === 0) {
-            const el = document.createElement('div');
-            el.className = 'space-planet ' + ['planet-gas','planet-mars','planet-ice'][Math.floor(Math.random()*3)];
-            const s = 60 + Math.random()*80;
-            el.style.width = s+'px'; el.style.height = s+'px';
-            container.appendChild(el);
-            setTimeout(() => el.remove(), 25000);
+    // --- GESTIÓN DE CAJAS (A -> B -> C) ---
+    const btnLedger = document.getElementById('header-ledger-btn');
+    
+    // Función para actualizar toda la UI (Botón y Colores Footer)
+    const updateLedgerVisuals = (mode) => {
+        // 1. Actualizar atributo en BODY (Esto activa el CSS de colores)
+        document.body.setAttribute('data-ledger-mode', mode);
+        
+        // 2. Actualizar Texto del Botón
+        if(btnLedger) {
+            btnLedger.textContent = `CAJA ${mode}`;
+            // Animación pulsación
+            btnLedger.animate([
+                { transform: 'scale(1)' }, { transform: 'scale(0.95)' }, { transform: 'scale(1)' }
+            ], { duration: 200 });
         }
-    }, 8000);
+        
+        // 3. Guardar en memoria (opcional, para persistencia)
+        localStorage.setItem('selectedLedgerMode', mode);
+    };
 
-    // 2. Meteoritos (Rocas rápidas)
-    setInterval(() => {
-        if(Math.random() > 0.4) {
-            const el = document.createElement('div');
-            el.className = 'space-meteor';
-            const s = 10 + Math.random()*15;
-            el.style.width = s+'px'; el.style.height = s+'px';
-            el.style.left = Math.random()*80 + '%'; // Posición aleatoria inicio
-            el.style.top = '-50px';
-            container.appendChild(el);
-            setTimeout(() => el.remove(), 6000);
-        }
-    }, 2000);
+    // Inicializar (leer de memoria o defecto A)
+    let currentMode = localStorage.getItem('selectedLedgerMode') || 'A';
+    // Asegurar que es válido
+    if(!['A','B','C'].includes(currentMode)) currentMode = 'A';
+    updateLedgerVisuals(currentMode);
 
-    // 3. Estrellas Fugaces (Luz espectacular)
-    setInterval(() => {
-        if(Math.random() > 0.5) {
-            const el = document.createElement('div');
-            el.className = 'shooting-star';
-            el.style.top = (Math.random()*50) + '%';
-            el.style.left = (Math.random()*50) + '%';
-            el.style.width = (100 + Math.random()*200) + 'px'; // Longitud variable
-            container.appendChild(el);
-            setTimeout(() => el.remove(), 2000);
-        }
-    }, 2500);
-}
+    // Evento Click en el botón CAJA
+    if(btnLedger) {
+        btnLedger.addEventListener('click', () => {
+            // Ciclo A -> B -> C -> A
+            if (currentMode === 'A') currentMode = 'B';
+            else if (currentMode === 'B') currentMode = 'C';
+            else currentMode = 'A';
+            
+            updateLedgerVisuals(currentMode);
+            
+            // AQUÍ: Llamar a tu función de recargar datos (si existe)
+            if(typeof loadMovements === 'function') loadMovements(); 
+            // O emitir evento personalizado si usas otra arquitectura
+        });
+    }
+
+    // --- GESTIÓN DE HERRAMIENTAS (ENCABEZADO) ---
+    
+    // 1. CALCULADORA
+    const btnCalc = document.getElementById('btn-toggle-calculator');
+    const modalCalc = document.getElementById('calculator-modal');
+    
+    if(btnCalc && modalCalc) {
+        btnCalc.addEventListener('click', () => {
+            modalCalc.style.display = (modalCalc.style.display === 'none' || modalCalc.style.display === '') ? 'flex' : 'none';
+        });
+    }
+
+    // 2. OPCIONES (TRES PUNTOS)
+    const btnOpt = document.getElementById('btn-show-options');
+    const menuOpt = document.getElementById('main-dropdown-menu');
+    
+    if(btnOpt && menuOpt) {
+        btnOpt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuOpt.style.display = (menuOpt.style.display === 'none' || menuOpt.style.display === '') ? 'block' : 'none';
+        });
+        // Cerrar al hacer click fuera
+        document.addEventListener('click', () => {
+            menuOpt.style.display = 'none';
+        });
+    }
+});
