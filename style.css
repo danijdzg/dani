@@ -389,24 +389,6 @@
     --font-numeric: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* 1. Estilo base del encabezado (oscuro, para que contraste en ambos temas) */
-.top-bar {
-    /* Un blur más fuerte y saturado (estilo Apple) */
-    background-color: rgba(28, 42, 58, 0.65); /* Más transparencia */
-    backdrop-filter: blur(25px) saturate(180%); /* Saturate aviva los colores de fondo */
-    -webkit-backdrop-filter: blur(25px) saturate(180%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Borde sutilísimo */
-}
-
-/* 4. Asegura que el texto y botones dentro del encabezado SIEMPRE sean blancos y legibles */
-/* Refactorización Profesional en style.css */
-body[data-theme] .top-bar,
-body[data-theme] .top-bar .btn,
-body[data-theme] .top-bar .icon-btn,
-body[data-theme] .top-bar #page-title-display {
-    color: var(--c-white); /* Sin !important, pero ahora es más específico que las reglas del tema */
-}
-
 /* ================================================================= */
 /* === ESTILOS BASE Y ESTRUCTURALES (COMUNES A AMBOS TEMAS)       === */
 /* ================================================================= */
@@ -5974,27 +5956,50 @@ body[data-ledger-mode="A"] .top-bar,
 body[data-ledger-mode="B"] .top-bar,
 body[data-ledger-mode="C"] .top-bar,
 .top-bar {
-    background-color: rgba(28, 42, 58, 0.75) !important; /* Fondo semitransparente oscuro */
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    position: relative; /* Necesario para que el botón se centre respecto a esto */
+    display: flex;
+    justify-content: space-between; /* Título a la izq, Iconos a la der */
+    align-items: center;
+    height: 60px; /* Un poco más alto para que respire */
+    padding: 0 16px;
+    
+    /* Efecto Vidrio Global */
+    background-color: rgba(20, 25, 35, 0.6) !important;
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--c-on-surface);
+    z-index: 100;
 }
 
 /* 2. Estilo Base del Botón de Caja (Transparente) */
 #ledger-toggle-btn {
-    background-color: transparent !important; /* Sin fondo de color */
-    box-shadow: none !important;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important; /* Borde sutil por defecto */
-    transition: color 0.3s ease, border-color 0.3s ease;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%); /* Centrado matemático perfecto */
+    
+    /* Diseño "Cápsula Sobresaliente" */
+    background-color: rgba(0, 0, 0, 0.4) !important; /* Fondo semitransparente oscuro */
+    backdrop-filter: blur(5px);
+    
+    padding: 8px 24px;       /* Más grande y ancho */
+    border-radius: 50px;     /* Forma redondeada completa */
+    border: 2px solid;       /* Borde visible del color de la caja */
+    
+    font-size: 1rem;
+    font-weight: 800;        /* Texto muy grueso */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;     /* Que no se rompa el texto en móviles */
+    
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3); /* Sombra base */
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 10;
 }
 
 /* Efecto al pulsar */
 #ledger-toggle-btn:active {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    transform: scale(0.95);
+    transform: translate(-50%, -50%) scale(0.92);
 }
 
 /* ================================================================= */
@@ -6004,8 +6009,9 @@ body[data-ledger-mode="C"] .top-bar,
 /* --- CAJA A (AZUL) --- */
 /* Botón del encabezado */
 body[data-ledger-mode="A"] #ledger-toggle-btn {
-    color: #007AFF !important; /* Fuente Azul */
-    border-color: rgba(0, 122, 255, 0.3) !important;
+    color: #007AFF !important;
+    border-color: #007AFF !important;
+    box-shadow: 0 0 15px rgba(0, 122, 255, 0.3), inset 0 0 10px rgba(0, 122, 255, 0.1) !important;
 }
 /* Pestaña del pie de página activa */
 body[data-ledger-mode="A"] .bottom-nav__item--active {
@@ -6016,8 +6022,9 @@ body[data-ledger-mode="A"] .bottom-nav__item--active {
 /* --- CAJA B (ROJA) --- */
 /* Botón del encabezado */
 body[data-ledger-mode="B"] #ledger-toggle-btn {
-    color: #FF3B30 !important; /* Fuente Roja */
-    border-color: rgba(255, 59, 48, 0.3) !important;
+    color: #FF3B30 !important;
+    border-color: #FF3B30 !important;
+    box-shadow: 0 0 15px rgba(255, 59, 48, 0.3), inset 0 0 10px rgba(255, 59, 48, 0.1) !important;
 }
 /* Pestaña del pie de página activa */
 body[data-ledger-mode="B"] .bottom-nav__item--active {
@@ -6028,8 +6035,9 @@ body[data-ledger-mode="B"] .bottom-nav__item--active {
 /* --- CAJA C (VERDE) --- */
 /* Botón del encabezado */
 body[data-ledger-mode="C"] #ledger-toggle-btn {
-    color: #28a745 !important; /* Fuente Verde */
-    border-color: rgba(40, 167, 69, 0.3) !important;
+    color: #28a745 !important;
+    border-color: #28a745 !important;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.3), inset 0 0 10px rgba(40, 167, 69, 0.1) !important;
 }
 /* Pestaña del pie de página activa */
 body[data-ledger-mode="C"] .bottom-nav__item--active {
