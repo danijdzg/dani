@@ -11887,7 +11887,7 @@ document.addEventListener('DOMContentLoaded', () => {
             modalCalc.style.display = 'flex';
             // Cargar iframe solo si es necesario
             const iframe = document.getElementById('calculator-frame');
-            if(iframe && !iframe.getAttribute('src')) iframe.src = 'calculator.html';
+            if(iframe && !iframe.getAttribute('src')) iframe.src = 'calculadora.html';
         });
         
         // Cerrar calculadora
