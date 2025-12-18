@@ -6061,3 +6061,67 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
     box-shadow: none !important;
     border-radius: 0 !important;
 }
+/* ================================================================= */
+/* === ELIMINAR ICONOS DE MOVIMIENTOS (AHORRO DE ESPACIO) === */
+/* ================================================================= */
+
+/* 1. Ocultar el círculo del icono (Avatar) en toda la app */
+.transaction-avatar {
+    display: none !important;
+}
+
+/* 2. Ocultar también el icono antiguo si quedase alguno residual */
+.transaction-card__indicator {
+    display: none !important;
+}
+
+/* 3. Ajustar el texto para que no se pegue al borde izquierdo */
+/* Al quitar el icono, necesitamos dar un poco de aire al contenido */
+.transaction-card {
+    padding-left: 12px !important; /* Espacio lateral de seguridad */
+}
+
+/* 4. Si usas la vista de "Extracto" o listas compactas, ajustamos también */
+.search-result-item__icon {
+    display: none !important;
+}
+.search-result-item {
+    padding-left: 12px !important;
+}
+/* ================================================================= */
+/* === NUEVAS TARJETAS CON BARRA LATERAL (CÓDIGO LIMPIO) === */
+/* ================================================================= */
+
+/* Base de la tarjeta */
+.t-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 12px 16px; /* Espaciado interno cómodo */
+    background-color: var(--c-surface);
+    border-bottom: 1px solid var(--c-outline);
+    transition: background-color 0.2s;
+    overflow: hidden; /* Para que la barra no se salga si redondeas bordes */
+}
+
+/* --- LAS BARRAS DE COLOR (A la izquierda) --- */
+
+/* 1. GASTO -> ROJO */
+.t-type-expense {
+    border-left: 5px solid #FF3B30 !important;
+}
+
+/* 2. INGRESO -> VERDE */
+.t-type-income {
+    border-left: 5px solid #30D158 !important; /* Verde vibrante */
+}
+
+/* 3. TRASPASO -> MORADO */
+.t-type-transfer {
+    border-left: 5px solid #BF5AF2 !important; /* Púrpura iOS */
+}
+
+/* --- Limpieza de código antiguo (Opcional: puedes borrar esto del CSS si ya no existe) --- */
+.t-icon, .transaction-avatar, .transaction-card__indicator {
+    display: none !important; /* Asegura que nada antiguo se muestre */
+}

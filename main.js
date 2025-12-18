@@ -3746,7 +3746,7 @@ const renderVirtualListItem = (item) => {
         `;
     }
 
-    // 4. MOVIMIENTOS REALES (DIARIO)
+    // 4. MOVIMIENTOS REALES (VERSIÓN OPTIMIZADA SIN ICONOS)
     if (item.type === 'transaction') {
         const m = item.movement;
         const { cuentas, conceptos } = db;
@@ -3756,40 +3756,36 @@ const renderVirtualListItem = (item) => {
         const dateObj = new Date(m.fecha);
         const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
 
-        let iconHtml, line1, line2, amountClass, amountSign;
+        let line1, line2, amountClass, amountSign, typeClass;
 
         if (m.tipo === 'traspaso') {
+            // --- TIPO: TRASPASO (MORADO) ---
+            typeClass = 't-type-transfer'; // Clase para la barra morada
+            
             const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || 'Origen';
             const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || 'Destino';
             
-            // Formateamos los saldos resultantes que calculamos en updateVirtualListUI
             const saldoOrigenHtml = m._saldoOrigenSnapshot !== undefined 
-                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoOrigenSnapshot)})</span>` 
-                : '';
+                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoOrigenSnapshot)})</span>` : '';
             const saldoDestinoHtml = m._saldoDestinoSnapshot !== undefined 
-                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoDestinoSnapshot)})</span>` 
-                : '';
+                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoDestinoSnapshot)})</span>` : '';
 
-            iconHtml = `<div class="t-icon t-icon--transfer"><span class="material-icons">sync_alt</span></div>`;
+            // Diseño simplificado solo texto
+            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part">De: ${escapeHTML(origen)}${saldoOrigenHtml}</span>`;
+            line2 = `<span class="t-transfer-part">A: ${escapeHTML(destino)}${saldoDestinoHtml}</span>`;
             
-            // Añadimos el saldo a cada línea
-            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:2px;">arrow_upward</span>${escapeHTML(origen)}${saldoOrigenHtml}</span>`;
-            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:2px;">arrow_downward</span>${escapeHTML(destino)}${saldoDestinoHtml}</span>`;
-            
-            amountClass = 'text-info';
+            amountClass = 'text-info'; // Azul para el importe
             amountSign = '';
             
         } else {
+            // --- TIPO: GASTO (ROJO) O INGRESO (VERDE) ---
+            const isGasto = m.cantidad < 0;
+            typeClass = isGasto ? 't-type-expense' : 't-type-income'; // Clase para barra roja/verde
+
             const concepto = conceptos.find(c => c.id === m.conceptoId);
             const conceptoNombre = concepto ? concepto.nombre : 'Varios';
             const cuentaObj = cuentas.find(c => c.id === m.cuentaId);
             const nombreCuenta = cuentaObj ? cuentaObj.nombre : 'Cuenta';
-            
-            const emojiMatch = conceptoNombre.match(/(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
-            const avatarContent = emojiMatch ? emojiMatch[0] : conceptoNombre.charAt(0).toUpperCase();
-            
-            const isGasto = m.cantidad < 0;
-            iconHtml = `<div class="t-icon ${isGasto ? 't-icon--expense' : 't-icon--income'}">${avatarContent}</div>`;
             
             line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-concept">${escapeHTML(conceptoNombre)}</span>`;
             
@@ -3801,9 +3797,9 @@ const renderVirtualListItem = (item) => {
             amountSign = isGasto ? '' : '+';
         }
 
+        // HTML FINAL LIMPIO: Sin div de icono, solo barra lateral por CSS
         return `
-        <div class="t-card ${highlightClass}" data-id="${m.id}" data-action="edit-movement-from-list">
-            ${iconHtml}
+        <div class="t-card ${highlightClass} ${typeClass}" data-id="${m.id}" data-action="edit-movement-from-list">
             <div class="t-content">
                 <div class="t-row-primary">
                     <div class="t-line-1">${line1}</div>
