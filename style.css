@@ -5895,43 +5895,58 @@ input, select, textarea {
     100% { transform: translateX(-500px) translateY(500px) rotate(-45deg); opacity: 0; width: 0; }
 }
 
-/* --- PLANETAS (Diseño CSS Puro) --- */
-.planet {
-    position: absolute;
-    border-radius: 50%;
-    box-shadow: inset -4px -4px 10px rgba(0,0,0,0.7); /* Sombra interna para volumen 3D */
-    animation: floatOrbit var(--orbit-speed) linear infinite alternate;
-    opacity: 0.9;
-}
+// [MANTENER EL CÓDIGO ANTERIOR DE LAS ESTRELLAS AQUÍ...]
 
-/* Estilos Específicos de Planetas */
-.planet-mercury { background: radial-gradient(circle at 30% 30%, #a5a5a5, #4e4e4e); }
-.planet-venus   { background: radial-gradient(circle at 30% 30%, #e6dbb3, #b89c56); box-shadow: 0 0 10px #e6dbb3; }
-.planet-mars    { background: radial-gradient(circle at 30% 30%, #ff6b6b, #8a1c1c); box-shadow: 0 0 8px #ff4500; }
-.planet-jupiter { 
-    background: repeating-linear-gradient(-45deg, #d4a373 0, #d4a373 10px, #faedcd 10px, #faedcd 20px); 
-    box-shadow: inset -6px -6px 15px rgba(0,0,0,0.5);
-}
-/* Saturno y sus anillos (usando ::after) */
-.planet-saturn  { background: #ead185; }
-.planet-saturn::after {
-    content: '';
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%) rotate(20deg);
-    width: 160%; height: 40%;
-    border-radius: 50%;
-    border: 4px solid rgba(220, 200, 150, 0.6);
-    border-top: 4px solid rgba(220, 200, 150, 0.9); /* Parte trasera más oscura */
-}
-.planet-uranus  { background: radial-gradient(circle at 30% 30%, #a2d2ff, #3a86ff); }
-.planet-neptune { background: radial-gradient(circle at 30% 30%, #4cc9f0, #4361ee); }
+    // 3. GENERAR LOS PLANETAS REALISTAS (Ahora incluye la Tierra)
+    // Aumentamos un poco los tamaños para que se aprecien las texturas
+    const planetsData = [
+        { type: 'mercury', size: 20 },
+        { type: 'venus',   size: 35 },
+        { type: 'earth',   size: 40 }, // ¡Tierra añadida!
+        { type: 'mars',    size: 28 },
+        { type: 'jupiter', size: 85 }, // Júpiter es enorme
+        { type: 'saturn',  size: 110 }, // Saturno ancho por los anillos
+        { type: 'uranus',  size: 50 },
+        { type: 'neptune', size: 48 }
+    ];
 
-/* Movimiento flotante de los planetas */
-@keyframes floatOrbit {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(var(--move-x), var(--move-y)); }
-}
+    // Rutas de animación CSS disponibles (definidas en style.css)
+    const movementPaths = ['movePath1', 'movePath2', 'movePath3'];
+
+    planetsData.forEach((p, index) => {
+        const planet = document.createElement('div');
+        planet.classList.add('planet', `planet-${p.type}`);
+        
+        // Tamaño base
+        planet.style.width = `${p.size}px`;
+        planet.style.height = `${p.size}px`;
+        
+        // --- Asignación de Movimiento Realista ---
+
+        // 1. Elegir una ruta aleatoria
+        const randomPath = movementPaths[Math.floor(Math.random() * movementPaths.length)];
+        
+        // 2. Velocidad: Entre 100s y 300s (muy lento) para cruzar la pantalla
+        const duration = 100 + (Math.random() * 200); 
+        
+        // 3. Retraso inicial: Para que no entren todos a la vez al cargar la página.
+        // Espaciamos sus entradas entre 0s y 60s.
+        const delay = Math.random() * 60;
+
+        // Aplicar estilos de animación combinados
+        // Usamos dos animaciones: la trayectoria y el "fadeIn" para que aparezcan suavemente
+        planet.style.animationName = `${randomPath}, fadeInSpace`;
+        planet.style.animationDuration = `${duration}s, ${duration}s`;
+        planet.style.animationDelay = `-${delay}s, -${delay}s`; // Delay negativo para que algunos ya estén a mitad de camino al empezar
+
+        // Posición inicial base (fuera de pantalla, la animación controla el resto)
+        planet.style.left = '-100px';
+        planet.style.top = '0px';
+
+        container.appendChild(planet);
+    });
+
+    // [MANTENER EL CÓDIGO SIGUIENTE DE LAS ESTRELLAS FUGACES AQUÍ...]
 /* ========================================= */
 /* === Ocultar Scrollbar (Estilo App) === */
 /* ========================================= */
