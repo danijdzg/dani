@@ -398,18 +398,6 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Borde sutilísimo */
 }
 
-/* 2. Anulación específica para Contabilidad A (el encabezado se vuelve azul corporativo) */
-body[data-ledger-mode="A"] .top-bar {
-    background-color: #002D5B; /* Azul oscuro y profesional */
-}
-
-/* 3. Anulación específica para Contabilidad B (el encabezado se vuelve rojo oscuro) */
-body[data-ledger-mode="B"] .top-bar {
-    /* Un rojo oscuro o púrpura profundo en lugar del gris translúcido estándar */
-    background-color: rgba(80, 0, 0, 0.85) !important; 
-    border-bottom: 1px solid var(--c-danger);
-}
-
 /* 4. Asegura que el texto y botones dentro del encabezado SIEMPRE sean blancos y legibles */
 /* Refactorización Profesional en style.css */
 body[data-theme] .top-bar,
@@ -423,41 +411,19 @@ body[data-theme] .top-bar #page-title-display {
 /* === COLORES DE CAJAS (ENCABEZADOS Y NAVEGACIÓN) REVISADOS === */
 /* ================================================================= */
 
-/* --- CAJA A: AZUL (Encabezado y Botones Activos) --- */
-body[data-ledger-mode="A"] .top-bar {
-    background-color: #0056b3 !important; /* Azul sólido */
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
+
 body[data-ledger-mode="A"] #ledger-toggle-btn {
     background-color: #007AFF !important; /* Azul Brillante */
     border-color: #007AFF !important;
     color: var(--c-white);
     box-shadow: 0 0 10px rgba(0, 122, 255, 0.5);
 }
-/* Iconos de navegación en Azul */
-body[data-ledger-mode="A"] .bottom-nav__item--active {
-    color: #007bff !important; 
-}
 
-/* --- CAJA B: ROJA (Encabezado y Botones Activos) --- */
-body[data-ledger-mode="B"] .top-bar {
-    background-color: #c82333 !important; /* Rojo sólido */
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
 body[data-ledger-mode="B"] #ledger-toggle-btn {
     background-color: #a71d2a; /* Rojo más oscuro */
     color: white;
 }
-/* Iconos de navegación en Rojo */
-body[data-ledger-mode="B"] .bottom-nav__item--active {
-    color: #dc3545 !important;
-}
 
-/* --- CAJA C: VERDE (Encabezado y PESTAÑAS BOTÓN) --- */
-body[data-ledger-mode="C"] .top-bar {
-    background-color: #218838 !important; /* Verde sólido */
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
 body[data-ledger-mode="C"] #ledger-toggle-btn {
     background-color: #1e7e34; /* Verde más oscuro */
     color: white;
@@ -6026,4 +5992,51 @@ input, select, textarea {
 .app-layout__main {
     scrollbar-width: none;  /* Firefox */
     -ms-overflow-style: none;  /* IE 10+ */
+}
+/* ================================================================= */
+/* === COLORES DE CAJAS: TEXTO DE BOTÓN Y BARRA TRANSPARENTE === */
+/* ================================================================= */
+
+/* 1. Barra Superior: SIEMPRE Estilo Vidrio (Quitamos fondos sólidos) */
+body[data-ledger-mode="A"] .top-bar,
+body[data-ledger-mode="B"] .top-bar,
+body[data-ledger-mode="C"] .top-bar {
+    background-color: rgba(28, 42, 58, 0.75) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 2. Botón de la Caja: Fondo transparente y TEXTO de color */
+#ledger-toggle-btn {
+    background-color: transparent !important; /* Fondo invisible */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    box-shadow: none !important;
+    transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+/* --- CAJA A: TEXTO AZUL --- */
+body[data-ledger-mode="A"] #ledger-toggle-btn {
+    color: #007AFF !important; /* Azul igual que el pie de página */
+    border-color: rgba(0, 122, 255, 0.3) !important;
+}
+
+/* --- CAJA B: TEXTO ROJO --- */
+body[data-ledger-mode="B"] #ledger-toggle-btn {
+    color: #FF3B30 !important; /* Rojo igual que el pie de página */
+    border-color: rgba(255, 59, 48, 0.3) !important;
+}
+
+/* --- CAJA C: TEXTO VERDE --- */
+body[data-ledger-mode="C"] #ledger-toggle-btn {
+    color: #28a745 !important; /* Verde igual que el pie de página */
+    border-color: rgba(40, 167, 69, 0.3) !important;
+}
+
+/* Efecto al pulsar el botón */
+#ledger-toggle-btn:active {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    transform: scale(0.95);
 }

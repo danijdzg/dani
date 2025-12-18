@@ -9371,10 +9371,7 @@ const handleStart = (e) => {
     updateLedgerButtonUI(); 
     // ▲▲▲ FIN DE LA CORRECCIÓN ▲▲▲
     
-    // Mensaje informativo usando el nombre real
-    showToast(`Cambiado a ${getLedgerName(currentLedger)}.`, 'info');
-
-    // 4. Actualizar datos y vistas
+      // 4. Actualizar datos y vistas
     populateAllDropdowns();
 
     const activePageEl = document.querySelector('.view--active');
