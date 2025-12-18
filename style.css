@@ -5848,42 +5848,63 @@ input, select, textarea {
     }
 }
 /* ================================================================= */
-/* === FONDO CÓSMICO AMOLED (Solo Estrellas y Fugaces) === */
+/* === FONDO CÓSMICO 3D (EFECTO HIPERESPACIO/NAVE) === */
 /* ================================================================= */
 
-/* Contenedor del Cosmos (Fijo al fondo) */
+/* Contenedor del Cosmos (Motor 3D) */
 #cosmos-container {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1; /* Detrás de todo */
-    
-    /* CAMBIO CLAVE: Negro Puro #000000 para efecto AMOLED */
-    background-color: #000000; 
-    
+    z-index: -1;
+    background-color: #000000; /* Negro AMOLED Puro */
     overflow: hidden;
-    pointer-events: none;
+    
+    /* ESTO CREA LA PROFUNDIDAD 3D */
+    perspective: 800px; 
+    transform-style: preserve-3d;
 }
 
-/* --- ESTRELLAS (Varios tamaños y brillos) --- */
+/* --- ESTRELLAS VIAJERAS --- */
 .star {
     position: absolute;
     background-color: white;
     border-radius: 50%;
-    /* Opacidad variable para dar profundidad */
-    opacity: 0.8; 
-    box-shadow: 0 0 2px rgba(255, 255, 255, 0.8); /* Pequeño resplandor */
-    animation: twinkle var(--twinkle-duration) infinite ease-in-out alternate;
+    /* Empezamos invisibles y lejos */
+    opacity: 0;
+    
+    /* El centro de fuga es el centro de la pantalla */
+    transform-origin: 50% 50%;
+    
+    /* La animación de viaje */
+    animation: warpSpeed var(--speed) linear infinite;
+    animation-delay: var(--delay);
 }
 
-@keyframes twinkle {
-    0% { opacity: 0.2; transform: scale(0.8); }
-    100% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 4px white; }
+/* Animación: Las estrellas vienen desde el fondo (-1000px) hacia ti */
+@keyframes warpSpeed {
+    0% {
+        transform: translateZ(-1000px);
+        opacity: 0;
+    }
+    20% {
+        opacity: 0.8; /* Se hacen visibles lejos */
+    }
+    80% {
+        opacity: 1;
+        /* Al acercarse brillan más */
+        box-shadow: 0 0 6px white; 
+    }
+    100% {
+        /* Pasan "detrás" de la cámara (hacia ti) */
+        transform: translateZ(300px); 
+        opacity: 0;
+    }
 }
 
-/* --- ESTRELLAS FUGACES (Espectaculares) --- */
+/* --- ESTRELLAS FUGACES (Capa superior decorativa) --- */
 .shooting-star {
     position: absolute;
     height: 2px;
@@ -5895,11 +5916,58 @@ input, select, textarea {
     z-index: -1;
 }
 
-/* Animación de cruzar la pantalla */
 @keyframes shoot {
     0% { transform: translateX(0) translateY(0) rotate(-45deg); opacity: 1; width: 0; }
-    15% { width: 120px; opacity: 1; } /* Cola larga y brillante */
+    15% { width: 120px; opacity: 1; }
     100% { transform: translateX(-600px) translateY(600px) rotate(-45deg); opacity: 0; width: 0; }
+}
+/* ================================================================= */
+/* === MODO COMPACTO & LIMPIEZA TOTAL DEL ENCABEZADO === */
+/* ================================================================= */
+
+/* 1. Ocultar los Nombres de las Pestañas en el Encabezado */
+/* Esto elimina "Panel", "Diario", "Ajustes" de la barra superior para siempre */
+#page-title-display {
+    display: none !important;
+}
+
+/* 2. Reducir la altura del Encabezado (Más espacio para contenido) */
+.top-bar {
+    height: 30px !important;      /* Reducimos de 60px a 30px */
+    min-height: 50px !important;
+    padding: 0 10px !important;   /* Menos padding lateral */
+}
+
+/* 3. Ajustar el botón central "Caja A" para que quepa en la barra más fina */
+#ledger-toggle-btn {
+    padding: 6px 20px !important; /* Un poco más pequeño */
+    font-size: 0.9rem !important; /* Letra ajustada */
+    height: 34px !important;      /* Altura fija compacta */
+    /* Mantenemos el centrado absoluto */
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* 4. Ajustar el contenedor principal para que empiece justo donde acaba el encabezado */
+/* Como el encabezado ahora mide 50px, el contenido empieza en 50px */
+#app-root.app-layout {
+    padding-top: 50px !important; 
+}
+
+/* 5. ELIMINAR CUALQUIER ESPACIO VACÍO en Panel y Diario */
+/* Forzamos a que las gráficas y listas toquen el borde del encabezado */
+.dashboard-view, 
+.dashboard-container,
+.diario-container,
+.transactions-list-container {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* 6. Ajuste específico para el Sticky del Diario (Meses) */
+/* Como la barra ahora mide 50px, el mes debe pegarse a 30px, no a 60px */
+.movimiento-month-header {
+    top: 30px !important; 
 }
    
 /* ========================================= */
