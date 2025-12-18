@@ -1403,11 +1403,10 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     
     /* 1. EL "LIENZO" EXTERIOR */
     body {
-        background-color: #050505; /* Fondo negro profundo fuera de la app */
-        display: flex;
-        justify-content: center; /* Centramos la app en el monitor */
-        background-image: radial-gradient(circle at 50% 50%, #1a202c 0%, #000000 100%);
-    }
+    background-color: #000000; /* Fondo negro limpio (AMOLED) */
+    margin: 0;
+    overflow-x: hidden; /* Prevenir scroll lateral */
+}
 
     /* 2. EL CONTENEDOR DE LA APP (La "Ventana") */
     .app-layout { 
@@ -5847,86 +5846,7 @@ input, select, textarea {
         opacity: 0.5;
     }
 }
-/* ================================================================= */
-/* === FONDO CÓSMICO 3D: WARP SPEED (CORREGIDO) === */
-/* ================================================================= */
 
-#cosmos-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    background-color: #000000; /* Negro Puro */
-    overflow: hidden;
-    /* Profundidad de campo para el efecto 3D */
-    perspective: 600px; 
-}
-
-/* --- ESTRELLAS --- */
-.star {
-    position: absolute;
-    /* Todas nacen en el centro exacto */
-    top: 50%;
-    left: 50%;
-    width: 2px;
-    height: 2px;
-    background-color: white;
-    border-radius: 50%;
-    opacity: 0;
-    box-shadow: 0 0 2px white;
-    
-    /* Esta animación controla todo el viaje */
-    animation: warpTravel var(--duration) linear infinite;
-    animation-delay: var(--delay);
-    
-    /* Importante para rendimiento en móviles */
-    will-change: transform, opacity;
-}
-
-/* ANIMACIÓN: Del fondo (-1000px) hacia el frente (+500px) */
-@keyframes warpTravel {
-    0% {
-        /* Empieza lejos y en el centro */
-        transform: translate3d(0, 0, -1000px);
-        opacity: 0;
-    }
-    10% {
-        opacity: 1; /* Se hace visible rápido */
-    }
-    100% {
-        /* Termina cerca de la cara y dispersa según sus variables X e Y */
-        transform: translate3d(var(--dest-x), var(--dest-y), 800px);
-        opacity: 0; /* Se desvanece al "pasarnos" */
-    }
-}
-
-/* --- ESTRELLAS FUGACES (Más grandes y frecuentes) --- */
-.shooting-star {
-    position: absolute;
-    height: 3px; /* Un poco más gruesas para verse más */
-    background: linear-gradient(90deg, rgba(255,255,255,1), transparent);
-    border-radius: 999px;
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9));
-    animation: shoot 1.5s ease-out forwards; /* Más rápida */
-    opacity: 0;
-    z-index: -1;
-}
-
-@keyframes shoot {
-    0% { 
-        transform: translateX(0) translateY(0) rotate(-45deg) scale(0.5); 
-        opacity: 1; 
-        width: 0; 
-    }
-    20% { width: 150px; opacity: 1; }
-    100% { 
-        transform: translateX(-800px) translateY(800px) rotate(-45deg) scale(1); 
-        opacity: 0; 
-        width: 0; 
-    }
-}
 /* ================================================================= */
 /* === MODO COMPACTO & LIMPIEZA TOTAL DEL ENCABEZADO === */
 /* ================================================================= */
