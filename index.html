@@ -90,17 +90,6 @@
         </div>
     </div>
     
-    <div id="app-root" class="app-layout">
-		<div class="top-bar">
-    <div class="top-bar__left-button">
-        <button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar Caja">
-            Caja A
-        </button>
-        <span id="page-title-display">Panel</span>
-    </div>
-    <div class="top-bar__actions" id="top-bar-actions">
-        </div>
-</div>
        <nav class="bottom-nav">
     <button data-action="navigate" data-page="panel-page" class="bottom-nav__item">
         <span class="material-icons">dashboard</span>
@@ -151,11 +140,13 @@
 </div>
         <div class="top-bar">
     <div class="app-logo" style="display: flex; align-items: center; gap: 10px;">
-    <span class="material-icons" style="font-size: 40px; color: #00B34D;">account_balance_wallet</span>
-    
-    <span class="app-title" style="font-weight: 700; font-size: 1.15rem; letter-spacing: -0.5px;">aiDANaI - ctas</span>
+    <span class="material-icons" style="font-size: 40px; color: #00B34D;">account_balance_wallet</span>   
 </div>
-
+	<div class="top-bar__left-button">
+        <button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar Caja">
+            Caja A
+        </button>
+       </div>
     <div style="flex-grow: 1;"></div>
 
     <div class="top-bar-actions" style="display: flex; gap: 5px; align-items: center;">
