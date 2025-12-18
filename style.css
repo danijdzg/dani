@@ -6143,3 +6143,83 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
        o puedes ponerle fondo morado suave si prefieres */
     text-shadow: 0 0 8px rgba(191, 90, 242, 0.4); 
 }
+/* ================================================================= */
+/* === UNIFICACIÓN TOTAL: ENCABEZADO Y PIE DE PÁGINA === */
+/* ================================================================= */
+
+/* 1. VARIABLE COMPARTIDA DE ESTILO (Para que sean idénticos) */
+:root {
+    /* Color oscuro semitransparente para efecto vidrio */
+    --bar-bg: rgba(18, 18, 18, 0.85); 
+    --bar-blur: blur(15px) saturate(180%);
+    --bar-border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* 2. ENCABEZADO (Pegado Arriba) */
+.top-bar {
+    position: fixed !important; /* Fijo al techo */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50px !important;
+    z-index: 1000; /* Siempre por encima */
+    
+    /* Estética Vidrio */
+    background-color: var(--bar-bg) !important;
+    backdrop-filter: var(--bar-blur);
+    -webkit-backdrop-filter: var(--bar-blur);
+    
+    /* Borde solo abajo */
+    border-bottom: var(--bar-border);
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2); /* Sombra suave */
+}
+
+/* 3. PIE DE PÁGINA (Pegado Abajo) */
+.bottom-nav {
+    position: fixed !important; /* Fijo al suelo */
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px; /* Altura estándar cómoda para dedos */
+    z-index: 1000;
+    
+    /* Estética Vidrio (Idéntica al encabezado) */
+    background-color: var(--bar-bg) !important;
+    backdrop-filter: var(--bar-blur);
+    -webkit-backdrop-filter: var(--bar-blur);
+    
+    /* Borde solo arriba */
+    border-top: var(--bar-border);
+    border-bottom: none;
+    border-left: none;
+    border-right: none;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+    
+    /* Aseguramos flex para los iconos */
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+/* 4. AJUSTE DEL CUERPO (Para que el contenido no se tape) */
+#app-root.app-layout {
+    /* Dejamos espacio arriba (50px) y abajo (70px) para que las barras fijas no tapen nada */
+    padding-top: 50px !important;
+    padding-bottom: 70px !important; 
+    
+    /* Fondo negro base */
+    background-color: #000000;
+    min-height: 100vh;
+}
+
+/* 5. CORRECCIÓN STICKY DIARIO */
+/* Como el encabezado es fijo, el mes debe pegarse justo debajo (a 50px) */
+.movimiento-month-header {
+    position: sticky;
+    top: 50px !important; /* Justo debajo de la barra superior */
+    z-index: 900; /* Debajo del encabezado pero sobre los movimientos */
+    background-color: #000000; /* O el color que prefieras para tapar al hacer scroll */
+}
