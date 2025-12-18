@@ -11732,7 +11732,7 @@ window.addEventListener('click', (e) => {
     }
 });
 /* ================================================= */
-/* === 1. MOTOR CÓSMICO (Planetas y Estrellas) === */
+/* === 1. MOTOR CÓSMICO (FONDO) === */
 /* ================================================= */
 (function initCosmicEngine() {
     const container = document.getElementById('deep-space-background');
@@ -11768,7 +11768,7 @@ window.addEventListener('click', (e) => {
     createStars(500, '1px', 0.8);
     createStars(150, '2px', 1.0);
 
-    // Planetas Espectaculares
+    // Planetas
     const spawnPlanet = () => {
         if (document.querySelectorAll('.space-planet').length >= 2) return;
         const p = document.createElement('div');
@@ -11778,7 +11778,6 @@ window.addEventListener('click', (e) => {
         const size = 60 + Math.random() * 100; 
         p.style.width = `${size}px`; p.style.height = `${size}px`;
         
-        // Animación diagonal
         p.style.left = '-200px';
         p.style.top = `${Math.random() * 60}%`;
         const duration = 20 + Math.random() * 15;
@@ -11790,83 +11789,77 @@ window.addEventListener('click', (e) => {
     setInterval(() => { if(Math.random() > 0.4) spawnPlanet(); }, 5000);
 })();
 
+/* ================================================= */
+/* === 2. LÓGICA DE DATOS Y ENCABEZADO === */
+/* ================================================= */
 
-/* ================================================================ */
-/* === LECTURA DE DATOS CON FILTRO DE CAJA (A, B o C) === */
-/* ================================================================ */
-
-// 1. Variable para saber en qué caja estamos (leída de memoria o A por defecto)
+// Variable global para la caja actual
 let currentLedgerMode = localStorage.getItem('selectedLedgerMode') || 'A';
 
-// Función para inicializar la escucha de datos
+// Función principal de carga de datos
 function initApp() {
-    console.log("Cargando datos para CAJA:", currentLedgerMode);
+    console.log("Iniciando App en CAJA:", currentLedgerMode);
     
-    // Actualizar colores visuales
+    // 1. Actualizar estética (Body y Botón)
     document.body.setAttribute('data-ledger-mode', currentLedgerMode);
-    const btn = document.getElementById('header-ledger-btn');
-    if(btn) btn.textContent = `CAJA ${currentLedgerMode}`;
+    const btnHeader = document.getElementById('header-ledger-btn');
+    if(btnHeader) btnHeader.textContent = `CAJA ${currentLedgerMode}`;
 
-    // --- ESCUCHA DE FIREBASE CON FILTRO ---
+    // 2. Conexión a Firebase con FILTRO
     db.collection("movimientos")
       .orderBy("fecha", "desc")
       .onSnapshot((snapshot) => {
         
         const movimientos = [];
-        let totalIngresos = 0;
-        let totalGastos = 0;
-
+        
         snapshot.forEach((doc) => {
             const data = doc.data();
             
-            // >>> EL FILTRO MAESTRO <<<
-            // Si el movimiento NO tiene campo 'caja', asumimos que es 'A'
-            const cajaMovimiento = data.caja || 'A';
+            // --- FILTRO DE CAJA ---
+            // Si el dato no tiene caja, asumimos 'A'.
+            const cajaDato = data.caja || 'A';
             
-            // SOLO procesamos el movimiento si coincide con la caja actual
-            if (cajaMovimiento === currentLedgerMode) {
+            // Solo guardamos si coincide
+            if (cajaDato === currentLedgerMode) {
                 movimientos.push({ id: doc.id, ...data });
-                
-                // Calcular totales aquí mismo para asegurar consistencia
-                if (data.tipo === 'ingreso') totalIngresos += parseFloat(data.cantidad);
-                if (data.tipo === 'gasto') totalGastos += parseFloat(data.cantidad);
             }
         });
 
-        // Renderizar la lista con los datos YA FILTRADOS
-        renderVirtualListItem(movimientos); 
-        // Actualizar KPIs (si tienes función updateKPIs)
-        if(typeof updateKPIs === 'function') updateKPIs(movimientos);
+        // Renderizar (asegúrate de que esta función existe en tu código previo)
+        if (typeof renderVirtualListItem === 'function') {
+            renderVirtualListItem(movimientos);
+        } else if (typeof renderList === 'function') {
+            renderList(movimientos);
+        }
+        
+        // Actualizar KPIs si existe la función
+        if (typeof updateKPIs === 'function') {
+            updateKPIs(movimientos);
+        }
     });
 }
 
-// 2. Lógica del Botón de Cambio de Caja
+// Eventos de botones (Calculadora, Menú y Cambio de Caja)
 document.addEventListener('DOMContentLoaded', () => {
-    // Iniciar app
+    
+    // Iniciar la carga de datos
     initApp();
 
+    // A. BOTÓN CAMBIO DE CAJA
     const btnLedger = document.getElementById('header-ledger-btn');
     if(btnLedger) {
         btnLedger.addEventListener('click', () => {
-            // Ciclo A -> B -> C -> A
             if (currentLedgerMode === 'A') currentLedgerMode = 'B';
             else if (currentLedgerMode === 'B') currentLedgerMode = 'C';
             else currentLedgerMode = 'A';
 
-            // Guardar en memoria
             localStorage.setItem('selectedLedgerMode', currentLedgerMode);
-            
-            // REINICIAR LA APP PARA APLICAR EL NUEVO FILTRO
-            // Esto cancelará la suscripción anterior y cargará los datos de la nueva caja
-            // (La forma más simple es recargar la página para limpiar todo)
+            // Recargar página para aplicar cambios limpiamente
             location.reload(); 
         });
     }
-});
 
-    // --- B. ICONOS DE HERRAMIENTAS QUE NO FUNCIONABAN ---
-
-    // 1. CALCULADORA
+    // B. CALCULADORA
     const btnCalc = document.getElementById('btn-toggle-calculator');
     const modalCalc = document.getElementById('calculator-modal');
     const btnCloseCalc = document.getElementById('btn-close-calc');
@@ -11874,83 +11867,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if(btnCalc && modalCalc) {
         btnCalc.addEventListener('click', () => {
             modalCalc.style.display = 'flex';
-            // Cargar iframe solo si es necesario
             const iframe = document.getElementById('calculator-frame');
-            if(iframe && !iframe.getAttribute('src')) iframe.src = 'calculadora.html';
+            // Cargar iframe si está vacío (evita error 404 si no existe el archivo aún)
+            if(iframe && !iframe.getAttribute('src')) iframe.src = 'calculator.html';
         });
-        
-        // Cerrar calculadora
         if(btnCloseCalc) {
             btnCloseCalc.addEventListener('click', () => modalCalc.style.display = 'none');
         }
     }
 
-    // 2. MENÚ OPCIONES
+    // C. MENÚ DE OPCIONES
     const btnOpt = document.getElementById('btn-show-options');
     const menuDropdown = document.getElementById('main-dropdown-menu');
     
     if(btnOpt && menuDropdown) {
         btnOpt.addEventListener('click', (e) => {
-            e.stopPropagation(); // Evita que el click en el botón cierre el menú inmediatamente
-            
-            // Toggle clase 'show' para animación o display
+            e.stopPropagation();
             if (menuDropdown.style.display === 'block') {
-                menuDropdown.classList.remove('show');
-                setTimeout(() => menuDropdown.style.display = 'none', 200); // Esperar animación
+                menuDropdown.style.display = 'none';
             } else {
                 menuDropdown.style.display = 'block';
-                // Pequeño delay para permitir que la animación CSS ocurra
-                requestAnimationFrame(() => menuDropdown.classList.add('show'));
             }
         });
-        
-        // Cerrar al pulsar fuera
-        document.addEventListener('click', (e) => {
-            if (menuDropdown.style.display === 'block' && !menuDropdown.contains(e.target) && e.target !== btnOpt) {
-                menuDropdown.classList.remove('show');
-                setTimeout(() => menuDropdown.style.display = 'none', 200);
-            }
-        });
-    }
-});
-/* ============================================================== */
-/* === REACTIVAR ICONOS DEL ENCABEZADO (CALCULADORA Y MENÚ) === */
-/* ============================================================== */
-document.addEventListener('DOMContentLoaded', () => {
-    
-    // 1. CALCULADORA
-    const btnCalc = document.getElementById('btn-toggle-calculator');
-    const modalCalc = document.getElementById('calculator-modal');
-    const btnCloseCalc = document.getElementById('btn-close-calc');
-    
-    if (btnCalc && modalCalc) {
-        btnCalc.addEventListener('click', () => {
-            modalCalc.style.display = 'flex'; // Mostrar
-        });
-        if(btnCloseCalc) {
-            btnCloseCalc.addEventListener('click', () => {
-                modalCalc.style.display = 'none'; // Ocultar
-            });
-        }
-    }
-
-    // 2. MENÚ DE OPCIONES (3 PUNTOS)
-    const btnOpt = document.getElementById('btn-show-options');
-    const menu = document.getElementById('main-dropdown-menu');
-
-    if (btnOpt && menu) {
-        btnOpt.addEventListener('click', (e) => {
-            e.stopPropagation();
-            // Alternar: Si se ve, lo oculto. Si no, lo muestro.
-            if (menu.style.display === 'block') {
-                menu.style.display = 'none';
-            } else {
-                menu.style.display = 'block';
-            }
-        });
-        // Cerrar si clicamos fuera
         document.addEventListener('click', () => {
-            menu.style.display = 'none';
+            menuDropdown.style.display = 'none';
         });
     }
 });
