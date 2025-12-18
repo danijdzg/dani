@@ -140,20 +140,21 @@
         <span class="material-icons fab-icon-close">close</span>
     </button>
 </div>
-        <div class="top-bar">
+   <div class="top-bar">
+    
     <div class="top-bar__left" style="display: flex; align-items: center; gap: 10px;">
-    <span class="material-icons" style="font-size: 40px; color: #00B34D;">account_balance_wallet</span>
-	<span id="page-title-display" style="font-weight: 600; font-size: 1.1rem;"></span>
-	<button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Cambiar Caja">
-            Caja A
-        </button>
-</div>
-	<div class="top-bar__left-button">
         
-       </div>
-    <div style="flex-grow: 1;"></div>
+        <span class="material-icons" style="font-size: 32px; color: #00B34D;">account_balance_wallet</span>
 
-    <div class="top-bar-actions" style="display: flex; gap: 5px; align-items: center;">
+        <div id="diario-left-icons" style="display: flex; align-items: center; gap: 2px;"></div>
+        <span id="page-title-display" style="font-weight: 600; font-size: 1.1rem;"></span>
+    </div>
+
+    <button id="ledger-toggle-btn" class="btn" data-action="toggle-ledger" title="Cambiar Caja">
+        Caja A
+    </button>
+    
+    <div class="top-bar__actions" id="top-bar-actions" style="display: flex; gap: 5px; align-items: center;">
         
         <button class="icon-btn" data-action="global-search" aria-label="Buscar">
             <span class="material-icons">search</span>

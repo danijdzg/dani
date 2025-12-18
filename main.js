@@ -11757,7 +11757,7 @@ const createSpaceTravel = () => {
         star.style.setProperty('--dest-y', `${destY}px`);
 
         // Velocidad: Cuanto más bajo el número, más rápido parece la nave
-        const duration = 1 + Math.random() * 3; 
+        const duration = 5 + Math.random() * 10;
         star.style.setProperty('--duration', `${duration}s`);
 
         // Retraso para flujo continuo
