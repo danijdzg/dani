@@ -11798,52 +11798,67 @@ let currentLedgerMode = localStorage.getItem('selectedLedgerMode') || 'A';
 
 // Función principal de carga de datos
 function initApp() {
-    // 1. Configuración Visual Inicial
+    // 1. Configuración Visual
     let currentLedgerMode = localStorage.getItem('selectedLedgerMode') || 'A';
-    console.log("Configurando App visualmente para CAJA:", currentLedgerMode);
+    console.log("Iniciando App visualmente en CAJA:", currentLedgerMode);
     
     document.body.setAttribute('data-ledger-mode', currentLedgerMode);
     const btnHeader = document.getElementById('header-ledger-btn');
     if(btnHeader) btnHeader.textContent = `CAJA ${currentLedgerMode}`;
 
-    // 2. EL CAMBIO CLAVE: Esperar a la Autenticación
-    // Esto vigila si el usuario entra o sale de la app
+    // 2. EL TRUCO: Escuchar el estado de la autenticación
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
-            // ¡USUARIO LOGUEADO! Ahora sí tenemos permiso para leer datos
-            console.log("Usuario detectado:", user.email);
-            
-            const db = firebase.firestore();
-            
-            // Suscripción a los datos (Esto se mantiene igual que antes)
-            db.collection("movimientos")
-              .orderBy("fecha", "desc")
-              .onSnapshot((snapshot) => {
-                const movimientos = [];
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    // Filtro de Caja
-                    const cajaDato = data.caja || 'A'; 
-                    if (cajaDato === currentLedgerMode) {
-                        movimientos.push({ id: doc.id, ...data });
-                    }
-                });
-
-                // Renderizar
-                if (typeof renderVirtualListItem === 'function') renderVirtualListItem(movimientos);
-                else if (typeof renderList === 'function') renderList(movimientos);
-                
-                if (typeof updateKPIs === 'function') updateKPIs(movimientos);
-
-            }, (error) => {
-                console.error("Error leyendo datos (incluso estando logueado):", error);
-            });
-
+            // === CASO A: YA TIENES LA LLAVE (Estás logueado) ===
+            console.log("Usuario autenticado (ID):", user.uid);
+            cargarDatosFirestore(currentLedgerMode);
         } else {
-            // NO HAY USUARIO LOGUEADO
-            console.warn("Nadie ha iniciado sesión. No se pueden cargar los datos.");
-            // Opcional: Si no estás logueado, redirigir al login o hacer login anónimo
-            // firebase.auth().signInAnonymously().catch(console.error);
+            // === CASO B: NO TIENES LLAVE (No estás logueado) ===
+            console.warn("Usuario no detectado. Intentando entrar como Anónimo...");
+            
+            // Intentamos hacer login anónimo automático
+            firebase.auth().signInAnonymously()
+                .then(() => {
+                    console.log("Login anónimo exitoso.");
+                    // Al loguearse, se disparará de nuevo el 'if(user)' de arriba
+                })
+                .catch((error) => {
+                    console.error("Error en el Auto-Login:", error);
+                    alert("Error de seguridad: Firebase no permite la entrada. Revisa la consola.");
+                });
+        }
+    });
+}
+
+// Función auxiliar para leer los datos (se llama solo cuando ya tenemos permiso)
+function cargarDatosFirestore(modoCaja) {
+    const db = firebase.firestore(); // Conectamos ahora que tenemos permiso
+    
+    db.collection("movimientos")
+      .orderBy("fecha", "desc")
+      .onSnapshot((snapshot) => {
+        const movimientos = [];
+        
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            // Filtro de Caja
+            const cajaDato = data.caja || 'A'; 
+            if (cajaDato === modoCaja) {
+                movimientos.push({ id: doc.id, ...data });
+            }
+        });
+
+        // Renderizar
+        if (typeof renderVirtualListItem === 'function') renderVirtualListItem(movimientos);
+        else if (typeof renderList === 'function') renderList(movimientos);
+        
+        if (typeof updateKPIs === 'function') updateKPIs(movimientos);
+
+    }, (error) => {
+        console.error("Error leyendo datos:", error);
+        // Si sale permission-denied aquí, es que tus reglas de Firebase son muy estrictas
+        if (error.code === 'permission-denied') {
+            alert("AVISO: Tienes que habilitar el 'Login Anónimo' en tu consola de Firebase o cambiar las Reglas a 'allow read: if true'.");
         }
     });
 }
@@ -11878,7 +11893,7 @@ document.addEventListener('DOMContentLoaded', () => {
             modalCalc.style.display = 'flex';
             const iframe = document.getElementById('calculator-frame');
             // Cargar iframe si está vacío (evita error 404 si no existe el archivo aún)
-            if(iframe && !iframe.getAttribute('src')) iframe.src = 'calculator.html';
+            if(iframe && !iframe.getAttribute('src')) iframe.src = 'calculadora.html';
         });
         if(btnCloseCalc) {
             btnCloseCalc.addEventListener('click', () => modalCalc.style.display = 'none');
