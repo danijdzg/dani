@@ -6223,61 +6223,7 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
     z-index: 900; /* Debajo del encabezado pero sobre los movimientos */
     background-color: #000000; /* O el color que prefieras para tapar al hacer scroll */
 }
-/* ================================================================= */
-/* === MODO "ULTRA COMPACTO" (CERO ESPACIO DESPERDICIADO) === */
-/* ================================================================= */
 
-/* 1. Sincronización Exacta: Encabezado y Cuerpo */
-.top-bar {
-    height: 50px !important;      /* Altura fija compacta */
-    min-height: 50px !important;
-}
-
-#app-root.app-layout {
-    /* El relleno debe ser EXACTAMENTE la altura de la barra. Ni un px más. */
-    padding-top: 50px !important; 
-}
-
-/* 2. Eliminación de Márgenes en Contenedores Principales */
-/* Esto quita el espacio blanco encima de las gráficas o la lista */
-.dashboard-view,
-.dashboard-container,
-.diario-container,
-.transactions-list-container {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
-
-/* 3. Ajuste Fino: El primer elemento de cada vista */
-/* A veces el primer elemento tiene su propio margen. Lo reducimos al mínimo. */
-.dashboard-view > *:first-child,
-.diario-container > *:first-child {
-    margin-top: 2px !important; /* Solo 2px de separación visual */
-}
-
-/* 4. PESTAÑA DIARIO: Encabezado del Mes Pegado */
-/* El mes (ej: "Diciembre") se pega exactamente debajo de la barra superior */
-.movimiento-month-header {
-    top: 50px !important; /* Coincide con la altura del encabezado */
-    margin-top: 0 !important;
-    padding-top: 8px !important; /* Un poco de relleno interno para que el texto no toque el borde */
-    padding-bottom: 8px !important;
-    border-radius: 0 !important; /* Quitamos bordes redondos para que encaje como un bloque */
-}
-
-/* 5. PESTAÑA PANEL: Tarjetas KPI (Ingresos/Gastos) */
-/* Subimos las tarjetas de resumen para que estén arriba del todo */
-.kpi-grid,
-.summary-cards-container {
-    margin-top: 4px !important; /* Mínimo respiro */
-    margin-bottom: 10px !important;
-}
-
-/* 6. Ajuste de Títulos de Sección (si los hubiera) */
-h2, .section-title {
-    margin-top: 0 !important;
-    padding-top: 5px !important;
-}
 /* ================================================================= */
 /* === 1. BOTÓN (+) INCRUSTADO EN EL CENTRO DEL PIE DE PÁGINA === */
 /* ================================================================= */
@@ -6371,4 +6317,62 @@ h2, .section-title {
         transform: translate3d(var(--dest-x), var(--dest-y), 500px);
         opacity: 0;
     }
+}
+/* ================================================================= */
+/* === ELIMINACIÓN TOTAL DE MÁRGENES SUPERIORES (ZERO-GAP) === */
+/* ================================================================= */
+
+/* 1. Ajuste milimétrico del Contenedor Principal */
+#app-root.app-layout {
+    /* El relleno superior debe ser EXACTAMENTE la altura de la barra (50px) */
+    /* Si sientes que aún hay hueco, prueba a bajar esto a 45px, 
+       pero cuidado con que el texto no se meta debajo del vidrio */
+    padding-top: 50px !important; 
+}
+
+/* 2. Forzar a los contenedores de las vistas a no tener techo */
+.dashboard-view,
+.dashboard-container,
+.diario-container,
+.transactions-list-container,
+.view-container {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    border-top: none !important;
+}
+
+/* 3. LA REGLA DE ORO: Matar el margen del PRIMER elemento */
+/* Esto busca el primer hijo de cualquier vista y le quita el margen superior. */
+/* Es lo que elimina el hueco misterioso causado por títulos o grids. */
+.dashboard-view > *:first-child,
+.diario-container > *:first-child,
+.view-container > *:first-child,
+.kpi-grid:first-child,
+.summary-cards-container:first-child {
+    margin-top: 0 !important;
+    padding-top: 4px !important; /* Solo 4px para que no toque el borde literalmente */
+}
+
+/* 4. AJUSTE ESPECÍFICO PARA PESTAÑA DIARIO (El mes pegado) */
+.movimiento-month-header {
+    /* Se pega exactamente donde termina el encabezado */
+    top: 50px !important; 
+    margin-top: 0 !important;
+    
+    /* Reducimos la altura del encabezado del mes para ganar más espacio vertical */
+    padding: 6px 15px !important; 
+    font-size: 0.85rem !important; /* Texto un pelín más compacto */
+    line-height: 1.2 !important;
+}
+
+/* 5. AJUSTE ESPECÍFICO PARA PESTAÑA PANEL (Gráficas KPI) */
+/* Compactamos la rejilla de las tarjetas superiores */
+.kpi-grid {
+    gap: 8px !important; /* Menos espacio entre tarjetas */
+    margin-bottom: 10px !important; /* Menos espacio debajo de las tarjetas */
+}
+
+/* 6. Corrección para evitar scroll elástico blanco en iOS/Android */
+html, body {
+    overscroll-behavior-y: none; /* Evita el rebote blanco arriba/abajo */
 }
