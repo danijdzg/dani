@@ -6321,60 +6321,6 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
 html, body {
     overscroll-behavior-y: none; /* Evita el rebote blanco arriba/abajo */
 }
-/* ================================================================= */
-/* === CORRECCIONES FINALES: ESPACIOS (ZERO-GAP) === */
-/* ================================================================= */
-
-
-/* SOLUCIÓN ESPACIO SUPERIOR: Ajuste quirúrgico del contenedor */
-#app-root.app-layout {
-    /* El relleno superior debe ser EXACTAMENTE la altura de la barra (50px) */
-    padding-top: 50px !important; 
-  
-/* ================================================================= */
-/* === CORRECCIÓN NAVEGACIÓN Y MÁRGENES (FIX FINAL) === */
-/* ================================================================= */
-
-/* 1. Lógica de Pestañas (Mostrar/Ocultar) */
-/* Por defecto, todas las vistas están ocultas y sin márgenes */
-.view {
-    display: none; /* Oculto por defecto */
-    width: 100%;
-    height: 100%;
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-    overflow-x: hidden;
-}
-
-/* Solo la vista que tenga la clase 'active' se muestra */
-.view.active {
-    display: block !important; /* Visible */
-    animation: fadeIn 0.3s ease-in-out; /* Pequeña animación suave opcional */
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-/* 2. Ajuste de Contenedores Internos (Sin huecos) */
-/* Mantenemos la eliminación de márgenes para los contenedores internos, pero SIN tocar .view */
-.app-layout__main,
-.dashboard-container,
-.diario-container {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-    /* Quitamos el 'display: block !important' global para evitar conflictos */
-}
-
-/* 3. Asegurar altura del Main */
-.app-layout__main {
-    flex: 1;
-    position: relative;
-    width: 100%;
-    /* Aseguramos que no tenga scroll propio que choque con el body */
-    overflow-y: visible; 
-}
 
 /* ================================================================= */
 /* === FONDO NEGRO PURO (SIN ESTRELLAS) Y CERO MÁRGENES === */
@@ -6398,4 +6344,41 @@ html, body {
     background-color: #000000 !important;
     min-height: 100vh;
     padding-top: 50px !important; /* Espacio exacto para el encabezado */
+}
+/* ================================================================= */
+/* === CORRECCIÓN NAVEGACIÓN (FIX) === */
+/* ================================================================= */
+
+/* SOLUCIÓN ESPACIO SUPERIOR: Ajuste quirúrgico del contenedor */
+#app-root.app-layout {
+    /* El relleno superior debe ser EXACTAMENTE la altura de la barra (50px) */
+    padding-top: 50px !important; 
+
+/* 1. Comportamiento de las Pestañas */
+.view {
+    display: none; /* Todas ocultas por defecto */
+    width: 100%;
+    height: 100%;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* 2. La pestaña activa SE MUESTRA */
+.view.active {
+    display: block !important; /* ¡Esta es la clave para que se vea! */
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Animación suave de aparición */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 3. Ajuste de contenedores (Mantener márgenes a cero) */
+.app-layout__main,
+.dashboard-container,
+.diario-container {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
 }
