@@ -6263,38 +6263,6 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
     box-shadow: 0 0 20px rgba(0, 179, 77, 0.8) !important;
 }
 
-
-/* ================================================================= */
-/* === NUEVO FONDO ESTRELLADO (CANVAS) === */
-/* ================================================================= */
-
-/* 1. El Lienzo de Estrellas */
-#starfield {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -2; /* Al fondo del todo */
-    background-color: #000000; /* Fondo base negro */
-}
-
-/* 2. La Nebulosa / Galaxia (Efecto de color sutil) */
-#galaxy-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1; /* Encima de las estrellas pero detrás de la app */
-    pointer-events: none;
-    
-    /* Gradientes sutiles rojizos/espaciales tomados de tu ejemplo */
-    background: 
-        radial-gradient(ellipse at 30% 50%, rgba(229, 57, 53, 0.15) 0%, rgba(229, 57, 53, 0.05) 20%, transparent 50%), 
-        radial-gradient(ellipse at 70% 50%, rgba(211, 47, 47, 0.12) 0%, rgba(211, 47, 47, 0.03) 25%, transparent 50%), 
-        radial-gradient(ellipse at 50% 30%, rgba(239, 83, 80, 0.1) 0%, transparent 40%);
-}
 /* ================================================================= */
 /* === ELIMINACIÓN TOTAL DE MÁRGENES SUPERIORES (ZERO-GAP) === */
 /* ================================================================= */
@@ -6374,4 +6342,26 @@ html, body {
     padding-top: 0 !important;
     display: block !important;
 }
+/* ================================================================= */
+/* === FONDO NEGRO PURO (SIN ESTRELLAS) Y CERO MÁRGENES === */
+/* ================================================================= */
 
+html, body {
+    /* IMPORTANTE: Volvemos a poner color negro sólido */
+    background-color: #000000 !important; 
+    background: #000000 !important;
+    
+    /* Mantenemos los ajustes de espacio a cero */
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100%;
+    height: 100%;
+    overscroll-behavior-y: none; /* Evita rebotes elásticos */
+}
+
+/* Aseguramos que el contenedor principal tampoco tenga márgenes */
+#app-root.app-layout {
+    background-color: #000000 !important;
+    min-height: 100vh;
+    padding-top: 50px !important; /* Espacio exacto para el encabezado */
+}
