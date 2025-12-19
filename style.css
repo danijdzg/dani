@@ -5874,12 +5874,6 @@ input, select, textarea {
     transform: translate(-50%, -50%);
 }
 
-/* 4. Ajustar el contenedor principal para que empiece justo donde acaba el encabezado */
-/* Como el encabezado ahora mide 50px, el contenido empieza en 50px */
-#app-root.app-layout {
-    padding-top: 50px !important; 
-}
-
 /* 5. ELIMINAR CUALQUIER ESPACIO VACÍO en Panel y Diario */
 /* Forzamos a que las gráficas y listas toquen el borde del encabezado */
 .dashboard-view, 
@@ -6204,17 +6198,6 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
     align-items: center;
 }
 
-/* 4. AJUSTE DEL CUERPO (Para que el contenido no se tape) */
-#app-root.app-layout {
-    /* Dejamos espacio arriba (50px) y abajo (70px) para que las barras fijas no tapen nada */
-    padding-top: 50px !important;
-    padding-bottom: 70px !important; 
-    
-    /* Fondo negro base */
-    background-color: #000000;
-    min-height: 100vh;
-}
-
 /* 5. CORRECCIÓN STICKY DIARIO */
 /* Como el encabezado es fijo, el mes debe pegarse justo debajo (a 50px) */
 .movimiento-month-header {
@@ -6267,13 +6250,6 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
 /* === ELIMINACIÓN TOTAL DE MÁRGENES SUPERIORES (ZERO-GAP) === */
 /* ================================================================= */
 
-/* 1. Ajuste milimétrico del Contenedor Principal */
-#app-root.app-layout {
-    /* El relleno superior debe ser EXACTAMENTE la altura de la barra (50px) */
-    /* Si sientes que aún hay hueco, prueba a bajar esto a 45px, 
-       pero cuidado con que el texto no se meta debajo del vidrio */
-    padding-top: 50px !important; 
-}
 
 /* 2. Forzar a los contenedores de las vistas a no tener techo */
 .dashboard-view,
@@ -6343,33 +6319,33 @@ html, body {
 /* === CORRECCIÓN FINAL: VISIBILIDAD Y ESTRUCTURA (FIX) === */
 /* ================================================================= */
 
-/* 1. Ajuste del contenedor principal */
+/* SOLUCIÓN ESPACIO SUPERIOR: Ajuste quirúrgico del contenedor */
 #app-root.app-layout {
     /* El relleno superior debe ser EXACTAMENTE la altura de la barra (50px) */
     padding-top: 50px !important; 
     width: 100%;
     min-height: 100vh;
     background-color: #000000;
-} /* <--- ¡ESTA LLAVE FALTABA ANTES Y ROMPÍA TODO! */
+} /* <--- ¡ESTA LLAVE FALTABA Y ROMPÍA LA VISIBILIDAD! */
 
-/* 2. Comportamiento de las Pestañas (El motor visual) */
+/* 1. Comportamiento de las Pestañas (El motor visual) */
 .view {
     display: none; /* Oculto por defecto */
     width: 100%;
     height: 100%;
     margin: 0 !important;
     padding: 0 !important;
-    opacity: 0; /* Preparado para animación */
+    opacity: 0; 
     transition: opacity 0.2s ease-in;
 }
 
-/* 3. La pestaña activa SE MUESTRA */
+/* 2. La pestaña activa SE MUESTRA */
 .view.active {
     display: block !important; /* Muestra el bloque */
     opacity: 1; /* Lo hace visible */
 }
 
-/* 4. Corrección de márgenes internos (Zero-Gap) */
+/* 3. Corrección de márgenes internos (Zero-Gap) */
 /* Esto asegura que el contenido empiece justo debajo del encabezado */
 .app-layout__main,
 .dashboard-container,
@@ -6379,12 +6355,12 @@ html, body {
     padding-top: 0 !important;
 }
 
-/* 5. Asegurar fondo negro global */
+/* 4. Asegurar fondo negro global */
 html, body {
     background-color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 100%;
     height: 100%;
-    overflow-x: hidden; /* Evita scroll lateral */
+    overflow-x: hidden;
 }
