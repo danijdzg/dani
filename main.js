@@ -4169,31 +4169,32 @@ const loadMoreMovements = async (isInitial = false) => {
 };
 
 /* ================================================================= */
-/* === FUNCIÓN RENDER DIARIO (VERSIÓN LIBRE SIN BLOQUEOS) === */
+/* === FUNCIÓN RENDER DIARIO (BLOQUEO INTELIGENTE Y OPTIMIZADO) === */
 /* ================================================================= */
 
 const renderDiarioPage = async () => {
-    // 1. RESET DE SEGURIDAD: En lugar de bloquear, avisamos y continuamos.
-    // Esto soluciona el problema de quedarse "atascado" fuera.
+    // 1. SEMÁFORO INTELIGENTE: Si ya está trabajando, IGNORAMOS los clics extra.
+    // Esto evita las 4 descargas paralelas que ves en la consola.
     if (isDiarioPageRendering) {
-        console.warn("⚠️ Aviso: Re-entrando en Diario. Reiniciando proceso...");
-        isDiarioPageRendering = false; // Forzamos el desbloqueo
+        console.log("⏳ Diario ocupado. Ignorando llamada duplicada.");
+        return; 
     }
     
+    // Bloqueamos la entrada
     isDiarioPageRendering = true;
 
     try {
-        // 2. FORZAR VISIBILIDAD DE LA PESTAÑA (Corrección "Solo funciona Panel")
-        // Aseguramos que la sección 'diario-page' tenga la clase 'active' y las demás no.
+        // 2. GESTIÓN DE PESTAÑAS (Corrección Visual)
+        // Forzamos manualmente que la pestaña Diario se muestre y las otras se oculten
         document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
         const container = document.getElementById('diario-page');
         if (container) {
-            container.classList.add('active'); // ¡Forzamos que se vea!
+            container.classList.add('active'); 
         } else {
             throw new Error("No se encontró el contenedor #diario-page");
         }
 
-        // 3. PREPARAR CONTENEDOR INTERNO
+        // 3. PREPARAR CONTENEDOR (Solo si está vacío)
         if (!container.querySelector('#diario-view-container')) {
             container.innerHTML = '<div id="diario-view-container" style="height:100%; width:100%;"></div>';
         }
@@ -4206,11 +4207,11 @@ const renderDiarioPage = async () => {
                 window.movementsObserver = null;
             }
             await renderDiarioCalendar();
-            return; 
+            return; // El bloque 'finally' se encargará de desbloquear
         }
 
         // --- MODO LISTA (VIRTUAL SCROLL) ---
-        // Solo inyectamos HTML si está vacío
+        // Inyectar HTML base si es necesario
         if (!viewContainer.innerHTML.trim() || !document.getElementById('virtual-list-content')) {
             viewContainer.innerHTML = `
                 <div id="diario-filter-active-indicator" class="hidden">
@@ -4219,44 +4220,43 @@ const renderDiarioPage = async () => {
                         <p style="font-size:0.9rem; font-weight:600;">Filtros activos</p>
                     </div>
                 </div>
-                
                 <div id="movimientos-list-container" style="height:100%; overflow:visible;">
-                    <div id="virtual-list-sizer">
-                        <div id="virtual-list-content"></div>
-                    </div>
+                    <div id="virtual-list-sizer"><div id="virtual-list-content"></div></div>
                 </div>
-                
                 <div id="infinite-scroll-trigger" style="height: 50px; width: 100%;"></div>
-                
                 <div id="empty-movimientos" class="empty-state hidden" style="margin-top: 50px;">
-                    <span class="material-icons">search_off</span>
-                    <h3>Sin movimientos</h3>
+                    <span class="material-icons">search_off</span><h3>Sin movimientos</h3>
                 </div>`;
         }
 
-        // Referencias globales para la lista virtual
+        // Referencias globales
         if (typeof vList !== 'undefined') {
             vList.scrollerEl = document.querySelector('.app-layout__main');
             vList.sizerEl = document.getElementById('virtual-list-sizer');
             vList.contentEl = document.getElementById('virtual-list-content');
         }
 
-        // --- CARGA DE DATOS ---
-        // Si hay filtros activos
+        // --- CARGA DE DATOS OPTIMIZADA ---
         if (diarioActiveFilters) {
-            const allMovements = await AppStore.getAll();
-            // Lógica simple de filtrado para asegurar que cargue algo
-            db.movimientos = allMovements; // (Aquí iría tu filtrado detallado, simplificado para asegurar carga)
+            // OPTIMIZACIÓN: Si ya tenemos datos en memoria, no los descargues 4 veces.
+            // Solo descargamos si db.movimientos está vacío.
+            let allMovements = db.movimientos;
+            if (!allMovements || allMovements.length === 0) {
+                 allMovements = await AppStore.getAll();
+            }
             
+            // Aquí iría tu lógica de filtrado (simplificada para asegurar funcionamiento)
+            // Si necesitas filtrar, usa allMovements.filter(...)
+            db.movimientos = allMovements; 
+
             if (typeof processMovementsForRunningBalance === 'function') {
                 await processMovementsForRunningBalance(db.movimientos, true);
             }
             if (typeof updateVirtualListUI === 'function') updateVirtualListUI();
 
         } else {
-            // Sin filtros (Scroll infinito)
+            // Modo Normal (Scroll Infinito)
             if (!db.movimientos || db.movimientos.length === 0) {
-               // Intentamos cargar. Si loadMoreMovements falla, no bloqueamos la app.
                try {
                    if (typeof loadMoreMovements === 'function') await loadMoreMovements(true);
                } catch (e) { console.error("Error cargando movimientos:", e); }
@@ -4264,7 +4264,6 @@ const renderDiarioPage = async () => {
                if (typeof updateVirtualListUI === 'function') updateVirtualListUI();
             }
             
-            // Reactivar observador
             setTimeout(() => {
                 if (typeof initMovementsObserver === 'function') initMovementsObserver();
             }, 500);
@@ -4273,8 +4272,10 @@ const renderDiarioPage = async () => {
     } catch (error) {
         console.error("❌ Error en renderDiarioPage:", error);
     } finally {
-        // SIEMPRE liberamos el semáforo al final
+        // [CRÍTICO] ESTO ASEGURA QUE SIEMPRE SE PUEDA VOLVER A ENTRAR
+        // Se ejecuta tanto si va bien como si hay error.
         isDiarioPageRendering = false;
+        // console.log("🔓 Diario desbloqueado y listo.");
     }
 };
 
