@@ -2424,62 +2424,60 @@ if (!window.renderPlanificarPage) {
     };
 }
 
-// 2. MAPA DE PÁGINAS (Usando "Lazy Execution" para evitar errores de inicialización)
+/* ================================================================= */
+/* === MAPA DE PÁGINAS BLINDADO (SOLUCIÓN TRY-CATCH) === */
+/* ================================================================= */
+
 const pageRenderers = {
     'panel-page': {
         title: 'Panel',
-        // TRUCO: Usamos una función flecha para buscar 'renderPanelPage' solo cuando se ejecute
         render: async () => { if(typeof renderPanelPage === 'function') await renderPanelPage(); },
-        actions: `
-            <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
-                <span class="material-icons">calculate</span>
-            </button>
-            <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
-                <span class="material-icons">more_vert</span>
-            </button>`
+        actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
     },
     'diario-page': {
         title: 'Diario',
-        render: async () => { if(typeof renderDiarioPage === 'function') await renderDiarioPage(); },
-        actions: `
-            <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
-                <span class="material-icons">calculate</span>
-            </button>
-            <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
-                <span class="material-icons">more_vert</span>
-            </button>`
+        render: async () => { 
+            // Llamamos a la función limpia que acabamos de poner
+            if(typeof renderDiarioPage === 'function') await renderDiarioPage(); 
+        },
+        actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
     },
     'patrimonio-page': {
         title: 'Patrimonio',
-        // Aquí estaba el error antes. Ahora es seguro:
-        render: async () => { 
-            if (typeof renderPatrimonioPage === 'function') await renderPatrimonioPage();
-            else if (window.renderPatrimonioPage) await window.renderPatrimonioPage();
+        render: async () => {
+            // USAMOS TRY-CATCH PARA EVITAR EL ERROR DE INICIALIZACIÓN
+            try {
+                if (typeof renderPatrimonioPage === 'function') {
+                    await renderPatrimonioPage();
+                } else if (window.renderPatrimonioPage) {
+                    await window.renderPatrimonioPage();
+                }
+            } catch (e) {
+                // Si falla, usamos el de respaldo
+                if (window.renderPatrimonioPage) await window.renderPatrimonioPage();
+            }
+            // SEGURIDAD FINAL: Si sigue vacío, forzamos mensaje
+            const c = document.getElementById('patrimonio-page');
+            if(c && !c.innerHTML.trim() && window.renderPatrimonioPage) await window.renderPatrimonioPage();
         },
-        actions: `
-            <button data-action="toggle-portfolio-currency" class="icon-btn" title="Cambiar moneda">
-                <span class="material-icons" id="currency-toggle-icon">currency_bitcoin</span>
-            </button>
-            <button data-action="open-external-calculator" class="icon-btn">
-                <span class="material-icons">calculate</span>
-            </button>
-            <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
-                <span class="material-icons">more_vert</span>
-            </button>`
+        actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
     },
     'planificar-page': {
         title: 'Planificar',
         render: async () => {
-            if (typeof renderPlanificarPage === 'function') await renderPlanificarPage();
-            else if (window.renderPlanificarPage) await window.renderPlanificarPage();
+            try {
+                if (typeof renderPlanificarPage === 'function') {
+                    await renderPlanificarPage();
+                } else if (window.renderPlanificarPage) {
+                    await window.renderPlanificarPage(); // Nota: corregido nombre variable window
+                }
+            } catch (e) {
+                if (window.renderPlanificarPage) await window.renderPlanificarPage();
+            }
+            const c = document.getElementById('planificar-page');
+            if(c && !c.innerHTML.trim() && window.renderPlanificarPage) await window.renderPlanificarPage();
         },
-        actions: `
-            <button data-action="open-external-calculator" class="icon-btn">
-                <span class="material-icons">calculate</span>
-            </button>
-            <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
-                <span class="material-icons">more_vert</span>
-            </button>`
+        actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
     },
     'ajustes-page': {
         title: 'Ajustes',
@@ -4220,49 +4218,43 @@ const loadMoreMovements = async (isInitial = false) => {
 };
 
 /* ================================================================= */
-/* === FUNCIÓN RENDER DIARIO (BLOQUEO INTELIGENTE Y OPTIMIZADO) === */
+/* === FUNCIÓN RENDER DIARIO (LIMPIA Y SIN CONFLICTOS) === */
 /* ================================================================= */
 
 const renderDiarioPage = async () => {
-    // 1. SEMÁFORO INTELIGENTE: Si ya está trabajando, IGNORAMOS los clics extra.
-    // Esto evita las 4 descargas paralelas que ves en la consola.
+    // 1. SEMÁFORO: Evitar cargas duplicadas si ya está trabajando
     if (isDiarioPageRendering) {
-        console.log("⏳ Diario ocupado. Ignorando llamada duplicada.");
+        console.log("⏳ Diario ocupado. Ignorando llamada extra.");
         return; 
     }
     
-    // Bloqueamos la entrada
     isDiarioPageRendering = true;
 
     try {
-        // 2. GESTIÓN DE PESTAÑAS (Corrección Visual)
-        // Forzamos manualmente que la pestaña Diario se muestre y las otras se oculten
-        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        // --- [CAMBIO IMPORTANTE] ---
+        // HEMOS BORRADO EL BLOQUE QUE FORZABA 'classList.add'. 
+        // AHORA CONFIAMOS 100% EN navigateTo() PARA EL CAMBIO VISUAL.
+        
         const container = document.getElementById('diario-page');
-        if (container) {
-            container.classList.add('active'); 
-        } else {
-            throw new Error("No se encontró el contenedor #diario-page");
-        }
+        if (!container) throw new Error("No existe #diario-page");
 
-        // 3. PREPARAR CONTENEDOR (Solo si está vacío)
+        // 2. PREPARAR CONTENEDOR (Solo si no existe)
         if (!container.querySelector('#diario-view-container')) {
             container.innerHTML = '<div id="diario-view-container" style="height:100%; width:100%;"></div>';
         }
         const viewContainer = document.getElementById('diario-view-container');
 
         // --- MODO CALENDARIO ---
-        if (diarioViewMode === 'calendar') {
+        if (window.diarioViewMode === 'calendar') {
             if (window.movementsObserver) {
                 window.movementsObserver.disconnect();
                 window.movementsObserver = null;
             }
             await renderDiarioCalendar();
-            return; // El bloque 'finally' se encargará de desbloquear
+            return; 
         }
 
-        // --- MODO LISTA (VIRTUAL SCROLL) ---
-        // Inyectar HTML base si es necesario
+        // --- MODO LISTA ---
         if (!viewContainer.innerHTML.trim() || !document.getElementById('virtual-list-content')) {
             viewContainer.innerHTML = `
                 <div id="diario-filter-active-indicator" class="hidden">
@@ -4274,10 +4266,7 @@ const renderDiarioPage = async () => {
                 <div id="movimientos-list-container" style="height:100%; overflow:visible;">
                     <div id="virtual-list-sizer"><div id="virtual-list-content"></div></div>
                 </div>
-                <div id="infinite-scroll-trigger" style="height: 50px; width: 100%;"></div>
-                <div id="empty-movimientos" class="empty-state hidden" style="margin-top: 50px;">
-                    <span class="material-icons">search_off</span><h3>Sin movimientos</h3>
-                </div>`;
+                <div id="infinite-scroll-trigger" style="height: 50px; width: 100%;"></div>`;
         }
 
         // Referencias globales
@@ -4287,46 +4276,31 @@ const renderDiarioPage = async () => {
             vList.contentEl = document.getElementById('virtual-list-content');
         }
 
-        // --- CARGA DE DATOS OPTIMIZADA ---
-        if (diarioActiveFilters) {
-            // OPTIMIZACIÓN: Si ya tenemos datos en memoria, no los descargues 4 veces.
-            // Solo descargamos si db.movimientos está vacío.
-            let allMovements = db.movimientos;
-            if (!allMovements || allMovements.length === 0) {
+        // --- CARGA DE DATOS ---
+        // Si no hay datos, cargamos. Si hay, pintamos.
+        let allMovements = db.movimientos;
+        if (!allMovements || allMovements.length === 0) {
+             try {
                  allMovements = await AppStore.getAll();
-            }
-            
-            // Aquí iría tu lógica de filtrado (simplificada para asegurar funcionamiento)
-            // Si necesitas filtrar, usa allMovements.filter(...)
-            db.movimientos = allMovements; 
-
-            if (typeof processMovementsForRunningBalance === 'function') {
-                await processMovementsForRunningBalance(db.movimientos, true);
-            }
-            if (typeof updateVirtualListUI === 'function') updateVirtualListUI();
-
-        } else {
-            // Modo Normal (Scroll Infinito)
-            if (!db.movimientos || db.movimientos.length === 0) {
-               try {
-                   if (typeof loadMoreMovements === 'function') await loadMoreMovements(true);
-               } catch (e) { console.error("Error cargando movimientos:", e); }
-            } else {
-               if (typeof updateVirtualListUI === 'function') updateVirtualListUI();
-            }
-            
-            setTimeout(() => {
-                if (typeof initMovementsObserver === 'function') initMovementsObserver();
-            }, 500);
+             } catch(e) { console.error("Error cargando store", e); }
         }
+        db.movimientos = allMovements || [];
+
+        // Ejecutar lógica de lista virtual si existe
+        if (typeof processMovementsForRunningBalance === 'function') {
+            await processMovementsForRunningBalance(db.movimientos, true);
+        }
+        if (typeof updateVirtualListUI === 'function') updateVirtualListUI();
+
+        // Reactivar observador de scroll
+        setTimeout(() => {
+            if (typeof initMovementsObserver === 'function') initMovementsObserver();
+        }, 500);
 
     } catch (error) {
-        console.error("❌ Error en renderDiarioPage:", error);
+        console.error("❌ Error en Diario:", error);
     } finally {
-        // [CRÍTICO] ESTO ASEGURA QUE SIEMPRE SE PUEDA VOLVER A ENTRAR
-        // Se ejecuta tanto si va bien como si hay error.
-        isDiarioPageRendering = false;
-        // console.log("🔓 Diario desbloqueado y listo.");
+        isDiarioPageRendering = false; // Desbloquear siempre
     }
 };
 
