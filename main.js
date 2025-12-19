@@ -2409,11 +2409,6 @@ const cleanupObservers = () => {
 /* === 1. FUNCIONES DE RESPALDO GLOBAL (SOLUCIÓN PLANIFICAR) === */
 /* ================================================================= */
 
-// Definimos esto GLOBALMENTE para que siempre existan
-window.renderPatrimonioPage = async () => {
-    const c = document.getElementById('patrimonio-page');
-    if(c) c.innerHTML = '<div class="empty-state" style="padding-top:50px; text-align:center;"><span class="material-icons" style="font-size:48px; color:var(--c-primary);">account_balance</span><h3>Patrimonio</h3><p>En construcción</p></div>';
-};
 
 window.renderPlanificarPage = async () => {
     const c = document.getElementById('planificar-page');
@@ -2426,96 +2421,7 @@ window.renderPlanificarPage = async () => {
 /* === 2. NAVEGACIÓN ANTI-REBOTE (SOLUCIÓN 4x DIARIO) === */
 /* ================================================================= */
 
-let isNavigating = false; // Semáforo de navegación global
 
-const navigateTo = async (pageId, isInitial = false) => {
-    // ANTI-REBOTE: Si ya estamos navegando a esa página (menos de 300ms), ignoramos
-    if (isNavigating && !isInitial) return;
-    isNavigating = true;
-    setTimeout(() => { isNavigating = false; }, 300); // Liberar semáforo tras 300ms
-
-    console.log(`🚀 Navegando a: ${pageId}`);
-    
-    // A) CAMBIO VISUAL
-    document.querySelectorAll('.view').forEach(el => {
-        el.classList.remove('active');
-        el.style.display = 'none';
-    });
-
-    const targetPage = document.getElementById(pageId);
-    if (!targetPage) {
-        console.error(`❌ Error: No existe #${pageId}`);
-        return;
-    }
-
-    targetPage.style.display = 'block';
-    // Forzamos repintado
-    requestAnimationFrame(() => {
-        targetPage.classList.add('active');
-    });
-
-    // B) BARRA INFERIOR
-    document.querySelectorAll('.bottom-nav__item').forEach(btn => {
-        const btnPage = btn.getAttribute('data-page') || btn.dataset.page;
-        if (btnPage === pageId) {
-            btn.classList.add('bottom-nav__item--active');
-            btn.style.color = 'var(--c-primary)';
-        } else {
-            btn.classList.remove('bottom-nav__item--active');
-            btn.style.color = '';
-        }
-    });
-
-    // C) TÍTULOS Y ACCIONES
-    const titleEl = document.getElementById('page-title-display');
-    const actionsEl = document.getElementById('top-bar-actions');
-    const renderer = pageRenderers[pageId]; // Usamos la variable global pageRenderers
-
-    if (titleEl && renderer) {
-        const pagesWithoutTitle = ['panel-page', 'diario-page', 'patrimonio-page', 'planificar-page'];
-        titleEl.textContent = pagesWithoutTitle.includes(pageId) ? '' : renderer.title;
-    }
-
-    // Limpieza botones Diario (siempre limpiar primero)
-    const diarioIconsContainer = document.getElementById('diario-left-icons');
-    if (diarioIconsContainer) diarioIconsContainer.innerHTML = '';
-
-    // Inyección botones Diario
-    if (pageId === 'diario-page' && diarioIconsContainer) {
-         diarioIconsContainer.innerHTML = `
-            <button data-action="show-diario-filters" class="icon-btn" style="margin-right:5px;">
-                <span class="material-icons" style="font-size:24px;">filter_list</span>
-            </button>
-            <button data-action="global-search" class="icon-btn">
-                <span class="material-icons" style="font-size:24px;">search</span>
-            </button>
-        `;
-    }
-    
-    // Inyección botones derecha
-    if (actionsEl && renderer && renderer.actions) {
-         let actionsHTML = renderer.actions;
-         if (pageId === 'diario-page') {
-            const mode = window.diarioViewMode || 'list';
-            actionsHTML = `<button data-action="toggle-diario-view" class="icon-btn"><span class="material-icons">${mode === 'list' ? 'calendar_month' : 'list'}</span></button>` + actionsHTML;
-         }
-         actionsEl.innerHTML = actionsHTML;
-    }
-
-    // D) EJECUCIÓN DEL RENDERIZADOR
-    if (renderer && typeof renderer.render === 'function') {
-        try {
-            await renderer.render();
-        } catch (error) {
-            console.error(`❌ Error renderizando ${pageId}:`, error);
-        }
-    }
-    
-    // Fix Panel: Forzar actualización extra
-    if (pageId === 'panel-page' && typeof scheduleDashboardUpdate === 'function') {
-        setTimeout(scheduleDashboardUpdate, 50);
-    }
-};
 
 const getPendingRecurrents = () => {
     const now = new Date();
@@ -4332,81 +4238,12 @@ const renderPanelPage = async () => {
 /* === 3. CONEXIÓN FINAL (MAPA Y NAVEGACIÓN) === */
 /* ================================================================= */
 
-// Definir funciones de respaldo para las pestañas vacías
-window.renderPatrimonioPage = async () => {
-    const c = document.getElementById('patrimonio-page');
-    if(c) c.innerHTML = '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#666;"><span class="material-icons" style="font-size:48px;">account_balance</span><h3>Patrimonio</h3><p>En construcción</p></div>';
-};
+
 window.renderPlanificarPage = async () => {
     const c = document.getElementById('planificar-page');
     if(c) c.innerHTML = '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#666;"><span class="material-icons" style="font-size:48px;">event</span><h3>Planificar</h3><p>En construcción</p></div>';
 };
 
-const pageRenderers = {
-    'panel-page': {
-        title: 'Panel',
-        render: renderPanelPage, // Usamos la función que creamos en el Paso 1
-        actions: `<button class="icon-btn"><span class="material-icons">more_vert</span></button>`
-    },
-    'diario-page': {
-        title: 'Diario',
-        render: renderDiarioPage, // Usamos la función que creamos en el Paso 2
-        actions: `<button class="icon-btn"><span class="material-icons">search</span></button>`
-    },
-    'patrimonio-page': { title: 'Patrimonio', render: window.renderPatrimonioPage },
-    'planificar-page': { title: 'Planificar', render: window.renderPlanificarPage },
-    'ajustes-page': { title: 'Ajustes', render: async () => console.log("Ajustes") }
-};
-
-let isNavigating = false;
-const navigateTo = async (pageId, isInitial = false) => {
-    if (isNavigating && !isInitial) return;
-    isNavigating = true;
-    setTimeout(() => isNavigating = false, 300);
-
-    console.log(`🚀 Navegando a: ${pageId}`);
-
-    // 1. CAMBIO VISUAL (CSS)
-    document.querySelectorAll('.view').forEach(el => {
-        el.classList.remove('active');
-        el.style.display = 'none';
-    });
-    
-    const target = document.getElementById(pageId);
-    if (target) {
-        target.style.display = 'block';
-        setTimeout(() => target.classList.add('active'), 10);
-    }
-
-    // 2. ICONOS INFERIORES
-    document.querySelectorAll('.bottom-nav__item').forEach(btn => {
-        btn.classList.toggle('bottom-nav__item--active', btn.dataset.page === pageId);
-        btn.style.color = (btn.dataset.page === pageId) ? 'var(--c-primary)' : '';
-    });
-
-    // 3. EJECUTAR RENDERIZADOR
-    const renderer = pageRenderers[pageId];
-    if (renderer && renderer.render) {
-        try {
-            await renderer.render();
-        } catch (e) { console.error("Error rendering:", e); }
-    }
-};
-
-// --- ARRANQUE INICIAL ---
-// Esto asegura que al cargar la página se descarguen datos y se vaya al Panel
-document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Intentar cargar datos globales
-    try {
-        if (typeof AppStore !== 'undefined') {
-            db.movimientos = await AppStore.getAll();
-            console.log("✅ Datos iniciales cargados:", db.movimientos.length);
-        }
-    } catch (e) { console.error("Error carga inicial", e); }
-
-    // 2. Ir al Panel
-    navigateTo('panel-page', true);
-});
 const renderAjustesPage = () => {
     const container = select(PAGE_IDS.AJUSTES);
     if (!container) return;
@@ -11207,7 +11044,6 @@ showConfirmationModal(
 
 };
 
-document.addEventListener('DOMContentLoaded', initApp);
 
 const fetchMovementsInChunks = async (baseQuery, field, ids) => {
     if (ids.length === 0) {
@@ -11703,4 +11539,128 @@ window.addEventListener('click', (e) => {
             else window.location.reload();
         }
     }
+});
+/* ================================================================= */
+/* === SISTEMA DE NAVEGACIÓN Y ARRANQUE (BLOQUE MAESTRO FINAL) === */
+/* ================================================================= */
+
+// 1. FUNCIONES DE RESPALDO GLOBAL
+window.renderPatrimonioPage = async () => {
+    const c = document.getElementById('patrimonio-page');
+    if(c) c.innerHTML = '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#666; padding-top:50px;"><span class="material-icons" style="font-size:48px; margin-bottom:10px;">account_balance</span><h3>Patrimonio</h3><p>En construcción</p></div>';
+};
+
+window.renderPlanificarPage = async () => {
+    const c = document.getElementById('planificar-page');
+    if(c) c.innerHTML = '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#666; padding-top:50px;"><span class="material-icons" style="font-size:48px; margin-bottom:10px;">event</span><h3>Planificar</h3><p>En construcción</p></div>';
+};
+
+// 2. MAPA DE PÁGINAS
+const pageRenderers = {
+    'panel-page': {
+        title: 'Panel',
+        render: async () => {
+            // Seguridad: Asegurar que renderPanelPage existe antes de llamarla
+            if (typeof renderPanelPage === 'function') {
+                await renderPanelPage();
+            } else {
+                console.error("Falta la función renderPanelPage");
+            }
+        }, 
+        actions: `<button class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
+    },
+    'diario-page': {
+        title: 'Diario',
+        render: async () => {
+            if (typeof renderDiarioPage === 'function') {
+                await renderDiarioPage();
+            }
+        },
+        actions: `<button class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
+    },
+    'patrimonio-page': { title: 'Patrimonio', render: window.renderPatrimonioPage },
+    'planificar-page': { title: 'Planificar', render: window.renderPlanificarPage },
+    'ajustes-page': { title: 'Ajustes', render: async () => { console.log("Ajustes..."); } }
+};
+
+// 3. VARIABLE DE CONTROL Y FUNCIÓN DE NAVEGACIÓN
+// (Asegúrate de no tener 'let isNavigating' en ninguna otra parte del archivo)
+let isNavigating = false; 
+
+const navigateTo = async (pageId, isInitial = false) => {
+    // Anti-rebote
+    if (isNavigating && !isInitial) return;
+    isNavigating = true;
+    setTimeout(() => { isNavigating = false; }, 300);
+
+    console.log(`🚀 Navegando a: ${pageId}`);
+
+    // A) CAMBIO VISUAL
+    document.querySelectorAll('.view').forEach(el => {
+        el.classList.remove('active');
+        el.style.display = 'none';
+    });
+    
+    const target = document.getElementById(pageId);
+    if (target) {
+        target.style.display = 'block';
+        // Pequeño retardo para activar la animación CSS
+        requestAnimationFrame(() => target.classList.add('active'));
+    } else {
+        console.error(`No existe la página #${pageId}`);
+        return;
+    }
+
+    // B) BARRA INFERIOR
+    document.querySelectorAll('.bottom-nav__item').forEach(btn => {
+        const isActive = (btn.dataset.page === pageId);
+        btn.classList.toggle('bottom-nav__item--active', isActive);
+        btn.style.color = isActive ? 'var(--c-primary)' : '';
+    });
+
+    // C) HEADER Y ACCIONES
+    const titleEl = document.getElementById('page-title-display');
+    const actionsEl = document.getElementById('top-bar-actions');
+    const renderer = pageRenderers[pageId];
+
+    if (titleEl && renderer) {
+        const pagesWithoutTitle = ['panel-page', 'diario-page', 'patrimonio-page', 'planificar-page'];
+        titleEl.textContent = pagesWithoutTitle.includes(pageId) ? '' : renderer.title;
+    }
+    
+    // Iconos específicos del Diario a la izquierda
+    const diarioIcons = document.getElementById('diario-left-icons');
+    if (diarioIcons) {
+        diarioIcons.innerHTML = (pageId === 'diario-page') 
+            ? `<button data-action="show-diario-filters" class="icon-btn"><span class="material-icons">filter_list</span></button>` 
+            : '';
+    }
+
+    // D) EJECUTAR RENDERIZADOR
+    if (renderer && renderer.render) {
+        try {
+            await renderer.render();
+        } catch (e) { console.error(`Error al renderizar ${pageId}`, e); }
+    }
+    
+    // E) FORZAR ACTUALIZACIÓN SI ES PANEL
+    if (pageId === 'panel-page' && typeof scheduleDashboardUpdate === 'function') {
+        setTimeout(scheduleDashboardUpdate, 100);
+    }
+};
+
+// 4. ARRANQUE DE LA APLICACIÓN
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("🚀 Iniciando App...");
+    
+    // Intentar cargar datos si no existen
+    if (typeof AppStore !== 'undefined' && (!db.movimientos || db.movimientos.length === 0)) {
+        try {
+            db.movimientos = await AppStore.getAll();
+            console.log(`✅ Datos cargados al inicio: ${db.movimientos.length}`);
+        } catch (e) { console.warn("No se pudieron cargar datos iniciales", e); }
+    }
+
+    // Ir a la página inicial
+    navigateTo('panel-page', true);
 });
