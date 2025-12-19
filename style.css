@@ -6251,6 +6251,7 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
 /* ================================================================= */
 
 
+
 /* 2. Forzar a los contenedores de las vistas a no tener techo */
 .dashboard-view,
 .dashboard-container,
@@ -6362,55 +6363,5 @@ html, body {
     padding: 0 !important;
     width: 100%;
     height: 100%;
-    overflow-x: hidden;
-}
-/* ================================================================= */
-/* === PARCHE DE EMERGENCIA DE VISIBILIDAD === */
-/* ================================================================= */
-
-/* 1. ESTA LLAVE ES CRÍTICA: Cierra cualquier @media query que se haya quedado abierto arriba */
-} 
-
-/* 2. REGLAS GLOBALES (Aplican a móviles y PC por igual) */
-/* Forzamos que la vista activa SE VEA, anulando cualquier restricción anterior */
-
-.view {
-    display: none; 
-    opacity: 0;
-    transition: opacity 0.2s ease-in;
-}
-
-.view.active {
-    display: flex !important; /* Usamos flex para mantener tu estructura interna */
-    flex-direction: column;
-    opacity: 1 !important;
-    width: 100%;
-    height: 100%;
-    overflow-x: hidden;
-}
-
-/* 3. Asegurar el contenedor principal */
-#app-root.app-layout {
-    display: flex !important;
-    flex-direction: column;
-    opacity: 1 !important;
-    background-color: #000000 !important;
-    width: 100%;
-    min-height: 100dvh; /* Dynamic viewport height para móviles modernos */
-    padding-top: 50px !important;
-}
-
-/* 4. Asegurar que el contenido tenga espacio para verse */
-.app-layout__main {
-    display: block !important;
-    flex: 1;
-    overflow-y: auto;
-    width: 100%;
-    opacity: 1 !important;
-}
-
-/* 5. Fondo negro base */
-html, body {
-    background-color: #000000 !important;
     overflow-x: hidden;
 }

@@ -2405,170 +2405,61 @@ const cleanupObservers = () => {
     }
 };
 /* ================================================================= */
-/* === SISTEMA DE NAVEGACIÓN BLINDADO (SIN ERRORES DE CARGA) === */
+/* === SISTEMA DE NAVEGACIÓN (FIX DEFINITIVO - VERSIÓN COMPATIBLE) === */
 /* ================================================================= */
 
-// 1. FUNCIONES DE RESPALDO (Por si no existen)
-// Las definimos en window para evitar conflictos con 'const'
-if (!window.renderPatrimonioPage) {
-    window.renderPatrimonioPage = async () => {
-        const c = document.getElementById('patrimonio-page');
-        if(c) c.innerHTML = '<div class="empty-state" style="padding-top:50px;"><h3>Patrimonio</h3><p>Sección en construcción</p></div>';
-    };
-}
-
-if (!window.renderPlanificarPage) {
-    window.renderPlanificarPage = async () => {
-        const c = document.getElementById('planificar-page');
-        if(c) c.innerHTML = '<div class="empty-state" style="padding-top:50px;"><h3>Planificar</h3><p>Sección en construcción</p></div>';
-    };
-}
-
-/* ================================================================= */
-/* === MAPA DE PÁGINAS (CON CARGA DE DATOS EN PANEL) === */
-/* ================================================================= */
-
-const pageRenderers = {
-    'panel-page': {
-        title: 'Panel',
-        render: async () => { 
-            // 1. CARGA DE DATOS AUTOMÁTICA (Si está vacía)
-            // Esto soluciona que el Panel salga vacío al iniciar
-            if (!db.movimientos || db.movimientos.length === 0) {
-                console.log("📥 Panel: Detectados datos vacíos. Iniciando descarga...");
-                try {
-                    // Aseguramos que AppStore exista antes de llamar
-                    if (typeof AppStore !== 'undefined') {
-                        db.movimientos = await AppStore.getAll();
-                        console.log(`✅ Datos cargados: ${db.movimientos.length} movimientos.`);
-                    }
-                } catch (error) {
-                    console.error("❌ Error cargando datos en Panel:", error);
-                }
-            }
-
-            // 2. RENDERIZAR PANEL
-            if(typeof renderPanelPage === 'function') {
-                await renderPanelPage(); 
-            }
-            
-            // 3. ACTUALIZAR GRÁFICAS (Doble seguridad)
-            if(typeof scheduleDashboardUpdate === 'function') {
-                scheduleDashboardUpdate();
-            }
-        },
-        actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
-    },
-    'diario-page': {
-        title: 'Diario',
-        render: async () => { 
-            if(typeof renderDiarioPage === 'function') await renderDiarioPage(); 
-        },
-        actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
-    },
-    'patrimonio-page': {
-        title: 'Patrimonio',
-        render: async () => {
-            try {
-                if (typeof renderPatrimonioPage === 'function') await renderPatrimonioPage();
-                else if (window.renderPatrimonioPage) await window.renderPatrimonioPage();
-            } catch (e) { if (window.renderPatrimonioPage) await window.renderPatrimonioPage(); }
-            
-            const c = document.getElementById('patrimonio-page');
-            if(c && !c.innerHTML.trim() && window.renderPatrimonioPage) await window.renderPatrimonioPage();
-        },
-        actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
-    },
-    'planificar-page': {
-        title: 'Planificar',
-        render: async () => {
-            try {
-                if (typeof renderPlanificarPage === 'function') await renderPlanificarPage();
-                else if (window.renderPlanificarPage) await window.renderPlanificarPage();
-            } catch (e) { if (window.renderPlanificarPage) await window.renderPlanificarPage(); }
-            
-            const c = document.getElementById('planificar-page');
-            if(c && !c.innerHTML.trim() && window.renderPlanificarPage) await window.renderPlanificarPage();
-        },
-        actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
-    },
-    'ajustes-page': {
-        title: 'Ajustes',
-        render: async () => { if(typeof renderAjustesPage === 'function') await renderAjustesPage(); },
-        actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
-    }
-};
-
-// 3. FUNCIÓN DE NAVEGACIÓN PRINCIPAL
 const navigateTo = async (pageId, isInitial = false) => {
-    console.log(`🚀 Navegando a: ${pageId}`);
-    
-    // A) CAMBIO VISUAL INMEDIATO
+    console.log(`🚀 Navegando a: ${pageId} (Inicial: ${isInitial})`);
+
+    // 1. CAMBIO VISUAL INMEDIATO (Prioridad absoluta)
+    // Esto asegura que salgas de la pestaña anterior AL INSTANTE.
     document.querySelectorAll('.view').forEach(el => {
         el.classList.remove('active');
-        el.style.display = 'none';
+        el.style.display = 'none'; // Forzamos ocultar
     });
-
+    
     const targetPage = document.getElementById(pageId);
-    if (!targetPage) {
-        console.error(`❌ Error: No existe la página #${pageId}`);
+    if (targetPage) {
+        targetPage.style.display = 'block'; // Forzamos mostrar
+        // Pequeño retardo para permitir que el navegador procese el cambio
+        requestAnimationFrame(() => {
+            targetPage.classList.add('active');
+        });
+    } else {
+        console.error(`❌ Error Crítico: No existe el contenedor #${pageId}`);
         return;
     }
 
-    targetPage.style.display = 'block';
-    requestAnimationFrame(() => {
-        targetPage.classList.add('active');
-    });
-
-    // B) ACTUALIZAR ICONOS INFERIORES
+    // 2. ACTUALIZAR BARRA INFERIOR (Iconos)
     document.querySelectorAll('.bottom-nav__item').forEach(btn => {
         const btnPage = btn.getAttribute('data-page') || btn.dataset.page;
         if (btnPage === pageId) {
-            btn.classList.add('bottom-nav__item--active');
-            btn.style.color = 'var(--c-primary)';
+            btn.classList.add('active');
+            btn.style.color = 'var(--c-primary)'; 
         } else {
-            btn.classList.remove('bottom-nav__item--active');
-            btn.style.color = '';
+            btn.classList.remove('active');
+            btn.style.color = ''; 
         }
     });
 
-    // C) TÍTULOS Y ACCIONES
+    // 3. LIMPIEZA DE ENCABEZADO
+    // Ocultar título en las páginas principales
     const titleEl = document.getElementById('page-title-display');
-    const actionsEl = document.getElementById('top-bar-actions');
-    const renderer = pageRenderers[pageId];
-
-    if (titleEl && renderer) {
+    if (titleEl) {
         const pagesWithoutTitle = ['panel-page', 'diario-page', 'patrimonio-page', 'planificar-page'];
-        titleEl.textContent = pagesWithoutTitle.includes(pageId) ? '' : renderer.title;
+        const rawTitle = (pageRenderers[pageId] && pageRenderers[pageId].title) ? pageRenderers[pageId].title : '';
+        titleEl.textContent = pagesWithoutTitle.includes(pageId) ? '' : rawTitle;
     }
 
-    if (actionsEl && renderer) {
-        let actionsHTML = renderer.actions;
-        // Inyección para Diario
-        if (pageId === 'diario-page') {
-            const diarioViewMode = window.diarioViewMode || 'list';
-            const extraButtons = `
-                <button data-action="toggle-diario-view" class="icon-btn" title="Cambiar Vista">
-                    <span class="material-icons">${diarioViewMode === 'list' ? 'calendar_month' : 'list'}</span>
-                </button>
-                <button data-action="show-diario-filters" class="icon-btn" title="Filtrar">
-                    <span class="material-icons">filter_list</span>
-                </button>
-            `;
-            actionsHTML = extraButtons + actionsHTML;
-        }
-        actionsEl.innerHTML = actionsHTML;
-    }
-
-    // Botones Izquierda (Diario)
+    // Gestión de Iconos del Diario (Inyectar solo si estamos en diario)
     const diarioIconsContainer = document.getElementById('diario-left-icons');
     if (diarioIconsContainer) {
         if (pageId === 'diario-page') {
             diarioIconsContainer.innerHTML = `
-                <button data-action="show-diario-filters" class="icon-btn" style="margin-right:5px;">
+                <button data-action="show-diario-filters" class="icon-btn" title="Filtrar" style="margin-right:5px;">
                     <span class="material-icons" style="font-size:24px;">filter_list</span>
                 </button>
-                <button data-action="global-search" class="icon-btn">
+                <button data-action="global-search" class="icon-btn" title="Buscar">
                     <span class="material-icons" style="font-size:24px;">search</span>
                 </button>
             `;
@@ -2577,17 +2468,16 @@ const navigateTo = async (pageId, isInitial = false) => {
         }
     }
 
-    // D) EJECUCIÓN SEGURA
-    if (renderer && typeof renderer.render === 'function') {
-        try {
-            await renderer.render();
-        } catch (error) {
-            console.error(`❌ Error al renderizar ${pageId}:`, error);
+    // 4. EJECUCIÓN SEGURA DE LA PÁGINA
+    // Usamos try/catch para que si Patrimonio falla, la app NO se congele
+    try {
+        if (pageRenderers[pageId] && typeof pageRenderers[pageId].render === 'function') {
+            await pageRenderers[pageId].render();
+        } else {
+            console.warn(`⚠️ No hay función render para: ${pageId}, pero la navegación visual se realizó.`);
         }
-    }
-    
-    if (pageId === 'panel-page' && typeof scheduleDashboardUpdate === 'function') {
-        scheduleDashboardUpdate();
+    } catch (error) {
+        console.error(`❌ Error al renderizar ${pageId}:`, error);
     }
 };
 
@@ -4231,43 +4121,49 @@ const loadMoreMovements = async (isInitial = false) => {
 };
 
 /* ================================================================= */
-/* === FUNCIÓN RENDER DIARIO (LIMPIA Y SIN CONFLICTOS) === */
+/* === FUNCIÓN RENDER DIARIO (BLOQUEO INTELIGENTE Y OPTIMIZADO) === */
 /* ================================================================= */
 
 const renderDiarioPage = async () => {
-    // 1. SEMÁFORO: Evitar cargas duplicadas si ya está trabajando
+    // 1. SEMÁFORO INTELIGENTE: Si ya está trabajando, IGNORAMOS los clics extra.
+    // Esto evita las 4 descargas paralelas que ves en la consola.
     if (isDiarioPageRendering) {
-        console.log("⏳ Diario ocupado. Ignorando llamada extra.");
+        console.log("⏳ Diario ocupado. Ignorando llamada duplicada.");
         return; 
     }
     
+    // Bloqueamos la entrada
     isDiarioPageRendering = true;
 
     try {
-        // --- [CAMBIO IMPORTANTE] ---
-        // HEMOS BORRADO EL BLOQUE QUE FORZABA 'classList.add'. 
-        // AHORA CONFIAMOS 100% EN navigateTo() PARA EL CAMBIO VISUAL.
-        
+        // 2. GESTIÓN DE PESTAÑAS (Corrección Visual)
+        // Forzamos manualmente que la pestaña Diario se muestre y las otras se oculten
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
         const container = document.getElementById('diario-page');
-        if (!container) throw new Error("No existe #diario-page");
+        if (container) {
+            container.classList.add('active'); 
+        } else {
+            throw new Error("No se encontró el contenedor #diario-page");
+        }
 
-        // 2. PREPARAR CONTENEDOR (Solo si no existe)
+        // 3. PREPARAR CONTENEDOR (Solo si está vacío)
         if (!container.querySelector('#diario-view-container')) {
             container.innerHTML = '<div id="diario-view-container" style="height:100%; width:100%;"></div>';
         }
         const viewContainer = document.getElementById('diario-view-container');
 
         // --- MODO CALENDARIO ---
-        if (window.diarioViewMode === 'calendar') {
+        if (diarioViewMode === 'calendar') {
             if (window.movementsObserver) {
                 window.movementsObserver.disconnect();
                 window.movementsObserver = null;
             }
             await renderDiarioCalendar();
-            return; 
+            return; // El bloque 'finally' se encargará de desbloquear
         }
 
-        // --- MODO LISTA ---
+        // --- MODO LISTA (VIRTUAL SCROLL) ---
+        // Inyectar HTML base si es necesario
         if (!viewContainer.innerHTML.trim() || !document.getElementById('virtual-list-content')) {
             viewContainer.innerHTML = `
                 <div id="diario-filter-active-indicator" class="hidden">
@@ -4279,7 +4175,10 @@ const renderDiarioPage = async () => {
                 <div id="movimientos-list-container" style="height:100%; overflow:visible;">
                     <div id="virtual-list-sizer"><div id="virtual-list-content"></div></div>
                 </div>
-                <div id="infinite-scroll-trigger" style="height: 50px; width: 100%;"></div>`;
+                <div id="infinite-scroll-trigger" style="height: 50px; width: 100%;"></div>
+                <div id="empty-movimientos" class="empty-state hidden" style="margin-top: 50px;">
+                    <span class="material-icons">search_off</span><h3>Sin movimientos</h3>
+                </div>`;
         }
 
         // Referencias globales
@@ -4289,31 +4188,46 @@ const renderDiarioPage = async () => {
             vList.contentEl = document.getElementById('virtual-list-content');
         }
 
-        // --- CARGA DE DATOS ---
-        // Si no hay datos, cargamos. Si hay, pintamos.
-        let allMovements = db.movimientos;
-        if (!allMovements || allMovements.length === 0) {
-             try {
+        // --- CARGA DE DATOS OPTIMIZADA ---
+        if (diarioActiveFilters) {
+            // OPTIMIZACIÓN: Si ya tenemos datos en memoria, no los descargues 4 veces.
+            // Solo descargamos si db.movimientos está vacío.
+            let allMovements = db.movimientos;
+            if (!allMovements || allMovements.length === 0) {
                  allMovements = await AppStore.getAll();
-             } catch(e) { console.error("Error cargando store", e); }
-        }
-        db.movimientos = allMovements || [];
+            }
+            
+            // Aquí iría tu lógica de filtrado (simplificada para asegurar funcionamiento)
+            // Si necesitas filtrar, usa allMovements.filter(...)
+            db.movimientos = allMovements; 
 
-        // Ejecutar lógica de lista virtual si existe
-        if (typeof processMovementsForRunningBalance === 'function') {
-            await processMovementsForRunningBalance(db.movimientos, true);
-        }
-        if (typeof updateVirtualListUI === 'function') updateVirtualListUI();
+            if (typeof processMovementsForRunningBalance === 'function') {
+                await processMovementsForRunningBalance(db.movimientos, true);
+            }
+            if (typeof updateVirtualListUI === 'function') updateVirtualListUI();
 
-        // Reactivar observador de scroll
-        setTimeout(() => {
-            if (typeof initMovementsObserver === 'function') initMovementsObserver();
-        }, 500);
+        } else {
+            // Modo Normal (Scroll Infinito)
+            if (!db.movimientos || db.movimientos.length === 0) {
+               try {
+                   if (typeof loadMoreMovements === 'function') await loadMoreMovements(true);
+               } catch (e) { console.error("Error cargando movimientos:", e); }
+            } else {
+               if (typeof updateVirtualListUI === 'function') updateVirtualListUI();
+            }
+            
+            setTimeout(() => {
+                if (typeof initMovementsObserver === 'function') initMovementsObserver();
+            }, 500);
+        }
 
     } catch (error) {
-        console.error("❌ Error en Diario:", error);
+        console.error("❌ Error en renderDiarioPage:", error);
     } finally {
-        isDiarioPageRendering = false; // Desbloquear siempre
+        // [CRÍTICO] ESTO ASEGURA QUE SIEMPRE SE PUEDA VOLVER A ENTRAR
+        // Se ejecuta tanto si va bien como si hay error.
+        isDiarioPageRendering = false;
+        // console.log("🔓 Diario desbloqueado y listo.");
     }
 };
 
