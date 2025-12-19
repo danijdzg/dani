@@ -1,7 +1,7 @@
 
 {
-  "name": "aiDANaI-ctas",
-  "short_name": "aiDANaI-ctas",
+  "name": "DaniCtas",
+  "short_name": "DaniCtas",
   "description": "Finanzas Dani Ctas",
   "start_url": ".",
   "display": "standalone",

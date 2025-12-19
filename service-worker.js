@@ -1,76 +1,85 @@
 // service-worker.js
-// Versión: 3.1 (Sin caché de Firestore)
 
-const CACHE_NAME = 'DaniCtas-v3.5';
+const CACHE_NAME = 'DaniCtas';
 const URLS_TO_CACHE = [
   '.',
   'index.html',
-  'calculadora.html',
   'style.css',
   'main.js',
   'manifest.json',
+  'aiDANaI.webp',
   'icons/android-chrome-192x192.png',
   'icons/android-chrome-512x512.png'
 ];
 
+// Evento 'install': Se dispara cuando el Service Worker se instala por primera vez.
 self.addEventListener('install', event => {
+  // skipWaiting() fuerza al nuevo Service Worker a activarse inmediatamente.
   self.skipWaiting(); 
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Service Worker: Cacheando app shell...');
+        console.log('Cache abierta. Guardando ficheros de la app...');
         return cache.addAll(URLS_TO_CACHE);
       })
   );
 });
 
+// Evento 'activate': Se dispara cuando el Service Worker se activa.
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (CACHE_NAME !== cacheName) {
+            console.log('Borrando caché antigua:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => self.clients.claim()) // Toma el control de las páginas abiertas.
   );
 });
 
+// REEMPLAZA TU self.addEventListener('fetch', ...) con este bloque
 self.addEventListener('fetch', event => {
     const { request } = event;
 
-    // 1. REGLA DE ORO: Ignorar completamente Firestore
-    // Dejamos que el SDK de Firebase gestione su propia caché interna (IndexedDB)
-    // Esto arregla el problema de datos obsoletos y conflictos de escritura.
-    if (request.url.includes('firestore.googleapis.com') || request.url.includes('google.com')) {
-        return; 
+    // No interceptar peticiones que no sean GET
+    if (request.method !== 'GET') {
+        return;
     }
 
-    // 2. Solo gestionamos peticiones GET para recursos de la interfaz
-    if (request.method !== 'GET') return;
-
-    const url = new URL(request.url);
-    // Normalización de index.html para PWA
-    const resourcePath = url.pathname.endsWith('/') ? '/index.html' : url.pathname;
-    
-    // Comprobamos si es un recurso estático que queremos controlar
-    const isAppShellResource = URLS_TO_CACHE.some(path => path.endsWith(resourcePath.replace(/^\//, '')));
-
-    if (isAppShellResource) {
-        // Estrategia Stale-While-Revalidate: Rapidez + Actualización
+    // Estrategia para los recursos de la App (CSS, JS, HTML, imágenes)
+    // Stale-While-Revalidate: Sirve desde la caché al instante, y actualiza en segundo plano.
+    if (URLS_TO_CACHE.includes(new URL(request.url).pathname)) {
         event.respondWith(
             caches.open(CACHE_NAME).then(cache => {
                 return cache.match(request).then(cachedResponse => {
                     const fetchPromise = fetch(request).then(networkResponse => {
                         cache.put(request, networkResponse.clone());
                         return networkResponse;
-                    }).catch(err => console.log('Fallo red SW (no crítico si hay caché)', err));
-                    
+                    });
+                    // Devuelve la respuesta de la caché si existe, si no, espera a la red.
                     return cachedResponse || fetchPromise;
                 });
             })
         );
+        return;
     }
+
+    // Estrategia para datos de Firebase (Network First)
+    // Siempre intenta obtener los datos más frescos, con fallback a la caché si no hay red.
+    event.respondWith(
+        fetch(request)
+            .then(networkResponse => {
+                return caches.open(CACHE_NAME).then(cache => {
+                    cache.put(request, networkResponse.clone());
+                    return networkResponse;
+                });
+            })
+            .catch(() => {
+                return caches.match(request);
+            })
+    );
 });
