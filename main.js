@@ -4168,101 +4168,139 @@ const loadMoreMovements = async (isInitial = false) => {
     movementsObserver.observe(trigger);
 };
 
-// ▼▼▼ REEMPLAZA TU FUNCIÓN renderDiarioPage POR COMPLETO CON ESTA VERSIÓN ▼▼▼
+/* ================================================================= */
+/* === FUNCIÓN RENDER DIARIO BLINDADA (FIX BLOQUEO) === */
+/* ================================================================= */
 
 const renderDiarioPage = async () => {
+    // 1. SEMÁFORO DE SEGURIDAD
     if (isDiarioPageRendering) {
-        console.log("BLOQUEADO: Intento de re-renderizar el Diario mientras ya estaba en proceso.");
+        console.warn("BLOQUEADO: Intento de re-renderizar el Diario mientras ya estaba en proceso.");
         return;
     }
+    
+    // Bloqueamos la entrada
     isDiarioPageRendering = true;
 
     try {
         const container = select('diario-page');
+        if (!container) throw new Error("No se encontró el contenedor de la página Diario");
+
+        // Crear estructura si no existe
         if (!container.querySelector('#diario-view-container')) {
-            container.innerHTML = '<div id="diario-view-container"></div>';
+            container.innerHTML = '<div id="diario-view-container" style="height:100%; width:100%;"></div>';
         }
         
         const viewContainer = select('diario-view-container');
-        if (!viewContainer) return;
 
+        // --- MODO CALENDARIO ---
         if (diarioViewMode === 'calendar') {
-            if (movementsObserver) movementsObserver.disconnect();
+            if (movementsObserver) {
+                movementsObserver.disconnect();
+                movementsObserver = null;
+            }
             await renderDiarioCalendar();
-            return; // Salimos aquí si estamos en vista de calendario
+            // ¡IMPORTANTE! Incluso al salir por aquí, el 'finally' se ejecutará y desbloqueará.
+            return; 
         }
 
-        viewContainer.innerHTML = `
-            <div id="diario-filter-active-indicator" class="hidden">
-			<button data-action="clear-diario-filters" class="icon-btn" style="width: 24px; height: 24px;">
-        <span class="material-icons" style="font-size: 16px;">close</span>
-    </button>
-                <p>Mostrando resultados filtrados.</p>
-                <div>
-                    <button data-action="export-filtered-csv" class="btn btn--secondary" style="padding: 4px 10px; font-size: 0.75rem;"><span class="material-icons" style="font-size: 14px;">download</span>Exportar</button>
-                    <button data-action="clear-diario-filters" class="btn btn--secondary" style="padding: 4px 10px; font-size: 0.75rem;">Limpiar</button>
+        // --- MODO LISTA (VIRTUAL SCROLL) ---
+        // Solo inyectamos el HTML si está vacío para no parpadear en re-renderizados suaves
+        if (!viewContainer.innerHTML.trim() || !select('virtual-list-content')) {
+            viewContainer.innerHTML = `
+                <div id="diario-filter-active-indicator" class="hidden">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <button data-action="clear-diario-filters" class="icon-btn"><span class="material-icons">close</span></button>
+                        <p style="font-size:0.9rem; font-weight:600;">Filtros activos</p>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button data-action="export-filtered-csv" class="btn btn--secondary" style="padding: 4px 10px; font-size: 0.75rem;">
+                            <span class="material-icons" style="font-size: 14px;">download</span> CSV
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div id="movimientos-list-container">
-                <div id="virtual-list-sizer"><div id="virtual-list-content"></div></div>
-            </div>
-            <div id="infinite-scroll-trigger" style="height: 50px;"></div> 
-            <div id="empty-movimientos" class="empty-state hidden" style="margin: 0 var(--sp-4);">
-                <span class="material-icons">search_off</span><h3>Sin Resultados</h3><p>No se encontraron movimientos que coincidan con tus filtros.</p>
-            </div>`;
+                
+                <div id="movimientos-list-container" style="height:100%; overflow:visible;">
+                    <div id="virtual-list-sizer">
+                        <div id="virtual-list-content"></div>
+                    </div>
+                </div>
+                
+                <div id="infinite-scroll-trigger" style="height: 50px; width: 100%;"></div>
+                
+                <div id="empty-movimientos" class="empty-state hidden" style="margin-top: 50px;">
+                    <span class="material-icons">search_off</span>
+                    <h3>Sin movimientos</h3>
+                    <p>No hay datos que coincidan con tu búsqueda.</p>
+                </div>`;
+        }
 
+        // Asignar referencias globales de la lista virtual
         vList.scrollerEl = selectOne('.app-layout__main');
         vList.sizerEl = select('virtual-list-sizer');
         vList.contentEl = select('virtual-list-content');
         
         const scrollTrigger = select('infinite-scroll-trigger');
+        const filterIndicator = select('diario-filter-active-indicator');
 
+        // --- LÓGICA DE DATOS ---
         if (diarioActiveFilters) {
+            // A) CON FILTROS
             if (scrollTrigger) scrollTrigger.classList.add('hidden');
+            if (filterIndicator) filterIndicator.classList.remove('hidden');
+            
+            // Desactivar scroll infinito estándar
             if (movementsObserver) movementsObserver.disconnect();
 
-            select('diario-filter-active-indicator').classList.remove('hidden');
-            
+            // Cargar todo y filtrar en memoria
             const allMovements = await AppStore.getAll();
-
-			const { startDate, endDate, description, minAmount, maxAmount, cuentas, conceptos } = diarioActiveFilters;
-			db.movimientos = allMovements.filter(m => {
+            const { startDate, endDate, description, minAmount, maxAmount, cuentas, conceptos } = diarioActiveFilters;
+            
+            db.movimientos = allMovements.filter(m => {
                 if (startDate && m.fecha < startDate) return false;
                 if (endDate && m.fecha > endDate) return false;
-                if (description && !m.descripcion.toLowerCase().includes(description)) return false;
+                if (description && !((m.descripcion || '').toLowerCase().includes(description))) return false;
+                
                 const cantidadEuros = m.cantidad / 100;
                 if (minAmount && cantidadEuros < parseFloat(minAmount)) return false;
                 if (maxAmount && cantidadEuros > parseFloat(maxAmount)) return false;
+                
                 if (cuentas.length > 0) {
                     if (m.tipo === 'traspaso' && !cuentas.includes(m.cuentaOrigenId) && !cuentas.includes(m.cuentaDestinoId)) return false;
                     if (m.tipo === 'movimiento' && !cuentas.includes(m.cuentaId)) return false;
                 }
+                
                 if (conceptos.length > 0 && m.tipo === 'movimiento' && !conceptos.includes(m.conceptoId)) return false;
+                
                 return true;
             });
-            
+
             await processMovementsForRunningBalance(db.movimientos, true);
             updateVirtualListUI();
 
         } else {
+            // B) SIN FILTROS (Scroll Infinito Normal)
             if (scrollTrigger) scrollTrigger.classList.remove('hidden');
-            select('diario-filter-active-indicator').classList.add('hidden');
+            if (filterIndicator) filterIndicator.classList.add('hidden');
+
+            // Si la lista está vacía, intentamos cargar la primera página
+            if (!db.movimientos || db.movimientos.length === 0) {
+               await loadMoreMovements(true); // Carga inicial
+            } else {
+               updateVirtualListUI(); // Ya tenemos datos, solo pintamos
+            }
             
-            db.movimientos = [];
-            lastVisibleMovementDoc = null;
-            allMovementsLoaded = false;
-            isLoadingMoreMovements = false; 
-            
-            await loadMoreMovements(true);
-            initMovementsObserver();
+            // Reactivar el observador de scroll
+            setTimeout(() => initMovementsObserver(), 500);
         }
 
     } catch (error) {
-        console.error("Error crítico renderizando la página del diario:", error);
-        // Si hay un error, es crucial liberar la guarda para poder intentarlo de nuevo.
+        console.error("❌ Error fatal en renderDiarioPage:", error);
+        showToast("Error al mostrar el diario.", "danger");
     } finally {
-       
+        // [CRÍTICO] LIBERAR EL SEMÁFORO SIEMPRE
         isDiarioPageRendering = false;
+        // console.log("✅ Render Diario finalizado y desbloqueado.");
     }
 };
 
