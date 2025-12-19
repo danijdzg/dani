@@ -6326,22 +6326,56 @@ html, body {
 /* ================================================================= */
 
 
-/* 2. SOLUCIÓN ESPACIO SUPERIOR: Ajuste quirúrgico del contenedor */
+/* SOLUCIÓN ESPACIO SUPERIOR: Ajuste quirúrgico del contenedor */
 #app-root.app-layout {
     /* El relleno superior debe ser EXACTAMENTE la altura de la barra (50px) */
     padding-top: 50px !important; 
   
+/* ================================================================= */
+/* === CORRECCIÓN NAVEGACIÓN Y MÁRGENES (FIX FINAL) === */
+/* ================================================================= */
 
-/* 3. ELIMINAR HUECOS EN LA ESTRUCTURA INTERNA */
-/* Forzamos que la etiqueta MAIN y las VISTAS no tengan techo */
+/* 1. Lógica de Pestañas (Mostrar/Ocultar) */
+/* Por defecto, todas las vistas están ocultas y sin márgenes */
+.view {
+    display: none; /* Oculto por defecto */
+    width: 100%;
+    height: 100%;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    overflow-x: hidden;
+}
+
+/* Solo la vista que tenga la clase 'active' se muestra */
+.view.active {
+    display: block !important; /* Visible */
+    animation: fadeIn 0.3s ease-in-out; /* Pequeña animación suave opcional */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 2. Ajuste de Contenedores Internos (Sin huecos) */
+/* Mantenemos la eliminación de márgenes para los contenedores internos, pero SIN tocar .view */
 .app-layout__main,
-.view,
 .dashboard-container,
 .diario-container {
     margin-top: 0 !important;
     padding-top: 0 !important;
-    display: block !important;
+    /* Quitamos el 'display: block !important' global para evitar conflictos */
 }
+
+/* 3. Asegurar altura del Main */
+.app-layout__main {
+    flex: 1;
+    position: relative;
+    width: 100%;
+    /* Aseguramos que no tenga scroll propio que choque con el body */
+    overflow-y: visible; 
+}
+
 /* ================================================================= */
 /* === FONDO NEGRO PURO (SIN ESTRELLAS) Y CERO MÁRGENES === */
 /* ================================================================= */
