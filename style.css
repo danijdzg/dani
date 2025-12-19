@@ -389,6 +389,97 @@
     --font-numeric: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+/* 1. Estilo base del encabezado (oscuro, para que contraste en ambos temas) */
+.top-bar {
+    /* Un blur más fuerte y saturado (estilo Apple) */
+    background-color: rgba(28, 42, 58, 0.65); /* Más transparencia */
+    backdrop-filter: blur(25px) saturate(180%); /* Saturate aviva los colores de fondo */
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Borde sutilísimo */
+}
+
+/* 2. Anulación específica para Contabilidad A (el encabezado se vuelve azul corporativo) */
+body[data-ledger-mode="A"] .top-bar {
+    background-color: #002D5B; /* Azul oscuro y profesional */
+}
+
+/* 3. Anulación específica para Contabilidad B (el encabezado se vuelve rojo oscuro) */
+body[data-ledger-mode="B"] .top-bar {
+    /* Un rojo oscuro o púrpura profundo en lugar del gris translúcido estándar */
+    background-color: rgba(80, 0, 0, 0.85) !important; 
+    border-bottom: 1px solid var(--c-danger);
+}
+
+/* 4. Asegura que el texto y botones dentro del encabezado SIEMPRE sean blancos y legibles */
+/* Refactorización Profesional en style.css */
+body[data-theme] .top-bar,
+body[data-theme] .top-bar .btn,
+body[data-theme] .top-bar .icon-btn,
+body[data-theme] .top-bar #page-title-display {
+    color: var(--c-white); /* Sin !important, pero ahora es más específico que las reglas del tema */
+}
+
+/* ================================================================= */
+/* === COLORES DE CAJAS (ENCABEZADOS Y NAVEGACIÓN) REVISADOS === */
+/* ================================================================= */
+
+/* --- CAJA A: AZUL (Encabezado y Botones Activos) --- */
+body[data-ledger-mode="A"] .top-bar {
+    background-color: #0056b3 !important; /* Azul sólido */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+body[data-ledger-mode="A"] #ledger-toggle-btn {
+    background-color: #007AFF !important; /* Azul Brillante */
+    border-color: #007AFF !important;
+    color: var(--c-white);
+    box-shadow: 0 0 10px rgba(0, 122, 255, 0.5);
+}
+/* Iconos de navegación en Azul */
+body[data-ledger-mode="A"] .bottom-nav__item--active {
+    color: #007bff !important; 
+}
+
+/* --- CAJA B: ROJA (Encabezado y Botones Activos) --- */
+body[data-ledger-mode="B"] .top-bar {
+    background-color: #c82333 !important; /* Rojo sólido */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+body[data-ledger-mode="B"] #ledger-toggle-btn {
+    background-color: #a71d2a; /* Rojo más oscuro */
+    color: white;
+}
+/* Iconos de navegación en Rojo */
+body[data-ledger-mode="B"] .bottom-nav__item--active {
+    color: #dc3545 !important;
+}
+
+/* --- CAJA C: VERDE (Encabezado y PESTAÑAS BOTÓN) --- */
+body[data-ledger-mode="C"] .top-bar {
+    background-color: #218838 !important; /* Verde sólido */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+body[data-ledger-mode="C"] #ledger-toggle-btn {
+    background-color: #1e7e34; /* Verde más oscuro */
+    color: white;
+}
+
+/* --- CORRECCIÓN ESPECÍFICA PARA PESTAÑAS DE CAJA C --- */
+/* En lugar de solo cambiar el color de la fuente, cambiamos el FONDO del botón */
+body[data-ledger-mode="C"] .tab-item--active,
+body[data-ledger-mode="C"] .bottom-nav__item--active {
+    background-color: #28a745 !important; /* Fondo Verde */
+    color: #ffffff !important; /* Texto Blanco */
+    border-radius: 8px; /* Bordes redondeados para parecer botón */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    /* Quitamos el borde inferior que se usa en los otros modos */
+    border-bottom: none !important; 
+}
+
+/* Ajuste pequeño para que el icono dentro del botón verde se vea blanco */
+body[data-ledger-mode="C"] .bottom-nav__item--active .material-icons,
+body[data-ledger-mode="C"] .tab-item--active .material-icons {
+    color: #ffffff !important;
+}
 /* ================================================================= */
 /* === ESTILOS BASE Y ESTRUCTURALES (COMUNES A AMBOS TEMAS)       === */
 /* ================================================================= */
@@ -1084,7 +1175,7 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
 }
 .movimiento-month-header {
     position: sticky; /* La clave mágica */
-    top: 60;
+    top: 0;
     z-index: 5; 
     margin-top: 0; 
     border-radius: 0; 
@@ -1239,6 +1330,17 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
 
 /* Quitar bordes externos sobrantes */
 .calculator-grid .calculator-btn:nth-child(4n) { border-right: none; }
+
+/* --- Estilos de Contabilidad Dual (A/B) --- */
+body[data-ledger-mode="A"] #ledger-toggle-btn { background-color: var(--c-primary); border-color: var(--c-primary); color: var(--c-white); box-shadow: var(--shadow-sm); }
+body[data-ledger-mode="A"] #ledger-toggle-btn:hover {
+    background-color: #0056b3 !important; /* Azul más oscuro al pasar el ratón */
+    border-color: #0056b3 !important;
+}
+body[data-ledger-mode="B"] #ledger-toggle-btn { background-color: var(--c-danger); border-color: var(--c-danger); color: var(--c-white); box-shadow: var(--shadow-sm); }
+body[data-ledger-mode="B"] #ledger-toggle-btn:hover { background-color: color-mix(in srgb, var(--c-danger) 85%, black); border-color: color-mix(in srgb, var(--c-danger) 85%, black); box-shadow: var(--glow-red); }
+body[data-ledger-mode="B"] .bottom-nav__item--active { color: var(--c-danger); }
+#ledger-toggle-btn { font-weight: 700; padding: 6px 10px; font-size: 0.8rem; min-width: 40px; text-align: center; }
 
 /* --- Iconos y Clases de Ayuda --- */
 .text-positive { color: var(--c-success); } .text-negative { color: var(--c-danger); } .text-warning { color: var(--c-warning); } .text-info { color: var(--c-info); }
@@ -1403,10 +1505,11 @@ border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde 'hairline' nítido */ 
     
     /* 1. EL "LIENZO" EXTERIOR */
     body {
-    background-color: #000000; /* Fondo negro limpio (AMOLED) */
-    margin: 0;
-    overflow-x: hidden; /* Prevenir scroll lateral */
-}
+        background-color: #050505; /* Fondo negro profundo fuera de la app */
+        display: flex;
+        justify-content: center; /* Centramos la app en el monitor */
+        background-image: radial-gradient(circle at 50% 50%, #1a202c 0%, #000000 100%);
+    }
 
     /* 2. EL CONTENEDOR DE LA APP (La "Ventana") */
     .app-layout { 
@@ -5846,50 +5949,70 @@ input, select, textarea {
         opacity: 0.5;
     }
 }
+/* ========================================= */
+/* === MOTOR DE FONDO ESTRELLADO (V3.0 AMOLED) === */
+/* ========================================= */
 
-/* ================================================================= */
-/* === MODO COMPACTO & LIMPIEZA TOTAL DEL ENCABEZADO === */
-/* ================================================================= */
-
-/* 1. Ocultar los Nombres de las Pestañas en el Encabezado */
-/* Esto elimina "Panel", "Diario", "Ajustes" de la barra superior para siempre */
-#page-title-display {
-    display: none !important;
+#deep-space-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    /* CAMBIO CLAVE: Negro puro para pantallas AMOLED */
+    background-color: #000000; 
+    overflow: hidden;
+    pointer-events: none;
 }
 
-/* 2. Reducir la altura del Encabezado (Más espacio para contenido) */
-.top-bar {
-    height: 30px !important;      /* Reducimos de 60px a 30px */
-    min-height: 50px !important;
-    padding: 0 10px !important;   /* Menos padding lateral */
+/* Contenedor de cada capa para manejar la animación vertical */
+.star-anim-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    animation: moveStars linear infinite;
 }
 
-/* 3. Ajustar el botón central "Caja A" para que quepa en la barra más fina */
-#ledger-toggle-btn {
-    padding: 6px 20px !important; /* Un poco más pequeño */
-    font-size: 0.9rem !important; /* Letra ajustada */
-    height: 34px !important;      /* Altura fija compacta */
-    /* Mantenemos el centrado absoluto */
+@keyframes moveStars {
+    from { transform: translateY(0); }
+    to { transform: translateY(-100vh); }
+}
+
+/* Estrella Fugaz */
+.shooting-star {
+    position: absolute;
     top: 50%;
-    transform: translate(-50%, -50%);
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    /* Gradiente ajustado para contrastar con el negro puro */
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.6); /* Brillo más intenso */
+    animation: shoot 3s linear infinite; /* Un poco más rápido */
+    opacity: 0;
 }
 
-/* 5. ELIMINAR CUALQUIER ESPACIO VACÍO en Panel y Diario */
-/* Forzamos a que las gráficas y listas toquen el borde del encabezado */
-.dashboard-view, 
-.dashboard-container,
-.diario-container,
-.transactions-list-container {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
+.shooting-star::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 200px; /* Cola más larga */
+    height: 1px;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
+    right: 0;
 }
 
-/* 6. Ajuste específico para el Sticky del Diario (Meses) */
-/* Como la barra ahora mide 50px, el mes debe pegarse a 30px, no a 60px */
-.movimiento-month-header {
-    top: 30px !important; 
+@keyframes shoot {
+    0% { transform: rotate(-45deg) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    20% { transform: rotate(-45deg) translateX(-1500px); opacity: 0; }
+    100% { transform: rotate(-45deg) translateX(-1500px); opacity: 0; }
 }
-   
 /* ========================================= */
 /* === Ocultar Scrollbar (Estilo App) === */
 /* ========================================= */
@@ -5903,465 +6026,4 @@ input, select, textarea {
 .app-layout__main {
     scrollbar-width: none;  /* Firefox */
     -ms-overflow-style: none;  /* IE 10+ */
-}
-/* ================================================================= */
-/* === NUEVO DISEÑO: ENCABEZADO VIDRIO Y TEXTOS DE COLOR === */
-/* ================================================================= */
-
-/* 1. Unificar Encabezado con el Pie de Página (Estilo Vidrio) */
-/* Aplicamos esto a TODOS los modos (A, B, C) para quitar fondos sólidos */
-body[data-ledger-mode="A"] .top-bar,
-body[data-ledger-mode="B"] .top-bar,
-body[data-ledger-mode="C"] .top-bar,
-.top-bar {
-    position: relative; /* Necesario para que el botón se centre respecto a esto */
-    display: flex;
-    justify-content: space-between; /* Título a la izq, Iconos a la der */
-    align-items: center;
-    height: 60px; /* Un poco más alto para que respire */
-    padding: 0 16px;
-    
-    /* Efecto Vidrio Global */
-    background-color: rgba(20, 25, 35, 0.6) !important;
-    backdrop-filter: blur(15px) saturate(180%);
-    -webkit-backdrop-filter: blur(15px) saturate(180%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    z-index: 100;
-}
-
-/* 2. Estilo Base del Botón de Caja (Transparente) */
-#ledger-toggle-btn {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%); /* Centrado matemático perfecto */
-    
-    /* Diseño "Cápsula Sobresaliente" */
-    background-color: rgba(0, 0, 0, 0.4) !important; /* Fondo semitransparente oscuro */
-    backdrop-filter: blur(5px);
-    
-    padding: 8px 24px;       /* Más grande y ancho */
-    border-radius: 50px;     /* Forma redondeada completa */
-    border: 2px solid;       /* Borde visible del color de la caja */
-    
-    font-size: 1rem;
-    font-weight: 800;        /* Texto muy grueso */
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    white-space: nowrap;     /* Que no se rompa el texto en móviles */
-    
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3); /* Sombra base */
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    z-index: 10;
-}
-
-/* Efecto al pulsar */
-#ledger-toggle-btn:active {
-    transform: translate(-50%, -50%) scale(0.92);
-}
-
-/* ================================================================= */
-/* === REGLAS DE COLOR POR CAJA (TEXTO AZUL, ROJO, VERDE) === */
-/* ================================================================= */
-
-/* --- CAJA A (AZUL) --- */
-/* Botón del encabezado */
-body[data-ledger-mode="A"] #ledger-toggle-btn {
-    color: #007AFF !important;
-    border-color: #007AFF !important;
-    box-shadow: 0 0 15px rgba(0, 122, 255, 0.3), inset 0 0 10px rgba(0, 122, 255, 0.1) !important;
-}
-/* Pestaña del pie de página activa */
-body[data-ledger-mode="A"] .bottom-nav__item--active {
-    color: #007AFF !important; /* Fuente Azul */
-    background-color: transparent !important; /* Aseguramos que no tenga fondo sólido */
-}
-
-/* --- CAJA B (ROJA) --- */
-/* Botón del encabezado */
-body[data-ledger-mode="B"] #ledger-toggle-btn {
-    color: #FF3B30 !important;
-    border-color: #FF3B30 !important;
-    box-shadow: 0 0 15px rgba(255, 59, 48, 0.3), inset 0 0 10px rgba(255, 59, 48, 0.1) !important;
-}
-/* Pestaña del pie de página activa */
-body[data-ledger-mode="B"] .bottom-nav__item--active {
-    color: #FF3B30 !important; /* Fuente Roja */
-    background-color: transparent !important;
-}
-
-/* --- CAJA C (VERDE) --- */
-/* Botón del encabezado */
-body[data-ledger-mode="C"] #ledger-toggle-btn {
-    color: #28a745 !important;
-    border-color: #28a745 !important;
-    box-shadow: 0 0 15px rgba(40, 167, 69, 0.3), inset 0 0 10px rgba(40, 167, 69, 0.1) !important;
-}
-/* Pestaña del pie de página activa */
-body[data-ledger-mode="C"] .bottom-nav__item--active {
-    color: #28a745 !important; /* Fuente Verde */
-    background-color: transparent !important; /* Quitamos el fondo verde sólido que tenías antes */
-    box-shadow: none !important;
-    border-radius: 0 !important;
-}
-/* ================================================================= */
-/* === ELIMINAR ICONOS DE MOVIMIENTOS (AHORRO DE ESPACIO) === */
-/* ================================================================= */
-
-/* 1. Ocultar el círculo del icono (Avatar) en toda la app */
-.transaction-avatar {
-    display: none !important;
-}
-
-/* 2. Ocultar también el icono antiguo si quedase alguno residual */
-.transaction-card__indicator {
-    display: none !important;
-}
-
-/* 3. Ajustar el texto para que no se pegue al borde izquierdo */
-/* Al quitar el icono, necesitamos dar un poco de aire al contenido */
-.transaction-card {
-    padding-left: 12px !important; /* Espacio lateral de seguridad */
-}
-
-/* 4. Si usas la vista de "Extracto" o listas compactas, ajustamos también */
-.search-result-item__icon {
-    display: none !important;
-}
-.search-result-item {
-    padding-left: 12px !important;
-}
-/* ================================================================= */
-/* === TARJETAS DE MOVIMIENTOS: ESTILO NEÓN & TRANSPARENTE === */
-/* ================================================================= */
-
-/* 1. Base de la tarjeta (FONDO TRANSPARENTE) */
-.t-card {
-    position: relative;
-    display: flex;
-    align-items: center;
-    padding: 14px 16px; /* Un poco más de aire */
-    
-    /* CAMBIO CLAVE: Fondo transparente para que se funda con el cosmos */
-    background-color: transparent !important; 
-    
-    /* Separador muy sutil solo para guiar la vista */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    
-    transition: background-color 0.2s;
-    overflow: visible; /* Necesario para que el brillo del neón no se corte */
-}
-
-/* Efecto hover suave (opcional, para escritorio) */
-.t-card:active {
-    background-color: rgba(255, 255, 255, 0.03) !important;
-}
-
-/* 2. ELIMINAR BORDES ANTIGUOS */
-/* Quitamos los bordes sólidos que pusimos en el paso anterior */
-.t-type-expense, .t-type-income, .t-type-transfer {
-    border-left: none !important;
-}
-
-/* 3. NUEVA LÍNEA "ESPECTACULAR" (Pseudo-elemento Neón) */
-.t-card::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    /* La línea no toca los bordes arriba/abajo, queda flotando centrada */
-    top: 15%; 
-    bottom: 15%;
-    width: 4px; /* Grosor de la línea */
-    border-radius: 4px; /* Puntas redondeadas */
-    
-    /* Transición suave del brillo */
-    transition: box-shadow 0.3s ease;
-}
-
-/* --- COLORES Y RESPLANDORES (GLOW) --- */
-
-/* GASTO (Rojo Neón) */
-.t-type-expense::before {
-    background-color: #FF453A;
-    /* Sombra difusa del mismo color para crear el brillo */
-    box-shadow: 0 0 12px rgba(255, 69, 58, 0.8); 
-}
-
-/* INGRESO (Verde Neón) */
-.t-type-income::before {
-    background-color: #32D74B;
-    box-shadow: 0 0 12px rgba(50, 215, 75, 0.8);
-}
-
-/* TRASPASO (Morado Neón) */
-.t-type-transfer::before {
-    background-color: #BF5AF2;
-    box-shadow: 0 0 12px rgba(191, 90, 242, 0.8);
-}
-/* ================================================================= */
-/* === CUENTAS DE COLORES (Sincronizadas con el tipo) === */
-/* ================================================================= */
-
-/* Estilo base para las "Etiquetas de Cuenta" */
-.t-account-badge, .t-transfer-part {
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    padding: 2px 6px;
-    border-radius: 6px;
-    transition: all 0.3s ease;
-}
-
-/* 1. GASTOS -> Cuenta en ROJO */
-/* Buscamos la cuenta DENTRO de una tarjeta de gasto */
-.t-type-expense .t-account-badge {
-    color: #FF453A !important;             /* Texto Rojo Neón */
-    background-color: rgba(255, 69, 58, 0.15);   /* Fondo rojizo muy sutil */
-    border: 1px solid rgba(255, 69, 58, 0.3);    /* Borde fino rojo */
-    box-shadow: 0 0 5px rgba(255, 69, 58, 0.1);  /* Pequeño resplandor */
-}
-
-/* 2. INGRESOS -> Cuenta en VERDE */
-/* Buscamos la cuenta DENTRO de una tarjeta de ingreso */
-.t-type-income .t-account-badge {
-    color: #32D74B !important;             /* Texto Verde Neón */
-    background-color: rgba(50, 215, 75, 0.15);   /* Fondo verdoso muy sutil */
-    border: 1px solid rgba(50, 215, 75, 0.3);    /* Borde fino verde */
-    box-shadow: 0 0 5px rgba(50, 215, 75, 0.1);
-}
-
-/* 3. TRASPASOS -> Cuentas en MORADO */
-/* En los traspasos, coloreamos el texto "De: Cuenta" y "A: Cuenta" */
-.t-type-transfer .t-transfer-part {
-    color: #BF5AF2 !important;             /* Texto Morado Neón */
-    /* Para traspasos, dejamos el fondo transparente para no recargar, 
-       o puedes ponerle fondo morado suave si prefieres */
-    text-shadow: 0 0 8px rgba(191, 90, 242, 0.4); 
-}
-/* ================================================================= */
-/* === UNIFICACIÓN TOTAL: ENCABEZADO Y PIE DE PÁGINA === */
-/* ================================================================= */
-
-/* 1. VARIABLE COMPARTIDA DE ESTILO (Para que sean idénticos) */
-:root {
-    /* Color oscuro semitransparente para efecto vidrio */
-    --bar-bg: rgba(18, 18, 18, 0.85); 
-    --bar-blur: blur(15px) saturate(180%);
-    --bar-border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* 2. ENCABEZADO (Pegado Arriba) */
-.top-bar {
-    position: fixed !important; /* Fijo al techo */
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 50px !important;
-    z-index: 1000; /* Siempre por encima */
-    
-    /* Estética Vidrio */
-    background-color: var(--bar-bg) !important;
-    backdrop-filter: var(--bar-blur);
-    -webkit-backdrop-filter: var(--bar-blur);
-    
-    /* Borde solo abajo */
-    border-bottom: var(--bar-border);
-    border-top: none;
-    border-left: none;
-    border-right: none;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2); /* Sombra suave */
-}
-
-/* 3. PIE DE PÁGINA (Pegado Abajo) */
-.bottom-nav {
-    position: fixed !important; /* Fijo al suelo */
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 60px; /* Altura estándar cómoda para dedos */
-    z-index: 1000;
-    
-    /* Estética Vidrio (Idéntica al encabezado) */
-    background-color: var(--bar-bg) !important;
-    backdrop-filter: var(--bar-blur);
-    -webkit-backdrop-filter: var(--bar-blur);
-    
-    /* Borde solo arriba */
-    border-top: var(--bar-border);
-    border-bottom: none;
-    border-left: none;
-    border-right: none;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
-    
-    /* Aseguramos flex para los iconos */
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-}
-
-/* 5. CORRECCIÓN STICKY DIARIO */
-/* Como el encabezado es fijo, el mes debe pegarse justo debajo (a 50px) */
-.movimiento-month-header {
-    position: sticky;
-    top: 50px !important; /* Justo debajo de la barra superior */
-    z-index: 900; /* Debajo del encabezado pero sobre los movimientos */
-    background-color: #000000; /* O el color que prefieras para tapar al hacer scroll */
-}
-
-/* ================================================================= */
-/* === 1. BOTÓN (+) INCRUSTADO EN EL CENTRO DEL PIE DE PÁGINA === */
-/* ================================================================= */
-
-.fab-container {
-    /* Centrado Horizontal Absoluto */
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    right: auto !important;
-    
-    /* Posición Vertical: Lo subimos para que "rompa" la línea del pie de página */
-    /* Como el pie mide 60px, ponerlo a 30px hace que sobresalga la mitad */
-    bottom: 30px !important; 
-    
-    z-index: 1100 !important; /* Por encima del pie de página */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.fab {
-    width: 60px !important;  /* Un poco más grande para destacar */
-    height: 60px !important;
-    border-radius: 50%;
-    
-    /* Sombra de neón para separarlo visualmente de la barra */
-    box-shadow: 0 0 15px rgba(0, 179, 77, 0.5), 0 4px 10px rgba(0,0,0,0.3) !important;
-    
-    /* Aseguramos el color del tema */
-    background-color: var(--c-primary) !important; 
-    color: #fff !important;
-}
-
-/* Efecto al pulsar */
-.fab:active {
-    transform: scale(0.95);
-    box-shadow: 0 0 20px rgba(0, 179, 77, 0.8) !important;
-}
-
-/* ================================================================= */
-/* === ELIMINACIÓN TOTAL DE MÁRGENES SUPERIORES (ZERO-GAP) === */
-/* ================================================================= */
-
-
-
-/* 2. Forzar a los contenedores de las vistas a no tener techo */
-.dashboard-view,
-.dashboard-container,
-.diario-container,
-.transactions-list-container,
-.view-container {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-    border-top: none !important;
-}
-
-/* 3. LA REGLA DE ORO: Matar el margen del PRIMER elemento */
-/* Esto busca el primer hijo de cualquier vista y le quita el margen superior. */
-/* Es lo que elimina el hueco misterioso causado por títulos o grids. */
-.dashboard-view > *:first-child,
-.diario-container > *:first-child,
-.view-container > *:first-child,
-.kpi-grid:first-child,
-.summary-cards-container:first-child {
-    margin-top: 0 !important;
-    padding-top: 4px !important; /* Solo 4px para que no toque el borde literalmente */
-}
-
-/* 4. AJUSTE ESPECÍFICO PARA PESTAÑA DIARIO (El mes pegado) */
-.movimiento-month-header {
-    /* Se pega exactamente donde termina el encabezado */
-    top: 50px !important; 
-    margin-top: 0 !important;
-    
-    /* Reducimos la altura del encabezado del mes para ganar más espacio vertical */
-    padding: 6px 15px !important; 
-    font-size: 0.85rem !important; /* Texto un pelín más compacto */
-    line-height: 1.2 !important;
-}
-
-/* 5. AJUSTE ESPECÍFICO PARA PESTAÑA PANEL (Gráficas KPI) */
-/* Compactamos la rejilla de las tarjetas superiores */
-.kpi-grid {
-    gap: 8px !important; /* Menos espacio entre tarjetas */
-    margin-bottom: 10px !important; /* Menos espacio debajo de las tarjetas */
-}
-
-/* 6. Corrección para evitar scroll elástico blanco en iOS/Android */
-html, body {
-    overscroll-behavior-y: none; /* Evita el rebote blanco arriba/abajo */
-}
-
-/* ================================================================= */
-/* === FONDO NEGRO PURO (SIN ESTRELLAS) Y CERO MÁRGENES === */
-/* ================================================================= */
-
-html, body {
-    /* IMPORTANTE: Volvemos a poner color negro sólido */
-    background-color: #000000 !important; 
-    background: #000000 !important;
-    
-    /* Mantenemos los ajustes de espacio a cero */
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100%;
-    height: 100%;
-    overscroll-behavior-y: none; /* Evita rebotes elásticos */
-}
-
-/* ================================================================= */
-/* === CORRECCIÓN FINAL: VISIBILIDAD Y ESTRUCTURA (FIX) === */
-/* ================================================================= */
-
-/* SOLUCIÓN ESPACIO SUPERIOR: Ajuste quirúrgico del contenedor */
-#app-root.app-layout {
-    /* El relleno superior debe ser EXACTAMENTE la altura de la barra (50px) */
-    padding-top: 50px !important; 
-    width: 100%;
-    min-height: 100vh;
-    background-color: #000000;
-} /* <--- ¡ESTA LLAVE FALTABA Y ROMPÍA LA VISIBILIDAD! */
-
-/* 1. Comportamiento de las Pestañas (El motor visual) */
-.view {
-    display: none; /* Oculto por defecto */
-    width: 100%;
-    height: 100%;
-    margin: 0 !important;
-    padding: 0 !important;
-    opacity: 0; 
-    transition: opacity 0.2s ease-in;
-}
-
-/* 2. La pestaña activa SE MUESTRA */
-.view.active {
-    display: block !important; /* Muestra el bloque */
-    opacity: 1; /* Lo hace visible */
-}
-
-/* 3. Corrección de márgenes internos (Zero-Gap) */
-/* Esto asegura que el contenido empiece justo debajo del encabezado */
-.app-layout__main,
-.dashboard-container,
-.diario-container,
-.view > *:first-child {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
-
-/* 4. Asegurar fondo negro global */
-html, body {
-    background-color: #000000 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100%;
-    height: 100%;
-    overflow-x: hidden;
 }

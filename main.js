@@ -572,7 +572,8 @@ const handleGenerateGlobalExtract = async (btn = null) => {
         </div>`;
 
         resultadoContainer.innerHTML = html;
-     
+        showToast("Extracto Global generado.", "success");
+
     } catch (error) {
         console.error(error);
         resultadoContainer.innerHTML = `<div class="empty-state text-danger"><p>Error al calcular.</p></div>`;
@@ -2466,33 +2467,30 @@ const pageRenderers = {
     [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
 };
 
-    if (pageRenderers[pageId]) {
-        // 1. Actualizar el Título (Limpiamos si es Panel o Diario)
-        const titleEl = document.getElementById('page-title-display');
-        if (titleEl) {
-            const rawTitle = pageRenderers[pageId].title;
-            // Si es Panel o Diario, dejamos el texto vacío. Si no, ponemos el título (ej: Ajustes)
-            titleEl.textContent = (pageId === PAGE_IDS.PANEL || pageId === PAGE_IDS.DIARIO) ? '' : rawTitle;
-        }
+    if (pageRenderers[pageId]) { 
+    if (leftEl) {
+        // Usamos la función getLedgerName para obtener el texto inicial correcto
+        const currentName = getLedgerName(currentLedger);
 
-        // 2. Botones extra del Diario (Filtro y Vista)
-        // Los inyectamos en la barra de acciones de la derecha si estamos en Diario
-        if (actionsEl) {
-            let actionsHTML = pageRenderers[pageId].actions;
+        // Generamos el botón con el nombre YA puesto
+        let leftSideHTML = `
+            <button id="ledger-toggle-btn" class="btn btn--secondary" data-action="toggle-ledger" title="Estás en: ${currentName}">
+                ${currentName}
+            </button>
+			<span id="page-title-display" style="text-decoration: none; color: inherit; cursor: default;">${pageRenderers[pageId].title}</span>`;
             
+            // CORRECCIÓN: Ya NO añadimos ningún botón extra si es PANEL.
+            // Solo añadimos botones si es DIARIO.
             if (pageId === PAGE_IDS.DIARIO) {
-                // Añadimos los botones del diario al principio de las acciones
-                const diarioButtons = `
-                    <button data-action="toggle-diario-view" class="icon-btn" title="Cambiar Vista"><span class="material-icons">${diarioViewMode === 'list' ? 'calendar_month' : 'list'}</span></button>
-                    <button data-action="show-diario-filters" class="icon-btn" title="Filtrar"><span class="material-icons">filter_list</span></button>
+                leftSideHTML += `
+                    <button data-action="show-diario-filters" class="icon-btn" style="margin-left: 8px;"><span class="material-icons">filter_list</span></button>
+                    <button data-action="toggle-diario-view" class="icon-btn"><span class="material-icons">${diarioViewMode === 'list' ? 'calendar_month' : 'list'}</span></button>
                 `;
-                actionsHTML = diarioButtons + actionsHTML;
             }
-            
-            actionsEl.innerHTML = actionsHTML;
+            leftEl.innerHTML = leftSideHTML;
         }
+        if (actionsEl) actionsEl.innerHTML = pageRenderers[pageId].actions;
         
-        // 3. Renderizar la página
         await pageRenderers[pageId].render();
     }
     
@@ -3745,7 +3743,7 @@ const renderVirtualListItem = (item) => {
         `;
     }
 
-    // 4. MOVIMIENTOS REALES (VERSIÓN OPTIMIZADA SIN ICONOS)
+    // 4. MOVIMIENTOS REALES (DIARIO)
     if (item.type === 'transaction') {
         const m = item.movement;
         const { cuentas, conceptos } = db;
@@ -3755,36 +3753,40 @@ const renderVirtualListItem = (item) => {
         const dateObj = new Date(m.fecha);
         const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
 
-        let line1, line2, amountClass, amountSign, typeClass;
+        let iconHtml, line1, line2, amountClass, amountSign;
 
         if (m.tipo === 'traspaso') {
-            // --- TIPO: TRASPASO (MORADO) ---
-            typeClass = 't-type-transfer'; // Clase para la barra morada
-            
             const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || 'Origen';
             const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || 'Destino';
             
+            // Formateamos los saldos resultantes que calculamos en updateVirtualListUI
             const saldoOrigenHtml = m._saldoOrigenSnapshot !== undefined 
-                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoOrigenSnapshot)})</span>` : '';
+                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoOrigenSnapshot)})</span>` 
+                : '';
             const saldoDestinoHtml = m._saldoDestinoSnapshot !== undefined 
-                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoDestinoSnapshot)})</span>` : '';
+                ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoDestinoSnapshot)})</span>` 
+                : '';
 
-            // Diseño simplificado solo texto
-            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part">De: ${escapeHTML(origen)}${saldoOrigenHtml}</span>`;
-            line2 = `<span class="t-transfer-part">A: ${escapeHTML(destino)}${saldoDestinoHtml}</span>`;
+            iconHtml = `<div class="t-icon t-icon--transfer"><span class="material-icons">sync_alt</span></div>`;
             
-            amountClass = 'text-info'; // Azul para el importe
+            // Añadimos el saldo a cada línea
+            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part"><span class="material-icons text-negative" style="font-size:14px; margin-right:2px;">arrow_upward</span>${escapeHTML(origen)}${saldoOrigenHtml}</span>`;
+            line2 = `<span class="t-transfer-part"><span class="material-icons text-positive" style="font-size:14px; margin-right:2px;">arrow_downward</span>${escapeHTML(destino)}${saldoDestinoHtml}</span>`;
+            
+            amountClass = 'text-info';
             amountSign = '';
             
         } else {
-            // --- TIPO: GASTO (ROJO) O INGRESO (VERDE) ---
-            const isGasto = m.cantidad < 0;
-            typeClass = isGasto ? 't-type-expense' : 't-type-income'; // Clase para barra roja/verde
-
             const concepto = conceptos.find(c => c.id === m.conceptoId);
             const conceptoNombre = concepto ? concepto.nombre : 'Varios';
             const cuentaObj = cuentas.find(c => c.id === m.cuentaId);
             const nombreCuenta = cuentaObj ? cuentaObj.nombre : 'Cuenta';
+            
+            const emojiMatch = conceptoNombre.match(/(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
+            const avatarContent = emojiMatch ? emojiMatch[0] : conceptoNombre.charAt(0).toUpperCase();
+            
+            const isGasto = m.cantidad < 0;
+            iconHtml = `<div class="t-icon ${isGasto ? 't-icon--expense' : 't-icon--income'}">${avatarContent}</div>`;
             
             line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-concept">${escapeHTML(conceptoNombre)}</span>`;
             
@@ -3796,9 +3798,9 @@ const renderVirtualListItem = (item) => {
             amountSign = isGasto ? '' : '+';
         }
 
-        // HTML FINAL LIMPIO: Sin div de icono, solo barra lateral por CSS
         return `
-        <div class="t-card ${highlightClass} ${typeClass}" data-id="${m.id}" data-action="edit-movement-from-list">
+        <div class="t-card ${highlightClass}" data-id="${m.id}" data-action="edit-movement-from-list">
+            ${iconHtml}
             <div class="t-content">
                 <div class="t-row-primary">
                     <div class="t-line-1">${line1}</div>
@@ -9369,7 +9371,10 @@ const handleStart = (e) => {
     updateLedgerButtonUI(); 
     // ▲▲▲ FIN DE LA CORRECCIÓN ▲▲▲
     
-      // 4. Actualizar datos y vistas
+    // Mensaje informativo usando el nombre real
+    showToast(`Cambiado a ${getLedgerName(currentLedger)}.`, 'info');
+
+    // 4. Actualizar datos y vistas
     populateAllDropdowns();
 
     const activePageEl = document.querySelector('.view--active');
@@ -11722,51 +11727,89 @@ window.addEventListener('click', (e) => {
         }
     }
 });
-/* ============================================== */
-/* === MOTOR DE VIAJE ESPACIAL (main.js) === */
-/* ============================================== */
+/* ================================================================= */
+/* === GENERADOR DE ESPACIO PROFUNDO (Deep Space Engine) === */
+/* ================================================================= */
+(function initSpaceBackground() {
+    // 1. Verificar existencia del contenedor
+    const container = document.getElementById('deep-space-background');
+    if (!container) return;
 
-const createSpaceTravel = () => {
-    // 1. Crear contenedor si no existe
-    let container = document.getElementById('cosmos-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'cosmos-container';
-        document.body.prepend(container);
-    } else {
-        container.innerHTML = '';
-    }
+    console.log("🌌 Iniciando motores de hiperespacio v2.0...");
+    container.innerHTML = ''; // Limpiar cualquier residuo anterior
 
-    // 2. Generar Estrellas (Aumentamos cantidad para sensación de velocidad)
-    const starCount = 200; 
-    
-    for (let i = 0; i < starCount; i++) {
+    // 2. Función para crear capas con bucle perfecto
+    const createLayer = (count, size, duration, opacity) => {
+        // Crear el contenedor que se animará
+        const layerContainer = document.createElement('div');
+        layerContainer.className = 'star-anim-container';
+        layerContainer.style.animationDuration = `${duration}s`;
+        layerContainer.style.opacity = opacity;
+
+        // Generar coordenadas de sombras (box-shadow) para las estrellas
+        let shadows = [];
+        for (let i = 0; i < count; i++) {
+            const x = Math.random() * 100; // Posición horizontal (vw)
+            const y = Math.random() * 100; // Posición vertical (vh)
+            shadows.push(`${x}vw ${y}vh #FFF`);
+        }
+        const boxShadowString = shadows.join(',');
+
+        // CREAR PARTE A (Pantalla actual)
+        const starsA = document.createElement('div');
+        starsA.style.position = 'absolute';
+        starsA.style.width = size;
+        starsA.style.height = size;
+        starsA.style.background = 'transparent';
+        starsA.style.borderRadius = '50%';
+        starsA.style.boxShadow = boxShadowString;
+        starsA.style.top = 0; // Empieza arriba
+
+        // CREAR PARTE B (Clon para el bucle, empieza debajo)
+        const starsB = starsA.cloneNode(true);
+        starsB.style.top = '100vh'; // Empieza justo debajo de la pantalla
+
+        // Añadir ambas partes al contenedor de animación
+        layerContainer.appendChild(starsA);
+        layerContainer.appendChild(starsB);
+        container.appendChild(layerContainer);
+    };
+
+    // 3. Crear las 3 capas de profundidad
+    // Capa 1: Lejanas (Muchas, muy pequeñas, muy lentas)
+    createLayer(400, '1px', 150, 0.7);
+
+    // Capa 2: Medianas (Menos, brillo medio, velocidad media)
+    createLayer(100, '2px', 100, 0.9);
+
+    // Capa 3: Cercanas (Pocas, grandes, rápidas)
+    createLayer(30, '3px', 60, 1);
+
+    // 4. Sistema de Estrellas Fugaces (Opcional, pero espectacular)
+    const spawnShootingStar = () => {
         const star = document.createElement('div');
-        star.className = 'star';
+        star.className = 'shooting-star';
         
-        // MATEMÁTICAS DE TÚNEL:
-        // Calculamos un ángulo aleatorio y una distancia final
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 800 + Math.random() * 1500; // Dispersión amplia
+        // Posición aleatoria
+        star.style.top = `${Math.random() * 50}%`; // Solo en la mitad superior
+        star.style.left = `${Math.random() * 100}%`;
         
-        const destX = Math.cos(angle) * distance;
-        const destY = Math.sin(angle) * distance;
-
-        // Variables CSS
-        star.style.setProperty('--dest-x', `${destX}px`);
-        star.style.setProperty('--dest-y', `${destY}px`);
-
-        // Velocidad: Cuanto más bajo el número, más rápido parece la nave
-        const duration = 5 + Math.random() * 10;
-        star.style.setProperty('--duration', `${duration}s`);
-
-        // Retraso para flujo continuo
-        const delay = Math.random() * 5;
-        star.style.setProperty('--delay', `-${delay}s`);
+        // Tamaño y duración aleatoria para variedad
+        const scale = 0.5 + Math.random(); 
+        star.style.transform = `scale(${scale}) rotate(-45deg)`;
+        star.style.animationDuration = `${2 + Math.random() * 3}s`;
 
         container.appendChild(star);
-    }
-};
 
-// Iniciar motores al cargar
-document.addEventListener('DOMContentLoaded', createSpaceTravel);
+        // Limpieza automática al terminar la animación
+        setTimeout(() => {
+            star.remove();
+        }, 5000);
+    };
+
+    // Lanzar una estrella fugaz cada 4-10 segundos
+    setInterval(() => {
+        spawnShootingStar();
+    }, 4000 + Math.random() * 6000);
+
+})();
