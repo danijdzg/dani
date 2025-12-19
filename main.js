@@ -2405,33 +2405,31 @@ const cleanupObservers = () => {
     }
 };
 /* ================================================================= */
-/* === SISTEMA DE NAVEGACIÓN REPARADO (FIX FINAL) === */
+/* === SISTEMA DE NAVEGACIÓN BLINDADO (SIN ERRORES DE CARGA) === */
 /* ================================================================= */
 
-// 1. FUNCIONES DE SEGURIDAD (Por si faltan en tu código)
-// Si ya tienes renderPatrimonioPage o renderPlanificacionPage definidas en otro sitio, 
-// este bloque no las sobrescribirá si las declaraste con 'const' antes.
-// Pero si no existen, esto evita que la app falle.
-
-if (typeof renderPatrimonioPage === 'undefined') {
+// 1. FUNCIONES DE RESPALDO (Por si no existen)
+// Las definimos en window para evitar conflictos con 'const'
+if (!window.renderPatrimonioPage) {
     window.renderPatrimonioPage = async () => {
         const c = document.getElementById('patrimonio-page');
         if(c) c.innerHTML = '<div class="empty-state" style="padding-top:50px;"><h3>Patrimonio</h3><p>Sección en construcción</p></div>';
     };
 }
 
-if (typeof renderPlanificacionPage === 'undefined') {
-    window.renderPlanificacionPage = async () => {
+if (!window.renderPlanificarPage) {
+    window.renderPlanificarPage = async () => {
         const c = document.getElementById('planificar-page');
         if(c) c.innerHTML = '<div class="empty-state" style="padding-top:50px;"><h3>Planificar</h3><p>Sección en construcción</p></div>';
     };
 }
 
-// 2. MAPA DE PÁGINAS (Ahora es global y fácil de editar)
+// 2. MAPA DE PÁGINAS (Usando "Lazy Execution" para evitar errores de inicialización)
 const pageRenderers = {
     'panel-page': {
         title: 'Panel',
-        render: typeof renderPanelPage !== 'undefined' ? renderPanelPage : async () => console.log("Panel"),
+        // TRUCO: Usamos una función flecha para buscar 'renderPanelPage' solo cuando se ejecute
+        render: async () => { if(typeof renderPanelPage === 'function') await renderPanelPage(); },
         actions: `
             <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
                 <span class="material-icons">calculate</span>
@@ -2442,7 +2440,7 @@ const pageRenderers = {
     },
     'diario-page': {
         title: 'Diario',
-        render: typeof renderDiarioPage !== 'undefined' ? renderDiarioPage : async () => console.log("Diario"),
+        render: async () => { if(typeof renderDiarioPage === 'function') await renderDiarioPage(); },
         actions: `
             <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
                 <span class="material-icons">calculate</span>
@@ -2453,7 +2451,11 @@ const pageRenderers = {
     },
     'patrimonio-page': {
         title: 'Patrimonio',
-        render: window.renderPatrimonioPage || renderPatrimonioPage,
+        // Aquí estaba el error antes. Ahora es seguro:
+        render: async () => { 
+            if (typeof renderPatrimonioPage === 'function') await renderPatrimonioPage();
+            else if (window.renderPatrimonioPage) await window.renderPatrimonioPage();
+        },
         actions: `
             <button data-action="toggle-portfolio-currency" class="icon-btn" title="Cambiar moneda">
                 <span class="material-icons" id="currency-toggle-icon">currency_bitcoin</span>
@@ -2467,7 +2469,10 @@ const pageRenderers = {
     },
     'planificar-page': {
         title: 'Planificar',
-        render: window.renderPlanificacionPage || renderPlanificacionPage,
+        render: async () => {
+            if (typeof renderPlanificarPage === 'function') await renderPlanificarPage();
+            else if (window.renderPlanificarPage) await window.renderPlanificarPage();
+        },
         actions: `
             <button data-action="open-external-calculator" class="icon-btn">
                 <span class="material-icons">calculate</span>
@@ -2478,20 +2483,19 @@ const pageRenderers = {
     },
     'ajustes-page': {
         title: 'Ajustes',
-        render: typeof renderAjustesPage !== 'undefined' ? renderAjustesPage : async () => console.log("Ajustes"),
+        render: async () => { if(typeof renderAjustesPage === 'function') await renderAjustesPage(); },
         actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
     }
 };
 
-// 3. LA FUNCIÓN DE NAVEGACIÓN PRINCIPAL
+// 3. FUNCIÓN DE NAVEGACIÓN PRINCIPAL
 const navigateTo = async (pageId, isInitial = false) => {
     console.log(`🚀 Navegando a: ${pageId}`);
     
-    // A) CAMBIO VISUAL INMEDIATO (Prioridad Absoluta)
-    // Ocultamos todas primero
+    // A) CAMBIO VISUAL INMEDIATO
     document.querySelectorAll('.view').forEach(el => {
         el.classList.remove('active');
-        el.style.display = 'none'; // Forzamos ocultar
+        el.style.display = 'none';
     });
 
     const targetPage = document.getElementById(pageId);
@@ -2500,14 +2504,12 @@ const navigateTo = async (pageId, isInitial = false) => {
         return;
     }
 
-    // Mostramos la destino
     targetPage.style.display = 'block';
-    // Pequeño retardo para que el navegador procese el cambio de display
     requestAnimationFrame(() => {
         targetPage.classList.add('active');
     });
 
-    // B) ACTUALIZAR BARRA INFERIOR
+    // B) ACTUALIZAR ICONOS INFERIORES
     document.querySelectorAll('.bottom-nav__item').forEach(btn => {
         const btnPage = btn.getAttribute('data-page') || btn.dataset.page;
         if (btnPage === pageId) {
@@ -2519,22 +2521,19 @@ const navigateTo = async (pageId, isInitial = false) => {
         }
     });
 
-    // C) GESTIÓN DE TÍTULOS Y BOTONES SUPERIORES
+    // C) TÍTULOS Y ACCIONES
     const titleEl = document.getElementById('page-title-display');
     const actionsEl = document.getElementById('top-bar-actions');
     const renderer = pageRenderers[pageId];
 
     if (titleEl && renderer) {
-        // Ocultar título en páginas principales para limpieza
         const pagesWithoutTitle = ['panel-page', 'diario-page', 'patrimonio-page', 'planificar-page'];
         titleEl.textContent = pagesWithoutTitle.includes(pageId) ? '' : renderer.title;
     }
 
-    // Botones de acción (Derecha)
     if (actionsEl && renderer) {
         let actionsHTML = renderer.actions;
-        
-        // Inyección especial para Diario (Botones extra)
+        // Inyección para Diario
         if (pageId === 'diario-page') {
             const diarioViewMode = window.diarioViewMode || 'list';
             const extraButtons = `
@@ -2550,7 +2549,7 @@ const navigateTo = async (pageId, isInitial = false) => {
         actionsEl.innerHTML = actionsHTML;
     }
 
-    // Botones de acción (Izquierda - Diario)
+    // Botones Izquierda (Diario)
     const diarioIconsContainer = document.getElementById('diario-left-icons');
     if (diarioIconsContainer) {
         if (pageId === 'diario-page') {
@@ -2567,8 +2566,7 @@ const navigateTo = async (pageId, isInitial = false) => {
         }
     }
 
-    // D) EJECUCIÓN LÓGICA (RENDER)
-    // Usamos try/catch para que un error en el código de una página NO cuelgue la app
+    // D) EJECUCIÓN SEGURA
     if (renderer && typeof renderer.render === 'function') {
         try {
             await renderer.render();
@@ -2577,7 +2575,6 @@ const navigateTo = async (pageId, isInitial = false) => {
         }
     }
     
-    // E) ACTUALIZACIONES GLOBALES
     if (pageId === 'panel-page' && typeof scheduleDashboardUpdate === 'function') {
         scheduleDashboardUpdate();
     }
