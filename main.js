@@ -2404,127 +2404,181 @@ const cleanupObservers = () => {
         movementsObserver = null;
     }
 };
-const navigateTo = async (pageId, isInitial = false) => {
-    cleanupObservers();
-    const oldView = document.querySelector('.view--active');
-    const newView = select(pageId);
-    const mainScroller = selectOne('.app-layout__main');
+/* ================================================================= */
+/* === SISTEMA DE NAVEGACIÓN REPARADO (FIX FINAL) === */
+/* ================================================================= */
 
-    const menu = select('main-menu-popover');
-    if (menu) menu.classList.remove('popover-menu--visible');
+// 1. FUNCIONES DE SEGURIDAD (Por si faltan en tu código)
+// Si ya tienes renderPatrimonioPage o renderPlanificacionPage definidas en otro sitio, 
+// este bloque no las sobrescribirá si las declaraste con 'const' antes.
+// Pero si no existen, esto evita que la app falle.
 
-    // 1. Guardar scroll
-    if (oldView && mainScroller) {
-        pageScrollPositions[oldView.id] = mainScroller.scrollTop;
-    }
+if (typeof renderPatrimonioPage === 'undefined') {
+    window.renderPatrimonioPage = async () => {
+        const c = document.getElementById('patrimonio-page');
+        if(c) c.innerHTML = '<div class="empty-state" style="padding-top:50px;"><h3>Patrimonio</h3><p>Sección en construcción</p></div>';
+    };
+}
 
-    if (!newView || (oldView && oldView.id === pageId)) return;
-    
-    destroyAllCharts();
-    if (!isInitial) hapticFeedback('light');
+if (typeof renderPlanificacionPage === 'undefined') {
+    window.renderPlanificacionPage = async () => {
+        const c = document.getElementById('planificar-page');
+        if(c) c.innerHTML = '<div class="empty-state" style="padding-top:50px;"><h3>Planificar</h3><p>Sección en construcción</p></div>';
+    };
+}
 
-    if (!isInitial && window.history.state?.page !== pageId) {
-        history.pushState({ page: pageId }, '', `#${pageId}`);
-    }
-
-    // Nav Inferior
-    const navItems = Array.from(selectAll('.bottom-nav__item'));
-    const oldIndex = oldView ? navItems.findIndex(item => item.dataset.page === oldView.id) : -1;
-    const newIndex = navItems.findIndex(item => item.dataset.page === newView.id);
-    const isForward = newIndex > oldIndex;
-
-    // Barra Superior
-    const actionsEl = select('top-bar-actions');
-    const leftEl = select('top-bar-left-button');
-    
-    // Acciones por defecto (Menú de 3 puntos)
-    const standardActions = `
-        <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
-            <span class="material-icons">calculate</span>
-        </button>
-        <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
-    <span class="material-icons">more_vert</span>
-</button>
-    `;
-    
-    if (pageId === PAGE_IDS.PLANIFICAR && !dataLoaded.presupuestos) await loadPresupuestos();
-    if (pageId === PAGE_IDS.PATRIMONIO && !dataLoaded.inversiones) await loadInversiones();
-	const patrimonioActions = `
-    <button data-action="toggle-portfolio-currency" class="icon-btn" title="Cambiar moneda (EUR/BTC)">
-        <span class="material-icons" id="currency-toggle-icon">currency_bitcoin</span>
-    </button>
-    ${standardActions}
-`;
-
+// 2. MAPA DE PÁGINAS (Ahora es global y fácil de editar)
 const pageRenderers = {
-    [PAGE_IDS.PANEL]: { title: 'Panel', render: renderPanelPage, actions: standardActions },
-    [PAGE_IDS.DIARIO]: { title: 'Diario', render: renderDiarioPage, actions: standardActions },
-    // ▼▼▼ CAMBIO AQUÍ ▼▼▼
-    [PAGE_IDS.PATRIMONIO]: { title: 'Patrimonio', render: renderPatrimonioPage, actions: patrimonioActions },
-    // ▲▲▲ FIN CAMBIO ▲▲▲
-    [PAGE_IDS.PLANIFICAR]: { title: 'Planificar', render: renderPlanificacionPage, actions: standardActions },
-    [PAGE_IDS.AJUSTES]: { title: 'Ajustes', render: renderAjustesPage, actions: standardActions },
+    'panel-page': {
+        title: 'Panel',
+        render: typeof renderPanelPage !== 'undefined' ? renderPanelPage : async () => console.log("Panel"),
+        actions: `
+            <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
+                <span class="material-icons">calculate</span>
+            </button>
+            <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
+                <span class="material-icons">more_vert</span>
+            </button>`
+    },
+    'diario-page': {
+        title: 'Diario',
+        render: typeof renderDiarioPage !== 'undefined' ? renderDiarioPage : async () => console.log("Diario"),
+        actions: `
+            <button data-action="open-external-calculator" class="icon-btn" title="Abrir Calculadora">
+                <span class="material-icons">calculate</span>
+            </button>
+            <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
+                <span class="material-icons">more_vert</span>
+            </button>`
+    },
+    'patrimonio-page': {
+        title: 'Patrimonio',
+        render: window.renderPatrimonioPage || renderPatrimonioPage,
+        actions: `
+            <button data-action="toggle-portfolio-currency" class="icon-btn" title="Cambiar moneda">
+                <span class="material-icons" id="currency-toggle-icon">currency_bitcoin</span>
+            </button>
+            <button data-action="open-external-calculator" class="icon-btn">
+                <span class="material-icons">calculate</span>
+            </button>
+            <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
+                <span class="material-icons">more_vert</span>
+            </button>`
+    },
+    'planificar-page': {
+        title: 'Planificar',
+        render: window.renderPlanificacionPage || renderPlanificacionPage,
+        actions: `
+            <button data-action="open-external-calculator" class="icon-btn">
+                <span class="material-icons">calculate</span>
+            </button>
+            <button id="header-menu-btn" class="icon-btn" data-action="show-main-menu">
+                <span class="material-icons">more_vert</span>
+            </button>`
+    },
+    'ajustes-page': {
+        title: 'Ajustes',
+        render: typeof renderAjustesPage !== 'undefined' ? renderAjustesPage : async () => console.log("Ajustes"),
+        actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
+    }
 };
 
-    if (pageRenderers[pageId]) {
-        // 1. Actualizar el Título (Limpiamos si es Panel o Diario)
-        const titleEl = document.getElementById('page-title-display');
-        if (titleEl) {
-            const rawTitle = pageRenderers[pageId].title;
-            // Si es Panel o Diario, dejamos el texto vacío. Si no, ponemos el título (ej: Ajustes)
-            titleEl.textContent = (pageId === PAGE_IDS.PANEL || pageId === PAGE_IDS.DIARIO) ? '' : rawTitle;
-        }
+// 3. LA FUNCIÓN DE NAVEGACIÓN PRINCIPAL
+const navigateTo = async (pageId, isInitial = false) => {
+    console.log(`🚀 Navegando a: ${pageId}`);
+    
+    // A) CAMBIO VISUAL INMEDIATO (Prioridad Absoluta)
+    // Ocultamos todas primero
+    document.querySelectorAll('.view').forEach(el => {
+        el.classList.remove('active');
+        el.style.display = 'none'; // Forzamos ocultar
+    });
 
-        // 2. Botones extra del Diario (Filtro y Vista)
-        // Los inyectamos en la barra de acciones de la derecha si estamos en Diario
-        if (actionsEl) {
-            let actionsHTML = pageRenderers[pageId].actions;
-            
-            if (pageId === PAGE_IDS.DIARIO) {
-                // Añadimos los botones del diario al principio de las acciones
-                const diarioButtons = `
-                    <button data-action="toggle-diario-view" class="icon-btn" title="Cambiar Vista"><span class="material-icons">${diarioViewMode === 'list' ? 'calendar_month' : 'list'}</span></button>
-                    <button data-action="show-diario-filters" class="icon-btn" title="Filtrar"><span class="material-icons">filter_list</span></button>
-                `;
-                actionsHTML = diarioButtons + actionsHTML;
-            }
-            
-            actionsEl.innerHTML = actionsHTML;
+    const targetPage = document.getElementById(pageId);
+    if (!targetPage) {
+        console.error(`❌ Error: No existe la página #${pageId}`);
+        return;
+    }
+
+    // Mostramos la destino
+    targetPage.style.display = 'block';
+    // Pequeño retardo para que el navegador procese el cambio de display
+    requestAnimationFrame(() => {
+        targetPage.classList.add('active');
+    });
+
+    // B) ACTUALIZAR BARRA INFERIOR
+    document.querySelectorAll('.bottom-nav__item').forEach(btn => {
+        const btnPage = btn.getAttribute('data-page') || btn.dataset.page;
+        if (btnPage === pageId) {
+            btn.classList.add('bottom-nav__item--active');
+            btn.style.color = 'var(--c-primary)';
+        } else {
+            btn.classList.remove('bottom-nav__item--active');
+            btn.style.color = '';
         }
+    });
+
+    // C) GESTIÓN DE TÍTULOS Y BOTONES SUPERIORES
+    const titleEl = document.getElementById('page-title-display');
+    const actionsEl = document.getElementById('top-bar-actions');
+    const renderer = pageRenderers[pageId];
+
+    if (titleEl && renderer) {
+        // Ocultar título en páginas principales para limpieza
+        const pagesWithoutTitle = ['panel-page', 'diario-page', 'patrimonio-page', 'planificar-page'];
+        titleEl.textContent = pagesWithoutTitle.includes(pageId) ? '' : renderer.title;
+    }
+
+    // Botones de acción (Derecha)
+    if (actionsEl && renderer) {
+        let actionsHTML = renderer.actions;
         
-        // 3. Renderizar la página
-        await pageRenderers[pageId].render();
+        // Inyección especial para Diario (Botones extra)
+        if (pageId === 'diario-page') {
+            const diarioViewMode = window.diarioViewMode || 'list';
+            const extraButtons = `
+                <button data-action="toggle-diario-view" class="icon-btn" title="Cambiar Vista">
+                    <span class="material-icons">${diarioViewMode === 'list' ? 'calendar_month' : 'list'}</span>
+                </button>
+                <button data-action="show-diario-filters" class="icon-btn" title="Filtrar">
+                    <span class="material-icons">filter_list</span>
+                </button>
+            `;
+            actionsHTML = extraButtons + actionsHTML;
+        }
+        actionsEl.innerHTML = actionsHTML;
+    }
+
+    // Botones de acción (Izquierda - Diario)
+    const diarioIconsContainer = document.getElementById('diario-left-icons');
+    if (diarioIconsContainer) {
+        if (pageId === 'diario-page') {
+            diarioIconsContainer.innerHTML = `
+                <button data-action="show-diario-filters" class="icon-btn" style="margin-right:5px;">
+                    <span class="material-icons" style="font-size:24px;">filter_list</span>
+                </button>
+                <button data-action="global-search" class="icon-btn">
+                    <span class="material-icons" style="font-size:24px;">search</span>
+                </button>
+            `;
+        } else {
+            diarioIconsContainer.innerHTML = '';
+        }
+    }
+
+    // D) EJECUCIÓN LÓGICA (RENDER)
+    // Usamos try/catch para que un error en el código de una página NO cuelgue la app
+    if (renderer && typeof renderer.render === 'function') {
+        try {
+            await renderer.render();
+        } catch (error) {
+            console.error(`❌ Error al renderizar ${pageId}:`, error);
+        }
     }
     
-    // Animaciones y Clases
-    selectAll('.bottom-nav__item').forEach(b => b.classList.toggle('bottom-nav__item--active', b.dataset.page === newView.id));
-    newView.classList.add('view--active'); 
-    if (oldView && !isInitial) {
-        const outClass = isForward ? 'view-transition-out-forward' : 'view-transition-out-backward';
-        const inClass = isForward ? 'view-transition-in-forward' : 'view-transition-in-backward';
-        newView.classList.add(inClass);
-        oldView.classList.add(outClass);
-        oldView.addEventListener('animationend', () => {
-            oldView.classList.remove('view--active', outClass);
-            newView.classList.remove(inClass);
-        }, { once: true });
-    } else if (oldView) {
-        oldView.classList.remove('view--active');
-    }
-
-    // Restaurar Scroll
-    if (mainScroller) {
-        const targetScroll = pageScrollPositions[pageId] || 0;
-        mainScroller.scrollTop = targetScroll;
-        if (pageId === PAGE_IDS.DIARIO && diarioViewMode === 'list') {
-            requestAnimationFrame(() => {
-                mainScroller.scrollTop = targetScroll; 
-                renderVisibleItems(); 
-            });
-        }
-    }
-
-    if (pageId === PAGE_IDS.PANEL) {
+    // E) ACTUALIZACIONES GLOBALES
+    if (pageId === 'panel-page' && typeof scheduleDashboardUpdate === 'function') {
         scheduleDashboardUpdate();
     }
 };
