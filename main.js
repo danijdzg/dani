@@ -2425,19 +2425,43 @@ if (!window.renderPlanificarPage) {
 }
 
 /* ================================================================= */
-/* === MAPA DE PÁGINAS BLINDADO (SOLUCIÓN TRY-CATCH) === */
+/* === MAPA DE PÁGINAS (CON CARGA DE DATOS EN PANEL) === */
 /* ================================================================= */
 
 const pageRenderers = {
     'panel-page': {
         title: 'Panel',
-        render: async () => { if(typeof renderPanelPage === 'function') await renderPanelPage(); },
+        render: async () => { 
+            // 1. CARGA DE DATOS AUTOMÁTICA (Si está vacía)
+            // Esto soluciona que el Panel salga vacío al iniciar
+            if (!db.movimientos || db.movimientos.length === 0) {
+                console.log("📥 Panel: Detectados datos vacíos. Iniciando descarga...");
+                try {
+                    // Aseguramos que AppStore exista antes de llamar
+                    if (typeof AppStore !== 'undefined') {
+                        db.movimientos = await AppStore.getAll();
+                        console.log(`✅ Datos cargados: ${db.movimientos.length} movimientos.`);
+                    }
+                } catch (error) {
+                    console.error("❌ Error cargando datos en Panel:", error);
+                }
+            }
+
+            // 2. RENDERIZAR PANEL
+            if(typeof renderPanelPage === 'function') {
+                await renderPanelPage(); 
+            }
+            
+            // 3. ACTUALIZAR GRÁFICAS (Doble seguridad)
+            if(typeof scheduleDashboardUpdate === 'function') {
+                scheduleDashboardUpdate();
+            }
+        },
         actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
     },
     'diario-page': {
         title: 'Diario',
         render: async () => { 
-            // Llamamos a la función limpia que acabamos de poner
             if(typeof renderDiarioPage === 'function') await renderDiarioPage(); 
         },
         actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
@@ -2445,18 +2469,11 @@ const pageRenderers = {
     'patrimonio-page': {
         title: 'Patrimonio',
         render: async () => {
-            // USAMOS TRY-CATCH PARA EVITAR EL ERROR DE INICIALIZACIÓN
             try {
-                if (typeof renderPatrimonioPage === 'function') {
-                    await renderPatrimonioPage();
-                } else if (window.renderPatrimonioPage) {
-                    await window.renderPatrimonioPage();
-                }
-            } catch (e) {
-                // Si falla, usamos el de respaldo
-                if (window.renderPatrimonioPage) await window.renderPatrimonioPage();
-            }
-            // SEGURIDAD FINAL: Si sigue vacío, forzamos mensaje
+                if (typeof renderPatrimonioPage === 'function') await renderPatrimonioPage();
+                else if (window.renderPatrimonioPage) await window.renderPatrimonioPage();
+            } catch (e) { if (window.renderPatrimonioPage) await window.renderPatrimonioPage(); }
+            
             const c = document.getElementById('patrimonio-page');
             if(c && !c.innerHTML.trim() && window.renderPatrimonioPage) await window.renderPatrimonioPage();
         },
@@ -2466,14 +2483,10 @@ const pageRenderers = {
         title: 'Planificar',
         render: async () => {
             try {
-                if (typeof renderPlanificarPage === 'function') {
-                    await renderPlanificarPage();
-                } else if (window.renderPlanificarPage) {
-                    await window.renderPlanificarPage(); // Nota: corregido nombre variable window
-                }
-            } catch (e) {
-                if (window.renderPlanificarPage) await window.renderPlanificarPage();
-            }
+                if (typeof renderPlanificarPage === 'function') await renderPlanificarPage();
+                else if (window.renderPlanificarPage) await window.renderPlanificarPage();
+            } catch (e) { if (window.renderPlanificarPage) await window.renderPlanificarPage(); }
+            
             const c = document.getElementById('planificar-page');
             if(c && !c.innerHTML.trim() && window.renderPlanificarPage) await window.renderPlanificarPage();
         },
