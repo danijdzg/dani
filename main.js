@@ -2425,54 +2425,45 @@ if (!window.renderPlanificarPage) {
 }
 
 /* ================================================================= */
-/* === MAPA DE PÁGINAS (FIX PANEL VACÍO) === */
+/* === MAPA DE PÁGINAS (CON CARGA DE DATOS EN PANEL) === */
 /* ================================================================= */
 
 const pageRenderers = {
     'panel-page': {
         title: 'Panel',
         render: async () => { 
-            console.log("📊 Renderizando Panel...");
-            
-            // 1. ESTRATEGIA DE CARGA FORZADA
-            // Si la base de datos está vacía, descargamos Y PINTAMOS inmediatamente.
+            // 1. CARGA DE DATOS AUTOMÁTICA (Si está vacía)
+            // Esto soluciona que el Panel salga vacío al iniciar
             if (!db.movimientos || db.movimientos.length === 0) {
-                console.log("📥 Panel vacío. Descargando datos...");
+                console.log("📥 Panel: Detectados datos vacíos. Iniciando descarga...");
                 try {
+                    // Aseguramos que AppStore exista antes de llamar
                     if (typeof AppStore !== 'undefined') {
-                        // A) Descargar
                         db.movimientos = await AppStore.getAll();
-                        console.log(`✅ ${db.movimientos.length} movimientos descargados.`);
-                        
-                        // B) ¡FORZAR PINTADO INMEDIATO!
-                        // Esto faltaba: hay que llamar al renderizador una vez tenemos datos
-                        if(typeof renderPanelPage === 'function') {
-                            await renderPanelPage(); 
-                        }
+                        console.log(`✅ Datos cargados: ${db.movimientos.length} movimientos.`);
                     }
                 } catch (error) {
-                    console.error("❌ Error descargando datos en Panel:", error);
-                }
-            } else {
-                // Si ya teníamos datos, pintamos directamente
-                if(typeof renderPanelPage === 'function') {
-                    await renderPanelPage(); 
+                    console.error("❌ Error cargando datos en Panel:", error);
                 }
             }
 
-            // 2. SEGURIDAD ADICIONAL (Actualizar KPIs)
-            // Si existe la función de actualizar gráficas, la llamamos también
+            // 2. RENDERIZAR PANEL
+            if(typeof renderPanelPage === 'function') {
+                await renderPanelPage(); 
+            }
+            
+            // 3. ACTUALIZAR GRÁFICAS (Doble seguridad)
             if(typeof scheduleDashboardUpdate === 'function') {
-                setTimeout(scheduleDashboardUpdate, 100); 
+                scheduleDashboardUpdate();
             }
         },
         actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
     },
-    
-    // --- RESTO DE PÁGINAS (IGUAL QUE ANTES) ---
     'diario-page': {
         title: 'Diario',
-        render: async () => { if(typeof renderDiarioPage === 'function') await renderDiarioPage(); },
+        render: async () => { 
+            if(typeof renderDiarioPage === 'function') await renderDiarioPage(); 
+        },
         actions: `<button id="header-menu-btn" class="icon-btn" data-action="show-main-menu"><span class="material-icons">more_vert</span></button>`
     },
     'patrimonio-page': {
@@ -2483,7 +2474,6 @@ const pageRenderers = {
                 else if (window.renderPatrimonioPage) await window.renderPatrimonioPage();
             } catch (e) { if (window.renderPatrimonioPage) await window.renderPatrimonioPage(); }
             
-            // Crear si está vacío
             const c = document.getElementById('patrimonio-page');
             if(c && !c.innerHTML.trim() && window.renderPatrimonioPage) await window.renderPatrimonioPage();
         },
@@ -4241,19 +4231,27 @@ const loadMoreMovements = async (isInitial = false) => {
 };
 
 /* ================================================================= */
-/* === FUNCIÓN RENDER DIARIO (FIX DUPLICADOS) === */
+/* === FUNCIÓN RENDER DIARIO (LIMPIA Y SIN CONFLICTOS) === */
 /* ================================================================= */
 
 const renderDiarioPage = async () => {
-    // 1. SEMÁFORO: Evitar saturación
-    if (isDiarioPageRendering) return; 
+    // 1. SEMÁFORO: Evitar cargas duplicadas si ya está trabajando
+    if (isDiarioPageRendering) {
+        console.log("⏳ Diario ocupado. Ignorando llamada extra.");
+        return; 
+    }
+    
     isDiarioPageRendering = true;
 
     try {
+        // --- [CAMBIO IMPORTANTE] ---
+        // HEMOS BORRADO EL BLOQUE QUE FORZABA 'classList.add'. 
+        // AHORA CONFIAMOS 100% EN navigateTo() PARA EL CAMBIO VISUAL.
+        
         const container = document.getElementById('diario-page');
         if (!container) throw new Error("No existe #diario-page");
 
-        // 2. ESTRUCTURA BÁSICA (Solo si no existe)
+        // 2. PREPARAR CONTENEDOR (Solo si no existe)
         if (!container.querySelector('#diario-view-container')) {
             container.innerHTML = '<div id="diario-view-container" style="height:100%; width:100%;"></div>';
         }
@@ -4270,8 +4268,7 @@ const renderDiarioPage = async () => {
         }
 
         // --- MODO LISTA ---
-        // Si no existe la estructura de lista, la creamos
-        if (!viewContainer.querySelector('#virtual-list-content')) {
+        if (!viewContainer.innerHTML.trim() || !document.getElementById('virtual-list-content')) {
             viewContainer.innerHTML = `
                 <div id="diario-filter-active-indicator" class="hidden">
                     <div style="display:flex; align-items:center; gap:8px;">
@@ -4285,40 +4282,30 @@ const renderDiarioPage = async () => {
                 <div id="infinite-scroll-trigger" style="height: 50px; width: 100%;"></div>`;
         }
 
-        // 3. ¡LIMPIEZA ANTI-DUPLICADOS! (ESTO ES LO NUEVO)
-        // Antes de pintar nada, borramos lo que hubiera antes
-        const listContent = document.getElementById('virtual-list-content');
-        if (listContent) {
-            listContent.innerHTML = ''; // <--- BORRADO CRÍTICO
-        }
-
         // Referencias globales
         if (typeof vList !== 'undefined') {
             vList.scrollerEl = document.querySelector('.app-layout__main');
             vList.sizerEl = document.getElementById('virtual-list-sizer');
-            vList.contentEl = listContent;
+            vList.contentEl = document.getElementById('virtual-list-content');
         }
 
-        // 4. CARGA DE DATOS
+        // --- CARGA DE DATOS ---
+        // Si no hay datos, cargamos. Si hay, pintamos.
         let allMovements = db.movimientos;
         if (!allMovements || allMovements.length === 0) {
              try {
                  allMovements = await AppStore.getAll();
              } catch(e) { console.error("Error cargando store", e); }
         }
-        // Asignamos y filtramos si es necesario
         db.movimientos = allMovements || [];
 
-        // 5. PINTAR LA LISTA LIMPIA
+        // Ejecutar lógica de lista virtual si existe
         if (typeof processMovementsForRunningBalance === 'function') {
-            // true = resetear acumulados
             await processMovementsForRunningBalance(db.movimientos, true);
         }
-        if (typeof updateVirtualListUI === 'function') {
-            updateVirtualListUI();
-        }
+        if (typeof updateVirtualListUI === 'function') updateVirtualListUI();
 
-        // Reactivar scroll infinito
+        // Reactivar observador de scroll
         setTimeout(() => {
             if (typeof initMovementsObserver === 'function') initMovementsObserver();
         }, 500);
@@ -4326,7 +4313,7 @@ const renderDiarioPage = async () => {
     } catch (error) {
         console.error("❌ Error en Diario:", error);
     } finally {
-        isDiarioPageRendering = false;
+        isDiarioPageRendering = false; // Desbloquear siempre
     }
 };
 
