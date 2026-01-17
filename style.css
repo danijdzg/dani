@@ -6365,17 +6365,3 @@ html, body {
     height: 100%;
     overflow-x: hidden;
 }
-
-/* FORZAR VISIBILIDAD PARA DEPURAR */
-.view {
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    height: auto !important;
-    min-height: 100vh;
-}
-
-/* Asegurar que el fondo no sea negro puro */
-body, #app-root {
-    background-color: #f5f5f5 !important; 
-}
