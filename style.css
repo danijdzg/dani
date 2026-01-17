@@ -6365,37 +6365,33 @@ html, body {
     height: 100%;
     overflow-x: hidden;
 }
-/* --- EN style.css (Añadir al final) --- */
 
-/* 1. Forzar que el contenedor principal ocupe espacio y tenga fondo claro */
+
+/* --- CORRECCIÓN FINAL EN style.css --- */
+
+/* Aseguramos que el contenedor tenga fondo blanco */
 .app-layout__main {
-    min-height: 80vh !important;
-    background-color: #ffffff !important; /* Fondo blanco forzado */
-    opacity: 1 !important;
-    visibility: visible !important;
-    z-index: 1 !important;
-    position: relative !important;
+    background-color: #ffffff !important;
+    min-height: 100vh;
 }
 
-/* 2. Forzar que las vistas (pestañas) se comporten correctamente */
+/* 1. Ocultar todas las pestañas por defecto (CRÍTICO para que funcionen los botones) */
 .view {
-    display: none; /* Por defecto ocultas */
+    display: none !important; 
 }
 
-/* Cuando la vista está activa, FORZAR que se vea */
-.view.active, section.view:not([hidden]) {
+/* 2. Mostrar SOLO la pestaña que tenga la clase 'active' */
+/* Esto permite que el JS controle qué se ve y qué no */
+.view.active {
     display: block !important;
     opacity: 1 !important;
     visibility: visible !important;
-    height: auto !important;
-    padding-top: 10px !important; /* Espacio para que no se pegue arriba */
 }
 
-/* 3. Asegurar que NINGÚN modal nos esté bloqueando (excepto si lo abrimos nosotros) */
-.modal-overlay {
-    display: none !important; /* Ocultar todos los modales por defecto */
+/* 3. Asegurar que el modal de calculadora no tape nada */
+#calculator-iframe-modal {
+    display: none !important; /* Oculto por defecto */
 }
-/* Solo mostrar el modal si tiene la clase activa explícita (si tu JS la usa) */
-.modal-overlay.active, .modal-overlay[style*="display: block"] {
-    display: flex !important;
+#calculator-iframe-modal.active {
+    display: flex !important; /* Solo visible si el JS lo activa */
 }
