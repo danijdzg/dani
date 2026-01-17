@@ -6365,3 +6365,37 @@ html, body {
     height: 100%;
     overflow-x: hidden;
 }
+/* --- EN style.css (Añadir al final) --- */
+
+/* 1. Forzar que el contenedor principal ocupe espacio y tenga fondo claro */
+.app-layout__main {
+    min-height: 80vh !important;
+    background-color: #ffffff !important; /* Fondo blanco forzado */
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: 1 !important;
+    position: relative !important;
+}
+
+/* 2. Forzar que las vistas (pestañas) se comporten correctamente */
+.view {
+    display: none; /* Por defecto ocultas */
+}
+
+/* Cuando la vista está activa, FORZAR que se vea */
+.view.active, section.view:not([hidden]) {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    height: auto !important;
+    padding-top: 10px !important; /* Espacio para que no se pegue arriba */
+}
+
+/* 3. Asegurar que NINGÚN modal nos esté bloqueando (excepto si lo abrimos nosotros) */
+.modal-overlay {
+    display: none !important; /* Ocultar todos los modales por defecto */
+}
+/* Solo mostrar el modal si tiene la clase activa explícita (si tu JS la usa) */
+.modal-overlay.active, .modal-overlay[style*="display: block"] {
+    display: flex !important;
+}
