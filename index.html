@@ -28,7 +28,7 @@
 
 <body data-ledger-mode="A">
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="login-screen" class="login-view">
+    <div id="login-screen" class="login-view" style="display: none !important;">
         <div class="login-view__card">
             <div class="login-view__logo" style="display: flex; align-items: center; justify-content: center; width: 90px; height: 90px; background: var(--c-surface-variant); border-radius: 24px; margin: 0 auto 1rem auto; box-shadow: 0 0 25px rgba(0, 179, 77, 0.2);">
 				<span class="material-icons" style="font-size: 48px; color: var(--c-primary);">lock</span>
@@ -60,7 +60,7 @@
         </div>
     </div>
 
-    <div id="pin-login-screen" class="login-view">
+    <div id="pin-login-screen" class="login-view" style="display: none !important;">
         <div class="starry-background"></div>
         <div class="login-view__card">
             <div class="login-view__logo" style="display: flex; align-items: center; justify-content: center; width: 90px; height: 90px; background: var(--c-surface-variant); border-radius: 24px; margin: 0 auto 1rem auto; box-shadow: 0 0 25px rgba(0, 179, 77, 0.2);">
@@ -173,9 +173,6 @@
 
         <main class="app-layout__main">
             <section id="panel-page" class="view"></section>
-			<section id="panel-page" class="view" style="display: block !important; background: white; min-height: 500px;">
-    <h1>PRUEBA DE VISIBILIDAD</h1>
-</section>
             <section id="diario-page" class="view" style="padding: 0; gap: 0;"></section>
             <section id="patrimonio-page" class="view"></section>
             <section id="planificar-page" class="view"></section>
