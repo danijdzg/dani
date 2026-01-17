@@ -4178,11 +4178,11 @@ const loadMoreMovements = async (isInitial = false) => {
 // ▼▼▼ REEMPLAZA TU FUNCIÓN renderDiarioPage POR COMPLETO CON ESTA VERSIÓN ▼▼▼
 
 const renderDiarioPage = async () => {
-    if (isDiarioPageRendering) {
-        console.log("BLOQUEADO: Intento de re-renderizar el Diario mientras ya estaba en proceso.");
-        return;
-    }
-    isDiarioPageRendering = true;
+    //if (isDiarioPageRendering) {
+      //  console.log("BLOQUEADO: Intento de re-renderizar el Diario mientras ya estaba en proceso.");
+        //return;
+    //}
+    //isDiarioPageRendering = true;
 
     try {
         const container = select('diario-page');

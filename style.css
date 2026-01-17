@@ -6367,31 +6367,34 @@ html, body {
 }
 
 
-/* --- CORRECCIÓN FINAL EN style.css --- */
+/* --- ARREGLO FINAL DE PESTAÑAS --- */
 
-/* Aseguramos que el contenedor tenga fondo blanco */
+/* 1. Fondo blanco para que no se vea negro */
 .app-layout__main {
     background-color: #ffffff !important;
     min-height: 100vh;
+    position: relative;
+    z-index: 1;
 }
 
-/* 1. Ocultar todas las pestañas por defecto (CRÍTICO para que funcionen los botones) */
-.view {
-    display: none !important; 
+/* 2. OCULTAR TODAS las pestañas por defecto */
+/* Esto es lo que faltaba: asegurar que si no está activa, no se vea */
+section.view {
+    display: none !important;
 }
 
-/* 2. Mostrar SOLO la pestaña que tenga la clase 'active' */
-/* Esto permite que el JS controle qué se ve y qué no */
-.view.active {
+/* 3. MOSTRAR SOLO la pestaña activa */
+/* El JS se encarga de poner la clase .active a la pestaña que tocas */
+section.view.active {
     display: block !important;
     opacity: 1 !important;
     visibility: visible !important;
 }
 
-/* 3. Asegurar que el modal de calculadora no tape nada */
-#calculator-iframe-modal {
-    display: none !important; /* Oculto por defecto */
+/* 4. Asegurar que los modales no molesten */
+.modal-overlay {
+    display: none !important;
 }
-#calculator-iframe-modal.active {
-    display: flex !important; /* Solo visible si el JS lo activa */
+.modal-overlay.active, .modal-overlay[style*="display: block"] {
+    display: flex !important;
 }
