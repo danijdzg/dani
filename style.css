@@ -351,41 +351,46 @@
 
 	
 :root {
-    /* TEMA ÚNICO: "ABISMO DIGITAL" */
-    --c-primary: #00B34D;       
-    --c-primary-hover: #00CC55;
-    --c-danger: #FF3B30;
-    --c-success: #39FF14;
-    --c-warning: #FFD60A;
-    --c-info: #BF5AF2;
+    /* TEMA ÚNICO: "AMOLED CYBER-FINANCE" */
     
-    /* FONDOS OSCUROS FIJOS */
-    --c-background: #0A121A;    
-    --c-surface: rgba(28, 42, 58, 0.6); 
-    --c-surface-variant: rgba(42, 58, 78, 0.5);
+    /* COLORES PRINCIPALES (Vistosos y Neón) */
+    --c-primary: #00FF94;       /* Verde Matrix (Marca principal) */
+    --c-primary-hover: #00CC76; /* Un tono más oscuro para hovers */
     
-    --c-outline: rgba(255, 255, 255, 0.1); 
-    --c-border-glow: 0 0 12px rgba(0, 179, 77, 0.4);
+    --c-success: #00FF94;       /* INGRESOS: Verde Matrix */
+    --c-danger: #FF2E4D;        /* GASTOS: Rojo Láser/Frambuesa */
+    --c-info: #00B8FF;          /* TRASPASOS: Azul Cian Eléctrico (Sustituye al morado) */
+    --c-warning: #FFD600;       /* ALERTAS: Amarillo Sol */
     
-    --c-on-surface: #F0F8FF;
-    --c-on-surface-secondary: rgba(240, 248, 255, 0.85); 
-    --c-on-surface-tertiary: rgba(240, 248, 255, 0.70); 
+    /* FONDOS OSCUROS FIJOS (Optimizado AMOLED) */
+    --c-background: #000000;    /* Negro Puro (Ahorro batería y contraste infinito) */
+    --c-surface: #121212;       /* Gris casi negro (Material Dark standard) */
+    --c-surface-variant: #1E1E1E; /* Gris oscuro para inputs y elementos secundarios */
     
-    --shadow-sm: 0 0 8px rgba(0, 0, 0, 0.25);
-    --shadow-md: 0 0 20px rgba(0, 0, 0, 0.45);
-    --glow-red: 0 0 20px rgba(255, 59, 48, 0.55);
+    /* BORDES Y BRILLOS */
+    --c-outline: rgba(255, 255, 255, 0.15); /* Un poco más visible sobre negro puro */
+    --c-border-glow: 0 0 12px rgba(0, 255, 148, 0.4); /* Resplandor Verde Nuevo */
+    
+    /* TEXTOS (Blancos puros para máximo contraste) */
+    --c-on-surface: #FFFFFF;
+    --c-on-surface-secondary: rgba(255, 255, 255, 0.85); 
+    --c-on-surface-tertiary: rgba(255, 255, 255, 0.50); 
+    
+    /* SOMBRAS Y EFECTOS */
+    --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.5);
+    --glow-red: 0 0 20px rgba(255, 46, 77, 0.55); /* Resplandor con el nuevo Rojo */
 
-    /* VARIABLES BASE */
+    /* VARIABLES BASE (Sin cambios) */
     --c-white: #FFFFFF; 
     --c-black: #000000;
     --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-numeric: 'Inter', sans-serif;
     
-    /* Tamaños y espacios (mantenlos igual) */
+    /* Tamaños y espacios (Mantenidos igual) */
     --fs-xs: 0.75rem; --fs-sm: 0.875rem; --fs-base: 1rem; --fs-lg: 1.125rem; --fs-xl: 1.25rem;
     --sp-1: 0.25rem; --sp-2: 0.5rem; --sp-3: 0.75rem; --sp-4: 1rem; --sp-5: 1.25rem; --sp-6: 1.5rem;
     --border-radius-md: 10px; --border-radius-lg: 16px;
-	/* AÑADIMOS ESTO PARA NÚMEROS ESTABLES */
     --font-numeric: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -591,7 +596,6 @@ body {
 
 /* --- Pantalla de Introducción --- */
 .intro-screen { position: fixed; inset: 0; z-index: 9999; display: flex; justify-content: center; align-items: center; background-color: #000000; transition: opacity 0.75s ease-in-out; }
-.starry-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(1px 1px at 10% 20%,#fff,transparent),radial-gradient(1px 1px at 80% 30%,#fff,transparent),radial-gradient(2px 2px at 50% 50%,#fff,transparent),radial-gradient(1px 1px at 30% 80%,#fff,transparent),radial-gradient(2px 2px at 90% 90%,#fff,transparent); background-size: 300px 300px; animation: twinkle 15s linear infinite; }
 @keyframes twinkle { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .intro-screen__logo { width: 250px; height: auto; border-radius: 24px; opacity: 0; position: absolute; animation: logoExplode 2.5s cubic-bezier(0.5, 0, 0.5, 1) forwards; }
 @keyframes logoExplode { 0% { transform: scale(0.2) rotate(-25deg); opacity: 0; } 30% { transform: scale(1.1) rotate(10deg); opacity: 1; } 50% { transform: scale(0.95) rotate(-8deg); opacity: 1; } 80% { transform: scale(1.5) rotate(5deg); opacity: 1; } 100% { transform: scale(12) rotate(20deg); opacity: 0; } }
@@ -5511,8 +5515,8 @@ body[data-theme="sunset-groove"] #filter-periodo option {
     background: linear-gradient(135deg, #30D158, #39FF14); 
     color: #004d00; /* Icono oscuro para contraste */
 }
-.fab-option--traspaso .fab-icon-holder { 
-    background: linear-gradient(135deg, #007AFF, #5AC8FA); 
+.fab-option--traspaso .fab-icon-holder {
+    background: linear-gradient(135deg, #00B8FF, #007AFF); /* Gradiente Azul */
 }
 
 /* Etiquetas de Texto */
@@ -6093,10 +6097,10 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
     box-shadow: 0 0 12px rgba(50, 215, 75, 0.8);
 }
 
-/* TRASPASO (Morado Neón) */
+/* La barra de neón lateral */
 .t-type-transfer::before {
-    background-color: #BF5AF2;
-    box-shadow: 0 0 12px rgba(191, 90, 242, 0.8);
+    background-color: #00B8FF !important; /* Nuevo Azul */
+    box-shadow: 0 0 12px rgba(0, 184, 255, 0.8) !important; /* Resplandor Azul */
 }
 /* ================================================================= */
 /* === CUENTAS DE COLORES (Sincronizadas con el tipo) === */
@@ -6129,13 +6133,9 @@ body[data-ledger-mode="C"] .bottom-nav__item--active {
     box-shadow: 0 0 5px rgba(50, 215, 75, 0.1);
 }
 
-/* 3. TRASPASOS -> Cuentas en MORADO */
-/* En los traspasos, coloreamos el texto "De: Cuenta" y "A: Cuenta" */
+//* El texto de "De: Cuenta A" y "A: Cuenta B" */
 .t-type-transfer .t-transfer-part {
-    color: #BF5AF2 !important;             /* Texto Morado Neón */
-    /* Para traspasos, dejamos el fondo transparente para no recargar, 
-       o puedes ponerle fondo morado suave si prefieres */
-    text-shadow: 0 0 8px rgba(191, 90, 242, 0.4); 
+    color: #00B8FF !important; /* Nuevo Azul */
 }
 /* ================================================================= */
 /* === UNIFICACIÓN TOTAL: ENCABEZADO Y PIE DE PÁGINA === */
@@ -6316,34 +6316,31 @@ html, body {
     overscroll-behavior-y: none; /* Evita rebotes elásticos */
 }
 
-/* ================================================================= */
-/* === CORRECCIÓN FINAL: VISIBILIDAD Y ESTRUCTURA (FIX) === */
-/* ================================================================= */
+/* ======================================================= */
+/* === ESTRUCTURA PRINCIPAL Y VISIBILIDAD (CORREGIDO) === */
+/* ======================================================= */
 
-/* SOLUCIÓN ESPACIO SUPERIOR: Ajuste quirúrgico del contenedor */
+/* 1. Fondo base de la aplicación (Sin estrellas, negro sólido limpio) */
 #app-root.app-layout {
-    /* El relleno superior debe ser EXACTAMENTE la altura de la barra (50px) */
     padding-top: 50px !important; 
     width: 100%;
     min-height: 100vh;
-    background-color: #000000;
-} /* <--- ¡ESTA LLAVE FALTABA Y ROMPÍA LA VISIBILIDAD! */
+    background-color: #000000; /* Fondo negro simple */
+    position: relative;
+    z-index: 1;
+} 
 
-/* 1. Comportamiento de las Pestañas (El motor visual) */
+/* 2. Reglas de Vistas (ESTO ES LO QUE ARREGLA QUE NO SE VEA NADA) */
 .view {
-    display: none; /* Oculto por defecto */
-    width: 100%;
-    height: 100%;
-    margin: 0 !important;
-    padding: 0 !important;
-    opacity: 0; 
-    transition: opacity 0.2s ease-in;
+    display: none; /* Por defecto oculto */
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
-/* 2. La pestaña activa SE MUESTRA */
-.view.active {
-    display: block !important; /* Muestra el bloque */
-    opacity: 1; /* Lo hace visible */
+/* Cuando el JS activa la vista, la mostramos */
+.view.active, .view--active {
+    display: block !important;
+    opacity: 1;
 }
 
 /* 3. Corrección de márgenes internos (Zero-Gap) */
@@ -6364,39 +6361,4 @@ html, body {
     width: 100%;
     height: 100%;
     overflow-x: hidden;
-}
-
-/* --- EN style.css (Añadir al final) --- */
-
-/* 1. Forzar que el contenedor principal ocupe espacio y tenga fondo claro */
-.app-layout__main {
-    min-height: 80vh !important;
-    background-color: #000000 !important; /* Fondo negro forzado */
-    opacity: 1 !important;
-    visibility: visible !important;
-    z-index: 1 !important;
-    position: relative !important;
-}
-
-/* 2. Forzar que las vistas (pestañas) se comporten correctamente */
-.view {
-    display: none; /* Por defecto ocultas */
-}
-
-/* Cuando la vista está activa, FORZAR que se vea */
-.view.active, section.view:not([hidden]) {
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    height: auto !important;
-    padding-top: 10px !important; /* Espacio para que no se pegue arriba */
-}
-
-/* 3. Asegurar que NINGÚN modal nos esté bloqueando (excepto si lo abrimos nosotros) */
-.modal-overlay {
-    display: none !important; /* Ocultar todos los modales por defecto */
-}
-/* Solo mostrar el modal si tiene la clase activa explícita (si tu JS la usa) */
-.modal-overlay.active, .modal-overlay[style*="display: block"] {
-    display: flex !important;
 }

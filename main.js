@@ -3452,7 +3452,7 @@ const renderPortfolioMainContent = async (targetContainerId) => {
     if (!container) return;
 
     const investmentAccounts = getVisibleAccounts().filter((c) => c.esInversion);
-    const CHART_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
+    const CHART_COLORS = ['#00FF94', '#FF2E4D', '#FFD600', '#00B8FF', '#BF5AF2', '#FF9F0A'];
 
     if (investmentAccounts.length === 0) {
         container.innerHTML = `<div id="empty-investments" class="empty-state" style="margin-top: 0; border: none; background: transparent;"><span class="material-icons">rocket_launch</span><h3>Tu Portafolio empieza aquí</h3><p>Ve a 'Ajustes' > 'Cuentas' y marca una cuenta como 'de inversión'.</p></div>`;
@@ -3752,7 +3752,7 @@ const renderVirtualListItem = (item) => {
         `;
     }
 
-    // 4. MOVIMIENTOS REALES (VERSIÓN OPTIMIZADA SIN ICONOS)
+    /// 4. MOVIMIENTOS REALES (VERSIÓN OPTIMIZADA SIN ICONOS)
     if (item.type === 'transaction') {
         const m = item.movement;
         const { cuentas, conceptos } = db;
@@ -3763,11 +3763,15 @@ const renderVirtualListItem = (item) => {
         const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
 
         let line1, line2, amountClass, amountSign, typeClass;
+        let cardStyle = ''; // NUEVO: Para forzar el color de la barra
 
         if (m.tipo === 'traspaso') {
-            // --- TIPO: TRASPASO (MORADO) ---
-            typeClass = 't-type-transfer'; // Clase para la barra morada
+            // --- TIPO: TRASPASO (CAMBIADO A AZUL) ---
+            typeClass = 't-type-transfer'; 
             
+            // FORZAMOS LA BARRA AZUL AQUÍ:
+            cardStyle = 'border-left-color: var(--c-info) !important;';
+
             const origen = cuentas.find(c => c.id === m.cuentaOrigenId)?.nombre || 'Origen';
             const destino = cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || 'Destino';
             
@@ -3776,17 +3780,17 @@ const renderVirtualListItem = (item) => {
             const saldoDestinoHtml = m._saldoDestinoSnapshot !== undefined 
                 ? `<span class="t-transfer-balance">(${formatCurrencyHTML(m._saldoDestinoSnapshot)})</span>` : '';
 
-            // Diseño simplificado solo texto
-            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part">De: ${escapeHTML(origen)}${saldoOrigenHtml}</span>`;
-            line2 = `<span class="t-transfer-part">A: ${escapeHTML(destino)}${saldoDestinoHtml}</span>`;
+            // Diseño simplificado: AÑADIMOS COLOR AZUL A LAS CUENTAS (style="color: var(--c-info)")
+            line1 = `<span class="t-date-badge">${dateStr}</span> <span class="t-transfer-part" style="color: var(--c-info)">De: ${escapeHTML(origen)}${saldoOrigenHtml}</span>`;
+            line2 = `<span class="t-transfer-part" style="color: var(--c-info)">A: ${escapeHTML(destino)}${saldoDestinoHtml}</span>`;
             
-            amountClass = 'text-info'; // Azul para el importe
+            amountClass = 'text-info'; // El importe ya usa el color info (azul)
             amountSign = '';
             
         } else {
             // --- TIPO: GASTO (ROJO) O INGRESO (VERDE) ---
             const isGasto = m.cantidad < 0;
-            typeClass = isGasto ? 't-type-expense' : 't-type-income'; // Clase para barra roja/verde
+            typeClass = isGasto ? 't-type-expense' : 't-type-income'; 
 
             const concepto = conceptos.find(c => c.id === m.conceptoId);
             const conceptoNombre = concepto ? concepto.nombre : 'Varios';
@@ -3803,9 +3807,9 @@ const renderVirtualListItem = (item) => {
             amountSign = isGasto ? '' : '+';
         }
 
-        // HTML FINAL LIMPIO: Sin div de icono, solo barra lateral por CSS
+        // HTML FINAL: Añadimos ${cardStyle} al div principal
         return `
-        <div class="t-card ${highlightClass} ${typeClass}" data-id="${m.id}" data-action="edit-movement-from-list">
+        <div class="t-card ${highlightClass} ${typeClass}" style="${cardStyle}" data-id="${m.id}" data-action="edit-movement-from-list">
             <div class="t-content">
                 <div class="t-row-primary">
                     <div class="t-line-1">${line1}</div>
@@ -4178,11 +4182,11 @@ const loadMoreMovements = async (isInitial = false) => {
 // ▼▼▼ REEMPLAZA TU FUNCIÓN renderDiarioPage POR COMPLETO CON ESTA VERSIÓN ▼▼▼
 
 const renderDiarioPage = async () => {
-    //if (isDiarioPageRendering) {
-      //  console.log("BLOQUEADO: Intento de re-renderizar el Diario mientras ya estaba en proceso.");
-        //return;
-    //}
-    //isDiarioPageRendering = true;
+    if (isDiarioPageRendering) {
+        console.log("BLOQUEADO: Intento de re-renderizar el Diario mientras ya estaba en proceso.");
+        return;
+    }
+    isDiarioPageRendering = true;
 
     try {
         const container = select('diario-page');
@@ -4480,7 +4484,7 @@ const renderPatrimonioOverviewWidget = async (containerId) => {
 
     const visibleAccounts = getVisibleAccounts();
     const saldos = await getSaldos();
-    const BASE_COLORS = ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#C084FC', '#4ECDC4', '#EF626C', '#A8D58A'];
+    const BASE_COLORS = ['#00FF94', '#FF2E4D', '#FFD600', '#00B8FF', '#BF5AF2', '#FF9F0A'];
 
     const allAccountTypes = [...new Set(visibleAccounts.map((c) => toSentenceCase(c.tipo || 'S/T')))].sort();
     const filteredAccountTypes = new Set(allAccountTypes.filter(t => !deselectedAccountTypesFilter.has(t)));
@@ -4673,13 +4677,13 @@ const handleShowIrrHistory = async (options) => {
         data: {
             labels: historyData.map(d => new Date(d.date)),
             datasets: [{
-                label: 'TIR Anualizada',
-                data: historyData.map(d => d.irr * 100),
-                borderColor: 'var(--c-info)',
-                backgroundColor: 'rgba(191, 90, 242, 0.2)',
-                fill: true,
-                tension: 0.1
-            }]
+				label: 'TIR Anualizada',
+				data: historyData.map(d => d.irr * 100),
+				borderColor: '#00B8FF', // NUEVO AZUL (Antes era var(--c-info) o morado)
+				backgroundColor: 'rgba(0, 184, 255, 0.2)', // Relleno Azul suave
+				fill: true,
+				tension: 0.1
+			}]
         },
         options: {
             responsive: true,
@@ -4839,9 +4843,9 @@ const renderPanelPage = async () => {
                 <div style="background-color: rgba(0,0,0,0.2); border-radius: 16px; padding: 15px; display: grid; grid-template-columns: 1fr 1px 1fr; align-items: center; border: 1px solid var(--c-outline);">
                     
                     <div style="text-align: center;">
-                        <div style="font-size: 0.65rem; font-weight: 700; color: var(--c-info); text-transform: uppercase; margin-bottom: 4px; display:flex; justify-content:center; gap:4px; align-items:center;">
-                            <span class="material-icons" style="font-size: 12px;">account_balance_wallet</span> Liquidez
-                            <button class="help-btn" data-action="show-kpi-help" data-kpi="liquidez">?</button>
+                        <div style="font-size: 0.65rem; font-weight: 700; color: #FFFFFF; text-transform: uppercase; margin-bottom: 4px; display:flex; justify-content:center; gap:4px; align-items:center;">
+                            <span class="material-icons" style="font-size: 12px; color: #FFFFFF;">account_balance_wallet</span> Liquidez
+                            <button class="help-btn" data-action="show-kpi-help" data-kpi="liquidez" style="border-color: rgba(255,255,255,0.3); color: #FFFFFF;">?</button>
                         </div>
                         <div id="kpi-liquidez-value" class="text-positive skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 700;">0,00 €</div>
                     </div>
@@ -4849,9 +4853,9 @@ const renderPanelPage = async () => {
                     <div style="height: 30px; background-color: var(--c-outline);"></div>
 
                     <div style="text-align: center;">
-                        <div style="font-size: 0.65rem; font-weight: 700; color: #BF5AF2; text-transform: uppercase; margin-bottom: 4px; display:flex; justify-content:center; gap:4px; align-items:center;">
-                            <span class="material-icons" style="font-size: 12px;">savings</span> Capital Inv.
-                            <button class="help-btn" data-action="show-kpi-help" data-kpi="capital_invertido">?</button>
+                        <div style="font-size: 0.65rem; font-weight: 700; color: #FFFFFF; text-transform: uppercase; margin-bottom: 4px; display:flex; justify-content:center; gap:4px; align-items:center;">
+                            <span class="material-icons" style="font-size: 12px; color: #FFFFFF;">savings</span> Capital Inv.
+                            <button class="help-btn" data-action="show-kpi-help" data-kpi="capital_invertido" style="border-color: rgba(255,255,255,0.3); color: #FFFFFF;">?</button>
                         </div>
                         <div id="kpi-capital-invertido-total" class="text-positive skeleton" data-current-value="0" style="font-size: 1rem; font-weight: 700;">0,00 €</div>
                     </div>
@@ -4886,24 +4890,27 @@ const renderPanelPage = async () => {
             </div>
 
             <div class="hero-card fade-in-up" style="padding: 15px; margin-bottom: var(--sp-4); background: linear-gradient(180deg, var(--c-surface) 0%, rgba(0,0,0,0.2) 100%); border: 1px solid var(--c-outline);">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div style="text-align: center;">
-                        <div style="display: flex; justify-content: center; align-items: center; gap: 6px; margin-bottom: 6px;">
-                            <span class="material-icons" style="color: #FFD60A; font-size: 18px;">shield</span>
-                            <span style="font-size: 0.7rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase;">COBERTURA</span>
-                            <button class="help-btn" data-action="show-kpi-help" data-kpi="cobertura" style="font-size: 10px; width: 14px; height: 14px;">?</button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px;">
+                        
+                        <div style="text-align: center;">
+                            <div style="display: flex; justify-content: center; align-items: center; gap: 6px; margin-bottom: 6px;">
+                                <span class="material-icons" style="color: var(--c-warning); font-size: 18px;">shield</span>
+                                <span style="font-size: 0.7rem; font-weight: 700; color: var(--c-warning); text-transform: uppercase;">COBERTURA</span>
+                                <button class="help-btn" data-action="show-kpi-help" data-kpi="cobertura" style="font-size: 10px; width: 14px; height: 14px; border-color: var(--c-warning); color: var(--c-warning);">?</button>
+                            </div>
+                            <div id="health-runway-val" class="skeleton" style="font-size: 1.3rem; font-weight: 800; color: var(--c-warning);">0.0 Meses</div>
                         </div>
-                        <div id="health-runway-val" class="skeleton" style="font-size: 1.3rem; font-weight: 800; color: #FFD60A;">0.0 Meses</div>
-                    </div>
-                    <div style="text-align: center; border-left: 1px solid var(--c-outline);">
-                        <div style="display: flex; justify-content: center; align-items: center; gap: 6px; margin-bottom: 6px;">
-                            <span class="material-icons" style="color: #39FF14; font-size: 18px;">flag</span>
-                            <span style="font-size: 0.7rem; font-weight: 700; color: var(--c-on-surface-secondary); text-transform: uppercase;">LIBERTAD</span>
-                            <button class="help-btn" data-action="show-kpi-help" data-kpi="libertad" style="font-size: 10px; width: 14px; height: 14px;">?</button>
+
+                        <div style="text-align: center; border-left: 1px solid var(--c-outline);">
+                            <div style="display: flex; justify-content: center; align-items: center; gap: 6px; margin-bottom: 6px;">
+                                <span class="material-icons" style="color: var(--c-warning); font-size: 18px;">flag</span>
+                                <span style="font-size: 0.7rem; font-weight: 700; color: var(--c-warning); text-transform: uppercase;">LIBERTAD</span>
+                                <button class="help-btn" data-action="show-kpi-help" data-kpi="libertad" style="font-size: 10px; width: 14px; height: 14px; border-color: var(--c-warning); color: var(--c-warning);">?</button>
+                            </div>
+                            <div id="health-fi-val" class="skeleton" style="font-size: 1.3rem; font-weight: 800; color: var(--c-warning);">0.0%</div>
                         </div>
-                        <div id="health-fi-val" class="skeleton" style="font-size: 1.3rem; font-weight: 800; color: #39FF14;">0.00%</div>
+
                     </div>
-                </div>
             </div>
         </div>
         
@@ -5200,7 +5207,7 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                 {
                     label: 'Valor de Mercado',
                     data: totalValueData,
-                    borderColor: '#00B34D', 
+                    borderColor: '#00FF94', // CAMBIAR A NUEVO VERDE (#00FF94) 
                     borderWidth: 2,
                     pointRadius: 0,
                     pointHoverRadius: 4,
@@ -5208,10 +5215,10 @@ async function renderPortfolioEvolutionChart(targetContainerId) {
                     order: 0,
                     // El relleno verde/rojo que muestra la ganancia/pérdida
                     fill: {
-                        target: '1', 
-                        above: 'rgba(0, 179, 77, 0.25)',   
-                        below: 'rgba(255, 59, 48, 0.25)'   
-                    }
+						target: '1',
+						above: 'rgba(0, 255, 148, 0.25)', // Relleno verde nuevo
+						below: 'rgba(255, 46, 77, 0.25)'   // Relleno rojo nuevo (Pérdidas)
+					}
                 },
                 {
                     label: 'Capital Aportado',
@@ -5504,7 +5511,14 @@ async function renderInformeAsignacionActivos(container) {
             labels, 
             datasets: [{ 
                 data, 
-                backgroundColor: ['#007AFF', '#30D158', '#FFD60A', '#FF3B30', '#BF5AF2', '#5E5CE6', '#FF9F0A', '#45B6E9', '#D158A7'] 
+                backgroundColor: [
+					'#00FF94', // Verde
+					'#FF2E4D', // Rojo
+					'#00B8FF', // Azul
+					'#FFD600', // Amarillo
+					'#BF5AF2', // Morado (Secundario)
+					'#FF9F0A'  // Naranja (Secundario)
+				]
             }] 
         },
         options: { 
@@ -6425,8 +6439,8 @@ const updateNetWorthChart = async (saldos) => {
     
     // Gradiente sutil
     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, 'rgba(0, 179, 77, 0.25)'); // Verde suave arriba
-    gradient.addColorStop(1, 'rgba(0, 179, 77, 0.0)'); // Transparente abajo
+	gradient.addColorStop(0, 'rgba(0, 255, 148, 0.25)'); // Nuevo Verde (transparente)
+	gradient.addColorStop(1, 'rgba(0, 255, 148, 0.0)');
 
     netWorthChart = new Chart(ctx, {
         type: 'line',
@@ -6434,7 +6448,7 @@ const updateNetWorthChart = async (saldos) => {
             datasets: [{
                 label: 'Patrimonio',
                 data: dataPoints,
-                borderColor: '#00B34D', // Verde principal
+                borderColor: '#00FF94', // TU NUEVO VERDE NEÓN
                 borderWidth: 2,
                 backgroundColor: gradient,
                 fill: true,
@@ -11729,51 +11743,3 @@ window.addEventListener('click', (e) => {
         }
     }
 });
-/* ============================================== */
-/* === MOTOR DE VIAJE ESPACIAL (main.js) === */
-/* ============================================== */
-
-const createSpaceTravel = () => {
-    // 1. Crear contenedor si no existe
-    let container = document.getElementById('cosmos-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'cosmos-container';
-        document.body.prepend(container);
-    } else {
-        container.innerHTML = '';
-    }
-
-    // 2. Generar Estrellas (Aumentamos cantidad para sensación de velocidad)
-    const starCount = 200; 
-    
-    for (let i = 0; i < starCount; i++) {
-        const star = document.createElement('div');
-        star.className = 'star';
-        
-        // MATEMÁTICAS DE TÚNEL:
-        // Calculamos un ángulo aleatorio y una distancia final
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 800 + Math.random() * 1500; // Dispersión amplia
-        
-        const destX = Math.cos(angle) * distance;
-        const destY = Math.sin(angle) * distance;
-
-        // Variables CSS
-        star.style.setProperty('--dest-x', `${destX}px`);
-        star.style.setProperty('--dest-y', `${destY}px`);
-
-        // Velocidad: Cuanto más bajo el número, más rápido parece la nave
-        const duration = 5 + Math.random() * 10;
-        star.style.setProperty('--duration', `${duration}s`);
-
-        // Retraso para flujo continuo
-        const delay = Math.random() * 5;
-        star.style.setProperty('--delay', `-${delay}s`);
-
-        container.appendChild(star);
-    }
-};
-
-// Iniciar motores al cargar
-document.addEventListener('DOMContentLoaded', createSpaceTravel);
