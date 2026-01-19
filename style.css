@@ -6502,3 +6502,177 @@ html, body {
     opacity: 1 !important;        /* Quitamos la transparencia que lo hacía gris */
     font-weight: 500 !important;  /* Un poco más de peso para que se lea bien */
 }
+/* ================================================================= */
+/* === MODO PC / TABLET GRANDE (Estrategia Doble Ancho: 840px) === */
+/* ================================================================= */
+
+@media (min-width: 840px) {
+    
+    /* 1. EL CONTENEDOR PRINCIPAL (La ventana de la App) */
+    .app-layout { 
+        width: 840px !important;      /* Ancho fijo: 2x Móvil */
+        max-width: 840px !important;  
+        margin: 0 auto;               /* Centrado automático en el monitor */
+        border-left: 1px solid var(--c-outline);
+        border-right: 1px solid var(--c-outline);
+        box-shadow: 0 0 50px rgba(0,0,0,0.5); /* Sombra elegante alrededor */
+        min-height: 100vh;
+    }
+
+    /* 2. BARRA DE NAVEGACIÓN PRO (Texto + Iconos) */
+    .bottom-nav { 
+        width: 840px !important; /* Coincide con el ancho de la app */
+        left: 50% !important; 
+        transform: translateX(-50%) !important; /* Centrado perfecto */
+        
+        /* Hacemos los botones más anchos para que quepa el texto */
+        padding: 0 40px; 
+    }
+
+    /* Transformamos los botones para que se vean ICONO a la izquierda y TEXTO a la derecha */
+    .bottom-nav__item { 
+        flex-direction: row !important; /* Pone los elementos lado a lado */
+        gap: 10px; /* Espacio entre icono y texto */
+        padding: 0 15px;
+        border-radius: 12px;
+        transition: background-color 0.2s;
+    }
+
+    /* Efecto al pasar el ratón por encima (Solo PC) */
+    .bottom-nav__item:hover {
+        background-color: var(--c-surface-variant);
+    }
+
+    /* ¡HACEMOS VISIBLE EL TEXTO! */
+    .bottom-nav__label { 
+        display: block !important; /* Fuerza que aparezca */
+        font-size: 0.9rem; 
+        font-weight: 600;
+        margin-top: 0;
+    }
+
+    /* 3. OPTIMIZACIÓN DE REJILLAS (Aprovechar el espacio) */
+    /* En PC, las tarjetas de KPI (Resumen) se ponen en 4 columnas en vez de 2 */
+    .kpi-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 20px;
+    }
+
+    /* Los formularios se ponen en 2 columnas para no ser tan altos */
+    .dense-form-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 20px;
+    }
+
+    /* 4. MODALES (Ventanas emergentes) */
+    /* Aseguramos que no sean más anchos que la propia app */
+    .modal-overlay, .toast-container {
+        width: 840px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+    }
+}
+/* ================================================================= */
+/* === SOLUCIÓN FINAL: BARRAS DE SISTEMA (Móvil y PC) === */
+/* ================================================================= */
+
+/* 1. BASE COMÚN (Encabezado y Pie idénticos) */
+.top-bar, .bottom-nav {
+    /* Posicionamiento Fijo y Centrado */
+    position: fixed !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 1000 !important; /* Siempre encima */
+    
+    /* Ancho total en móvil (Evita cortes laterales) */
+    width: 100% !important;
+    max-width: 100% !important; 
+    box-sizing: border-box !important;
+
+    /* Estética "Vidrio Oscuro" (Igual para ambos) */
+    background-color: rgba(20, 25, 35, 0.9) !important; /* Fondo oscuro sólido semi-transparente */
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+}
+
+/* 2. ENCABEZADO (Top Bar) - Ajuste Notch/Cámara */
+.top-bar {
+    top: 0 !important;
+    bottom: auto !important;
+    
+    /* Altura automática basada en contenido + zona segura */
+    height: auto !important;
+    min-height: 54px !important;
+    
+    /* Relleno superior inteligente para la cámara/reloj */
+    padding-top: env(safe-area-inset-top, 0px) !important; 
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    
+    /* Borde fino solo abajo */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-radius: 0 !important; /* Recto, sin curvas */
+}
+
+/* 3. PIE DE PÁGINA (Bottom Nav) - Ajuste Barra Gestos */
+.bottom-nav {
+    top: auto !important;
+    bottom: 0 !important;
+    
+    /* Eliminamos el estilo antiguo de "píldora flotante" */
+    margin: 0 !important;
+    border-radius: 0 !important; 
+    
+    /* Altura automática + Relleno inferior inteligente */
+    height: auto !important; 
+    padding-bottom: env(safe-area-inset-bottom, 20px) !important; /* Espacio para barra iPhone/Android */
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+
+    /* Borde fino solo arriba */
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-bottom: none !important;
+    
+    /* Alineación de iconos */
+    display: flex !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+}
+
+/* Ajuste de los botones dentro de la barra */
+.bottom-nav__item {
+    height: 60px !important; /* Altura táctil cómoda */
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: none !important; /* Sin fondo propio */
+}
+
+/* 4. ADAPTACIÓN EXCLUSIVA PARA PC (Mantener el ancho controlado) */
+@media (min-width: 840px) {
+    .top-bar, .bottom-nav {
+        /* En PC limitamos el ancho a 840px para que no se vea gigante */
+        width: 840px !important;
+        max-width: 840px !important;
+        
+        /* En PC no necesitamos relleno extra de seguridad */
+        padding-top: 0 !important; 
+        padding-bottom: 0 !important;
+        
+        /* Altura fija cómoda para ratón */
+        height: 60px !important; 
+    }
+    
+    /* En PC mostramos icono y texto lado a lado */
+    .bottom-nav__item {
+        flex-direction: row !important;
+        gap: 10px;
+    }
+}
