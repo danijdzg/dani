@@ -6362,3 +6362,143 @@ html, body {
     height: 100%;
     overflow-x: hidden;
 }
+
+/* ================================================================= */
+/* === MEJORA: BARRA VERTICAL DERECHA (SIMETRÍA) === */
+/* ================================================================= */
+
+/* 1. Definimos la forma de la barra derecha (El gemelo) */
+.t-card::after {
+    content: '';
+    position: absolute;
+    right: 0;           /* ¡Aquí está la clave! Lo pegamos a la derecha */
+    top: 15%; 
+    bottom: 15%;        /* Misma altura que la izquierda */
+    width: 4px;         /* Mismo grosor */
+    border-radius: 4px; 
+    transition: box-shadow 0.3s ease;
+    opacity: 0.8;       /* Un pelín más suave para no saturar */
+}
+
+/* 2. Le damos el color correspondiente según el tipo (Gasto, Ingreso, Traspaso) */
+
+/* GASTO (Rojo) a la derecha */
+.t-type-expense::after {
+    background-color: #FF453A;
+    box-shadow: 0 0 12px rgba(255, 69, 58, 0.8); 
+}
+
+/* INGRESO (Verde) a la derecha */
+.t-type-income::after {
+    background-color: #32D74B;
+    box-shadow: 0 0 12px rgba(50, 215, 75, 0.8);
+}
+
+/* TRASPASO (Azul) a la derecha */
+.t-type-transfer::after {
+    background-color: #00B8FF; 
+    box-shadow: 0 0 12px rgba(0, 184, 255, 0.8); 
+}
+
+/* 3. Ajuste de seguridad para móviles pequeños */
+/* Para asegurar que el texto no choque con la nueva barra derecha */
+.t-card {
+    padding-right: 16px !important; /* Damos un respiro al contenido por la derecha */
+}
+
+/* ================================================================= */
+/* === MEJORA: TEXTOS BLANCO PURO EN DIARIO (Alto Contraste) === */
+/* ================================================================= */
+
+/* 1. Forzamos BLANCO PURO en descripciones, fechas y saldos */
+/* Usamos selectores muy específicos para asegurar que ganen a cualquier otro estilo */
+#movimientos-list-container .t-line-2,
+#movimientos-list-container .transaction-card__description,
+#movimientos-list-container .transaction-card__row-2,
+#movimientos-list-container .t-running-balance,
+#movimientos-list-container .transaction-card__balance,
+#movimientos-list-container .sticky-date-text,
+#movimientos-list-container .t-date-badge,
+#movimientos-list-container .t-balance-pill {
+    color: #FFFFFF !important;    /* Blanco nuclear */
+    opacity: 1 !important;        /* Sin transparencia */
+    font-weight: 500;             /* Un pelín más grueso para que se lea mejor */
+}
+
+/* 2. También los iconos pequeños (calendarios, flechitas) en blanco */
+#movimientos-list-container .material-icons {
+    color: #FFFFFF !important;
+}
+
+/* 3. EXCEPCIÓN: Mantenemos los colores semánticos (Rojo, Verde, Azul) */
+/* Esto asegura que no "pintemos de blanco" lo que debe ser de color */
+
+/* Gastos en ROJO */
+.t-type-expense .t-amount,
+.t-type-expense .t-account-badge { 
+    color: #FF453A !important; 
+}
+
+/* Ingresos en VERDE */
+.t-type-income .t-amount,
+.t-type-income .t-account-badge { 
+    color: #32D74B !important; 
+}
+
+/* Traspasos en AZUL (El texto "De: Cuenta A -> A: Cuenta B") */
+.t-type-transfer .t-transfer-part,
+.t-type-transfer .t-account-badge { 
+    color: #00B8FF !important; 
+}
+
+/* ================================================================= */
+/* === MEJORA: CUENTAS EN MAYÚSCULAS Y SIN RECUADRO === */
+/* ================================================================= */
+
+/* 1. Ponemos TODAS las cuentas en MAYÚSCULAS */
+/* Esto afecta a Gastos, Ingresos y Traspasos */
+.t-account-badge {
+    text-transform: uppercase !important; /* Fuerza las mayúsculas */
+    letter-spacing: 0.5px; /* Un pelín de aire entre letras para que se lea mejor */
+    font-weight: 800 !important; /* Letra gordita para que se vea bien */
+}
+
+/* 2. Quitamos el "envoltorio" (recuadro) SOLO a Ingresos y Gastos */
+/* Dejamos el texto limpio, sin borde ni fondo */
+.t-type-expense .t-account-badge,
+.t-type-income .t-account-badge {
+    background-color: transparent !important; /* Fondo transparente */
+    border: none !important;                  /* Sin línea de borde */
+    box-shadow: none !important;              /* Sin brillos ni sombras */
+    padding: 0 !important;                    /* Quitamos el relleno, texto puro */
+}
+
+/* NOTA: En los TRASPASOS (Color Azul) NO quitamos el recuadro 
+   porque suelen ser dos cuentas ("De A -> a B") y el recuadro ayuda 
+   a entender el movimiento. Si también quieres quitarlo ahí, dímelo. */
+   
+   /* ================================================================= */
+/* === MEJORA: TRASPASOS (Uniformidad con el resto) === */
+/* ================================================================= */
+
+/* 1. Importe del Traspaso en AZUL */
+.t-type-transfer .t-amount {
+    color: #00B8FF !important;    /* Azul Cian Eléctrico (El mismo de las cuentas) */
+    opacity: 1 !important;        /* Totalmente visible */
+    font-weight: 800 !important;  /* Negrita para que resalte */
+}
+
+/* 2. Texto de cuentas del Traspaso en MAYÚSCULAS */
+/* Convertimos "De: Banco a: Cartera" en "DE: BANCO A: CARTERA" */
+.t-type-transfer .t-transfer-part {
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px;        /* Un poco de aire para leerlo mejor */
+    font-weight: 800 !important;
+    /* Mantenemos el color azul original para el texto, solo cambiamos la forma */
+}
+/* Saldos entre paréntesis en los traspasos (ej: "(Saldo: 150€)") */
+.t-type-transfer .t-transfer-balance {
+    color: #FFFFFF !important;    /* Blanco Puro */
+    opacity: 1 !important;        /* Quitamos la transparencia que lo hacía gris */
+    font-weight: 500 !important;  /* Un poco más de peso para que se lea bien */
+}
