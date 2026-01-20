@@ -9189,6 +9189,110 @@ const handleStart = (e) => {
         const { action, id, page, type, modalId, reportId } = actionTarget.dataset;
         const btn = actionTarget.closest('button');
         
+/* ========================================= */
+/* === NUEVA LÓGICA: CONFIGURAR PIN === */
+/* ========================================= */
+const handleConfigurePin = () => {
+    // 1. Diseño del Formulario (HTML dentro de JS)
+    const html = `
+        <div style="text-align: center;">
+            <div style="margin-bottom: var(--sp-4);">
+                <span class="material-icons" style="font-size: 48px; color: var(--c-primary);">lock_reset</span>
+            </div>
+            <p style="margin-bottom: var(--sp-4); color: var(--c-on-surface-secondary);">
+                Protege tus finanzas. Crea un código de 4 números.
+            </p>
+            
+            <div class="form-group">
+                <label class="form-label" style="text-align:center;">NUEVO PIN</label>
+                <input type="tel" id="set-pin-1" class="form-input" 
+                       style="text-align: center; letter-spacing: 12px; font-size: 2rem; font-weight: 700; background: var(--c-surface); border-color: var(--c-primary);" 
+                       maxlength="4" placeholder="••••" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" style="text-align:center;">CONFIRMAR PIN</label>
+                <input type="tel" id="set-pin-2" class="form-input" 
+                       style="text-align: center; letter-spacing: 12px; font-size: 2rem; font-weight: 700;" 
+                       maxlength="4" placeholder="••••" autocomplete="off">
+            </div>
+
+            <p id="pin-match-error" class="form-error" style="text-align:center; min-height:20px;"></p>
+
+            <div class="modal__actions">
+                 <button id="btn-save-pin" class="btn btn--primary btn--full" disabled style="opacity: 0.5;">
+                    <span class="material-icons">save</span> Guardar Seguridad
+                 </button>
+            </div>
+        </div>
+    `;
+
+    // 2. Mostrar la ventana (Modal)
+    showGenericModal('Seguridad de Acceso', html);
+
+    // 3. Referencias a los elementos
+    const i1 = document.getElementById('set-pin-1');
+    const i2 = document.getElementById('set-pin-2');
+    const btn = document.getElementById('btn-save-pin');
+    const errorMsg = document.getElementById('pin-match-error');
+
+    // 4. Función de Validación en tiempo real
+    const validate = () => {
+        // Limpiamos si el usuario intenta meter letras
+        i1.value = i1.value.replace(/[^0-9]/g, '');
+        i2.value = i2.value.replace(/[^0-9]/g, '');
+        
+        const pin1 = i1.value;
+        const pin2 = i2.value;
+        
+        // Comprobamos si coinciden
+        if (pin1.length === 4 && pin2.length === 4) {
+            if (pin1 === pin2) {
+                btn.removeAttribute('disabled');
+                btn.style.opacity = '1';
+                errorMsg.textContent = '';
+                i2.style.borderColor = 'var(--c-success)';
+            } else {
+                btn.setAttribute('disabled', 'true');
+                btn.style.opacity = '0.5';
+                errorMsg.textContent = 'Los números no coinciden';
+                i2.style.borderColor = 'var(--c-danger)';
+            }
+        } else {
+            btn.setAttribute('disabled', 'true');
+            btn.style.opacity = '0.5';
+            i2.style.borderColor = 'var(--c-outline)';
+        }
+    };
+
+    // 5. Escuchar lo que escribe el usuario
+    i1.addEventListener('input', () => { 
+        validate(); 
+        if(i1.value.length === 4) i2.focus(); // Salta al siguiente campo automáticamente
+    });
+    i2.addEventListener('input', validate);
+
+    // 6. Guardar cuando pulse el botón
+    btn.onclick = async () => {
+        setButtonLoading(btn, true);
+        const pin = i1.value;
+        
+        // Encriptamos el PIN (¡Seguridad ante todo!)
+        const hash = await hashPin(pin); 
+        
+        // Guardamos en la memoria del móvil/PC
+        localStorage.setItem('pinUserHash', hash);
+        if(currentUser) localStorage.setItem('pinUserEmail', currentUser.email);
+        
+        hapticFeedback('success'); // Vibración de éxito
+        showToast('¡Seguridad activada! Te pediré el PIN al volver.', 'success');
+        hideModal('generic-modal');
+    };
+    
+    // Enfocar el primer campo al abrir
+    setTimeout(() => i1.focus(), 100);
+};		
+		
         // Mapa de acciones
         const actions = {
 		'toggle-portfolio-currency': async () => {
@@ -9458,7 +9562,7 @@ const handleStart = (e) => {
             'save-and-new-movement': () => handleSaveMovement(document.getElementById('form-movimiento'), btn), 'set-movimiento-type': () => setMovimientoFormType(type),
             'recalculate-balances': () => { showConfirmationModal('Se recalcularán todos los saldos. ¿Continuar?', () => auditAndFixAllBalances(btn), 'Confirmar Auditoría'); },
             'json-wizard-back-2': () => goToJSONStep(1), 'json-wizard-import-final': () => handleFinalJsonImport(btn),
-            'toggle-traspaso-accounts-filter': () => populateTraspasoDropdowns(), 'set-pin': async () => { /* Lógica PIN */ },
+            'toggle-traspaso-accounts-filter': () => populateTraspasoDropdowns(), 'set-pin': () => handleConfigurePin(),
             'edit-recurrente-from-pending': () => startMovementForm(id, true),
             'confirm-recurrent': () => handleConfirmRecurrent(id, btn), 'skip-recurrent': () => handleSkipRecurrent(id, btn),
             'show-informe-builder': showInformeBuilderModal, 'save-informe': () => handleSaveInforme(btn),
